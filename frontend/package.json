@@ -23,7 +23,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "lint": "npx eslint 'src/**/*.{js,jsx}'"
+    "lint": "npx eslint 'src/**/*.{js,jsx}'",
+    "format": "prettier --write ."
   },
   "eslintConfig": {
     "extends": [
