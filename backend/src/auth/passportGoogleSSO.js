@@ -50,7 +50,7 @@ passport.serializeUser((user, doneCallback) => {
 
 passport.deserializeUser((id, doneCallback)=> {
   
-  await findOne({
+  await User.findOne({
     where: { id }
   }).catch (err => {
     console.error("Error Deserializing", err);
