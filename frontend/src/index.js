@@ -9,10 +9,14 @@ import routes from "./routes";
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#00bcd4",
+      main: "#3A76F8",
+      dark: "#151719",
+      //csesoc dark: "#40404C",
+      light: "#ADC7FF",
     },
     secondary: {
-      main: "#ff4081",
+      main: "#DBD2Ef",
+      light: "#eceded",
     },
   },
   props: {
