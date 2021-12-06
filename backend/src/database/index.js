@@ -6,11 +6,11 @@ const sequelize = new Sequelize(
   process.env.DB_PASS,
   {
     host: "localhost",
-    dialect: "mysql",
+    dialect: "postgres",
   }
 );
 
-sequelize.sync();
+sequelize.sync({force: true});
 
 (async () => {
   try {

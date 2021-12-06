@@ -15,14 +15,13 @@ passport.use(
       console.log("GoogleStrategy Executed");
 
       const defaultUser = {
-        fullName: `${profilegiven_name} ${profile.family_name}`,
         displayName: profile.displayName,
         email: profile.emails[0].value,
         googleId: profile.id,
         avatar: profile.photos[0].value,
       };
 
-  await User.findOrCreate({
+      await User.findOrCreate({
           where: { googleId: profile.id }, 
           defaults: defaultUser
       })
@@ -50,7 +49,7 @@ passport.serializeUser((user, doneCallback) => {
 
 passport.deserializeUser((id, doneCallback)=> {
   
-  await User.findOne({
+  User.findOne({
     where: { id }
   }).catch (err => {
     console.error("Error Deserializing", err);

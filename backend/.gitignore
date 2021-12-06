@@ -71,3 +71,6 @@ typings/
 
 # Serverless directories
 .serverless
+
+
+src/config/config.json

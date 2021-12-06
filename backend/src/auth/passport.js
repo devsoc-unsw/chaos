@@ -3,7 +3,7 @@ const passportJwt = require("passport-jwt");
 const ExtractJwt = passportJwt.ExtractJwt;
 const StrategyJwt = passportJwt.Strategy;
 const User = require("../models/user");
-
+require('dotenv').config();
 passport.use(
   new StrategyJwt(
     {
