@@ -9,10 +9,12 @@ edition = "2021"
 rocket = { version = "0.5.0-rc.1", features = ["json"] }
 # pull rocket_cors from git master until crates.io artifact builds on stable
 rocket_cors = { git = "https://github.com/lawliet89/rocket_cors", branch = "master" }
-diesel = { version = "1.4.8", features = ["postgres"] }
+diesel = { version = "1.4.8", features = ["postgres", "r2d2", "chrono"] }
 diesel-derive-enum = { version = "1", features = ["postgres"] }
 dotenv = "0.15.0"
 dotenv_codegen = "0.15.0"
-reqwest = "0.11.7"
+reqwest = { version = "0.11.7", features = ["json"] }
 jsonwebtoken = "7.2.0"
 serde = {version = "1.0", features = ["derive"] }
+serde_json = "1.0.72"
+chrono = "0.4"

@@ -1,7 +1,6 @@
 CREATE TABLE users (
 	id SERIAL PRIMARY KEY,
 	email TEXT NOT NULL,
-	google_token TEXT NOT NULL,
 	zid TEXT NOT NULL,
 	display_name TEXT NOT NULL,
 	degree_name TEXT NOT NULL,

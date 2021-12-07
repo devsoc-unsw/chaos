@@ -1,22 +1,4 @@
-use diesel_derive_enum::DbEnum;
-
-#[derive(Debug, DbEnum)]
-pub enum ApplicationStatus {
-    Pending,
-    Rejected,
-    Success,
-}
-
-#[derive(Debug, DbEnum)]
-pub enum AdminLevel {
-    ReadOnly,
-    Director,
-    Admin,
-}
-
-diesel::table! {
-    use diesel::sql_types::*;
-
+table! {
     answers (id) {
         id -> Int4,
         application_id -> Int4,
@@ -27,23 +9,18 @@ diesel::table! {
     }
 }
 
-diesel::table! {
-    use diesel::sql_types::*;
-    use crate::schema::ApplicationStatusMapping;
-
+table! {
     applications (id) {
         id -> Int4,
         user_id -> Int4,
         role_id -> Int4,
-        status -> ApplicationStatusMapping,
+        status -> Application_status,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }
 }
 
-diesel::table! {
-    use diesel::sql_types::*;
-
+table! {
     campaigns (id) {
         id -> Int4,
         organisation_id -> Int4,
@@ -58,9 +35,7 @@ diesel::table! {
     }
 }
 
-diesel::table! {
-    use diesel::sql_types::*;
-
+table! {
     comments (id) {
         id -> Int4,
         application_id -> Int4,
@@ -71,24 +46,19 @@ diesel::table! {
     }
 }
 
-diesel::table! {
-    use diesel::sql_types::*;
-    use crate::schema::AdminLevelMapping;
-
+table! {
     organisation_users (id) {
         id -> Int4,
         user_id -> Int4,
         organisation_id -> Int4,
-        admin_level -> AdminLevelMapping,
+        admin_level -> Admin_level,
         superuser -> Bool,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }
 }
 
-diesel::table! {
-    use diesel::sql_types::*;
-
+table! {
     organisations (id) {
         id -> Int4,
         name -> Text,
@@ -98,9 +68,7 @@ diesel::table! {
     }
 }
 
-diesel::table! {
-    use diesel::sql_types::*;
-
+table! {
     questions (id) {
         id -> Int4,
         role_id -> Int4,
@@ -113,9 +81,7 @@ diesel::table! {
     }
 }
 
-diesel::table! {
-    use diesel::sql_types::*;
-
+table! {
     ratings (id) {
         id -> Int4,
         application_id -> Int4,
@@ -126,9 +92,7 @@ diesel::table! {
     }
 }
 
-diesel::table! {
-    use diesel::sql_types::*;
-
+table! {
     roles (id) {
         id -> Int4,
         campaign_id -> Int4,
@@ -142,13 +106,10 @@ diesel::table! {
     }
 }
 
-diesel::table! {
-    use diesel::sql_types::*;
-
+table! {
     users (id) {
         id -> Int4,
         email -> Text,
-        google_token -> Text,
         zid -> Text,
         display_name -> Text,
         degree_name -> Text,
@@ -159,21 +120,21 @@ diesel::table! {
     }
 }
 
-diesel::joinable!(answers -> applications (application_id));
-diesel::joinable!(answers -> questions (question_id));
-diesel::joinable!(applications -> roles (role_id));
-diesel::joinable!(applications -> users (user_id));
-diesel::joinable!(campaigns -> organisations (organisation_id));
-diesel::joinable!(comments -> applications (application_id));
-diesel::joinable!(comments -> users (commenter_user_id));
-diesel::joinable!(organisation_users -> organisations (organisation_id));
-diesel::joinable!(organisation_users -> users (user_id));
-diesel::joinable!(questions -> roles (role_id));
-diesel::joinable!(ratings -> applications (application_id));
-diesel::joinable!(ratings -> users (rater_user_id));
-diesel::joinable!(roles -> campaigns (campaign_id));
+joinable!(answers -> applications (application_id));
+joinable!(answers -> questions (question_id));
+joinable!(applications -> roles (role_id));
+joinable!(applications -> users (user_id));
+joinable!(campaigns -> organisations (organisation_id));
+joinable!(comments -> applications (application_id));
+joinable!(comments -> users (commenter_user_id));
+joinable!(organisation_users -> organisations (organisation_id));
+joinable!(organisation_users -> users (user_id));
+joinable!(questions -> roles (role_id));
+joinable!(ratings -> applications (application_id));
+joinable!(ratings -> users (rater_user_id));
+joinable!(roles -> campaigns (campaign_id));
 
-diesel::allow_tables_to_appear_in_same_query!(
+allow_tables_to_appear_in_same_query!(
     answers,
     applications,
     campaigns,
