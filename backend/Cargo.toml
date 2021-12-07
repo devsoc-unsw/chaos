@@ -1,0 +1,17 @@
+[package]
+name = "backend"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rocket = { version = "0.5.0-rc.1", features = ["json"] }
+# pull rocket_cors from git master until crates.io artifact builds on stable
+rocket_cors = { git = "https://github.com/lawliet89/rocket_cors", branch = "master" }
+diesel = { version = "1.4.8", features = ["postgres"] }
+dotenv = "0.15.0"
+dotenv_codegen = "0.15.0"
+reqwest = "0.11.7"
+jsonwebtoken = "7.2.0"
+serde = {version = "1.0", features = ["derive"] }
