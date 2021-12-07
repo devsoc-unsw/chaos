@@ -1,9 +1,12 @@
+#[macro_use] extern crate diesel;
+
 use auth::Auth;
 use jsonwebtoken::{EncodingKey, DecodingKey};
 use rocket::routes;
 use dotenv_codegen::dotenv;
 
-mod auth;
+pub mod auth;
+pub mod schema;
 
 pub struct ApiState {
     jwt_encoding_key: EncodingKey,
