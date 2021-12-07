@@ -52,6 +52,7 @@ diesel::table! {
         description -> Text,
         starts_at -> Timestamp,
         ends_at -> Timestamp,
+        draft -> Bool,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }
