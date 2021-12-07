@@ -1,4 +1,6 @@
 import PrivateRoute from "./PrivateRoute";
+import LoadingIndicator from "./LoadingIndicator";
+import BackgroundWrapper from "./BackgroundWrapper";
+import ParticleWallpaper from "./ParticleWallpaper";
 
-// eslint-disable-next-line import/prefer-default-export
-export { PrivateRoute };
+export { PrivateRoute, LoadingIndicator, BackgroundWrapper, ParticleWallpaper };

@@ -1,10 +1,14 @@
 import React, { lazy } from "react";
 import { Route } from "react-router-dom";
-// import { PrivateRoute } from "./components";
 
-// const LandingPage = lazy(() => import("./pages/landing"));
-import LandingPage from "./pages/landing";
+const LandingPage = lazy(() => import("./pages/landing"));
+const HomePage = lazy(() => import("./pages/home"));
+const AuthSuccess = lazy(() => import("./pages/auth_success"));
 
-const routes = [<Route key="landing" path="/" element={<LandingPage />} />];
+const routes = [
+  <Route key="dashboard" path="/dashboard" element={<HomePage />} />,
+  <Route key="auth" path="/auth/callback" element={<AuthSuccess />} />,
+  <Route key="landing" path="/" element={<LandingPage />} />,
+];
 
 export default routes;

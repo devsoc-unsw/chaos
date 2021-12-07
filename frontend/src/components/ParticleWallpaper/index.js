@@ -12,7 +12,7 @@ const ParticleWallpaper = () => (
       options={{
         particles: {
           number: {
-            value: 50,
+            value: 100,
             density: {
               enable: true,
               value_area: 1000,
