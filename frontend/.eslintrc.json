@@ -17,6 +17,7 @@
     "react/jsx-filename-extension": [1, { "extensions": [".js", ".jsx"] }],
     "prettier/prettier": "error",
     "no-console": "off",
+    "import/prefer-default-export": "off",
     "react/function-component-definition": [
       1,
       {

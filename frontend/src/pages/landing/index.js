@@ -1,9 +1,9 @@
 import { Typography } from "@mui/material";
 import React from "react";
-import { useTheme, Box } from "@mui/system";
-import Particles from "react-tsparticles";
+import { useTheme } from "@mui/system";
 import BackgroundWrapper from "../../components/BackgroundWrapper";
 import ParticleWallpaper from "../../components/ParticleWallpaper";
+import BoldTitle from "./landing.styled";
 
 const Landing = () => {
   // eslint-disable-next-line no-unused-vars
@@ -12,15 +12,7 @@ const Landing = () => {
   return (
     <BackgroundWrapper>
       <ParticleWallpaper />
-      <Typography
-        sx={{
-          fontWeight: 600,
-          color: theme.palette.secondary.light,
-        }}
-        variant="h1"
-      >
-        Project Chaos
-      </Typography>
+      <BoldTitle variant="h1">Project Chaos</BoldTitle>
 
       <Typography
         sx={{
