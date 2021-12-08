@@ -37,6 +37,7 @@ const Signup = () => {
         </div>
         <InputLabel htmlFor="display_name">Full Name</InputLabel>
         <TextField
+          required
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           id="display_name"
@@ -45,6 +46,7 @@ const Signup = () => {
 
         <InputLabel htmlFor="zid">zID</InputLabel>
         <TextField
+          required
           id="zid"
           aria-describedby="zid"
           inputProps={{ pattern: "^z\\d{7}$" }}
@@ -56,6 +58,7 @@ const Signup = () => {
 
         <InputLabel htmlFor="degree_name">Degree Name</InputLabel>
         <TextField
+          required
           id="degree_name"
           aria-describedby="Degree Name"
           value={formData.degree_name}
@@ -66,6 +69,7 @@ const Signup = () => {
 
         <InputLabel htmlFor="starting_year">Starting Year</InputLabel>
         <TextField
+          required
           type="number"
           inputProps={{ pattern: "^\\d{4}$" }}
           id="starting_year"
