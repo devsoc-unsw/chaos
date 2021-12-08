@@ -132,9 +132,9 @@ pub enum SignInError {
     SignupRequired,
 }
 
-#[post("/signin/<oauth_code>")]
-pub async fn signin(oauth_code: String, state: &State<ApiState>, conn: Connection) -> Result<Json<SignInResponse>, Json<SignInError>> {
-    let token = get_access_token(&oauth_code, state)
+#[post("/signin?<code>")]
+pub async fn signin(code: String, state: &State<ApiState>, conn: Connection) -> Result<Json<SignInResponse>, Json<SignInError>> {
+    let token = get_access_token(&code, state)
         .await
         .ok_or(Json(SignInError::InvalidOAuthCode))?;
     
@@ -178,7 +178,7 @@ pub enum SignUpError {
 }
 
 #[post("/signup?<code>", data = "<body>")]
-pub async fn signup(state: &State<ApiState>, conn: Connection, code: String, body: Json<SignUpBody>) -> Result<Json<SignUpResponse>, Json<SignUpError>> {
+pub async fn signup(code: String, body: Json<SignUpBody>, state: &State<ApiState>, conn: Connection) -> Result<Json<SignUpResponse>, Json<SignUpError>> {
     let token = get_access_token(&code, state)
         .await
         .ok_or(Json(SignUpError::InvalidOAuthCode))?;
