@@ -74,7 +74,6 @@ table! {
         user_id -> Int4,
         organisation_id -> Int4,
         admin_level -> AdminLevelMapping,
-        superuser -> Bool,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }
@@ -94,7 +93,7 @@ table! {
     questions (id) {
         id -> Int4,
         role_id -> Int4,
-        tile -> Text,
+        title -> Text,
         description -> Nullable<Text>,
         max_bytes -> Int4,
         required -> Bool,

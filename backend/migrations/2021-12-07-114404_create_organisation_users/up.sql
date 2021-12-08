@@ -5,7 +5,6 @@ CREATE TABLE organisation_users (
 	user_id INTEGER NOT NULL REFERENCES users (id),
 	organisation_id INTEGER NOT NULL REFERENCES organisations (id),
 	admin_level admin_level NOT NULL,
-	superuser BOOLEAN NOT NULL,
 	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

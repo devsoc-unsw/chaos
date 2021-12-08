@@ -1,7 +1,7 @@
 CREATE TABLE questions (
 	id SERIAL PRIMARY KEY,
 	role_id INTEGER NOT NULL REFERENCES roles (id),
-	tile TEXT NOT NULL,
+	title TEXT NOT NULL,
 	description TEXT,
 	max_bytes INTEGER NOT NULL,
 	required BOOLEAN NOT NULL,
