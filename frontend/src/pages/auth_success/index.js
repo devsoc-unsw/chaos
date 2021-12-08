@@ -1,11 +1,17 @@
 import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { authenticate } from "../../api";
+import { LoadingIndicator } from "../../components";
 import useQuery from "../../hooks/useQuery";
+import { SIGNUP_REQUIRED } from "../../utils/consts";
+import { setStore } from "../../utils";
 
 const AuthSuccess = () => {
   const query = useQuery();
+  const navigate = useNavigate();
   const [state, setState] = React.useState({
     isAuthenticated: false,
+    needsSignup: false,
     isAuthenticating: true,
     error: null,
   });
@@ -17,18 +23,31 @@ const AuthSuccess = () => {
       if (code) {
         await authenticate(code)
           .then((res) => res.json())
-          .then(({ token }) => {
-            localStorage.setItem("AUTH_TOKEN", token);
-            setState({
-              isAuthenticated: true,
-              isAuthenticating: false,
-              error: null,
-            });
+          .then((data) => {
+            if (data[SIGNUP_REQUIRED]) {
+              setState({
+                isAuthenticated: true,
+                isAuthenticating: false,
+                needsSignup: true,
+                error: null,
+              });
+              setStore("name", data[SIGNUP_REQUIRED].name);
+              setStore("signup_token", data[SIGNUP_REQUIRED].signup_token);
+            } else {
+              localStorage.setItem("AUTH_TOKEN", data.token);
+              setState({
+                isAuthenticated: true,
+                isAuthenticating: false,
+                needsSignup: false,
+                error: null,
+              });
+            }
           })
           .catch((error) => {
             setState({
               isAuthenticated: false,
               isAuthenticating: false,
+              needsSignup: false,
               error,
             });
           });
@@ -38,17 +57,31 @@ const AuthSuccess = () => {
     attemptAuth();
   }, []);
 
-  return state.isAuthenticating ? (
-    <div>Authenticating...</div>
-  ) : state.isAuthenticated ? (
-    <div> success</div>
-  ) : (
-    <>
+  if (state.needsSignup) {
+    navigate("/signup");
+  } else if (state.isAuthenticated) {
+    navigate("/dashboard");
+  }
+
+  const renderIsAuthenticated = () =>
+    state.isAuthenticated ? (
       <div>
-        <h1>Authentication failed</h1>
-        <p>{state.error.message}</p>
+        <h1>Redirecting you...</h1>
       </div>
+    ) : (
+      <div>
+        <h1>Not Authenticated</h1>
+        {state.error.message}
+      </div>
+    );
+
+  return state.isAuthenticating ? (
+    <>
+      <div>Authenticating...</div>
+      <LoadingIndicator />
     </>
+  ) : (
+    renderIsAuthenticated()
   );
 };
 

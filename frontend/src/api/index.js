@@ -1,10 +1,14 @@
+/* eslint-disable camelcase */
 import API from "./api";
 
-const authenticate = async (OauthCode) => {
+const authenticate = async (oauth_token) =>
   API.request({
-    path: `/auth/${OauthCode}`,
+    method: "POST",
+    path: `/auth/signin`,
+    body: {
+      oauth_token,
+    },
   });
-};
 
 const authenticatedRequest = () => {
   const token = `Bearer ${localStorage.getItem("AUTH_TOKEN")}`;
