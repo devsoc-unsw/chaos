@@ -2,10 +2,12 @@
 
 pub mod auth;
 pub mod database;
+pub mod cors;
 pub mod state;
 
 use auth::Auth;
 use database::pool;
+use cors::cors;
 use rocket::routes;
 
 #[rocket::get("/foo")]
@@ -18,9 +20,12 @@ async fn main() {
     let api_state = state::api_state().await;
     let connection_pool = pool();
 
+    let cors = cors(); 
+
     rocket::build()
         .manage(api_state)
         .manage(connection_pool)
+        .attach(cors)
         .mount("/", routes![authed_call])
         .mount("/auth", routes![auth::signin, auth::signup])
         .launch()
