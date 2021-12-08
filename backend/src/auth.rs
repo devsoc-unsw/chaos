@@ -143,7 +143,7 @@ pub async fn signin(code: String, state: &State<ApiState>, conn: Connection) -> 
         .ok_or(Json(SignInError::GoogleOAuthInternalError))?;
 
     let user = User::get_from_email(conn.deref(), &email)
-        .ok_or(Json(SignInError::GoogleOAuthInternalError))?;
+        .ok_or(Json(SignInError::SignupRequired))?;
 
     let auth = AuthJwt {
         user_id: user.id as u32,
