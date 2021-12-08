@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { authenticate } from "../../api";
 import { LoadingIndicator } from "../../components";
 import useQuery from "../../hooks/useQuery";
-import { SIGNUP_REQUIRED } from "../../utils/consts";
+import { SIGNUP_REQUIRED } from "../../utils/constants";
 import { setStore } from "../../utils";
 
 const AuthSuccess = () => {

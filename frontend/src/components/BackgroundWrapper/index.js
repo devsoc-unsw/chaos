@@ -13,7 +13,7 @@ const BackgroundWrapper = ({ children }) => {
         justifyContent: "center",
         minHeight: "100vh",
         minWidth: "100vw",
-        backgroundColor: theme.palette.primary.dark,
+        backgroundColor: theme.palette.primary.main,
       }}
     >
       {children}

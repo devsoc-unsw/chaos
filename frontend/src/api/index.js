@@ -1,4 +1,5 @@
 /* eslint-disable camelcase */
+import { getStore } from "../utils";
 import API from "./api";
 
 const authenticate = async (oauth_token) =>
@@ -7,6 +8,19 @@ const authenticate = async (oauth_token) =>
     path: `/auth/signin`,
     body: {
       oauth_token,
+    },
+  });
+
+const doSignup = async ({ name, degree_name, zid, starting_year }) =>
+  API.request({
+    method: "POST",
+    path: `/auth/signup`,
+    body: {
+      signup_token: getStore("signup_token"),
+      zid,
+      display_name: name,
+      degree_starting_year: starting_year,
+      degree_name,
     },
   });
 
@@ -24,4 +38,4 @@ const authenticatedRequest = () => {
   };
 };
 
-export { authenticatedRequest, authenticate };
+export { authenticatedRequest, authenticate, doSignup };
