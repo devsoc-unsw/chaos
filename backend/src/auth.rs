@@ -9,6 +9,7 @@ use serde_json::Value;
 
 const GOOGLE_TOKEN_URL:   &str = "https://oauth2.googleapis.com/token";
 const OPENID_EMAIL_FIELD: &str = "email";
+const OPENID_NAME_FIELD:  &str = "name";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AuthJwt {
@@ -104,20 +105,46 @@ async fn get_access_token(oauth_code: &str, state: &State<ApiState>) -> Option<S
     Some(token)
 }
 
-async fn get_user_email(state: &State<ApiState>, token: &str) -> Option<String> {
-    let mut user_info: serde_json::Value = state.reqwest_client.get(&state.userinfo_endpoint)
+struct UserDetails {
+    email: Option<String>,
+    name: Option<String>,
+}
+
+async fn get_user_details(state: &State<ApiState>, token: &str) -> UserDetails {
+    let response = match state.reqwest_client.get(&state.userinfo_endpoint)
         .header(header::AUTHORIZATION, format!("Bearer {}", token))
         .send()
-        .await
-        .ok()?
-        .json::<serde_json::Value>()
-        .await
-        .ok()?;
+        .await {
+        Ok(response) => response,
+        Err(_) => return UserDetails { email: None, name: None },
+    };
 
-    return match user_info.get_mut(OPENID_EMAIL_FIELD)?.take() {
-        Value::String(user_email) => Some(user_email),
+    let mut user_info = match response
+        .json::<serde_json::Value>()
+        .await {
+        Ok(user_info) => user_info,
+        Err(_) => return UserDetails { email: None, name: None },
+    };
+
+    let email = match user_info.get_mut(OPENID_EMAIL_FIELD) {
+        Some(Value::String(email)) => Some(email.to_string()),
         _ => None,
     };
+
+    let name = match user_info.get_mut(OPENID_NAME_FIELD) {
+        Some(Value::String(name)) => Some(name.to_string()),
+        _ => None,
+    };
+
+    UserDetails {
+        email,
+        name,
+    }
+}
+
+#[derive(Deserialize)]
+pub struct SignInBody {
+    oauth_token: String,
 }
 
 #[derive(Serialize)]
@@ -129,21 +156,36 @@ pub struct SignInResponse {
 pub enum SignInError {
     InvalidOAuthCode,
     GoogleOAuthInternalError,
-    SignupRequired,
+    SignupRequired { signup_token: String, name: Option<String> },
 }
 
-#[post("/signin?<code>")]
-pub async fn signin(code: String, state: &State<ApiState>, conn: Connection) -> Result<Json<SignInResponse>, Json<SignInError>> {
-    let token = get_access_token(&code, state)
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SignupJwt {
+    pub auth_token: String,
+}
+
+#[post("/signin", data = "<body>")]
+pub async fn signin(body: Json<SignInBody>, state: &State<ApiState>, conn: Connection) -> Result<Json<SignInResponse>, Json<SignInError>> {
+    let token = get_access_token(&body.oauth_token, state)
         .await
         .ok_or(Json(SignInError::InvalidOAuthCode))?;
     
-    let email = get_user_email(state, &token)
-        .await
+    let details = get_user_details(state, &token).await;
+    
+    let email = details.email
         .ok_or(Json(SignInError::GoogleOAuthInternalError))?;
 
     let user = User::get_from_email(conn.deref(), &email)
-        .ok_or(Json(SignInError::SignupRequired))?;
+        .ok_or_else(|| {
+            let jwt = SignupJwt {
+                auth_token: token,
+            };
+
+            let token = jsonwebtoken::encode(&Header::new(jsonwebtoken::Algorithm::HS256), &jwt, &state.jwt_encoding_key)
+                .expect("creating jwt should never fail");
+
+            Json(SignInError::SignupRequired { signup_token: token, name: details.name })
+        })?;
 
     let auth = AuthJwt {
         user_id: user.id as u32,
@@ -152,13 +194,14 @@ pub async fn signin(code: String, state: &State<ApiState>, conn: Connection) -> 
     let token = jsonwebtoken::encode(&Header::new(jsonwebtoken::Algorithm::HS256), &auth, &state.jwt_encoding_key)
         .expect("creating jwt should never fail");
 
-    return Ok(Json(SignInResponse {
+    Ok(Json(SignInResponse {
         token,
-    }));
+    }))
 }
 
 #[derive(Deserialize)]
 pub struct SignUpBody {
+    signup_token: String,
     zid: String,
     display_name: String,
     degree_name: String,
@@ -172,19 +215,27 @@ pub struct SignUpResponse {
 
 #[derive(Serialize)]
 pub enum SignUpError {
-    InvalidOAuthCode,
+    InvalidSignupToken,
     GoogleOAuthInternalError,
     AccountAlreadyExists,
 }
 
-#[post("/signup?<code>", data = "<body>")]
-pub async fn signup(code: String, body: Json<SignUpBody>, state: &State<ApiState>, conn: Connection) -> Result<Json<SignUpResponse>, Json<SignUpError>> {
-    let token = get_access_token(&code, state)
-        .await
-        .ok_or(Json(SignUpError::InvalidOAuthCode))?;
+#[post("/signup", data = "<body>")]
+pub async fn signup(body: Json<SignUpBody>, state: &State<ApiState>, conn: Connection) -> Result<Json<SignUpResponse>, Json<SignUpError>> {
+    let validation = Validation {
+        algorithms: vec![Algorithm::HS256],
+        validate_exp: false,
+        ..Default::default()
+    };
 
-    let email = get_user_email(state, &token)
-        .await
+    let token = match jsonwebtoken::decode::<SignupJwt>(&body.signup_token, &state.jwt_decoding_key, &validation) {
+        Ok(data) => data.claims.auth_token,
+        Err(_) => return Err(Json(SignUpError::InvalidSignupToken)),
+    };
+
+    let details = get_user_details(state, &token).await;
+
+    let email = details.email
         .ok_or(Json(SignUpError::GoogleOAuthInternalError))?;
 
     if User::get_from_email(conn.deref(), &email).is_some() {
@@ -208,7 +259,7 @@ pub async fn signup(code: String, body: Json<SignUpBody>, state: &State<ApiState
     let token = jsonwebtoken::encode(&Header::new(jsonwebtoken::Algorithm::HS256), &auth, &state.jwt_encoding_key)
         .expect("creating jwt should never fail");
 
-    return Ok(Json(SignUpResponse {
+    Ok(Json(SignUpResponse {
         token,
-    }));
+    }))
 }
