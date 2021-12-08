@@ -193,7 +193,6 @@ pub async fn signup(state: &State<ApiState>, conn: Connection, code: String, bod
 
     let user = NewUser {
         email,
-        google_token: token,
         zid: body.zid.to_string(),
         display_name: body.display_name.to_string(),
         degree_name: body.degree_name.to_string(),

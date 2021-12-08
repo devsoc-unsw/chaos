@@ -7,7 +7,6 @@ use super::schema::users;
 pub struct User {
     pub id: i32,
     pub email: String,
-    pub google_token: String,
     pub zid: String,
     pub display_name: String,
     pub degree_name: String,
@@ -21,7 +20,6 @@ pub struct User {
 #[table_name = "users"]
 pub struct NewUser {
     pub email: String,
-    pub google_token: String,
     pub zid: String,
     pub display_name: String,
     pub degree_name: String,

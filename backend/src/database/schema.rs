@@ -1,3 +1,19 @@
+use diesel_derive_enum::DbEnum;
+
+#[derive(Debug, DbEnum)]
+pub enum ApplicationStatus {
+    Pending,
+    Rejected,
+    Success,
+}
+
+#[derive(Debug, DbEnum)]
+pub enum AdminLevel {
+    ReadOnly,
+    Director,
+    Admin,
+}
+
 table! {
     answers (id) {
         id -> Int4,
@@ -10,11 +26,14 @@ table! {
 }
 
 table! {
+    use diesel::sql_types::*;
+    use crate::database::schema::ApplicationStatusMapping;
+
     applications (id) {
         id -> Int4,
         user_id -> Int4,
         role_id -> Int4,
-        status -> Application_status,
+        status -> ApplicationStatusMapping,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }
@@ -47,11 +66,14 @@ table! {
 }
 
 table! {
+    use diesel::sql_types::*;
+    use crate::database::schema::AdminLevelMapping;
+
     organisation_users (id) {
         id -> Int4,
         user_id -> Int4,
         organisation_id -> Int4,
-        admin_level -> Admin_level,
+        admin_level -> AdminLevelMapping,
         superuser -> Bool,
         created_at -> Timestamp,
         updated_at -> Timestamp,
