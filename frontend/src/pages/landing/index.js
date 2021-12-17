@@ -17,7 +17,9 @@ const Landing = () => {
         Recruitment Drives, without the fuss.
       </Subtitle>
       <Box>
-        <Button href={OAUTH_CALLBACK_URL}>Get Started</Button>
+        <Button color="secondary" href={OAUTH_CALLBACK_URL}>
+          Get Started
+        </Button>
       </Box>
     </BackgroundWrapper>
   );
