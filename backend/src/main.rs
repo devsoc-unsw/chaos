@@ -4,10 +4,11 @@ pub mod auth;
 pub mod database;
 pub mod cors;
 pub mod state;
+pub mod guard;
 
 use auth::Auth;
-use database::pool;
 use cors::cors;
+use database::Database;
 use rocket::routes;
 
 #[rocket::get("/foo")]
@@ -17,14 +18,15 @@ fn authed_call(auth: Auth) -> String {
 
 #[rocket::main]
 async fn main() {
+    dotenv::dotenv().unwrap();
+
     let api_state = state::api_state().await;
-    let connection_pool = pool();
 
     let cors = cors(); 
 
     rocket::build()
         .manage(api_state)
-        .manage(connection_pool)
+        .attach(Database::fairing())
         .attach(cors)
         .mount("/", routes![authed_call])
         .mount("/auth", routes![auth::signin, auth::signup])

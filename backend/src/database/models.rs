@@ -49,6 +49,14 @@ impl User {
             .unwrap_or_else(|_| vec![])
     }
 
+    pub fn get_from_id(conn: &PgConnection, id_val: i32) -> Option<User> {
+        use crate::database::schema::users::dsl::*;
+
+        users.filter(id.eq(id_val))
+            .first(conn)
+            .ok()
+    }
+
     pub fn get_from_email(conn: &PgConnection, user_email: &str) -> Option<User> {
         use crate::database::schema::users::dsl::*;
 

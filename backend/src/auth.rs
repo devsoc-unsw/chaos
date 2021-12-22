@@ -1,8 +1,7 @@
-use std::ops::Deref;
-use crate::{state::ApiState, database::{guard::Connection, models::{User, NewUser}}};
+use crate::{state::ApiState, database::{models::{User, NewUser}, Database}};
 use jsonwebtoken::{Header, Validation, Algorithm};
 use reqwest::header;
-use rocket::{request::{self, Outcome}, Request, post, State, serde::json::Json, request::FromRequest, http::Status};
+use rocket::{Request, State, http::Status, post, request::{self, Outcome}, request::FromRequest, serde::json::Json};
 use serde::{Serialize, Deserialize};
 use dotenv_codegen::dotenv;
 use serde_json::Value;
@@ -165,7 +164,7 @@ pub struct SignupJwt {
 }
 
 #[post("/signin", data = "<body>")]
-pub async fn signin(body: Json<SignInBody>, state: &State<ApiState>, conn: Connection) -> Result<Json<SignInResponse>, Json<SignInError>> {
+pub async fn signin(body: Json<SignInBody>, state: &State<ApiState>, db: Database) -> Result<Json<SignInResponse>, Json<SignInError>> {
     let token = get_access_token(&body.oauth_token, state)
         .await
         .ok_or(Json(SignInError::InvalidOAuthCode))?;
@@ -175,7 +174,8 @@ pub async fn signin(body: Json<SignInBody>, state: &State<ApiState>, conn: Conne
     let email = details.email
         .ok_or(Json(SignInError::GoogleOAuthInternalError))?;
 
-    let user = User::get_from_email(conn.deref(), &email)
+    let user = db.run(move |conn| User::get_from_email(conn, &email))
+        .await
         .ok_or_else(|| {
             let jwt = SignupJwt {
                 auth_token: token,
@@ -199,7 +199,7 @@ pub async fn signin(body: Json<SignInBody>, state: &State<ApiState>, conn: Conne
     }))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct SignUpBody {
     signup_token: String,
     zid: String,
@@ -221,7 +221,7 @@ pub enum SignUpError {
 }
 
 #[post("/signup", data = "<body>")]
-pub async fn signup(body: Json<SignUpBody>, state: &State<ApiState>, conn: Connection) -> Result<Json<SignUpResponse>, Json<SignUpError>> {
+pub async fn signup(body: Json<SignUpBody>, state: &State<ApiState>, db: Database) -> Result<Json<SignUpResponse>, Json<SignUpError>> {
     let validation = Validation {
         algorithms: vec![Algorithm::HS256],
         validate_exp: false,
@@ -238,19 +238,32 @@ pub async fn signup(body: Json<SignUpBody>, state: &State<ApiState>, conn: Conne
     let email = details.email
         .ok_or(Json(SignUpError::GoogleOAuthInternalError))?;
 
-    if User::get_from_email(conn.deref(), &email).is_some() {
-        return Err(Json(SignUpError::AccountAlreadyExists));
+    {
+        let email = email.clone();
+
+        db.run(move |conn| User::get_from_email(conn, &email))
+            .await
+            .ok_or(Json(SignUpError::AccountAlreadyExists))?;
     }
 
-    let user = NewUser {
-        email,
-        zid: body.zid.to_string(),
-        display_name: body.display_name.to_string(),
-        degree_name: body.degree_name.to_string(),
-        degree_starting_year: body.degree_starting_year as i32,
-        superuser: false,
-    }.insert(conn.deref())
-        .expect("we already ensured a conflicting user does not exist");
+    let user = {
+        let email = email.clone();
+        let body = body.clone();
+
+        db.run(move |conn| {
+            let user = NewUser {
+                email,
+                zid: body.zid.to_string(),
+                display_name: body.display_name.to_string(),
+                degree_name: body.degree_name.to_string(),
+                degree_starting_year: body.degree_starting_year as i32,
+                superuser: false,
+            };
+            
+            user.insert(conn)
+                .expect("we already ensured a conflicting user does not exist")
+        }).await
+    };
 
     let auth = AuthJwt {
         user_id: user.id as u32,
