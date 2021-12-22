@@ -1,10 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Box,
   CardContent,
   CardActionArea,
-  Chip,
   Typography,
   Tooltip,
   Grid,
@@ -14,6 +12,7 @@ import {
   RatingChip,
   AvgChip,
 } from "./finalRatingCandidateCard.styled";
+import FinalRatingApplicationComments from "../FinalRatingApplicationComments";
 
 const calculateAvg = (ratings) => {
   if (ratings.length === 0) return 0;
@@ -33,32 +32,49 @@ const avgColor = (avg) => {
 
 const FinalRatingCandidateCard = (props) => {
   const { name, position, ratings } = props;
+  const [open, setOpen] = useState(false);
+
+  const handleOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
 
   const avg = calculateAvg(ratings);
 
   return (
-    <CandidateCard variant="outlined">
-      <CardActionArea>
-        <CardContent>
-          <Grid container alignItems="center">
-            <Grid item>
-              <AvgChip label={avg} color={avgColor(avg)} />
+    <>
+      <CandidateCard variant="outlined">
+        <CardActionArea onClick={handleOpen}>
+          <CardContent>
+            <Grid container alignItems="center">
+              <Grid item>
+                <AvgChip label={avg} color={avgColor(avg)} />
+              </Grid>
+              <Grid item style={{ flexGrow: 1 }}>
+                <Typography variant="h6">{name}</Typography>
+                <Typography color="text.secondary">{position}</Typography>
+              </Grid>
+              <Grid item>
+                {ratings.map(({ rater, rating }) => (
+                  <Tooltip title={rater} key={rater}>
+                    <RatingChip label={rating} variant="outlined" />
+                  </Tooltip>
+                ))}
+              </Grid>
             </Grid>
-            <Grid item style={{ flexGrow: 1 }}>
-              <Typography variant="h6">{name}</Typography>
-              <Typography color="text.secondary">{position}</Typography>
-            </Grid>
-            <Grid item>
-              {ratings.map(({ rater, rating }) => (
-                <Tooltip title={rater} key={rater}>
-                  <RatingChip label={rating} variant="outlined" />
-                </Tooltip>
-              ))}
-            </Grid>
-          </Grid>
-        </CardContent>
-      </CardActionArea>
-    </CandidateCard>
+          </CardContent>
+        </CardActionArea>
+      </CandidateCard>
+      <FinalRatingApplicationComments
+        name={name}
+        position={position}
+        open={open}
+        handleClose={handleClose}
+      />
+    </>
   );
 };
 
