@@ -8,7 +8,7 @@ import {
   Grid,
 } from "@mui/material";
 
-import RankingToolbar from "./RankingToolbar";
+import RankingsToolbar from "./RankingsToolbar";
 import DragDropRankings from "./DragDropRankings";
 
 // TODO: CHAOS-12 retrieve data from BE instead of using dummy data
@@ -77,7 +77,7 @@ const dummyRankings = {
 
 const dummyPositions = Object.keys(dummyRankings);
 
-const FinalRating = () => {
+const Rankings = () => {
   // TODO: CHAOS-12 handle candidates from multiple positions from BE
   const [selectedPosition, setSelectedPosition] = useState("");
   const [rankings, setRankings] = useState(dummyRankings);
@@ -104,7 +104,7 @@ const FinalRating = () => {
         </Step>
       </Stepper>
 
-      <RankingToolbar
+      <RankingsToolbar
         positions={dummyPositions}
         selectedPosition={selectedPosition}
         setSelectedPosition={setSelectedPosition}
@@ -124,4 +124,4 @@ const FinalRating = () => {
   );
 };
 
-export default FinalRating;
+export default Rankings;

@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import SortIcon from "@mui/icons-material/Sort";
 
-const RankingToolbar = (props) => {
+const RankingsToolbar = (props) => {
   const { positions, selectedPosition, setSelectedPosition } = props;
 
   const handleChange = (event) => {
@@ -48,10 +48,10 @@ const RankingToolbar = (props) => {
   );
 };
 
-RankingToolbar.propTypes = {
+RankingsToolbar.propTypes = {
   positions: PropTypes.arrayOf(PropTypes.string).isRequired,
   selectedPosition: PropTypes.string.isRequired,
   setSelectedPosition: PropTypes.func.isRequired,
 };
 
-export default RankingToolbar;
+export default RankingsToolbar;
