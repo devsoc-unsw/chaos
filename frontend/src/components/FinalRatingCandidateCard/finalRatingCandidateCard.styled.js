@@ -6,7 +6,7 @@ export const CandidateCard = styled(Card)`
 `;
 
 export const RatingChip = styled(Chip)`
-  margin: 0.2rem;
+  margin: 0 0.2rem;
 `;
 
 export const AvgChip = styled(Chip)`

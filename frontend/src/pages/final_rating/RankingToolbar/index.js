@@ -40,7 +40,7 @@ const RankingToolbar = (props) => {
       </Grid>
       <Grid item>
         {/* TODO: CHAOS-11 sort candidates when button is pressed */}
-        <Button size="large" startIcon={<SortIcon />}>
+        <Button variant="outlined" startIcon={<SortIcon />}>
           Sort candidates
         </Button>
       </Grid>
