@@ -1,19 +1,9 @@
 import React, { useState } from "react";
-import {
-  Container,
-  Stepper,
-  Step,
-  StepLabel,
-  FormControl,
-  Grid,
-  Select,
-  InputLabel,
-  MenuItem,
-  Button,
-} from "@mui/material";
-import SortIcon from "@mui/icons-material/Sort";
+import { Container, Stepper, Step, StepLabel } from "@mui/material";
+import { DragDropContext, Droppable } from "react-beautiful-dnd";
 
 import FinalRatingCandidateCard from "../../components/FinalRatingCandidateCard";
+import RankingToolbar from "./RankingToolbar";
 
 // TODO: CHAOS-12 retrieve data from BE instead of using dummy data
 const dummyPositions = [
@@ -75,9 +65,27 @@ const dummyApplicants = [
 const FinalRating = () => {
   const [selectedPosition, setSelectedPosition] = useState("");
 
-  const handleChange = (event) => {
-    setSelectedPosition(event.target.value);
-  };
+  // const onDragEnd = (result) => {
+  //   const { destination, source, draggableId } = result;
+
+  //   if (!destination) return;
+  //   if (
+  //     destination.droppableId === source.droppableId &&
+  //     destination.index === source.index
+  //   )
+  //     return;
+
+  //   const newQuestionOrder = Array.from(quizData.questions);
+  //   newQuestionOrder.splice(source.index, 1);
+  //   newQuestionOrder.splice(
+  //     destination.index,
+  //     0,
+  //     quizData.questions.filter(
+  //       (questionData) => `${questionData.id}` === draggableId
+  //     )[0]
+  //   );
+  //   updateQuizData({ ...quizData, questions: newQuestionOrder });
+  // };
 
   return (
     <Container>
@@ -94,44 +102,24 @@ const FinalRating = () => {
         </Step>
       </Stepper>
 
-      <Grid container alignItems="center" spacing={4}>
-        <Grid item xs>
-          <FormControl fullWidth>
-            <InputLabel id="candidate-position-select-label">
-              Position
-            </InputLabel>
-            <Select
-              labelId="candidate-position-select-label"
-              id="candidate-position-select"
-              value={selectedPosition}
-              label="Position"
-              onChange={handleChange}
-            >
-              {dummyPositions.map((position) => (
-                <MenuItem key={position} value={position}>
-                  {position}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item>
-          {/* TODO: CHAOS-11 sort candidates when button is pressed */}
-          <Button size="large" startIcon={<SortIcon />}>
-            Sort candidates
-          </Button>
-        </Grid>
-      </Grid>
+      <RankingToolbar
+        positions={dummyPositions}
+        selectedPosition={selectedPosition}
+        setSelectedPosition={setSelectedPosition}
+      />
 
+      {/* <DragDropContext onDragEnd={onDragEnd}> */}
       {dummyApplicants
         .filter((applicant) => applicant.position === selectedPosition)
         .map((applicant) => (
           <FinalRatingCandidateCard
+            key={applicant.name}
             name={applicant.name}
             position={applicant.position}
             ratings={applicant.ratings}
           />
         ))}
+      {/* </DragDropContext> */}
     </Container>
   );
 };

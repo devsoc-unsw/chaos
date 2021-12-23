@@ -7,6 +7,8 @@ import {
   Tooltip,
   Grid,
 } from "@mui/material";
+import { Draggable } from "react-beautiful-dnd";
+
 import {
   CandidateCard,
   RatingChip,
@@ -31,7 +33,7 @@ const avgColor = (avg) => {
 };
 
 const FinalRatingCandidateCard = (props) => {
-  const { name, position, ratings } = props;
+  const { index, name, position, ratings } = props;
   const [open, setOpen] = useState(false);
 
   const handleOpen = () => {
@@ -46,7 +48,16 @@ const FinalRatingCandidateCard = (props) => {
 
   return (
     <>
-      <CandidateCard variant="outlined">
+      {/* <Draggable draggableId={name} index={index}>
+        {(provided) => ( */}
+      <CandidateCard
+        // ref={provided.innerRef}
+        // eslint-disable-next-line react/jsx-props-no-spreading
+        // {...provided.draggableProps}
+        // eslint-disable-next-line react/jsx-props-no-spreading
+        // {...provided.dragHandleProps}
+        variant="outlined"
+      >
         <CardActionArea onClick={handleOpen}>
           <CardContent>
             <Grid container alignItems="center">
@@ -68,6 +79,8 @@ const FinalRatingCandidateCard = (props) => {
           </CardContent>
         </CardActionArea>
       </CandidateCard>
+      {/* )}
+      </Draggable> */}
       <FinalRatingApplicationComments
         name={name}
         position={position}
@@ -79,6 +92,7 @@ const FinalRatingCandidateCard = (props) => {
 };
 
 FinalRatingCandidateCard.propTypes = {
+  index: PropTypes.number.isRequired,
   name: PropTypes.string.isRequired,
   position: PropTypes.string.isRequired,
   ratings: PropTypes.arrayOf(
