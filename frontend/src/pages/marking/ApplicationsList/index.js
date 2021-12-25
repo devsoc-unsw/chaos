@@ -1,23 +1,41 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-import { List } from "@mui/material";
-import ApplicationsListItem from "../ApplicationsListItem";
+import { Tab, Tabs, Box } from "@mui/material";
+import ApplicationsListTabPanel from "../ApplicationsListTabPanel";
 
 const ApplicationsList = (props) => {
   // TODO: CHAOS-12 handle candidates from multiple positions from BE
   const { applications, selectedApplication, setSelectedApplication } = props;
 
+  const handleChange = (event, newValue) => {
+    console.log(selectedApplication);
+    setSelectedApplication(newValue);
+    console.log("new value is ", newValue);
+  };
+
   return (
-    <List component="nav" aria-label="applications">
-      {applications.map((application) => (
-        <ApplicationsListItem
+    <Box sx={{ display: "flex" }}>
+      <Tabs
+        orientation="vertical"
+        variant="scrollable"
+        value={selectedApplication}
+        onChange={handleChange}
+        aria-label="applications"
+        sx={{ borderRight: 1, borderColor: "divider" }}
+      >
+        {applications.map((application) => (
+          <Tab label={application.zId} />
+        ))}
+      </Tabs>
+      {applications.map((application, index) => (
+        <ApplicationsListTabPanel
           application={application}
+          value={index}
           selectedApplication={selectedApplication}
-          setSelectedApplication={setSelectedApplication}
         />
       ))}
-    </List>
+    </Box>
   );
 };
 
@@ -27,6 +45,7 @@ ApplicationsList.propTypes = {
       PropTypes.shape({
         applicationId: PropTypes.string.isRequired,
         zId: PropTypes.string.isRequired,
+        mark: PropTypes.number.isRequired,
         questions: PropTypes.arrayOf(
           PropTypes.shape({
             question: PropTypes.string.isRequired,

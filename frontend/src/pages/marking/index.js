@@ -10,6 +10,7 @@ const dummyApplications = {
     {
       applicationId: "App 1",
       zId: "z5212345",
+      mark: 0,
       questions: [
         {
           question: "What scares you about getting older?",
@@ -71,6 +72,7 @@ const dummyApplications = {
     {
       applicationId: "App 2",
       zId: "z1234567",
+      mark: 0,
       questions: [
         {
           question: "What is the trait you most deplore in yourself?",
@@ -122,7 +124,7 @@ const Marking = () => {
   const [selectedPosition, setSelectedPosition] = useState(
     "Student Experience Director"
   );
-  const [selectedApplication, setSelectedApplication] = useState("App 1");
+  const [selectedApplication, setSelectedApplication] = useState(0);
 
   return (
     <Container>
