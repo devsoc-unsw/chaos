@@ -10,6 +10,7 @@ import {
 
 import RankingsToolbar from "./RankingsToolbar";
 import DragDropRankings from "./DragDropRankings";
+import ReviewerStepper from "../../components/ReviewerStepper";
 
 // TODO: CHAOS-12 retrieve data from BE instead of using dummy data
 const dummyRankings = {
@@ -91,18 +92,7 @@ const Rankings = () => {
 
   return (
     <Container>
-      {/* TODO: CHAOS-13 extract stepper out so that its used on all steps */}
-      <Stepper alternativeLabel activeStep={1} sx={{ margin: "3rem 0" }}>
-        <Step>
-          <StepLabel>Mark candidates individually</StepLabel>
-        </Step>
-        <Step>
-          <StepLabel>Choose candidates to progress to the next stage</StepLabel>
-        </Step>
-        <Step>
-          <StepLabel>Notify candidates of their results</StepLabel>
-        </Step>
-      </Stepper>
+      <ReviewerStepper activeStep={1} />
 
       <RankingsToolbar
         positions={dummyPositions}
