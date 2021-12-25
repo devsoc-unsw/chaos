@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 
-import FinalRatingCandidateCard from "../../../components/FinalRatingCandidateCard";
+import FinalRatingCandidateCard from "../FinalRatingCandidateCard";
 
 const DragDropRankings = (props) => {
   const { rankings, setRankings, selectedPosition } = props;
