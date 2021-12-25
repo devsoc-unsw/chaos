@@ -121,26 +121,39 @@ const dummyApplications = {
 
 const Marking = () => {
   // TODO: CHAOS-12 handle candidates from multiple positions from BE
+  const [applications, setApplications] = useState(dummyApplications);
   const [selectedPosition, setSelectedPosition] = useState(
     "Student Experience Director"
   );
   const [selectedApplication, setSelectedApplication] = useState(0);
+
+  const setMark = (newMark) => {
+    const newApplications = { ...applications };
+    newApplications[selectedPosition][selectedApplication].mark = newMark;
+    setApplications(newApplications);
+  };
 
   return (
     <Container>
       <ReviewerStepper activeStep={0} />
 
       <ApplicationsList
-        applications={dummyApplications[selectedPosition] || []}
+        applications={applications[selectedPosition] || []}
+        setMark={setMark}
         selectedApplication={selectedApplication}
         setSelectedApplication={setSelectedApplication}
       />
 
-      {/* Show application */}
-
       <Grid container justifyContent="flex-end">
         {/* TODO: IF not all done, disabled, otherwise link to /rankings */}
-        <Button>Next (Console Log)</Button>
+        <Button
+          href="/rankings"
+          disabled={applications[selectedPosition].some(
+            (application) => application.mark === 0
+          )}
+        >
+          Next (Rankings)
+        </Button>
       </Grid>
     </Container>
   );

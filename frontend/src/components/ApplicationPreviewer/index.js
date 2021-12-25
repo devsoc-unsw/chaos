@@ -9,7 +9,9 @@ const ApplicationPreviewer = (props) => {
 
   return (
     <Container>
-      <Typography variant="h4">{application.zId}</Typography>
+      <Typography variant="h5" gutterBottom>
+        {application.zId}
+      </Typography>
 
       {application.questions.map((question) => (
         <>
