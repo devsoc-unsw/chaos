@@ -1,12 +1,5 @@
 import React, { useState } from "react";
-import {
-  Container,
-  Stepper,
-  Step,
-  StepLabel,
-  Button,
-  Grid,
-} from "@mui/material";
+import { Container, Button, Grid } from "@mui/material";
 
 import RankingsToolbar from "./RankingsToolbar";
 import DragDropRankings from "./DragDropRankings";
