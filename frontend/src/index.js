@@ -1,8 +1,20 @@
 import React, { Suspense } from "react";
 import ReactDOM from "react-dom";
 import { SnackbarProvider } from "notistack";
-import { BrowserRouter as Router, Routes } from "react-router-dom";
-import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
+import { BrowserRouter, Routes } from "react-router-dom";
+
+import {
+  AppBar,
+  Button,
+  createTheme,
+  CssBaseline,
+  IconButton,
+  ThemeProvider,
+  Toolbar,
+  Typography,
+} from "@mui/material";
+import MenuIcon from "@mui/icons-material/Menu";
+
 import routes from "./routes";
 import { LoadingIndicator } from "./components";
 // import "./styles/global.css";
@@ -35,9 +47,26 @@ ReactDOM.render(
     <CssBaseline />
     <SnackbarProvider maxSnack={3}>
       <Suspense fallback={<LoadingIndicator />}>
-        <Router>
+        <AppBar position="static">
+          <Toolbar>
+            <IconButton
+              size="large"
+              edge="start"
+              color="inherit"
+              aria-label="menu"
+              sx={{ mr: 2 }}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+              News
+            </Typography>
+            <Button color="inherit">Login</Button>
+          </Toolbar>
+        </AppBar>
+        <BrowserRouter>
           <Routes>{routes}</Routes>
-        </Router>
+        </BrowserRouter>
       </Suspense>
     </SnackbarProvider>
   </ThemeProvider>,
