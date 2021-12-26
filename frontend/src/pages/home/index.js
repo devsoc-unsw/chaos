@@ -1,11 +1,15 @@
+import React, { useContext, useEffect } from "react";
 import { Container } from "@mui/material";
-import React from "react";
 import CampaignCard from "../../components/CampaignCard";
-
-import DirectorDummy from './director.jpg';
-import SubcomDummy from './subcom.jpg';
+import { SetAppBarTitleContext } from "../../App";
+import DirectorDummy from "./director.jpg";
+import SubcomDummy from "./subcom.jpg";
 
 const Home = () => {
+  const setAppBarTitle = useContext(SetAppBarTitleContext);
+  useEffect(() => {
+    setAppBarTitle("Home");
+  }, []);
   return (
     <Container>
       <h2>Your Campaigns</h2>
@@ -34,7 +38,6 @@ const Home = () => {
         endDate="1 Feb 2022"
         img={SubcomDummy}
       />
-
     </Container>
   );
 };

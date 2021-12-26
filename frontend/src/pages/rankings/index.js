@@ -4,7 +4,7 @@ import { Container, Button, Grid } from "@mui/material";
 import RankingsToolbar from "./RankingsToolbar";
 import DragDropRankings from "./DragDropRankings";
 import ReviewerStepper from "../../components/ReviewerStepper";
-import { SetCampaignContext } from "../../App";
+import { SetAppBarTitleContext } from "../../App";
 
 // TODO: CHAOS-12 retrieve data from BE instead of using dummy data
 const dummyRankings = {
@@ -73,9 +73,9 @@ const dummyRankings = {
 const dummyPositions = Object.keys(dummyRankings);
 
 const Rankings = () => {
-  const setCampaign = useContext(SetCampaignContext);
+  const setAppBarTitle = useContext(SetAppBarTitleContext);
   useEffect(() => {
-    setCampaign("2022 Subcommittee Recruitment (Hardcoded Title)");
+    setAppBarTitle("2022 Subcommittee Recruitment (Hardcoded Title)");
   }, []);
   // TODO: CHAOS-12 handle candidates from multiple positions from BE
   const [selectedPosition, setSelectedPosition] = useState("");

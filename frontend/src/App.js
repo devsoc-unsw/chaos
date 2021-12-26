@@ -28,24 +28,24 @@ const theme = createTheme({
   },
 });
 
-export const SetCampaignContext = createContext(() => {});
+export const SetAppBarTitleContext = createContext(() => {});
 
 const App = () => {
-  const [campaign, setCampaign] = useState("");
+  const [AppBarTitle, setAppBarTitle] = useState("");
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <SnackbarProvider maxSnack={3}>
         <Suspense fallback={<LoadingIndicator />}>
-          <SetCampaignContext.Provider value={setCampaign}>
+          <SetAppBarTitleContext.Provider value={setAppBarTitle}>
             <BrowserRouter>
               <header>
-                <ChaosAppBar campaign={campaign} />
+                <ChaosAppBar campaign={AppBarTitle} />
               </header>
               <Routes>{routes}</Routes>
             </BrowserRouter>
-          </SetCampaignContext.Provider>
+          </SetAppBarTitleContext.Provider>
         </Suspense>
       </SnackbarProvider>
     </ThemeProvider>
