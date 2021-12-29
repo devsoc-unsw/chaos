@@ -3,16 +3,16 @@ import React, { useContext, useEffect } from "react";
 import { Box } from "@mui/system";
 import { BackgroundWrapper, ParticleWallpaper } from "../../components";
 import { BoldTitle, Subtitle } from "./landing.styled";
-import { SetAppBarTitleContext } from "../../App";
+import { SetNavBarTitleContext } from "../../App";
 
 const OAUTH_CALLBACK_URL = process.env.REACT_APP_OAUTH_CALLBACK_URL;
 
 const Landing = () => {
   // eslint-disable-next-line no-unused-vars
   const [loggedIn, setLoggedIn] = React.useState(false);
-  const setAppBarTitle = useContext(SetAppBarTitleContext);
+  const setNavBarTitle = useContext(SetNavBarTitleContext);
   useEffect(() => {
-    setAppBarTitle("Shrey's Particle Landing Page");
+    setNavBarTitle("Shrey's Particle Landing Page");
   }, []);
 
   return (

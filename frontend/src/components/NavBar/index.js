@@ -2,9 +2,9 @@ import React from "react";
 import PropTypes from "prop-types";
 import { AppBar, Button, Toolbar } from "@mui/material";
 import HomeIcon from "@mui/icons-material/Home";
-import { CampaignName, LogoButton } from "./chaosAppBar.styled";
+import { CampaignName, LogoButton } from "./navBar.styled";
 
-const ChaosAppBar = (props) => {
+const NavBar = (props) => {
   const { campaign } = props;
 
   return (
@@ -26,8 +26,8 @@ const ChaosAppBar = (props) => {
   );
 };
 
-ChaosAppBar.propTypes = {
+NavBar.propTypes = {
   campaign: PropTypes.string.isRequired,
 };
 
-export default ChaosAppBar;
+export default NavBar;

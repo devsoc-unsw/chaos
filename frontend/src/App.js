@@ -2,7 +2,7 @@ import React, { Suspense, createContext, useState } from "react";
 import { BrowserRouter, Routes } from "react-router-dom";
 import { SnackbarProvider } from "notistack";
 import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
-import { ChaosAppBar, LoadingIndicator } from "./components";
+import { NavBar, LoadingIndicator } from "./components";
 import routes from "./routes";
 
 const theme = createTheme({
@@ -28,24 +28,24 @@ const theme = createTheme({
   },
 });
 
-export const SetAppBarTitleContext = createContext(() => {});
+export const SetNavBarTitleContext = createContext(() => {});
 
 const App = () => {
-  const [AppBarTitle, setAppBarTitle] = useState("");
+  const [AppBarTitle, setNavBarTitle] = useState("");
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <SnackbarProvider maxSnack={3}>
         <Suspense fallback={<LoadingIndicator />}>
-          <SetAppBarTitleContext.Provider value={setAppBarTitle}>
+          <SetNavBarTitleContext.Provider value={setNavBarTitle}>
             <BrowserRouter>
               <header>
-                <ChaosAppBar campaign={AppBarTitle} />
+                <NavBar campaign={AppBarTitle} />
               </header>
               <Routes>{routes}</Routes>
             </BrowserRouter>
-          </SetAppBarTitleContext.Provider>
+          </SetNavBarTitleContext.Provider>
         </Suspense>
       </SnackbarProvider>
     </ThemeProvider>

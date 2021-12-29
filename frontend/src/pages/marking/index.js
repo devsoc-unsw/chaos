@@ -3,7 +3,7 @@ import { Container, Button, Grid } from "@mui/material";
 
 import ReviewerStepper from "../../components/ReviewerStepper";
 import ApplicationsList from "./ApplicationsList";
-import { SetAppBarTitleContext } from "../../App";
+import { SetNavBarTitleContext } from "../../App";
 
 // TODO: CHAOS-12 retrieve data from BE instead of using dummy data
 const dummyApplications = {
@@ -121,9 +121,9 @@ const dummyApplications = {
 };
 
 const Marking = () => {
-  const setAppBarTitle = useContext(SetAppBarTitleContext);
+  const setNavBarTitle = useContext(SetNavBarTitleContext);
   useEffect(() => {
-    setAppBarTitle("2022 Subcommittee Recruitment (Hardcoded Title)");
+    setNavBarTitle("2022 Subcommittee Recruitment (Hardcoded Title)");
   }, []);
   // TODO: CHAOS-12 handle candidates from multiple positions from BE
   const [applications, setApplications] = useState(dummyApplications);

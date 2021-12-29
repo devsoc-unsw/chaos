@@ -1,14 +1,14 @@
 import React, { useContext, useEffect } from "react";
 import { Container } from "@mui/material";
 import CampaignCard from "../../components/CampaignCard";
-import { SetAppBarTitleContext } from "../../App";
+import { SetNavBarTitleContext } from "../../App";
 import DirectorDummy from "./director.jpg";
 import SubcomDummy from "./subcom.jpg";
 
 const Home = () => {
-  const setAppBarTitle = useContext(SetAppBarTitleContext);
+  const setNavBarTitle = useContext(SetNavBarTitleContext);
   useEffect(() => {
-    setAppBarTitle("Home");
+    setNavBarTitle("Home");
   }, []);
   return (
     <Container>
