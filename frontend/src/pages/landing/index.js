@@ -12,7 +12,7 @@ const Landing = () => {
   const [loggedIn, setLoggedIn] = React.useState(false);
   const setNavBarTitle = useContext(SetNavBarTitleContext);
   useEffect(() => {
-    setNavBarTitle("Shrey's Particle Landing Page");
+    setNavBarTitle("");
   }, []);
 
   return (
@@ -23,9 +23,7 @@ const Landing = () => {
         Recruitment Drives, without the fuss.
       </Subtitle>
       <Box>
-        <Button color="secondary" href={OAUTH_CALLBACK_URL}>
-          Get Started
-        </Button>
+        <Button href={OAUTH_CALLBACK_URL}>Get Started</Button>
       </Box>
     </BackgroundWrapper>
   );
