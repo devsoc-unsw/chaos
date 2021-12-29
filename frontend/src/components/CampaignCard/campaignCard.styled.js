@@ -1,5 +1,5 @@
 import { styled } from "@mui/material/styles";
-import { Typography, IconButton } from "@mui/material/";
+import { IconButton } from "@mui/material/";
 
 export const ExpandIconButton = styled(IconButton)(({ theme, expanded }) => ({
   transform: !expanded ? "rotate(0deg)" : "rotate(180deg)",
