@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Container, Button, Grid } from "@mui/material";
 
 import RankingsToolbar from "./RankingsToolbar";
 import DragDropRankings from "./DragDropRankings";
 import ReviewerStepper from "../../components/ReviewerStepper";
+import { SetNavBarTitleContext } from "../../App";
 
 // TODO: CHAOS-12 retrieve data from BE instead of using dummy data
 const dummyRankings = {
@@ -72,6 +73,10 @@ const dummyRankings = {
 const dummyPositions = Object.keys(dummyRankings);
 
 const Rankings = () => {
+  const setNavBarTitle = useContext(SetNavBarTitleContext);
+  useEffect(() => {
+    setNavBarTitle("2022 Subcommittee Recruitment (Hardcoded Title)");
+  }, []);
   // TODO: CHAOS-12 handle candidates from multiple positions from BE
   const [selectedPosition, setSelectedPosition] = useState("");
   const [rankings, setRankings] = useState(dummyRankings);
