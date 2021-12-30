@@ -25,6 +25,7 @@ pub enum AuthError {
     MissingBearer,
     InvalidJwt,
     ApiStateMissing,
+    NotSuperUser,
 }
 
 #[rocket::async_trait]

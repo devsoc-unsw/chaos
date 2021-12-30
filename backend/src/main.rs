@@ -5,6 +5,7 @@ pub mod database;
 pub mod cors;
 pub mod state;
 pub mod guard;
+pub mod organisation;
 
 use auth::Auth;
 use cors::cors;
@@ -29,6 +30,7 @@ async fn main() {
         .attach(Database::fairing())
         .attach(cors)
         .mount("/", routes![authed_call])
+        .mount("/organisation", routes![organisation::new])
         .mount("/auth", routes![auth::signin, auth::signup])
         .launch()
         .await
