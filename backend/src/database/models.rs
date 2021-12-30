@@ -16,6 +16,21 @@ use super::schema::{
     ratings,
 };
 
+pub struct SuperUser {
+    pub user: User,
+    // https://stackoverflow.com/a/53589431/15443095
+    _private: (),
+}
+
+impl SuperUser {
+    pub fn new(user: User) -> SuperUser {
+        SuperUser {
+            user,
+            _private: (),
+        }
+    }
+}
+
 #[derive(Queryable)]
 pub struct User {
     pub id: i32,
