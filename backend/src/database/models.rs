@@ -1,6 +1,7 @@
 use chrono::NaiveDateTime;
 use diesel::PgConnection;
 use diesel::prelude::*;
+use rocket::FromForm;
 use super::schema::AdminLevel;
 use super::schema::ApplicationStatus;
 use super::schema::{
@@ -42,6 +43,21 @@ pub struct User {
     pub superuser: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
+}
+
+pub struct SuperUser {
+    pub user: User,
+    // https://stackoverflow.com/a/53589431/15443095
+    _private: (),
+}
+
+impl SuperUser {
+    pub fn new(user: User) -> SuperUser {
+        SuperUser {
+            user,
+            _private: (),
+        }
+    }
 }
 
 #[derive(Insertable)]
@@ -100,7 +116,7 @@ pub struct Organisation {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Insertable)]
+#[derive(Insertable, FromForm)]
 #[table_name = "organisations"]
 pub struct NewOrganisation {
     pub name: String,
@@ -123,6 +139,14 @@ impl Organisation {
             .order(id.asc())
             .load(conn)
             .unwrap_or_else(|_| vec![])
+    }
+
+    pub fn find_by_name(conn: &PgConnection, organisation_name: &str) -> Option<Organisation> {
+        use crate::database::schema::organisations::dsl::*;
+
+        organisations.filter(name.eq(organisation_name))
+            .first(conn)
+            .ok()
     }
 }
 
