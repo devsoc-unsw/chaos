@@ -57,11 +57,13 @@ const AuthSuccess = () => {
     attemptAuth();
   }, []);
 
-  if (state.needsSignup) {
-    navigate("/signup");
-  } else if (state.isAuthenticated) {
-    navigate("/dashboard");
-  }
+  useEffect(() => {
+    if (state.needsSignup) {
+      navigate("/signup");
+    } else if (state.isAuthenticated) {
+      navigate("/dashboard");
+    }
+  }, [state]);
 
   const renderIsAuthenticated = () =>
     state.isAuthenticated ? (
@@ -75,14 +77,16 @@ const AuthSuccess = () => {
       </div>
     );
 
-  return state.isAuthenticating ? (
-    <>
-      <div>Authenticating...</div>
-      <LoadingIndicator />
-    </>
-  ) : (
-    renderIsAuthenticated()
-  );
+  if (state.isAuthenticating) {
+    return (
+      <>
+        <div>Authenticating...</div>
+        <LoadingIndicator />
+      </>
+    );
+  }
+
+  return renderIsAuthenticated();
 };
 
 export default AuthSuccess;
