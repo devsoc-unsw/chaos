@@ -241,10 +241,9 @@ pub async fn signup(body: Json<SignUpBody>, state: &State<ApiState>, db: Databas
     {
         let email = email.clone();
 
-        if db.run(move |conn| User::get_from_email(conn, &email))
-            .await.is_some() {
-            return Err(Json(SignUpError::AccountAlreadyExists));
-        }
+        db.run(move |conn| User::get_from_email(conn, &email))
+            .await
+            .ok_or(Json(SignUpError::AccountAlreadyExists))?;
     }
 
     let user = {
