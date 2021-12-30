@@ -9,12 +9,11 @@ import { setStore } from "../../utils";
 const AuthSuccess = () => {
   const query = useQuery();
   const navigate = useNavigate();
-  const [state, setState] = React.useState({
-    isAuthenticated: false,
-    needsSignup: false,
-    isAuthenticating: true,
-    error: null,
-  });
+
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  const [needsSignup, setNeedsSignup] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState(null);
 
   useEffect(() => {
     async function attemptAuth() {
@@ -25,31 +24,19 @@ const AuthSuccess = () => {
           .then((res) => res.json())
           .then((data) => {
             if (data[SIGNUP_REQUIRED]) {
-              setState({
-                isAuthenticated: true,
-                isAuthenticating: false,
-                needsSignup: true,
-                error: null,
-              });
+              setNeedsSignup(true);
+              setIsLoading(false);
               setStore("name", data[SIGNUP_REQUIRED].name);
               setStore("signup_token", data[SIGNUP_REQUIRED].signup_token);
             } else {
               localStorage.setItem("AUTH_TOKEN", data.token);
-              setState({
-                isAuthenticated: true,
-                isAuthenticating: false,
-                needsSignup: false,
-                error: null,
-              });
+              setIsAuthenticated(true);
+              setIsLoading(false);
             }
           })
-          .catch((error) => {
-            setState({
-              isAuthenticated: false,
-              isAuthenticating: false,
-              needsSignup: false,
-              error,
-            });
+          .catch((err) => {
+            setIsLoading(false);
+            setError(err);
           });
       }
     }
@@ -58,26 +45,26 @@ const AuthSuccess = () => {
   }, []);
 
   useEffect(() => {
-    if (state.needsSignup) {
+    if (needsSignup) {
       navigate("/signup");
-    } else if (state.isAuthenticated) {
+    } else if (isAuthenticated) {
       navigate("/dashboard");
     }
-  }, [state]);
+  }, [needsSignup, isAuthenticated]);
 
   const renderIsAuthenticated = () =>
-    state.isAuthenticated ? (
+    isAuthenticated ? (
       <div>
         <h1>Redirecting you...</h1>
       </div>
     ) : (
       <div>
         <h1>Not Authenticated</h1>
-        {state.error.message}
+        {error.message}
       </div>
     );
 
-  if (state.isAuthenticating) {
+  if (isLoading) {
     return (
       <>
         <div>Authenticating...</div>
