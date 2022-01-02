@@ -73,9 +73,10 @@ const DragDropRankings = (props) => {
                       {...draggableProvided.dragHandleProps}
                     >
                       <FinalRatingCandidateCard
-                        name={candidate.name + index}
+                        name={candidate.name}
                         position={selectedPosition}
                         ratings={candidate.ratings}
+                        pass
                       />
                     </div>
                   )}
@@ -115,7 +116,7 @@ const DragDropRankings = (props) => {
                       {...draggableProvided.dragHandleProps}
                     >
                       <FinalRatingCandidateCard
-                        name={candidate.name + (index + passIndex + 1)}
+                        name={candidate.name}
                         position={selectedPosition}
                         ratings={candidate.ratings}
                       />

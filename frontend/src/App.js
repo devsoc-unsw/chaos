@@ -17,6 +17,12 @@ const theme = createTheme({
     //   main: "#DBD2Ef",
     //   light: "#eceded",
     // },
+    // success: {
+    //   light: "#e2f3e2",
+    // },
+    // error: {
+    //   light: "#FCDADA",
+    // },
   },
   components: {
     MuiButton: {
