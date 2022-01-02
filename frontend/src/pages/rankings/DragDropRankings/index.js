@@ -26,12 +26,15 @@ const DragDropRankings = (props) => {
     } else {
       // Dragged a candidate
       const newRankings = Array.from(rankings[selectedPosition]);
-      const sourceIndex = source.index - (source.index > passIndex ? 1 : 0);
-      const destIndex =
-        destination.index - (destination.index > passIndex ? 1 : 0);
-      newRankings.splice(sourceIndex, 1);
+      const srcIdx = source.index - (source.index > passIndex);
+      const destIdx =
+        destination.index -
+        (destination.index > passIndex) -
+        (destination.index === passIndex && source.index < passIndex);
+
+      newRankings.splice(srcIdx, 1);
       newRankings.splice(
-        destIndex,
+        destIdx,
         0,
         rankings[selectedPosition].filter(
           (candidate) => candidate.name === draggableId
@@ -40,10 +43,11 @@ const DragDropRankings = (props) => {
       setRankings({ ...rankings, [selectedPosition]: newRankings });
 
       // If candidate was dragged to the other side of pass bar, update position of pass bar
-      if (source.index > passIndex && destination.index < passIndex)
+      if (source.index > passIndex && destination.index <= passIndex) {
         setPassIndex(passIndex + 1);
-      if (source.index < passIndex && destination.index > passIndex)
+      } else if (source.index < passIndex && destination.index >= passIndex) {
         setPassIndex(passIndex - 1);
+      }
     }
   };
 
@@ -73,7 +77,7 @@ const DragDropRankings = (props) => {
                       {...draggableProvided.dragHandleProps}
                     >
                       <FinalRatingCandidateCard
-                        name={candidate.name}
+                        name={candidate.name + index}
                         position={selectedPosition}
                         ratings={candidate.ratings}
                         pass
@@ -116,7 +120,7 @@ const DragDropRankings = (props) => {
                       {...draggableProvided.dragHandleProps}
                     >
                       <FinalRatingCandidateCard
-                        name={candidate.name}
+                        name={candidate.name + (index + passIndex + 1)}
                         position={selectedPosition}
                         ratings={candidate.ratings}
                       />

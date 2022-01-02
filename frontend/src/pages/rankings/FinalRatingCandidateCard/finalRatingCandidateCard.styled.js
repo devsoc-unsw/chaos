@@ -4,7 +4,8 @@ import { red, green } from "@mui/material/colors";
 
 export const CandidateCard = styled(Card)(({ theme, pass }) => ({
   margin: "0.5rem 0",
-  backgroundColor: pass ? green[50] : red[50],
+  // backgroundColor: pass ? green[50] : red[50],
+  borderLeft: `5px solid ${pass ? green[500] : red[500]}`,
 }));
 
 export const RatingChip = styled(Chip)`

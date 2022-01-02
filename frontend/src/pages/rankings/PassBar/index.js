@@ -1,9 +1,12 @@
 import React from "react";
-import { Chip, Divider } from "@mui/material";
+import { Tooltip, Divider } from "@mui/material";
+import DragHandleIcon from "@mui/icons-material/DragHandle";
 
 const PassBar = () => (
   <Divider>
-    <Chip label="pass" color="success" />
+    <Tooltip title="Drag the bar to set the pass cutoff">
+      <DragHandleIcon />
+    </Tooltip>
   </Divider>
 );
 
