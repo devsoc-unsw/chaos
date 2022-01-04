@@ -120,7 +120,8 @@ impl Organisation {
     pub fn find_by_name(conn: &PgConnection, organisation_name: &str) -> Option<Organisation> {
         use crate::database::schema::organisations::dsl::*;
 
-        organisations.filter(name.eq(organisation_name))
+        organisations
+            .filter(name.eq(organisation_name))
             .first(conn)
             .ok()
     }
@@ -140,6 +141,8 @@ impl Organisation {
     }
 
     // FIXME - rather than looping through all admins, filter the users if theyre in admin_ids
+    // FIXME - this only works if they're already in the organisation, need to insert them into the
+    // organistaion first?
     pub fn set_admins(conn: &PgConnection, org_id: i32, admin_ids: &[i32]) -> Option<usize> {
         use crate::database::schema::organisation_users::dsl::*;
 
