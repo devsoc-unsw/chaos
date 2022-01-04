@@ -33,7 +33,11 @@ async fn main() {
         .mount("/", routes![authed_call])
         .mount(
             "/organisation",
-            routes![organisation::new, organisation::get_from_id],
+            routes![
+                organisation::new,
+                organisation::get_from_id,
+                organisation::delete
+            ],
         )
         .mount("/auth", routes![auth::signin, auth::signup])
         .launch()

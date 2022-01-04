@@ -2,6 +2,7 @@ use chrono::NaiveDateTime;
 use diesel::PgConnection;
 use diesel::prelude::*;
 use rocket::FromForm;
+use serde::{Serialize, Deserialize};
 use super::schema::AdminLevel;
 use super::schema::ApplicationStatus;
 use super::schema::{
@@ -92,7 +93,7 @@ impl NewUser {
     }
 }
 
-#[derive(Queryable)]
+#[derive(Queryable, Serialize, Deserialize)]
 pub struct Organisation {
     pub id: i32,
     pub name: String,
@@ -130,6 +131,14 @@ impl Organisation {
 
         organisations.filter(name.eq(organisation_name))
             .first(conn)
+            .ok()
+    }
+
+    pub fn delete(conn: &PgConnection, organisation_id: i32) -> Option<usize> {
+        use crate::database::schema::organisations::dsl::*;
+
+        diesel::delete(organisations.filter(id.eq(organisation_id)))
+            .execute(conn)
             .ok()
     }
 }

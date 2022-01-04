@@ -5,7 +5,7 @@ use crate::database::{
 use rocket::{
     form::Form,
     get, post,
-    serde::{json::Json, Serialize},
+    serde::{json::Json, Serialize}, delete,
 };
 
 #[derive(Serialize)]
@@ -35,9 +35,21 @@ pub async fn new(
 }
 
 #[get("/<org_id>")]
-pub async fn get_from_id(org_id: i32, _user: User, db: Database) -> Result<(), Json<OrgError>> {
+pub async fn get_from_id(org_id: i32, _user: User, db: Database) -> Result<Json<Organisation>, Json<OrgError>> {
     let res: Option<Organisation> = db
         .run(move |conn| Organisation::get_from_id(&conn, org_id))
+        .await;
+
+    match res {
+        Some(org) => Ok(Json(org)),
+        None => Err(Json(OrgError::OrgNotFound)),
+    }
+}
+
+#[delete("/<org_id>")]
+pub async fn delete(org_id: i32, _user: SuperUser, db: Database) -> Result<(), Json<OrgError>> {
+    let res: Option<usize> = db
+        .run(move |conn| Organisation::delete(&conn, org_id))
         .await;
 
     match res {
