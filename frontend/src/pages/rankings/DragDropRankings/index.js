@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
@@ -8,9 +8,11 @@ import PassBar from "../PassBar";
 
 const DragDropRankings = (props) => {
   const { rankings, setRankings, selectedPosition } = props;
-  const [passIndex, setPassIndex] = useState(
-    rankings[selectedPosition]?.length ?? 1
-  );
+  const [passIndex, setPassIndex] = useState(0);
+
+  useEffect(() => {
+    setPassIndex(Math.ceil((rankings[selectedPosition]?.length || 0) / 2));
+  }, [selectedPosition]);
 
   const onDragEnd = (result) => {
     const { destination, source, draggableId } = result;
@@ -80,7 +82,6 @@ const DragDropRankings = (props) => {
                         name={candidate.name}
                         position={selectedPosition}
                         ratings={candidate.ratings}
-                        pass
                       />
                     </div>
                   )}
@@ -123,6 +124,7 @@ const DragDropRankings = (props) => {
                         name={candidate.name}
                         position={selectedPosition}
                         ratings={candidate.ratings}
+                        reject
                       />
                     </div>
                   )}

@@ -2,10 +2,10 @@ import { styled } from "@mui/material/styles";
 import { Card, Chip } from "@mui/material";
 import { red, green } from "@mui/material/colors";
 
-export const CandidateCard = styled(Card)(({ theme, pass }) => ({
+export const CandidateCard = styled(Card)(({ reject }) => ({
   margin: "0.5rem 0",
-  backgroundColor: pass ? green[50] : red[50],
-  borderLeft: `5px solid ${pass ? green[500] : red[500]}`,
+  backgroundColor: reject ? red[50] : green[50],
+  borderLeft: `5px solid ${reject ? red[500] : green[500]}`,
   cursor: "pointer",
 }));
 

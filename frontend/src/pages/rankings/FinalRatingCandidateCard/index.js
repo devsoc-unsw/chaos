@@ -27,7 +27,7 @@ const avgColor = (avg) => {
 };
 
 const FinalRatingCandidateCard = (props) => {
-  const { name, position, ratings, pass } = props;
+  const { name, position, ratings, reject } = props;
   const [open, setOpen] = useState(false);
 
   const handleOpen = () => {
@@ -42,7 +42,7 @@ const FinalRatingCandidateCard = (props) => {
 
   return (
     <>
-      <CandidateCard pass={pass} variant="outlined" onClick={handleOpen}>
+      <CandidateCard reject={reject} variant="outlined" onClick={handleOpen}>
         <CardContent>
           <Grid container alignItems="center">
             <Grid item>
@@ -80,11 +80,11 @@ FinalRatingCandidateCard.propTypes = {
       rating: PropTypes.number.isRequired,
     })
   ).isRequired,
-  pass: PropTypes.bool,
+  reject: PropTypes.bool,
 };
 
 FinalRatingCandidateCard.defaultProps = {
-  pass: false,
+  reject: false,
 };
 
 export default FinalRatingCandidateCard;
