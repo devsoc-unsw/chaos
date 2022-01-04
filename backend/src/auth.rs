@@ -1,14 +1,27 @@
-use crate::{state::ApiState, database::{models::{User, NewUser}, Database}};
-use jsonwebtoken::{Header, Validation, Algorithm};
-use reqwest::header;
-use rocket::{Request, State, http::Status, post, request::{self, Outcome}, request::FromRequest, serde::json::Json};
-use serde::{Serialize, Deserialize};
+use crate::{
+    database::{
+        models::{NewUser, User},
+        Database,
+    },
+    state::ApiState,
+};
 use dotenv_codegen::dotenv;
+use jsonwebtoken::{Algorithm, Header, Validation};
+use reqwest::header;
+use rocket::{
+    http::Status,
+    post,
+    request::FromRequest,
+    request::{self, Outcome},
+    serde::json::Json,
+    Request, State,
+};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-const GOOGLE_TOKEN_URL:   &str = "https://oauth2.googleapis.com/token";
+const GOOGLE_TOKEN_URL: &str = "https://oauth2.googleapis.com/token";
 const OPENID_EMAIL_FIELD: &str = "email";
-const OPENID_NAME_FIELD:  &str = "name";
+const OPENID_NAME_FIELD: &str = "name";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AuthJwt {
@@ -35,12 +48,19 @@ impl<'r> FromRequest<'r> for Auth {
     async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
         let api_state = match request.guard::<&State<ApiState>>().await {
             Outcome::Success(api_state) => api_state,
-            _ => return Outcome::Failure((Status::InternalServerError, AuthError::ApiStateMissing))
+            _ => {
+                return Outcome::Failure((Status::InternalServerError, AuthError::ApiStateMissing))
+            }
         };
 
         let header = match request.headers().get_one("Authorization") {
             Some(header) => header,
-            None => return Outcome::Failure((Status::BadRequest, AuthError::MissingAuthorizationHeader)),
+            None => {
+                return Outcome::Failure((
+                    Status::BadRequest,
+                    AuthError::MissingAuthorizationHeader,
+                ))
+            }
         };
 
         if !header.starts_with("Bearer ") {
@@ -48,21 +68,23 @@ impl<'r> FromRequest<'r> for Auth {
         }
 
         let token = header.trim_start_matches("Bearer ");
-        
+
         let validation = Validation {
             algorithms: vec![Algorithm::HS256],
             validate_exp: false,
             ..Default::default()
         };
 
-        let token = match jsonwebtoken::decode::<AuthJwt>(token, &api_state.jwt_decoding_key, &validation) {
+        let token = match jsonwebtoken::decode::<AuthJwt>(
+            token,
+            &api_state.jwt_decoding_key,
+            &validation,
+        ) {
             Ok(data) => data.claims,
             Err(_) => return Outcome::Failure((Status::BadRequest, AuthError::InvalidJwt)),
         };
 
-        return Outcome::Success(Auth {
-            jwt: token
-        });
+        return Outcome::Success(Auth { jwt: token });
     }
 }
 
@@ -86,13 +108,15 @@ async fn get_access_token(oauth_code: &str, state: &State<ApiState>) -> Option<S
         id_token: String,
     }
 
-    let token = state.reqwest_client.post(GOOGLE_TOKEN_URL)
+    let token = state
+        .reqwest_client
+        .post(GOOGLE_TOKEN_URL)
         .form(&TokenForm {
             code: oauth_code,
             client_id: dotenv!("GOOGLE_CLIENT_ID"),
             client_secret: dotenv!("GOOGLE_CLIENT_SECRET"),
             redirect_uri: dotenv!("GOOGLE_REDIRECT_URI"),
-            grant_type: "authorization_code"
+            grant_type: "authorization_code",
         })
         .send()
         .await
@@ -111,19 +135,30 @@ struct UserDetails {
 }
 
 async fn get_user_details(state: &State<ApiState>, token: &str) -> UserDetails {
-    let response = match state.reqwest_client.get(&state.userinfo_endpoint)
+    let response = match state
+        .reqwest_client
+        .get(&state.userinfo_endpoint)
         .header(header::AUTHORIZATION, format!("Bearer {}", token))
         .send()
-        .await {
+        .await
+    {
         Ok(response) => response,
-        Err(_) => return UserDetails { email: None, name: None },
+        Err(_) => {
+            return UserDetails {
+                email: None,
+                name: None,
+            }
+        }
     };
 
-    let mut user_info = match response
-        .json::<serde_json::Value>()
-        .await {
+    let mut user_info = match response.json::<serde_json::Value>().await {
         Ok(user_info) => user_info,
-        Err(_) => return UserDetails { email: None, name: None },
+        Err(_) => {
+            return UserDetails {
+                email: None,
+                name: None,
+            }
+        }
     };
 
     let email = match user_info.get_mut(OPENID_EMAIL_FIELD) {
@@ -136,10 +171,7 @@ async fn get_user_details(state: &State<ApiState>, token: &str) -> UserDetails {
         _ => None,
     };
 
-    UserDetails {
-        email,
-        name,
-    }
+    UserDetails { email, name }
 }
 
 #[derive(Deserialize)]
@@ -156,7 +188,10 @@ pub struct SignInResponse {
 pub enum SignInError {
     InvalidOAuthCode,
     GoogleOAuthInternalError,
-    SignupRequired { signup_token: String, name: Option<String> },
+    SignupRequired {
+        signup_token: String,
+        name: Option<String>,
+    },
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -165,39 +200,52 @@ pub struct SignupJwt {
 }
 
 #[post("/signin", data = "<body>")]
-pub async fn signin(body: Json<SignInBody>, state: &State<ApiState>, db: Database) -> Result<Json<SignInResponse>, Json<SignInError>> {
+pub async fn signin(
+    body: Json<SignInBody>,
+    state: &State<ApiState>,
+    db: Database,
+) -> Result<Json<SignInResponse>, Json<SignInError>> {
     let token = get_access_token(&body.oauth_token, state)
         .await
         .ok_or(Json(SignInError::InvalidOAuthCode))?;
-    
+
     let details = get_user_details(state, &token).await;
-    
-    let email = details.email
+
+    let email = details
+        .email
         .ok_or(Json(SignInError::GoogleOAuthInternalError))?;
 
-    let user = db.run(move |conn| User::get_from_email(conn, &email))
+    let user = db
+        .run(move |conn| User::get_from_email(conn, &email))
         .await
         .ok_or_else(|| {
-            let jwt = SignupJwt {
-                auth_token: token,
-            };
+            let jwt = SignupJwt { auth_token: token };
 
-            let token = jsonwebtoken::encode(&Header::new(jsonwebtoken::Algorithm::HS256), &jwt, &state.jwt_encoding_key)
-                .expect("creating jwt should never fail");
+            let token = jsonwebtoken::encode(
+                &Header::new(jsonwebtoken::Algorithm::HS256),
+                &jwt,
+                &state.jwt_encoding_key,
+            )
+            .expect("creating jwt should never fail");
 
-            Json(SignInError::SignupRequired { signup_token: token, name: details.name })
+            Json(SignInError::SignupRequired {
+                signup_token: token,
+                name: details.name,
+            })
         })?;
 
     let auth = AuthJwt {
         user_id: user.id as u32,
     };
 
-    let token = jsonwebtoken::encode(&Header::new(jsonwebtoken::Algorithm::HS256), &auth, &state.jwt_encoding_key)
-        .expect("creating jwt should never fail");
+    let token = jsonwebtoken::encode(
+        &Header::new(jsonwebtoken::Algorithm::HS256),
+        &auth,
+        &state.jwt_encoding_key,
+    )
+    .expect("creating jwt should never fail");
 
-    Ok(Json(SignInResponse {
-        token,
-    }))
+    Ok(Json(SignInResponse { token }))
 }
 
 #[derive(Deserialize, Clone)]
@@ -222,27 +270,37 @@ pub enum SignUpError {
 }
 
 #[post("/signup", data = "<body>")]
-pub async fn signup(body: Json<SignUpBody>, state: &State<ApiState>, db: Database) -> Result<Json<SignUpResponse>, Json<SignUpError>> {
+pub async fn signup(
+    body: Json<SignUpBody>,
+    state: &State<ApiState>,
+    db: Database,
+) -> Result<Json<SignUpResponse>, Json<SignUpError>> {
     let validation = Validation {
         algorithms: vec![Algorithm::HS256],
         validate_exp: false,
         ..Default::default()
     };
 
-    let token = match jsonwebtoken::decode::<SignupJwt>(&body.signup_token, &state.jwt_decoding_key, &validation) {
+    let token = match jsonwebtoken::decode::<SignupJwt>(
+        &body.signup_token,
+        &state.jwt_decoding_key,
+        &validation,
+    ) {
         Ok(data) => data.claims.auth_token,
         Err(_) => return Err(Json(SignUpError::InvalidSignupToken)),
     };
 
     let details = get_user_details(state, &token).await;
 
-    let email = details.email
+    let email = details
+        .email
         .ok_or(Json(SignUpError::GoogleOAuthInternalError))?;
 
     {
         let email = email.clone();
 
-        db.run(move |conn| User::get_from_email(conn, &email))
+        db
+            .run(move |conn| User::get_from_email(conn, &email))
             .await
             .ok_or(Json(SignUpError::AccountAlreadyExists))?;
     }
@@ -260,20 +318,23 @@ pub async fn signup(body: Json<SignUpBody>, state: &State<ApiState>, db: Databas
                 degree_starting_year: body.degree_starting_year as i32,
                 superuser: false,
             };
-            
+
             user.insert(conn)
                 .expect("we already ensured a conflicting user does not exist")
-        }).await
+        })
+        .await
     };
 
     let auth = AuthJwt {
         user_id: user.id as u32,
     };
 
-    let token = jsonwebtoken::encode(&Header::new(jsonwebtoken::Algorithm::HS256), &auth, &state.jwt_encoding_key)
-        .expect("creating jwt should never fail");
+    let token = jsonwebtoken::encode(
+        &Header::new(jsonwebtoken::Algorithm::HS256),
+        &auth,
+        &state.jwt_encoding_key,
+    )
+    .expect("creating jwt should never fail");
 
-    Ok(Json(SignUpResponse {
-        token,
-    }))
+    Ok(Json(SignUpResponse { token }))
 }

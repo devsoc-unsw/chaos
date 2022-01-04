@@ -36,7 +36,9 @@ async fn main() {
             routes![
                 organisation::new,
                 organisation::get_from_id,
-                organisation::delete
+                organisation::delete,
+                organisation::get_admins,
+                organisation::set_admins,
             ],
         )
         .mount("/auth", routes![auth::signin, auth::signup])

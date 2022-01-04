@@ -7,7 +7,7 @@ pub enum ApplicationStatus {
     Success,
 }
 
-#[derive(Debug, DbEnum)]
+#[derive(Debug, DbEnum, PartialEq)]
 pub enum AdminLevel {
     ReadOnly,
     Director,
