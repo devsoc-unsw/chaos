@@ -28,6 +28,7 @@ pub async fn new(
         .run(move |conn| NewOrganisation::insert(&organisation, &conn))
         .await;
 
+
     match res {
         Some(_) => Ok(()),
         None => Err(Json(NewOrgError::OrgNameAlreadyExists)),

@@ -18,6 +18,21 @@ use super::schema::{
     ratings,
 };
 
+pub struct SuperUser {
+    pub user: User,
+    // https://stackoverflow.com/a/53589431/15443095
+    _private: (),
+}
+
+impl SuperUser {
+    pub fn new(user: User) -> SuperUser {
+        SuperUser {
+            user,
+            _private: (),
+        }
+    }
+}
+
 #[derive(Queryable)]
 pub struct User {
     pub id: i32,
@@ -139,6 +154,14 @@ impl Organisation {
 
         diesel::delete(organisations.filter(id.eq(organisation_id)))
             .execute(conn)
+            .ok()
+    }
+
+    pub fn find_by_name(conn: &PgConnection, organisation_name: &str) -> Option<Organisation> {
+        use crate::database::schema::organisations::dsl::*;
+
+        organisations.filter(name.eq(organisation_name))
+            .first(conn)
             .ok()
     }
 }
