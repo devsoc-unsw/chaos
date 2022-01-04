@@ -117,13 +117,12 @@ impl Organisation {
             .unwrap_or_else(|_| vec![])
     }
 
-    pub fn get_from_id(conn: &PgConnection, organisation_id: i32) -> Vec<Organisation> {
+    pub fn get_from_id(conn: &PgConnection, organisation_id: i32) -> Option<Organisation> {
         use crate::database::schema::organisations::dsl::*;
 
         organisations.filter(id.eq(organisation_id))
-            .order(id.asc())
-            .load(conn)
-            .unwrap_or_else(|_| vec![])
+            .first(conn)
+            .ok()
     }
 
     pub fn find_by_name(conn: &PgConnection, organisation_name: &str) -> Option<Organisation> {
