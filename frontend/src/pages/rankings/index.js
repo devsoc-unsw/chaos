@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Container, Button, Grid } from "@mui/material";
+import { Container, Button, Grid, Typography } from "@mui/material";
+import { red, green } from "@mui/material/colors";
 
 import RankingsToolbar from "./RankingsToolbar";
 import DragDropRankings from "./DragDropRankings";
@@ -91,6 +92,20 @@ const Rankings = () => {
   return (
     <Container>
       <ReviewerStepper activeStep={1} />
+
+      <Typography paragraph>
+        Candidates have been given an aggregate mark and ranked numerically.
+        Reorder the candidates to your desire and use the pass bar to determine
+        which candidates are{" "}
+        <Typography component="span" color={`${green[500]}`}>
+          <b>accepted</b>
+        </Typography>{" "}
+        or{" "}
+        <Typography component="span" color={`${red[500]}`}>
+          <b>rejected</b>
+        </Typography>
+        .
+      </Typography>
 
       <RankingsToolbar
         positions={dummyPositions}
