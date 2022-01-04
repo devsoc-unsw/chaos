@@ -94,17 +94,18 @@ const Rankings = () => {
       <ReviewerStepper activeStep={1} />
 
       <Typography paragraph>
-        Candidates have been given an aggregate mark and ranked numerically.
-        Reorder the candidates to your desire and use the pass bar to determine
-        which candidates are{" "}
+        The candidates below are ranked based on their aggregate application
+        mark. Candidates may be reordered, and clicking on a candidate will open
+        up their application and comments. Drag the pass bar to determine which
+        candidates are{" "}
         <Typography component="span" color={`${green[500]}`}>
           <b>accepted</b>
         </Typography>{" "}
         or{" "}
         <Typography component="span" color={`${red[500]}`}>
           <b>rejected</b>
-        </Typography>
-        .
+        </Typography>{" "}
+        and then press <b>Next</b> to confirm your selections.
       </Typography>
 
       <RankingsToolbar
