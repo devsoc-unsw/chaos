@@ -274,6 +274,15 @@ impl Campaign {
             .load(conn)
             .unwrap_or_else(|_| vec![])
     }
+
+    pub fn get_from_id(conn: &PgConnection, campaign_id: i32) -> Option<Campaign> {
+        use crate::database::schema::campaigns::dsl::*;
+
+        campaigns
+            .filter(id.eq(campaign_id))
+            .first(conn)
+            .ok()
+    }
 }
 
 impl NewCampaign {

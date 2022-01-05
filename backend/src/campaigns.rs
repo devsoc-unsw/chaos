@@ -1,10 +1,9 @@
 use crate::database::{
-    models::{NewOrganisation, Organisation, SuperUser, User},
+    models::{Campaign, NewOrganisation, Organisation, SuperUser, User},
     Database,
 };
 
 use serde::{Deserialize, Serialize};
-
 
 use rocket::{
     delete,
@@ -15,27 +14,17 @@ use rocket::{
 
 #[derive(Serialize)]
 pub enum CampignError {
-    CampignNotFound
+    CampignNotFound,
 }
 
-
-#[get("/organisation/<org_id>/campaign/<campaign_id>")]
-pub fn get_campaign(org_id: i32, campaign_id: i32, db: Database) -> Json<Organisation> {
-    let org = db.get_organisation(org_id);
-    match org {
-        Some(org) => {
-            let campaign = org.get_campaign(campaign_id);
-            match campaign {
-                Some(campaign) => Json(campaign),
-                None => Json(org),
-            }
-        }
-        None => Json(Organisation {
-            id: 0,
-            name: "".to_string(),
-            campaigns: vec![],
-        }),
+#[get("/campaign/<campaign_id>")]
+pub fn get_campaign(
+    org_id: i32,
+    campaign_id: i32,
+    db: Database,
+) -> Result<Json<Campaign>, Json<CampignError>> {
+    match Campaign::get_from_id(campaign_id) {
+        Some(campaign) => Ok(Json(campaign)),
+        None => Err(Json(CampignNotFound)),
     }
-    let campaign = org.get_campaign(campaign_id);
-    Json(campaign)
 }
