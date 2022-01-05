@@ -1,4 +1,4 @@
-use rocket_cors::{Cors, AllowedOrigins, AllowedHeaders};
+use rocket_cors::{AllowedHeaders, AllowedOrigins, Cors};
 
 pub fn cors() -> Cors {
     let cors = rocket_cors::CorsOptions {
@@ -13,8 +13,9 @@ pub fn cors() -> Cors {
         },
         allowed_headers: AllowedHeaders::All,
         ..Default::default()
-    }.to_cors()
-        .expect("Failed to create CORS options");
-    
+    }
+    .to_cors()
+    .expect("Failed to create CORS options");
+
     cors
 }

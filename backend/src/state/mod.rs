@@ -1,10 +1,11 @@
-use jsonwebtoken::{EncodingKey, DecodingKey};
 use dotenv_codegen::dotenv;
+use jsonwebtoken::{DecodingKey, EncodingKey};
 use reqwest::Client;
 use serde_json::Value;
 
-const GOOGLE_OPENID_DISCOVERY_URL: &str = "https://accounts.google.com/.well-known/openid-configuration";
-const GOOGLE_OPENID_USERINFO_KEY:  &str = "userinfo_endpoint";
+const GOOGLE_OPENID_DISCOVERY_URL: &str =
+    "https://accounts.google.com/.well-known/openid-configuration";
+const GOOGLE_OPENID_USERINFO_KEY: &str = "userinfo_endpoint";
 
 pub struct ApiState {
     pub reqwest_client: Client,
@@ -20,15 +21,23 @@ pub async fn api_state() -> ApiState {
 
     let discovery = reqwest::get(GOOGLE_OPENID_DISCOVERY_URL)
         .await
-        .expect(&format!("Failed to fetch openid discovery from {:?}", GOOGLE_OPENID_DISCOVERY_URL))
-        .json::<serde_json::Map::<String, Value>>()
+        .expect(&format!(
+            "Failed to fetch openid discovery from {:?}",
+            GOOGLE_OPENID_DISCOVERY_URL
+        ))
+        .json::<serde_json::Map<String, Value>>()
         .await
         .expect("Failed to parse openid discovery as a JSON Object");
 
-    let userinfo_endpoint = match discovery.get(GOOGLE_OPENID_USERINFO_KEY)
-        .expect(&format!("Openid discovery does not contain a {:?} key", GOOGLE_OPENID_USERINFO_KEY)) {
-            Value::String(url) => url.to_string(),
-            other => panic!("Openid discovery {:?} key has incorrect type {:?}", GOOGLE_OPENID_USERINFO_KEY, other),
+    let userinfo_endpoint = match discovery.get(GOOGLE_OPENID_USERINFO_KEY).expect(&format!(
+        "Openid discovery does not contain a {:?} key",
+        GOOGLE_OPENID_USERINFO_KEY
+    )) {
+        Value::String(url) => url.to_string(),
+        other => panic!(
+            "Openid discovery {:?} key has incorrect type {:?}",
+            GOOGLE_OPENID_USERINFO_KEY, other
+        ),
     };
 
     let api_state = ApiState {
@@ -40,4 +49,3 @@ pub async fn api_state() -> ApiState {
 
     api_state
 }
-

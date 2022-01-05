@@ -30,7 +30,6 @@ pub async fn new(
         .run(move |conn| NewOrganisation::insert(&organisation, &conn))
         .await;
 
-
     match res {
         Some(_) => Ok(()),
         None => Err(Json(NewOrgError::OrgNameAlreadyExists)),
@@ -86,7 +85,7 @@ pub async fn get_admins(
 }
 
 #[put("/<org_id>/admins", data = "<admins>")]
-pub async fn set_admins (
+pub async fn set_admins(
     org_id: i32,
     user: User,
     db: Database,
@@ -95,23 +94,18 @@ pub async fn set_admins (
     let res = db
         .run(move |conn| Organisation::get_admin_ids(&conn, org_id))
         .await;
-  
-    match res {
 
+    match res {
         Some(ids) => {
             if !ids.contains(&user.id) {
                 return Err(Json(OrgError::UserIsNotAdmin));
             } else {
-                db
-                    .run(move |conn| Organisation::set_admins(&conn, org_id, &admins))
+                db.run(move |conn| Organisation::set_admins(&conn, org_id, &admins))
                     .await;
                 Ok(Json(()))
             }
-
         }
 
-        None => {
-            Err(Json(OrgError::OrgNotFound))
-        }
+        None => Err(Json(OrgError::OrgNotFound)),
     }
 }

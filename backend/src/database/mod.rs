@@ -1,5 +1,5 @@
-pub mod schema;
 pub mod models;
+pub mod schema;
 
 use rocket_sync_db_pools::database;
 

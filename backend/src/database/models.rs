@@ -29,9 +29,7 @@ pub struct SuperUser {
 
 impl SuperUser {
     pub fn new(user: User) -> Self {
-        Self {
-            user
-        }
+        Self { user }
     }
 
     pub fn user(&self) -> &User {
@@ -188,7 +186,11 @@ pub struct NewOrganisationUser {
 }
 
 impl OrganisationUser {
-    pub fn get(conn: &PgConnection, organisation_id_val: i32, user_id_val: i32) -> Option<OrganisationUser> {
+    pub fn get(
+        conn: &PgConnection,
+        organisation_id_val: i32,
+        user_id_val: i32,
+    ) -> Option<OrganisationUser> {
         use crate::database::schema::organisation_users::dsl::*;
 
         organisation_users
@@ -253,13 +255,24 @@ pub struct Campaign {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(FromForm, AsChangeset)]
-pub struct UpdateCampaign {
+#[derive(FromForm)]
+pub struct UpdateCampaignInput {
     pub name: String,
     pub cover_image: Option<String>,
     pub description: String,
     pub starts_at: String,
     pub ends_at: String,
+    pub draft: bool,
+}
+
+#[derive(AsChangeset)]
+#[table_name = "campaigns"]
+pub struct UpdateCampaignChangeset {
+    pub name: String,
+    pub cover_image: Option<String>,
+    pub description: String,
+    pub starts_at: NaiveDateTime,
+    pub ends_at: NaiveDateTime,
     pub draft: bool,
 }
 
@@ -302,22 +315,34 @@ impl Campaign {
     pub fn get_from_id(conn: &PgConnection, campaign_id: i32) -> Option<Campaign> {
         use crate::database::schema::campaigns::dsl::*;
 
-        campaigns
-            .filter(id.eq(campaign_id))
-            .first(conn)
-            .ok()
+        campaigns.filter(id.eq(campaign_id)).first(conn).ok()
     }
 
-    pub fn update(conn: &PgConnection, campaign_id: i32, update_campaign: &UpdateCampaign) -> Option<Campaign> {
+    pub fn update(
+        conn: &PgConnection,
+        campaign_id: i32,
+        update_campaign: &UpdateCampaignInput,
+    ) -> Option<Campaign> {
         use crate::database::schema::campaigns::dsl::*;
 
-        diesel::update(
-            campaigns
-                .filter(id.eq(campaign_id)),
-        )
-        .set(update_campaign)
-        .get_result(conn)
-        .ok()
+        let update_changeset = UpdateCampaignChangeset {
+            name: update_campaign.name.clone(),
+            cover_image: update_campaign.cover_image.clone(),
+            description: update_campaign.description.clone(),
+            starts_at: NaiveDateTime::parse_from_str(
+                &update_campaign.starts_at,
+                "%Y-%m-%dT%H:%M:%S",
+            )
+            .unwrap(),
+            ends_at: NaiveDateTime::parse_from_str(&update_campaign.ends_at, "%Y-%m-%dT%H:%M:%S")
+                .unwrap(),
+            draft: update_campaign.draft,
+        };
+
+        diesel::update(campaigns.filter(id.eq(campaign_id)))
+            .set(update_changeset)
+            .get_result(conn)
+            .ok()
     }
 }
 
@@ -520,7 +545,10 @@ impl Answer {
             .unwrap_or_else(|_| vec![])
     }
 
-    pub fn get_all_from_application_id(conn: &PgConnection, application_id_val: i32) -> Vec<Answer> {
+    pub fn get_all_from_application_id(
+        conn: &PgConnection,
+        application_id_val: i32,
+    ) -> Vec<Answer> {
         use crate::database::schema::answers::dsl::*;
 
         answers
@@ -577,7 +605,10 @@ impl Comment {
             .unwrap_or_else(|_| vec![])
     }
 
-    pub fn get_all_from_application_id(conn: &PgConnection, application_id_val: i32) -> Vec<Comment> {
+    pub fn get_all_from_application_id(
+        conn: &PgConnection,
+        application_id_val: i32,
+    ) -> Vec<Comment> {
         use crate::database::schema::comments::dsl::*;
 
         comments
@@ -624,7 +655,10 @@ impl Rating {
             .unwrap_or_else(|_| vec![])
     }
 
-    pub fn get_all_from_application_id(conn: &PgConnection, application_id_val: i32) -> Vec<Rating> {
+    pub fn get_all_from_application_id(
+        conn: &PgConnection,
+        application_id_val: i32,
+    ) -> Vec<Rating> {
         use crate::database::schema::ratings::dsl::*;
 
         ratings
