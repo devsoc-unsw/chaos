@@ -1,6 +1,6 @@
 use crate::database::{
-    models::{Campaign, NewOrganisation, Organisation, SuperUser, User},
-    Database,
+    models::{Campaign, NewOrganisation, Organisation, SuperUser, User, OrganisationUser, Role},
+    Database, schema::AdminLevel,
 };
 
 use serde::{Deserialize, Serialize};
@@ -32,11 +32,46 @@ pub async fn get_campaign(
     }
 }
 
+#[derive(Serialize)]
+pub struct RolesResponse {
+    roles: Vec<Role>,
+}
+
+#[derive(Serialize)]
+pub enum RolesError {
+    CampaignNotFound,
+    Unauthorized,
+}
+
 #[get("/campaign/<campaign_id>/roles")]
-pub fn roles(
+pub async fn roles(
     campaign_id: i32,
     user: User,
     db: Database,
-) -> Json<Vec<String>> {
-    todo!()
+) -> Result<Json<RolesResponse>, Json<RolesError>> {
+    let campaign = db.run(move |conn|
+        Campaign::get_from_id(conn, campaign_id)
+    ).await;
+
+    let campaign = campaign.ok_or(Json(RolesError::CampaignNotFound))?;
+
+    let (org_user, roles) = db.run(move |conn| 
+        (
+            OrganisationUser::get(conn, campaign.organisation_id, user.id),
+            Role::get_all_from_campaign_id(conn, campaign.id),
+        )
+    ).await;
+
+    let permission = org_user.map(|user| user.admin_level)
+        .unwrap_or(AdminLevel::ReadOnly);
+
+    // Prevent people from viewing while it's in draft mode,
+    // unless they have adequate permissions
+    if campaign.draft && !user.superuser && permission == AdminLevel::ReadOnly {
+        return Err(Json(RolesError::Unauthorized));
+    }
+
+    Ok(Json(RolesResponse {
+        roles
+    }))
 }

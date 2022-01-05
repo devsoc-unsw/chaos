@@ -307,7 +307,7 @@ impl NewCampaign {
     }
 }
 
-#[derive(Queryable)]
+#[derive(Queryable, Serialize)]
 pub struct Role {
     pub id: i32,
     pub campaign_id: i32,
