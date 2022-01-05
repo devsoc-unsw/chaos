@@ -24,14 +24,18 @@ pub struct User {
 }
 
 pub struct SuperUser {
-    pub user: User,
-    // https://stackoverflow.com/a/53589431/15443095
-    _private: (),
+    user: User,
 }
 
 impl SuperUser {
-    pub fn new(user: User) -> SuperUser {
-        SuperUser { user, _private: () }
+    pub fn new(user: User) -> Self {
+        Self {
+            user
+        }
+    }
+
+    pub fn user(&self) -> &User {
+        &self.user
     }
 }
 
