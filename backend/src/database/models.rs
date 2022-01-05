@@ -229,7 +229,7 @@ impl NewOrganisationUser {
     }
 }
 
-#[derive(Queryable)]
+#[derive(Queryable, Serialize)]
 pub struct Campaign {
     pub id: i32,
     pub organisation_id: i32,

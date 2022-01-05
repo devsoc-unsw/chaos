@@ -2,6 +2,7 @@
 extern crate diesel;
 
 pub mod auth;
+pub mod campaigns;
 pub mod cors;
 pub mod database;
 pub mod guard;
