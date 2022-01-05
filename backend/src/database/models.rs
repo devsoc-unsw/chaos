@@ -188,6 +188,16 @@ pub struct NewOrganisationUser {
 }
 
 impl OrganisationUser {
+    pub fn get(conn: &PgConnection, organisation_id_val: i32, user_id_val: i32) -> Option<OrganisationUser> {
+        use crate::database::schema::organisation_users::dsl::*;
+
+        organisation_users
+            .filter(organisation_id.eq(organisation_id_val))
+            .filter(user_id.eq(user_id_val))
+            .first(conn)
+            .ok()
+    }
+
     pub fn get_all(conn: &PgConnection) -> Vec<OrganisationUser> {
         use crate::database::schema::organisation_users::dsl::*;
 
@@ -197,7 +207,7 @@ impl OrganisationUser {
             .unwrap_or_else(|_| vec![])
     }
 
-    pub fn get_from_user_id(conn: &PgConnection, user_id_val: i32) -> Vec<OrganisationUser> {
+    pub fn get_all_from_user_id(conn: &PgConnection, user_id_val: i32) -> Vec<OrganisationUser> {
         use crate::database::schema::organisation_users::dsl::*;
 
         organisation_users
@@ -207,7 +217,7 @@ impl OrganisationUser {
             .unwrap_or_else(|_| vec![])
     }
 
-    pub fn get_from_organisation_id(
+    pub fn get_all_from_organisation_id(
         conn: &PgConnection,
         organisation_id_val: i32,
     ) -> Vec<OrganisationUser> {
@@ -327,7 +337,7 @@ impl Role {
         roles.order(id.asc()).load(conn).unwrap_or_else(|_| vec![])
     }
 
-    pub fn get_from_campaign_id(conn: &PgConnection, campaign_id_val: i32) -> Vec<Role> {
+    pub fn get_all_from_campaign_id(conn: &PgConnection, campaign_id_val: i32) -> Vec<Role> {
         use crate::database::schema::roles::dsl::*;
 
         roles
@@ -380,7 +390,7 @@ impl Application {
             .unwrap_or_else(|_| vec![])
     }
 
-    pub fn get_from_user_id(conn: &PgConnection, user_id_val: i32) -> Vec<Application> {
+    pub fn get_all_from_user_id(conn: &PgConnection, user_id_val: i32) -> Vec<Application> {
         use crate::database::schema::applications::dsl::*;
 
         applications
@@ -390,7 +400,7 @@ impl Application {
             .unwrap_or_else(|_| vec![])
     }
 
-    pub fn get_from_role_id(conn: &PgConnection, role_id_val: i32) -> Vec<Application> {
+    pub fn get_all_from_role_id(conn: &PgConnection, role_id_val: i32) -> Vec<Application> {
         use crate::database::schema::applications::dsl::*;
 
         applications
@@ -441,7 +451,7 @@ impl Question {
             .unwrap_or_else(|_| vec![])
     }
 
-    pub fn get_from_role_id(conn: &PgConnection, role_id_val: i32) -> Vec<Question> {
+    pub fn get_all_from_role_id(conn: &PgConnection, role_id_val: i32) -> Vec<Question> {
         use crate::database::schema::questions::dsl::*;
 
         questions
@@ -488,7 +498,7 @@ impl Answer {
             .unwrap_or_else(|_| vec![])
     }
 
-    pub fn get_from_application_id(conn: &PgConnection, application_id_val: i32) -> Vec<Answer> {
+    pub fn get_all_from_application_id(conn: &PgConnection, application_id_val: i32) -> Vec<Answer> {
         use crate::database::schema::answers::dsl::*;
 
         answers
@@ -498,7 +508,7 @@ impl Answer {
             .unwrap_or_else(|_| vec![])
     }
 
-    pub fn get_from_question_id(conn: &PgConnection, question_id_val: i32) -> Vec<Answer> {
+    pub fn get_all_from_question_id(conn: &PgConnection, question_id_val: i32) -> Vec<Answer> {
         use crate::database::schema::answers::dsl::*;
 
         answers
@@ -545,7 +555,7 @@ impl Comment {
             .unwrap_or_else(|_| vec![])
     }
 
-    pub fn get_from_application_id(conn: &PgConnection, application_id_val: i32) -> Vec<Comment> {
+    pub fn get_all_from_application_id(conn: &PgConnection, application_id_val: i32) -> Vec<Comment> {
         use crate::database::schema::comments::dsl::*;
 
         comments
@@ -592,7 +602,7 @@ impl Rating {
             .unwrap_or_else(|_| vec![])
     }
 
-    pub fn get_from_application_id(conn: &PgConnection, application_id_val: i32) -> Vec<Rating> {
+    pub fn get_all_from_application_id(conn: &PgConnection, application_id_val: i32) -> Vec<Rating> {
         use crate::database::schema::ratings::dsl::*;
 
         ratings
@@ -602,7 +612,7 @@ impl Rating {
             .unwrap_or_else(|_| vec![])
     }
 
-    pub fn get_from_rater_user_id(conn: &PgConnection, user_id_val: i32) -> Vec<Rating> {
+    pub fn get_all_from_rater_user_id(conn: &PgConnection, user_id_val: i32) -> Vec<Rating> {
         use crate::database::schema::ratings::dsl::*;
 
         ratings
