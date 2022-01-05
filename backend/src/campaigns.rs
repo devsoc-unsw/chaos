@@ -1,5 +1,5 @@
 use crate::database::{
-    models::{Campaign, NewOrganisation, Organisation, SuperUser, User, OrganisationUser, Role},
+    models::{Campaign, UpdateCampaign, NewOrganisation, Organisation, SuperUser, User, OrganisationUser, Role},
     Database, schema::AdminLevel,
 };
 
@@ -15,6 +15,7 @@ use rocket::{
 #[derive(Serialize)]
 pub enum CampaignError {
     CampaignNotFound,
+    Unauthorized
 }
 
 #[get("/campaign/<campaign_id>")]
@@ -31,6 +32,39 @@ pub async fn get_campaign(
         None => Err(Json(CampaignError::CampaignNotFound)),
     }
 }
+
+#[put("/campaign/<campaign_id>", data = "<update_campaign>")]
+pub async fn update_campaign(
+    campaign_id: i32,
+    update_campaign: Form<UpdateCampaign>,
+    user: User,
+    db: Database,
+) -> Result<Json<()>, Json<CampaignError>> {
+   
+    let campaign = db.run(move |conn|
+        Campaign::get_from_id(conn, campaign_id)
+    ).await;
+    let campaign = campaign.ok_or(Json(CampaignError::CampaignNotFound))?;
+
+    let org_user = db.run(move |conn| {
+        OrganisationUser::get(conn, campaign.organisation_id, user.id)
+    }).await;
+    let org_user = org_user.ok_or(Json(CampaignError::Unauthorized))?;
+
+    if !user.superuser && org_user.admin_level == AdminLevel::ReadOnly {
+        return Err(Json(CampaignError::Unauthorized));
+    }
+
+    // only update if admin_level is not AdminLevel::ReadOnly
+    // ie, director, Admin (exec) or SuperUser
+    let campaign = db.run(move |conn|
+        Campaign::update(conn, campaign_id, &update_campaign)
+    ).await;
+
+
+    Ok(Json(()))
+}
+
 
 #[derive(Serialize)]
 pub struct RolesResponse {

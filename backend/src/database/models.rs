@@ -253,6 +253,16 @@ pub struct Campaign {
     pub updated_at: NaiveDateTime,
 }
 
+#[derive(FromForm, AsChangeset)]
+pub struct UpdateCampaign {
+    pub name: String,
+    pub cover_image: Option<String>,
+    pub description: String,
+    pub starts_at: String,
+    pub ends_at: String,
+    pub draft: bool,
+}
+
 #[derive(Insertable)]
 #[table_name = "campaigns"]
 pub struct NewCampaign {
@@ -296,6 +306,18 @@ impl Campaign {
             .filter(id.eq(campaign_id))
             .first(conn)
             .ok()
+    }
+
+    pub fn update(conn: &PgConnection, campaign_id: i32, update_campaign: &UpdateCampaign) -> Option<Campaign> {
+        use crate::database::schema::campaigns::dsl::*;
+
+        diesel::update(
+            campaigns
+                .filter(id.eq(campaign_id)),
+        )
+        .set(update_campaign)
+        .get_result(conn)
+        .ok()
     }
 }
 
