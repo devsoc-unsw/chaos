@@ -146,20 +146,14 @@ impl Organisation {
     pub fn set_admins(conn: &PgConnection, org_id: i32, admin_ids: &[i32]) -> Option<usize> {
         use crate::database::schema::organisation_users::dsl::*;
 
-        let mut counter = 0;
-        for admin_id in admin_ids {
-            diesel::update(
-                organisation_users
-                    .filter(organisation_id.eq(org_id))
-                    .filter(user_id.eq(*admin_id)),
-            )
-            .set(admin_level.eq(AdminLevel::Admin))
-            .execute(conn)
-            .ok();
-            counter += 1;
-        }
-
-        Some(counter)
+        diesel::update(
+            organisation_users
+                .filter(organisation_id.eq(org_id))
+                .filter(user_id.eq_any(admin_ids)),
+        )
+        .set(admin_level.eq(AdminLevel::Admin))
+        .execute(conn)
+        .ok()
     }
 }
 
