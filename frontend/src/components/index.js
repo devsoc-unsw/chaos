@@ -1,7 +1,8 @@
 import BackgroundWrapper from "./BackgroundWrapper";
 import CampaignCard from "./CampaignCard";
-import NavBar from "./NavBar";
 import LoadingIndicator from "./LoadingIndicator";
+import MarkChip from "./MarkChip";
+import NavBar from "./NavBar";
 import ParticleWallpaper from "./ParticleWallpaper";
 import PrivateRoute from "./PrivateRoute";
 import ReviewerStepper from "./ReviewerStepper";
@@ -9,8 +10,9 @@ import ReviewerStepper from "./ReviewerStepper";
 export {
   BackgroundWrapper,
   CampaignCard,
-  NavBar,
   LoadingIndicator,
+  MarkChip,
+  NavBar,
   ParticleWallpaper,
   PrivateRoute,
   ReviewerStepper,

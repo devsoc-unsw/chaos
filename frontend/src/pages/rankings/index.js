@@ -45,9 +45,25 @@ const dummyRankings = {
     {
       name: "Evan Lee",
       ratings: [
-        { rater: "Shrey Somaiya", rating: 0 },
-        { rater: "Michael Gribben", rating: 0 },
+        { rater: "Shrey Somaiya", rating: 1 },
+        { rater: "Michael Gribben", rating: 1 },
         { rater: "Haley Gu", rating: 1 },
+      ],
+    },
+    {
+      name: "Priscilla Soo",
+      ratings: [
+        { rater: "Shrey Somaiya", rating: 4 },
+        { rater: "Michael Gribben", rating: 4 },
+        { rater: "Haley Gu", rating: 5 },
+      ],
+    },
+    {
+      name: "Timmy Huang",
+      ratings: [
+        { rater: "Shrey Somaiya", rating: 3 },
+        { rater: "Michael Gribben", rating: 3 },
+        { rater: "Haley Gu", rating: 2 },
       ],
     },
   ],

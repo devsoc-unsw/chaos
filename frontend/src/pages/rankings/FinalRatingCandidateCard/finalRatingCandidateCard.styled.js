@@ -1,5 +1,5 @@
 import { styled } from "@mui/material/styles";
-import { Card, Chip } from "@mui/material";
+import { Card, Chip, Grid } from "@mui/material";
 import { red, green } from "@mui/material/colors";
 
 export const CandidateCard = styled(Card)(({ reject }) => ({
@@ -9,10 +9,11 @@ export const CandidateCard = styled(Card)(({ reject }) => ({
   cursor: "pointer",
 }));
 
-export const RatingChip = styled(Chip)`
-  margin: 0 0.2rem;
+export const GridCandidateName = styled(Grid)`
+  flex-grow: 1;
+  margin-left: 1rem;
 `;
 
-export const AvgChip = styled(Chip)`
-  margin-right: 1rem;
+export const RatingChip = styled(Chip)`
+  margin: 0 0.2rem;
 `;

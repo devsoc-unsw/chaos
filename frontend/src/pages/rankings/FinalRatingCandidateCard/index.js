@@ -5,8 +5,9 @@ import { CardContent, Typography, Tooltip, Grid } from "@mui/material";
 import {
   CandidateCard,
   RatingChip,
-  AvgChip,
+  GridCandidateName,
 } from "./finalRatingCandidateCard.styled";
+import { MarkChip } from "../../../components";
 import FinalRatingApplicationComments from "../FinalRatingApplicationComments";
 
 // TODO CHAOS-15: proper algo to aggregate marks
@@ -15,15 +16,7 @@ const calculateAvg = (ratings) => {
 
   const sum = ratings.map((a) => a.rating).reduce((a, b) => a + b, 0);
   const avg = sum / ratings.length;
-  return (Math.round(avg * 100) / 100).toFixed(2);
-};
-
-const avgColor = (avg) => {
-  if (avg < 1) return "error";
-  if (avg < 2) return "warning";
-  if (avg < 3) return "secondary";
-  if (avg < 4) return "info";
-  return "success";
+  return Math.round(avg * 100) / 100;
 };
 
 const FinalRatingCandidateCard = (props) => {
@@ -38,19 +31,17 @@ const FinalRatingCandidateCard = (props) => {
     setOpen(false);
   };
 
-  const avg = calculateAvg(ratings);
-
   return (
     <>
       <CandidateCard reject={reject} variant="outlined" onClick={handleOpen}>
         <CardContent>
           <Grid container alignItems="center">
             <Grid item>
-              <AvgChip label={avg} color={avgColor(avg)} />
+              <MarkChip mark={calculateAvg(ratings)} />
             </Grid>
-            <Grid item style={{ flexGrow: 1 }}>
+            <GridCandidateName item>
               <Typography variant="h6">{name}</Typography>
-            </Grid>
+            </GridCandidateName>
             <Grid item>
               {ratings.map(({ rater, rating }) => (
                 <Tooltip title={rater} key={rater}>
