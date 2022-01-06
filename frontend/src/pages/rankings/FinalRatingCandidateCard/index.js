@@ -6,6 +6,7 @@ import {
   CandidateCard,
   RatingChip,
   GridCandidateName,
+  BullSpan,
 } from "./finalRatingCandidateCard.styled";
 import { MarkChip } from "../../../components";
 import FinalRatingApplicationComments from "../FinalRatingApplicationComments";
@@ -40,11 +41,22 @@ const FinalRatingCandidateCard = (props) => {
               <MarkChip mark={calculateAvg(ratings)} colored decimal />
             </Grid>
             <GridCandidateName item>
-              <Typography variant="h6">{name}</Typography>
+              <Typography variant="h6" component="span">
+                {name}
+              </Typography>
             </GridCandidateName>
             <Grid item>
+              <Typography variant="overline" sx={{ margin: "1rem" }}>
+                Domestic
+                <BullSpan>•</BullSpan>
+                3rd Year
+                <BullSpan>•</BullSpan>
+                Software Engineering
+              </Typography>
+            </Grid>
+            <Grid item>
               {ratings.map(({ rater, rating }) => (
-                <Tooltip title={rater} key={rater}>
+                <Tooltip placement="top" arrow title={rater} key={rater}>
                   <RatingChip label={rating} variant="outlined" />
                 </Tooltip>
               ))}
