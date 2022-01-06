@@ -37,7 +37,7 @@ const FinalRatingCandidateCard = (props) => {
         <CardContent>
           <Grid container alignItems="center">
             <Grid item>
-              <MarkChip mark={calculateAvg(ratings)} />
+              <MarkChip mark={calculateAvg(ratings)} colored decimal />
             </Grid>
             <GridCandidateName item>
               <Typography variant="h6">{name}</Typography>
