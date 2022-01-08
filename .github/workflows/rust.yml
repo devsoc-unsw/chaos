@@ -23,6 +23,7 @@ jobs:
         envkey_GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         envkey_GOOGLE_REDIRECT_URI: ${{ secrets.GOOGLE_REDIRECT_URI }}
         envkey_ROCKET_DATABASES: ${{ secrets.ROCKET_DATABASES }}
+        directory: backend
     - uses: actions/checkout@v2
 
     # selecting a toolchain either by action or manual `rustup` calls should happen
