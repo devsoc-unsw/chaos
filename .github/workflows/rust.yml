@@ -15,7 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Make envfile
-      uses: SpicyPizza/create-envfile@v1.2
+      uses: SpicyPizza/create-envfile@master
       with:
         envkey_DATABASE_URL: "postgres_url"
         envkey_JWT_SECRET: ${{ secrets.JWT_SECRET }}
@@ -25,6 +25,8 @@ jobs:
         envkey_ROCKET_DATABASES: ${{ secrets.ROCKET_DATABASES }}
         directory: backend/
     - uses: actions/checkout@v2
+    - name: Test if env file exists
+      run: ls && cat backend/.env
     # selecting a toolchain either by action or manual `rustup` calls should happen
     # before the plugin, as it uses the current rustc version as its cache key
     - uses: actions-rs/toolchain@v1
