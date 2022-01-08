@@ -1,7 +1,4 @@
-use crate::database::{
-    models::User,
-    Database,
-};
+use crate::database::{models::User, Database};
 use rocket::{
     get,
     serde::{json::Json, Serialize},
@@ -12,9 +9,8 @@ pub enum UserError {
     UserNotFound,
 }
 
-
 #[derive(Serialize)]
-pub struct ReturnUser  {
+pub struct ReturnUser {
     email: String,
     zid: String,
     display_name: String,
@@ -28,18 +24,15 @@ pub async fn get_user(
     _user: User,
     db: Database,
 ) -> Result<Json<ReturnUser>, Json<UserError>> {
-    let res : Option<User> = db
-        .run(move |conn| User::get_from_id(&conn, user_id))
-        .await;
+    let res: Option<User> = db.run(move |conn| User::get_from_id(&conn, user_id)).await;
 
     match res {
-        Some(user) => Ok(Json(
-            ReturnUser {
+        Some(user) => Ok(Json(ReturnUser {
             email: user.email,
             zid: user.zid,
             display_name: user.display_name,
             degree_name: user.degree_name,
-            degree_starting_year: user.degree_starting_year
+            degree_starting_year: user.degree_starting_year,
         })),
         None => Err(Json(UserError::UserNotFound)),
     }
