@@ -14,18 +14,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Make envfile
-      uses: SpicyPizza/create-envfile@master
-      with:
-        envkey_DATABASE_URL: "postgres_url"
-        envkey_JWT_SECRET: ${{ secrets.JWT_SECRET }}
-        envkey_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-        envkey_GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-        envkey_GOOGLE_REDIRECT_URI: ${{ secrets.GOOGLE_REDIRECT_URI }}
-        envkey_ROCKET_DATABASES: ${{ secrets.ROCKET_DATABASES }}
-        directory: backend/
-    - uses: actions/checkout@v2
-    - name: attempt to generate env file
+    - name: Mock an env file
       run: |
         echo "DATABASE_URL=test_url" >> backend/.env
         echo "JWT_SECRET=test_secret" >> backend/.env
@@ -33,8 +22,6 @@ jobs:
         echo "GOOGLE_CLIENT_SECRET=test" >> backend/.env
         echo "GOOGLE_REDIRECT_URI=http://localhost:3000/auth/callback" >> backend/.env
         echo "ROCKET_DATABASES='{}'" >> backend/.env
-    - name: test env file
-      run: ls -la backend
     # selecting a toolchain either by action or manual `rustup` calls should happen
     # before the plugin, as it uses the current rustc version as its cache key
     - uses: actions-rs/toolchain@v1
