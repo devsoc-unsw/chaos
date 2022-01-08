@@ -16,10 +16,19 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Setup Env File
+            run: |
+              cat << EOF > .env
+              DATABASE_URL=postgres_url
+              JWT_SECRET=secret
+              GOOGLE_CLIENT_ID=test_client_id
+              GOOGLE_CLIENT_SECRET=test_client_secret
+              GOOGLE_REDIRECT_URI=test_redirect_URI
+              ROCKET_DATABASES='{database={url="postgres_url"}}'
+              EOF
     - name: Build
       run: cargo build --manifest-path backend/Cargo.toml
     - name: Cargo Check
       run: cargo check --manifest-path backend/Cargo.toml
     - name: RustFmt
       run: cargo fmt --manifest-path backend/Cargo.toml
-
