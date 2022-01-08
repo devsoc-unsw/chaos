@@ -16,16 +16,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Setup Env File
-            run: |
-              cat << EOF > .env
-              DATABASE_URL=postgres_url
-              JWT_SECRET=secret
-              GOOGLE_CLIENT_ID=test_client_id
-              GOOGLE_CLIENT_SECRET=test_client_secret
-              GOOGLE_REDIRECT_URI=test_redirect_URI
-              ROCKET_DATABASES='{database={url="postgres_url"}}'
-              EOF
+    - name: Make envfile
+      uses: SpicyPizza/create-envfile@v1
+      with:
+        envkey_DATABASE_URL: "postgres_url"
+        envkey_JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        envkey_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+        envkey_GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+        envkey_GOOGLE_CLIENT_URI: ${{ secrets.GOOGLE_CLIENT_URI }}
+        envkey_ROCKET_DATABASES: ${{ secrets.ROCKET_DATABASES }}
     - name: Build
       run: cargo build --manifest-path backend/Cargo.toml
     - name: Cargo Check
