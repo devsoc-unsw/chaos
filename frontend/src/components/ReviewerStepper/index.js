@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Step, StepLabel } from "@mui/material";
-import { NavStepper } from "./reviewStepper.styled";
+import { NavStepper } from "./reviewerStepper.styled";
 
 const ReviewerStepper = (props) => {
   const { activeStep } = props;

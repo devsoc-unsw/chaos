@@ -5,8 +5,10 @@ import { CardContent, Typography, Tooltip, Grid } from "@mui/material";
 import {
   CandidateCard,
   RatingChip,
-  AvgChip,
+  GridCandidateName,
+  BullSpan,
 } from "./finalRatingCandidateCard.styled";
+import { MarkChip } from "../../../components";
 import FinalRatingApplicationComments from "../FinalRatingApplicationComments";
 
 // TODO CHAOS-15: proper algo to aggregate marks
@@ -15,15 +17,7 @@ const calculateAvg = (ratings) => {
 
   const sum = ratings.map((a) => a.rating).reduce((a, b) => a + b, 0);
   const avg = sum / ratings.length;
-  return (Math.round(avg * 100) / 100).toFixed(2);
-};
-
-const avgColor = (avg) => {
-  if (avg < 1) return "error";
-  if (avg < 2) return "warning";
-  if (avg < 3) return "secondary";
-  if (avg < 4) return "info";
-  return "success";
+  return Math.round(avg * 100) / 100;
 };
 
 const FinalRatingCandidateCard = (props) => {
@@ -38,22 +32,31 @@ const FinalRatingCandidateCard = (props) => {
     setOpen(false);
   };
 
-  const avg = calculateAvg(ratings);
-
   return (
     <>
       <CandidateCard reject={reject} variant="outlined" onClick={handleOpen}>
         <CardContent>
           <Grid container alignItems="center">
             <Grid item>
-              <AvgChip label={avg} color={avgColor(avg)} />
+              <MarkChip mark={calculateAvg(ratings)} colored decimal />
             </Grid>
-            <Grid item style={{ flexGrow: 1 }}>
-              <Typography variant="h6">{name}</Typography>
+            <GridCandidateName item>
+              <Typography variant="h6" component="span">
+                {name}
+              </Typography>
+            </GridCandidateName>
+            <Grid item>
+              <Typography variant="overline" sx={{ margin: "1rem" }}>
+                Domestic
+                <BullSpan>•</BullSpan>
+                3rd Year
+                <BullSpan>•</BullSpan>
+                Software Engineering
+              </Typography>
             </Grid>
             <Grid item>
               {ratings.map(({ rater, rating }) => (
-                <Tooltip title={rater} key={rater}>
+                <Tooltip placement="top" arrow title={rater} key={rater}>
                   <RatingChip label={rating} variant="outlined" />
                 </Tooltip>
               ))}

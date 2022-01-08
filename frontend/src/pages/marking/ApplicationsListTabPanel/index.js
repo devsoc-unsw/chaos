@@ -4,6 +4,7 @@ import PropTypes from "prop-types";
 import { Box, Chip, Divider, Grid, TextField, Typography } from "@mui/material";
 import ApplicationPreviewer from "../../../components/ApplicationPreviewer";
 import { RatingChips } from "./applicationsListTabPanel";
+import { MarkChip } from "../../../components";
 
 const ApplicationsListTabPanel = (props) => {
   const { application, setMark } = props;
@@ -25,42 +26,42 @@ const ApplicationsListTabPanel = (props) => {
 
         <RatingChips container spacing={2}>
           <Grid item>
-            <Chip
+            <MarkChip
               clickable
-              label={1}
-              color={application.mark === 1 ? "error" : "default"}
+              mark={1}
+              colored={application.mark === 1}
               onClick={() => setMark(1)}
             />
           </Grid>
           <Grid item>
-            <Chip
+            <MarkChip
+              mark={2}
+              colored={application.mark === 2}
               clickable
-              label={2}
-              color={application.mark === 2 ? "warning" : "default"}
               onClick={() => setMark(2)}
             />
           </Grid>
           <Grid item>
-            <Chip
+            <MarkChip
+              mark={3}
+              colored={application.mark === 3}
               clickable
-              label={3}
-              color={application.mark === 3 ? "secondary" : "default"}
               onClick={() => setMark(3)}
             />
           </Grid>
           <Grid item>
-            <Chip
+            <MarkChip
+              mark={4}
+              colored={application.mark === 4}
               clickable
-              label={4}
-              color={application.mark === 4 ? "info" : "default"}
               onClick={() => setMark(4)}
             />
           </Grid>
           <Grid item>
-            <Chip
+            <MarkChip
+              mark={5}
+              colored={application.mark === 5}
               clickable
-              label={5}
-              color={application.mark === 5 ? "success" : "default"}
               onClick={() => setMark(5)}
             />
           </Grid>

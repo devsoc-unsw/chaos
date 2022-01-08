@@ -1,16 +1,9 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-import { Tab, Tabs, Grid, Chip } from "@mui/material";
+import { Tab, Tabs, Grid } from "@mui/material";
 import ApplicationsListTabPanel from "../ApplicationsListTabPanel";
-
-const getChipColor = (mark) => {
-  if (mark === 1) return "error";
-  if (mark === 2) return "warning";
-  if (mark === 3) return "secondary";
-  if (mark === 4) return "info";
-  return "success";
-};
+import { MarkChip } from "../../../components";
 
 const ApplicationsList = (props) => {
   // TODO: CHAOS-12 handle candidates from multiple positions from BE
@@ -42,10 +35,7 @@ const ApplicationsList = (props) => {
                 >
                   {application.zId}
                   {application.mark ? (
-                    <Chip
-                      label={application.mark}
-                      color={getChipColor(application.mark)}
-                    />
+                    <MarkChip mark={application.mark} colored />
                   ) : (
                     ""
                   )}
