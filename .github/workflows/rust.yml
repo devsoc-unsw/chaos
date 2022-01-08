@@ -21,7 +21,7 @@ jobs:
         envkey_JWT_SECRET: ${{ secrets.JWT_SECRET }}
         envkey_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
         envkey_GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-        envkey_GOOGLE_CLIENT_URI: ${{ secrets.GOOGLE_CLIENT_URI }}
+        envkey_GOOGLE_REDIRECT_URI: ${{ secrets.GOOGLE_REDIRECT_URI }}
         envkey_ROCKET_DATABASES: ${{ secrets.ROCKET_DATABASES }}
     - uses: actions/checkout@v2
 
