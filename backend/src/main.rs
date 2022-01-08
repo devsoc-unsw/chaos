@@ -8,7 +8,7 @@ pub mod database;
 pub mod guard;
 pub mod organisation;
 pub mod state;
-pub mod user
+pub mod user;
 
 use auth::Auth;
 use cors::cors;
