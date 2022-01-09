@@ -10,7 +10,7 @@ pub enum UserError {
 }
 
 #[derive(Serialize)]
-pub struct ReturnUser {
+pub struct UserResponse {
     email: String,
     zid: String,
     display_name: String,
@@ -23,11 +23,11 @@ pub async fn get_user(
     user_id: i32,
     _user: User,
     db: Database,
-) -> Result<Json<ReturnUser>, Json<UserError>> {
+) -> Result<Json<UserResponse>, Json<UserError>> {
     let res: Option<User> = db.run(move |conn| User::get_from_id(&conn, user_id)).await;
 
     match res {
-        Some(user) => Ok(Json(ReturnUser {
+        Some(user) => Ok(Json(UserResponse {
             email: user.email,
             zid: user.zid,
             display_name: user.display_name,
