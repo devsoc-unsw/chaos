@@ -8,6 +8,7 @@ pub mod database;
 pub mod guard;
 pub mod organisation;
 pub mod state;
+pub mod user;
 
 use auth::Auth;
 use cors::cors;
@@ -48,9 +49,10 @@ async fn main() {
             routes![
                 campaigns::get_campaign,
                 campaigns::create_or_update_campaign,
-                campaigns::roles
+                campaigns::roles,
             ],
         )
+        .mount("/user", routes![user::get_user])
         .launch()
         .await
         .unwrap();
