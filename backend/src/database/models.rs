@@ -344,6 +344,56 @@ impl Campaign {
             .get_result(conn)
             .ok()
     }
+
+    pub fn delete(conn: &PgConnection, campaign_id: i32) -> bool {
+        use crate::database::schema::campaigns::dsl::*;
+
+        diesel::delete(campaigns.filter(id.eq(campaign_id)))
+            .execute(conn)
+            .is_ok()
+    }
+
+    // this function is used to delete a campaign and all associated data
+    // ie the campaign, roles, applications, questions, answers, ratings and comments.
+    // it will not delete users from OrganisationUsers
+    pub fn delete_deep(conn: &PgConnection, campaign_id: i32) -> Option<()> {
+        use crate::database::schema::roles::dsl::{id as role_id, roles};
+
+        let role_items: Vec<Role> = roles.filter(role_id.eq(campaign_id)).load(conn).ok()?;
+
+        for role in role_items {
+            let question_items: Vec<Question> = Question::get_all_from_role_id(conn, role.id);
+            for question in question_items {
+                let answer_items: Vec<Answer> = Answer::get_all_from_question_id(conn, question.id);
+                for answer in answer_items {
+                    Answer::delete(conn, answer.id);
+                }
+                Question::delete(conn, question.id);
+            }
+
+            let application_items: Vec<Application> =
+                Application::get_all_from_role_id(conn, role.id);
+            for application in application_items {
+                let rating_items: Vec<Rating> =
+                    Rating::get_all_from_application_id(conn, application.id);
+                for rating in rating_items {
+                    Rating::delete(conn, rating.id);
+                }
+                let comment_items: Vec<Comment> =
+                    Comment::get_all_from_application_id(conn, application.id);
+                for comment in comment_items {
+                    Comment::delete(conn, comment.id);
+                }
+                Application::delete(conn, application.id);
+            }
+
+            Role::delete(conn, role.id);
+        }
+
+        Campaign::delete(conn, campaign_id);
+
+        Some(())
+    }
 }
 
 impl NewCampaign {
@@ -398,6 +448,14 @@ impl Role {
         use crate::database::schema::roles::dsl::*;
 
         roles.filter(name.eq(role_name)).first(conn).ok()
+    }
+
+    pub fn delete(conn: &PgConnection, role_id: i32) -> bool {
+        use crate::database::schema::roles::dsl::*;
+
+        diesel::delete(roles.filter(id.eq(role_id)))
+            .execute(conn)
+            .is_ok()
     }
 }
 
@@ -456,6 +514,14 @@ impl Application {
             .load(conn)
             .unwrap_or_else(|_| vec![])
     }
+
+    pub fn delete(conn: &PgConnection, application_id: i32) -> bool {
+        use crate::database::schema::applications::dsl::*;
+
+        diesel::delete(applications.filter(id.eq(application_id)))
+            .execute(conn)
+            .is_ok()
+    }
 }
 
 impl NewApplication {
@@ -506,6 +572,14 @@ impl Question {
             .order(id.asc())
             .load(conn)
             .unwrap_or_else(|_| vec![])
+    }
+
+    pub fn delete(conn: &PgConnection, question_id: i32) -> bool {
+        use crate::database::schema::questions::dsl::*;
+
+        diesel::delete(questions.filter(id.eq(question_id)))
+            .execute(conn)
+            .is_ok()
     }
 }
 
@@ -567,6 +641,14 @@ impl Answer {
             .load(conn)
             .unwrap_or_else(|_| vec![])
     }
+
+    pub fn delete(conn: &PgConnection, answer_id_val: i32) -> bool {
+        use crate::database::schema::answers::dsl::*;
+
+        diesel::delete(answers.filter(id.eq(answer_id_val)))
+            .execute(conn)
+            .is_ok()
+    }
 }
 
 impl NewAnswer {
@@ -616,6 +698,14 @@ impl Comment {
             .order(id.asc())
             .load(conn)
             .unwrap_or_else(|_| vec![])
+    }
+
+    pub fn delete(conn: &PgConnection, comment_id_val: i32) -> bool {
+        use crate::database::schema::comments::dsl::*;
+
+        diesel::delete(comments.filter(id.eq(comment_id_val)))
+            .execute(conn)
+            .is_ok()
     }
 }
 
@@ -676,6 +766,13 @@ impl Rating {
             .order(id.asc())
             .load(conn)
             .unwrap_or_else(|_| vec![])
+    }
+
+    pub fn delete(conn: &PgConnection, rating_id_val: i32) -> bool {
+        use crate::database::schema::ratings::dsl::*;
+        diesel::delete(ratings.filter(id.eq(rating_id_val)))
+            .execute(conn)
+            .is_ok()
     }
 }
 

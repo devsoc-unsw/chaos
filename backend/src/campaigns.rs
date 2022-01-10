@@ -62,6 +62,33 @@ pub async fn create_or_update_campaign(
     Ok(Json(()))
 }
 
+#[delete("/<campaign_id>")]
+pub async fn delete_campaign(
+    campaign_id: i32,
+    user: User,
+    db: Database,
+) -> Result<Json<()>, Json<CampaignError>> {
+    let campaign = db
+        .run(move |conn| Campaign::get_from_id(conn, campaign_id))
+        .await;
+    let campaign = campaign.ok_or(Json(CampaignError::CampaignNotFound))?;
+
+    let org_user = db
+        .run(move |conn| OrganisationUser::get(conn, campaign.organisation_id, user.id))
+        .await;
+    let org_user = org_user.ok_or(Json(CampaignError::Unauthorized))?;
+
+    // only exec/org admin or superuser can delete
+    if !user.superuser && org_user.admin_level != AdminLevel::Admin {
+        return Err(Json(CampaignError::Unauthorized));
+    }
+
+    db.run(move |conn| Campaign::delete_deep(conn, campaign_id))
+        .await;
+
+    Ok(Json(()))
+}
+
 #[derive(Serialize)]
 pub struct RolesResponse {
     roles: Vec<Role>,
