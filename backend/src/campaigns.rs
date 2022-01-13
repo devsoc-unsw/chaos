@@ -42,21 +42,22 @@ pub async fn create_or_update_campaign(
     let campaign = db
         .run(move |conn| Campaign::get_from_id(conn, campaign_id))
         .await;
+
     let campaign = campaign.ok_or(Json(CampaignError::CampaignNotFound))?;
 
     let org_user = db
         .run(move |conn| OrganisationUser::get(conn, campaign.organisation_id, user.id))
         .await;
+
     let org_user = org_user.ok_or(Json(CampaignError::Unauthorized))?;
 
+    // only allow update if admin_level is not AdminLevel::ReadOnly
+    // ie only director, Admin (exec) or SuperUser can perform this action
     if !user.superuser && org_user.admin_level == AdminLevel::ReadOnly {
         return Err(Json(CampaignError::Unauthorized));
     }
 
-    // only update if admin_level is not AdminLevel::ReadOnly
-    // ie, director, Admin (exec) or SuperUser
-    let campaign = db
-        .run(move |conn| Campaign::update(conn, campaign_id, &update_campaign))
+    db.run(move |conn| Campaign::update(conn, campaign_id, &update_campaign))
         .await;
 
     Ok(Json(()))
