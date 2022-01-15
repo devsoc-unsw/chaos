@@ -1,17 +1,14 @@
 import {
-  Container,
   FormControlLabel,
   Switch,
-  TextField,
-  Button,
 } from "@mui/material";
 import AdapterDateFns from '@mui/lab/AdapterDateFns';
 import LocalizationProvider from '@mui/lab/LocalizationProvider';
 import DatePicker from '@mui/lab/DatePicker';
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { CampaignContainer, CampaignRowDiv, CampaignSubmit, CampaignTextField } from "./createCampaign.styled";
 import { LoadingIndicator } from "../../components";
-
 
 const CreateCampaign = () => {
   const navigate = useNavigate();
@@ -25,61 +22,64 @@ const CreateCampaign = () => {
   const [error, setError] = React.useState(null);
 
   return (
-    <Container>
+    <CampaignContainer>
       <img src="https://source.unsplash.com/random/1280x720" alt="placeholder image" />
-      <TextField
+      <CampaignTextField
         label="Campaign Name"
         variant="outlined"
         value={name}
         onChange={(e) => setName(e.target.value)}
       />
-      <TextField
+      <CampaignTextField
         label="Campaign Description"
         variant="outlined"
+        multiline
+        rows={10}
         value={description}
         onChange={(e) => setDescription(e.target.value)}
       />
-      <LocalizationProvider dateAdapter={AdapterDateFns}>
-        <DatePicker
-          label="Start Date"
-          inputFormat="dd/MM/yyyy"
-          value={startDate}
-          onChange={(date) => setStartDate(date)}
-          renderInput={(params) => <TextField {...params} />}
-        />
-        <DatePicker
-          label="End Date"
-          inputFormat="dd/MM/yyyy"
-          value={endDate}
-          onChange={(date) => setEndDate(date)}
-          renderInput={(params) => <TextField {...params} />}
-        />
-      </LocalizationProvider>
-      <p>Date pickers for start and end dates</p>
+      <CampaignRowDiv>
       <FormControlLabel
-        control={
-          <Switch
-            label="Interview Stage"
-            checked={interviewStage}
-            onChange={() => setInterviewStage(!interviewStage)}
+          control={
+            <Switch
+              label="Interview Stage"
+              checked={interviewStage}
+              onChange={() => setInterviewStage(!interviewStage)}
+            />
+          }
+          label="Interview Stage"
+        />
+        <FormControlLabel
+          control={
+            <Switch
+              label="Scoring Stage"
+              checked={scoringState}
+              onChange={() => setScoringStage(!scoringState)}
+            />
+          }
+          label="Scoring Stage"
+        />
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <DatePicker
+            label="Start Date"
+            inputFormat="dd/MM/yyyy"
+            value={startDate}
+            onChange={(date) => setStartDate(date)}
+            renderInput={(params) => <CampaignTextField {...params} />}
           />
-        }
-        label="Interview Stage"
-      />
-      <FormControlLabel
-        control={
-          <Switch
-            label="Scoring Stage"
-            checked={scoringState}
-            onChange={() => setScoringStage(!scoringState)}
+          <DatePicker
+            label="End Date"
+            inputFormat="dd/MM/yyyy"
+            value={endDate}
+            onChange={(date) => setEndDate(date)}
+            renderInput={(params) => <CampaignTextField {...params} />}
           />
-        }
-        label="Scoring Stage"
-      />
-      <Button variant="contained" color="primary" onClick={undefined}>
+        </LocalizationProvider>
+      </CampaignRowDiv>
+      <CampaignSubmit variant="contained" color="primary" onClick={undefined}>
         Create Campaign
-      </Button>
-    </Container>
+      </CampaignSubmit>
+    </CampaignContainer>
   );
 
 };
