@@ -50,6 +50,7 @@ async fn main() {
                 campaigns::get_campaign,
                 campaigns::create_or_update_campaign,
                 campaigns::roles,
+                campaigns::delete_campaign,
             ],
         )
         .mount("/user", routes![user::get_user])
