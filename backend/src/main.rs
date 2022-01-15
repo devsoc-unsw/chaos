@@ -54,7 +54,7 @@ async fn main() {
             ],
         )
         .mount("/user", routes![user::get_user])
-        .mount("/role", routes![role::get_role,])
+        .mount("/role", routes![role::get_role, role::update_role])
         .launch()
         .await
         .unwrap();

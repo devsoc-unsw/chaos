@@ -349,7 +349,6 @@ impl Campaign {
 impl NewCampaign {
     pub fn insert(&self, conn: &PgConnection) -> Option<Campaign> {
         use crate::database::schema::campaigns::dsl::*;
-
         self.insert_into(campaigns).get_result(conn).ok()
     }
 }
@@ -367,9 +366,18 @@ pub struct Role {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Insertable)]
+#[derive(FromForm)]
+pub struct RoleUpdateInput {
+    pub name: String,
+    pub description: Option<String>,
+    pub min_available: i32,
+    pub max_available: i32,
+    pub finalised: bool,
+}
+
+#[derive(Insertable, AsChangeset)]
 #[table_name = "roles"]
-pub struct NewRole {
+pub struct NewOrUpdateRole {
     pub name: String,
     pub description: Option<String>,
     pub min_available: i32,
@@ -405,9 +413,30 @@ impl Role {
 
         roles.filter(id.eq(role_id)).first(conn).ok()
     }
+
+    pub fn update(
+        conn: &PgConnection,
+        role_id: i32,
+        role_update: &RoleUpdateInput,
+    ) -> Option<Role> {
+        use crate::database::schema::roles::dsl::*;
+
+        let update_changeset = NewOrUpdateRole {
+            name: role_update.name.clone(),
+            description: role_update.description.clone(),
+            min_available: role_update.min_available,
+            max_available: role_update.max_available,
+            finalised: role_update.finalised,
+        };
+
+        diesel::update(roles.filter(id.eq(role_id)))
+            .set(update_changeset)
+            .get_result(conn)
+            .ok()
+    }
 }
 
-impl NewRole {
+impl NewOrUpdateRole {
     pub fn insert(&self, conn: &PgConnection) -> Option<Role> {
         use crate::database::schema::roles::dsl::*;
 

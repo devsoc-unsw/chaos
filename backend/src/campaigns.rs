@@ -1,15 +1,12 @@
 use crate::database::{
-    models::{
-        Campaign, NewOrganisation, Organisation, OrganisationUser, Role, SuperUser,
-        UpdateCampaignInput, User,
-    },
+    models::{Campaign, OrganisationUser, Role, UpdateCampaignInput, User},
     schema::AdminLevel,
     Database,
 };
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
-use rocket::{delete, form::Form, get, post, put, serde::json::Json};
+use rocket::{form::Form, get, put, serde::json::Json};
 
 #[derive(Serialize)]
 pub enum CampaignError {
