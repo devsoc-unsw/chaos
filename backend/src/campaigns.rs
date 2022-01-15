@@ -1,7 +1,7 @@
 use crate::database::{
     models::{
-        Campaign, NewOrganisation, Organisation, OrganisationUser, Role, SuperUser,
-        UpdateCampaignInput, User,
+        Campaign, NewCampaign, NewCampaignInput, NewOrganisation, Organisation, OrganisationUser,
+        Role, SuperUser, UpdateCampaignInput, User,
     },
     schema::AdminLevel,
     Database,
@@ -15,13 +15,11 @@ use rocket::{delete, form::Form, get, post, put, serde::json::Json};
 pub enum CampaignError {
     CampaignNotFound,
     Unauthorized,
+    UnableToCreate,
 }
 
 #[get("/<campaign_id>")]
-pub async fn get_campaign(
-    campaign_id: i32,
-    db: Database,
-) -> Result<Json<Campaign>, Json<CampaignError>> {
+pub async fn get(campaign_id: i32, db: Database) -> Result<Json<Campaign>, Json<CampaignError>> {
     let campaign = db
         .run(move |conn| Campaign::get_from_id(conn, campaign_id))
         .await;
@@ -33,7 +31,7 @@ pub async fn get_campaign(
 }
 
 #[put("/<campaign_id>", data = "<update_campaign>")]
-pub async fn create_or_update_campaign(
+pub async fn update(
     campaign_id: i32,
     update_campaign: Form<UpdateCampaignInput>,
     user: User,
@@ -61,6 +59,33 @@ pub async fn create_or_update_campaign(
         .await;
 
     Ok(Json(()))
+}
+
+#[post("/new", data = "<new_campaign>")]
+pub async fn create(
+    new_campaign: Form<NewCampaignInput>,
+    user: User,
+    db: Database,
+) -> Result<Json<Campaign>, Json<CampaignError>> {
+    let inner = new_campaign.into_inner();
+    let org_user = db
+        .run(move |conn| OrganisationUser::get(conn, inner.organisation_id, user.id))
+        .await;
+
+    let org_user = org_user.ok_or(Json(CampaignError::Unauthorized))?;
+
+    // only allow update if admin_level is not AdminLevel::ReadOnly
+    // ie only director, Admin (exec) or SuperUser can perform this action
+    if !user.superuser && org_user.admin_level == AdminLevel::ReadOnly {
+        return Err(Json(CampaignError::Unauthorized));
+    }
+
+    let campaign = db
+        .run(move |conn| Campaign::create(conn, &inner))
+        .await
+        .ok_or(Json(CampaignError::UnableToCreate))?;
+
+    Ok(Json(campaign))
 }
 
 #[derive(Serialize)]

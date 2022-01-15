@@ -47,9 +47,10 @@ async fn main() {
         .mount(
             "/campaigns",
             routes![
-                campaigns::get_campaign,
-                campaigns::create_or_update_campaign,
+                campaigns::get,
+                campaigns::update,
                 campaigns::roles,
+                campaigns::create,
             ],
         )
         .mount("/user", routes![user::get_user])
