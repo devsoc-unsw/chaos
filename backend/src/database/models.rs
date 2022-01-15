@@ -37,6 +37,16 @@ impl SuperUser {
     }
 }
 
+pub struct OrganisationDirector {
+    user: User,
+    org: Organisation,
+};
+
+pub struct OrganisationAdmin {
+    user: User,
+    org: Organisation,
+};
+
 #[derive(Insertable)]
 #[table_name = "users"]
 pub struct NewUser {
