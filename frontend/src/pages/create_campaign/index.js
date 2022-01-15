@@ -52,7 +52,7 @@ const CreateCampaign = () => {
     if (status === 200) {
       console.log("nice!");
     } else {
-      console.log("you fucked up");
+      console.log("something fucked up");
     }
   };
 
