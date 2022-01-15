@@ -45,7 +45,7 @@ async fn main() {
         )
         .mount("/auth", routes![auth::signin, auth::signup])
         .mount(
-            "/campaigns",
+            "/campaign",
             routes![
                 campaigns::get,
                 campaigns::update,
