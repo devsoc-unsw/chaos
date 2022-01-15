@@ -399,6 +399,12 @@ impl Role {
 
         roles.filter(name.eq(role_name)).first(conn).ok()
     }
+
+    pub fn get_from_id(conn: &PgConnection, role_id: i32) -> Option<Role> {
+        use crate::database::schema::roles::dsl::*;
+
+        roles.filter(id.eq(role_id)).first(conn).ok()
+    }
 }
 
 impl NewRole {
