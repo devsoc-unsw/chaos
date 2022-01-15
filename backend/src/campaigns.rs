@@ -1,7 +1,7 @@
 use crate::database::{
     models::{
-        Campaign, NewOrganisation, Organisation, OrganisationUser, Role, SuperUser,
-        UpdateCampaignInput, User,
+        Campaign, NewOrganisation, Organisation, OrganisationAdmin, OrganisationUser, Role,
+        SuperUser, UpdateCampaignInput, User,
     },
     schema::AdminLevel,
     Database,
@@ -41,13 +41,13 @@ pub async fn create_or_update_campaign(
 ) -> Result<Json<()>, Json<CampaignError>> {
     let campaign = db
         .run(move |conn| Campaign::get_from_id(conn, campaign_id))
-        .await;
-    let campaign = campaign.ok_or(Json(CampaignError::CampaignNotFound))?;
+        .await
+        .ok_or(Json(CampaignError::CampaignNotFound))?;
 
     let org_user = db
         .run(move |conn| OrganisationUser::get(conn, campaign.organisation_id, user.id))
-        .await;
-    let org_user = org_user.ok_or(Json(CampaignError::Unauthorized))?;
+        .await
+        .ok_or(Json(CampaignError::Unauthorized))?;
 
     if !user.superuser && org_user.admin_level == AdminLevel::ReadOnly {
         return Err(Json(CampaignError::Unauthorized));
@@ -55,8 +55,7 @@ pub async fn create_or_update_campaign(
 
     // only update if admin_level is not AdminLevel::ReadOnly
     // ie, director, Admin (exec) or SuperUser
-    let campaign = db
-        .run(move |conn| Campaign::update(conn, campaign_id, &update_campaign))
+    db.run(move |conn| Campaign::update(conn, campaign_id, &update_campaign))
         .await;
 
     Ok(Json(()))
@@ -68,25 +67,18 @@ pub async fn delete_campaign(
     user: User,
     db: Database,
 ) -> Result<Json<()>, Json<CampaignError>> {
-    let campaign = db
-        .run(move |conn| Campaign::get_from_id(conn, campaign_id))
+    let admin_res = db
+        .run(move |conn| OrganisationAdmin::new_from_campaign_id(user, campaign_id, conn))
         .await;
-    let campaign = campaign.ok_or(Json(CampaignError::CampaignNotFound))?;
 
-    let org_user = db
-        .run(move |conn| OrganisationUser::get(conn, campaign.organisation_id, user.id))
-        .await;
-    let org_user = org_user.ok_or(Json(CampaignError::Unauthorized))?;
-
-    // only exec/org admin or superuser can delete
-    if !user.superuser && org_user.admin_level != AdminLevel::Admin {
-        return Err(Json(CampaignError::Unauthorized));
+    match admin_res {
+        Ok(_admin) => {
+            db.run(move |conn| Campaign::delete_deep(conn, campaign_id))
+                .await;
+            Ok(Json(()))
+        }
+        Err(_) => Err(Json(CampaignError::Unauthorized)),
     }
-
-    db.run(move |conn| Campaign::delete_deep(conn, campaign_id))
-        .await;
-
-    Ok(Json(()))
 }
 
 #[derive(Serialize)]

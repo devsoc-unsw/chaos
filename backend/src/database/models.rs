@@ -40,12 +40,131 @@ impl SuperUser {
 pub struct OrganisationDirector {
     user: User,
     org: Organisation,
-};
+}
+
+pub enum OrganisationDirectorError {
+    DieselError(diesel::result::Error),
+    Unauthorized,
+}
+
+impl From<diesel::result::Error> for OrganisationDirectorError {
+    fn from(err: diesel::result::Error) -> Self {
+        OrganisationDirectorError::DieselError(err)
+    }
+}
+
+impl OrganisationDirector {
+    pub fn new_from_org_id(
+        user: User,
+        org_id: i32,
+        conn: &PgConnection,
+    ) -> Result<Self, OrganisationDirectorError> {
+        let org = organisations::table
+            .find(org_id)
+            .first::<Organisation>(conn)?;
+
+        let org_user = organisation_users::table
+            .filter(organisation_users::organisation_id.eq(org_id))
+            .filter(organisation_users::user_id.eq(user.id))
+            .first::<OrganisationUser>(conn)?;
+
+        if !user.superuser && org_user.admin_level != AdminLevel::Director {
+            return Err(OrganisationDirectorError::Unauthorized);
+        }
+
+        Ok(Self { user, org })
+    }
+
+    pub fn new_from_campaign_id(
+        user: User,
+        campaign_id: i32,
+        conn: &PgConnection,
+    ) -> Result<Self, OrganisationDirectorError> {
+        let org_id = campaigns::table
+            .find(campaign_id)
+            .first::<Campaign>(conn)?
+            .organisation_id;
+
+        let org = organisations::table
+            .filter(organisations::id.eq(org_id))
+            .first::<Organisation>(conn)?;
+
+        let org_user = organisation_users::table
+            .filter(organisation_users::organisation_id.eq(org.id))
+            .filter(organisation_users::user_id.eq(user.id))
+            .first::<OrganisationUser>(conn)?;
+
+        if !user.superuser && org_user.admin_level != AdminLevel::Director {
+            return Err(OrganisationDirectorError::Unauthorized);
+        }
+
+        Ok(Self { user, org })
+    }
+}
 
 pub struct OrganisationAdmin {
     user: User,
     org: Organisation,
-};
+}
+pub enum OrganisationAdminError {
+    DieselError(diesel::result::Error),
+    Unauthorized,
+}
+
+impl From<diesel::result::Error> for OrganisationAdminError {
+    fn from(err: diesel::result::Error) -> Self {
+        OrganisationAdminError::DieselError(err)
+    }
+}
+
+impl OrganisationAdmin {
+    pub fn new_from_org_id(
+        user: User,
+        org_id: i32,
+        conn: &PgConnection,
+    ) -> Result<Self, OrganisationAdminError> {
+        let org = organisations::table
+            .find(org_id)
+            .first::<Organisation>(conn)?;
+
+        let org_user = organisation_users::table
+            .filter(organisation_users::organisation_id.eq(org_id))
+            .filter(organisation_users::user_id.eq(user.id))
+            .first::<OrganisationUser>(conn)?;
+
+        if !user.superuser && org_user.admin_level != AdminLevel::Admin {
+            return Err(OrganisationAdminError::Unauthorized);
+        }
+
+        Ok(Self { user, org })
+    }
+
+    pub fn new_from_campaign_id(
+        user: User,
+        campaign_id: i32,
+        conn: &PgConnection,
+    ) -> Result<Self, OrganisationDirectorError> {
+        let org_id = campaigns::table
+            .find(campaign_id)
+            .first::<Campaign>(conn)?
+            .organisation_id;
+
+        let org = organisations::table
+            .filter(organisations::id.eq(org_id))
+            .first::<Organisation>(conn)?;
+
+        let org_user = organisation_users::table
+            .filter(organisation_users::organisation_id.eq(org.id))
+            .filter(organisation_users::user_id.eq(user.id))
+            .first::<OrganisationUser>(conn)?;
+
+        if !user.superuser && org_user.admin_level != AdminLevel::Admin {
+            return Err(OrganisationDirectorError::Unauthorized);
+        }
+
+        Ok(Self { user, org })
+    }
+}
 
 #[derive(Insertable)]
 #[table_name = "users"]
