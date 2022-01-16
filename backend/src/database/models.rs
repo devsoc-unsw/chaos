@@ -5,11 +5,11 @@ use super::schema::{
     ratings, roles, users,
 };
 use chrono::NaiveDateTime;
+use diesel::prelude::BelongingToDsl;
 use diesel::prelude::*;
 use diesel::PgConnection;
 use rocket::FromForm;
 use serde::{Deserialize, Serialize};
-
 #[derive(Queryable)]
 pub struct User {
     pub id: i32,
@@ -85,20 +85,7 @@ impl OrganisationDirector {
             .first::<Campaign>(conn)?
             .organisation_id;
 
-        let org = organisations::table
-            .filter(organisations::id.eq(org_id))
-            .first::<Organisation>(conn)?;
-
-        let org_user = organisation_users::table
-            .filter(organisation_users::organisation_id.eq(org.id))
-            .filter(organisation_users::user_id.eq(user.id))
-            .first::<OrganisationUser>(conn)?;
-
-        if !user.superuser && org_user.admin_level != AdminLevel::Director {
-            return Err(OrganisationDirectorError::Unauthorized);
-        }
-
-        Ok(Self { user, org })
+        Self::new_from_org_id(user, org_id, conn)
     }
 }
 
@@ -143,26 +130,13 @@ impl OrganisationAdmin {
         user: User,
         campaign_id: i32,
         conn: &PgConnection,
-    ) -> Result<Self, OrganisationDirectorError> {
+    ) -> Result<Self, OrganisationAdminError> {
         let org_id = campaigns::table
             .find(campaign_id)
             .first::<Campaign>(conn)?
             .organisation_id;
 
-        let org = organisations::table
-            .filter(organisations::id.eq(org_id))
-            .first::<Organisation>(conn)?;
-
-        let org_user = organisation_users::table
-            .filter(organisation_users::organisation_id.eq(org.id))
-            .filter(organisation_users::user_id.eq(user.id))
-            .first::<OrganisationUser>(conn)?;
-
-        if !user.superuser && org_user.admin_level != AdminLevel::Admin {
-            return Err(OrganisationDirectorError::Unauthorized);
-        }
-
-        Ok(Self { user, org })
+        Self::new_from_org_id(user, org_id, conn)
     }
 }
 
@@ -296,7 +270,9 @@ impl NewOrganisation {
     }
 }
 
-#[derive(Queryable)]
+#[derive(Queryable, Associations)]
+#[belongs_to(Organisation)]
+#[belongs_to(User)]
 pub struct OrganisationUser {
     pub id: i32,
     pub user_id: i32,
@@ -370,7 +346,8 @@ impl NewOrganisationUser {
     }
 }
 
-#[derive(Queryable, Serialize)]
+#[derive(Queryable, Serialize, Associations)]
+#[belongs_to(Organisation)]
 pub struct Campaign {
     pub id: i32,
     pub organisation_id: i32,
@@ -482,42 +459,21 @@ impl Campaign {
             .is_ok()
     }
 
-    // this function is used to delete a campaign and all associated data
-    // ie the campaign, roles, applications, questions, answers, ratings and comments.
-    // it will not delete users from OrganisationUsers
     pub fn delete_deep(conn: &PgConnection, campaign_id: i32) -> Option<()> {
-        use crate::database::schema::roles::dsl::{id as role_id, roles};
+        use crate::database::schema::roles::dsl::{campaign_id as dsl_role_campaign_id, roles};
 
-        let role_items: Vec<Role> = roles.filter(role_id.eq(campaign_id)).load(conn).ok()?;
+        let role_items: Vec<Role> = roles
+            .filter(dsl_role_campaign_id.eq(campaign_id))
+            .load(conn)
+            .ok()?;
 
         for role in role_items {
-            let question_items: Vec<Question> = Question::get_all_from_role_id(conn, role.id);
-            for question in question_items {
-                let answer_items: Vec<Answer> = Answer::get_all_from_question_id(conn, question.id);
-                for answer in answer_items {
-                    Answer::delete(conn, answer.id);
-                }
-                Question::delete(conn, question.id);
-            }
-
-            let application_items: Vec<Application> =
-                Application::get_all_from_role_id(conn, role.id);
-            for application in application_items {
-                let rating_items: Vec<Rating> =
-                    Rating::get_all_from_application_id(conn, application.id);
-                for rating in rating_items {
-                    Rating::delete(conn, rating.id);
-                }
-                let comment_items: Vec<Comment> =
-                    Comment::get_all_from_application_id(conn, application.id);
-                for comment in comment_items {
-                    Comment::delete(conn, comment.id);
-                }
-                Application::delete(conn, application.id);
-            }
-
-            Role::delete(conn, role.id);
+            Role::delete_children(conn, role)?;
         }
+
+        diesel::delete(roles.filter(dsl_role_campaign_id.eq(campaign_id)))
+            .execute(conn)
+            .ok()?;
 
         Campaign::delete(conn, campaign_id);
 
@@ -533,7 +489,8 @@ impl NewCampaign {
     }
 }
 
-#[derive(Queryable, Serialize)]
+#[derive(Identifiable, Queryable, Serialize, Associations, PartialEq)]
+#[belongs_to(Campaign)]
 pub struct Role {
     pub id: i32,
     pub campaign_id: i32,
@@ -586,6 +543,33 @@ impl Role {
             .execute(conn)
             .is_ok()
     }
+
+    pub fn delete_children(conn: &PgConnection, role: Role) -> Option<()> {
+        let question_items: Vec<Question> = Question::belonging_to(&role).load(conn).ok()?;
+
+        diesel::delete(Question::belonging_to(&role))
+            .execute(conn)
+            .ok()?;
+
+        for question in question_items {
+            diesel::delete(Answer::belonging_to(&question))
+                .execute(conn)
+                .ok()?;
+        }
+
+        let application_items: Vec<Application> =
+            Application::belonging_to(&role).load(conn).ok()?;
+
+        for application in application_items {
+            Application::delete_children(conn, application)?;
+        }
+
+        diesel::delete(Application::belonging_to(&role))
+            .execute(conn)
+            .ok()?;
+
+        Some(())
+    }
 }
 
 impl NewRole {
@@ -596,7 +580,9 @@ impl NewRole {
     }
 }
 
-#[derive(Queryable)]
+#[derive(Identifiable, Queryable, Associations, PartialEq)]
+#[belongs_to(Role)]
+#[belongs_to(OrganisationUser, foreign_key = "user_id")]
 pub struct Application {
     pub id: i32,
     pub user_id: i32,
@@ -651,6 +637,18 @@ impl Application {
             .execute(conn)
             .is_ok()
     }
+
+    pub fn delete_children(conn: &PgConnection, application: Application) -> Option<()> {
+        diesel::delete(Rating::belonging_to(&application))
+            .execute(conn)
+            .ok()?;
+
+        diesel::delete(Comment::belonging_to(&application))
+            .execute(conn)
+            .ok()?;
+
+        Some(())
+    }
 }
 
 impl NewApplication {
@@ -661,7 +659,9 @@ impl NewApplication {
     }
 }
 
-#[derive(Queryable)]
+#[derive(Identifiable, Queryable, Associations, PartialEq)]
+#[belongs_to(Role)]
+#[table_name = "questions"]
 pub struct Question {
     pub id: i32,
     pub role_id: i32,
@@ -703,6 +703,14 @@ impl Question {
             .unwrap_or_else(|_| vec![])
     }
 
+    pub fn delete_all_from_role_id(conn: &PgConnection, role_id_val: i32) -> bool {
+        use crate::database::schema::questions::dsl::*;
+
+        diesel::delete(questions.filter(role_id.eq(role_id_val)))
+            .execute(conn)
+            .is_ok()
+    }
+
     pub fn delete(conn: &PgConnection, question_id: i32) -> bool {
         use crate::database::schema::questions::dsl::*;
 
@@ -720,7 +728,9 @@ impl NewQuestion {
     }
 }
 
-#[derive(Queryable)]
+#[derive(Identifiable, Queryable, Associations, PartialEq)]
+#[belongs_to(Question)]
+#[belongs_to(Application)]
 pub struct Answer {
     pub id: i32,
     pub application_id: i32,
@@ -788,7 +798,9 @@ impl NewAnswer {
     }
 }
 
-#[derive(Queryable)]
+#[derive(Identifiable, Queryable, Associations, PartialEq)]
+#[belongs_to(Application)]
+#[belongs_to(OrganisationUser, foreign_key = "commenter_user_id")]
 pub struct Comment {
     pub id: i32,
     pub application_id: i32,
@@ -846,7 +858,9 @@ impl NewComment {
     }
 }
 
-#[derive(Queryable)]
+#[derive(Identifiable, Queryable, Associations, PartialEq)]
+#[belongs_to(Application)]
+#[belongs_to(OrganisationUser, foreign_key = "rater_user_id")]
 pub struct Rating {
     pub id: i32,
     pub application_id: i32,

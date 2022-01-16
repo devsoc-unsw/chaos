@@ -1,15 +1,12 @@
 use crate::database::{
-    models::{
-        Campaign, NewOrganisation, Organisation, OrganisationAdmin, OrganisationUser, Role,
-        SuperUser, UpdateCampaignInput, User,
-    },
+    models::{Campaign, OrganisationAdmin, OrganisationUser, Role, UpdateCampaignInput, User},
     schema::AdminLevel,
     Database,
 };
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
-use rocket::{delete, form::Form, get, post, put, serde::json::Json};
+use rocket::{delete, form::Form, get, put, serde::json::Json};
 
 #[derive(Serialize)]
 pub enum CampaignError {
@@ -48,7 +45,6 @@ pub async fn create_or_update_campaign(
         .run(move |conn| OrganisationUser::get(conn, campaign.organisation_id, user.id))
         .await
         .ok_or(Json(CampaignError::Unauthorized))?;
-
 
     // only allow update if admin_level is not AdminLevel::ReadOnly
     // ie only director, Admin (exec) or SuperUser can perform this action
