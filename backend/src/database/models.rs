@@ -299,7 +299,7 @@ pub struct NewCampaign {
     pub draft: bool,
 }
 
-#[derive(FromForm, Clone)]
+#[derive(Deserialize, Clone)]
 pub struct NewCampaignInput {
     pub organisation_id: i32,
     pub name: String,
