@@ -36,7 +36,9 @@ const CreateCampaign = () => {
       setError(null);
     }
 
-    const coverSend = cover ? cover.slice(fileUrl.indexOf(";base64,") + 8) : "";
+    const coverSend = cover ? cover.slice(cover.indexOf(";base64,") + 8) : "";
+    const startTimeString = `${startDate.getFullYear()}-${startDate.getMonth() < 9 ? `0${startDate.getMonth() + 1}` : `${startDate.getMonth() + 1}`}-${startDate.getDate() < 9 ? `0${startDate.getDate() + 1}` : `${startDate.getDate() + 1}`}T${startDate.getHours() < 9 ? `0${startDate.getHours()}` : `${startDate.getHours()}`}:${startDate.getMinutes() < 9 ? `0${startDate.getMinutes()}` : `${startDate.getMinutes()}`}:00`;
+    const endTimeString = `${endDate.getFullYear()}-${endDate.getMonth() < 9 ? `0${endDate.getMonth() + 1}` : `${endDate.getMonth() + 1}`}-${endDate.getDate() < 9 ? `0${endDate.getDate() + 1}` : `${endDate.getDate() + 1}`}T${endDate.getHours() < 9 ? `0${endDate.getHours()}` : `${endDate.getHours()}`}:${endDate.getMinutes() < 9 ? `0${endDate.getMinutes()}` : `${endDate.getMinutes()}`}:00`;
 
     const postCampaign = await fetch("http://127.0.0.1:8000/campaign/new", {
       method: "POST",
@@ -44,12 +46,14 @@ const CreateCampaign = () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        organisation_id: 1,
         name,
         description,
-        start_time: startDate,
-        end_time: endDate,
+        starts_at: startTimeString,
+        ends_at: endTimeString,
         draft,
-        cover: coverSend,
+        // draft now means that it is an actual draft
+        cover_image: coverSend,
       }),
     });
 
@@ -63,11 +67,8 @@ const CreateCampaign = () => {
 
   const onFileUpload = async (acceptedFiles) => {
     const fileUrl = await fileToDataUrl(acceptedFiles[0]);
-    console.log("fileUrl", fileUrl);
-    const base64File = fileUrl.slice(fileUrl.indexOf(";base64,") + 8);
-    console.log("base64File", base64File);
     setCover(fileUrl);
-  }
+  };
 
   return (
     <CampaignContainer>
