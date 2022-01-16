@@ -385,6 +385,18 @@ pub struct NewOrUpdateRole {
     pub finalised: bool,
 }
 
+impl NewOrUpdateRole {
+    pub fn from(role_input: &RoleUpdateInput) -> NewOrUpdateRole {
+        NewOrUpdateRole {
+            name: role_input.name.clone(),
+            description: role_input.description.clone(),
+            min_available: role_input.min_available,
+            max_available: role_input.max_available,
+            finalised: role_input.finalised,
+        }
+    }
+}
+
 impl Role {
     pub fn get_all(conn: &PgConnection) -> Vec<Role> {
         use crate::database::schema::roles::dsl::*;
@@ -421,13 +433,7 @@ impl Role {
     ) -> Option<Role> {
         use crate::database::schema::roles::dsl::*;
 
-        let update_changeset = NewOrUpdateRole {
-            name: role_update.name.clone(),
-            description: role_update.description.clone(),
-            min_available: role_update.min_available,
-            max_available: role_update.max_available,
-            finalised: role_update.finalised,
-        };
+        let update_changeset = NewOrUpdateRole::from(role_update);
 
         diesel::update(roles.filter(id.eq(role_id)))
             .set(update_changeset)
