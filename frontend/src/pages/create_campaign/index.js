@@ -75,7 +75,6 @@ const CreateCampaign = () => {
 
   return (
     <CampaignContainer>
-      <img src="https://source.unsplash.com/random/1280x720" alt="placeholder image" />
       <Dropzone
         onDrop={acceptedFiles => onFileUpload(acceptedFiles)}
         accept={["image/jpeg", "image/jpg", "image/png", "image/gif"]}
