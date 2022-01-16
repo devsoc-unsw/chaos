@@ -25,6 +25,8 @@ const CreateCampaign = () => {
   const [cover, setCover] = React.useState(null);
   const [error, setError] = React.useState(null);
 
+  // TODO: user authentication and redirection if they are not logged in or authenticated
+
   const submitHandler = async () => {
     if (name.length === 0 && !draft) {
       setError("Campaign name is required");
@@ -46,6 +48,7 @@ const CreateCampaign = () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        // TODO: replace organisation id with something in the frontend that returns the id, would necessitate an endpoint to get all orgs the  user is a part of
         organisation_id: 1,
         name,
         description,
