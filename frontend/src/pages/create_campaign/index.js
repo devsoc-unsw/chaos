@@ -7,8 +7,10 @@ import LocalizationProvider from '@mui/lab/LocalizationProvider';
 import DateTimePicker from '@mui/lab/DateTimePicker';
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { CampaignContainer, CampaignRowDiv, CampaignSubmit, CampaignTextField } from "./createCampaign.styled";
+import { CampaignContainer, CampaignDropzone, CampaignRowDiv, CampaignSubmit, CampaignTextField } from "./createCampaign.styled";
+import Dropzone from 'react-dropzone';
 import { LoadingIndicator } from "../../components";
+import { fileToDataUrl } from "../../utils";
 
 const CreateCampaign = () => {
   const navigate = useNavigate();
@@ -20,6 +22,7 @@ const CreateCampaign = () => {
   const [interviewStage, setInterviewStage] = React.useState(false);
   const [scoringState, setScoringStage] = React.useState(false);
   const [draft, setDraft] = React.useState(false);
+  const [cover, setCover] = React.useState(null);
   const [error, setError] = React.useState(null);
 
   const submitHandler = async () => {
@@ -33,6 +36,8 @@ const CreateCampaign = () => {
       setError(null);
     }
 
+    const coverSend = cover ? cover.slice(fileUrl.indexOf(";base64,") + 8) : "";
+
     const postCampaign = await fetch("http://127.0.0.1:8000/campaign/new", {
       method: "POST",
       headers: {
@@ -44,7 +49,7 @@ const CreateCampaign = () => {
         start_time: startDate,
         end_time: endDate,
         draft,
-        cover,
+        cover: coverSend,
       }),
     });
 
@@ -56,9 +61,33 @@ const CreateCampaign = () => {
     }
   };
 
+  const onFileUpload = async (acceptedFiles) => {
+    const fileUrl = await fileToDataUrl(acceptedFiles[0]);
+    console.log("fileUrl", fileUrl);
+    const base64File = fileUrl.slice(fileUrl.indexOf(";base64,") + 8);
+    console.log("base64File", base64File);
+    setCover(fileUrl);
+  }
+
   return (
     <CampaignContainer>
       <img src="https://source.unsplash.com/random/1280x720" alt="placeholder image" />
+      <Dropzone
+        onDrop={acceptedFiles => onFileUpload(acceptedFiles)}
+        accept={["image/jpeg", "image/jpg", "image/png", "image/gif"]}
+        minSize={1024}
+        maxSize={3072000}
+      >
+        {({getRootProps, getInputProps}) => (
+          <section>
+            <CampaignDropzone {...getRootProps()}>
+              <input {...getInputProps()} />
+              {cover === null && <p>Drag 'n' drop your campaign cover image, or click to select an image</p>}
+              {cover !== null && <img src={cover} alt="campaign cover" />}
+            </CampaignDropzone>
+          </section>
+        )}
+      </Dropzone>
       <CampaignTextField
         label="Campaign Name"
         variant="outlined"

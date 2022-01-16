@@ -24,3 +24,11 @@ export const CampaignRowDiv = styled.div`
   margin: 1% 0;
   width: 100%;
 `;
+
+export const CampaignDropzone = styled.div`
+  text-align: center;
+  padding: 20px;
+  border: 3px dashed #eeeeee;
+  background-color: #fafafa;
+  color: #bdbdbd;
+`;
