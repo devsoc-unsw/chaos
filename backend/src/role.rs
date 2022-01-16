@@ -5,6 +5,7 @@ use crate::database::{
     Database,
 };
 use rocket::{
+    delete,
     form::Form,
     get, put,
     serde::{json::Json, Serialize},
@@ -51,13 +52,11 @@ pub async fn get_role(
     }
 }
 
-#[put("/<role_id>", data = "<role_update>")]
-pub async fn update_role(
+async fn error_if_unauthorised(
     role_id: i32,
-    role_update: Form<RoleUpdateInput>,
     user: User,
-    db: Database,
-) -> Result<Json<RoleResponse>, Json<RoleError>> {
+    db: &Database,
+) -> Result<(), Json<RoleError>> {
     // check for valid role
     let role = db
         .run(move |conn| Role::get_from_id(conn, role_id))
@@ -80,6 +79,19 @@ pub async fn update_role(
         return Err(Json(RoleError::Unauthorized));
     }
 
+    Ok(())
+}
+
+#[put("/<role_id>", data = "<role_update>")]
+pub async fn update_role(
+    role_id: i32,
+    role_update: Form<RoleUpdateInput>,
+    user: User,
+    db: Database,
+) -> Result<Json<RoleResponse>, Json<RoleError>> {
+    // check auth
+    error_if_unauthorised(role_id, user, &db).await?;
+
     // update valid user
     let res = db
         .run(move |conn| Role::update(conn, role_id, &role_update))
@@ -87,6 +99,20 @@ pub async fn update_role(
 
     match res {
         Some(role) => Ok(Json(RoleResponse::from(role))),
+        None => Err(Json(RoleError::RoleUpdateFailure)),
+    }
+}
+
+#[put("/<role_id>")]
+pub async fn delete_role(role_id: i32, user: User, db: Database) -> Result<(), Json<RoleError>> {
+    // check auth
+    error_if_unauthorised(role_id, user, &db).await?;
+
+    // deletes user
+    let res = db.run(move |conn| Role::delete(conn, role_id)).await;
+
+    match res {
+        Some(_) => Ok(()),
         None => Err(Json(RoleError::RoleUpdateFailure)),
     }
 }

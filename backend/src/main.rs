@@ -51,9 +51,10 @@ async fn main() {
                 campaigns::get_campaign,
                 campaigns::create_or_update_campaign,
                 campaigns::roles,
+                campaigns::get_all_campaigns,
             ],
         )
-        .mount("/user", routes![user::get_user])
+        .mount("/user", routes![user::get_user, user::get_user_campaigns])
         .mount("/role", routes![role::get_role, role::update_role])
         .launch()
         .await

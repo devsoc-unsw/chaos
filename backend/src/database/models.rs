@@ -5,6 +5,7 @@ use super::schema::{
     ratings, roles, users,
 };
 use chrono::NaiveDateTime;
+use chrono::Utc;
 use diesel::prelude::*;
 use diesel::PgConnection;
 use rocket::FromForm;
@@ -65,6 +66,16 @@ impl User {
         use crate::database::schema::users::dsl::*;
 
         users.filter(email.eq(user_email)).first(conn).ok()
+    }
+
+    pub fn get_all_campaigns(&self, conn: &PgConnection) -> Vec<Campaign> {
+        use crate::database::schema::campaigns::dsl::*;
+
+        campaigns
+            .filter(organisation_id.eq(self.id))
+            .order(id.asc())
+            .load(conn)
+            .unwrap_or_else(|_| vec![])
     }
 }
 
@@ -299,6 +310,18 @@ impl Campaign {
             .unwrap_or_else(|_| vec![])
     }
 
+    /// return all campaigns that are live to all users
+    pub fn get_all_public(conn: &PgConnection) -> Vec<Campaign> {
+        use crate::database::schema::campaigns::dsl::*;
+
+        let now = Utc::now().naive_utc();
+        campaigns
+            .filter(starts_at.ge(now).or(draft.eq(false)))
+            .order(id.asc())
+            .load(conn)
+            .unwrap_or_else(|_| vec![])
+    }
+
     pub fn get_from_organisation_id(
         conn: &PgConnection,
         organisation_id_val: i32,
@@ -438,6 +461,14 @@ impl Role {
         diesel::update(roles.filter(id.eq(role_id)))
             .set(update_changeset)
             .get_result(conn)
+            .ok()
+    }
+
+    pub fn delete(conn: &PgConnection, role_id: i32) -> Option<usize> {
+        use crate::database::schema::roles::dsl::*;
+
+        diesel::delete(roles.filter(id.eq(role_id)))
+            .execute(conn)
             .ok()
     }
 }
