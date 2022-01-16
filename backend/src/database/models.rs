@@ -367,7 +367,8 @@ pub struct Role {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Insertable)]
+// FromForm defaults bools to false if not present
+#[derive(Insertable, FromForm)]
 #[table_name = "roles"]
 pub struct NewRole {
     pub name: String,
