@@ -70,7 +70,7 @@ pub async fn update(
 
 #[post("/new", data = "<new_campaign>")]
 pub async fn create(
-    new_campaign: Form<NewCampaignInput>,
+    new_campaign: Json<NewCampaignInput>,
     user: User,
     db: Database,
 ) -> Result<Json<Campaign>, Json<CampaignError>> {
