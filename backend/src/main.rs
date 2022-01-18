@@ -51,6 +51,7 @@ async fn main() {
                 campaigns::update,
                 campaigns::roles,
                 campaigns::create,
+                campaigns::delete_campaign,
                 campaigns::get_all_campaigns,
             ],
         )

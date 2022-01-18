@@ -7,9 +7,9 @@ use crate::database::{
     Database,
 };
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
-use rocket::{delete, form::Form, get, post, put, serde::json::Json};
+use rocket::{delete, form::Form, get, put, serde::json::Json};
 
 #[derive(Serialize)]
 pub enum CampaignError {
@@ -46,15 +46,13 @@ pub async fn update(
 ) -> Result<Json<()>, Json<CampaignError>> {
     let campaign = db
         .run(move |conn| Campaign::get_from_id(conn, campaign_id))
-        .await;
-
-    let campaign = campaign.ok_or(Json(CampaignError::CampaignNotFound))?;
+        .await
+        .ok_or(Json(CampaignError::CampaignNotFound))?;
 
     let org_user = db
         .run(move |conn| OrganisationUser::get(conn, campaign.organisation_id, user.id))
-        .await;
-
-    let org_user = org_user.ok_or(Json(CampaignError::Unauthorized))?;
+        .await
+        .ok_or(Json(CampaignError::Unauthorized))?;
 
     // only allow update if admin_level is not AdminLevel::ReadOnly
     // ie only director, Admin (exec) or SuperUser can perform this action
@@ -93,6 +91,25 @@ pub async fn create(
         .ok_or(Json(CampaignError::UnableToCreate))?;
 
     Ok(Json(campaign))
+
+#[delete("/<campaign_id>")]
+pub async fn delete_campaign(
+    campaign_id: i32,
+    user: User,
+    db: Database,
+) -> Result<Json<()>, Json<CampaignError>> {
+    let admin_res = db
+        .run(move |conn| OrganisationAdmin::new_from_campaign_id(user, campaign_id, conn))
+        .await;
+
+    match admin_res {
+        Ok(_admin) => {
+            db.run(move |conn| Campaign::delete_deep(conn, campaign_id))
+                .await;
+            Ok(Json(()))
+        }
+        Err(_) => Err(Json(CampaignError::Unauthorized)),
+    }
 }
 
 #[derive(Serialize)]
