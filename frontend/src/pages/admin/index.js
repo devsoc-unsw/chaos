@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { SetNavBarTitleContext } from "../../App";
+import { AdminContainer } from "./admin.styled"
 import AdminSidebar from "../../components/AdminSideBar";
 import AdminContent from "../../components/AdminContent";
 
@@ -29,17 +30,14 @@ const Admin = () => {
   return (
     <orgContext.Provider value={{ orgSelected, setOrgSelected, orgList, setOrgList }}>
       <isFormOpenContext.Provider value={{ isFormOpen, setIsFormOpen }}>
-        <div style={{
-          position: 'absolute',
-          display: 'flex',
-          margin: '0px',
-          height: '100%',
-          width: '100%',
-          flexWrap: 'wrap'
-        }}>
+        <AdminContainer>
           <AdminSidebar 
             orgList={orgList}
+            setOrgList={setOrgList}
+            orgSelected={orgSelected}
+            setOrgSelected={setOrgSelected}
             isFormOpen={isFormOpen}
+            setIsFormOpen={setIsFormOpen}
             sidebarWidth={sidebarWidth}
             setSidebarWidth={setSidebarWidth}
           />
@@ -48,7 +46,7 @@ const Admin = () => {
             icon={orgList.find(org => org.id === orgSelected).icon}
             orgName={orgList.find(org => org.id === orgSelected).orgName}
           />
-        </div>
+        </AdminContainer>
       </isFormOpenContext.Provider>
     </orgContext.Provider>
   )
