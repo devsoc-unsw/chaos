@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { SidebarContainer, OrgButton, CreateOrgButton, OrgButtonGroup, OrgIcon, OrgName } from "./adminSidebar.styled"
+import { SidebarContainer, OrgButton, CreateOrgButton, OrgButtonGroup, OrgIcon, OrgIconImage, OrgName, OrgButtonContent } from "./adminSidebar.styled"
 import CreateOrganisationForm from "./CreateOrganisationForm"
 
 // FIXME: change to better icons
@@ -45,18 +45,12 @@ const AdminSidebar = ({ orgList, setOrgList, orgSelected, setOrgSelected, isForm
         size="large"
       > 
         <CreateOrgButton isFormOpen={isFormOpen}>
-          <div 
-            style={{ display: 'flex', padding: '4px' }}
-            onClick={() => setIsFormOpen(!isFormOpen)}
-          >
+          <OrgButtonContent onClick={() => setIsFormOpen(!isFormOpen)}>
             <OrgIcon>
-              <img 
-                src={isFormOpen ? minusIconDummy : plusIconDummy}
-                style={{ width: '60px', height: '60px', borderRadius: '12px' }}
-              />
+              <OrgIconImage src={isFormOpen ? minusIconDummy : plusIconDummy}/>
             </OrgIcon>
             <OrgName>New Organisation</OrgName>
-          </div>
+          </OrgButtonContent>
           {
             isFormOpen && 
             <CreateOrganisationForm 
@@ -71,18 +65,12 @@ const AdminSidebar = ({ orgList, setOrgList, orgSelected, setOrgSelected, isForm
         {
           orgList.map((it) => (
             <OrgButton value={it.id}>
-              <div 
-                style={{ display: 'flex', padding: '4px' }}
-                onClick={() => setOrgSelected(it.id)}
-              >
+              <OrgButtonContent onClick={() => setOrgSelected(it.id)}>
                 <OrgIcon>
-                  <img 
-                    src={it.icon}
-                    style={{ width: '60px', height: '60px', borderRadius: '12px' }}
-                  />
+                  <OrgIconImage src={it.icon} />
                 </OrgIcon>
                 <OrgName>{it.orgName}</OrgName>
-              </div>
+              </OrgButtonContent>
             </OrgButton>
           ))
         }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { AdminContentContainer, ContentHeader, ToggleButtonContainer, OrgInfo, ContentBody } from './adminContent.styled'
+import { AdminContentContainer, ContentHeader, ToggleButtonContainer, OrgInfo, OrgInfoImage, OrgInfoName, ContentBody } from './adminContent.styled'
 import { ToggleButton, ToggleButtonGroup } from '@mui/material';
 import ClearIcon from '@mui/icons-material/Clear';
 
@@ -36,23 +36,8 @@ const AdminContent = ({ id, icon, orgName }) => {
     <AdminContentContainer>
       <ContentHeader>
         <OrgInfo>
-          <img 
-            src={icon}
-            style={{
-              height: '100px',
-              width: '100px',
-              margin: '45px',
-              marginLeft: '80px',
-              borderRadius: '12px',
-            }}
-          >
-          </img>
-          <div style={{
-            display: 'inline-flex',
-            alignSelf: 'center',
-            fontSize: '3rem'}}
-          >{orgName}
-          </div>
+          <OrgInfoImage src={icon}></OrgInfoImage>
+          <OrgInfoName>{orgName}</OrgInfoName>
         </OrgInfo>
         <ToggleButtonContainer>
           <ToggleButtonGroup

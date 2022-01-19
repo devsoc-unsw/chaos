@@ -33,6 +33,11 @@ export const OrgButton = muiStyled(ToggleButton)(() => ({
   verticalAlign: 'middle'
 }));
 
+export const OrgButtonContent = muiStyled('div')(() => ({
+  display: 'flex',
+  padding: '4px'
+}));
+
 export const CreateOrgButton = muiStyled(OrgButton)(({ isFormOpen }) => ({
   height: isFormOpen ? '180px' : '90px'
 }));
@@ -43,6 +48,12 @@ export const OrgIcon = muiStyled('span')(() => ({
   height: '60px',
   lineHeight: '60px',
   margin: '0px'
+}));
+
+export const OrgIconImage = muiStyled('img')(() => ({
+  width: '60px',
+  height: '60px',
+  borderRadius: '12px'
 }));
 
 export const OrgName = muiStyled('span')(() => ({

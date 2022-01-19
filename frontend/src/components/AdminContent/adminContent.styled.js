@@ -32,6 +32,20 @@ export const OrgInfo = muiStyled('div')(() => ({
   alignItems: 'center'
 }));
 
+export const OrgInfoImage = muiStyled('img')(() => ({
+  height: '100px',
+  width: '100px',
+  margin: '45px',
+  marginLeft: '80px',
+  borderRadius: '12px'
+}));
+
+export const OrgInfoName = muiStyled('div')(() => ({
+  display: 'inline-flex',
+  alignSelf: 'center',
+  fontSize: '3rem'
+}));
+
 export const ContentBody = muiStyled('div')(() => ({
   margin: '80px',
   marginTop: '0px',
