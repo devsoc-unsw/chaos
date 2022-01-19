@@ -8,8 +8,6 @@ import { orgContext } from '../../pages/admin';
 // FIXME: content not aligned with sidebar, need to change sidebar :(
 
 const AdminContent = ({ id, icon, orgName }) => {
-  // since there are only 2 states, window is a Boolean where
-  // true -> members and false -> campaigns
   const [windowSelected, setWindowSelected] = useState("campaigns");
   const {orgSelected, setOrgSelected, orgList, setOrgList} = React.useContext(orgContext);
 
