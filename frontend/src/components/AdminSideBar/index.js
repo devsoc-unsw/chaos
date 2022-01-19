@@ -1,10 +1,6 @@
 import React, { useState } from 'react'
-import { SidebarContainer, OrgButton, CreateOrgButton, OrgButtonGroup, OrgIcon, OrgIconImage, OrgName, OrgButtonContent } from "./adminSidebar.styled"
+import { SidebarContainer, OrgButton, CreateOrgButton, OrgButtonGroup, OrgIcon, OrgIconImage, OrgName, OrgButtonContent, CreateOrgIcon, RemoveOrgIcon } from "./adminSidebar.styled"
 import CreateOrganisationForm from "./CreateOrganisationForm"
-
-// FIXME: change to better icons
-import plusIconDummy from './plus_icon.png'
-import minusIconDummy from './minus_icon.png'
 
 const AdminSidebar = ({ orgList, setOrgList, orgSelected, setOrgSelected, isFormOpen, setIsFormOpen, sidebarWidth, setSidebarWidth }) => {
   const [uploadedImage, setUploadedImage] = useState({image: null, url: null});
@@ -47,9 +43,9 @@ const AdminSidebar = ({ orgList, setOrgList, orgSelected, setOrgSelected, isForm
         <CreateOrgButton isFormOpen={isFormOpen}>
           <OrgButtonContent onClick={() => setIsFormOpen(!isFormOpen)}>
             <OrgIcon>
-              <OrgIconImage src={isFormOpen ? minusIconDummy : plusIconDummy}/>
+              {isFormOpen ? <RemoveOrgIcon /> : <CreateOrgIcon />}
             </OrgIcon>
-            <OrgName>New Organisation</OrgName>
+            <OrgName style={{paddingLeft: '10px'}}>New Organisation</OrgName>
           </OrgButtonContent>
           {
             isFormOpen && 

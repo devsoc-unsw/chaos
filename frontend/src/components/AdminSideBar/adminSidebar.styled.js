@@ -1,6 +1,7 @@
 import { styled as muiStyled } from "@mui/material/styles";
 import { ToggleButton, ToggleButtonGroup } from "@mui/material";
-import styled from "@emotion/styled";
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
 
 export const SidebarContainer = muiStyled('div')(({ isFormOpen, sidebarWidth }) => ({
   position:'relative',
@@ -40,6 +41,16 @@ export const OrgButtonContent = muiStyled('div')(() => ({
 
 export const CreateOrgButton = muiStyled(OrgButton)(({ isFormOpen }) => ({
   height: isFormOpen ? '180px' : '90px'
+}));
+
+export const CreateOrgIcon = muiStyled(AddIcon)(() => ({
+  fontSize: '30px',
+  margin: '14px'
+}));
+
+export const RemoveOrgIcon = muiStyled(RemoveIcon)(() => ({
+  fontSize: '30px',
+  margin: '14px'
 }));
 
 export const OrgIcon = muiStyled('span')(() => ({
