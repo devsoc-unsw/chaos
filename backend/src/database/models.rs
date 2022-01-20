@@ -5,8 +5,8 @@ use super::schema::{
     ratings, roles, users,
 };
 use chrono::NaiveDateTime;
-use diesel::prelude::BelongingToDsl;
 use chrono::Utc;
+use diesel::prelude::BelongingToDsl;
 use diesel::prelude::*;
 use diesel::PgConnection;
 use rocket::FromForm;
@@ -498,6 +498,8 @@ impl Campaign {
         };
 
         new_campaign.insert(conn)
+    }
+
     pub fn delete(conn: &PgConnection, campaign_id: i32) -> bool {
         use crate::database::schema::campaigns::dsl::*;
 

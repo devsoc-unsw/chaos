@@ -1,7 +1,7 @@
 use crate::database::{
     models::{
-        Campaign, NewCampaign, NewCampaignInput, NewOrganisation, Organisation, OrganisationUser,
-        Role, SuperUser, UpdateCampaignInput, User,
+        Campaign, NewCampaignInput,  OrganisationAdmin, OrganisationUser,
+        Role, UpdateCampaignInput, User,
     },
     schema::AdminLevel,
     Database,
@@ -9,7 +9,7 @@ use crate::database::{
 
 use serde::Serialize;
 
-use rocket::{delete, form::Form, get, put, serde::json::Json};
+use rocket::{delete, form::Form, get, post, put, serde::json::Json};
 
 #[derive(Serialize)]
 pub enum CampaignError {
@@ -91,6 +91,7 @@ pub async fn create(
         .ok_or(Json(CampaignError::UnableToCreate))?;
 
     Ok(Json(campaign))
+}
 
 #[delete("/<campaign_id>")]
 pub async fn delete_campaign(
