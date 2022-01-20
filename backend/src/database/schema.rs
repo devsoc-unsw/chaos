@@ -1,6 +1,7 @@
 use diesel_derive_enum::DbEnum;
+use rocket::FromFormField;
 
-#[derive(Debug, DbEnum, PartialEq)]
+#[derive(Debug, DbEnum, PartialEq, FromFormField)]
 pub enum ApplicationStatus {
     Pending,
     Rejected,
