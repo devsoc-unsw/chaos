@@ -1,4 +1,4 @@
-use crate::database::models::RoleUpdateInput;
+use crate::database::models::RoleUpdate;
 use crate::database::{
     models::{Campaign, OrganisationUser, Role, User},
     schema::AdminLevel,
@@ -27,8 +27,8 @@ pub struct RoleResponse {
     max_available: i32,
 }
 
-impl RoleResponse {
-    pub fn from(role: Role) -> RoleResponse {
+impl From<Role> for RoleResponse {
+    fn from(role: Role) -> Self {
         RoleResponse {
             name: role.name,
             description: role.description,
@@ -85,7 +85,7 @@ async fn error_if_unauthorised(
 #[put("/<role_id>", data = "<role_update>")]
 pub async fn update_role(
     role_id: i32,
-    role_update: Form<RoleUpdateInput>,
+    role_update: Form<RoleUpdate>,
     user: User,
     db: Database,
 ) -> Result<Json<RoleResponse>, Json<RoleError>> {
@@ -103,7 +103,7 @@ pub async fn update_role(
     }
 }
 
-#[put("/<role_id>")]
+#[delete("/<role_id>")]
 pub async fn delete_role(role_id: i32, user: User, db: Database) -> Result<(), Json<RoleError>> {
     // check auth
     error_if_unauthorised(role_id, user, &db).await?;
