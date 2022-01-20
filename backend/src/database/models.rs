@@ -5,8 +5,8 @@ use super::schema::{
     ratings, roles, users,
 };
 use chrono::NaiveDateTime;
-use diesel::prelude::BelongingToDsl;
 use chrono::Utc;
+use diesel::prelude::BelongingToDsl;
 use diesel::prelude::*;
 use diesel::PgConnection;
 use rocket::FromForm;
@@ -396,13 +396,23 @@ pub struct UpdateCampaignChangeset {
 #[derive(Insertable)]
 #[table_name = "campaigns"]
 pub struct NewCampaign {
-    pub id: i32,
     pub organisation_id: i32,
     pub name: String,
     pub cover_image: Option<String>,
     pub description: String,
     pub starts_at: NaiveDateTime,
     pub ends_at: NaiveDateTime,
+    pub draft: bool,
+}
+
+#[derive(Deserialize, Clone)]
+pub struct NewCampaignInput {
+    pub organisation_id: i32,
+    pub name: String,
+    pub cover_image: Option<String>,
+    pub description: String,
+    pub starts_at: String,
+    pub ends_at: String,
     pub draft: bool,
 }
 
@@ -472,6 +482,22 @@ impl Campaign {
             .set(update_changeset)
             .get_result(conn)
             .ok()
+    }
+
+    pub fn create(conn: &PgConnection, new_campaign: &NewCampaignInput) -> Option<Campaign> {
+        let new_campaign = NewCampaign {
+            organisation_id: new_campaign.organisation_id,
+            name: new_campaign.name.clone(),
+            cover_image: new_campaign.cover_image.clone(),
+            description: new_campaign.description.clone(),
+            starts_at: NaiveDateTime::parse_from_str(&new_campaign.starts_at, "%Y-%m-%dT%H:%M:%S")
+                .expect("Invalid date format"),
+            ends_at: NaiveDateTime::parse_from_str(&new_campaign.ends_at, "%Y-%m-%dT%H:%M:%S")
+                .expect("Invalid date format"),
+            draft: new_campaign.draft,
+        };
+
+        new_campaign.insert(conn)
     }
 
     pub fn delete(conn: &PgConnection, campaign_id: i32) -> bool {
