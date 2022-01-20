@@ -1,8 +1,8 @@
 # Setup guide
 
 * Install the latest (stable) Rust toolchain with [rustup](https://rustup.rs/)
-* Install postgres with associated dev tools, eg. `sudo apt install postgresql-all`
-* Download and save the backend `.env.development` file from vault to the root of the backend folder.
+* Install postgres with associated dev tools, eg. `sudo apt install postgresql-all` (something like `brew install postgresql` for osx)
+* Download and save the backend `.env` file from vault to the root of the backend folder.
 * Setup postgres accordingly
    * Make sure the user is named `postgres` and the password is the same as the one in vault `.env` file
    * the password is in the `DATABSE_URL` field, which will look very similar to `postgres://postgres:<password>@localhost/chaos`
