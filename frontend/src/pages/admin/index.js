@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, createContext } from "react";
 import { SetNavBarTitleContext } from "../../App";
 import { AdminContainer } from "./admin.styled"
 import AdminSidebar from "../../components/AdminSideBar";
@@ -7,8 +7,8 @@ import AdminContent from "../../components/AdminContent";
 import CSELogoDummy from './CSESoc_logo.jpeg';
 import SECLogoDummy from './SECSoc_logo.jpeg';
 
-export const isFormOpenContext = React.createContext(null);
-export const orgContext = React.createContext(null);
+export const isFormOpenContext = createContext(null);
+export const orgContext = createContext(null);
 
 const Admin = () => {
   const setNavBarTitle = useContext(SetNavBarTitleContext);

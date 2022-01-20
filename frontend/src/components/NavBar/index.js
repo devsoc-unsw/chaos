@@ -4,12 +4,11 @@ import { AppBar, Button, Toolbar } from "@mui/material";
 import HomeIcon from "@mui/icons-material/Home";
 import { CampaignName, LogoButton } from "./navBar.styled";
 import BasicMenu from "./NavBarMenu";
+import { isLoggedIn } from "../../utils"
 
 const NavBar = (props) => {
   const { campaign } = props;
-
-  // FIXME: use actual logged in state
-  const isLoggedIn = true;
+  const loggedIn = isLoggedIn();
 
   return (
     <AppBar position="static">
@@ -25,7 +24,7 @@ const NavBar = (props) => {
         </LogoButton>
         <CampaignName>{campaign}</CampaignName>
         {
-          isLoggedIn ? 
+          loggedIn ? 
           <BasicMenu /> :
           <Button variant="secondary">Login</Button>
         }

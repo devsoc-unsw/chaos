@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useContext } from 'react'
 import { AdminContentContainer, ContentHeader, ToggleButtonContainer, OrgInfo, OrgInfoImage, OrgInfoName, ContentBody } from './adminContent.styled'
 import { ToggleButton, ToggleButtonGroup } from '@mui/material';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -9,7 +9,7 @@ import { orgContext } from '../../pages/admin';
 
 const AdminContent = ({ id, icon, orgName }) => {
   const [windowSelected, setWindowSelected] = useState("campaigns");
-  const {orgSelected, setOrgSelected, orgList, setOrgList} = React.useContext(orgContext);
+  const {orgSelected, setOrgSelected, orgList, setOrgList} = useContext(orgContext);
 
   const handleDeletion = () => {
     if (orgSelected === id) {

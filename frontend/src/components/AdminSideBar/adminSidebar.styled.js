@@ -1,9 +1,9 @@
-import { styled as muiStyled } from "@mui/material/styles";
+import { styled } from "@mui/material/styles";
 import { ToggleButton, ToggleButtonGroup } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 
-export const SidebarContainer = muiStyled('div')(({ isFormOpen, sidebarWidth }) => ({
+export const SidebarContainer = styled('div')(({ isFormOpen, sidebarWidth }) => ({
   position:'relative',
   width: isFormOpen ? '280px' : sidebarWidth,
   height: '100%',
@@ -15,7 +15,7 @@ export const SidebarContainer = muiStyled('div')(({ isFormOpen, sidebarWidth }) 
   overflow: 'hidden'
 }));
 
-export const OrgButtonGroup = muiStyled(ToggleButtonGroup)(() => ({
+export const OrgButtonGroup = styled(ToggleButtonGroup)(() => ({
   position: 'absolute',
   top: '0',
   left: '0',
@@ -24,7 +24,7 @@ export const OrgButtonGroup = muiStyled(ToggleButtonGroup)(() => ({
   margin:'0px'
 }));
 
-export const OrgButton = muiStyled(ToggleButton)(() => ({
+export const OrgButton = styled(ToggleButton)(() => ({
   position: 'relative',
   display: 'table',
   width: '100%',
@@ -34,26 +34,26 @@ export const OrgButton = muiStyled(ToggleButton)(() => ({
   verticalAlign: 'middle'
 }));
 
-export const OrgButtonContent = muiStyled('div')(() => ({
+export const OrgButtonContent = styled('div')(() => ({
   display: 'flex',
   padding: '4px'
 }));
 
-export const CreateOrgButton = muiStyled(OrgButton)(({ isFormOpen }) => ({
+export const CreateOrgButton = styled(OrgButton)(({ isFormOpen }) => ({
   height: isFormOpen ? '180px' : '90px'
 }));
 
-export const CreateOrgIcon = muiStyled(AddIcon)(() => ({
+export const CreateOrgIcon = styled(AddIcon)(() => ({
   fontSize: '30px',
   margin: '14px'
 }));
 
-export const RemoveOrgIcon = muiStyled(RemoveIcon)(() => ({
+export const RemoveOrgIcon = styled(RemoveIcon)(() => ({
   fontSize: '30px',
   margin: '14px'
 }));
 
-export const OrgIcon = muiStyled('span')(() => ({
+export const OrgIcon = styled('span')(() => ({
   display: 'block',
   minWidth: '60px',
   height: '60px',
@@ -61,13 +61,13 @@ export const OrgIcon = muiStyled('span')(() => ({
   margin: '0px'
 }));
 
-export const OrgIconImage = muiStyled('img')(() => ({
+export const OrgIconImage = styled('img')(() => ({
   width: '60px',
   height: '60px',
   borderRadius: '12px'
 }));
 
-export const OrgName = muiStyled('span')(() => ({
+export const OrgName = styled('span')(() => ({
   position: 'relative',
   display: 'block',
   padding: '0 10px',

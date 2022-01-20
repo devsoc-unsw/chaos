@@ -1,12 +1,12 @@
-import { styled as muiStyled } from "@mui/material/styles";
+import { styled } from "@mui/material/styles";
 
-export const AdminContentContainer = muiStyled('div')(() => ({
+export const AdminContentContainer = styled('div')(() => ({
   flex: '1 0 auto',
   height: '100%',
   backgroundColor: 'white'
 }));
 
-export const ToggleButtonContainer = muiStyled('div')(() => ({
+export const ToggleButtonContainer = styled('div')(() => ({
   display: 'flex',
   justifyContent: 'flex-end',
   alignItems: 'center',
@@ -16,7 +16,7 @@ export const ToggleButtonContainer = muiStyled('div')(() => ({
   marginRight: '80px'
 }));
 
-export const ContentHeader = muiStyled('div')(() => ({
+export const ContentHeader = styled('div')(() => ({
   display: 'flex',
   justifyContent: 'space-between',
   width: '100%',
@@ -25,14 +25,14 @@ export const ContentHeader = muiStyled('div')(() => ({
   alignItems: 'center'
 }));
 
-export const OrgInfo = muiStyled('div')(() => ({
+export const OrgInfo = styled('div')(() => ({
   display: 'flex',
   width: '50%',
   height: '100%',
   alignItems: 'center'
 }));
 
-export const OrgInfoImage = muiStyled('img')(() => ({
+export const OrgInfoImage = styled('img')(() => ({
   height: '100px',
   width: '100px',
   margin: '45px',
@@ -40,13 +40,13 @@ export const OrgInfoImage = muiStyled('img')(() => ({
   borderRadius: '12px'
 }));
 
-export const OrgInfoName = muiStyled('div')(() => ({
+export const OrgInfoName = styled('div')(() => ({
   display: 'inline-flex',
   alignSelf: 'center',
   fontSize: '3rem'
 }));
 
-export const ContentBody = muiStyled('div')(() => ({
+export const ContentBody = styled('div')(() => ({
   margin: '80px',
   marginTop: '0px',
   height: '69%',

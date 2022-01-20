@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { SidebarContainer, OrgButton, CreateOrgButton, OrgButtonGroup, OrgIcon, OrgIconImage, OrgName, OrgButtonContent, CreateOrgIcon, RemoveOrgIcon } from "./adminSidebar.styled"
-import CreateOrganisationForm from "./CreateOrganisationForm"
+//import CreateOrganisationForm from "./CreateOrganisationForm"
+import CreateOrganisationForm from "../CreateOrganisationForm"
 
 const AdminSidebar = ({ orgList, setOrgList, orgSelected, setOrgSelected, isFormOpen, setIsFormOpen, sidebarWidth, setSidebarWidth }) => {
   const [uploadedImage, setUploadedImage] = useState({image: null, url: null});
