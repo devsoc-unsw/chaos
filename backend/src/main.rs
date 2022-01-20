@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate diesel;
 
+pub mod application;
 pub mod auth;
 pub mod campaigns;
 pub mod cors;
@@ -56,6 +57,7 @@ async fn main() {
             ],
         )
         .mount("/user", routes![user::get_user, user::get_user_campaigns])
+        .mount("/application", routes![application::create_comment])
         .launch()
         .await
         .unwrap();

@@ -1,7 +1,7 @@
 use crate::database::{
     models::{
-        Campaign, NewCampaignInput,  OrganisationAdmin, OrganisationUser,
-        Role, UpdateCampaignInput, User,
+        Campaign, NewCampaignInput, OrganisationAdmin, OrganisationUser, Role, UpdateCampaignInput,
+        User,
     },
     schema::AdminLevel,
     Database,
