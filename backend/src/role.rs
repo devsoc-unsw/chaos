@@ -108,8 +108,8 @@ pub async fn delete_role(role_id: i32, user: User, db: Database) -> Result<(), J
     // check auth
     error_if_unauthorised(role_id, user, &db).await?;
 
-    // deletes user
-    let res = db.run(move |conn| Role::delete(conn, role_id)).await;
+    // deletes user deep (questions & applications)
+    let res = db.run(move |conn| Role::delete_deep(conn, role_id)).await;
 
     match res {
         Some(_) => Ok(()),
