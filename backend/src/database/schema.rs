@@ -1,6 +1,6 @@
 use diesel_derive_enum::DbEnum;
 
-#[derive(Debug, DbEnum)]
+#[derive(Debug, DbEnum, PartialEq)]
 pub enum ApplicationStatus {
     Pending,
     Rejected,
