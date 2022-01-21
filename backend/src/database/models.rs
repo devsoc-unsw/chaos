@@ -354,7 +354,7 @@ impl NewCampaign {
     }
 }
 
-#[derive(Queryable, Serialize)]
+#[derive(Queryable, Serialize, Debug)]
 pub struct Role {
     pub id: i32,
     pub campaign_id: i32,
@@ -368,9 +368,19 @@ pub struct Role {
 }
 
 // FromForm defaults bools to false if not present
-#[derive(Insertable, FromForm)]
+#[derive(FromForm)]
+pub struct CreateRoleInput {
+    pub name: String,
+    pub description: Option<String>,
+    pub min_available: i32,
+    pub max_available: i32,
+    pub finalised: bool,
+}
+
+#[derive(Insertable)]
 #[table_name = "roles"]
 pub struct NewRole {
+    pub campaign_id: i32,
     pub name: String,
     pub description: Option<String>,
     pub min_available: i32,

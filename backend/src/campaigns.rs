@@ -1,7 +1,7 @@
 use crate::database::{
     models::{
-        Campaign, NewOrganisation, NewRole, Organisation, OrganisationUser, Role, SuperUser,
-        UpdateCampaignInput, User,
+        Campaign, NewRole, OrganisationUser, Role,
+        UpdateCampaignInput, User, CreateRoleInput,
     },
     schema::AdminLevel,
     Database,
@@ -112,7 +112,7 @@ pub async fn roles(
 #[post("/<campaign_id>/roles", data = "<role>")]
 pub async fn create_role(
     campaign_id: i32,
-    role: Form<NewRole>,
+    mut role: Form<CreateRoleInput>,
     user: User,
     db: Database,
 ) -> Result<(), Json<RolesError>> {
@@ -132,6 +132,15 @@ pub async fn create_role(
     if !user.superuser && org_user.admin_level == AdminLevel::ReadOnly {
         return Err(Json(RolesError::Unauthorized));
     }
+
+    let role = NewRole {
+        campaign_id,
+        name: role.name.clone(),
+        description: role.description.take(),
+        min_available: role.min_available,
+        max_available: role.max_available,
+        finalised: role.finalised,
+    };
 
     let res: Option<Role> = db.run(move |conn| NewRole::insert(&role, &conn)).await;
 
