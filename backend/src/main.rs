@@ -45,15 +45,18 @@ async fn main() {
         )
         .mount("/auth", routes![auth::signin, auth::signup])
         .mount(
-            "/campaigns",
+            "/campaign",
             routes![
-                campaigns::get_campaign,
-                campaigns::create_or_update_campaign,
+                campaigns::get,
+                campaigns::update,
                 campaigns::roles,
                 campaigns::create_role,
+                campaigns::create,
+                campaigns::delete_campaign,
+                campaigns::get_all_campaigns,
             ],
         )
-        .mount("/user", routes![user::get_user])
+        .mount("/user", routes![user::get_user, user::get_user_campaigns])
         .launch()
         .await
         .unwrap();

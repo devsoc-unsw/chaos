@@ -1,4 +1,7 @@
-use crate::database::{models::User, Database};
+use crate::database::{
+    models::{Campaign, User},
+    Database,
+};
 use rocket::{
     get,
     serde::{json::Json, Serialize},
@@ -7,6 +10,7 @@ use rocket::{
 #[derive(Serialize)]
 pub enum UserError {
     UserNotFound,
+    CampaignNotFound,
 }
 
 #[derive(Serialize)]
@@ -36,4 +40,14 @@ pub async fn get_user(
         })),
         None => Err(Json(UserError::UserNotFound)),
     }
+}
+
+#[get("/campaigns")]
+pub async fn get_user_campaigns(
+    user: User,
+    db: Database,
+) -> Result<Json<Vec<Campaign>>, Json<UserError>> {
+    let campaigns = db.run(move |conn| user.get_all_campaigns(conn)).await;
+
+    Ok(Json(campaigns))
 }
