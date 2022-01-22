@@ -31,7 +31,7 @@ pub async fn get(campaign_id: i32, db: Database) -> Result<Json<Campaign>, Json<
 }
 
 #[get("/all")]
-pub async fn get_all_campaigns(user: User, db: Database) -> Json<Vec<Campaign>> {
+pub async fn get_all_campaigns(_user: User, db: Database) -> Json<Vec<Campaign>> {
     let campaigns = db.run(|conn| Campaign::get_all_public(conn)).await;
 
     Json(campaigns)

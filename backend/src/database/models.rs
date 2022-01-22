@@ -629,7 +629,7 @@ impl NewRole {
     }
 }
 
-#[derive(Identifiable, Queryable, Associations, PartialEq)]
+#[derive(Identifiable, Queryable, Associations, PartialEq, Serialize)]
 #[belongs_to(Role)]
 #[belongs_to(OrganisationUser, foreign_key = "user_id")]
 pub struct Application {
@@ -641,7 +641,7 @@ pub struct Application {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Insertable)]
+#[derive(Insertable, FromForm)]
 #[table_name = "applications"]
 pub struct NewApplication {
     pub user_id: i32,
