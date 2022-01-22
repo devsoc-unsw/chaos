@@ -57,7 +57,10 @@ async fn main() {
             ],
         )
         .mount("/user", routes![user::get_user, user::get_user_campaigns])
-        .mount("/comment", routes![comment::create_comment])
+        .mount(
+            "/comment",
+            routes![comment::create_comment, comment::get_comment_from_id],
+        )
         .launch()
         .await
         .unwrap();
