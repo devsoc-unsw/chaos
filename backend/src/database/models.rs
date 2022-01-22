@@ -641,7 +641,7 @@ pub struct Application {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Insertable)]
+#[derive(Insertable, FromForm)]
 #[table_name = "applications"]
 pub struct NewApplication {
     pub user_id: i32,
