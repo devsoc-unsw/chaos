@@ -585,6 +585,12 @@ impl Role {
         roles.filter(name.eq(role_name)).first(conn).ok()
     }
 
+    pub fn get_from_id(conn: &PgConnection, id_val: i32) -> Option<Role> {
+        use crate::database::schema::roles::dsl::*;
+
+        roles.filter(id.eq(id_val)).first(conn).ok()
+    }
+
     pub fn delete(conn: &PgConnection, role_id: i32) -> bool {
         use crate::database::schema::roles::dsl::*;
 
@@ -747,6 +753,17 @@ impl Question {
 
         questions
             .filter(role_id.eq(role_id_val))
+            .order(id.asc())
+            .load(conn)
+            .unwrap_or_else(|_| vec![])
+    }
+
+    pub fn get_ids_from_role_id(conn: &PgConnection, role_id_val: i32) -> Vec<i32> {
+        use crate::database::schema::questions::dsl::*;
+
+        questions
+            .filter(role_id.eq(role_id_val))
+            .select(id)
             .order(id.asc())
             .load(conn)
             .unwrap_or_else(|_| vec![])
