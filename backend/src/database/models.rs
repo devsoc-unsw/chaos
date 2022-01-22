@@ -847,7 +847,7 @@ impl NewAnswer {
     }
 }
 
-#[derive(Identifiable, Queryable, Associations, PartialEq)]
+#[derive(Identifiable, Queryable, Associations, PartialEq, Serialize)]
 #[belongs_to(Application)]
 #[belongs_to(OrganisationUser, foreign_key = "commenter_user_id")]
 pub struct Comment {
@@ -859,7 +859,7 @@ pub struct Comment {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Insertable)]
+#[derive(Insertable, FromForm)]
 #[table_name = "comments"]
 pub struct NewComment {
     pub application_id: i32,
