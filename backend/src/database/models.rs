@@ -868,6 +868,12 @@ pub struct NewComment {
 }
 
 impl Comment {
+    pub fn get_from_id(conn: &PgConnection, comment_id: i32) -> Option<Comment> {
+        use crate::database::schema::comments::dsl::*;
+
+        comments.filter(id.eq(comment_id)).first(conn).ok()
+    }
+
     pub fn get_all(conn: &PgConnection) -> Vec<Comment> {
         use crate::database::schema::comments::dsl::*;
 
