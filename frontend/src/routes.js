@@ -9,6 +9,7 @@ const Marking = lazy(() => import("./pages/marking"));
 const Rankings = lazy(() => import("./pages/rankings"));
 const Admin = lazy(() => import("./pages/admin"));
 const CampaignCreate = lazy(() => import("./pages/create_campaign"));
+const ApplicationPage = lazy(() => import("./pages/application_page"));
 
 const routes = [
   <Route key="dashboard" path="/dashboard" element={<DashboardPage />} />,
@@ -23,6 +24,7 @@ const routes = [
     path="/campaign/create"
     element={<CampaignCreate />}
   />,
+  <Route key="ApplicationPage" path="/application" element={<ApplicationPage />} />,
 ];
 
 export default routes;

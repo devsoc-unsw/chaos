@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import {
   Card,
@@ -25,6 +26,7 @@ import { ExpandIconButton } from "./campaignCard.styled";
 const CampaignCard = (props) => {
   const [expanded, setExpanded] = useState(false);
   const { title, appliedFor, positions, startDate, endDate, img } = props;
+  const navigate = useNavigate();
 
   const handleExpandClick = () => {
     setExpanded(!expanded);
@@ -95,7 +97,11 @@ const CampaignCard = (props) => {
       </CardActionArea>
 
       <CardActions disableSpacing>
-        <Button size="small" variant="outlined">
+        <Button 
+          size="small" 
+          variant="outlined" 
+          onClick={() => navigate("/application") /*FIXME: integrate w/ backend to navigate to specific page*/}
+        >
           Apply
         </Button>
         <ExpandIconButton
