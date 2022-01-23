@@ -1,11 +1,11 @@
 import { styled } from "@mui/material/styles";
-import { List, ListItem, ListItemText, ListItemButton, Divider } from "@mui/material";
+import { List, ListItem, ListItemButton, Divider } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 
 export const AdminContentContainer = styled("div")(() => ({
   flex: "1 0 auto",
   height: "100%",
-  backgroundColor: "white"
+  backgroundColor: "white",
 }));
 
 export const ToggleButtonContainer = styled("div")(() => ({
@@ -15,7 +15,7 @@ export const ToggleButtonContainer = styled("div")(() => ({
   backgroundColor: "white",
   height: "100%",
   width: "50%",
-  marginRight: "80px"
+  marginRight: "80px",
 }));
 
 export const ContentHeader = styled("div")(() => ({
@@ -24,14 +24,14 @@ export const ContentHeader = styled("div")(() => ({
   width: "100%",
   height: "200px",
   backgroundColor: "white",
-  alignItems: "center"
+  alignItems: "center",
 }));
 
 export const OrgInfo = styled("div")(() => ({
   display: "flex",
   width: "50%",
   height: "100%",
-  alignItems: "center"
+  alignItems: "center",
 }));
 
 export const OrgInfoImage = styled("img")(() => ({
@@ -39,13 +39,13 @@ export const OrgInfoImage = styled("img")(() => ({
   width: "100px",
   margin: "45px",
   marginLeft: "80px",
-  borderRadius: "12px"
+  borderRadius: "12px",
 }));
 
 export const OrgInfoName = styled("div")(() => ({
   display: "inline-flex",
   alignSelf: "center",
-  fontSize: "3rem"
+  fontSize: "3rem",
 }));
 
 export const ContentBody = styled("div")(() => ({
@@ -57,48 +57,48 @@ export const ContentBody = styled("div")(() => ({
   borderRadius: "12px",
   borderWidth: "1px",
   backgroundColor: "#f0f4fc",
-  overflow: "auto"
+  overflow: "auto",
 }));
 
 export const CampaignListItem = styled(ListItem)(() => ({
-  padding: "0px"
+  padding: "0px",
 }));
 
 export const CampaignListItemImage = styled("img")(() => ({
   width: "250px",
-  height: "130px"
+  height: "130px",
 }));
 
 export const MemberListItem = styled(ListItem)(() => ({
   padding: "0px",
-  height: "70px"
+  height: "70px",
 }));
 
 export const AdminContentList = styled(List)(() => ({
   position: "relative",
-  padding:"0px",
+  padding: "0px",
 }));
 
 export const AdminListItemButton = styled(ListItemButton)(() => ({
   padding: "0px",
-  height: "100%"
+  height: "100%",
 }));
 
 export const ContentListHeader = styled(ListItem)(() => ({
-  padding:"0px",
-  height:"50px",
-  backgroundColor: "#e2e6ed"
+  padding: "0px",
+  height: "50px",
+  backgroundColor: "#e2e6ed",
 }));
 
 export const DummyDivForAlignment = styled("div")(() => ({
   width: "250px",
-  height: "130px"
+  height: "130px",
 }));
 
 export const DummyIconForAlignment = styled(AddIcon)(() => ({
-  display: "none"
+  display: "none",
 }));
 
 export const AdminDivider = styled(Divider)(() => ({
-  backgroundColor: "grey"
+  backgroundColor: "grey",
 }));
