@@ -1,5 +1,5 @@
 use crate::database::{
-    models::{Application, NewApplication, SuperUser},
+    models::{Application, NewApplication, User},
     Database,
 };
 use rocket::{
@@ -18,7 +18,7 @@ pub enum ApplicationError {
 #[post("/new", data = "<new_application>")]
 pub async fn create_application(
     new_application: Form<NewApplication>,
-    _user: SuperUser,
+    _user: User,
     db: Database,
 ) -> Result<Json<Application>, Json<ApplicationError>> {
     let application = db
