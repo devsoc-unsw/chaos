@@ -8,6 +8,7 @@ pub mod cors;
 pub mod database;
 pub mod guard;
 pub mod organisation;
+pub mod role;
 pub mod state;
 pub mod user;
 
@@ -58,6 +59,7 @@ async fn main() {
         )
         .mount("/user", routes![user::get_user, user::get_user_campaigns])
         .mount("application", routes![application::create_application])
+        .mount("/role", routes![role::get_role, role::update_role])
         .launch()
         .await
         .unwrap();
