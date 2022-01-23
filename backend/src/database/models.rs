@@ -281,7 +281,7 @@ impl NewOrganisation {
     }
 }
 
-#[derive(Queryable, Associations)]
+#[derive(Queryable, Debug, Associations)]
 #[belongs_to(Organisation)]
 #[belongs_to(User)]
 pub struct OrganisationUser {
@@ -554,6 +554,7 @@ pub struct Role {
 #[derive(Insertable, AsChangeset, FromForm)]
 #[table_name = "roles"]
 pub struct RoleUpdate {
+    pub campaign_id: i32,
     pub name: String,
     pub description: Option<String>,
     pub min_available: i32,
