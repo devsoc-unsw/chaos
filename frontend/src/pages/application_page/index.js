@@ -171,9 +171,7 @@ const Application = () => {
                         multiline
                         value={answers[qID]}
                         onChange={(e) => handleAnswerInput(e, qID)}
-                      >
-                        placeholder
-                      </Answer>
+                      />
                     </>
                   )
                 })
