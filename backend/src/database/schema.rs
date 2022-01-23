@@ -1,15 +1,15 @@
 use diesel_derive_enum::DbEnum;
 
-#[DbValueStyle = "PascalCase"]
 #[derive(Debug, DbEnum, PartialEq)]
+#[DbValueStyle = "PascalCase"]
 pub enum ApplicationStatus {
     Pending,
     Rejected,
     Success,
 }
 
-#[DbValueStyle = "PascalCase"]
 #[derive(Debug, DbEnum, PartialEq)]
+#[DbValueStyle = "PascalCase"]
 pub enum AdminLevel {
     ReadOnly,
     Director,
