@@ -538,7 +538,7 @@ impl NewCampaign {
     }
 }
 
-#[derive(Identifiable, Queryable, Serialize, Associations, PartialEq, Debug)]
+#[derive(Identifiable, Queryable, Serialize, Associations, PartialEq)]
 #[belongs_to(Campaign)]
 pub struct Role {
     pub id: i32,

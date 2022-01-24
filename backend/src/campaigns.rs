@@ -162,21 +162,19 @@ pub async fn roles(
 #[post("/<campaign_id>/roles", data = "<role>")]
 pub async fn create_role(
     campaign_id: i32,
-    mut role: Form<CreateRoleInput>,
+    role: Form<CreateRoleInput>,
     user: User,
     db: Database,
 ) -> Result<(), Json<RolesError>> {
     let campaign = db
         .run(move |conn| Campaign::get_from_id(conn, campaign_id))
-        .await;
-
-    let campaign = campaign.ok_or(Json(RolesError::CampaignNotFound))?;
+        .await
+        .ok_or(Json(RolesError::CampaignNotFound))?;A
 
     let org_user = db
         .run(move |conn| OrganisationUser::get(conn, campaign.organisation_id, user.id))
-        .await;
-
-    let org_user = org_user.ok_or(Json(RolesError::Unauthorized))?;
+        .await
+        .ok_or(Json(RolesError::Unauthorized))?;
 
     // only allow creation if admin_level is not AdminLevel::ReadOnly
     if !user.superuser && org_user.admin_level == AdminLevel::ReadOnly {
@@ -186,7 +184,7 @@ pub async fn create_role(
     let role = NewRole {
         campaign_id,
         name: role.name.clone(),
-        description: role.description.take(),
+        description: role.description.clone(),
         min_available: role.min_available,
         max_available: role.max_available,
         finalised: role.finalised,
