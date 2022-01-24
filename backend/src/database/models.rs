@@ -281,7 +281,7 @@ impl NewOrganisation {
     }
 }
 
-#[derive(Queryable, Debug, Associations)]
+#[derive(Queryable, Associations)]
 #[belongs_to(Organisation)]
 #[belongs_to(User)]
 pub struct OrganisationUser {
