@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate diesel;
 
+pub mod application;
 pub mod auth;
 pub mod campaigns;
 pub mod cors;
@@ -8,6 +9,7 @@ pub mod database;
 pub mod guard;
 pub mod organisation;
 pub mod role;
+pub mod seed;
 pub mod state;
 pub mod user;
 
@@ -15,6 +17,7 @@ use auth::Auth;
 use cors::cors;
 use database::Database;
 use rocket::routes;
+use std::env;
 
 #[rocket::get("/foo")]
 fn authed_call(auth: Auth) -> String {
@@ -24,6 +27,9 @@ fn authed_call(auth: Auth) -> String {
 #[rocket::main]
 async fn main() {
     dotenv::dotenv().unwrap();
+    if let Ok(_) = env::var("SEED") {
+        seed::seed();
+    }
 
     let api_state = state::api_state().await;
 
@@ -57,7 +63,11 @@ async fn main() {
             ],
         )
         .mount("/user", routes![user::get_user, user::get_user_campaigns])
-        .mount("/role", routes![role::get_question_ids])
+        .mount("/application", routes![application::create_application])
+        .mount(
+            "/role",
+            routes![role::get_role, role::update_role, role::get_question_ids],
+        )
         .launch()
         .await
         .unwrap();

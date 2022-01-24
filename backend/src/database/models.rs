@@ -533,7 +533,6 @@ impl Campaign {
 impl NewCampaign {
     pub fn insert(&self, conn: &PgConnection) -> Option<Campaign> {
         use crate::database::schema::campaigns::dsl::*;
-
         self.insert_into(campaigns).get_result(conn).ok()
     }
 }
@@ -552,9 +551,10 @@ pub struct Role {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Insertable)]
+#[derive(Insertable, AsChangeset, FromForm)]
 #[table_name = "roles"]
-pub struct NewRole {
+pub struct RoleUpdate {
+    pub campaign_id: i32,
     pub name: String,
     pub description: Option<String>,
     pub min_available: i32,
@@ -585,10 +585,19 @@ impl Role {
         roles.filter(name.eq(role_name)).first(conn).ok()
     }
 
-    pub fn get_from_id(conn: &PgConnection, id_val: i32) -> Option<Role> {
+    pub fn get_from_id(conn: &PgConnection, role_id: i32) -> Option<Role> {
         use crate::database::schema::roles::dsl::*;
 
-        roles.filter(id.eq(id_val)).first(conn).ok()
+        roles.filter(id.eq(role_id)).first(conn).ok()
+    }
+
+    pub fn update(conn: &PgConnection, role_id: i32, role_update: &RoleUpdate) -> Option<Role> {
+        use crate::database::schema::roles::dsl::*;
+
+        diesel::update(roles.filter(id.eq(role_id)))
+            .set(role_update)
+            .get_result(conn)
+            .ok()
     }
 
     pub fn delete(conn: &PgConnection, role_id: i32) -> bool {
@@ -625,9 +634,24 @@ impl Role {
 
         Some(())
     }
+
+    pub fn delete_deep(conn: &PgConnection, role_id: i32) -> Option<()> {
+        use crate::database::schema::roles::dsl::*;
+
+        let role = roles.filter(id.eq(role_id)).first(conn).ok()?;
+
+        Role::delete_children(conn, role)?;
+
+        let deleted = Role::delete(conn, role_id);
+
+        match deleted {
+            true => Some(()),
+            false => None,
+        }
+    }
 }
 
-impl NewRole {
+impl RoleUpdate {
     pub fn insert(&self, conn: &PgConnection) -> Option<Role> {
         use crate::database::schema::roles::dsl::*;
 
@@ -635,7 +659,7 @@ impl NewRole {
     }
 }
 
-#[derive(Identifiable, Queryable, Associations, PartialEq)]
+#[derive(Identifiable, Queryable, Associations, PartialEq, Serialize)]
 #[belongs_to(Role)]
 #[belongs_to(OrganisationUser, foreign_key = "user_id")]
 pub struct Application {
@@ -647,7 +671,7 @@ pub struct Application {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Insertable)]
+#[derive(Insertable, FromForm)]
 #[table_name = "applications"]
 pub struct NewApplication {
     pub user_id: i32,
