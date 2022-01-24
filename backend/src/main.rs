@@ -9,6 +9,7 @@ pub mod database;
 pub mod guard;
 pub mod organisation;
 pub mod role;
+pub mod seed;
 pub mod state;
 pub mod user;
 
@@ -16,6 +17,7 @@ use auth::Auth;
 use cors::cors;
 use database::Database;
 use rocket::routes;
+use std::env;
 
 #[rocket::get("/foo")]
 fn authed_call(auth: Auth) -> String {
@@ -25,6 +27,9 @@ fn authed_call(auth: Auth) -> String {
 #[rocket::main]
 async fn main() {
     dotenv::dotenv().unwrap();
+    if let Ok(_) = env::var("SEED") {
+        seed::seed();
+    }
 
     let api_state = state::api_state().await;
 
