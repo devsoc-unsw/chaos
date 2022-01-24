@@ -533,7 +533,6 @@ impl Campaign {
 impl NewCampaign {
     pub fn insert(&self, conn: &PgConnection) -> Option<Campaign> {
         use crate::database::schema::campaigns::dsl::*;
-
         self.insert_into(campaigns).get_result(conn).ok()
     }
 }
@@ -552,9 +551,9 @@ pub struct Role {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Insertable)]
+#[derive(Insertable, AsChangeset, FromForm)]
 #[table_name = "roles"]
-pub struct NewRole {
+pub struct RoleUpdate {
     pub name: String,
     pub description: Option<String>,
     pub min_available: i32,
@@ -583,6 +582,21 @@ impl Role {
         use crate::database::schema::roles::dsl::*;
 
         roles.filter(name.eq(role_name)).first(conn).ok()
+    }
+
+    pub fn get_from_id(conn: &PgConnection, role_id: i32) -> Option<Role> {
+        use crate::database::schema::roles::dsl::*;
+
+        roles.filter(id.eq(role_id)).first(conn).ok()
+    }
+
+    pub fn update(conn: &PgConnection, role_id: i32, role_update: &RoleUpdate) -> Option<Role> {
+        use crate::database::schema::roles::dsl::*;
+
+        diesel::update(roles.filter(id.eq(role_id)))
+            .set(role_update)
+            .get_result(conn)
+            .ok()
     }
 
     pub fn delete(conn: &PgConnection, role_id: i32) -> bool {
@@ -619,9 +633,24 @@ impl Role {
 
         Some(())
     }
+
+    pub fn delete_deep(conn: &PgConnection, role_id: i32) -> Option<()> {
+        use crate::database::schema::roles::dsl::*;
+
+        let role = roles.filter(id.eq(role_id)).first(conn).ok()?;
+
+        Role::delete_children(conn, role)?;
+
+        let deleted = Role::delete(conn, role_id);
+
+        match deleted {
+            true => Some(()),
+            false => None,
+        }
+    }
 }
 
-impl NewRole {
+impl RoleUpdate {
     pub fn insert(&self, conn: &PgConnection) -> Option<Role> {
         use crate::database::schema::roles::dsl::*;
 
@@ -881,6 +910,33 @@ impl Comment {
             .order(id.asc())
             .load(conn)
             .unwrap_or_else(|_| vec![])
+    }
+
+    pub fn app_id_to_org_id(conn: &PgConnection, application_id: i32) -> Option<i32> {
+        use crate::database::schema::*;
+
+        applications::table
+            .filter(applications::id.eq(application_id))
+            .inner_join(roles::table.on(roles::id.eq(applications::role_id)))
+            .inner_join(campaigns::table.on(campaigns::id.eq(roles::campaign_id)))
+            .inner_join(organisations::table.on(organisations::id.eq(campaigns::organisation_id)))
+            .select(organisations::id)
+            .first(conn)
+            .ok()
+    }
+
+    pub fn comment_id_to_org_id(conn: &PgConnection, comment_id: i32) -> Option<i32> {
+        use crate::database::schema::*;
+
+        comments::table
+            .filter(comments::id.eq(comment_id))
+            .inner_join(applications::table.on(applications::id.eq(comments::application_id)))
+            .inner_join(roles::table.on(roles::id.eq(applications::role_id)))
+            .inner_join(campaigns::table.on(campaigns::id.eq(roles::campaign_id)))
+            .inner_join(organisations::table.on(organisations::id.eq(campaigns::organisation_id)))
+            .select(organisations::id)
+            .first(conn)
+            .ok()
     }
 
     pub fn get_all_from_application_id(
