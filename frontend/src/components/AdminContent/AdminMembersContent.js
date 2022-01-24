@@ -15,7 +15,7 @@ import {
 
 const AdminMembersContent = ({ members, setMembers }) => {
   const onDelete = (memberId) => {
-    // FIXME: integrate with backend to actually delete
+    // FIXME: CHAOS-55, integrate with backend to actually delete
     setMembers(members.filter((m) => m.id !== parseInt(memberId, 10)));
   };
   return (

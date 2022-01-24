@@ -17,65 +17,65 @@ export const SidebarContainer = styled("div")(
   })
 );
 
-export const OrgButtonGroup = styled(ToggleButtonGroup)(() => ({
-  position: "absolute",
-  top: "0",
-  left: "0",
-  width: "100%",
-  padding: "0px",
-  margin: "0px",
-}));
+export const OrgButtonGroup = styled(ToggleButtonGroup)`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 0px;
+  margin: 0px;
+`;
 
-export const OrgButton = styled(ToggleButton)(() => ({
-  position: "relative",
-  display: "table",
-  width: "100%",
-  listStyle: "none",
-  height: "90px",
-  padding: "5px",
-  verticalAlign: "middle",
-}));
+export const OrgButton = styled(ToggleButton)`
+  position: relative;
+  display: table;
+  width: 100%;
+  list-style: none;
+  height: 90px;
+  padding: 5px;
+  vertical-align: middle;
+`;
 
-export const OrgButtonContent = styled("div")(() => ({
-  display: "flex",
-  padding: "4px",
-}));
+export const OrgButtonContent = styled("div")`
+  display: flex;
+  padding: 4px;
+`;
 
 export const CreateOrgButton = styled(OrgButton)(({ isFormOpen }) => ({
   height: isFormOpen ? "180px" : "90px",
 }));
 
-export const CreateOrgIcon = styled(AddIcon)(() => ({
-  fontSize: "30px",
-  margin: "14px",
-}));
+export const CreateOrgIcon = styled(AddIcon)`
+  font-size: 30px;
+  margin: 14px;
+`;
 
-export const RemoveOrgIcon = styled(RemoveIcon)(() => ({
-  fontSize: "30px",
-  margin: "14px",
-}));
+export const RemoveOrgIcon = styled(RemoveIcon)`
+  font-size: 30px;
+  margin: 14px;
+`;
 
-export const OrgIcon = styled("span")(() => ({
-  display: "block",
-  minWidth: "60px",
-  height: "60px",
-  lineHeight: "60px",
-  margin: "0px",
-}));
+export const OrgIcon = styled("span")`
+  display: block;
+  min-width: 60px;
+  height: 60px;
+  line-height: 60px;
+  margin: 0px;
+`;
 
-export const OrgIconImage = styled("img")(() => ({
-  width: "60px",
-  height: "60px",
-  borderRadius: "12px",
-}));
+export const OrgIconImage = styled("img")`
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+`;
 
-export const OrgName = styled("span")(() => ({
-  position: "relative",
-  display: "block",
-  padding: "0 10px",
-  height: "60px",
-  lineHeight: "60px",
-  textAlign: "start",
-  whiteSpace: "nowrap",
-  paddingLeft: "25px",
-}));
+export const OrgName = styled("span")`
+  position: relative;
+  display: block;
+  padding: 0 10px;
+  height: 60px;
+  line-height: 60px;
+  text-align: start;
+  white-space: nowrap;
+  padding-left: 25px;
+`;

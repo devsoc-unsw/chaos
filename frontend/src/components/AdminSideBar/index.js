@@ -38,9 +38,9 @@ const AdminSidebar = ({
   };
 
   const onUpload = () => {
-    // FIXME: send to the backend
+    // FIXME: CHAOS-55, send to the backend
     if (uploadedImage.image && inputText) {
-      // FIXME: backend request should return new id, this method obv flawed (also floored)
+      // FIXME: CHAOS-55, backend request should return new id, this method obv flawed (also floored)
       const newID = Math.floor(Math.random() * 1000);
       const newOrgList = orgList.concat({
         id: newID,

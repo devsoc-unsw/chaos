@@ -20,7 +20,7 @@ const AdminCampaignContent = ({ campaigns, setCampaigns }) => {
   const navigate = useNavigate();
 
   const onDelete = (e) => {
-    // FIXME: integrate with backend to actually delete
+    // FIXME: CHAOS-55, integrate with backend to actually delete
     e.stopPropagation();
     const campaignId = e.currentTarget.value;
     setCampaigns(campaigns.filter((c) => c.id !== parseInt(campaignId, 10)));
@@ -54,12 +54,8 @@ const AdminCampaignContent = ({ campaigns, setCampaigns }) => {
       {campaigns.map((c) => (
         <div>
           <CampaignListItem>
-            <AdminListItemButton
-              onClick={
-                (e) =>
-                  onCampaignClick(e) /* FIXME: should nav to marking/<c.id> */
-              }
-            >
+            {"" /* FIXME: part of CHAOS-55, should nav to marking/<c.id> */}
+            <AdminListItemButton onClick={(e) => onCampaignClick(e)}>
               <CampaignListItemImage src={c.image} />
               <ListItemText align="center">{c.title}</ListItemText>
               <ListItemText align="center">

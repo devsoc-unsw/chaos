@@ -19,8 +19,8 @@ import { orgContext } from "../../pages/admin";
 import AdminCampaignContent from "./AdminCampaignContent";
 import AdminMembersContent from "./AdminMembersContent";
 
-// FIXME: should request from backend. Have this function defined here instead of utils
-//        cause I don"t think it will be used again??
+// CHAOS-55: should request from backend. Have this function defined here instead of utils
+//           cause I don"t think it will be used again??
 const getCampaigns = (/* orgID, token */) => [
   {
     id: 0,
@@ -44,8 +44,8 @@ const getCampaigns = (/* orgID, token */) => [
     endDate: "1 Apr 2022",
   },
 ];
-// FIXME: should request from backend. Have this function defined here instead of utils
-//        cause I don"t think it will be used again??
+// CHAOS-55: should request from backend. Have this function defined here instead of utils
+//           cause I don"t think it will be used again??
 const getMembers = (/* orgID, token */) => [
   {
     id: 0,
@@ -129,7 +129,6 @@ const getMembers = (/* orgID, token */) => [
   },
 ];
 
-// FIXME: content not aligned with sidebar, need to change sidebar :(
 const AdminContent = ({ id, icon, orgName }) => {
   const [windowSelected, setWindowSelected] = useState("campaigns");
   const { orgSelected, setOrgSelected, orgList, setOrgList } =
@@ -139,7 +138,7 @@ const AdminContent = ({ id, icon, orgName }) => {
 
   const handleDeletion = () => {
     if (orgSelected === id) {
-      // FIXME: doesn"t handle no remaining orgs, also assumes that
+      // FIXME: CHAOS-56, doesn"t handle no remaining orgs, also assumes that
       //        an org exists with id == 0, and that the user is a member
       //        of this org. Will be fixed when itegrated with backend.
       setOrgSelected(0);
