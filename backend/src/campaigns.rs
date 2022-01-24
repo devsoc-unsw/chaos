@@ -1,7 +1,7 @@
 use crate::database::{
     models::{
-        Campaign, NewCampaignInput,  OrganisationAdmin, OrganisationUser,
-        Role, UpdateCampaignInput, User, CreateRoleInput, NewRole,
+        Campaign, NewCampaignInput, OrganisationAdmin, OrganisationUser,
+        Role, UpdateCampaignInput, User, CreateRoleInput, RoleUpdate,
     },
     schema::AdminLevel,
     Database,
@@ -31,7 +31,7 @@ pub async fn get(campaign_id: i32, db: Database) -> Result<Json<Campaign>, Json<
 }
 
 #[get("/all")]
-pub async fn get_all_campaigns(user: User, db: Database) -> Json<Vec<Campaign>> {
+pub async fn get_all_campaigns(_user: User, db: Database) -> Json<Vec<Campaign>> {
     let campaigns = db.run(|conn| Campaign::get_all_public(conn)).await;
 
     Json(campaigns)
@@ -169,7 +169,7 @@ pub async fn create_role(
     let campaign = db
         .run(move |conn| Campaign::get_from_id(conn, campaign_id))
         .await
-        .ok_or(Json(RolesError::CampaignNotFound))?;A
+        .ok_or(Json(RolesError::CampaignNotFound))?;
 
     let org_user = db
         .run(move |conn| OrganisationUser::get(conn, campaign.organisation_id, user.id))
@@ -181,7 +181,7 @@ pub async fn create_role(
         return Err(Json(RolesError::Unauthorized));
     }
 
-    let role = NewRole {
+    let role = RoleUpdate {
         campaign_id,
         name: role.name.clone(),
         description: role.description.clone(),
@@ -190,7 +190,7 @@ pub async fn create_role(
         finalised: role.finalised,
     };
 
-    let res: Option<Role> = db.run(move |conn| NewRole::insert(&role, &conn)).await;
+    let res: Option<Role> = db.run(move |conn| RoleUpdate::insert(&role, &conn)).await;
 
     match res {
         Some(_) => Ok(()),
