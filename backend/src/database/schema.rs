@@ -1,6 +1,7 @@
 use diesel_derive_enum::DbEnum;
 
 #[derive(Debug, DbEnum, PartialEq)]
+#[DbValueStyle = "PascalCase"]
 pub enum ApplicationStatus {
     Pending,
     Rejected,
@@ -8,6 +9,7 @@ pub enum ApplicationStatus {
 }
 
 #[derive(Debug, DbEnum, PartialEq)]
+#[DbValueStyle = "PascalCase"]
 pub enum AdminLevel {
     ReadOnly,
     Director,
@@ -27,7 +29,7 @@ table! {
 
 table! {
     use diesel::sql_types::*;
-    use crate::database::schema::ApplicationStatusMapping;
+    use super::ApplicationStatusMapping;
 
     applications (id) {
         id -> Int4,
@@ -67,7 +69,7 @@ table! {
 
 table! {
     use diesel::sql_types::*;
-    use crate::database::schema::AdminLevelMapping;
+    use super::AdminLevelMapping;
 
     organisation_users (id) {
         id -> Int4,
