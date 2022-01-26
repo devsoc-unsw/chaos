@@ -57,15 +57,17 @@ async fn main() {
                 campaigns::get,
                 campaigns::update,
                 campaigns::roles,
-                campaigns::create_role,
                 campaigns::create,
                 campaigns::delete_campaign,
                 campaigns::get_all_campaigns,
             ],
         )
         .mount("/user", routes![user::get_user, user::get_user_campaigns])
-        .mount("application", routes![application::create_application])
-        .mount("/role", routes![role::get_role, role::update_role])
+        .mount("/application", routes![application::create_application])
+        .mount(
+            "/role",
+            routes![role::get_role, role::update_role, role::new_role],
+        )
         .launch()
         .await
         .unwrap();

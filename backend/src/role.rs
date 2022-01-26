@@ -7,7 +7,7 @@ use crate::database::{
 use rocket::{
     delete,
     form::Form,
-    get, put,
+    get, post, put,
     serde::{json::Json, Serialize},
 };
 
@@ -17,6 +17,7 @@ pub enum RoleError {
     RoleNotFound,
     CampaignNotFound,
     Unauthorized,
+    RoleAlreadyExists,
 }
 
 #[derive(Serialize)]
@@ -114,5 +115,37 @@ pub async fn delete_role(role_id: i32, user: User, db: Database) -> Result<(), J
     match res {
         Some(_) => Ok(()),
         None => Err(Json(RoleError::RoleUpdateFailure)),
+    }
+}
+
+#[post("/new", data = "<role>")]
+pub async fn new_role(
+    role: Form<RoleUpdate>,
+    user: User,
+    db: Database,
+) -> Result<(), Json<RoleError>> {
+    // Closure in run below doesn't work without explicitly taking ownership of this value
+    let campaign_id = role.campaign_id;
+
+    let campaign = db
+        .run(move |conn| Campaign::get_from_id(conn, campaign_id))
+        .await
+        .ok_or(Json(RoleError::CampaignNotFound))?;
+
+    let org_user = db
+        .run(move |conn| OrganisationUser::get(conn, campaign.organisation_id, user.id))
+        .await
+        .ok_or(Json(RoleError::Unauthorized))?;
+
+    // only allow creation if admin_level is not AdminLevel::ReadOnly
+    if !user.superuser && org_user.admin_level == AdminLevel::ReadOnly {
+        return Err(Json(RoleError::Unauthorized));
+    }
+
+    let res: Option<Role> = db.run(move |conn| RoleUpdate::insert(&role, &conn)).await;
+
+    match res {
+        Some(_) => Ok(()),
+        None => Err(Json(RoleError::RoleAlreadyExists)),
     }
 }

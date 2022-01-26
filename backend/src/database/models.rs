@@ -551,16 +551,6 @@ pub struct Role {
     pub updated_at: NaiveDateTime,
 }
 
-// FromForm defaults bools to false if not present
-#[derive(FromForm)]
-pub struct CreateRoleInput {
-    pub name: String,
-    pub description: Option<String>,
-    pub min_available: i32,
-    pub max_available: i32,
-    pub finalised: bool,
-}
-
 #[derive(Insertable, AsChangeset, FromForm)]
 #[table_name = "roles"]
 pub struct RoleUpdate {

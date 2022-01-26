@@ -1,7 +1,7 @@
 use crate::database::{
     models::{
-        Campaign, NewCampaignInput, OrganisationAdmin, OrganisationUser,
-        Role, UpdateCampaignInput, User, CreateRoleInput, RoleUpdate,
+        Campaign, NewCampaignInput, OrganisationAdmin, OrganisationUser, Role, UpdateCampaignInput,
+        User,
     },
     schema::AdminLevel,
     Database,
@@ -157,43 +157,4 @@ pub async fn roles(
     }
 
     Ok(Json(RolesResponse { roles }))
-}
-
-#[post("/<campaign_id>/roles", data = "<role>")]
-pub async fn create_role(
-    campaign_id: i32,
-    role: Form<CreateRoleInput>,
-    user: User,
-    db: Database,
-) -> Result<(), Json<RolesError>> {
-    let campaign = db
-        .run(move |conn| Campaign::get_from_id(conn, campaign_id))
-        .await
-        .ok_or(Json(RolesError::CampaignNotFound))?;
-
-    let org_user = db
-        .run(move |conn| OrganisationUser::get(conn, campaign.organisation_id, user.id))
-        .await
-        .ok_or(Json(RolesError::Unauthorized))?;
-
-    // only allow creation if admin_level is not AdminLevel::ReadOnly
-    if !user.superuser && org_user.admin_level == AdminLevel::ReadOnly {
-        return Err(Json(RolesError::Unauthorized));
-    }
-
-    let role = RoleUpdate {
-        campaign_id,
-        name: role.name.clone(),
-        description: role.description.clone(),
-        min_available: role.min_available,
-        max_available: role.max_available,
-        finalised: role.finalised,
-    };
-
-    let res: Option<Role> = db.run(move |conn| RoleUpdate::insert(&role, &conn)).await;
-
-    match res {
-        Some(_) => Ok(()),
-        None => Err(Json(RolesError::RoleAlreadyExists)),
-    }
 }
