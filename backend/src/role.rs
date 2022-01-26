@@ -1,6 +1,8 @@
 use crate::database::models::RoleUpdate;
 use crate::database::{
-    models::{Campaign, OrganisationUser, Role, User},
+    models::{
+        Campaign, OrganisationDirector, OrganisationDirectorError, OrganisationUser, Role, User,
+    },
     schema::AdminLevel,
     Database,
 };
@@ -118,6 +120,15 @@ pub async fn delete_role(role_id: i32, user: User, db: Database) -> Result<(), J
     }
 }
 
+impl std::convert::From<OrganisationDirectorError> for Json<RoleError> {
+    fn from(e: OrganisationDirectorError) -> Self {
+        Json(match e {
+            OrganisationDirectorError::Unauthorized => RoleError::Unauthorized,
+            _ => RoleError::CampaignNotFound,
+        })
+    }
+}
+
 #[post("/new", data = "<role>")]
 pub async fn new_role(
     role: Form<RoleUpdate>,
@@ -127,20 +138,9 @@ pub async fn new_role(
     // Closure in run below doesn't work without explicitly taking ownership of this value
     let campaign_id = role.campaign_id;
 
-    let campaign = db
-        .run(move |conn| Campaign::get_from_id(conn, campaign_id))
-        .await
-        .ok_or(Json(RoleError::CampaignNotFound))?;
-
-    let org_user = db
-        .run(move |conn| OrganisationUser::get(conn, campaign.organisation_id, user.id))
-        .await
-        .ok_or(Json(RoleError::Unauthorized))?;
-
-    // only allow creation if admin_level is not AdminLevel::ReadOnly
-    if !user.superuser && org_user.admin_level == AdminLevel::ReadOnly {
-        return Err(Json(RoleError::Unauthorized));
-    }
+    let _ = db
+        .run(move |conn| OrganisationDirector::new_from_campaign_id(user, campaign_id, conn))
+        .await?;
 
     let res: Option<Role> = db.run(move |conn| RoleUpdate::insert(&role, &conn)).await;
 
