@@ -135,16 +135,15 @@ pub async fn new_role(
     user: User,
     db: Database,
 ) -> Result<(), Json<RoleError>> {
-    // Closure in run below doesn't work without explicitly taking ownership of this value
-    let campaign_id = role.campaign_id;
+    db.run(move |conn| {
+        let org_director = OrganisationDirector::new_from_campaign_id(user, role.campaign_id, conn);
 
-    db.run(move |conn| OrganisationDirector::new_from_campaign_id(user, campaign_id, conn))
-        .await?;
-
-    let res: Option<Role> = db.run(move |conn| RoleUpdate::insert(&role, &conn)).await;
-
-    match res {
-        Some(_) => Ok(()),
-        None => Err(Json(RoleError::RoleAlreadyExists)),
-    }
+        // Only insert if user is a valid org director
+        match org_director {
+            Ok(_) => RoleUpdate::insert(&role, &conn).ok_or(Json(RoleError::RoleAlreadyExists)),
+            Err(e) => Err(e.into()),
+        }
+    })
+    .await
+    .map(|_| ())
 }
