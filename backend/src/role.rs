@@ -138,8 +138,7 @@ pub async fn new_role(
     // Closure in run below doesn't work without explicitly taking ownership of this value
     let campaign_id = role.campaign_id;
 
-    let _ = db
-        .run(move |conn| OrganisationDirector::new_from_campaign_id(user, campaign_id, conn))
+    db.run(move |conn| OrganisationDirector::new_from_campaign_id(user, campaign_id, conn))
         .await?;
 
     let res: Option<Role> = db.run(move |conn| RoleUpdate::insert(&role, &conn)).await;
