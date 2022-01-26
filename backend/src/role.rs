@@ -1,6 +1,6 @@
 use crate::database::models::RoleUpdate;
 use crate::database::{
-    models::{Campaign, OrganisationUser, Question, Role, User},
+    models::{Campaign, OrganisationUser, Question, Role, User, OrganisationDirector},
     schema::AdminLevel,
     Database,
 };
@@ -46,19 +46,19 @@ pub async fn get_question_ids(
         .await
         .ok_or(QuestionsError::RoleNotFound)?;
 
-    let campaign = db
-        .run(move |conn| Campaign::get_from_id(conn, role.campaign_id))
-        .await
-        .ok_or(QuestionsError::CampaignNotFound)?;
+    let (maybe_campaign, org_director) = db
+        .run(move |conn| {
+            // OrganisationDirector::new_from_campaign_id will also get the campaign,
+            // but hopefully it will be cached so it's fine.
+            (Campaign::get_from_id(conn, role.campaign_id), OrganisationDirector::new_from_campaign_id(user, role.campaign_id, conn).is_ok())
+        })
+        .await;
 
-    let org_user = db
-        .run(move |conn| OrganisationUser::get(conn, campaign.organisation_id, user.id))
-        .await
-        .ok_or(QuestionsError::Unauthorized)?;
+    let campaign = maybe_campaign.ok_or(QuestionsError::CampaignNotFound)?;
 
     // Prevent people from viewing while it's in draft mode,
     // unless they have adequate permissions
-    if campaign.draft && !user.superuser && org_user.admin_level == AdminLevel::ReadOnly {
+    if campaign.draft && !org_director {
         return Err(Json(QuestionsError::Unauthorized));
     }
 
