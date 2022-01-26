@@ -659,7 +659,7 @@ impl RoleUpdate {
     }
 }
 
-#[derive(Identifiable, Queryable, Associations, PartialEq)]
+#[derive(Identifiable, Queryable, Associations, PartialEq, Serialize)]
 #[belongs_to(Role)]
 #[belongs_to(OrganisationUser, foreign_key = "user_id")]
 pub struct Application {
