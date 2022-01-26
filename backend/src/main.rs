@@ -4,6 +4,7 @@ extern crate diesel;
 pub mod application;
 pub mod auth;
 pub mod campaigns;
+pub mod comment;
 pub mod cors;
 pub mod database;
 pub mod guard;
@@ -67,6 +68,10 @@ async fn main() {
         .mount(
             "/role",
             routes![role::get_role, role::update_role, role::get_question_ids],
+        )
+        .mount(
+            "/comment",
+            routes![comment::create_comment, comment::get_comment_from_id],
         )
         .launch()
         .await
