@@ -64,12 +64,16 @@ async fn main() {
             ],
         )
         .mount("/user", routes![user::get_user, user::get_user_campaigns])
+        .mount("/application", routes![application::create_application])
+        .mount(
+            "/role",
+            routes![role::get_role, role::update_role, role::new_role],
+        )
         .mount(
             "/comment",
             routes![comment::create_comment, comment::get_comment_from_id],
         )
         .mount("application", routes![application::create_application])
-        .mount("/role", routes![role::get_role, role::update_role])
         .launch()
         .await
         .unwrap();
