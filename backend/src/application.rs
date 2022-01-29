@@ -4,9 +4,8 @@ use crate::database::{
 };
 use rocket::{
     form::Form,
-    post, put,
+    post,
     serde::{json::Json, Serialize},
-    FromForm,
 };
 
 #[derive(Serialize)]
@@ -28,19 +27,4 @@ pub async fn create_application(
         .ok_or(Json(ApplicationError::UnableToCreate))?;
 
     Ok(Json(application))
-}
-
-#[derive(FromForm)]
-pub struct RatingInput {
-    rating: i32,
-}
-
-#[put("/<application_id>/rating", data = "<rating>")]
-pub async fn create_rating(
-    application_id: i32,
-    rating: Form<RatingInput>,
-    _user: User,
-    _db: Database, // ) -> Result<Json<()>, Json<ApplicationError>>{
-) {
-    ()
 }
