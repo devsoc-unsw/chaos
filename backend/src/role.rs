@@ -1,8 +1,5 @@
-use crate::database::models::RoleUpdate;
 use crate::database::{
-    models::{
-        Campaign, OrganisationDirector, OrganisationDirectorError, OrganisationUser, Role, User,
-    },
+    models::{Campaign, OrganisationUser, Role, RoleUpdate, User},
     schema::AdminLevel,
     Database,
 };
@@ -120,15 +117,6 @@ pub async fn delete_role(role_id: i32, user: User, db: Database) -> Result<(), J
     }
 }
 
-impl std::convert::From<OrganisationDirectorError> for Json<RoleError> {
-    fn from(e: OrganisationDirectorError) -> Self {
-        Json(match e {
-            OrganisationDirectorError::Unauthorized => RoleError::Unauthorized,
-            _ => RoleError::CampaignNotFound,
-        })
-    }
-}
-
 #[post("/new", data = "<role>")]
 pub async fn new_role(
     role: Form<RoleUpdate>,
@@ -136,14 +124,13 @@ pub async fn new_role(
     db: Database,
 ) -> Result<(), Json<RoleError>> {
     db.run(move |conn| {
-        let org_director = OrganisationDirector::new_from_campaign_id(user, role.campaign_id, conn);
+        OrganisationUser::campaign_admin_level(role.campaign_id, user.id, &conn)
+            .is_at_least_director()
+            .or_else(|_| Err(Json(RoleError::Unauthorized)))?;
 
-        // Only insert if user is a valid org director
-        match org_director {
-            Ok(_) => RoleUpdate::insert(&role, &conn).ok_or(Json(RoleError::RoleAlreadyExists)),
-            Err(e) => Err(e.into()),
-        }
+        RoleUpdate::insert(&role, &conn).ok_or_else(|| Json(RoleError::RoleAlreadyExists))?;
+
+        Ok(())
     })
     .await
-    .map(|_| ())
 }

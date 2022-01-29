@@ -1,8 +1,5 @@
 use crate::database::{
-    models::{
-        Campaign, NewCampaignInput, OrganisationAdmin, OrganisationUser, Role, UpdateCampaignInput,
-        User,
-    },
+    models::{Campaign, NewCampaignInput, OrganisationUser, Role, UpdateCampaignInput, User},
     schema::AdminLevel,
     Database,
 };
@@ -99,18 +96,17 @@ pub async fn delete_campaign(
     user: User,
     db: Database,
 ) -> Result<Json<()>, Json<CampaignError>> {
-    let admin_res = db
-        .run(move |conn| OrganisationAdmin::new_from_campaign_id(user, campaign_id, conn))
-        .await;
+    db.run(move |conn| {
+        // need to be admin to create new campaign
+        OrganisationUser::campaign_admin_level(campaign_id, user.id, &conn)
+            .is_admin()
+            .or_else(|_| Err(Json(CampaignError::Unauthorized)))?;
 
-    match admin_res {
-        Ok(_admin) => {
-            db.run(move |conn| Campaign::delete_deep(conn, campaign_id))
-                .await;
-            Ok(Json(()))
-        }
-        Err(_) => Err(Json(CampaignError::Unauthorized)),
-    }
+        Campaign::delete_deep(conn, campaign_id);
+
+        Ok(Json(()))
+    })
+    .await
 }
 
 #[derive(Serialize)]
