@@ -76,7 +76,10 @@ const Signup = () => {
           aria-describedby="Starting Year"
           value={formData.starting_year}
           onChange={(e) =>
-            setFormData({ ...formData, starting_year: e.target.value })
+            setFormData({
+              ...formData,
+              starting_year: parseInt(e.target.value, 10),
+            })
           }
         />
 
