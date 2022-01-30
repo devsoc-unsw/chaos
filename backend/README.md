@@ -22,3 +22,4 @@
 Scripts should be run from the `chaos/backend` directory:
  * `scripts/become_super_user`-  will prompt for the email address to turn into a GLOBAL super user
  * `scripts/seed.sh` - will wipe your database and add some dummy data
+   * If you are getting a `bad variable nameread answer` error, ensure the file has LF-style newlines
