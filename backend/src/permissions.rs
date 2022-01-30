@@ -164,6 +164,23 @@ impl OrganisationUser {
             .into()
     }
 
+    pub fn role_admin_level(role_id: i32, user_id: i32, conn: &PgConnection) -> AdminLevelUser {
+        roles::table
+            .filter(roles::id.eq(role_id))
+            .inner_join(campaigns::table.on(campaigns::id.eq(roles::campaign_id)))
+            .inner_join(organisations::table.on(organisations::id.eq(campaigns::organisation_id)))
+            .inner_join(
+                organisation_users::table
+                    .on(organisation_users::organisation_id.eq(organisations::id)),
+            )
+            .inner_join(users::table.on(users::id.eq(organisation_users::user_id)))
+            .filter(users::id.eq(user_id))
+            .select((organisation_users::admin_level, users::superuser))
+            .first(conn)
+            .or_else(|_| Err(PermissionError::Unauthorized))
+            .into()
+    }
+
     pub fn comment_admin_level(
         comment_id: i32,
         user_id: i32,
