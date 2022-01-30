@@ -299,9 +299,11 @@ pub async fn signup(
     {
         let email = email.clone();
 
-        db.run(move |conn| User::get_from_email(conn, &email))
-            .await
-            .ok_or(Json(SignUpError::AccountAlreadyExists))?;
+        let data = db.run(move |conn| User::get_from_email(conn, &email)).await;
+
+        println!("{:?}", data);
+
+        data.ok_or(Json(SignUpError::AccountAlreadyExists))?;
     }
 
     let user = {

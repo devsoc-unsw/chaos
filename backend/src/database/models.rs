@@ -11,7 +11,7 @@ use diesel::prelude::*;
 use diesel::PgConnection;
 use rocket::FromForm;
 use serde::{Deserialize, Serialize};
-#[derive(Queryable)]
+#[derive(Queryable, Debug)]
 pub struct User {
     pub id: i32,
     pub email: String,
@@ -68,7 +68,7 @@ impl OrganisationDirector {
             .filter(organisation_users::organisation_id.eq(org_id))
             .filter(organisation_users::user_id.eq(user.id))
             .first::<OrganisationUser>(conn)?;
-        
+
         // OrgAdmin, OrgDirector or Superuser are allowed to authetnicate as OrgDirector
         if !user.superuser && org_user.admin_level == AdminLevel::ReadOnly {
             return Err(OrganisationDirectorError::Unauthorized);
@@ -169,7 +169,7 @@ impl User {
     pub fn get_from_email(conn: &PgConnection, user_email: &str) -> Option<User> {
         use crate::database::schema::users::dsl::*;
 
-        users.filter(email.eq(user_email)).first(conn).ok()
+        Some(users.filter(email.eq(user_email)).first(conn).unwrap())
     }
 
     pub fn get_all_campaigns(&self, conn: &PgConnection) -> Vec<Campaign> {
