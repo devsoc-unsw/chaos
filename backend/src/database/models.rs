@@ -169,7 +169,7 @@ impl User {
     pub fn get_from_email(conn: &PgConnection, user_email: &str) -> Option<User> {
         use crate::database::schema::users::dsl::*;
 
-        Some(users.filter(email.eq(user_email)).first(conn).unwrap())
+        users.filter(email.eq(user_email)).first(conn).ok()
     }
 
     pub fn get_all_campaigns(&self, conn: &PgConnection) -> Vec<Campaign> {
