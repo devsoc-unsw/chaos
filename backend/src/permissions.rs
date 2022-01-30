@@ -1,9 +1,10 @@
-use crate::database::models::OrganisationUser;
+use crate::database::models::{OrganisationUser, SuperUser};
 use crate::database::schema::*;
 use diesel::{
     expression_methods::ExpressionMethods, query_dsl::QueryDsl, BoolExpressionMethods, JoinOnDsl,
     PgConnection, RunQueryDsl,
 };
+use dotenv::Error;
 /*
 Permission Documentation
 
@@ -41,28 +42,38 @@ pub enum PermissionError {
 }
 
 pub struct AdminLevelUser {
-    admin_level: Result<AdminLevel, PermissionError>,
+    // (admin_level, is_superuser)
+    res: Result<(AdminLevel, bool), PermissionError>,
 }
 
 impl AdminLevelUser {
-    pub fn is_at_least_director(self) -> Result<AdminLevel, PermissionError> {
-        match self.admin_level {
-            Ok(AdminLevel::Admin) | Ok(AdminLevel::Director) => self.admin_level,
+    pub fn is_at_least_director(self) -> Result<(AdminLevel, bool), PermissionError> {
+        match self.res {
+            Ok((_, true)) | Ok((AdminLevel::Admin, false)) | Ok((AdminLevel::Director, false)) => {
+                self.res
+            }
             _ => Err(PermissionError::Unauthorized),
         }
     }
 
-    pub fn is_admin(self) -> Result<AdminLevel, PermissionError> {
-        match self.admin_level {
-            Ok(AdminLevel::Admin) => self.admin_level,
+    pub fn is_admin(self) -> Result<(AdminLevel, bool), PermissionError> {
+        match self.res {
+            Ok((_, true)) | Ok((AdminLevel::Admin, false)) => self.res,
+            _ => Err(PermissionError::Unauthorized),
+        }
+    }
+
+    pub fn is_superuser(self) -> Result<(AdminLevel, bool), PermissionError> {
+        match self.res {
+            Ok((_, true)) => self.res,
             _ => Err(PermissionError::Unauthorized),
         }
     }
 }
 
-impl std::convert::From<Result<AdminLevel, PermissionError>> for AdminLevelUser {
-    fn from(res: Result<AdminLevel, PermissionError>) -> Self {
-        AdminLevelUser { admin_level: res }
+impl std::convert::From<Result<(AdminLevel, bool), PermissionError>> for AdminLevelUser {
+    fn from(res: Result<(AdminLevel, bool), PermissionError>) -> Self {
+        AdminLevelUser { res }
     }
 }
 
@@ -73,12 +84,10 @@ impl OrganisationUser {
         conn: &PgConnection,
     ) -> AdminLevelUser {
         organisation_users::table
-            .filter(
-                organisation_users::organisation_id
-                    .eq(org_id)
-                    .and(organisation_users::user_id.eq(user_id)),
-            )
-            .select(organisation_users::admin_level)
+            .filter(organisation_users::organisation_id.eq(org_id))
+            .inner_join(users::table.on(users::id.eq(organisation_users::user_id)))
+            .filter(users::id.eq(user_id))
+            .select((organisation_users::admin_level, users::superuser))
             .first(conn)
             .or_else(|_| Err(PermissionError::Unauthorized))
             .into()
@@ -96,8 +105,10 @@ impl OrganisationUser {
                 organisation_users::table
                     .on(organisation_users::organisation_id.eq(organisations::id)),
             )
-            .filter(organisation_users::user_id.eq(user_id))
+            .inner_join(users::table.on(users::id.eq(organisation_users::user_id)))
+            .filter(users::id.eq(user_id))
             .select(organisation_users::admin_level)
+            .select((organisation_users::admin_level, users::superuser))
             .first(conn)
             .or_else(|_| Err(PermissionError::Unauthorized))
             .into()
@@ -117,8 +128,9 @@ impl OrganisationUser {
                 organisation_users::table
                     .on(organisation_users::organisation_id.eq(organisations::id)),
             )
-            .filter(organisation_users::user_id.eq(user_id))
-            .select(organisation_users::admin_level)
+            .inner_join(users::table.on(users::id.eq(organisation_users::user_id)))
+            .filter(users::id.eq(user_id))
+            .select((organisation_users::admin_level, users::superuser))
             .first(conn)
             .or_else(|_| Err(PermissionError::Unauthorized))
             .into()
@@ -139,8 +151,9 @@ impl OrganisationUser {
                 organisation_users::table
                     .on(organisation_users::organisation_id.eq(organisations::id)),
             )
-            .filter(organisation_users::user_id.eq(user_id))
-            .select(organisation_users::admin_level)
+            .inner_join(users::table.on(users::id.eq(organisation_users::user_id)))
+            .filter(users::id.eq(user_id))
+            .select((organisation_users::admin_level, users::superuser))
             .first(conn)
             .or_else(|_| Err(PermissionError::Unauthorized))
             .into()
