@@ -24,7 +24,9 @@ pub async fn create_comment(
     // need to be director to comment
     let app_id = new_comment.application_id; // stack copy of i32
     db.run(move |conn| {
-        OrganisationUser::application_admin_level(app_id, user.id, &conn).is_at_least_director()
+        OrganisationUser::application_admin_level(app_id, user.id, &conn)
+            .is_at_least_director()
+            .check()
     })
     .await
     .or_else(|_| Err(Json(CommentError::Unauthorized)))?;
@@ -44,7 +46,9 @@ pub async fn get_comment_from_id(
     db: Database,
 ) -> Result<Json<Comment>, Json<CommentError>> {
     db.run(move |conn| {
-        OrganisationUser::comment_admin_level(comment_id, user.id, &conn).is_at_least_director()
+        OrganisationUser::comment_admin_level(comment_id, user.id, &conn)
+            .is_at_least_director()
+            .check()
     })
     .await
     .or_else(|_| Err(Json(CommentError::Unauthorized)))?;

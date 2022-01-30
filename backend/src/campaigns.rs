@@ -1,12 +1,9 @@
 use crate::database::{
     models::{Campaign, NewCampaignInput, OrganisationUser, Role, UpdateCampaignInput, User},
-    schema::AdminLevel,
     Database,
 };
-
-use serde::Serialize;
-
 use rocket::{delete, form::Form, get, post, put, serde::json::Json};
+use serde::Serialize;
 
 #[derive(Serialize)]
 pub enum CampaignError {
@@ -41,26 +38,17 @@ pub async fn update(
     user: User,
     db: Database,
 ) -> Result<Json<()>, Json<CampaignError>> {
-    let campaign = db
-        .run(move |conn| Campaign::get_from_id(conn, campaign_id))
-        .await
-        .ok_or(Json(CampaignError::CampaignNotFound))?;
+    db.run(move |conn| {
+        OrganisationUser::campaign_admin_level(campaign_id, user.id, &conn)
+            .is_at_least_director()
+            .check()
+            .or_else(|_| Err(Json(CampaignError::Unauthorized)))?;
 
-    let org_user = db
-        .run(move |conn| OrganisationUser::get(conn, campaign.organisation_id, user.id))
-        .await
-        .ok_or(Json(CampaignError::Unauthorized))?;
+        Campaign::update(conn, campaign_id, &update_campaign);
 
-    // only allow update if admin_level is not AdminLevel::ReadOnly
-    // ie only director, Admin (exec) or SuperUser can perform this action
-    if !user.superuser && org_user.admin_level == AdminLevel::ReadOnly {
-        return Err(Json(CampaignError::Unauthorized));
-    }
-
-    db.run(move |conn| Campaign::update(conn, campaign_id, &update_campaign))
-        .await;
-
-    Ok(Json(()))
+        Ok(Json(()))
+    })
+    .await
 }
 
 #[post("/new", data = "<new_campaign>")]
@@ -70,24 +58,18 @@ pub async fn create(
     db: Database,
 ) -> Result<Json<Campaign>, Json<CampaignError>> {
     let inner = new_campaign.into_inner();
-    let org_user = db
-        .run(move |conn| OrganisationUser::get(conn, inner.organisation_id, user.id))
-        .await;
+    db.run(move |conn| {
+        OrganisationUser::organisation_admin_level(inner.organisation_id, user.id, &conn)
+            .is_at_least_director()
+            .check()
+            .or_else(|_| Err(Json(CampaignError::Unauthorized)))?;
 
-    let org_user = org_user.ok_or(Json(CampaignError::Unauthorized))?;
+        let campaign =
+            Campaign::create(conn, &inner).ok_or_else(|| Json(CampaignError::UnableToCreate))?;
 
-    // only allow update if admin_level is not AdminLevel::ReadOnly
-    // ie only director, Admin (exec) or SuperUser can perform this action
-    if !user.superuser && org_user.admin_level == AdminLevel::ReadOnly {
-        return Err(Json(CampaignError::Unauthorized));
-    }
-
-    let campaign = db
-        .run(move |conn| Campaign::create(conn, &inner))
-        .await
-        .ok_or(Json(CampaignError::UnableToCreate))?;
-
-    Ok(Json(campaign))
+        Ok(Json(campaign))
+    })
+    .await
 }
 
 #[delete("/<campaign_id>")]
@@ -100,6 +82,7 @@ pub async fn delete_campaign(
         // need to be admin to create new campaign
         OrganisationUser::campaign_admin_level(campaign_id, user.id, &conn)
             .is_admin()
+            .check()
             .or_else(|_| Err(Json(CampaignError::Unauthorized)))?;
 
         Campaign::delete_deep(conn, campaign_id);
@@ -123,34 +106,23 @@ pub enum RolesError {
 
 #[get("/<campaign_id>/roles")]
 pub async fn roles(
-    campaign_id: i32,
+    campaign_id: i32, // campaign_id has namespace conflict
     user: User,
     db: Database,
 ) -> Result<Json<RolesResponse>, Json<RolesError>> {
-    let campaign = db
-        .run(move |conn| Campaign::get_from_id(conn, campaign_id))
-        .await;
+    db.run(move |conn| {
+        let campaign = Campaign::get_from_id(conn, campaign_id)
+            .ok_or_else(|| Json(RolesError::CampaignNotFound))?;
 
-    let campaign = campaign.ok_or(Json(RolesError::CampaignNotFound))?;
+        OrganisationUser::campaign_admin_level(campaign_id, user.id, &conn)
+            .is_at_least_director()
+            .and(campaign.draft) // is at least director AND campaign is a draft
+            .check()
+            .or_else(|_| Err(Json(RolesError::Unauthorized)))?;
 
-    let (org_user, roles) = db
-        .run(move |conn| {
-            (
-                OrganisationUser::get(conn, campaign.organisation_id, user.id),
-                Role::get_all_from_campaign_id(conn, campaign.id),
-            )
-        })
-        .await;
+        let roles = Role::get_all_from_campaign_id(conn, campaign.id);
 
-    let permission = org_user
-        .map(|user| user.admin_level)
-        .unwrap_or(AdminLevel::ReadOnly);
-
-    // Prevent people from viewing while it's in draft mode,
-    // unless they have adequate permissions
-    if campaign.draft && !user.superuser && permission == AdminLevel::ReadOnly {
-        return Err(Json(RolesError::Unauthorized));
-    }
-
-    Ok(Json(RolesResponse { roles }))
+        Ok(Json(RolesResponse { roles }))
+    })
+    .await
 }

@@ -1,21 +1,25 @@
-use crate::database::models::{OrganisationUser, SuperUser};
+use crate::database::models::OrganisationUser;
 use crate::database::schema::*;
 use diesel::{
-    expression_methods::ExpressionMethods, query_dsl::QueryDsl, BoolExpressionMethods, JoinOnDsl,
-    PgConnection, RunQueryDsl,
+    expression_methods::ExpressionMethods, query_dsl::QueryDsl, JoinOnDsl, PgConnection,
+    RunQueryDsl,
 };
-use dotenv::Error;
+
 /*
 Permission Documentation
 
 The implmentation below is designed to be used in this pattern:
 
-    // check auth
-    db.run(move |conn|
-        OrganisationUser::campaign_admin_level(role.campaign_id, user.id, &conn)
-        .at_least_director()
-        .or_else(|_| Err(Json(RoleError::Unauthorized)))
-    ).await?;
+    db.run(move |conn| {
+        let campaign = Campaign::get_from_id(conn, campaign_id)
+            .ok_or_else(|| Json(RolesError::CampaignNotFound))?;
+
+        OrganisationUser::campaign_admin_level(campaign_id, user.id, &conn)
+            .is_at_least_director()
+            .and(campaign.draft) // is at least director AND campaign is a draft
+            .check()
+            .or_else(|_| Err(Json(RolesError::Unauthorized)))?;
+    }).await
 
 This allows you to search for different admin levels while keeping everything in one place.
 
@@ -25,12 +29,16 @@ Note on repeated code in this file:
 I originally wanted to do a dynamic set of inner joins, then execute in a pattern like this:
 (this would have been implemented with BoxedExpression)
 
-    db.run(move |conn|
-        OrganisationUser::campaign_admin_level(role.campaign_id, user.id)
-        .check(&conn)
-        .at_least_director()
-        .or_else(|_| Err(Json(RoleError::Unauthorized)))
-    ).await?;
+    db.run(move |conn| {
+        let campaign = Campaign::get_from_id(conn, campaign_id)
+            .ok_or_else(|| Json(RolesError::CampaignNotFound))?;
+
+        OrganisationUser::campaign_admin_level(campaign_id, user.id)
+            .is_at_least_director()
+            .and(campaign.draft) // is at least director AND campaign is a draft
+            .check(&conn)
+            .or_else(|_| Err(Json(RolesError::Unauthorized)))?;
+    }).await
 
 However, diesel doesn't yet support boxed queries with inner joins (only single tables)
 At the point at which this is supported, this file can be cleaned up massively and the above
@@ -39,6 +47,7 @@ syntax can be implemented (oh woe the youth of the rust language)
 
 pub enum PermissionError {
     Unauthorized,
+    ConditionNotMet,
 }
 
 pub struct AdminLevelUser {
@@ -47,27 +56,46 @@ pub struct AdminLevelUser {
 }
 
 impl AdminLevelUser {
-    pub fn is_at_least_director(self) -> Result<(AdminLevel, bool), PermissionError> {
+    pub fn is_at_least_director(self) -> AdminLevelUser {
         match self.res {
             Ok((_, true)) | Ok((AdminLevel::Admin, false)) | Ok((AdminLevel::Director, false)) => {
-                self.res
+                self
             }
-            _ => Err(PermissionError::Unauthorized),
+            _ => AdminLevelUser {
+                res: Err(PermissionError::Unauthorized),
+            },
         }
     }
 
-    pub fn is_admin(self) -> Result<(AdminLevel, bool), PermissionError> {
+    pub fn is_admin(self) -> AdminLevelUser {
         match self.res {
-            Ok((_, true)) | Ok((AdminLevel::Admin, false)) => self.res,
-            _ => Err(PermissionError::Unauthorized),
+            Ok((_, true)) | Ok((AdminLevel::Admin, false)) => self,
+            _ => AdminLevelUser {
+                res: Err(PermissionError::Unauthorized),
+            },
         }
     }
 
-    pub fn is_superuser(self) -> Result<(AdminLevel, bool), PermissionError> {
+    pub fn is_superuser(self) -> AdminLevelUser {
         match self.res {
-            Ok((_, true)) => self.res,
-            _ => Err(PermissionError::Unauthorized),
+            Ok((_, true)) => self,
+            _ => AdminLevelUser {
+                res: Err(PermissionError::Unauthorized),
+            },
         }
+    }
+
+    pub fn and(self, condition: bool) -> AdminLevelUser {
+        match condition {
+            true => self,
+            false => AdminLevelUser {
+                res: Err(PermissionError::ConditionNotMet),
+            },
+        }
+    }
+
+    pub fn check(self) -> Result<(AdminLevel, bool), PermissionError> {
+        self.res
     }
 }
 

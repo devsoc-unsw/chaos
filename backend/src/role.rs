@@ -126,6 +126,7 @@ pub async fn new_role(
     db.run(move |conn| {
         OrganisationUser::campaign_admin_level(role.campaign_id, user.id, &conn)
             .is_at_least_director()
+            .check()
             .or_else(|_| Err(Json(RoleError::Unauthorized)))?;
 
         RoleUpdate::insert(&role, &conn).ok_or_else(|| Json(RoleError::RoleAlreadyExists))?;
