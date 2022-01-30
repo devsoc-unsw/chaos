@@ -38,4 +38,15 @@ const authenticatedRequest = () => {
   };
 };
 
-export { authenticatedRequest, authenticate, doSignup };
+const getAllCampaigns = () => {
+  const token = `Bearer ${localStorage.getItem("AUTH_TOKEN")}`;
+  return API.request({
+    path: "/campaign/all",
+    header: {
+      "Content-Type": "application/json",
+      Authorization: token,
+    },
+  });
+};
+
+export { authenticatedRequest, authenticate, doSignup, getAllCampaigns };
