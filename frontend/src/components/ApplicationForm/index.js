@@ -51,7 +51,7 @@ const ApplicationForm = (props) => {
   };
   return (
     <Container>
-      <CampaignImageCard sx={{ boxShadow: 15 }}>
+      <CampaignImageCard>
         <CardMedia
           component="img"
           height="100%"

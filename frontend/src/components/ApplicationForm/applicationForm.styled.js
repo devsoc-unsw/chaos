@@ -14,7 +14,7 @@ export const CampaignImageCard = styled(Card)`
   width: 100%;
   border-radius: 12px;
   margin-top: 50px;
-  box-shadow: 20;
+  box-shadow: 15;
 `;
 
 export const CampaignDescription = styled(Box)`
@@ -31,7 +31,7 @@ export const UserInfoCell = styled(TableCell)`
 `;
 
 export const UserInfo = styled("div")`
-  display: "flex";
+  display: flex;
 `;
 
 export const UserInfoFields = styled("div")`
