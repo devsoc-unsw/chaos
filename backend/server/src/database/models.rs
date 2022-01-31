@@ -535,13 +535,7 @@ impl Campaign {
 impl NewCampaign {
     pub fn insert(&self, conn: &PgConnection) -> Option<Campaign> {
         use crate::database::schema::campaigns::dsl::*;
-
-        let res = self.insert_into(campaigns);
-
-        let debug = debug_query::<Pg, _>(&res);
-
-        println!("{:?}", debug);
-        res.get_result(conn).ok()
+        self.insert_into(campaigns).get_result(conn).ok()
     }
 }
 
