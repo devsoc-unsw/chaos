@@ -67,7 +67,7 @@ async fn main() {
         .mount("/application", routes![application::create_application])
         .mount(
             "/role",
-            routes![role::get_role, role::update_role, role::get_question_ids],
+            routes![role::get_role, role::update_role, role::get_questions],
         )
         .mount(
             "/comment",

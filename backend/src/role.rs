@@ -1,6 +1,6 @@
 use crate::database::models::RoleUpdate;
 use crate::database::{
-    models::{Campaign, OrganisationUser, Question, Role, User, OrganisationDirector},
+    models::{Campaign, OrganisationUser, Question, Role, User, OrganisationDirector, QuestionResponse},
     schema::AdminLevel,
     Database,
 };
@@ -10,11 +10,6 @@ use rocket::{
     get, put,
     serde::{json::Json, Serialize},
 };
-
-#[derive(Serialize)]
-pub struct QuestionIdsResponse {
-    questions: Vec<i32>,
-}
 
 #[derive(Serialize)]
 pub enum QuestionsError {
@@ -32,11 +27,11 @@ pub enum RoleError {
 }
 
 #[get("/<role_id>/questions")]
-pub async fn get_question_ids(
+pub async fn get_questions(
     role_id: i32,
     user: User,
     db: Database,
-) -> Result<Json<QuestionIdsResponse>, Json<QuestionsError>> {
+) -> Result<Json<Vec<QuestionResponse>>, Json<QuestionsError>> {
     // First check that the role is valid and the user should be able to access the ids.
     // We can't use the helper function below since behaviour depends on the draft
     // status of the campaign.
@@ -62,11 +57,14 @@ pub async fn get_question_ids(
         return Err(Json(QuestionsError::Unauthorized));
     }
 
-    Ok(Json(QuestionIdsResponse {
-        questions: db
-            .run(move |conn| Question::get_ids_from_role_id(conn, role_id))
-            .await,
-    }))
+    Ok(Json(
+        db
+            .run(move |conn| Question::get_all_from_role_id(conn, role_id))
+            .await
+            .into_iter()
+            .map(|x| x.into())
+            .collect(),
+    ))
 }
 
 #[derive(Serialize)]

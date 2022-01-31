@@ -762,6 +762,29 @@ pub struct NewQuestion {
     pub required: bool,
 }
 
+#[derive(Serialize)]
+pub struct QuestionResponse {
+    pub id: i32,
+    pub role_id: i32,
+    pub title: String,
+    pub description: Option<String>,
+    pub max_bytes: i32,
+    pub required: bool,
+}
+
+impl std::convert::From<Question> for QuestionResponse {
+    fn from(question: Question) -> Self {
+        Self {
+            id: question.id,
+            role_id: question.role_id,
+            title: question.title,
+            description: question.description,
+            max_bytes: question.max_bytes,
+            required: question.required,
+        }
+    }
+}
+
 impl Question {
     pub fn get_all(conn: &PgConnection) -> Vec<Question> {
         use crate::database::schema::questions::dsl::*;
@@ -777,17 +800,6 @@ impl Question {
 
         questions
             .filter(role_id.eq(role_id_val))
-            .order(id.asc())
-            .load(conn)
-            .unwrap_or_else(|_| vec![])
-    }
-
-    pub fn get_ids_from_role_id(conn: &PgConnection, role_id_val: i32) -> Vec<i32> {
-        use crate::database::schema::questions::dsl::*;
-
-        questions
-            .filter(role_id.eq(role_id_val))
-            .select(id)
             .order(id.asc())
             .load(conn)
             .unwrap_or_else(|_| vec![])
