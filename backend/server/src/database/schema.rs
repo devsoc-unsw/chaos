@@ -53,7 +53,7 @@ table! {
         description -> Text,
         starts_at -> Timestamp,
         ends_at -> Timestamp,
-        draft -> Bool,
+        published -> Bool,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }

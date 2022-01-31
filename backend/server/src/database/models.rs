@@ -369,7 +369,7 @@ pub struct Campaign {
     pub description: String,
     pub starts_at: NaiveDateTime,
     pub ends_at: NaiveDateTime,
-    pub draft: bool,
+    pub published: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -381,7 +381,7 @@ pub struct UpdateCampaignInput {
     pub description: String,
     pub starts_at: String,
     pub ends_at: String,
-    pub draft: bool,
+    pub published: bool,
 }
 
 #[derive(AsChangeset)]
@@ -392,7 +392,7 @@ pub struct UpdateCampaignChangeset {
     pub description: String,
     pub starts_at: NaiveDateTime,
     pub ends_at: NaiveDateTime,
-    pub draft: bool,
+    pub published: bool,
 }
 
 #[derive(Insertable, Debug)]
@@ -404,7 +404,7 @@ pub struct NewCampaign {
     pub description: String,
     pub starts_at: NaiveDateTime,
     pub ends_at: NaiveDateTime,
-    pub draft: bool,
+    pub published: bool,
 }
 
 #[derive(Deserialize, Clone)]
@@ -415,7 +415,7 @@ pub struct NewCampaignInput {
     pub description: String,
     pub starts_at: String,
     pub ends_at: String,
-    pub draft: bool,
+    pub published: bool,
 }
 
 impl Campaign {
@@ -434,7 +434,7 @@ impl Campaign {
 
         let now = Utc::now().naive_utc();
         campaigns
-            .filter(starts_at.ge(now).or(draft.eq(false)))
+            .filter(starts_at.ge(now).and(published.eq(true)))
             .order(id.asc())
             .load(conn)
             .unwrap_or_else(|_| vec![])
@@ -477,7 +477,7 @@ impl Campaign {
             .unwrap(),
             ends_at: NaiveDateTime::parse_from_str(&update_campaign.ends_at, "%Y-%m-%dT%H:%M:%S")
                 .unwrap(),
-            draft: update_campaign.draft,
+            published: update_campaign.published,
         };
 
         diesel::update(campaigns.filter(id.eq(campaign_id)))
@@ -496,7 +496,7 @@ impl Campaign {
                 .expect("Invalid date format"),
             ends_at: NaiveDateTime::parse_from_str(&new_campaign.ends_at, "%Y-%m-%dT%H:%M:%S")
                 .expect("Invalid date format"),
-            draft: new_campaign.draft,
+            published: new_campaign.published,
         };
 
         new_campaign.insert(conn)

@@ -139,7 +139,7 @@ pub fn seed() {
         starts_at: NaiveDate::from_ymd(2022, 1, 1).and_hms(10, 00, 00),
         ends_at: NaiveDate::from_ymd(2022, 2, 20).and_hms(23, 59, 59),
         cover_image: Some(std::fs::read("./assets/csesoc_peer_mentoring.jpg").unwrap()),
-        draft: true
+        published: false,
     }.insert(&connection).expect("failed to insert new campaign");
 
     //println!("... Creating peer mentoring campaign\n");
