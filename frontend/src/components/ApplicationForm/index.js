@@ -149,19 +149,19 @@ const ApplicationForm = (props) => {
 ApplicationForm.propTypes = {
   questions: PropTypes.arrayOf(
     PropTypes.shape({
-      id: PropTypes.number.isRequired,
+      id: PropTypes.string.isRequired,
       text: PropTypes.string.isRequired,
       roles: PropTypes.objectOf(PropTypes.string).isRequired,
     })
   ).isRequired,
   roles: PropTypes.arrayOf(
     PropTypes.shape({
-      id: PropTypes.number.isRequired,
+      id: PropTypes.string.isRequired,
       title: PropTypes.string.isRequired,
       quantity: PropTypes.number.isRequired,
     })
   ).isRequired,
-  rolesSelected: PropTypes.arrayOf(PropTypes.number).isRequired,
+  rolesSelected: PropTypes.arrayOf(PropTypes.string).isRequired,
   setRolesSelected: PropTypes.func.isRequired,
   answers: PropTypes.objectOf(PropTypes.string).isRequired,
   setAnswers: PropTypes.func.isRequired,

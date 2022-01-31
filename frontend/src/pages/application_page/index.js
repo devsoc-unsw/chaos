@@ -9,7 +9,7 @@ import {
 import DummyCampaignHeader from "./director.jpg";
 
 const Application = () => {
-  // FIXME: CHAOS-51, request the following object from backedn
+  // FIXME: CHAOS-51, request the following object from backend
   const { campaignName, headerImage, description, roles, questions, userInfo } =
     {
       campaignName: "Director recruitment",
@@ -25,41 +25,41 @@ const Application = () => {
       `,
       roles: [
         {
-          id: 0,
+          id: "0",
           title: "Projects",
           quantity: 3,
         },
         {
-          id: 1,
+          id: "1",
           title: "Socials",
           quantity: 2,
         },
         {
-          id: 2,
+          id: "2",
           title: "Marketing",
           quantity: 4,
         },
       ],
       questions: [
         {
-          id: 0,
+          id: "0",
           text: "Very important question?",
-          roles: new Set([0, 2]),
+          roles: new Set(["0", "2"]),
         },
         {
-          id: 1,
+          id: "1",
           text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit?",
-          roles: new Set([0, 1]),
+          roles: new Set(["0", "1"]),
         },
         {
-          id: 2,
+          id: "2",
           text: "Another extremely important question?",
-          roles: new Set([0]),
+          roles: new Set(["0"]),
         },
         {
-          id: 3,
+          id: "3",
           text: "What do you think about this question and its importance?",
-          roles: new Set([2]),
+          roles: new Set(["2"]),
         },
       ],
       userInfo: {
