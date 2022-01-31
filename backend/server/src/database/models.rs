@@ -418,6 +418,13 @@ pub struct NewCampaignInput {
     pub published: bool,
 }
 
+#[derive(Serialize)]
+pub struct CampaignWithRoles {
+    pub campaign: Campaign,
+    pub roles: Vec<Role>,
+    applied_for: Vec<i32>,
+}
+
 impl Campaign {
     pub fn get_all(conn: &PgConnection) -> Vec<Campaign> {
         use crate::database::schema::campaigns::dsl::*;
@@ -429,15 +436,82 @@ impl Campaign {
     }
 
     /// return all campaigns that are live to all users
-    pub fn get_all_public(conn: &PgConnection) -> Vec<Campaign> {
+    pub fn get_all_public_with_roles(conn: &PgConnection, user_id: i32) -> Vec<CampaignWithRoles> {
         use crate::database::schema::campaigns::dsl::*;
 
         let now = Utc::now().naive_utc();
-        campaigns
-            .filter(starts_at.ge(now).and(published.eq(true)))
+        let campaigns_vec: Vec<Campaign> = campaigns
+            .filter(starts_at.lt(now).and(published.eq(true)))
             .order(id.asc())
             .load(conn)
-            .unwrap_or_else(|_| vec![])
+            .unwrap_or_else(|_| vec![]);
+
+        let mut current_campaigns_roles_vec: Vec<CampaignWithRoles> = Vec::new();
+        for campaign in campaigns_vec {
+            let campaign_roles = Role::get_all_from_campaign_id(conn, campaign.id);
+            let mut applied_for: Vec<i32> = Vec::new();
+
+            for role in &campaign_roles {
+                if Application::get_all_from_role_id(conn, role.id)
+                    .into_iter()
+                    .filter(|app| app.user_id == user_id)
+                    .collect::<Vec<Application>>()
+                    .len()
+                    > 0
+                {
+                    applied_for.push(role.id);
+                }
+            }
+            current_campaigns_roles_vec.push(CampaignWithRoles {
+                campaign,
+                roles: campaign_roles,
+                applied_for,
+            });
+        }
+
+        current_campaigns_roles_vec
+    }
+
+    // return all campaigns that are live and in the past
+    pub fn get_all_public_ended_with_roles(
+        conn: &PgConnection,
+        user_id: i32,
+    ) -> Vec<CampaignWithRoles> {
+        use crate::database::schema::campaigns::dsl::*;
+
+        let now = Utc::now().naive_utc();
+        let campaigns_vec: Vec<Campaign> = campaigns
+            .filter(ends_at.lt(now).and(published.eq(true)))
+            .order(id.asc())
+            .load(conn)
+            .unwrap_or_else(|_| vec![]);
+
+        let mut past_campaigns_roles_vec: Vec<CampaignWithRoles> = Vec::new();
+        for campaign in campaigns_vec {
+            let campaign_roles = Role::get_all_from_campaign_id(conn, campaign.id);
+
+            let mut applied_for: Vec<i32> = Vec::new();
+
+            for role in &campaign_roles {
+                if Application::get_all_from_role_id(conn, role.id)
+                    .into_iter()
+                    .filter(|app| app.user_id == user_id)
+                    .collect::<Vec<Application>>()
+                    .len()
+                    > 0
+                {
+                    applied_for.push(role.id);
+                }
+            }
+
+            past_campaigns_roles_vec.push(CampaignWithRoles {
+                campaign,
+                roles: campaign_roles,
+                applied_for,
+            });
+        }
+
+        past_campaigns_roles_vec
     }
 
     pub fn get_from_organisation_id(
@@ -740,7 +814,7 @@ impl NewApplication {
     }
 }
 
-#[derive(Identifiable, Queryable, Associations, PartialEq)]
+#[derive(Identifiable, Queryable, Associations, PartialEq, Serialize)]
 #[belongs_to(Role)]
 #[table_name = "questions"]
 pub struct Question {

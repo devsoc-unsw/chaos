@@ -139,7 +139,7 @@ pub fn seed() {
         starts_at: NaiveDate::from_ymd(2022, 1, 1).and_hms(10, 00, 00),
         ends_at: NaiveDate::from_ymd(2022, 2, 20).and_hms(23, 59, 59),
         cover_image: Some(std::fs::read("./assets/csesoc_peer_mentoring.jpg").unwrap()),
-        published: false,
+        published: true,
     }.insert(&connection).expect("failed to insert new campaign");
 
     //println!("... Creating peer mentoring campaign\n");
@@ -194,6 +194,16 @@ pub fn seed() {
     let application = NewApplication {
         role_id: senior_mentor_role.id,
         user_id: User::get_from_email(&connection, "hayes.choy@gmail.com")
+            .unwrap()
+            .id,
+        status: ApplicationStatus::Pending,
+    }
+    .insert(&connection)
+    .expect("Failed to insert application");
+
+    let application = NewApplication {
+        role_id: senior_mentor_role.id,
+        user_id: User::get_from_email(&connection, "shrey.somaiya@gmail.com")
             .unwrap()
             .id,
         status: ApplicationStatus::Pending,
