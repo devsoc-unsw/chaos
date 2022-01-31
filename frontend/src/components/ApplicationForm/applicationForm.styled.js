@@ -49,8 +49,8 @@ export const AuthLink = styled(NavLink)`
 `;
 
 export const FormContainer = styled(Container)`
-  padding-left: 200px;
-  padding-right: 200px;
+  margin-left: 200px;
+  margin-right: 200px;
 `;
 
 export const Section = styled("div")(({ isHidden }) => ({

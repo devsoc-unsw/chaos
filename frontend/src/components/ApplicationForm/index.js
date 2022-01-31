@@ -62,7 +62,7 @@ const ApplicationForm = (props) => {
       <CampaignDescription>
         <Typography>{description}</Typography>
       </CampaignDescription>
-      <FormContainer style={{ paddingLeft: "200px", paddingRight: "200px" }}>
+      <FormContainer>
         <Section>
           <SectionHeader>Applicant Details</SectionHeader>
           {loggedIn ? (
