@@ -9,6 +9,7 @@ pub mod cors;
 pub mod database;
 pub mod guard;
 pub mod organisation;
+pub mod permissions;
 pub mod role;
 pub mod seed;
 pub mod state;
@@ -73,7 +74,6 @@ async fn main() {
             "/comment",
             routes![comment::create_comment, comment::get_comment_from_id],
         )
-        .mount("application", routes![application::create_application])
         .launch()
         .await
         .unwrap();

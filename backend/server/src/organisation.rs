@@ -56,14 +56,9 @@ pub async fn get_from_id(
 
 #[delete("/<org_id>")]
 pub async fn delete(org_id: i32, _user: SuperUser, db: Database) -> Result<(), Json<OrgError>> {
-    let res: Option<usize> = db
-        .run(move |conn| Organisation::delete(&conn, org_id))
-        .await;
-
-    match res {
-        Some(_) => Ok(()),
-        None => Err(Json(OrgError::OrgNotFound)),
-    }
+    db.run(move |conn| Organisation::delete_deep(&conn, org_id))
+        .await
+        .ok_or(Json(OrgError::OrgNotFound))
 }
 
 // ============ /organisation/<org_id>/superusers ============

@@ -1,34 +1,19 @@
-import { styled as muiStyled } from "@mui/material/styles";
-import { Container, TextField, Button, autocompleteClasses } from "@mui/material";
-import styled from "@emotion/styled";
+import { styled } from "@mui/material/styles";
+import { Button } from "@mui/material";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 
-export const CampaignContainer = muiStyled(Container)(() => ({
-  display: "flex",
-  flexDirection: "column",
-}));
-
-export const CampaignTextField = muiStyled(TextField)(() => ({
-  margin: "1% 0",
-}));
-
-export const CampaignSubmit = muiStyled(Button)(() => ({
-  maxWidth: "200px",
-  padding: "10px 20px",
-  margin: "0 auto 5vh",
-}));
-
-export const CampaignRowDiv = styled.div`
+export const NextWrapper = styled("div")`
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  margin: 1% 0;
-  width: 100%;
+  justify-content: flex-end;
+  margin-bottom: 50px;
+  margin-right: 100px;
 `;
 
-export const CampaignDropzone = styled.div`
-  text-align: center;
-  padding: 20px;
-  border: 3px dashed #eeeeee;
-  background-color: #fafafa;
-  color: #bdbdbd;
+export const NextButton = styled(Button)`
+  font-size: 20px;
+`;
+
+export const ArrowIcon = styled(ArrowForwardIosIcon)`
+  font-size: 1rem;
+  margin-left: 8px;
 `;
