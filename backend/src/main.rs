@@ -66,6 +66,14 @@ async fn main() {
         .mount("/user", routes![user::get_user, user::get_user_campaigns])
         .mount("/application", routes![application::create_application])
         .mount("/role", routes![role::get_role, role::update_role])
+        .mount(
+            "/question",
+            routes![
+                question::get_question,
+                question::edit_question,
+                question::delete_question
+            ],
+        )
         .launch()
         .await
         .unwrap();

@@ -786,6 +786,7 @@ impl std::convert::From<Question> for QuestionResponse {
 }
 
 #[derive(FromForm, AsChangeset)]
+#[table_name = "questions"]
 pub struct UpdateQuestionInput {
     pub title: String,
     pub description: Option<String>,
@@ -803,7 +804,11 @@ impl Question {
             .unwrap_or_else(|_| vec![])
     }
 
-    pub fn update(conn: &PgConnection, question_id: i32, update_question: UpdateQuestionInput) -> Option<()> {
+    pub fn update(
+        conn: &PgConnection,
+        question_id: i32,
+        update_question: UpdateQuestionInput,
+    ) -> Option<()> {
         use crate::database::schema::questions::dsl::*;
 
         diesel::update(questions.filter(id.eq(question_id)))
