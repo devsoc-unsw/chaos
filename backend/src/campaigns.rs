@@ -122,6 +122,7 @@ pub struct RolesResponse {
 pub enum RolesError {
     CampaignNotFound,
     Unauthorized,
+    RoleAlreadyExists,
 }
 
 #[get("/<campaign_id>/roles")]

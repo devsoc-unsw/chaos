@@ -11,7 +11,7 @@ use diesel::prelude::*;
 use diesel::PgConnection;
 use rocket::FromForm;
 use serde::{Deserialize, Serialize};
-#[derive(Queryable)]
+#[derive(Queryable, Debug)]
 pub struct User {
     pub id: i32,
     pub email: String,
@@ -69,7 +69,8 @@ impl OrganisationDirector {
             .filter(organisation_users::user_id.eq(user.id))
             .first::<OrganisationUser>(conn)?;
 
-        if !user.superuser && org_user.admin_level != AdminLevel::Director {
+        // OrgAdmin, OrgDirector or Superuser are allowed to authetnicate as OrgDirector
+        if !user.superuser && org_user.admin_level == AdminLevel::ReadOnly {
             return Err(OrganisationDirectorError::Unauthorized);
         }
 
@@ -231,6 +232,23 @@ impl Organisation {
         diesel::delete(organisations.filter(id.eq(organisation_id)))
             .execute(conn)
             .ok()
+    }
+
+    pub fn delete_deep(conn: &PgConnection, org_id: i32) -> Option<()> {
+        use crate::database::schema::organisation_users::dsl::*;
+        let campaigns = Campaign::get_all_from_org_id(conn, org_id);
+
+        for campaign in campaigns {
+            Campaign::delete_deep(conn, campaign.id);
+        }
+
+        diesel::delete(organisation_users.filter(organisation_id.eq(org_id)))
+            .execute(conn)
+            .ok()?;
+
+        Organisation::delete(conn, org_id);
+
+        Some(())
     }
 
     pub fn find_by_name(conn: &PgConnection, organisation_name: &str) -> Option<Organisation> {
@@ -433,6 +451,16 @@ impl Campaign {
         let now = Utc::now().naive_utc();
         campaigns
             .filter(starts_at.ge(now).or(draft.eq(false)))
+            .order(id.asc())
+            .load(conn)
+            .unwrap_or_else(|_| vec![])
+    }
+
+    pub fn get_all_from_org_id(conn: &PgConnection, organisation_id_val: i32) -> Vec<Campaign> {
+        use crate::database::schema::campaigns::dsl::*;
+
+        campaigns
+            .filter(organisation_id.eq(organisation_id_val))
             .order(id.asc())
             .load(conn)
             .unwrap_or_else(|_| vec![])
@@ -930,7 +958,7 @@ impl NewAnswer {
     }
 }
 
-#[derive(Identifiable, Queryable, Associations, PartialEq)]
+#[derive(Identifiable, Queryable, Associations, PartialEq, Serialize)]
 #[belongs_to(Application)]
 #[belongs_to(OrganisationUser, foreign_key = "commenter_user_id")]
 pub struct Comment {
@@ -942,7 +970,7 @@ pub struct Comment {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Insertable)]
+#[derive(Insertable, FromForm)]
 #[table_name = "comments"]
 pub struct NewComment {
     pub application_id: i32,
@@ -951,6 +979,12 @@ pub struct NewComment {
 }
 
 impl Comment {
+    pub fn get_from_id(conn: &PgConnection, comment_id: i32) -> Option<Comment> {
+        use crate::database::schema::comments::dsl::*;
+
+        comments.filter(id.eq(comment_id)).first(conn).ok()
+    }
+
     pub fn get_all(conn: &PgConnection) -> Vec<Comment> {
         use crate::database::schema::comments::dsl::*;
 
@@ -958,6 +992,33 @@ impl Comment {
             .order(id.asc())
             .load(conn)
             .unwrap_or_else(|_| vec![])
+    }
+
+    pub fn app_id_to_org_id(conn: &PgConnection, application_id: i32) -> Option<i32> {
+        use crate::database::schema::*;
+
+        applications::table
+            .filter(applications::id.eq(application_id))
+            .inner_join(roles::table.on(roles::id.eq(applications::role_id)))
+            .inner_join(campaigns::table.on(campaigns::id.eq(roles::campaign_id)))
+            .inner_join(organisations::table.on(organisations::id.eq(campaigns::organisation_id)))
+            .select(organisations::id)
+            .first(conn)
+            .ok()
+    }
+
+    pub fn comment_id_to_org_id(conn: &PgConnection, comment_id: i32) -> Option<i32> {
+        use crate::database::schema::*;
+
+        comments::table
+            .filter(comments::id.eq(comment_id))
+            .inner_join(applications::table.on(applications::id.eq(comments::application_id)))
+            .inner_join(roles::table.on(roles::id.eq(applications::role_id)))
+            .inner_join(campaigns::table.on(campaigns::id.eq(roles::campaign_id)))
+            .inner_join(organisations::table.on(organisations::id.eq(campaigns::organisation_id)))
+            .select(organisations::id)
+            .first(conn)
+            .ok()
     }
 
     pub fn get_all_from_application_id(
