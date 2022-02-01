@@ -32,8 +32,14 @@ jobs:
       with:
         working-directory: backend/
     - name: Build
-      run: cargo build --manifest-path backend/Cargo.toml
+      run: cargo build --manifest-path backend/server/Cargo.toml
     - name: Cargo Check
-      run: cargo check --manifest-path backend/Cargo.toml
+      run: cargo check --manifest-path backend/server/Cargo.toml
     - name: RustFmt
-      run: cargo fmt --manifest-path backend/Cargo.toml
+      run: cargo fmt --manifest-path backend/server/Cargo.toml
+    - name: Build
+      run: cargo build --manifest-path backend/seed_data/Cargo.toml
+    - name: Cargo Check
+      run: cargo check --manifest-path backend/seed_data/Cargo.toml
+    - name: RustFmt
+      run: cargo fmt --manifest-path backend/seed_data/Cargo.toml
