@@ -4,7 +4,6 @@ use diesel::{
     expression_methods::ExpressionMethods, query_dsl::QueryDsl, JoinOnDsl, PgConnection,
     RunQueryDsl,
 };
-use rocket::response::status::Unauthorized;
 
 /*
 Permission Documentation
