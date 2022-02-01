@@ -8,7 +8,7 @@ use chrono::NaiveDateTime;
 use chrono::Utc;
 use diesel::prelude::BelongingToDsl;
 use diesel::prelude::*;
-use diesel::{debug_query, pg::Pg, PgConnection};
+use diesel::PgConnection;
 use rocket::FromForm;
 use serde::{Deserialize, Serialize};
 
@@ -233,6 +233,23 @@ impl Organisation {
         diesel::delete(organisations.filter(id.eq(organisation_id)))
             .execute(conn)
             .ok()
+    }
+
+    pub fn delete_deep(conn: &PgConnection, org_id: i32) -> Option<()> {
+        use crate::database::schema::organisation_users::dsl::*;
+        let campaigns = Campaign::get_all_from_org_id(conn, org_id);
+
+        for campaign in campaigns {
+            Campaign::delete_deep(conn, campaign.id);
+        }
+
+        diesel::delete(organisation_users.filter(organisation_id.eq(org_id)))
+            .execute(conn)
+            .ok()?;
+
+        Organisation::delete(conn, org_id);
+
+        Some(())
     }
 
     pub fn find_by_name(conn: &PgConnection, organisation_name: &str) -> Option<Organisation> {
@@ -501,6 +518,16 @@ impl Campaign {
             .unwrap_or_else(|_| vec![]);
 
         Self::pack_roles_and_applied_to_into_campaigns_vec(conn, campaigns_vec, user_id)
+    }
+
+    pub fn get_all_from_org_id(conn: &PgConnection, organisation_id_val: i32) -> Vec<Campaign> {
+        use crate::database::schema::campaigns::dsl::*;
+
+        campaigns
+            .filter(organisation_id.eq(organisation_id_val))
+            .order(id.asc())
+            .load(conn)
+            .unwrap_or_else(|_| vec![])
     }
 
     pub fn get_from_organisation_id(

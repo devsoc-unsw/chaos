@@ -6,6 +6,7 @@ import { SetNavBarTitleContext } from "../../App";
 import DirectorDummy from "./director.jpg";
 import ProjectLeadDummy from "./project-lead.jpg";
 import ProjectTeamDummy from "./project-team.png";
+import { getAllCampaigns } from "../../api";
 
 const dummyYourCampaigns = [
   {
@@ -248,6 +249,12 @@ const Dashboard = () => {
   const setNavBarTitle = useContext(SetNavBarTitleContext);
   useEffect(() => {
     setNavBarTitle("Your Dashboard");
+
+    const getCam = async () => {
+      const res = await getAllCampaigns();
+      console.log(res);
+    };
+    getCam();
   }, []);
   return (
     <Container>
