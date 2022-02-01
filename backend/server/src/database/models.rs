@@ -8,9 +8,10 @@ use chrono::NaiveDateTime;
 use chrono::Utc;
 use diesel::prelude::BelongingToDsl;
 use diesel::prelude::*;
-use diesel::PgConnection;
+use diesel::{debug_query, pg::Pg, PgConnection};
 use rocket::FromForm;
 use serde::{Deserialize, Serialize};
+
 #[derive(Queryable)]
 pub struct User {
     pub id: i32,
@@ -68,7 +69,7 @@ impl OrganisationDirector {
             .filter(organisation_users::organisation_id.eq(org_id))
             .filter(organisation_users::user_id.eq(user.id))
             .first::<OrganisationUser>(conn)?;
-        
+
         // OrgAdmin, OrgDirector or Superuser are allowed to authetnicate as OrgDirector
         if !user.superuser && org_user.admin_level == AdminLevel::ReadOnly {
             return Err(OrganisationDirectorError::Unauthorized);
@@ -195,7 +196,7 @@ impl NewUser {
 pub struct Organisation {
     pub id: i32,
     pub name: String,
-    pub logo: Option<String>,
+    pub logo: Option<Vec<u8>>,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -204,7 +205,7 @@ pub struct Organisation {
 #[table_name = "organisations"]
 pub struct NewOrganisation {
     pub name: String,
-    pub logo: Option<String>,
+    pub logo: Option<Vec<u8>>,
 }
 
 impl Organisation {
@@ -358,13 +359,13 @@ impl NewOrganisationUser {
     }
 }
 
-#[derive(Queryable, Serialize, Associations)]
+#[derive(Queryable, Serialize, Debug, Associations)]
 #[belongs_to(Organisation)]
 pub struct Campaign {
     pub id: i32,
     pub organisation_id: i32,
     pub name: String,
-    pub cover_image: Option<String>,
+    pub cover_image: Option<Vec<u8>>,
     pub description: String,
     pub starts_at: NaiveDateTime,
     pub ends_at: NaiveDateTime,
@@ -376,7 +377,7 @@ pub struct Campaign {
 #[derive(FromForm)]
 pub struct UpdateCampaignInput {
     pub name: String,
-    pub cover_image: Option<String>,
+    pub cover_image: Option<Vec<u8>>,
     pub description: String,
     pub starts_at: String,
     pub ends_at: String,
@@ -387,19 +388,19 @@ pub struct UpdateCampaignInput {
 #[table_name = "campaigns"]
 pub struct UpdateCampaignChangeset {
     pub name: String,
-    pub cover_image: Option<String>,
+    pub cover_image: Option<Vec<u8>>,
     pub description: String,
     pub starts_at: NaiveDateTime,
     pub ends_at: NaiveDateTime,
     pub draft: bool,
 }
 
-#[derive(Insertable)]
+#[derive(Insertable, Debug)]
 #[table_name = "campaigns"]
 pub struct NewCampaign {
     pub organisation_id: i32,
     pub name: String,
-    pub cover_image: Option<String>,
+    pub cover_image: Option<Vec<u8>>,
     pub description: String,
     pub starts_at: NaiveDateTime,
     pub ends_at: NaiveDateTime,
@@ -410,7 +411,7 @@ pub struct NewCampaign {
 pub struct NewCampaignInput {
     pub organisation_id: i32,
     pub name: String,
-    pub cover_image: Option<String>,
+    pub cover_image: Option<Vec<u8>>,
     pub description: String,
     pub starts_at: String,
     pub ends_at: String,
@@ -534,7 +535,13 @@ impl Campaign {
 impl NewCampaign {
     pub fn insert(&self, conn: &PgConnection) -> Option<Campaign> {
         use crate::database::schema::campaigns::dsl::*;
-        self.insert_into(campaigns).get_result(conn).ok()
+
+        let res = self.insert_into(campaigns);
+
+        let debug = debug_query::<Pg, _>(&res);
+
+        println!("{:?}", debug);
+        res.get_result(conn).ok()
     }
 }
 

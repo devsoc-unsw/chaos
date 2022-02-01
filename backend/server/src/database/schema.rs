@@ -49,7 +49,7 @@ table! {
         id -> Int4,
         organisation_id -> Int4,
         name -> Text,
-        cover_image -> Nullable<Text>,
+        cover_image -> Nullable<Binary>,
         description -> Text,
         starts_at -> Timestamp,
         ends_at -> Timestamp,
@@ -88,7 +88,7 @@ table! {
     organisations (id) {
         id -> Int4,
         name -> Text,
-        logo -> Nullable<Text>,
+        logo -> Nullable<Binary>,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }
