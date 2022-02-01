@@ -1,5 +1,5 @@
 use crate::database::{
-    models::{Application, NewApplication, User},
+    models::{Application, NewApplication, NewRating, OrganisationUser, User},
     Database,
 };
 use rocket::{
@@ -11,6 +11,7 @@ use rocket::{
 
 #[derive(Serialize)]
 pub enum ApplicationError {
+    Unauthorized,
     UserNotFound,
     RoleNotFound,
     UnableToCreate,
@@ -39,8 +40,26 @@ pub struct RatingInput {
 pub async fn create_rating(
     application_id: i32,
     rating: Form<RatingInput>,
-    _user: User,
-    _db: Database, // ) -> Result<Json<()>, Json<ApplicationError>>{
-) {
-    ()
+    user: User,
+    db: Database,
+) -> Result<Json<()>, Json<ApplicationError>> {
+    db.run(move |conn| {
+        OrganisationUser::application_admin_level(application_id, user.id, &conn)
+            .is_at_least_director()
+            .check()
+            .or_else(|_| Err(ApplicationError::Unauthorized))?;
+
+        NewRating::insert(
+            &NewRating {
+                application_id: application_id,
+                rater_user_id: user.id,
+                rating: rating.rating,
+            },
+            &conn,
+        )
+        .ok_or_else(|| ApplicationError::UnableToCreate)?;
+
+        Ok(Json(()))
+    })
+    .await
 }
