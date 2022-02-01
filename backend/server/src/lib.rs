@@ -9,6 +9,7 @@ pub mod cors;
 pub mod database;
 pub mod guard;
 pub mod organisation;
+pub mod permissions;
 pub mod role;
 pub mod state;
 pub mod user;

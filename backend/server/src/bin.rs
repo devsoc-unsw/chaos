@@ -1,15 +1,10 @@
-#[macro_use]
 extern crate diesel;
 
 use backend;
 use backend::auth::Auth;
 use backend::cors::cors;
 use backend::database::Database;
-use rocket::{
-    fs::{relative, FileServer},
-    routes,
-};
-use std::env;
+use rocket::routes;
 
 #[rocket::get("/foo")]
 fn authed_call(auth: Auth) -> String {

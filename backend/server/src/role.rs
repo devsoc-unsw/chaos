@@ -1,9 +1,5 @@
-use crate::database::models::RoleUpdate;
 use crate::database::{
-    models::{
-        Campaign, OrganisationDirector, OrganisationDirectorError, OrganisationUser, Role, User,
-    },
-    schema::AdminLevel,
+    models::{OrganisationUser, Role, RoleUpdate, User},
     Database,
 };
 use rocket::{
@@ -55,36 +51,6 @@ pub async fn get_role(
     }
 }
 
-async fn error_if_unauthorised(
-    role_id: i32,
-    user: User,
-    db: &Database,
-) -> Result<(), Json<RoleError>> {
-    // check for valid role
-    let role = db
-        .run(move |conn| Role::get_from_id(conn, role_id))
-        .await
-        .ok_or(Json(RoleError::RoleNotFound))?;
-
-    // && user is authorised for (campaign -> Organisation) that controls user
-    // this code is super jank atm - just need to get it working
-    let campaign = db
-        .run(move |conn| Campaign::get_from_id(conn, role.campaign_id))
-        .await
-        .ok_or(Json(RoleError::CampaignNotFound))?;
-
-    let org_user = db
-        .run(move |conn| OrganisationUser::get(conn, campaign.organisation_id, user.id))
-        .await
-        .ok_or(Json(RoleError::Unauthorized))?;
-
-    if !user.superuser && org_user.admin_level == AdminLevel::ReadOnly {
-        return Err(Json(RoleError::Unauthorized));
-    }
-
-    Ok(())
-}
-
 #[put("/<role_id>", data = "<role_update>")]
 pub async fn update_role(
     role_id: i32,
@@ -92,41 +58,33 @@ pub async fn update_role(
     user: User,
     db: Database,
 ) -> Result<Json<RoleResponse>, Json<RoleError>> {
-    // check auth
-    error_if_unauthorised(role_id, user, &db).await?;
+    db.run(move |conn| {
+        OrganisationUser::role_admin_level(role_id, user.id, &conn)
+            .is_at_least_director()
+            .check()
+            .or_else(|_| Err(Json(RoleError::Unauthorized)))?;
 
-    // update valid user
-    let res = db
-        .run(move |conn| Role::update(conn, role_id, &role_update))
-        .await;
+        let role = Role::update(conn, role_id, &role_update)
+            .ok_or_else(|| Json(RoleError::RoleUpdateFailure))?;
 
-    match res {
-        Some(role) => Ok(Json(RoleResponse::from(role))),
-        None => Err(Json(RoleError::RoleUpdateFailure)),
-    }
+        Ok(Json(role.into()))
+    })
+    .await
 }
 
 #[delete("/<role_id>")]
 pub async fn delete_role(role_id: i32, user: User, db: Database) -> Result<(), Json<RoleError>> {
-    // check auth
-    error_if_unauthorised(role_id, user, &db).await?;
+    db.run(move |conn| {
+        OrganisationUser::role_admin_level(role_id, user.id, &conn)
+            .is_at_least_director()
+            .check()
+            .or_else(|_| Err(Json(RoleError::Unauthorized)))?;
 
-    // deletes user deep (questions & applications)
-    let res = db.run(move |conn| Role::delete_deep(conn, role_id)).await;
+        Role::delete_deep(conn, role_id).ok_or_else(|| Json(RoleError::RoleUpdateFailure))?;
 
-    match res {
-        Some(_) => Ok(()),
-        None => Err(Json(RoleError::RoleUpdateFailure)),
-    }
-}
-
-impl std::convert::From<OrganisationDirectorError> for Json<RoleError> {
-    fn from(e: OrganisationDirectorError) -> Self {
-        Json(match e {
-            OrganisationDirectorError::Unauthorized => RoleError::Unauthorized,
-            _ => RoleError::CampaignNotFound,
-        })
-    }
+        Ok(())
+    })
+    .await
 }
 
 #[post("/new", data = "<role>")]
@@ -136,14 +94,14 @@ pub async fn new_role(
     db: Database,
 ) -> Result<(), Json<RoleError>> {
     db.run(move |conn| {
-        let org_director = OrganisationDirector::new_from_campaign_id(user, role.campaign_id, conn);
+        OrganisationUser::campaign_admin_level(role.campaign_id, user.id, &conn)
+            .is_at_least_director()
+            .check()
+            .or_else(|_| Err(Json(RoleError::Unauthorized)))?;
 
-        // Only insert if user is a valid org director
-        match org_director {
-            Ok(_) => RoleUpdate::insert(&role, &conn).ok_or(Json(RoleError::RoleAlreadyExists)),
-            Err(e) => Err(e.into()),
-        }
+        RoleUpdate::insert(&role, &conn).ok_or_else(|| Json(RoleError::RoleAlreadyExists))?;
+
+        Ok(())
     })
     .await
-    .map(|_| ())
 }
