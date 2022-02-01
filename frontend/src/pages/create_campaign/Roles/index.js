@@ -184,7 +184,7 @@ const RolesTab = ({ campaign }) => {
             .filter((q) => q.roles.has(roleSelected))
             .map((q, idx) => (
               <Question
-                idx={idx}
+                questionNumber={idx + 1}
                 question={q}
                 handleQuestionInput={handleQuestionInput}
                 onQuestionDelete={onQuestionDelete}

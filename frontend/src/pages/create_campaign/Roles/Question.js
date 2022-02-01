@@ -4,9 +4,14 @@ import { IconButton, TextField } from "@mui/material";
 import ClearIcon from "@mui/icons-material/Clear";
 import { QuestionTitle, QuestionContent } from "./rolesTab.styled";
 
-const Question = ({ idx, question, handleQuestionInput, onQuestionDelete }) => (
+const Question = ({
+  questionNumber,
+  question,
+  handleQuestionInput,
+  onQuestionDelete,
+}) => (
   <>
-    <QuestionTitle>Question {idx + 1}</QuestionTitle>
+    <QuestionTitle>Question {questionNumber}</QuestionTitle>
     <QuestionContent>
       <TextField
         fullWidth
@@ -30,7 +35,7 @@ const Question = ({ idx, question, handleQuestionInput, onQuestionDelete }) => (
 );
 
 Question.propTypes = {
-  idx: PropTypes.number.isRequired,
+  questionNumber: PropTypes.number.isRequired,
   question: PropTypes.shape({
     id: PropTypes.string.isRequired,
     text: PropTypes.string.isRequired,
