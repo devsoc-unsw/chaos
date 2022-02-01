@@ -15,6 +15,7 @@ import {
   Answer,
   CampaignDescription,
   FormContainer,
+  FormContent,
   AuthLink,
   UserInfoCell,
   SpaceRight,
@@ -63,84 +64,86 @@ const ApplicationForm = (props) => {
         <Typography>{description}</Typography>
       </CampaignDescription>
       <FormContainer>
-        <Section>
-          <SectionHeader>Applicant Details</SectionHeader>
-          {loggedIn ? (
-            <TableContainer>
-              <Table>
-                <tbody>
-                  <TableRow>
-                    <UserInfoCell>Name:</UserInfoCell>
-                    <UserInfoCell>
-                      <strong>{userInfo.name}</strong>
-                    </UserInfoCell>
-                  </TableRow>
-                  <TableRow>
-                    <UserInfoCell>zID:</UserInfoCell>
-                    <UserInfoCell>
-                      <strong>{userInfo.zid}</strong>
-                    </UserInfoCell>
-                  </TableRow>
-                  <TableRow>
-                    <UserInfoCell>Email:</UserInfoCell>
-                    <UserInfoCell>
-                      <strong>{userInfo.email}</strong>
-                    </UserInfoCell>
-                  </TableRow>
-                  <TableRow>
-                    <UserInfoCell>Degree:</UserInfoCell>
-                    <UserInfoCell>
-                      <strong>{userInfo.degree}</strong>
-                    </UserInfoCell>
-                  </TableRow>
-                </tbody>
-              </Table>
-            </TableContainer>
-          ) : (
-            <UserInfoTypography>
-              <SpaceRight>Please</SpaceRight>
-              <SpaceRight>
-                <AuthLink to="/">login</AuthLink>
-              </SpaceRight>
-              <SpaceRight>or</SpaceRight>
-              <SpaceRight>
-                <AuthLink to="/">create an account</AuthLink>
-              </SpaceRight>
-              to apply{"" /* CHAOS-54: link to correct places! */}
-            </UserInfoTypography>
-          )}
-        </Section>
-        <Section>
-          <SectionHeader>Which roles are you applying for?</SectionHeader>
-          {roles.map((role) => (
-            <RoleButton
-              key={role.id}
-              value={role.id}
-              selected={rolesSelected.includes(role.id)}
-              onClick={() => toggleRole(role.id)}
-            >
-              {role.title}
-            </RoleButton>
-          ))}
-        </Section>
-        {roles.map(({ id, title }) => (
-          <Section isHidden={!rolesSelected.includes(id)}>
-            <SectionHeader>{title}</SectionHeader>
-            {questions.map(
-              (q) =>
-                q.roles.has(id) && (
-                  <>
-                    <Question>{q.text}</Question>
-                    <Answer
-                      multiline
-                      value={answers[q.id]}
-                      onChange={(e) => handleAnswerInput(e, q.id)}
-                    />
-                  </>
-                )
+        <FormContent>
+          <Section>
+            <SectionHeader>Applicant Details</SectionHeader>
+            {loggedIn ? (
+              <TableContainer>
+                <Table>
+                  <tbody>
+                    <TableRow>
+                      <UserInfoCell>Name:</UserInfoCell>
+                      <UserInfoCell>
+                        <strong>{userInfo.name}</strong>
+                      </UserInfoCell>
+                    </TableRow>
+                    <TableRow>
+                      <UserInfoCell>zID:</UserInfoCell>
+                      <UserInfoCell>
+                        <strong>{userInfo.zid}</strong>
+                      </UserInfoCell>
+                    </TableRow>
+                    <TableRow>
+                      <UserInfoCell>Email:</UserInfoCell>
+                      <UserInfoCell>
+                        <strong>{userInfo.email}</strong>
+                      </UserInfoCell>
+                    </TableRow>
+                    <TableRow>
+                      <UserInfoCell>Degree:</UserInfoCell>
+                      <UserInfoCell>
+                        <strong>{userInfo.degree}</strong>
+                      </UserInfoCell>
+                    </TableRow>
+                  </tbody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <UserInfoTypography>
+                <SpaceRight>Please</SpaceRight>
+                <SpaceRight>
+                  <AuthLink to="/">login</AuthLink>
+                </SpaceRight>
+                <SpaceRight>or</SpaceRight>
+                <SpaceRight>
+                  <AuthLink to="/">create an account</AuthLink>
+                </SpaceRight>
+                to apply{"" /* CHAOS-54: link to correct places! */}
+              </UserInfoTypography>
             )}
           </Section>
-        ))}
+          <Section>
+            <SectionHeader>Which roles are you applying for?</SectionHeader>
+            {roles.map((role) => (
+              <RoleButton
+                key={role.id}
+                value={role.id}
+                selected={rolesSelected.includes(role.id)}
+                onClick={() => toggleRole(role.id)}
+              >
+                {role.title}
+              </RoleButton>
+            ))}
+          </Section>
+          {roles.map(({ id, title }) => (
+            <Section isHidden={!rolesSelected.includes(id)}>
+              <SectionHeader>{title}</SectionHeader>
+              {questions.map(
+                (q) =>
+                  q.roles.has(id) && (
+                    <>
+                      <Question>{q.text}</Question>
+                      <Answer
+                        multiline
+                        value={answers[q.id]}
+                        onChange={(e) => handleAnswerInput(e, q.id)}
+                      />
+                    </>
+                  )
+              )}
+            </Section>
+          ))}
+        </FormContent>
       </FormContainer>
     </Container>
   );

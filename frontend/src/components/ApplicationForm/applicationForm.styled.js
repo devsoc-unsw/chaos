@@ -49,8 +49,16 @@ export const AuthLink = styled(NavLink)`
 `;
 
 export const FormContainer = styled(Container)`
-  margin-left: 200px;
-  margin-right: 200px;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+`;
+
+export const FormContent = styled("div")`
+  display: flex;
+  max-width: 700px;
+  width: 90%;
+  flex-direction: column;
 `;
 
 export const Section = styled("div")(({ isHidden }) => ({
