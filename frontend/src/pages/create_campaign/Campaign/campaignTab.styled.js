@@ -13,11 +13,9 @@ export const CampaignTextField = muiStyled(TextField)(() => ({
   margin: "1% 0",
 }));
 
-export const CampaignSubmit = muiStyled(Button)(() => ({
-  maxWidth: "200px",
-  padding: "10px 20px",
-  margin: "0 auto 5vh",
-}));
+export const CoverImage = styled.img`
+  max-width: 100%;
+`;
 
 export const CampaignRowDiv = styled.div`
   display: flex;

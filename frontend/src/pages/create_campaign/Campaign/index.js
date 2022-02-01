@@ -11,10 +11,11 @@ import {
   CampaignRowDiv,
   SwitchRowDiv,
   CampaignTextField,
+  CoverImage,
 } from "./campaignTab.styled";
 import { fileToDataUrl } from "../../../utils";
 
-const CampaignTab = ({ isSelected, campaignData }) => {
+const CampaignTab = ({ campaign }) => {
   const {
     campaignName,
     setCampaignName,
@@ -30,100 +31,100 @@ const CampaignTab = ({ isSelected, campaignData }) => {
     setScoringStage,
     cover,
     setCover,
-  } = campaignData;
-  console.log(campaignData);
+  } = campaign;
+  console.log(campaign);
   const onFileUpload = async (acceptedFiles) => {
     const fileUrl = await fileToDataUrl(acceptedFiles[0]);
     setCover(fileUrl);
   };
 
   return (
-    isSelected && (
-      <CampaignContainer>
-        <Dropzone
-          onDrop={(acceptedFiles) => onFileUpload(acceptedFiles)}
-          accept={["image/jpeg", "image/jpg", "image/png", "image/gif"]}
-          minSize={1024}
-          maxSize={3072000}
-        >
-          {({ getRootProps, getInputProps }) => (
-            <section>
-              <CampaignDropzone {...getRootProps()}>
-                <input {...getInputProps()} />
-                {cover === null && (
-                  <p>
-                    Drag and drop your campaign cover image, or click to select
-                    an image
-                  </p>
-                )}
-                {cover !== null && <img src={cover} alt="campaign cover" />}
-              </CampaignDropzone>
-            </section>
-          )}
-        </Dropzone>
-        <CampaignTextField
-          label="Campaign Name"
-          variant="outlined"
-          value={campaignName}
-          onChange={(e) => setCampaignName(e.target.value)}
-        />
-        <CampaignTextField
-          label="Campaign Description"
-          variant="outlined"
-          multiline
-          rows={10}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-        <CampaignRowDiv>
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <DateTimePicker
-              label="Start Date"
-              inputFormat="dd/MM/yyyy hh:mm a"
-              value={startDate}
-              onChange={(date) => setStartDate(date)}
-              renderInput={(params) => <CampaignTextField {...params} />}
-            />
-            <DateTimePicker
-              label="End Date"
-              inputFormat="dd/MM/yyyy hh:mm a"
-              minDateTime={startDate}
-              value={endDate}
-              onChange={(date) => setEndDate(date)}
-              renderInput={(params) => <CampaignTextField {...params} />}
-            />
-          </LocalizationProvider>
-        </CampaignRowDiv>
-        <SwitchRowDiv>
-          <FormControlLabel
-            control={
-              <Switch
-                label="Interview Stage"
-                checked={interviewStage}
-                onChange={() => setInterviewStage(!interviewStage)}
-              />
-            }
-            label="Interview Stage"
+    <CampaignContainer>
+      <Dropzone
+        onDrop={(acceptedFiles) => onFileUpload(acceptedFiles)}
+        accept={["image/jpeg", "image/jpg", "image/png", "image/gif"]}
+        minSize={1024}
+        maxSize={3072000}
+      >
+        {({ getRootProps, getInputProps }) => (
+          <section>
+            <CampaignDropzone {...getRootProps()}>
+              <input {...getInputProps()} />
+              {cover === null && (
+                <p>
+                  Drag and drop your campaign cover image, or click to select
+                  an image
+                </p>
+              )}
+              {cover !== null && (
+                <CoverImage src={cover} alt="campaign cover" />
+              )}
+            </CampaignDropzone>
+          </section>
+        )}
+      </Dropzone>
+      <CampaignTextField
+        label="Campaign Name"
+        variant="outlined"
+        value={campaignName}
+        onChange={(e) => setCampaignName(e.target.value)}
+      />
+      <CampaignTextField
+        label="Campaign Description"
+        variant="outlined"
+        multiline
+        rows={10}
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+      />
+      <CampaignRowDiv>
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <DateTimePicker
+            label="Start Date"
+            inputFormat="dd/MM/yyyy hh:mm a"
+            value={startDate}
+            onChange={(date) => setStartDate(date)}
+            renderInput={(params) => <CampaignTextField {...params} />}
           />
-          <FormControlLabel
-            control={
-              <Switch
-                label="Scoring Stage"
-                checked={scoringStage}
-                onChange={() => setScoringStage(!scoringStage)}
-              />
-            }
-            label="Scoring Stage"
+          <DateTimePicker
+            label="End Date"
+            inputFormat="dd/MM/yyyy hh:mm a"
+            minDateTime={startDate}
+            value={endDate}
+            onChange={(date) => setEndDate(date)}
+            renderInput={(params) => <CampaignTextField {...params} />}
           />
-        </SwitchRowDiv>
-      </CampaignContainer>
-    )
+        </LocalizationProvider>
+      </CampaignRowDiv>
+      <SwitchRowDiv>
+        <FormControlLabel
+          control={
+            <Switch
+              label="Interview Stage"
+              checked={interviewStage}
+              onChange={() => setInterviewStage(!interviewStage)}
+            />
+          }
+          label="Interview Stage"
+        />
+        <FormControlLabel
+          control={
+            <Switch
+              label="Scoring Stage"
+              checked={scoringStage}
+              onChange={() => setScoringStage(!scoringStage)}
+            />
+          }
+          label="Scoring Stage"
+        />
+      </SwitchRowDiv>
+    </CampaignContainer>
   );
 };
 
 CampaignTab.propTypes = {
   isSelected: PropTypes.bool.isRequired,
-  campaignData: PropTypes.shape({
+  campaign: PropTypes.shape({
     questions: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.number.isRequired,
