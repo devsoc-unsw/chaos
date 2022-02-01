@@ -29,7 +29,6 @@ async fn main() {
         .attach(Database::fairing())
         .attach(cors)
         .mount("/", routes![authed_call])
-        .mount("/static", FileServer::from(relative!("static/")))
         .mount(
             "/organisation",
             routes![
