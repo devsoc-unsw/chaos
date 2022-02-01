@@ -133,7 +133,7 @@ pub async fn roles(
 
         OrganisationUser::campaign_admin_level(campaign_id, user.id, &conn)
             .is_at_least_director()
-            .and(campaign.published) // is at least director AND campaign is a draft
+            .or(campaign.published) // only if not (read only and campaign is unpublished)
             .check()
             .or_else(|_| Err(Json(RolesError::Unauthorized)))?;
 

@@ -4,6 +4,7 @@ use diesel::{
     expression_methods::ExpressionMethods, query_dsl::QueryDsl, JoinOnDsl, PgConnection,
     RunQueryDsl,
 };
+use rocket::response::status::Unauthorized;
 
 /*
 Permission Documentation
@@ -94,6 +95,18 @@ impl AdminLevelUser {
         }
     }
 
+    pub fn or(self, condition: bool) -> AdminLevelUser {
+        match condition {
+            true => self,
+            false => match self.res {
+                Ok((_, _)) => self,
+                _ => AdminLevelUser {
+                    res: Err(PermissionError::ConditionNotMet),
+                },
+            },
+        }
+    }
+
     pub fn check(self) -> Result<(AdminLevel, bool), PermissionError> {
         self.res
     }
@@ -135,7 +148,6 @@ impl OrganisationUser {
             )
             .inner_join(users::table.on(users::id.eq(organisation_users::user_id)))
             .filter(users::id.eq(user_id))
-            .select(organisation_users::admin_level)
             .select((organisation_users::admin_level, users::superuser))
             .first(conn)
             .or_else(|_| Err(PermissionError::Unauthorized))
