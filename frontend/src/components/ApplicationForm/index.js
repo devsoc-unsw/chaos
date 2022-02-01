@@ -21,20 +21,18 @@ import {
   SpaceRight,
 } from "./applicationForm.styled";
 
-const ApplicationForm = (props) => {
-  const {
-    questions,
-    roles,
-    rolesSelected,
-    setRolesSelected,
-    answers,
-    setAnswers,
-    campaignName,
-    headerImage,
-    description,
-    userInfo,
-  } = props;
-
+const ApplicationForm = ({
+  questions,
+  roles,
+  rolesSelected,
+  setRolesSelected,
+  answers,
+  setAnswers,
+  campaignName,
+  headerImage,
+  description,
+  userInfo,
+}) => {
   const loggedIn = isLoggedIn();
 
   // FIXME: part of CHAOS-51, handle single question related to many roles
