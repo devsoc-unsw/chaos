@@ -446,30 +446,44 @@ impl Campaign {
             .load(conn)
             .unwrap_or_else(|_| vec![]);
 
-        let mut current_campaigns_roles_vec: Vec<CampaignWithRoles> = Vec::new();
-        for campaign in campaigns_vec {
-            let campaign_roles = Role::get_all_from_campaign_id(conn, campaign.id);
-            let mut applied_for: Vec<i32> = Vec::new();
+        Self::pack_roles_and_applied_to_into_campaigns_vec(conn, campaigns_vec, user_id)
+    }
 
-            for role in &campaign_roles {
-                if Application::get_all_from_role_id(conn, role.id)
+    fn pack_roles_and_applied_to_into_campaigns_vec(
+        conn: &PgConnection,
+        campaigns_vec: Vec<Campaign>,
+        user_id: i32,
+    ) -> Vec<CampaignWithRoles> {
+        campaigns_vec
+            .into_iter()
+            .map(|campaign| {
+                let campaign_roles = Role::get_all_from_campaign_id(&conn, campaign.id);
+
+                let applied_for: Vec<i32> = campaign_roles
+                    .clone()
                     .into_iter()
-                    .filter(|app| app.user_id == user_id)
-                    .collect::<Vec<Application>>()
-                    .len()
-                    > 0
-                {
-                    applied_for.push(role.id);
-                }
-            }
-            current_campaigns_roles_vec.push(CampaignWithRoles {
-                campaign,
-                roles: campaign_roles,
-                applied_for,
-            });
-        }
+                    .filter_map(|role| {
+                        if Application::get_all_from_role_id(&conn, role.id)
+                            .into_iter()
+                            .filter(|app| app.user_id == user_id)
+                            .peekable()
+                            .peek()
+                            .is_some()
+                        {
+                            Some(role.id)
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
 
-        current_campaigns_roles_vec
+                CampaignWithRoles {
+                    campaign,
+                    roles: campaign_roles,
+                    applied_for,
+                }
+            })
+            .collect()
     }
 
     // return all campaigns that are live and in the past
@@ -486,32 +500,7 @@ impl Campaign {
             .load(conn)
             .unwrap_or_else(|_| vec![]);
 
-        let mut past_campaigns_roles_vec: Vec<CampaignWithRoles> = Vec::new();
-        for campaign in campaigns_vec {
-            let campaign_roles = Role::get_all_from_campaign_id(conn, campaign.id);
-
-            let mut applied_for: Vec<i32> = Vec::new();
-
-            for role in &campaign_roles {
-                if Application::get_all_from_role_id(conn, role.id)
-                    .into_iter()
-                    .filter(|app| app.user_id == user_id)
-                    .collect::<Vec<Application>>()
-                    .len()
-                    > 0
-                {
-                    applied_for.push(role.id);
-                }
-            }
-
-            past_campaigns_roles_vec.push(CampaignWithRoles {
-                campaign,
-                roles: campaign_roles,
-                applied_for,
-            });
-        }
-
-        past_campaigns_roles_vec
+        Self::pack_roles_and_applied_to_into_campaigns_vec(conn, campaigns_vec, user_id)
     }
 
     pub fn get_from_organisation_id(
@@ -613,7 +602,7 @@ impl NewCampaign {
     }
 }
 
-#[derive(Identifiable, Queryable, Serialize, Associations, PartialEq)]
+#[derive(Identifiable, Queryable, Serialize, Associations, Clone, PartialEq)]
 #[belongs_to(Campaign)]
 pub struct Role {
     pub id: i32,

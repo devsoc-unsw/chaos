@@ -166,7 +166,7 @@ pub async fn roles(
 
     // Prevent people from viewing while it's in draft mode,
     // unless they have adequate permissions
-    if campaign.published && !user.superuser && permission == AdminLevel::ReadOnly {
+    if !campaign.published && !user.superuser && permission == AdminLevel::ReadOnly {
         return Err(Json(RolesError::Unauthorized));
     }
 
