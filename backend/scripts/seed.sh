@@ -8,7 +8,6 @@ if [ "$answer" != "y" ]; then
     exit 1
 fi
 
-diesel database reset
-git restore src/database/schema.rs
+cd server/src && diesel database reset
 
-SEED=true cargo run
+cd ../../seed_data && cargo run

@@ -11,7 +11,8 @@ use diesel::prelude::*;
 use diesel::PgConnection;
 use rocket::FromForm;
 use serde::{Deserialize, Serialize};
-#[derive(Queryable, Debug)]
+
+#[derive(Queryable)]
 pub struct User {
     pub id: i32,
     pub email: String,
@@ -195,7 +196,7 @@ impl NewUser {
 pub struct Organisation {
     pub id: i32,
     pub name: String,
-    pub logo: Option<String>,
+    pub logo: Option<Vec<u8>>,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -204,7 +205,7 @@ pub struct Organisation {
 #[table_name = "organisations"]
 pub struct NewOrganisation {
     pub name: String,
-    pub logo: Option<String>,
+    pub logo: Option<Vec<u8>>,
 }
 
 impl Organisation {
@@ -375,17 +376,17 @@ impl NewOrganisationUser {
     }
 }
 
-#[derive(Queryable, Serialize, Associations)]
+#[derive(Queryable, Serialize, Debug, Associations)]
 #[belongs_to(Organisation)]
 pub struct Campaign {
     pub id: i32,
     pub organisation_id: i32,
     pub name: String,
-    pub cover_image: Option<String>,
+    pub cover_image: Option<Vec<u8>>,
     pub description: String,
     pub starts_at: NaiveDateTime,
     pub ends_at: NaiveDateTime,
-    pub draft: bool,
+    pub published: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -393,45 +394,52 @@ pub struct Campaign {
 #[derive(FromForm)]
 pub struct UpdateCampaignInput {
     pub name: String,
-    pub cover_image: Option<String>,
+    pub cover_image: Option<Vec<u8>>,
     pub description: String,
     pub starts_at: String,
     pub ends_at: String,
-    pub draft: bool,
+    pub published: bool,
 }
 
 #[derive(AsChangeset)]
 #[table_name = "campaigns"]
 pub struct UpdateCampaignChangeset {
     pub name: String,
-    pub cover_image: Option<String>,
+    pub cover_image: Option<Vec<u8>>,
     pub description: String,
     pub starts_at: NaiveDateTime,
     pub ends_at: NaiveDateTime,
-    pub draft: bool,
+    pub published: bool,
 }
 
-#[derive(Insertable)]
+#[derive(Insertable, Debug)]
 #[table_name = "campaigns"]
 pub struct NewCampaign {
     pub organisation_id: i32,
     pub name: String,
-    pub cover_image: Option<String>,
+    pub cover_image: Option<Vec<u8>>,
     pub description: String,
     pub starts_at: NaiveDateTime,
     pub ends_at: NaiveDateTime,
-    pub draft: bool,
+    pub published: bool,
 }
 
 #[derive(Deserialize, Clone)]
 pub struct NewCampaignInput {
     pub organisation_id: i32,
     pub name: String,
-    pub cover_image: Option<String>,
+    pub cover_image: Option<Vec<u8>>,
     pub description: String,
     pub starts_at: String,
     pub ends_at: String,
-    pub draft: bool,
+    pub published: bool,
+}
+
+#[derive(Serialize)]
+pub struct CampaignWithRoles {
+    pub campaign: Campaign,
+    pub roles: Vec<Role>,
+    applied_for: Vec<i32>,
 }
 
 impl Campaign {
@@ -445,15 +453,71 @@ impl Campaign {
     }
 
     /// return all campaigns that are live to all users
-    pub fn get_all_public(conn: &PgConnection) -> Vec<Campaign> {
+    pub fn get_all_public_with_roles(conn: &PgConnection, user_id: i32) -> Vec<CampaignWithRoles> {
         use crate::database::schema::campaigns::dsl::*;
 
         let now = Utc::now().naive_utc();
-        campaigns
-            .filter(starts_at.ge(now).or(draft.eq(false)))
+        let campaigns_vec: Vec<Campaign> = campaigns
+            .filter(starts_at.lt(now).and(published.eq(true)))
             .order(id.asc())
             .load(conn)
-            .unwrap_or_else(|_| vec![])
+            .unwrap_or_else(|_| vec![]);
+
+        Self::pack_roles_and_applied_to_into_campaigns_vec(conn, campaigns_vec, user_id)
+    }
+
+    fn pack_roles_and_applied_to_into_campaigns_vec(
+        conn: &PgConnection,
+        campaigns_vec: Vec<Campaign>,
+        user_id: i32,
+    ) -> Vec<CampaignWithRoles> {
+        campaigns_vec
+            .into_iter()
+            .map(|campaign| {
+                let campaign_roles = Role::get_all_from_campaign_id(&conn, campaign.id);
+
+                let applied_for: Vec<i32> = campaign_roles
+                    .clone()
+                    .into_iter()
+                    .filter_map(|role| {
+                        if Application::get_all_from_role_id(&conn, role.id)
+                            .into_iter()
+                            .filter(|app| app.user_id == user_id)
+                            .peekable()
+                            .peek()
+                            .is_some()
+                        {
+                            Some(role.id)
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
+
+                CampaignWithRoles {
+                    campaign,
+                    roles: campaign_roles,
+                    applied_for,
+                }
+            })
+            .collect()
+    }
+
+    // return all campaigns that are live and in the past
+    pub fn get_all_public_ended_with_roles(
+        conn: &PgConnection,
+        user_id: i32,
+    ) -> Vec<CampaignWithRoles> {
+        use crate::database::schema::campaigns::dsl::*;
+
+        let now = Utc::now().naive_utc();
+        let campaigns_vec: Vec<Campaign> = campaigns
+            .filter(ends_at.lt(now).and(published.eq(true)))
+            .order(id.asc())
+            .load(conn)
+            .unwrap_or_else(|_| vec![]);
+
+        Self::pack_roles_and_applied_to_into_campaigns_vec(conn, campaigns_vec, user_id)
     }
 
     pub fn get_all_from_org_id(conn: &PgConnection, organisation_id_val: i32) -> Vec<Campaign> {
@@ -503,7 +567,7 @@ impl Campaign {
             .unwrap(),
             ends_at: NaiveDateTime::parse_from_str(&update_campaign.ends_at, "%Y-%m-%dT%H:%M:%S")
                 .unwrap(),
-            draft: update_campaign.draft,
+            published: update_campaign.published,
         };
 
         diesel::update(campaigns.filter(id.eq(campaign_id)))
@@ -522,7 +586,7 @@ impl Campaign {
                 .expect("Invalid date format"),
             ends_at: NaiveDateTime::parse_from_str(&new_campaign.ends_at, "%Y-%m-%dT%H:%M:%S")
                 .expect("Invalid date format"),
-            draft: new_campaign.draft,
+            published: new_campaign.published,
         };
 
         new_campaign.insert(conn)
@@ -565,7 +629,7 @@ impl NewCampaign {
     }
 }
 
-#[derive(Identifiable, Queryable, Serialize, Associations, PartialEq)]
+#[derive(Identifiable, Queryable, Serialize, Associations, Clone, PartialEq)]
 #[belongs_to(Campaign)]
 pub struct Role {
     pub id: i32,
@@ -766,7 +830,7 @@ impl NewApplication {
     }
 }
 
-#[derive(Identifiable, Queryable, Associations, PartialEq)]
+#[derive(Identifiable, Queryable, Associations, PartialEq, Serialize)]
 #[belongs_to(Role)]
 #[table_name = "questions"]
 pub struct Question {

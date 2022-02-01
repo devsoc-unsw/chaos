@@ -1,7 +1,7 @@
 use crate::database::{
     models::{
-        Campaign, NewCampaignInput, OrganisationAdmin, OrganisationUser, Role, UpdateCampaignInput,
-        User,
+        Campaign, CampaignWithRoles, NewCampaignInput, OrganisationAdmin, OrganisationUser, Role,
+        UpdateCampaignInput, User,
     },
     schema::AdminLevel,
     Database,
@@ -30,11 +30,25 @@ pub async fn get(campaign_id: i32, db: Database) -> Result<Json<Campaign>, Json<
     }
 }
 
-#[get("/all")]
-pub async fn get_all_campaigns(_user: User, db: Database) -> Json<Vec<Campaign>> {
-    let campaigns = db.run(|conn| Campaign::get_all_public(conn)).await;
+#[derive(Serialize)]
+pub struct DashboardCampaignGroupings {
+    pub current_campaigns: Vec<CampaignWithRoles>,
+    pub past_campaigns: Vec<CampaignWithRoles>,
+}
 
-    Json(campaigns)
+#[get("/all")]
+pub async fn get_all_campaigns(user: User, db: Database) -> Json<DashboardCampaignGroupings> {
+    let current_campaigns = db
+        .run(move |conn| Campaign::get_all_public_with_roles(conn, user.id))
+        .await;
+    let past_campaigns = db
+        .run(move |conn| Campaign::get_all_public_ended_with_roles(conn, user.id))
+        .await;
+
+    Json(DashboardCampaignGroupings {
+        current_campaigns,
+        past_campaigns,
+    })
 }
 
 #[put("/<campaign_id>", data = "<update_campaign>")]
@@ -152,7 +166,7 @@ pub async fn roles(
 
     // Prevent people from viewing while it's in draft mode,
     // unless they have adequate permissions
-    if campaign.draft && !user.superuser && permission == AdminLevel::ReadOnly {
+    if !campaign.published && !user.superuser && permission == AdminLevel::ReadOnly {
         return Err(Json(RolesError::Unauthorized));
     }
 

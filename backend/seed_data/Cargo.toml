@@ -1,0 +1,12 @@
+[package]
+name = "seed_data"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+server = { path="../server" }
+diesel = "1.4.8"
+chrono = "0.4.19"
+dotenv = "0.15.0"
