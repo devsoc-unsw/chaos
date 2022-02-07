@@ -4,8 +4,8 @@ import { ListItemText, ListItemIcon, IconButton, Divider } from "@mui/material";
 import ClearIcon from "@mui/icons-material/Clear";
 import EditIcon from "@mui/icons-material/Edit";
 import {
-  RoleListItemContent,
-  RoleListItemButton,
+  RoleListItemContent as ListItemContent,
+  RoleListItemButton as ListItemButton,
   RoleQuantity,
 } from "./rolesTab.styled";
 
@@ -16,8 +16,8 @@ const RoleListItem = ({
   onRoleDelete,
 }) => (
   <>
-    <RoleListItemContent selected={role.id === roleSelected}>
-      <RoleListItemButton onClick={() => setRoleSelected(role.id)}>
+    <ListItemContent selected={role.id === roleSelected}>
+      <ListItemButton onClick={() => setRoleSelected(role.id)}>
         <RoleQuantity>{role.quantity}</RoleQuantity>
         <ListItemText>{role.title}</ListItemText>
         <ListItemIcon>
@@ -26,17 +26,12 @@ const RoleListItem = ({
           </IconButton>
         </ListItemIcon>
         <ListItemIcon>
-          <IconButton
-            value={role.id}
-            onClick={(e) => {
-              onRoleDelete(e);
-            }}
-          >
+          <IconButton value={role.id} onClick={(e) => onRoleDelete(e)}>
             <ClearIcon />
           </IconButton>
         </ListItemIcon>
-      </RoleListItemButton>
-    </RoleListItemContent>
+      </ListItemButton>
+    </ListItemContent>
     <Divider />
   </>
 );

@@ -3,28 +3,28 @@ import PropTypes from "prop-types";
 import { IconButton } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import {
-  CreateRoleFormControl,
-  CreateRoleFormGroup,
-  CreateRoleQuantity,
-  CreateRoleName,
+  CreateRoleFormControl as FormControl,
+  CreateRoleFormGroup as FormGroup,
+  Quantity,
+  Name,
 } from "./rolesTab.styled";
 
-const CreateRoleForm = ({
+const Form = ({
   newRoleQty,
   setNewRoleQty,
   newRoleName,
   setNewRoleName,
   addRole,
 }) => (
-  <CreateRoleFormControl>
-    <CreateRoleFormGroup row>
-      <CreateRoleQuantity
+  <FormControl>
+    <FormGroup row>
+      <Quantity
         type="number"
         value={newRoleQty}
         onChange={(e) => setNewRoleQty(e.target.value)}
         min={1}
       />
-      <CreateRoleName
+      <Name
         type="text"
         value={newRoleName}
         onChange={(e) => setNewRoleName(e.currentTarget.value)}
@@ -32,11 +32,11 @@ const CreateRoleForm = ({
       <IconButton onClick={addRole}>
         <AddIcon />
       </IconButton>
-    </CreateRoleFormGroup>
-  </CreateRoleFormControl>
+    </FormGroup>
+  </FormControl>
 );
 
-CreateRoleForm.propTypes = {
+Form.propTypes = {
   newRoleQty: PropTypes.number.isRequired,
   setNewRoleQty: PropTypes.func.isRequired,
   newRoleName: PropTypes.string.isRequired,
@@ -44,4 +44,4 @@ CreateRoleForm.propTypes = {
   addRole: PropTypes.func.isRequired,
 };
 
-export default CreateRoleForm;
+export default Form;

@@ -75,7 +75,7 @@ export const CreateRoleFormGroup = styled(FormGroup)`
   height: 70px;
 `;
 
-export const CreateRoleQuantity = styled("input")`
+export const Quantity = styled("input")`
   width: 12%;
   height: 50px;
   border-width: 1px;
@@ -84,7 +84,7 @@ export const CreateRoleQuantity = styled("input")`
   border-radius: 12px;
 `;
 
-export const CreateRoleName = styled("input")`
+export const Name = styled("input")`
   width: 65%;
   height: 50px;
   padding-left: 5px;

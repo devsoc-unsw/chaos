@@ -2,7 +2,10 @@ import React from "react";
 import PropTypes from "prop-types";
 import { IconButton, TextField } from "@mui/material";
 import ClearIcon from "@mui/icons-material/Clear";
-import { QuestionTitle, QuestionContent } from "./rolesTab.styled";
+import {
+  QuestionTitle as Title,
+  QuestionContent as Content,
+} from "./rolesTab.styled";
 
 const Question = ({
   questionNumber,
@@ -11,26 +14,19 @@ const Question = ({
   onQuestionDelete,
 }) => (
   <>
-    <QuestionTitle>Question {questionNumber}</QuestionTitle>
-    <QuestionContent>
+    <Title>Question {questionNumber}</Title>
+    <Content>
       <TextField
         fullWidth
         multiline
         required
         value={question.text}
-        onChange={(e) => {
-          handleQuestionInput(e, question.id);
-        }}
+        onChange={(e) => handleQuestionInput(e, question.id)}
       />
-      <IconButton
-        value={question.id}
-        onClick={(e) => {
-          onQuestionDelete(e);
-        }}
-      >
+      <IconButton value={question.id} onClick={(e) => onQuestionDelete(e)}>
         <ClearIcon />
       </IconButton>
-    </QuestionContent>
+    </Content>
   </>
 );
 

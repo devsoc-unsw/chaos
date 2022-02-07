@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Menu, MenuItem } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { SelectFromExistingButton } from "./rolesTab.styled";
+import { SelectFromExistingButton as Button } from "./rolesTab.styled";
 
 const SelectFromExistingMenu = ({
   filteredQuestions,
@@ -13,7 +13,7 @@ const SelectFromExistingMenu = ({
   anchorEl,
 }) => (
   <>
-    <SelectFromExistingButton
+    <Button
       variant="outlined"
       aria-controls={open ? "basic-menu" : undefined}
       aria-haspopup="true"
@@ -22,7 +22,7 @@ const SelectFromExistingMenu = ({
     >
       Select From Existing
       <ExpandMoreIcon fontSize="small" />
-    </SelectFromExistingButton>
+    </Button>
     <Menu
       id="basic-menu"
       anchorEl={anchorEl}

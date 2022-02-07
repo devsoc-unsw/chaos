@@ -101,7 +101,7 @@ const RolesTab = ({ campaign }) => {
   };
 
   const addQuestion = () => {
-    if (questions.filter((q) => q.text === "").length) {
+    if (questions.some((q) => q.text === "")) {
       alert(
         "Please add text to existing questions before creating a new question!"
       );
