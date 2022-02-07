@@ -9,7 +9,7 @@ import {
   Name,
 } from "./rolesTab.styled";
 
-const Form = ({
+const CreateRoleForm = ({
   newRoleQty,
   setNewRoleQty,
   newRoleName,
@@ -36,7 +36,7 @@ const Form = ({
   </FormControl>
 );
 
-Form.propTypes = {
+CreateRoleForm.propTypes = {
   newRoleQty: PropTypes.number.isRequired,
   setNewRoleQty: PropTypes.func.isRequired,
   newRoleName: PropTypes.string.isRequired,
@@ -44,4 +44,4 @@ Form.propTypes = {
   addRole: PropTypes.func.isRequired,
 };
 
-export default Form;
+export default CreateRoleForm;
