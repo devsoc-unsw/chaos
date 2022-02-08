@@ -1,5 +1,5 @@
 use crate::database::{
-    models::{Comment, NewComment, OrganisationDirector, User},
+    models::{Comment, NewComment, OrganisationUser, User},
     Database,
 };
 use rocket::{
@@ -21,17 +21,15 @@ pub async fn create_comment(
     user: User,
     db: Database,
 ) -> Result<Json<Comment>, Json<CommentError>> {
-    // comment is tied to application, tied to role, tied to campaign, tied to org
-    // comment maker needs to have permission in org - OrganisationDirector (OrganisationUsers)
+    // need to be director to comment
     let app_id = new_comment.application_id; // stack copy of i32
-    let org_id = db
-        .run(move |conn| Comment::app_id_to_org_id(&conn, app_id))
-        .await
-        .ok_or_else(|| Json(CommentError::Unauthorized))?;
-
-    db.run(move |conn| OrganisationDirector::new_from_org_id(user, org_id, &conn))
-        .await
-        .or_else(|_| Err(Json(CommentError::Unauthorized)))?;
+    db.run(move |conn| {
+        OrganisationUser::application_admin_level(app_id, user.id, &conn)
+            .is_at_least_director()
+            .check()
+    })
+    .await
+    .or_else(|_| Err(Json(CommentError::Unauthorized)))?;
 
     let comment = db
         .run(move |conn| NewComment::insert(&new_comment, conn))
@@ -47,14 +45,13 @@ pub async fn get_comment_from_id(
     user: User,
     db: Database,
 ) -> Result<Json<Comment>, Json<CommentError>> {
-    let org_id = db
-        .run(move |conn| Comment::comment_id_to_org_id(&conn, comment_id))
-        .await
-        .ok_or_else(|| Json(CommentError::Unauthorized))?;
-
-    db.run(move |conn| OrganisationDirector::new_from_org_id(user, org_id, &conn))
-        .await
-        .or_else(|_| Err(Json(CommentError::Unauthorized)))?;
+    db.run(move |conn| {
+        OrganisationUser::comment_admin_level(comment_id, user.id, &conn)
+            .is_at_least_director()
+            .check()
+    })
+    .await
+    .or_else(|_| Err(Json(CommentError::Unauthorized)))?;
 
     let comment = db
         .run(move |conn| Comment::get_from_id(conn, comment_id))

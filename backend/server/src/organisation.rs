@@ -5,7 +5,6 @@ use crate::database::{
 use rocket::{
     delete,
     form::Form,
-    futures::TryFutureExt,
     get, post, put,
     serde::{json::Json, Serialize},
 };
