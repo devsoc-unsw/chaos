@@ -998,3 +998,31 @@ impl NewRating {
         self.insert_into(ratings).get_result(conn).ok()
     }
 }
+
+#[derive(Serialize)]
+pub struct QuestionResponse {
+    pub id: i32,
+    pub role_id: i32,
+    pub title: String,
+    pub description: Option<String>,
+    pub max_bytes: i32,
+    pub required: bool,
+}
+
+#[derive(Serialize)]
+pub struct GetQuestionsResponse {
+    pub questions: Vec<QuestionResponse>,
+}
+
+impl std::convert::From<Question> for QuestionResponse {
+    fn from(question: Question) -> Self {
+        Self {
+            id: question.id,
+            role_id: question.role_id,
+            title: question.title,
+            description: question.description,
+            max_bytes: question.max_bytes,
+            required: question.required,
+        }
+    }
+}

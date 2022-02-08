@@ -1,5 +1,8 @@
 use crate::database::{
-    models::{OrganisationUser, Role, RoleUpdate, User},
+    models::{
+        Campaign, GetQuestionsResponse, OrganisationUser, Question, QuestionResponse, Role,
+        RoleUpdate, User,
+    },
     Database,
 };
 use rocket::{
@@ -102,6 +105,45 @@ pub async fn new_role(
         RoleUpdate::insert(&role, &conn).ok_or_else(|| Json(RoleError::RoleAlreadyExists))?;
 
         Ok(())
+    })
+    .await
+}
+
+#[derive(Serialize)]
+pub enum QuestionsError {
+    RoleNotFound,
+    CampaignNotFound,
+    Unauthorized,
+}
+
+#[get("/<role_id>/questions")]
+pub async fn get_questions(
+    role_id: i32,
+    user: User,
+    db: Database,
+) -> Result<Json<GetQuestionsResponse>, Json<QuestionsError>> {
+    // First check that the role is valid and the user should be able to access the ids.
+    // We can't use the helper function below since behaviour depends on the draft
+    // status of the campaign.
+
+    db.run(move |conn| {
+        let role = Role::get_from_id(conn, role_id).ok_or(Json(QuestionsError::RoleNotFound))?;
+        let campaign = Campaign::get_from_id(conn, role.campaign_id)
+            .ok_or(Json(QuestionsError::CampaignNotFound))?;
+
+        // Prevent people from viewing while it's in draft mode,
+        // unless they have adequate permissions
+        OrganisationUser::campaign_admin_level(campaign.id, user.id, &conn)
+            .is_at_least_director()
+            .or(campaign.published)
+            .check()
+            .map_err(|_| Json(QuestionsError::Unauthorized))?;
+        Ok(Json(GetQuestionsResponse {
+            questions: Question::get_all_from_role_id(conn, role_id)
+                .into_iter()
+                .map(|x| x.into())
+                .collect(),
+        }))
     })
     .await
 }
