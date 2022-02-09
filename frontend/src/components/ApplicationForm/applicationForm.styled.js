@@ -72,20 +72,20 @@ export const SectionHeader = styled("h1")`
   margin-top: 0px;
 `;
 
-export const RoleButton = styled(ToggleButton)({
-  "&.Mui-selected, &.Mui-selected:hover": {
-    color: "white",
-    backgroundColor: "#084cec",
-  },
-  borderRadius: "20px",
-  padding: "5px",
-  paddingLeft: "10px",
-  paddingRight: "10px",
-  color: "#084cec",
-  backgroundColor: "white",
-  borderColor: "#084cec",
-  margin: "5px",
-});
+export const RoleButton = styled(ToggleButton)`
+  &.Mui-selected, &.Mui-selected:hover {
+    color: white;
+    background-color: #084cec;
+  }
+  border-radius: 20px;
+  padding: 5px;
+  paddingleft: 10px;
+  padding-right: 10px;
+  color: #084cec;
+  background-color: white;
+  border-color: #084cec;
+  margin: 5px;
+`;
 
 export const Question = styled(Typography)`
   font-weight: bold;
