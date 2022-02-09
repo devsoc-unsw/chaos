@@ -23,7 +23,7 @@ const Question = ({
         value={question.text}
         onChange={(e) => handleQuestionInput(e, question.id)}
       />
-      <IconButton value={question.id} onClick={(e) => onQuestionDelete(e)}>
+      <IconButton value={question.id} onClick={onQuestionDelete}>
         <ClearIcon />
       </IconButton>
     </Content>

@@ -26,7 +26,7 @@ const RoleListItem = ({
           </IconButton>
         </ListItemIcon>
         <ListItemIcon>
-          <IconButton value={role.id} onClick={(e) => onRoleDelete(e)}>
+          <IconButton value={role.id} onClick={onRoleDelete}>
             <ClearIcon />
           </IconButton>
         </ListItemIcon>
