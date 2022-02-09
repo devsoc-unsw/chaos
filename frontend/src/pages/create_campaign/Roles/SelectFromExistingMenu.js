@@ -60,7 +60,11 @@ SelectFromExistingMenu.propTypes = {
   open: PropTypes.bool.isRequired,
   handleSelectFromExistingClick: PropTypes.func.isRequired,
   handleCloseSelectFromExisting: PropTypes.func.isRequired,
-  anchorEl: PropTypes.element.isRequired,
+  anchorEl: PropTypes.element,
+};
+
+SelectFromExistingMenu.defaultProps = {
+  anchorEl: null,
 };
 
 export default SelectFromExistingMenu;
