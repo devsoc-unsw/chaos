@@ -32,7 +32,6 @@ const CampaignTab = ({ campaign }) => {
     cover,
     setCover,
   } = campaign;
-  console.log(campaign);
   const onFileUpload = async (acceptedFiles) => {
     const fileUrl = await fileToDataUrl(acceptedFiles[0]);
     setCover(fileUrl);
@@ -123,7 +122,6 @@ const CampaignTab = ({ campaign }) => {
 };
 
 CampaignTab.propTypes = {
-  isSelected: PropTypes.bool.isRequired,
   campaign: PropTypes.shape({
     questions: PropTypes.arrayOf(
       PropTypes.shape({
@@ -145,7 +143,7 @@ CampaignTab.propTypes = {
     setStartDate: PropTypes.func.isRequired,
     endDate: PropTypes.instanceOf(Date).isRequired,
     setEndDate: PropTypes.func.isRequired,
-    cover: PropTypes.string.isRequired,
+    cover: PropTypes.string,
     setCover: PropTypes.func.isRequired,
     description: PropTypes.string.isRequired,
     setDescription: PropTypes.func.isRequired,
