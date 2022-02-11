@@ -62,7 +62,8 @@ async fn main() {
             routes![
                 backend::role::get_role,
                 backend::role::update_role,
-                backend::role::new_role
+                backend::role::new_role,
+                backend::role::get_questions,
             ],
         )
         .mount(
