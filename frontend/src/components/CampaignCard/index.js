@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import {
   Card,
@@ -23,10 +22,16 @@ import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import { ExpandIconButton } from "./campaignCard.styled";
 
-const CampaignCard = (props) => {
+const CampaignCard = ({
+  title,
+  appliedFor,
+  positions,
+  startDate,
+  endDate,
+  img,
+  applyClick,
+}) => {
   const [expanded, setExpanded] = useState(false);
-  const { title, appliedFor, positions, startDate, endDate, img } = props;
-  const navigate = useNavigate();
 
   const handleExpandClick = () => {
     setExpanded(!expanded);
@@ -97,10 +102,12 @@ const CampaignCard = (props) => {
       </CardActionArea>
 
       <CardActions disableSpacing>
-        <Button 
-          size="small" 
-          variant="outlined" 
-          onClick={() => navigate("/application") /*FIXME: integrate w/ backend to navigate to specific page*/}
+        <Button
+          size="small"
+          variant="outlined"
+          onClick={
+            applyClick /* CHAOS-51: integrate w/ backend to navigate to specific page */
+          }
         >
           Apply
         </Button>
@@ -148,6 +155,7 @@ CampaignCard.propTypes = {
   startDate: PropTypes.string.isRequired,
   endDate: PropTypes.string.isRequired,
   img: PropTypes.string.isRequired,
+  applyClick: PropTypes.func.isRequired,
 };
 
 export default CampaignCard;

@@ -1,9 +1,17 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { SubmitButton, SubmitWrapper } from "./reviewTab.styled";
+import { Grid } from "@mui/material";
+import {
+  CreateDraftButton,
+  InfoTextBox,
+  InfoText,
+  PublishButton,
+  SubmitWrapper,
+  CampaignCardGrid,
+} from "./reviewTab.styled";
 import ApplicationForm from "../../../components/ApplicationForm";
+import CampaignCard from "../../../components/CampaignCard";
 
-// FIXME: CHAOS-65, add campaign card to preview tab
 const ReviewTab = ({ campaign, onSubmit }) => {
   const {
     questions,
@@ -13,8 +21,11 @@ const ReviewTab = ({ campaign, onSubmit }) => {
     campaignName,
     cover,
     description,
+    startDate,
+    endDate,
   } = campaign;
   const [rolesSelected, setRolesSelected] = useState([]);
+  const [displayForm, setDisplayForm] = useState(false);
   useEffect(() => {
     const newAnswers = questions.map((q) => {
       const tmp = {};
@@ -34,27 +45,73 @@ const ReviewTab = ({ campaign, onSubmit }) => {
     email: "firstlast@gmail.com",
     degree: "Bachelor of Science (Computer Science)",
   };
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
   return (
     <>
-      <ApplicationForm
-        questions={questions}
-        roles={roles}
-        rolesSelected={rolesSelected}
-        setRolesSelected={setRolesSelected}
-        answers={answers}
-        setAnswers={setAnswers}
-        campaignName={campaignName}
-        headerImage={cover}
-        description={description}
-        userInfo={dummyUserInfo}
-      />
+      <InfoTextBox>
+        <InfoText>
+          Please review both the application card and form before publishing.
+          This is how your campaign will appear to applicants.
+        </InfoText>
+        <InfoText>
+          Click &quot;apply&quot; to view/hide the application form.
+        </InfoText>
+      </InfoTextBox>
+      <CampaignCardGrid container spacing={2} columns={4}>
+        <Grid item xs={1.5} />
+        <Grid item key={campaignName} xs={1}>
+          <CampaignCard
+            title={campaignName}
+            appliedFor={[]}
+            positions={roles.map((r) => ({
+              number: r.quantity,
+              name: r.title,
+            }))}
+            startDate={`${startDate.getDate()} ${
+              months[startDate.getMonth()]
+            } ${startDate.getFullYear()}`}
+            endDate={`${endDate.getDate()} ${
+              months[endDate.getMonth()]
+            } ${endDate.getFullYear()}`}
+            img={cover}
+            applyClick={() => setDisplayForm(!displayForm)}
+          />
+        </Grid>
+      </CampaignCardGrid>
+      {displayForm && (
+        <ApplicationForm
+          questions={questions}
+          roles={roles}
+          rolesSelected={rolesSelected}
+          setRolesSelected={setRolesSelected}
+          answers={answers}
+          setAnswers={setAnswers}
+          campaignName={campaignName}
+          headerImage={cover}
+          description={description}
+          userInfo={dummyUserInfo}
+        />
+      )}
       <SubmitWrapper>
-        <SubmitButton onClick={() => onSubmit(true)} variant="outlined">
+        <CreateDraftButton onClick={() => onSubmit(true)} variant="outlined">
           Create Draft
-        </SubmitButton>
-        <SubmitButton onClick={() => onSubmit(false)} variant="contained">
+        </CreateDraftButton>
+        <PublishButton onClick={() => onSubmit(false)} variant="contained">
           Publish
-        </SubmitButton>
+        </PublishButton>
       </SubmitWrapper>
     </>
   );
@@ -82,6 +139,8 @@ ReviewTab.propTypes = {
     campaignName: PropTypes.string.isRequired,
     cover: PropTypes.string.isRequired,
     description: PropTypes.string.isRequired,
+    startDate: PropTypes.instanceOf(Date).isRequired,
+    endDate: PropTypes.instanceOf(Date).isRequired,
   }).isRequired,
   onSubmit: PropTypes.func.isRequired,
 };
