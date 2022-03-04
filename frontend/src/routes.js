@@ -21,7 +21,7 @@ const routes = [
   <Route key="Admin" path="/Admin" element={<Admin />} />,
   <Route
     key="create-campaign"
-    path="/campaign/create"
+    path="/campaign/create/:orgId"
     element={<CampaignCreate />}
   />,
   <Route key="ApplicationPage" path="/application" element={<ApplicationPage />} />,
