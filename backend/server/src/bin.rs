@@ -1,6 +1,5 @@
 extern crate diesel;
 
-use backend;
 use backend::auth::Auth;
 use backend::cors::cors;
 use backend::database::Database;
@@ -73,6 +72,7 @@ async fn main() {
                 backend::comment::get_comment_from_id
             ],
         )
+        .mount("/admin", routes![backend::admin::get,])
         .launch()
         .await
         .unwrap();
