@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Container, Button, Grid, Typography } from "@mui/material";
 import { red, green } from "@mui/material/colors";
 
@@ -90,6 +91,7 @@ const dummyRankings = {
 const dummyPositions = Object.keys(dummyRankings);
 
 const Rankings = () => {
+  const navigate = useNavigate();
   const setNavBarTitle = useContext(SetNavBarTitleContext);
   useEffect(() => {
     setNavBarTitle("2022 Subcommittee Recruitment (Hardcoded Title)");
@@ -103,6 +105,7 @@ const Rankings = () => {
       "Order:",
       rankings[selectedPosition].map((candidate) => candidate.name)
     );
+    navigate("/finalise_candidates");
   };
 
   return (
