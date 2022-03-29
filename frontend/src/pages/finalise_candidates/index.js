@@ -22,7 +22,6 @@ const dummyCandidates = [
   },
   {
     role: "Socials Experience Subcommittee Member",
-    name: "Haley Gu",
     finalised: false,
   },
 ];
@@ -50,9 +49,7 @@ const FinaliseCandidates = () => {
           <Typography variant="h2">Not Finalised</Typography>
           <ul>
             {notFinalised.map((candidate) => (
-              <li>
-                {candidate.role} - {candidate.name}
-              </li>
+              <li>{candidate.role}</li>
             ))}
           </ul>
         </Grid>
