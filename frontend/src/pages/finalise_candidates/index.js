@@ -1,5 +1,6 @@
-import React from "react";
-import { Container, Grid, Typography } from "@mui/material";
+import React, { useState } from "react";
+import { Box, Container, Grid, Tab, Typography } from "@mui/material";
+import { TabContext, TabList, TabPanel } from "@mui/lab";
 import { FinalisedEntry } from "./finaliseCandidates.styled";
 
 const dummyCandidates = [
@@ -31,6 +32,8 @@ const FinaliseCandidates = () => {
   const notFinalised = dummyCandidates.filter(
     (candidate) => !candidate.finalised
   );
+  // TODO: CHAOS-71 generate tabs and emails for each finalised member
+  const [tab, setTab] = useState("0");
   return (
     <Container>
       <Grid container spacing={2} p={2}>
@@ -38,7 +41,7 @@ const FinaliseCandidates = () => {
           <Typography variant="h2">Finalised</Typography>
           <ul>
             {finalised.map((candidate) => (
-              <FinalisedEntry>
+              <FinalisedEntry key={candidate.role}>
                 {candidate.role} -{" "}
                 <span className="name">{candidate.name}</span>
               </FinalisedEntry>
@@ -49,11 +52,23 @@ const FinaliseCandidates = () => {
           <Typography variant="h2">Not Finalised</Typography>
           <ul>
             {notFinalised.map((candidate) => (
-              <li>{candidate.role}</li>
+              <li key={candidate.role}>{candidate.role}</li>
             ))}
           </ul>
         </Grid>
       </Grid>
+      <TabContext value={tab}>
+        <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1 }}>
+          <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+            <TabList onChange={(_, t) => setTab(t)}>
+              <Tab label="Hayes Choy" value="0" />
+              <Tab label="Shrey Somaiya" value="1" />
+            </TabList>
+          </Box>
+          <TabPanel value="0">email</TabPanel>
+          <TabPanel value="1">poggers</TabPanel>
+        </Box>
+      </TabContext>
     </Container>
   );
 };
