@@ -4,7 +4,7 @@ use crate::database::{
 };
 use rocket::{get, serde::json::Json};
 
-#[get("/admin")]
+#[get("/")]
 pub async fn get(user: User, db: Database) -> Json<AdminInfoResponse> {
     Json(AdminInfoResponse {
         organisations: db
