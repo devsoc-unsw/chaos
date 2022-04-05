@@ -104,3 +104,15 @@ pub async fn set_admins(
         None => Err(Json(OrgError::OrgNotFound)),
     }
 }
+
+#[get("/<org_id>/is_admin")]
+pub async fn is_admin(org_id: i32, user: User, db: Database) -> Json<bool> {
+    let res = db
+        .run(move |conn| Organisation::get_admin_ids(&conn, org_id))
+        .await;
+
+    match res {
+        Some(ids) => Json(ids.contains(&user.id) || user.superuser),
+        None => Json(false),
+    }
+}
