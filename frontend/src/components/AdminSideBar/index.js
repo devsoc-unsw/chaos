@@ -1,5 +1,5 @@
-/* eslint-disable react/prop-types */
 import React, { useState } from "react";
+import PropTypes from "prop-types";
 import {
   SidebarContainer,
   OrgButton,
@@ -12,7 +12,7 @@ import {
   CreateOrgIcon,
   RemoveOrgIcon,
 } from "./adminSidebar.styled";
-import CreateOrganisationForm from "../CreateOrganisationForm"
+import CreateOrganisationForm from "../CreateOrganisationForm";
 
 const AdminSidebar = ({
   orgList,
@@ -101,6 +101,23 @@ const AdminSidebar = ({
       </OrgButtonGroup>
     </SidebarContainer>
   );
+};
+
+AdminSidebar.propTypes = {
+  orgList: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number,
+      icon: PropTypes.string,
+      orgName: PropTypes.string,
+    })
+  ).isRequired,
+  setOrgList: PropTypes.func.isRequired,
+  orgSelected: PropTypes.number.isRequired,
+  setOrgSelected: PropTypes.func.isRequired,
+  isFormOpen: PropTypes.bool.isRequired,
+  setIsFormOpen: PropTypes.func.isRequired,
+  sidebarWidth: PropTypes.number.isRequired,
+  setSidebarWidth: PropTypes.func.isRequired,
 };
 
 export default AdminSidebar;

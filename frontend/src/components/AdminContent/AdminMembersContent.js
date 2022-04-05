@@ -1,9 +1,9 @@
-/* eslint-disable react/prop-types */
 import React from "react";
 import { ListItemText, Divider, ListItemIcon, IconButton } from "@mui/material";
 import ClearIcon from "@mui/icons-material/Clear";
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
+import PropTypes from "prop-types";
 import {
   AdminContentList,
   DummyIconForAlignment,
@@ -59,6 +59,17 @@ const AdminMembersContent = ({ members, setMembers }) => {
       ))}
     </AdminContentList>
   );
+};
+
+AdminMembersContent.propTypes = {
+  members: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number,
+      name: PropTypes.string,
+      role: PropTypes.number,
+    })
+  ).isRequired,
+  setMembers: PropTypes.func.isRequired,
 };
 
 export default AdminMembersContent;

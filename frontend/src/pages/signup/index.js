@@ -22,9 +22,10 @@ const Signup = () => {
       <StyledForm
         onSubmit={async (e) => {
           e.preventDefault();
-          console.log("formData", formData);
-          console.log(doSignup);
+          console.log("posting with:");
+          console.log(formData);
           const result = await doSignup(formData);
+          console.log(result);
           if (result.status === HTTP_STATUS_OKAY) {
             const data = await result.json();
             setStore("AUTH_TOKEN", data.token);

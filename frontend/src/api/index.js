@@ -24,6 +24,7 @@ const doSignup = async ({ name, degree_name, zid, starting_year }) =>
     },
   });
 
+/*
 const authenticatedRequest = () => {
   const token = `Bearer ${localStorage.getItem("AUTH_TOKEN")}`;
   return {
@@ -37,16 +38,27 @@ const authenticatedRequest = () => {
       }),
   };
 };
+*/
 
-const getAllCampaigns = () => {
+const authenticatedRequest = (payload) => {
   const token = `Bearer ${localStorage.getItem("AUTH_TOKEN")}`;
   return API.request({
-    path: "/campaign/all",
+    ...payload,
     header: {
-      "Content-Type": "application/json",
       Authorization: token,
+      ...payload.header,
     },
   });
 };
 
-export { authenticatedRequest, authenticate, doSignup, getAllCampaigns };
+const getAllCampaigns = () => authenticatedRequest({ path: "/campaign/all" });
+
+const getAdminData = () => authenticatedRequest({ path: "/admin" });
+
+export {
+  authenticatedRequest,
+  authenticate,
+  doSignup,
+  getAllCampaigns,
+  getAdminData,
+};
