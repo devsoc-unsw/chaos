@@ -7,7 +7,6 @@ import ReviewTab from "./Preview";
 import { NextButton, ArrowIcon, NextWrapper } from "./createCampaign.styled";
 import { isAdminInOrganisation } from "../../api";
 
-// FIXME: CHAOS-66, user authentication and redirection if they are not logged in or authenticated
 const CreateCampaign = () => {
   const { orgId } = useParams();
   const navigate = useNavigate();
