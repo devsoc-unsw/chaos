@@ -32,6 +32,7 @@ async fn main() {
                 backend::organisation::delete,
                 backend::organisation::get_admins,
                 backend::organisation::set_admins,
+                backend::organisation::is_admin,
             ],
         )
         .mount(
