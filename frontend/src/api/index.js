@@ -49,4 +49,21 @@ const getAllCampaigns = () => {
   });
 };
 
-export { authenticatedRequest, authenticate, doSignup, getAllCampaigns };
+const isAdminInOrganisation = (orgId) => {
+  const token = `Bearer ${localStorage.getItem("AUTH_TOKEN")}`;
+  return API.request({
+    path: `/organisation/${orgId}/is_admin`,
+    header: {
+      "Content-Type": "application/json",
+      Authorization: token,
+    },
+  });
+};
+
+export {
+  authenticatedRequest,
+  authenticate,
+  doSignup,
+  getAllCampaigns,
+  isAdminInOrganisation,
+};

@@ -1,12 +1,24 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Container, Tabs, Tab } from "@mui/material";
+import { useNavigate, useParams } from "react-router-dom";
 import CampaignTab from "./Campaign";
 import RolesTab from "./Roles";
 import ReviewTab from "./Preview";
 import { NextButton, ArrowIcon, NextWrapper } from "./createCampaign.styled";
+import { isAdminInOrganisation } from "../../api";
 
 // FIXME: CHAOS-66, user authentication and redirection if they are not logged in or authenticated
 const CreateCampaign = () => {
+  const { orgId } = useParams();
+  const navigate = useNavigate();
+  useEffect(async () => {
+    const data = await isAdminInOrganisation(orgId);
+    const isAdmin = await data.json();
+    if (!isAdmin) {
+      navigate("/");
+    }
+  }, []);
+
   const [tab, setTab] = useState(0);
   const [campaignName, setCampaignName] = useState("");
   const [startDate, setStartDate] = useState(new Date());
