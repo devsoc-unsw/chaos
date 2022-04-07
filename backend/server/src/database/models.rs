@@ -77,6 +77,16 @@ impl User {
             .load(conn)
             .unwrap_or_else(|_| vec![])
     }
+
+    pub fn get_all_org_ids_belonging(&self, conn: &PgConnection) -> Vec<i32> {
+        use crate::database::schema::organisation_users::dsl::*;
+
+        organisation_users
+            .filter(user_id.eq(self.id))
+            .select(organisation_id)
+            .load::<i32>(conn)
+            .unwrap_or_else(|_| vec![])
+    }
 }
 
 impl NewUser {
@@ -1050,4 +1060,92 @@ impl NewRating {
 
         self.insert_into(ratings).get_result(conn).ok()
     }
+}
+
+#[derive(Serialize)]
+pub struct GetQuestionsResponse {
+    pub questions: Vec<QuestionResponse>,
+}
+
+#[derive(Serialize)]
+pub struct CampaignInfo {
+    pub id: i32,
+    pub name: String,
+    pub cover_image: Option<Vec<u8>>,
+    pub starts_at: NaiveDateTime,
+    pub ends_at: NaiveDateTime,
+}
+
+impl std::convert::From<Campaign> for CampaignInfo {
+    fn from(campaign: Campaign) -> Self {
+        Self {
+            id: campaign.id,
+            name: campaign.name,
+            cover_image: campaign.cover_image,
+            starts_at: campaign.starts_at,
+            ends_at: campaign.ends_at,
+        }
+    }
+}
+
+#[derive(Serialize)]
+pub struct OrganisationUserInfo {
+    pub id: i32,
+    pub display_name: String,
+    pub role: AdminLevel,
+}
+
+impl OrganisationUserInfo {
+    pub fn get_all_from_organisation_id(
+        conn: &PgConnection,
+        organisation_id_val: i32,
+    ) -> Vec<OrganisationUserInfo> {
+        use crate::database::schema::organisation_users::dsl::*;
+
+        organisation_users
+            .filter(organisation_id.eq(organisation_id_val))
+            .order(id.asc())
+            .load(conn)
+            .unwrap_or_else(|_| vec![])
+            .into_iter()
+            .map(|o: OrganisationUser| {
+                let user = User::get_from_id(conn, o.user_id).unwrap();
+                Self {
+                    id: o.user_id,
+                    display_name: user.display_name,
+                    role: o.admin_level,
+                }
+            })
+            .collect()
+    }
+}
+
+#[derive(Serialize)]
+pub struct OrganisationInfo {
+    pub id: i32,
+    pub name: String,
+    pub logo: Option<Vec<u8>>,
+    pub members: Vec<OrganisationUserInfo>,
+    pub campaigns: Vec<CampaignInfo>,
+}
+
+impl OrganisationInfo {
+    pub fn new(organisation_id: i32, conn: &PgConnection) -> Self {
+        let organisation = Organisation::get_from_id(conn, organisation_id).unwrap();
+        Self {
+            id: organisation.id,
+            name: organisation.name,
+            logo: organisation.logo,
+            members: OrganisationUserInfo::get_all_from_organisation_id(conn, organisation.id),
+            campaigns: Campaign::get_all_from_org_id(conn, organisation.id)
+                .into_iter()
+                .map(|c: Campaign| CampaignInfo::from(c))
+                .collect(),
+        }
+    }
+}
+
+#[derive(Serialize)]
+pub struct AdminInfoResponse {
+    pub organisations: Vec<OrganisationInfo>,
 }

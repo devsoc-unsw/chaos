@@ -1,6 +1,5 @@
 extern crate diesel;
 
-use backend;
 use backend::auth::Auth;
 use backend::cors::cors;
 use backend::database::Database;
@@ -32,6 +31,7 @@ async fn main() {
                 backend::organisation::delete,
                 backend::organisation::get_admins,
                 backend::organisation::set_admins,
+                backend::organisation::is_admin,
             ],
         )
         .mount(
@@ -62,7 +62,8 @@ async fn main() {
             routes![
                 backend::role::get_role,
                 backend::role::update_role,
-                backend::role::new_role
+                backend::role::new_role,
+                backend::role::get_questions,
             ],
         )
         .mount(
@@ -80,6 +81,7 @@ async fn main() {
                 backend::question::delete_question
             ],
         )
+        .mount("/admin", routes![backend::admin::get,])
         .launch()
         .await
         .unwrap();

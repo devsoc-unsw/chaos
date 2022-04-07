@@ -21,6 +21,7 @@ const CreateCampaign = () => {
     roles.length > 0 ? roles[0].id : "-1"
   );
   const [questions, setQuestions] = useState([]);
+  const [answers, setAnswers] = useState([]);
   const campaign = {
     tab,
     setTab,
@@ -46,6 +47,8 @@ const CreateCampaign = () => {
     setRoleSelected,
     questions,
     setQuestions,
+    answers,
+    setAnswers,
   };
   const campaignTabIdx = 0;
   const rolesTabIdx = 1;
