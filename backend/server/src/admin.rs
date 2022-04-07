@@ -1,5 +1,5 @@
 use crate::database::{
-    models::{AdminInfoResponse, CampaignInfo, OrganisationInfo, OrganisationUserInfo, User},
+    models::{AdminInfoResponse, OrganisationInfo, User},
     Database,
 };
 use rocket::{get, serde::json::Json};

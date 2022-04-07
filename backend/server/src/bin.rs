@@ -73,6 +73,14 @@ async fn main() {
                 backend::comment::get_comment_from_id
             ],
         )
+        .mount(
+            "/question",
+            routes![
+                backend::question::get_question,
+                backend::question::edit_question,
+                backend::question::delete_question
+            ],
+        )
         .mount("/admin", routes![backend::admin::get,])
         .launch()
         .await
