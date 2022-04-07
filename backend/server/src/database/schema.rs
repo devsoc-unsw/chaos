@@ -11,7 +11,7 @@ pub enum ApplicationStatus {
     Success,
 }
 
-#[derive(Debug, DbEnum, PartialEq)]
+#[derive(Debug, DbEnum, PartialEq, Serialize)]
 #[DbValueStyle = "PascalCase"]
 pub enum AdminLevel {
     ReadOnly,
