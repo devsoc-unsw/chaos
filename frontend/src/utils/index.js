@@ -26,9 +26,7 @@ const months = [
 ];
 
 const dateToString = (date) => (
-  `${date.getDate()} ${
-    months[date.getMonth()]
-  } ${date.getFullYear()}`
+  `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`
 );
 
 const fileToDataUrl = (file) => {
