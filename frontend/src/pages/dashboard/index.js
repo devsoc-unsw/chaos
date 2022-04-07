@@ -4,9 +4,6 @@ import { Container, Grid } from "@mui/material";
 import CampaignCard from "../../components/CampaignCard";
 import { SetNavBarTitleContext } from "../../App";
 
-import DirectorDummy from "./director.jpg";
-import ProjectLeadDummy from "./project-lead.jpg";
-import ProjectTeamDummy from "./project-team.png";
 import { getAllCampaigns } from "../../api";
 import { bytesToImage, dateToString } from "../../utils";
 
