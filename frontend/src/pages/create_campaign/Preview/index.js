@@ -11,6 +11,7 @@ import {
 } from "./reviewTab.styled";
 import ApplicationForm from "../../../components/ApplicationForm";
 import CampaignCard from "../../../components/CampaignCard";
+import { dateToString } from "../../../utils";
 
 const ReviewTab = ({ campaign, onSubmit }) => {
   const {
@@ -45,20 +46,7 @@ const ReviewTab = ({ campaign, onSubmit }) => {
     email: "firstlast@gmail.com",
     degree: "Bachelor of Science (Computer Science)",
   };
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
+  
   return (
     <>
       <InfoTextBox>
@@ -80,12 +68,8 @@ const ReviewTab = ({ campaign, onSubmit }) => {
               number: r.quantity,
               name: r.title,
             }))}
-            startDate={`${startDate.getDate()} ${
-              months[startDate.getMonth()]
-            } ${startDate.getFullYear()}`}
-            endDate={`${endDate.getDate()} ${
-              months[endDate.getMonth()]
-            } ${endDate.getFullYear()}`}
+            startDate={dateToString(startDate)}
+            endDate={dateToString(endDate)}
             img={cover}
             applyClick={() => setDisplayForm(!displayForm)}
           />
