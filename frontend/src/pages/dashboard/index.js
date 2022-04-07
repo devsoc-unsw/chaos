@@ -15,15 +15,11 @@ const Dashboard = () => {
 
     const getCam = async () => {
       const res = await getAllCampaigns();
-      const json = await res.json();
-      setMyCampaigns(
-        json.current_campaigns.filter((c) => c.applied_for.length)
-      );
-      setCurrentCampaigns(
-        json.current_campaigns.filter((c) => !c.applied_for.length)
-      );
-      setPastCampaigns(json.past_campaigns);
-      console.log(json);
+      const data = await res.json();
+      const current = data.current_campaigns;
+      setMyCampaigns(current.filter((c) => c.applied_for.length));
+      setCurrentCampaigns(current.filter((c) => !c.applied_for.length));
+      setPastCampaigns(data.past_campaigns);
     };
     getCam();
   }, []);
