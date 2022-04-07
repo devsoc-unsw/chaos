@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate diesel;
 
+pub mod admin;
 pub mod application;
 pub mod auth;
 pub mod campaigns;
