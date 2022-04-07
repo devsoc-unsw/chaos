@@ -30,6 +30,11 @@ const Dashboard = () => {
     getCam();
   }, []);
   const navigate = useNavigate();
+  const campaignPositions = (campaign) =>
+    campaign.roles.map((role) => ({
+      name: role.name,
+      number: role.max_available,
+    }));
   return (
     <Container>
       <h2>My Campaigns</h2>
@@ -39,10 +44,7 @@ const Dashboard = () => {
             <CampaignCard
               title={campaign.campaign.name}
               appliedFor={campaign.applied_for}
-              positions={campaign.roles.map((role) => ({
-                name: role.name,
-                number: role.max_available,
-              }))}
+              positions={campaignPositions(campaign)}
               startDate={dateToString(new Date(campaign.campaign.starts_at))}
               endDate={dateToString(new Date(campaign.campaign.ends_at))}
               img={bytesToImage(campaign.campaign.cover_image)}
@@ -59,10 +61,7 @@ const Dashboard = () => {
             <CampaignCard
               title={campaign.campaign.name}
               appliedFor={campaign.applied_for}
-              positions={campaign.roles.map((role) => ({
-                name: role.name,
-                number: role.max_available,
-              }))}
+              positions={campaignPositions(campaign)}
               startDate={dateToString(new Date(campaign.campaign.starts_at))}
               endDate={dateToString(new Date(campaign.campaign.ends_at))}
               img={bytesToImage(campaign.campaign.cover_image)}
@@ -79,10 +78,7 @@ const Dashboard = () => {
             <CampaignCard
               title={campaign.campaign.name}
               appliedFor={campaign.applied_for}
-              positions={campaign.roles.map((role) => ({
-                name: role.name,
-                number: role.max_available,
-              }))}
+              positions={campaignPositions(campaign)}
               startDate={dateToString(new Date(campaign.campaign.starts_at))}
               endDate={dateToString(new Date(campaign.campaign.ends_at))}
               img={bytesToImage(campaign.campaign.cover_image)}
