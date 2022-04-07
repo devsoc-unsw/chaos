@@ -1,11 +1,9 @@
 import React, { useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Container, Grid } from "@mui/material";
-import CampaignCard from "../../components/CampaignCard";
+import { Container } from "@mui/material";
+import CampaignGrid from "./CampaignGrid";
 import { SetNavBarTitleContext } from "../../App";
 
 import { getAllCampaigns } from "../../api";
-import { bytesToImage, dateToString } from "../../utils";
 
 const Dashboard = () => {
   const setNavBarTitle = useContext(SetNavBarTitleContext);
@@ -29,64 +27,16 @@ const Dashboard = () => {
     };
     getCam();
   }, []);
-  const navigate = useNavigate();
-  const campaignPositions = (campaign) =>
-    campaign.roles.map((role) => ({
-      name: role.name,
-      number: role.max_available,
-    }));
   return (
     <Container>
       <h2>My Campaigns</h2>
-      <Grid container spacing={2} columns={4}>
-        {myCampaigns.map((campaign) => (
-          <Grid item key={campaign.campaign.id} xs={1}>
-            <CampaignCard
-              title={campaign.campaign.name}
-              appliedFor={campaign.applied_for}
-              positions={campaignPositions(campaign)}
-              startDate={dateToString(new Date(campaign.campaign.starts_at))}
-              endDate={dateToString(new Date(campaign.campaign.ends_at))}
-              img={bytesToImage(campaign.campaign.cover_image)}
-              applyClick={() => navigate("/application")}
-            />
-          </Grid>
-        ))}
-      </Grid>
+      <CampaignGrid campaigns={myCampaigns} />
 
       <h2>Available Campaigns</h2>
-      <Grid container spacing={2} columns={4}>
-        {currentCampaigns.map((campaign) => (
-          <Grid item key={campaign.campaign.id} xs={1}>
-            <CampaignCard
-              title={campaign.campaign.name}
-              appliedFor={campaign.applied_for}
-              positions={campaignPositions(campaign)}
-              startDate={dateToString(new Date(campaign.campaign.starts_at))}
-              endDate={dateToString(new Date(campaign.campaign.ends_at))}
-              img={bytesToImage(campaign.campaign.cover_image)}
-              applyClick={() => navigate("/application")}
-            />
-          </Grid>
-        ))}
-      </Grid>
+      <CampaignGrid campaigns={currentCampaigns} />
 
       <h2>Past Campaigns</h2>
-      <Grid container spacing={2} columns={4}>
-        {pastCampaigns.map((campaign) => (
-          <Grid item key={campaign.campaign.id} xs={1}>
-            <CampaignCard
-              title={campaign.campaign.name}
-              appliedFor={campaign.applied_for}
-              positions={campaignPositions(campaign)}
-              startDate={dateToString(new Date(campaign.campaign.starts_at))}
-              endDate={dateToString(new Date(campaign.campaign.ends_at))}
-              img={bytesToImage(campaign.campaign.cover_image)}
-              applyClick={() => navigate("/application")}
-            />
-          </Grid>
-        ))}
-      </Grid>
+      <CampaignGrid campaigns={pastCampaigns} />
     </Container>
   );
 };
