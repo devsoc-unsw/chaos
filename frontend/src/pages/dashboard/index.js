@@ -1,4 +1,5 @@
 import React, { useContext, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Container, Grid } from "@mui/material";
 import CampaignCard from "../../components/CampaignCard";
 import { SetNavBarTitleContext } from "../../App";
@@ -256,6 +257,7 @@ const Dashboard = () => {
     };
     getCam();
   }, []);
+  const navigate = useNavigate();
   return (
     <Container>
       <h2>My Campaigns</h2>
@@ -269,6 +271,7 @@ const Dashboard = () => {
               startDate={campaign.startDate}
               endDate={campaign.endDate}
               img={campaign.img}
+              applyClick={() => navigate("/application")}
             />
           </Grid>
         ))}
@@ -285,6 +288,7 @@ const Dashboard = () => {
               startDate={campaign.startDate}
               endDate={campaign.endDate}
               img={campaign.img}
+              applyClick={() => navigate("/application")}
             />
           </Grid>
         ))}
@@ -301,6 +305,7 @@ const Dashboard = () => {
               startDate={campaign.startDate}
               endDate={campaign.endDate}
               img={campaign.img}
+              applyClick={() => navigate("/application")}
             />
           </Grid>
         ))}
