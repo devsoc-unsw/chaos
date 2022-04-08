@@ -12,7 +12,7 @@
     "@mui/system": "^5.5.3",
     "@testing-library/jest-dom": "^5.16.4",
     "@testing-library/react": "^12.1.4",
-    "@testing-library/user-event": "^12.1.10",
+    "@testing-library/user-event": "^14.0.4",
     "date-fns": "^2.28.0",
     "notistack": "^2.0.3",
     "prop-types": "^15.7.2",
