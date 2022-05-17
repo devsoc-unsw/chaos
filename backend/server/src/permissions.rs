@@ -117,12 +117,26 @@ impl std::convert::From<Result<(AdminLevel, bool), PermissionError>> for AdminLe
     }
 }
 
+fn is_superuser(user_id: i32, conn: &PgConnection) -> bool {
+    match users::table
+        .filter(users::id.eq(user_id))
+        .select(users::superuser)
+        .first(conn)
+        .ok() {
+        Some(true) => true,
+        _ => false,
+    }
+}
+
 impl OrganisationUser {
     pub fn organisation_admin_level(
         org_id: i32,
         user_id: i32,
         conn: &PgConnection,
     ) -> AdminLevelUser {
+        if is_superuser(user_id, conn) {
+            return AdminLevelUser { res: Ok((AdminLevel::Admin, true)) };
+        }
         organisation_users::table
             .filter(organisation_users::organisation_id.eq(org_id))
             .inner_join(users::table.on(users::id.eq(organisation_users::user_id)))
@@ -138,6 +152,9 @@ impl OrganisationUser {
         user_id: i32,
         conn: &PgConnection,
     ) -> AdminLevelUser {
+        if is_superuser(user_id, conn) {
+            return AdminLevelUser { res: Ok((AdminLevel::Admin, true)) };
+        }
         campaigns::table
             .filter(campaigns::id.eq(campaign_id))
             .inner_join(organisations::table.on(organisations::id.eq(campaigns::organisation_id)))
@@ -158,6 +175,9 @@ impl OrganisationUser {
         user_id: i32,
         conn: &PgConnection,
     ) -> AdminLevelUser {
+        if is_superuser(user_id, conn) {
+            return AdminLevelUser { res: Ok((AdminLevel::Admin, true)) };
+        }
         applications::table
             .filter(applications::id.eq(application_id))
             .inner_join(roles::table.on(roles::id.eq(applications::role_id)))
@@ -176,6 +196,9 @@ impl OrganisationUser {
     }
 
     pub fn role_admin_level(role_id: i32, user_id: i32, conn: &PgConnection) -> AdminLevelUser {
+        if is_superuser(user_id, conn) {
+            return AdminLevelUser { res: Ok((AdminLevel::Admin, true)) };
+        }
         roles::table
             .filter(roles::id.eq(role_id))
             .inner_join(campaigns::table.on(campaigns::id.eq(roles::campaign_id)))
@@ -197,6 +220,9 @@ impl OrganisationUser {
         user_id: i32,
         conn: &PgConnection,
     ) -> AdminLevelUser {
+        if is_superuser(user_id, conn) {
+            return AdminLevelUser { res: Ok((AdminLevel::Admin, true)) };
+        }
         comments::table
             .filter(comments::id.eq(comment_id))
             .inner_join(applications::table.on(applications::id.eq(comments::application_id)))
