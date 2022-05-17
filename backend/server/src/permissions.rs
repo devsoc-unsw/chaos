@@ -122,7 +122,8 @@ fn is_superuser(user_id: i32, conn: &PgConnection) -> bool {
         .filter(users::id.eq(user_id))
         .select(users::superuser)
         .first(conn)
-        .ok() {
+        .ok()
+    {
         Some(true) => true,
         _ => false,
     }
@@ -135,7 +136,9 @@ impl OrganisationUser {
         conn: &PgConnection,
     ) -> AdminLevelUser {
         if is_superuser(user_id, conn) {
-            return AdminLevelUser { res: Ok((AdminLevel::Admin, true)) };
+            return AdminLevelUser {
+                res: Ok((AdminLevel::Admin, true)),
+            };
         }
         organisation_users::table
             .filter(organisation_users::organisation_id.eq(org_id))
@@ -153,7 +156,9 @@ impl OrganisationUser {
         conn: &PgConnection,
     ) -> AdminLevelUser {
         if is_superuser(user_id, conn) {
-            return AdminLevelUser { res: Ok((AdminLevel::Admin, true)) };
+            return AdminLevelUser {
+                res: Ok((AdminLevel::Admin, true)),
+            };
         }
         campaigns::table
             .filter(campaigns::id.eq(campaign_id))
@@ -176,7 +181,9 @@ impl OrganisationUser {
         conn: &PgConnection,
     ) -> AdminLevelUser {
         if is_superuser(user_id, conn) {
-            return AdminLevelUser { res: Ok((AdminLevel::Admin, true)) };
+            return AdminLevelUser {
+                res: Ok((AdminLevel::Admin, true)),
+            };
         }
         applications::table
             .filter(applications::id.eq(application_id))
@@ -197,7 +204,9 @@ impl OrganisationUser {
 
     pub fn role_admin_level(role_id: i32, user_id: i32, conn: &PgConnection) -> AdminLevelUser {
         if is_superuser(user_id, conn) {
-            return AdminLevelUser { res: Ok((AdminLevel::Admin, true)) };
+            return AdminLevelUser {
+                res: Ok((AdminLevel::Admin, true)),
+            };
         }
         roles::table
             .filter(roles::id.eq(role_id))
@@ -221,7 +230,9 @@ impl OrganisationUser {
         conn: &PgConnection,
     ) -> AdminLevelUser {
         if is_superuser(user_id, conn) {
-            return AdminLevelUser { res: Ok((AdminLevel::Admin, true)) };
+            return AdminLevelUser {
+                res: Ok((AdminLevel::Admin, true)),
+            };
         }
         comments::table
             .filter(comments::id.eq(comment_id))
