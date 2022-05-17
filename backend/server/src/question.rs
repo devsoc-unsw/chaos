@@ -1,7 +1,6 @@
 use crate::database::{
     models::{
-        OrganisationUser, Question, QuestionResponse, Role, UpdateQuestionInput
-        , User, Campaign,
+        Campaign, OrganisationUser, Question, QuestionResponse, Role, UpdateQuestionInput, User,
     },
     Database,
 };
@@ -31,11 +30,10 @@ pub async fn get_question(
 ) -> Result<Json<QuestionResponse>, Json<QuestionError>> {
     db.run(move |conn| {
         let q = Question::get_from_id(&conn, question_id)
-                    .ok_or(Json(QuestionError::QuestionNotFound))?;
-        let r = Role::get_from_id(&conn, q.role_id)
-                    .ok_or(Json(QuestionError::QuestionNotFound))?;
+            .ok_or(Json(QuestionError::QuestionNotFound))?;
+        let r = Role::get_from_id(&conn, q.role_id).ok_or(Json(QuestionError::QuestionNotFound))?;
         let c = Campaign::get_from_id(&conn, r.campaign_id)
-                    .ok_or(Json(QuestionError::QuestionNotFound))?;
+            .ok_or(Json(QuestionError::QuestionNotFound))?;
         OrganisationUser::role_admin_level(q.role_id, user.id, conn)
             .is_at_least_director()
             .or(c.published)

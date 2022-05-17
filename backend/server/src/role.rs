@@ -1,8 +1,5 @@
 use crate::database::{
-    models::{
-        Campaign, GetQuestionsResponse, OrganisationUser, Question, Role,
-        RoleUpdate, User,
-    },
+    models::{Campaign, GetQuestionsResponse, OrganisationUser, Question, Role, RoleUpdate, User},
     Database,
 };
 use rocket::{
