@@ -13,6 +13,6 @@ repos:
     hooks:
     -   id: fmt
         files: ^backend/
-        args: ['--manifest-path', 'backend/Cargo.toml', '--']
+        args: ['--manifest-path', 'backend/server/Cargo.toml', '--']
     -   id: cargo-check
-        args: ['--manifest-path', 'backend/Cargo.toml', '--']
+        args: ['--manifest-path', 'backend/server/Cargo.toml', '--']

@@ -10,6 +10,29 @@ function isLoggedIn() {
   return true;
 }
 
+const months = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+const dateToString = (date) =>
+  `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+
+const bytesToImage = (bytes) =>
+  `data:image/png;base64,${btoa(
+    String.fromCharCode(...new Uint8Array(bytes))
+  )}`;
+
 const fileToDataUrl = (file) => {
   const validFileTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif"];
   const valid = validFileTypes.find((type) => type === file.type);
@@ -33,4 +56,14 @@ const getStore = (key) => localStorage.getItem(key);
 const setStore = (key, val) => localStorage.setItem(key, val);
 const removeStore = (key) => localStorage.removeItem(key);
 
-export { isLogin, isAdmin, fileToDataUrl, getStore, setStore, removeStore, isLoggedIn };
+export {
+  isLogin,
+  isAdmin,
+  fileToDataUrl,
+  getStore,
+  setStore,
+  removeStore,
+  isLoggedIn,
+  dateToString,
+  bytesToImage,
+};

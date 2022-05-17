@@ -185,6 +185,7 @@ const AdminContent = ({ id, icon, orgName }) => {
           <AdminCampaignContent
             campaigns={campaigns}
             setCampaigns={setCampaigns}
+            orgId={id}
           />
         )}
         {windowSelected === "members" && (
