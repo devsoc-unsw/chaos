@@ -1,5 +1,5 @@
 use crate::database::{
-    models::{NewOrganisation, Organisation, SuperUser, User},
+    models::{NewOrganisation, Organisation, SuperUser, User, Campaign, OrganisationUser},
     Database,
 };
 use rocket::{
@@ -8,6 +8,7 @@ use rocket::{
     get, post, put,
     serde::{json::Json, Serialize},
 };
+use chrono::NaiveDateTime;
 
 #[derive(Serialize)]
 pub enum NewOrgError {
@@ -115,4 +116,57 @@ pub async fn is_admin(org_id: i32, user: User, db: Database) -> Json<bool> {
         Some(ids) => Json(ids.contains(&user.id) || user.superuser),
         None => Json(false),
     }
+}
+
+#[derive(Serialize)]
+pub struct CampaignResponse {
+    pub id: i32,
+    pub name: String,
+    pub cover_image: Option<Vec<u8>>,
+    pub description: String,
+    pub starts_at: NaiveDateTime,
+    pub ends_at: NaiveDateTime,
+    pub published: bool,
+}
+
+impl std::convert::From<Campaign> for CampaignResponse {
+    fn from(campaign: Campaign) -> Self {
+        Self {
+            id: campaign.id,
+            name: campaign.name,
+            cover_image: campaign.cover_image,
+            description: campaign.description,
+            starts_at: campaign.starts_at,
+            ends_at: campaign.ends_at,
+            published: campaign.published,
+        }
+    }
+}
+
+#[derive(Serialize)]
+pub struct GetCampaignsResponse {
+    campaigns: Vec<CampaignResponse>
+}
+
+#[get("/<org_id>/campaigns")]
+pub async fn get_associated_campaigns(
+    org_id: i32,
+    user: User,
+    db: Database
+) -> Json<GetCampaignsResponse> {
+    db.run(move |conn| {
+        let is_director = OrganisationUser::organisation_admin_level(org_id, user.id, conn)
+            .is_at_least_director()
+            .check()
+            .is_ok();
+
+        Json(GetCampaignsResponse {
+            campaigns: Campaign::get_all_from_org_id(conn, org_id)
+                .into_iter()
+                .filter(|v| v.published || is_director)
+                .map(CampaignResponse::from)
+                .collect()
+        })
+    })
+    .await
 }
