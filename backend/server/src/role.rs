@@ -1,5 +1,8 @@
 use crate::database::{
-    models::{Campaign, GetQuestionsResponse, OrganisationUser, Question, Role, RoleUpdate, User},
+    models::{
+        Campaign, GetQuestionsResponse, OrganisationUser, Question, Role,
+        RoleUpdate, User, Application
+    },
     Database,
 };
 use rocket::{
@@ -140,6 +143,35 @@ pub async fn get_questions(
                 .into_iter()
                 .map(|x| x.into())
                 .collect(),
+        }))
+    })
+    .await
+}
+
+#[derive(Serialize)]
+pub struct GetApplicationsResponse {
+    pub applications: Vec<Application>,
+}
+
+#[get("/<role_id>/applications")]
+pub async fn get_applications(
+    role_id: i32,
+    user: User,
+    db: Database,
+) -> Result<Json<GetApplicationsResponse>, Json<QuestionsError>> {
+    // First check that the role is valid and the user should be able to access the ids.
+    // We can't use the helper function below since behaviour depends on the draft
+    // status of the campaign.
+
+    db.run(move |conn| {
+        // NOTE: admin_level doesn't give good error info when eg. role is not found
+        // (just says unauthorized)
+        OrganisationUser::role_admin_level(role_id, user.id, conn)
+            .is_at_least_director()
+            .check()
+            .map_err(|_| QuestionsError::Unauthorized)?;
+        Ok(Json(GetApplicationsResponse {
+            applications: Application::get_all_from_role_id(conn, role_id),
         }))
     })
     .await

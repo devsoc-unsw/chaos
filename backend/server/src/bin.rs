@@ -64,6 +64,7 @@ async fn main() {
                 backend::role::update_role,
                 backend::role::new_role,
                 backend::role::get_questions,
+                backend::role::get_applications,
             ],
         )
         .mount(
