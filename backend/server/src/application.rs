@@ -1,11 +1,11 @@
 use crate::database::{
-    models::{Application, NewApplication, NewRating, OrganisationUser, User},
+    models::{Application, NewApplication, NewRating, OrganisationUser, User, NewAnswer},
     Database,
 };
 use rocket::{
     form::Form,
     post, put,
-    serde::{json::Json, Serialize},
+    serde::{json::Json, Serialize, Deserialize},
     FromForm,
 };
 
@@ -15,11 +15,12 @@ pub enum ApplicationError {
     UserNotFound,
     RoleNotFound,
     UnableToCreate,
+    AppNotFound,
 }
 
 #[post("/new", data = "<new_application>")]
 pub async fn create_application(
-    new_application: Form<NewApplication>,
+    new_application: Json<NewApplication>,
     _user: User,
     db: Database,
 ) -> Result<Json<Application>, Json<ApplicationError>> {
@@ -31,7 +32,7 @@ pub async fn create_application(
     Ok(Json(application))
 }
 
-#[derive(FromForm)]
+#[derive(FromForm, Deserialize)]
 pub struct RatingInput {
     rating: i32,
 }
@@ -39,7 +40,7 @@ pub struct RatingInput {
 #[put("/<application_id>/rating", data = "<rating>")]
 pub async fn create_rating(
     application_id: i32,
-    rating: Form<RatingInput>,
+    rating: Json<RatingInput>,
     user: User,
     db: Database,
 ) -> Result<Json<()>, Json<ApplicationError>> {
@@ -58,6 +59,28 @@ pub async fn create_rating(
             &conn,
         )
         .ok_or_else(|| ApplicationError::UnableToCreate)?;
+
+        Ok(Json(()))
+    })
+    .await
+}
+
+#[post("/<application_id>/answer", data = "<answer>")]
+pub async fn submit_answer(
+    application_id: i32,
+    user: User,
+    db: Database,
+    answer: Json<NewAnswer>
+) -> Result<Json<()>, Json<ApplicationError>> {
+    db.run(move |conn| {
+        let application = Application::get(application_id, &conn)
+            .ok_or(Json(ApplicationError::AppNotFound))?;
+        if application.user_id != user.id || answer.application_id != application_id {
+            return Err(Json(ApplicationError::Unauthorized));
+        }
+
+        NewAnswer::insert(&answer, &conn)
+            .ok_or(Json(ApplicationError::UnableToCreate))?;
 
         Ok(Json(()))
     })

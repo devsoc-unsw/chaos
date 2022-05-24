@@ -668,7 +668,7 @@ pub struct Application {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Insertable, FromForm)]
+#[derive(Insertable, FromForm, Deserialize)]
 #[table_name = "applications"]
 pub struct NewApplication {
     pub user_id: i32,
@@ -684,6 +684,12 @@ impl Application {
             .order(id.asc())
             .load(conn)
             .unwrap_or_else(|_| vec![])
+    }
+
+    pub fn get(app_id: i32, conn: &PgConnection) -> Option<Application> {
+        use crate::database::schema::applications::dsl::*;
+
+        applications.filter(id.eq(app_id)).first(conn).ok()
     }
 
     pub fn get_all_from_user_id(conn: &PgConnection, user_id_val: i32) -> Vec<Application> {
@@ -869,7 +875,7 @@ pub struct Answer {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Insertable)]
+#[derive(Insertable, Deserialize)]
 #[table_name = "answers"]
 pub struct NewAnswer {
     pub application_id: i32,
