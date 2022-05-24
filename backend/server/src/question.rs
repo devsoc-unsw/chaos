@@ -1,5 +1,7 @@
 use crate::database::{
-    models::{OrganisationUser, Question, QuestionResponse, Role, UpdateQuestionInput, User},
+    models::{
+        Campaign, OrganisationUser, Question, QuestionResponse, Role, UpdateQuestionInput, User,
+    },
     Database,
 };
 
@@ -19,15 +21,28 @@ pub enum QuestionError {
     InsufficientPermissions,
 }
 
+// TODO: may be useless function, also awfully inefficient.
 #[get("/<question_id>")]
 pub async fn get_question(
+    user: User,
     db: Database,
     question_id: i32,
 ) -> Result<Json<QuestionResponse>, Json<QuestionError>> {
-    db.run(move |conn| Question::get_from_id(&conn, question_id))
-        .await
-        .ok_or(Json(QuestionError::QuestionNotFound))
-        .map(|q| Json(QuestionResponse::from(q)))
+    db.run(move |conn| {
+        let q = Question::get_from_id(&conn, question_id)
+            .ok_or(Json(QuestionError::QuestionNotFound))?;
+        let r = Role::get_from_id(&conn, q.role_id).ok_or(Json(QuestionError::QuestionNotFound))?;
+        let c = Campaign::get_from_id(&conn, r.campaign_id)
+            .ok_or(Json(QuestionError::QuestionNotFound))?;
+        OrganisationUser::role_admin_level(q.role_id, user.id, conn)
+            .is_at_least_director()
+            .or(c.published)
+            .check()
+            .map_err(|_| Json(QuestionError::InsufficientPermissions))?;
+        Ok(q)
+    })
+    .await
+    .map(|q| Json(QuestionResponse::from(q)))
 }
 
 #[put("/<question_id>", data = "<update_question>")]
