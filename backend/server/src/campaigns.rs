@@ -51,7 +51,7 @@ pub async fn get_all_campaigns(user: User, db: Database) -> Json<DashboardCampai
 #[put("/<campaign_id>", data = "<update_campaign>")]
 pub async fn update(
     campaign_id: i32,
-    update_campaign: Form<UpdateCampaignInput>,
+    update_campaign: Json<UpdateCampaignInput>,
     user: User,
     db: Database,
 ) -> Result<Json<()>, Json<CampaignError>> {

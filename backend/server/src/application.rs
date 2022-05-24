@@ -5,7 +5,7 @@ use crate::database::{
 use rocket::{
     form::Form,
     post, put,
-    serde::{json::Json, Serialize},
+    serde::{json::Json, Serialize, Deserialize},
     FromForm,
 };
 
@@ -19,7 +19,7 @@ pub enum ApplicationError {
 
 #[post("/new", data = "<new_application>")]
 pub async fn create_application(
-    new_application: Form<NewApplication>,
+    new_application: Json<NewApplication>,
     _user: User,
     db: Database,
 ) -> Result<Json<Application>, Json<ApplicationError>> {
@@ -31,7 +31,7 @@ pub async fn create_application(
     Ok(Json(application))
 }
 
-#[derive(FromForm)]
+#[derive(FromForm, Deserialize)]
 pub struct RatingInput {
     rating: i32,
 }
@@ -39,7 +39,7 @@ pub struct RatingInput {
 #[put("/<application_id>/rating", data = "<rating>")]
 pub async fn create_rating(
     application_id: i32,
-    rating: Form<RatingInput>,
+    rating: Json<RatingInput>,
     user: User,
     db: Database,
 ) -> Result<Json<()>, Json<ApplicationError>> {

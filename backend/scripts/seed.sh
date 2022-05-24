@@ -10,4 +10,4 @@ fi
 
 cd server/src && diesel database reset
 
-cd ../../seed_data && cargo run
+cd ../../seed_data && cargo run --bin seed_data

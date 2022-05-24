@@ -13,7 +13,7 @@ pub fn establish_connection() -> PgConnection {
 }
 
 pub fn seed() {
-    // println!("SEEDING\n");
+    println!("SEEDING\n");
 
     let connection = establish_connection();
     let users = vec![
@@ -77,9 +77,10 @@ pub fn seed() {
 
     // add all users
     for user in &users {
-        user.insert(&connection);
+        user.insert(&connection)
+            .expect(&format!("Failed to insert user {}.", user.display_name));
     }
-    //println!("... Added {} users\n", users.len());
+    println!("... Added {} users\n", users.len());
 
     // create two organisations
 
@@ -95,10 +96,11 @@ pub fn seed() {
     ];
 
     for org in &orgs {
-        org.insert(&connection);
+        org.insert(&connection)
+           .expect(&format!("Failed to insert org {}.", org.name));
     }
 
-    //println!("... Added {} organizations\n", orgs.len());
+    println!("... Added {} organizations\n", orgs.len());
     // make giuliana the admin of csesoc
 
     let giuliana_user = User::get_from_email(&connection, "giuliana.debellis@gmail.com")
@@ -112,11 +114,11 @@ pub fn seed() {
         organisation_id: csesoc_org.id,
         admin_level: AdminLevel::Admin,
     }
-    .insert(&connection);
+    .insert(&connection)
+    .expect("Failed to insert giuliana as admin");
 
-    //println!("... Adding guiuliana as csesoc admin\n");
+    println!("... Adding guiuliana as csesoc admin\n");
 
-    let giuliana_csesoc_admin = giuliana_csesoc_admin.unwrap();
     // make clarence a director of csesoc
     let clarence_user = User::get_from_email(&connection, "clarence.feng@gmail.com")
         .expect("Failed to get giuliana user from email");
@@ -129,7 +131,7 @@ pub fn seed() {
     .insert(&connection)
     .expect("failed to insert org user clarence");
 
-    //println!("... Adding clarence as csesoc director\n");
+    println!("... Adding clarence as csesoc director\n");
     // create peer mentoring campaign for csesoc
 
     let new_campaign = NewCampaign {
@@ -142,7 +144,7 @@ pub fn seed() {
         published: true,
     }.insert(&connection).expect("failed to insert new campaign");
 
-    //println!("... Creating peer mentoring campaign\n");
+    println!("... Creating peer mentoring campaign\n");
 
     let mentor_role = RoleUpdate {
         campaign_id: new_campaign.id,
@@ -166,7 +168,7 @@ pub fn seed() {
     .insert(&connection)
     .expect("Failed to insert senior mentor role");
 
-    //println!("... Creating peer mentor and senior mentor role\n");
+    println!("... Creating peer mentor and senior mentor role\n");
     // attatch two questions two senior mentor role
     let question_one = NewQuestion {
         title: "What is the meaning of life?".to_string(),
@@ -188,7 +190,7 @@ pub fn seed() {
     .insert(&connection)
     .expect("Failed to insert question");
 
-    //println!("... Creating senior mentor questions\n");
+    println!("... Creating senior mentor questions\n");
     // hayes choy wants to apply for the senior peer mentor role
 
     let application = NewApplication {
@@ -211,7 +213,7 @@ pub fn seed() {
     .insert(&connection)
     .expect("Failed to insert application");
 
-    // println!("... Creating hayes application\n");
+    println!("... Creating hayes application\n");
 
     // create answers to question one
     let hayes_qn_one_answer = NewAnswer {
@@ -222,7 +224,7 @@ pub fn seed() {
     .insert(&connection)
     .expect("Failed to insert answer");
 
-    //   println!("... Creating hayes answer to question one\n");
+    println!("... Creating hayes answer to question one\n");
     // lets create a rating for hayes from Giuliana
 
     let hayes_rating_from_giuliana = NewRating {
@@ -257,5 +259,5 @@ pub fn seed() {
     .insert(&connection)
     .expect("Failed to insert comment");
 
-    //  println!("... Creating hayes comments and ratings\n");
+    println!("... Creating hayes comments and ratings\n");
 }

@@ -1,7 +1,7 @@
 use crate::database::{
     models::{
-        Campaign, GetQuestionsResponse, OrganisationUser, Question, Role,
-        RoleUpdate, User, Application
+        Application, Campaign, GetQuestionsResponse, OrganisationUser, Question, Role, RoleUpdate,
+        User,
     },
     Database,
 };
@@ -57,7 +57,7 @@ pub async fn get_role(
 #[put("/<role_id>", data = "<role_update>")]
 pub async fn update_role(
     role_id: i32,
-    role_update: Form<RoleUpdate>,
+    role_update: Json<RoleUpdate>,
     user: User,
     db: Database,
 ) -> Result<Json<RoleResponse>, Json<RoleError>> {
@@ -92,7 +92,7 @@ pub async fn delete_role(role_id: i32, user: User, db: Database) -> Result<(), J
 
 #[post("/new", data = "<role>")]
 pub async fn new_role(
-    role: Form<RoleUpdate>,
+    role: Json<RoleUpdate>,
     user: User,
     db: Database,
 ) -> Result<(), Json<RoleError>> {

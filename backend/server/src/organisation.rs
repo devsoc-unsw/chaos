@@ -1,14 +1,13 @@
 use crate::database::{
-    models::{NewOrganisation, Organisation, SuperUser, User, Campaign, OrganisationUser},
+    models::{Campaign, NewOrganisation, Organisation, OrganisationUser, SuperUser, User},
     Database,
 };
+use chrono::NaiveDateTime;
 use rocket::{
     delete,
-    form::Form,
     get, post, put,
     serde::{json::Json, Serialize},
 };
-use chrono::NaiveDateTime;
 
 #[derive(Serialize)]
 pub enum NewOrgError {
@@ -23,7 +22,7 @@ pub enum OrgError {
 
 #[post("/new", data = "<organisation>")]
 pub async fn new(
-    organisation: Form<NewOrganisation>,
+    organisation: Json<NewOrganisation>,
     _user: SuperUser,
     db: Database,
 ) -> Result<(), Json<NewOrgError>> {
@@ -145,14 +144,14 @@ impl std::convert::From<Campaign> for CampaignResponse {
 
 #[derive(Serialize)]
 pub struct GetCampaignsResponse {
-    campaigns: Vec<CampaignResponse>
+    campaigns: Vec<CampaignResponse>,
 }
 
 #[get("/<org_id>/campaigns")]
 pub async fn get_associated_campaigns(
     org_id: i32,
     user: User,
-    db: Database
+    db: Database,
 ) -> Json<GetCampaignsResponse> {
     db.run(move |conn| {
         let is_director = OrganisationUser::organisation_admin_level(org_id, user.id, conn)
@@ -165,7 +164,7 @@ pub async fn get_associated_campaigns(
                 .into_iter()
                 .filter(|v| v.published || is_director)
                 .map(CampaignResponse::from)
-                .collect()
+                .collect(),
         })
     })
     .await
