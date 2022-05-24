@@ -2,7 +2,7 @@
 import { getStore } from "../utils";
 import API from "./api";
 
-const authenticate = async (oauth_token) =>
+export const authenticate = async (oauth_token) =>
   API.request({
     method: "POST",
     path: `/auth/signin`,
@@ -11,7 +11,7 @@ const authenticate = async (oauth_token) =>
     },
   });
 
-const doSignup = async ({ name, degree_name, zid, starting_year }) =>
+export const doSignup = async ({ name, degree_name, zid, starting_year }) =>
   API.request({
     method: "POST",
     path: `/auth/signup`,
@@ -24,46 +24,33 @@ const doSignup = async ({ name, degree_name, zid, starting_year }) =>
     },
   });
 
-const authenticatedRequest = () => {
-  const token = `Bearer ${localStorage.getItem("AUTH_TOKEN")}`;
-  return {
-    getUser: async () =>
-      API.request({
-        path: "/user",
-        header: {
-          "Content-Type": "application/json",
-          Authorization: token,
-        },
-      }),
-  };
-};
+// const authenticatedRequest = () => {
+//   const token = `Bearer ${localStorage.getItem("AUTH_TOKEN")}`;
+//   return {
+//     getUser: async () =>
+//       API.request({
+//         path: "/user",
+//         header: {
+//           "Content-Type": "application/json",
+//           Authorization: token,
+//         },
+//       }),
+//   };
+// };
 
-const getAllCampaigns = () => {
-  const token = `Bearer ${localStorage.getItem("AUTH_TOKEN")}`;
+const authenticatedRequest = (payload) => {
+  const token = `Bearer ${getStore("AUTH_TOKEN")}`;
   return API.request({
-    path: "/campaign/all",
+    ...payload,
     header: {
-      "Content-Type": "application/json",
       Authorization: token,
+      ...payload.header,
     },
   });
 };
 
-const isAdminInOrganisation = (orgId) => {
-  const token = `Bearer ${localStorage.getItem("AUTH_TOKEN")}`;
-  return API.request({
-    path: `/organisation/${orgId}/is_admin`,
-    header: {
-      "Content-Type": "application/json",
-      Authorization: token,
-    },
-  });
-};
+export const getAllCampaigns = () =>
+  authenticatedRequest({ path: "/campaign/all" });
 
-export {
-  authenticatedRequest,
-  authenticate,
-  doSignup,
-  getAllCampaigns,
-  isAdminInOrganisation,
-};
+export const isAdminInOrganisation = (orgId) =>
+  authenticatedRequest({ path: `/organisation/${orgId}/is_admin` });
