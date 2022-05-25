@@ -56,6 +56,16 @@ impl User {
         users.order(id.asc()).load(conn).unwrap_or_else(|_| vec![])
     }
 
+    pub fn get_number(conn: &PgConnection) -> i64 {
+        use crate::database::schema::users::dsl::*;
+        use diesel::dsl::count;
+
+        users
+            .select(count(display_name))
+            .first(conn)
+            .unwrap_or_else(|_| 0)
+    }
+
     pub fn get_from_id(conn: &PgConnection, id_val: i32) -> Option<User> {
         use crate::database::schema::users::dsl::*;
 
@@ -106,7 +116,7 @@ pub struct Organisation {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Insertable, FromForm)]
+#[derive(Insertable, FromForm, Deserialize)]
 #[table_name = "organisations"]
 pub struct NewOrganisation {
     pub name: String,
@@ -296,7 +306,7 @@ pub struct Campaign {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(FromForm)]
+#[derive(FromForm, Deserialize)]
 pub struct UpdateCampaignInput {
     pub name: String,
     pub cover_image: Option<Vec<u8>>,
@@ -548,7 +558,7 @@ pub struct Role {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Insertable, AsChangeset, FromForm)]
+#[derive(Insertable, AsChangeset, FromForm, Deserialize)]
 #[table_name = "roles"]
 pub struct RoleUpdate {
     pub campaign_id: i32,
@@ -788,7 +798,7 @@ impl std::convert::From<Question> for QuestionResponse {
     }
 }
 
-#[derive(FromForm, AsChangeset)]
+#[derive(FromForm, AsChangeset, Deserialize)]
 #[table_name = "questions"]
 pub struct UpdateQuestionInput {
     pub title: String,

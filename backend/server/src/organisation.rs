@@ -5,7 +5,6 @@ use crate::database::{
 use chrono::NaiveDateTime;
 use rocket::{
     delete,
-    form::Form,
     get, post, put,
     serde::{json::Json, Serialize},
 };
@@ -23,7 +22,7 @@ pub enum OrgError {
 
 #[post("/new", data = "<organisation>")]
 pub async fn new(
-    organisation: Form<NewOrganisation>,
+    organisation: Json<NewOrganisation>,
     _user: SuperUser,
     db: Database,
 ) -> Result<(), Json<NewOrgError>> {

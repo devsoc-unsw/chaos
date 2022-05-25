@@ -49,7 +49,7 @@ pub async fn get_question(
 pub async fn edit_question(
     db: Database,
     question_id: i32,
-    update_question: Form<UpdateQuestionInput>,
+    update_question: Json<UpdateQuestionInput>,
     user: User,
 ) -> Result<(), Json<QuestionError>> {
     db.run(move |conn| {
