@@ -282,8 +282,22 @@ const Marking = () => {
           )
         )
       );
+      const ratings = await Promise.all(
+        allApplications.map((a) =>
+          Promise.all(
+            a.map(async (application) => {
+              const resp = await getApplicationRatings(application.id);
+              const applicationRatings = await resp.json();
+              return applicationRatings.ratings[
+                applicationRatings.ratings.length - 1
+              ];
+            })
+          )
+        )
+      );
 
       setSelectedPosition(roles[0].name);
+      setSelectedApplication(allApplications[0].applicationId);
       setApplications(
         Object.fromEntries(
           roles.map((role, roleIdx) => [
@@ -291,7 +305,7 @@ const Marking = () => {
             allApplications[roleIdx].map((application, applicationIdx) => ({
               applicationId: application.id,
               zId: "dummy",
-              mark: 0,
+              mark: ratings[roleIdx][applicationIdx]?.rating,
               questions: questions[roleIdx].map((question, questionIdx) => ({
                 question: question.title,
                 answer:
@@ -308,7 +322,10 @@ const Marking = () => {
     const newApplications = { ...applications };
     newApplications[selectedPosition][selectedApplication].mark = newMark;
     setApplications(newApplications);
-    await setApplicationRating(selectedApplication, newMark);
+    await setApplicationRating(
+      applications[selectedPosition][selectedApplication].applicationId,
+      newMark
+    );
   };
 
   return (

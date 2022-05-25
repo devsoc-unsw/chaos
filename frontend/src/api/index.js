@@ -84,4 +84,4 @@ export const getApplicationAnswers = (applicationId) =>
   authenticatedRequest({ path: `/application/${applicationId}/answers` });
 
 export const getApplicationRatings = (applicationId) =>
-  authenticatedRequest({ path: `/application/${applicationId}/rating` });
+  authenticatedRequest({ path: `/application/${applicationId}/ratings` });
