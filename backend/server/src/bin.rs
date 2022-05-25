@@ -55,7 +55,11 @@ async fn main() {
         )
         .mount(
             "/application",
-            routes![backend::application::create_application, backend::application::create_rating],
+            routes![
+                backend::application::create_application,
+                backend::application::create_rating,
+                backend::application::submit_answer,
+            ],
         )
         .mount(
             "/role",
