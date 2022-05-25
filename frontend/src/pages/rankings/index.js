@@ -120,10 +120,18 @@ const Rankings = () => {
       const getRatings = async (applicationId) => {
         const resp = await getApplicationRatings(applicationId);
         const applicationRatings = await resp.json();
-        return applicationRatings.ratings.map((rating) => ({
-          rater: rating.rater_user_id,
-          rating: rating.rating,
-        }));
+        const userIdsSeen = new Set();
+        return applicationRatings.ratings
+          .reverse()
+          .filter((rating) => {
+            const seen = userIdsSeen.has(rating.rater_user_id);
+            userIdsSeen.add(rating.rater_user_id);
+            return !seen;
+          })
+          .map((rating) => ({
+            rater: `User ${rating.rater_user_id}`,
+            rating: rating.rating,
+          }));
       };
       setRankings(
         Object.fromEntries(
