@@ -863,7 +863,7 @@ impl NewQuestion {
     }
 }
 
-#[derive(Identifiable, Queryable, Associations, PartialEq)]
+#[derive(Identifiable, Queryable, Associations, PartialEq, Serialize)]
 #[belongs_to(Question)]
 #[belongs_to(Application)]
 pub struct Answer {

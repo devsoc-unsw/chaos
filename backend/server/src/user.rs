@@ -2,6 +2,7 @@ use crate::database::{
     models::{Campaign, User},
     Database,
 };
+use diesel::PgConnection;
 use rocket::{
     get,
     serde::{json::Json, Serialize},
@@ -38,6 +39,7 @@ pub async fn get_user(
     db.run(move |conn| {
         let res = User::get_from_id(&conn, user_id)
             .ok_or(Json(UserError::UserNotFound))?;
+      
         if user_is_boss(&user, &res, conn) {
             Ok(Json(UserResponse {
                 email: user.email,
@@ -49,7 +51,8 @@ pub async fn get_user(
         } else {
             Err(Json(UserError::PermissionDenied))
         }
-    }).await
+    })
+    .await
 }
 
 #[get("/campaigns")]
