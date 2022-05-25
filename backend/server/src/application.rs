@@ -1,11 +1,11 @@
 use crate::database::{
-    models::{Application, NewApplication, NewRating, OrganisationUser, User, NewAnswer, Answer},
+    models::{Answer, Application, NewAnswer, NewApplication, NewRating, OrganisationUser, User},
     Database,
 };
 use rocket::{
     form::Form,
-    post, put, get,
-    serde::{json::Json, Serialize, Deserialize},
+    get, post, put,
+    serde::{json::Json, Deserialize, Serialize},
     FromForm,
 };
 
@@ -70,17 +70,16 @@ pub async fn submit_answer(
     application_id: i32,
     user: User,
     db: Database,
-    answer: Json<NewAnswer>
+    answer: Json<NewAnswer>,
 ) -> Result<Json<()>, Json<ApplicationError>> {
     db.run(move |conn| {
-        let application = Application::get(application_id, &conn)
-            .ok_or(Json(ApplicationError::AppNotFound))?;
+        let application =
+            Application::get(application_id, &conn).ok_or(Json(ApplicationError::AppNotFound))?;
         if application.user_id != user.id || answer.application_id != application_id {
             return Err(Json(ApplicationError::Unauthorized));
         }
 
-        NewAnswer::insert(&answer, &conn)
-            .ok_or(Json(ApplicationError::UnableToCreate))?;
+        NewAnswer::insert(&answer, &conn).ok_or(Json(ApplicationError::UnableToCreate))?;
 
         Ok(Json(()))
     })
@@ -99,8 +98,8 @@ pub async fn get_answers(
     db: Database,
 ) -> Result<Json<AnswersResponse>, Json<ApplicationError>> {
     db.run(move |conn| {
-        let app = Application::get(application_id, &conn)
-            .ok_or(Json(ApplicationError::AppNotFound))?;
+        let app =
+            Application::get(application_id, &conn).ok_or(Json(ApplicationError::AppNotFound))?;
 
         OrganisationUser::role_admin_level(app.role_id, user.id, &conn)
             .is_at_least_director()
@@ -108,7 +107,8 @@ pub async fn get_answers(
             .map_err(|_| Json(ApplicationError::Unauthorized))?;
 
         Ok(Json(AnswersResponse {
-            answers: Answer::get_all_from_application_id(conn, application_id)
+            answers: Answer::get_all_from_application_id(conn, application_id),
         }))
-    }).await
+    })
+    .await
 }

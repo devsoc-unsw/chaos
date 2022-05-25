@@ -1,7 +1,7 @@
 use diesel_derive_enum::DbEnum;
+use rocket::serde::Deserialize;
 use rocket::FromFormField;
 use serde::Serialize;
-use rocket::serde::Deserialize;
 
 #[derive(Debug, DbEnum, PartialEq, FromFormField, Serialize, Deserialize)]
 #[DbValueStyle = "PascalCase"]
