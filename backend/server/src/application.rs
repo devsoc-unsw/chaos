@@ -70,16 +70,17 @@ pub async fn submit_answer(
     application_id: i32,
     user: User,
     db: Database,
-    answer: Json<NewAnswer>,
+    answer: Json<NewAnswer>
 ) -> Result<Json<()>, Json<ApplicationError>> {
     db.run(move |conn| {
-        let application =
-            Application::get(application_id, &conn).ok_or(Json(ApplicationError::AppNotFound))?;
+        let application = Application::get(application_id, &conn)
+            .ok_or(Json(ApplicationError::AppNotFound))?;
         if application.user_id != user.id || answer.application_id != application_id {
             return Err(Json(ApplicationError::Unauthorized));
         }
 
-        NewAnswer::insert(&answer, &conn).ok_or(Json(ApplicationError::UnableToCreate))?;
+        NewAnswer::insert(&answer, &conn)
+            .ok_or(Json(ApplicationError::UnableToCreate))?;
 
         Ok(Json(()))
     })

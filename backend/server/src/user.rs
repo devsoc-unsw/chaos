@@ -7,6 +7,7 @@ use rocket::{
     get,
     serde::{json::Json, Serialize},
 };
+use diesel::PgConnection;
 
 #[derive(Serialize)]
 pub enum UserError {
@@ -36,7 +37,9 @@ pub async fn get_user(
     db: Database,
 ) -> Result<Json<UserResponse>, Json<UserError>> {
     db.run(move |conn| {
-        let res = User::get_from_id(&conn, user_id).ok_or(Json(UserError::UserNotFound))?;
+        let res = User::get_from_id(&conn, user_id)
+            .ok_or(Json(UserError::UserNotFound))?;
+      
         if user_is_boss(&user, &res, conn) {
             Ok(Json(UserResponse {
                 email: user.email,
