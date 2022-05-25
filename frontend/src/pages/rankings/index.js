@@ -7,6 +7,11 @@ import RankingsToolbar from "./RankingsToolbar";
 import DragDropRankings from "./DragDropRankings";
 import ReviewerStepper from "../../components/ReviewerStepper";
 import { SetNavBarTitleContext } from "../../App";
+import {
+  getApplicationRatings,
+  getCampaignRoles,
+  getRoleApplications,
+} from "../../api";
 
 // TODO: CHAOS-12 retrieve data from BE instead of using dummy data
 const dummyRankings = {
@@ -94,12 +99,50 @@ const Rankings = () => {
   const navigate = useNavigate();
   const { campaignId } = useParams();
   const setNavBarTitle = useContext(SetNavBarTitleContext);
-  useEffect(() => {
-    setNavBarTitle("2022 Subcommittee Recruitment (Hardcoded Title)");
-  }, []);
   // TODO: CHAOS-12 handle candidates from multiple positions from BE
   const [selectedPosition, setSelectedPosition] = useState("");
   const [rankings, setRankings] = useState(dummyRankings);
+  const [positions, setPositions] = useState([]);
+
+  useEffect(() => {
+    (async () => {
+      setNavBarTitle("2022 Subcommittee Recruitment (Hardcoded Title)");
+      const rolesResp = await getCampaignRoles(campaignId);
+      const { roles } = await rolesResp.json();
+
+      const allApplications = await Promise.all(
+        roles.map(async (role) => {
+          const resp = await getRoleApplications(role.id);
+          const roleApplications = await resp.json();
+          return roleApplications.applications;
+        })
+      );
+      const getRatings = async (applicationId) => {
+        const resp = await getApplicationRatings(applicationId);
+        const applicationRatings = await resp.json();
+        return applicationRatings.ratings.map((rating) => ({
+          rater: rating.rater_user_id,
+          rating: rating.rating,
+        }));
+      };
+      setRankings(
+        Object.fromEntries(
+          await Promise.all(
+            roles.map(async (role, roleIdx) => [
+              role.name,
+              await Promise.all(
+                allApplications[roleIdx].map(async (application) => ({
+                  name: "dummy",
+                  ratings: await getRatings(application.id),
+                }))
+              ),
+            ])
+          )
+        )
+      );
+      setPositions(roles.map((role) => role.name));
+    })();
+  }, []);
 
   const handleNext = () => {
     console.log(
@@ -129,7 +172,7 @@ const Rankings = () => {
       </Typography>
 
       <RankingsToolbar
-        positions={dummyPositions}
+        positions={positions}
         selectedPosition={selectedPosition}
         setSelectedPosition={setSelectedPosition}
       />
