@@ -59,6 +59,7 @@ async fn main() {
                 backend::application::create_application,
                 backend::application::create_rating,
                 backend::application::submit_answer,
+                backend::application::get_answers,
             ],
         )
         .mount(

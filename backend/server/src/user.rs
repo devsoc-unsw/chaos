@@ -7,7 +7,6 @@ use rocket::{
     get,
     serde::{json::Json, Serialize},
 };
-use diesel::PgConnection;
 
 #[derive(Serialize)]
 pub enum UserError {

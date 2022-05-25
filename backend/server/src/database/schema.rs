@@ -1,5 +1,4 @@
 use diesel_derive_enum::DbEnum;
-use rocket::serde::Deserialize;
 use rocket::FromFormField;
 use serde::{Serialize, Deserialize};
 
