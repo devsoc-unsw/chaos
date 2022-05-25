@@ -68,6 +68,9 @@ export const getCampaignRoles = (campaignId) =>
 export const getRoleApplications = (roleId) =>
   authenticatedRequest({ path: `/role/${roleId}/applications` });
 
+export const getRoleQuestions = (roleId) =>
+  authenticatedRequest({ path: `/role/${roleId}/questions` });
+
 export const setApplicationRating = (applicationId, rating) =>
   authenticatedRequest({
     method: "PUT",
@@ -76,3 +79,9 @@ export const setApplicationRating = (applicationId, rating) =>
       rating,
     },
   });
+
+export const getApplicationAnswers = (applicationId) =>
+  authenticatedRequest({ path: `/application/${applicationId}/answers` });
+
+export const getApplicationRatings = (applicationId) =>
+  authenticatedRequest({ path: `/application/${applicationId}/rating` });

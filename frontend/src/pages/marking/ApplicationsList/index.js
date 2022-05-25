@@ -45,13 +45,15 @@ const ApplicationsList = (props) => {
           ))}
         </Tabs>
       </Grid>
-      <Grid item xs={10}>
-        <ApplicationsListTabPanel
-          application={applications[selectedApplication]}
-          setMark={setMark}
-          selectedApplication={selectedApplication}
-        />
-      </Grid>
+      {applications[selectedApplication] ? (
+        <Grid item xs={10}>
+          <ApplicationsListTabPanel
+            application={applications[selectedApplication]}
+            setMark={setMark}
+            selectedApplication={selectedApplication}
+          />
+        </Grid>
+      ) : null}
     </Grid>
   );
 };

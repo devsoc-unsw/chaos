@@ -7,7 +7,10 @@ import ReviewerStepper from "../../components/ReviewerStepper";
 import ApplicationsList from "./ApplicationsList";
 import { SetNavBarTitleContext } from "../../App";
 import {
+  getApplicationAnswers,
+  getApplicationRatings,
   getRoleApplications,
+  getRoleQuestions,
   getCampaignRoles,
   setApplicationRating,
 } from "../../api";
@@ -243,24 +246,63 @@ const dummyPositions = Object.keys(dummyApplications);
 const Marking = () => {
   const setNavBarTitle = useContext(SetNavBarTitleContext);
   const { campaignId } = useParams();
-  useEffect(async () => {
-    setNavBarTitle("2022 Subcommittee Recruitment (Hardcoded Title)");
-    const resp = await getCampaignRoles(campaignId);
-    const roles = await resp.json();
-    // TODO: CHAOS-75 get application question responses
-    const applications = await Promise.all(
-      roles.roles.map((role) =>
-        getRoleApplications(role.id).then((res) => res.json())
-      )
-    );
-    console.log(applications);
-  }, []);
   // TODO: CHAOS-12 handle candidates from multiple positions from BE
-  const [applications, setApplications] = useState(dummyApplications);
-  const [selectedPosition, setSelectedPosition] = useState(
-    "Student Experience Director"
-  );
+  const [applications, setApplications] = useState([]);
+  const [selectedPosition, setSelectedPosition] = useState("");
   const [selectedApplication, setSelectedApplication] = useState(0);
+
+  useEffect(() => {
+    (async () => {
+      setNavBarTitle("2022 Subcommittee Recruitment (Hardcoded Title)");
+      const rolesResp = await getCampaignRoles(campaignId);
+      const { roles } = await rolesResp.json();
+
+      const allApplications = await Promise.all(
+        roles.map(async (role) => {
+          const resp = await getRoleApplications(role.id);
+          const roleApplications = await resp.json();
+          return roleApplications.applications;
+        })
+      );
+      const questions = await Promise.all(
+        roles.map(async (role) => {
+          const resp = await getRoleQuestions(role.id);
+          const roleQuestions = await resp.json();
+          return roleQuestions.questions;
+        })
+      );
+      const answers = await Promise.all(
+        allApplications.map((a) =>
+          Promise.all(
+            a.map(async (application) => {
+              const resp = await getApplicationAnswers(application.id);
+              const applicationAnswers = await resp.json();
+              return applicationAnswers.answers;
+            })
+          )
+        )
+      );
+
+      setSelectedPosition(roles[0].name);
+      setApplications(
+        Object.fromEntries(
+          roles.map((role, roleIdx) => [
+            role.name,
+            allApplications[roleIdx].map((application, applicationIdx) => ({
+              applicationId: application.id,
+              zId: "dummy",
+              mark: 0,
+              questions: questions[roleIdx].map((question, questionIdx) => ({
+                question: question.title,
+                answer:
+                  answers[roleIdx][applicationIdx][questionIdx]?.description,
+              })),
+            })),
+          ])
+        )
+      );
+    })();
+  }, []);
 
   const setMark = async (newMark) => {
     const newApplications = { ...applications };
@@ -284,20 +326,22 @@ const Marking = () => {
         >
           <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
             <TabList onChange={(_, t) => setSelectedPosition(t)}>
-              {dummyPositions.map((position) => (
-                <Tab label={position} value={position} />
+              {Object.keys(applications).map((role) => (
+                <Tab label={role} value={role} key={role} />
               ))}
             </TabList>
           </Box>
         </Box>
       </TabContext>
 
-      <ApplicationsList
-        applications={applications[selectedPosition] || []}
-        setMark={setMark}
-        selectedApplication={selectedApplication}
-        setSelectedApplication={setSelectedApplication}
-      />
+      {Object.keys(applications).length ? (
+        <ApplicationsList
+          applications={applications[selectedPosition] || []}
+          setMark={setMark}
+          selectedApplication={selectedApplication}
+          setSelectedApplication={setSelectedApplication}
+        />
+      ) : null}
 
       <Grid container justifyContent="flex-end">
         <Button
