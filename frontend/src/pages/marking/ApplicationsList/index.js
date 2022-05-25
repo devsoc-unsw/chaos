@@ -41,6 +41,7 @@ const ApplicationsList = (props) => {
                   )}
                 </Grid>
               }
+              key={application.applicationId}
             />
           ))}
         </Tabs>
