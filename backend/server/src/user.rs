@@ -1,5 +1,5 @@
 use crate::database::{
-    models::{Campaign, User},
+    models::{Application, Campaign, OrganisationUser, User},
     Database,
 };
 use diesel::PgConnection;
@@ -25,9 +25,22 @@ pub struct UserResponse {
     degree_starting_year: i32,
 }
 
-// TODO: implement
 fn user_is_boss(boss_user: &User, user: &User, conn: &PgConnection) -> bool {
-    boss_user.id == user.id
+    if boss_user.id == user.id {
+        return true;
+    }
+
+    let apps = Application::get_all_from_user_id(conn, user.id);
+    for app in &apps {
+        let boss_mode = OrganisationUser::role_admin_level(app.role_id, boss_user.id, conn)
+            .is_at_least_director()
+            .check()
+            .is_ok();
+        if boss_mode {
+            return true;
+        }
+    }
+    false
 }
 
 #[get("/<user_id>")]
