@@ -300,12 +300,11 @@ const Marking = () => {
       />
 
       <Grid container justifyContent="flex-end">
-        {/* TODO: IF not all done, disabled, otherwise link to /rankings */}
         <Button
           component={Link}
           to={`/rankings/${campaignId}`}
-          disabled={applications[selectedPosition].some(
-            (application) => application.mark === 0
+          disabled={Object.values(applications).some((a) =>
+            a.some((application) => application.mark === 0)
           )}
         >
           Next (Rankings)
