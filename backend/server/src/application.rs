@@ -1,5 +1,5 @@
 use crate::database::{
-    models::{Answer, Application, NewAnswer, NewApplication, NewRating, OrganisationUser, User},
+    models::{Answer, Application, NewAnswer, NewApplication, NewRating, OrganisationUser, User, Rating},
     Database,
 };
 use rocket::{
@@ -109,6 +109,33 @@ pub async fn get_answers(
 
         Ok(Json(AnswersResponse {
             answers: Answer::get_all_from_application_id(conn, application_id),
+        }))
+    })
+    .await
+}
+
+#[derive(Serialize)]
+pub struct RatingsResponse {
+    ratings: Vec<Rating>,
+}
+
+#[get("/<application_id>/ratings")]
+pub async fn get_ratings(
+    application_id: i32,
+    user: User,
+    db: Database,
+) -> Result<Json<RatingsResponse>, Json<ApplicationError>> {
+    db.run(move |conn| {
+        let app =
+            Application::get(application_id, &conn).ok_or(Json(ApplicationError::AppNotFound))?;
+
+        OrganisationUser::role_admin_level(app.role_id, user.id, &conn)
+            .is_at_least_director()
+            .check()
+            .map_err(|_| Json(ApplicationError::Unauthorized))?;
+
+        Ok(Json(RatingsResponse {
+            ratings: Rating::get_all_from_application_id(conn, application_id),
         }))
     })
     .await

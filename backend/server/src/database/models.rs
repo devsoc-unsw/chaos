@@ -1009,7 +1009,7 @@ impl NewComment {
     }
 }
 
-#[derive(Identifiable, Queryable, Associations, PartialEq)]
+#[derive(Identifiable, Queryable, Associations, PartialEq, Serialize)]
 #[belongs_to(Application)]
 #[belongs_to(OrganisationUser, foreign_key = "rater_user_id")]
 pub struct Rating {
