@@ -1,10 +1,10 @@
 use crate::database::{
-    models::{Application, NewApplication, NewRating, OrganisationUser, User, NewAnswer},
+    models::{Application, NewApplication, NewRating, OrganisationUser, User, NewAnswer, Answer},
     Database,
 };
 use rocket::{
     form::Form,
-    post, put,
+    post, put, get,
     serde::{json::Json, Serialize, Deserialize},
     FromForm,
 };
@@ -52,7 +52,7 @@ pub async fn create_rating(
 
         NewRating::insert(
             &NewRating {
-                application_id: application_id,
+                application_id,
                 rater_user_id: user.id,
                 rating: rating.rating,
             },
@@ -85,4 +85,30 @@ pub async fn submit_answer(
         Ok(Json(()))
     })
     .await
+}
+
+#[derive(Serialize)]
+pub struct AnswersResponse {
+    answers: Vec<Answer>,
+}
+
+#[get("/<application_id>/answers")]
+pub async fn get_answers(
+    application_id: i32,
+    user: User,
+    db: Database,
+) -> Result<Json<AnswersResponse>, Json<ApplicationError>> {
+    db.run(move |conn| {
+        let app = Application::get(application_id, &conn)
+            .ok_or(Json(ApplicationError::AppNotFound))?;
+
+        OrganisationUser::role_admin_level(app.role_id, user.id, &conn)
+            .is_at_least_director()
+            .check()
+            .map_err(|_| Json(ApplicationError::Unauthorized))?;
+
+        Ok(Json(AnswersResponse {
+            answers: Answer::get_all_from_application_id(conn, application_id)
+        }))
+    }).await
 }
