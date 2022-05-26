@@ -5,7 +5,7 @@ use crate::database::{
     },
     Database,
 };
-use crate::roles::GetApplicationsResponse;
+use crate::role::GetApplicationsResponse;
 use rocket::{delete, form::Form, get, post, put, serde::json::Json};
 use serde::Serialize;
 
@@ -141,26 +141,6 @@ pub async fn roles(
         let roles = Role::get_all_from_campaign_id(conn, campaign.id);
 
         Ok(Json(RolesResponse { roles }))
-    })
-    .await
-}
-
-#[get("/<campaign_id>/applications")]
-pub async fn applications(
-    user: User,
-    campaign_id: i32, 
-    db: Database,
-) -> Result<Json<GetApplicationsResponse>, Json<CampaignError>> {
-    use crate::database::schema::applications::dsl::*;
-
-    db.run(move |conn| {
-        OrganisationUser::campaign_admin_level(campaign_id, user.id, conn)
-            .is_at_least_director()
-            .check()
-            .map_err(|_| CampaignError::Unauthorized)?;
-        Ok(Json(GetApplicationsResponse {
-            applications: Application::get_all_from_role_id(conn, role_id),
-        }))
     })
     .await
 }

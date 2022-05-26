@@ -1,6 +1,10 @@
 use crate::database::{
-    models::{Campaign, NewOrganisation, Organisation, OrganisationUser, SuperUser, User},
+    models::{
+        Campaign, NewOrganisation, Organisation, OrganisationUser, SuperUser, User,
+        NewOrganisationUser,
+    },
     Database,
+    schema::AdminLevel,
 };
 use chrono::NaiveDateTime;
 use rocket::{
@@ -12,6 +16,7 @@ use rocket::{
 #[derive(Serialize)]
 pub enum NewOrgError {
     OrgNameAlreadyExists,
+    FailedToJoin,
 }
 
 #[derive(Serialize)]
@@ -23,17 +28,25 @@ pub enum OrgError {
 #[post("/new", data = "<organisation>")]
 pub async fn new(
     organisation: Json<NewOrganisation>,
-    _user: SuperUser,
+    user: SuperUser,
     db: Database,
 ) -> Result<(), Json<NewOrgError>> {
-    let res: Option<Organisation> = db
-        .run(move |conn| NewOrganisation::insert(&organisation, &conn))
-        .await;
+    db.run(move |conn| {
+        let org = NewOrganisation::insert(&organisation, &conn)
+            .ok_or(Json(NewOrgError::OrgNameAlreadyExists))?;
 
-    match res {
-        Some(_) => Ok(()),
-        None => Err(Json(NewOrgError::OrgNameAlreadyExists)),
-    }
+        let org_user = NewOrganisationUser {
+            user_id: user.user().id,
+            organisation_id: org.id,
+            admin_level: AdminLevel::Admin,
+        };
+
+        org_user.insert(conn)
+                .ok_or(Json(NewOrgError::FailedToJoin))?;
+
+        Ok(())
+    })
+    .await
 }
 
 // ============ /organisation/<org_id> ============
