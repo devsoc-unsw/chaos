@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Container, Button, Grid, Typography } from "@mui/material";
 import { red, green } from "@mui/material/colors";
 
@@ -92,6 +92,7 @@ const dummyPositions = Object.keys(dummyRankings);
 
 const Rankings = () => {
   const navigate = useNavigate();
+  const { campaignId } = useParams();
   const setNavBarTitle = useContext(SetNavBarTitleContext);
   useEffect(() => {
     setNavBarTitle("2022 Subcommittee Recruitment (Hardcoded Title)");

@@ -1,9 +1,15 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Container, Button, Grid } from "@mui/material";
 
+import { Link, useParams } from "react-router-dom";
 import ReviewerStepper from "../../components/ReviewerStepper";
 import ApplicationsList from "./ApplicationsList";
 import { SetNavBarTitleContext } from "../../App";
+import {
+  getRoleApplications,
+  getCampaignRoles,
+  setApplicationRating,
+} from "../../api";
 
 // TODO: CHAOS-12 retrieve data from BE instead of using dummy data
 const dummyApplications = {
@@ -122,8 +128,18 @@ const dummyApplications = {
 
 const Marking = () => {
   const setNavBarTitle = useContext(SetNavBarTitleContext);
-  useEffect(() => {
+  const { campaignId } = useParams();
+  useEffect(async () => {
     setNavBarTitle("2022 Subcommittee Recruitment (Hardcoded Title)");
+    const resp = await getCampaignRoles(campaignId);
+    const roles = await resp.json();
+    // TODO: CHAOS-75 get application question responses
+    const applications = await Promise.all(
+      roles.roles.map((role) =>
+        getRoleApplications(role.id).then((res) => res.json())
+      )
+    );
+    console.log(applications);
   }, []);
   // TODO: CHAOS-12 handle candidates from multiple positions from BE
   const [applications, setApplications] = useState(dummyApplications);
@@ -132,10 +148,11 @@ const Marking = () => {
   );
   const [selectedApplication, setSelectedApplication] = useState(0);
 
-  const setMark = (newMark) => {
+  const setMark = async (newMark) => {
     const newApplications = { ...applications };
     newApplications[selectedPosition][selectedApplication].mark = newMark;
     setApplications(newApplications);
+    await setApplicationRating(selectedApplication, newMark);
   };
 
   return (
@@ -152,7 +169,8 @@ const Marking = () => {
       <Grid container justifyContent="flex-end">
         {/* TODO: IF not all done, disabled, otherwise link to /rankings */}
         <Button
-          href="/rankings"
+          component={Link}
+          to={`/rankings/${campaignId}`}
           disabled={applications[selectedPosition].some(
             (application) => application.mark === 0
           )}
