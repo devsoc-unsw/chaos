@@ -8,9 +8,11 @@ import DragDropRankings from "./DragDropRankings";
 import ReviewerStepper from "../../components/ReviewerStepper";
 import { SetNavBarTitleContext } from "../../App";
 import {
+  getApplicationAnswers,
   getApplicationRatings,
   getCampaignRoles,
   getRoleApplications,
+  getRoleQuestions,
 } from "../../api";
 
 const Rankings = () => {
@@ -21,6 +23,7 @@ const Rankings = () => {
   const [selectedPosition, setSelectedPosition] = useState("");
   const [rankings, setRankings] = useState([]);
   const [positions, setPositions] = useState([]);
+  const [applications, setApplications] = useState({});
 
   useEffect(() => {
     (async () => {
@@ -59,6 +62,7 @@ const Rankings = () => {
               await Promise.all(
                 allApplications[roleIdx].map(async (application) => ({
                   name: "dummy",
+                  id: application.id,
                   ratings: await getRatings(application.id),
                 }))
               ),
@@ -67,8 +71,53 @@ const Rankings = () => {
         )
       );
       setPositions(roles.map((role) => role.name));
+
+      const questions = await Promise.all(
+        roles.map(async (role) => {
+          const resp = await getRoleQuestions(role.id);
+          const roleQuestions = await resp.json();
+          return roleQuestions.questions;
+        })
+      );
+      const answers = await Promise.all(
+        allApplications.map((a) =>
+          Promise.all(
+            a.map(async (application) => {
+              const resp = await getApplicationAnswers(application.id);
+              const applicationAnswers = await resp.json();
+              return applicationAnswers.answers;
+            })
+          )
+        )
+      );
+
+      setApplications(
+        Object.fromEntries(
+          roles.map((role, roleIdx) => [
+            role.name,
+            Object.fromEntries(
+              allApplications[roleIdx].map((application, applicationIdx) => [
+                application.id,
+                {
+                  zId: "dummy",
+                  questions: questions[roleIdx].map(
+                    (question, questionIdx) => ({
+                      question: question.title,
+                      answer:
+                        answers[roleIdx][applicationIdx][questionIdx]
+                          ?.description,
+                    })
+                  ),
+                },
+              ])
+            ),
+          ])
+        )
+      );
     })();
   }, []);
+
+  console.log(applications);
 
   const handleNext = () => {
     console.log(
@@ -107,6 +156,7 @@ const Rankings = () => {
         rankings={rankings}
         setRankings={setRankings}
         selectedPosition={selectedPosition}
+        applications={applications}
       />
 
       <Grid container justifyContent="flex-end">
