@@ -54,3 +54,10 @@ export const getAllCampaigns = () =>
 
 export const isAdminInOrganisation = (orgId) =>
   authenticatedRequest({ path: `/organisation/${orgId}/is_admin` });
+
+export const createOrganisation = (name, logo) =>
+  authenticatedRequest({
+    method: "POST",
+    path: "/organisation/new",
+    body: { name, logo },
+  });
