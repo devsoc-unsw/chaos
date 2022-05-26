@@ -56,6 +56,16 @@ impl User {
         users.order(id.asc()).load(conn).unwrap_or_else(|_| vec![])
     }
 
+    pub fn get_number(conn: &PgConnection) -> i64 {
+        use crate::database::schema::users::dsl::*;
+        use diesel::dsl::count;
+
+        users
+            .select(count(display_name))
+            .first(conn)
+            .unwrap_or_else(|_| 0)
+    }
+
     pub fn get_from_id(conn: &PgConnection, id_val: i32) -> Option<User> {
         use crate::database::schema::users::dsl::*;
 
@@ -106,7 +116,7 @@ pub struct Organisation {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Insertable, FromForm)]
+#[derive(Insertable, FromForm, Deserialize)]
 #[table_name = "organisations"]
 pub struct NewOrganisation {
     pub name: String,
@@ -296,7 +306,7 @@ pub struct Campaign {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(FromForm)]
+#[derive(FromForm, Deserialize)]
 pub struct UpdateCampaignInput {
     pub name: String,
     pub cover_image: Option<Vec<u8>>,
@@ -548,7 +558,7 @@ pub struct Role {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Insertable, AsChangeset, FromForm)]
+#[derive(Insertable, AsChangeset, FromForm, Deserialize)]
 #[table_name = "roles"]
 pub struct RoleUpdate {
     pub campaign_id: i32,
@@ -668,7 +678,7 @@ pub struct Application {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Insertable, FromForm)]
+#[derive(Insertable, FromForm, Deserialize)]
 #[table_name = "applications"]
 pub struct NewApplication {
     pub user_id: i32,
@@ -686,6 +696,12 @@ impl Application {
             .unwrap_or_else(|_| vec![])
     }
 
+    pub fn get(app_id: i32, conn: &PgConnection) -> Option<Application> {
+        use crate::database::schema::applications::dsl::*;
+
+        applications.filter(id.eq(app_id)).first(conn).ok()
+    }
+
     pub fn get_all_from_user_id(conn: &PgConnection, user_id_val: i32) -> Vec<Application> {
         use crate::database::schema::applications::dsl::*;
 
@@ -697,6 +713,16 @@ impl Application {
     }
 
     pub fn get_all_from_role_id(conn: &PgConnection, role_id_val: i32) -> Vec<Application> {
+        use crate::database::schema::applications::dsl::*;
+
+        applications
+            .filter(role_id.eq(role_id_val))
+            .order(id.asc())
+            .load(conn)
+            .unwrap_or_else(|_| vec![])
+    }
+
+    pub fn get_all_from_campaign_id(conn: &PgConnection, role_id_val: i32) -> Vec<Application> {
         use crate::database::schema::applications::dsl::*;
 
         applications
@@ -782,7 +808,7 @@ impl std::convert::From<Question> for QuestionResponse {
     }
 }
 
-#[derive(FromForm, AsChangeset)]
+#[derive(FromForm, AsChangeset, Deserialize)]
 #[table_name = "questions"]
 pub struct UpdateQuestionInput {
     pub title: String,
@@ -857,7 +883,7 @@ impl NewQuestion {
     }
 }
 
-#[derive(Identifiable, Queryable, Associations, PartialEq)]
+#[derive(Identifiable, Queryable, Associations, PartialEq, Serialize)]
 #[belongs_to(Question)]
 #[belongs_to(Application)]
 pub struct Answer {
@@ -869,7 +895,7 @@ pub struct Answer {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Insertable)]
+#[derive(Insertable, Deserialize)]
 #[table_name = "answers"]
 pub struct NewAnswer {
     pub application_id: i32,
@@ -993,7 +1019,7 @@ impl NewComment {
     }
 }
 
-#[derive(Identifiable, Queryable, Associations, PartialEq)]
+#[derive(Identifiable, Queryable, Associations, PartialEq, Serialize)]
 #[belongs_to(Application)]
 #[belongs_to(OrganisationUser, foreign_key = "rater_user_id")]
 pub struct Rating {

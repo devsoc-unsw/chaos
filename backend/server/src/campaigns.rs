@@ -1,10 +1,11 @@
 use crate::database::{
     models::{
         Campaign, CampaignWithRoles, NewCampaignInput, OrganisationUser, Role, UpdateCampaignInput,
-        User,
+        User, Application,
     },
     Database,
 };
+use crate::role::GetApplicationsResponse;
 use rocket::{delete, form::Form, get, post, put, serde::json::Json};
 use serde::Serialize;
 
@@ -51,7 +52,7 @@ pub async fn get_all_campaigns(user: User, db: Database) -> Json<DashboardCampai
 #[put("/<campaign_id>", data = "<update_campaign>")]
 pub async fn update(
     campaign_id: i32,
-    update_campaign: Form<UpdateCampaignInput>,
+    update_campaign: Json<UpdateCampaignInput>,
     user: User,
     db: Database,
 ) -> Result<Json<()>, Json<CampaignError>> {

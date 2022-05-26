@@ -1,7 +1,8 @@
 use crate::database::{
-    models::{Campaign, User},
+    models::{Application, Campaign, OrganisationUser, User},
     Database,
 };
+use diesel::PgConnection;
 use rocket::{
     get,
     serde::{json::Json, Serialize},
@@ -11,6 +12,7 @@ use rocket::{
 pub enum UserError {
     UserNotFound,
     CampaignNotFound,
+    PermissionDenied,
 }
 
 #[derive(Serialize)]
@@ -22,24 +24,47 @@ pub struct UserResponse {
     degree_starting_year: i32,
 }
 
+fn user_is_boss(boss_user: &User, user: &User, conn: &PgConnection) -> bool {
+    if boss_user.id == user.id {
+        return true;
+    }
+
+    let apps = Application::get_all_from_user_id(conn, user.id);
+    for app in &apps {
+        let boss_mode = OrganisationUser::role_admin_level(app.role_id, boss_user.id, conn)
+            .is_at_least_director()
+            .check()
+            .is_ok();
+        if boss_mode {
+            return true;
+        }
+    }
+    false
+}
+
 #[get("/<user_id>")]
 pub async fn get_user(
     user_id: i32,
-    _user: User,
+    user: User,
     db: Database,
 ) -> Result<Json<UserResponse>, Json<UserError>> {
-    let res: Option<User> = db.run(move |conn| User::get_from_id(&conn, user_id)).await;
-
-    match res {
-        Some(user) => Ok(Json(UserResponse {
-            email: user.email,
-            zid: user.zid,
-            display_name: user.display_name,
-            degree_name: user.degree_name,
-            degree_starting_year: user.degree_starting_year,
-        })),
-        None => Err(Json(UserError::UserNotFound)),
-    }
+    db.run(move |conn| {
+        let res = User::get_from_id(&conn, user_id)
+            .ok_or(Json(UserError::UserNotFound))?;
+      
+        if user_is_boss(&user, &res, conn) {
+            Ok(Json(UserResponse {
+                email: user.email,
+                zid: user.zid,
+                display_name: user.display_name,
+                degree_name: user.degree_name,
+                degree_starting_year: user.degree_starting_year,
+            }))
+        } else {
+            Err(Json(UserError::PermissionDenied))
+        }
+    })
+    .await
 }
 
 #[get("/campaigns")]
