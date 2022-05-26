@@ -47,7 +47,6 @@ const AdminSidebar = ({
         (await fileToDataUrl(uploadedImage.image)).split(",")[1]
       );
       const newID = await createOrganisation(inputText, imgUrl);
-      // const newID = Math.floor(Math.random() * 1000);
       const newOrgList = orgList.concat({
         id: newID,
         icon: uploadedImage.url,
