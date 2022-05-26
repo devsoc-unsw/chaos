@@ -13,95 +13,13 @@ import {
   getRoleApplications,
 } from "../../api";
 
-// TODO: CHAOS-12 retrieve data from BE instead of using dummy data
-const dummyRankings = {
-  "Student Experience Director": [
-    {
-      name: "Hayes Choy",
-      ratings: [
-        { rater: "Shrey Somaiya", rating: 5 },
-        { rater: "Michael Gribben", rating: 5 },
-        { rater: "Haley Gu", rating: 5 },
-      ],
-    },
-    {
-      name: "Giuliana De Bellis",
-      ratings: [
-        { rater: "Shrey Somaiya", rating: 4 },
-        { rater: "Michael Gribben", rating: 4 },
-        { rater: "Haley Gu", rating: 3 },
-      ],
-    },
-    {
-      name: "Colin Hon",
-      ratings: [
-        { rater: "Shrey Somaiya", rating: 2 },
-        { rater: "Michael Gribben", rating: 2 },
-        { rater: "Haley Gu", rating: 2 },
-      ],
-    },
-    {
-      name: "Lachlan Ting",
-      ratings: [
-        { rater: "Shrey Somaiya", rating: 1 },
-        { rater: "Michael Gribben", rating: 2 },
-        { rater: "Haley Gu", rating: 1 },
-      ],
-    },
-    {
-      name: "Evan Lee",
-      ratings: [
-        { rater: "Shrey Somaiya", rating: 1 },
-        { rater: "Michael Gribben", rating: 1 },
-        { rater: "Haley Gu", rating: 1 },
-      ],
-    },
-    {
-      name: "Priscilla Soo",
-      ratings: [
-        { rater: "Shrey Somaiya", rating: 4 },
-        { rater: "Michael Gribben", rating: 4 },
-        { rater: "Haley Gu", rating: 5 },
-      ],
-    },
-    {
-      name: "Timmy Huang",
-      ratings: [
-        { rater: "Shrey Somaiya", rating: 3 },
-        { rater: "Michael Gribben", rating: 3 },
-        { rater: "Haley Gu", rating: 2 },
-      ],
-    },
-  ],
-  "Socials Director": [
-    {
-      name: "Lachlan Ting",
-      ratings: [
-        { rater: "Shrey Somaiya", rating: 5 },
-        { rater: "Michael Gribben", rating: 3 },
-        { rater: "Haley Gu", rating: 1 },
-      ],
-    },
-    {
-      name: "Evan Lee",
-      ratings: [
-        { rater: "Shrey Somaiya", rating: 5 },
-        { rater: "Michael Gribben", rating: 5 },
-        { rater: "Haley Gu", rating: 3 },
-      ],
-    },
-  ],
-};
-
-const dummyPositions = Object.keys(dummyRankings);
-
 const Rankings = () => {
   const navigate = useNavigate();
   const { campaignId } = useParams();
   const setNavBarTitle = useContext(SetNavBarTitleContext);
   // TODO: CHAOS-12 handle candidates from multiple positions from BE
   const [selectedPosition, setSelectedPosition] = useState("");
-  const [rankings, setRankings] = useState(dummyRankings);
+  const [rankings, setRankings] = useState([]);
   const [positions, setPositions] = useState([]);
 
   useEffect(() => {
