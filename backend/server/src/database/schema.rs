@@ -11,12 +11,18 @@ pub enum ApplicationStatus {
     Success,
 }
 
-#[derive(Debug, DbEnum, PartialEq, Serialize)]
+#[derive(Debug, DbEnum, PartialEq, Serialize, Deserialize, Clone, Copy)]
 #[DbValueStyle = "PascalCase"]
 pub enum AdminLevel {
-    ReadOnly,
+    ReadOnly = 1,
     Director,
     Admin,
+}
+
+impl AdminLevel {
+    pub fn geq(self, other: Self) -> bool {
+        self as i32 >= other as i32
+    }
 }
 
 table! {
