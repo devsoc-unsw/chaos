@@ -15,6 +15,7 @@ const DragDropRankings = (props) => {
   }, [selectedPosition]);
 
   const onDragEnd = (result) => {
+    // TODO: CHAOS-88 integrate with backend
     const { destination, source, draggableId } = result;
     if (!destination) return;
     if (

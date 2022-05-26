@@ -29,6 +29,7 @@ const Marking = () => {
       const rolesResp = await getCampaignRoles(campaignId);
       const { roles } = await rolesResp.json();
 
+      // TODO(michael): REFACTOR ALL THIS
       const allApplications = await Promise.all(
         roles.map(async (role) => {
           const resp = await getRoleApplications(role.id);

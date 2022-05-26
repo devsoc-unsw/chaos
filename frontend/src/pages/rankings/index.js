@@ -91,6 +91,7 @@ const Rankings = () => {
         )
       );
 
+      // TODO(michael): holy fuck refactor this shit
       setApplications(
         Object.fromEntries(
           roles.map((role, roleIdx) => [
