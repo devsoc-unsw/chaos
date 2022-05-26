@@ -722,6 +722,16 @@ impl Application {
             .unwrap_or_else(|_| vec![])
     }
 
+    pub fn get_all_from_campaign_id(conn: &PgConnection, role_id_val: i32) -> Vec<Application> {
+        use crate::database::schema::applications::dsl::*;
+
+        applications
+            .filter(role_id.eq(role_id_val))
+            .order(id.asc())
+            .load(conn)
+            .unwrap_or_else(|_| vec![])
+    }
+
     pub fn delete(conn: &PgConnection, application_id: i32) -> bool {
         use crate::database::schema::applications::dsl::*;
 
