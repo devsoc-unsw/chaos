@@ -1,10 +1,13 @@
 use crate::database::{
     models::{
-        Campaign, GetQuestionsResponse, OrganisationUser, Question, Role,
-        RoleUpdate, User, Application
+        Application, Campaign, GetQuestionsResponse, OrganisationUser, Question,
+        Role, RoleUpdate, User,
     },
     Database,
+    schema::ApplicationStatus,
 };
+use chrono::NaiveDateTime;
+use diesel::PgConnection;
 use rocket::{
     delete,
     form::Form,
@@ -114,6 +117,7 @@ pub enum QuestionsError {
     RoleNotFound,
     CampaignNotFound,
     Unauthorized,
+    UserNotFound,
 }
 
 #[get("/<role_id>/questions")]
@@ -149,8 +153,37 @@ pub async fn get_questions(
 }
 
 #[derive(Serialize)]
+pub struct ApplicationResponse {
+    pub id: i32,
+    pub user_id: i32,
+    pub user_email: String,
+    pub user_zid: String,
+    pub role_id: i32,
+    pub status: ApplicationStatus,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+}
+
+#[derive(Serialize)]
 pub struct GetApplicationsResponse {
-    pub applications: Vec<Application>,
+    pub applications: Vec<ApplicationResponse>,
+}
+
+impl ApplicationResponse {
+    pub fn from_application(app: Application, conn: &PgConnection) -> Option<Self> {
+        let user = User::get_from_id(conn, app.user_id)?;
+
+        Some(ApplicationResponse {
+            id: app.id,
+            user_id: app.user_id,
+            user_email: user.email,
+            user_zid: user.zid,
+            role_id: app.role_id,
+            status: app.status,
+            created_at: app.created_at,
+            updated_at: app.updated_at,
+        })
+    }
 }
 
 #[get("/<role_id>/applications")]
@@ -170,8 +203,19 @@ pub async fn get_applications(
             .is_at_least_director()
             .check()
             .map_err(|_| QuestionsError::Unauthorized)?;
+
+        let apps = Application::get_all_from_role_id(conn, role_id);
+        let mut res_vec = Vec::with_capacity(apps.len());
+
+        for app in apps {
+            res_vec.push(
+                ApplicationResponse::from_application(app, conn)
+                    .ok_or(Json(QuestionsError::UserNotFound))?,
+            );
+        }
+
         Ok(Json(GetApplicationsResponse {
-            applications: Application::get_all_from_role_id(conn, role_id),
+            applications: res_vec,
         }))
     })
     .await
