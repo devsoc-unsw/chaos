@@ -33,7 +33,7 @@ const Admin = () => {
     >
       <isFormOpenContext.Provider value={{ isFormOpen, setIsFormOpen }}>
         <AdminContainer>
-          <AdminSidebar 
+          <AdminSidebar
             orgList={orgList}
             setOrgList={setOrgList}
             orgSelected={orgSelected}
@@ -43,7 +43,7 @@ const Admin = () => {
             sidebarWidth={sidebarWidth}
             setSidebarWidth={setSidebarWidth}
           />
-          <AdminContent 
+          <AdminContent
             id={orgList.find((org) => org.id === orgSelected).id}
             icon={orgList.find((org) => org.id === orgSelected).icon}
             orgName={orgList.find((org) => org.id === orgSelected).orgName}
