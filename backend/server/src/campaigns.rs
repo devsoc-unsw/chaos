@@ -1,10 +1,11 @@
 use crate::database::{
     models::{
         Campaign, CampaignWithRoles, NewCampaignInput, OrganisationUser, Role, UpdateCampaignInput,
-        User,
+        User, Application,
     },
     Database,
 };
+use crate::role::GetApplicationsResponse;
 use rocket::{delete, form::Form, get, post, put, serde::json::Json};
 use serde::Serialize;
 
