@@ -1,7 +1,7 @@
 use crate::database::{
     models::{
-        Campaign, CampaignWithRoles, NewCampaignInput, OrganisationUser, Role, UpdateCampaignInput,
-        User, Application,
+        Application, Campaign, CampaignWithRoles, NewCampaignInput, OrganisationUser, Role,
+        UpdateCampaignInput, User,
     },
     Database,
 };
