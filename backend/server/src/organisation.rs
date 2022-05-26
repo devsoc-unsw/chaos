@@ -5,7 +5,6 @@ use crate::database::{
     },
     schema::AdminLevel,
     Database,
-    schema::AdminLevel,
 };
 use chrono::NaiveDateTime;
 use rocket::{
