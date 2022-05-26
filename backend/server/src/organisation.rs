@@ -1,12 +1,14 @@
 use crate::database::{
-    models::{Campaign, NewOrganisation, Organisation, OrganisationUser, SuperUser, User},
-    Database,
+    models::{
+        Campaign, NewOrganisation, NewOrganisationUser, Organisation, OrganisationUser, SuperUser,
+        User,
+    },
     schema::AdminLevel,
+    Database,
 };
 use chrono::NaiveDateTime;
 use rocket::{
-    delete,
-    get, post, put,
+    delete, get, post, put,
     serde::{json::Json, Serialize},
 };
 
@@ -38,8 +40,9 @@ pub async fn new(
             admin_level: AdminLevel::Admin,
         };
 
-        org_user.insert(conn)
-                .ok_or(Json(NewOrgError::FailedToJoin))?;
+        org_user
+            .insert(conn)
+            .ok_or(Json(NewOrgError::FailedToJoin))?;
 
         Ok(())
     })

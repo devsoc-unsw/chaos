@@ -1,10 +1,10 @@
 use crate::database::{
     models::{
-        Application, Campaign, GetQuestionsResponse, OrganisationUser, Question,
-        Role, RoleUpdate, User,
+        Application, Campaign, GetQuestionsResponse, OrganisationUser, Question, Role, RoleUpdate,
+        User,
     },
-    Database,
     schema::ApplicationStatus,
+    Database,
 };
 use chrono::NaiveDateTime;
 use diesel::PgConnection;
@@ -164,11 +164,6 @@ pub struct ApplicationResponse {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Serialize)]
-pub struct GetApplicationsResponse {
-    pub applications: Vec<ApplicationResponse>,
-}
-
 impl ApplicationResponse {
     pub fn from_application(app: Application, conn: &PgConnection) -> Option<Self> {
         let user = User::get_from_id(conn, app.user_id)?;
@@ -186,8 +181,9 @@ impl ApplicationResponse {
     }
 }
 
+#[derive(Serialize)]
 pub struct GetApplicationsResponse {
-    pub applications: Vec<Application>,
+    pub applications: Vec<ApplicationResponse>,
 }
 
 #[get("/<role_id>/applications")]
