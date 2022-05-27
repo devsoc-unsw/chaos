@@ -61,3 +61,9 @@ export const createOrganisation = (name, logo) =>
     path: "/organisation/new",
     body: { name, logo },
   });
+
+export const doDeleteOrg = (org_id) =>
+  authenticatedRequest({
+    method: "DELETE",
+    path: `/organisation/${org_id}`,
+  });

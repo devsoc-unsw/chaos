@@ -20,8 +20,8 @@ const Admin = () => {
 
   // FIXME: CHAOS-55, change this to request orgs from backend
   const [orgList, setOrgList] = useState([
-    { id: 0, icon: CSELogoDummy, orgName: "CSESoc" },
-    { id: 1, icon: SECLogoDummy, orgName: "SECSoc" },
+    { id: 1, icon: CSELogoDummy, orgName: "CSESoc" },
+    { id: 2, icon: SECLogoDummy, orgName: "SECSoc" },
   ]);
 
   // FIXME: CHAOS-56, implement default behaviour for users w/ no org
