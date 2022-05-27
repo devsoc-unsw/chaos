@@ -1,6 +1,6 @@
 use diesel_derive_enum::DbEnum;
 use rocket::FromFormField;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, DbEnum, PartialEq, FromFormField, Serialize, Deserialize)]
 #[DbValueStyle = "PascalCase"]
@@ -11,12 +11,18 @@ pub enum ApplicationStatus {
     Success,
 }
 
-#[derive(Debug, DbEnum, PartialEq, Serialize)]
+#[derive(Debug, DbEnum, PartialEq, Serialize, Deserialize, Clone, Copy)]
 #[DbValueStyle = "PascalCase"]
 pub enum AdminLevel {
-    ReadOnly,
+    ReadOnly = 1,
     Director,
     Admin,
+}
+
+impl AdminLevel {
+    pub fn geq(self, other: Self) -> bool {
+        self as i32 >= other as i32
+    }
 }
 
 table! {

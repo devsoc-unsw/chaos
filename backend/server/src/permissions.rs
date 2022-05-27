@@ -18,7 +18,7 @@ The implmentation below is designed to be used in this pattern:
             .is_at_least_director()
             .and(campaign.draft) // is at least director AND campaign is a draft
             .check()
-            .or_else(|_| Err(Json(RolesError::Unauthorized)))?;
+            .or_else(|_| Err(Jsorganisation_users::on(RolesError::Unauthorized)))?;
     }).await
 
 This allows you to search for different admin levels while keeping everything in one place.
