@@ -61,3 +61,27 @@ export const createOrganisation = (name, logo) =>
     path: "/organisation/new",
     body: { name, logo },
   });
+
+export const getCampaignRoles = (campaignId) =>
+  authenticatedRequest({ path: `/campaign/${campaignId}/roles` });
+
+export const getRoleApplications = (roleId) =>
+  authenticatedRequest({ path: `/role/${roleId}/applications` });
+
+export const getRoleQuestions = (roleId) =>
+  authenticatedRequest({ path: `/role/${roleId}/questions` });
+
+export const setApplicationRating = (applicationId, rating) =>
+  authenticatedRequest({
+    method: "PUT",
+    path: `/application/${applicationId}/rating`,
+    body: {
+      rating,
+    },
+  });
+
+export const getApplicationAnswers = (applicationId) =>
+  authenticatedRequest({ path: `/application/${applicationId}/answers` });
+
+export const getApplicationRatings = (applicationId) =>
+  authenticatedRequest({ path: `/application/${applicationId}/ratings` });

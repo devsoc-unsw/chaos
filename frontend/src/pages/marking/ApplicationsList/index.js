@@ -27,6 +27,7 @@ const ApplicationsList = (props) => {
         >
           {applications.map((application) => (
             <Tab
+              sx={{ textTransform: "none" }}
               label={
                 <Grid
                   container
@@ -41,17 +42,20 @@ const ApplicationsList = (props) => {
                   )}
                 </Grid>
               }
+              key={application.applicationId}
             />
           ))}
         </Tabs>
       </Grid>
-      <Grid item xs={10}>
-        <ApplicationsListTabPanel
-          application={applications[selectedApplication]}
-          setMark={setMark}
-          selectedApplication={selectedApplication}
-        />
-      </Grid>
+      {applications[selectedApplication] ? (
+        <Grid item xs={10}>
+          <ApplicationsListTabPanel
+            application={applications[selectedApplication]}
+            setMark={setMark}
+            selectedApplication={selectedApplication}
+          />
+        </Grid>
+      ) : null}
     </Grid>
   );
 };
