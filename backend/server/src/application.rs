@@ -1,11 +1,13 @@
 use crate::database::{
-    models::{Application, NewApplication, NewRating, OrganisationUser, User},
+    models::{
+        Answer, Application, NewAnswer, NewApplication, NewRating, OrganisationUser, Rating, User,
+    },
     Database,
 };
 use rocket::{
     form::Form,
-    post, put,
-    serde::{json::Json, Serialize},
+    get, post, put,
+    serde::{json::Json, Deserialize, Serialize},
     FromForm,
 };
 
@@ -15,11 +17,12 @@ pub enum ApplicationError {
     UserNotFound,
     RoleNotFound,
     UnableToCreate,
+    AppNotFound,
 }
 
 #[post("/new", data = "<new_application>")]
 pub async fn create_application(
-    new_application: Form<NewApplication>,
+    new_application: Json<NewApplication>,
     _user: User,
     db: Database,
 ) -> Result<Json<Application>, Json<ApplicationError>> {
@@ -31,7 +34,7 @@ pub async fn create_application(
     Ok(Json(application))
 }
 
-#[derive(FromForm)]
+#[derive(FromForm, Deserialize)]
 pub struct RatingInput {
     rating: i32,
 }
@@ -39,7 +42,7 @@ pub struct RatingInput {
 #[put("/<application_id>/rating", data = "<rating>")]
 pub async fn create_rating(
     application_id: i32,
-    rating: Form<RatingInput>,
+    rating: Json<RatingInput>,
     user: User,
     db: Database,
 ) -> Result<Json<()>, Json<ApplicationError>> {
@@ -51,7 +54,7 @@ pub async fn create_rating(
 
         NewRating::insert(
             &NewRating {
-                application_id: application_id,
+                application_id,
                 rater_user_id: user.id,
                 rating: rating.rating,
             },
@@ -60,6 +63,81 @@ pub async fn create_rating(
         .ok_or_else(|| ApplicationError::UnableToCreate)?;
 
         Ok(Json(()))
+    })
+    .await
+}
+
+#[post("/<application_id>/answer", data = "<answer>")]
+pub async fn submit_answer(
+    application_id: i32,
+    user: User,
+    db: Database,
+    answer: Json<NewAnswer>,
+) -> Result<Json<()>, Json<ApplicationError>> {
+    db.run(move |conn| {
+        let application =
+            Application::get(application_id, &conn).ok_or(Json(ApplicationError::AppNotFound))?;
+        if application.user_id != user.id || answer.application_id != application_id {
+            return Err(Json(ApplicationError::Unauthorized));
+        }
+
+        NewAnswer::insert(&answer, &conn).ok_or(Json(ApplicationError::UnableToCreate))?;
+
+        Ok(Json(()))
+    })
+    .await
+}
+
+#[derive(Serialize)]
+pub struct AnswersResponse {
+    answers: Vec<Answer>,
+}
+
+#[get("/<application_id>/answers")]
+pub async fn get_answers(
+    application_id: i32,
+    user: User,
+    db: Database,
+) -> Result<Json<AnswersResponse>, Json<ApplicationError>> {
+    db.run(move |conn| {
+        let app =
+            Application::get(application_id, &conn).ok_or(Json(ApplicationError::AppNotFound))?;
+
+        OrganisationUser::role_admin_level(app.role_id, user.id, &conn)
+            .is_at_least_director()
+            .check()
+            .map_err(|_| Json(ApplicationError::Unauthorized))?;
+
+        Ok(Json(AnswersResponse {
+            answers: Answer::get_all_from_application_id(conn, application_id),
+        }))
+    })
+    .await
+}
+
+#[derive(Serialize)]
+pub struct RatingsResponse {
+    ratings: Vec<Rating>,
+}
+
+#[get("/<application_id>/ratings")]
+pub async fn get_ratings(
+    application_id: i32,
+    user: User,
+    db: Database,
+) -> Result<Json<RatingsResponse>, Json<ApplicationError>> {
+    db.run(move |conn| {
+        let app =
+            Application::get(application_id, &conn).ok_or(Json(ApplicationError::AppNotFound))?;
+
+        OrganisationUser::role_admin_level(app.role_id, user.id, &conn)
+            .is_at_least_director()
+            .check()
+            .map_err(|_| Json(ApplicationError::Unauthorized))?;
+
+        Ok(Json(RatingsResponse {
+            ratings: Rating::get_all_from_application_id(conn, application_id),
+        }))
     })
     .await
 }

@@ -319,7 +319,7 @@ pub async fn signup(
                 display_name: body.display_name.to_string(),
                 degree_name: body.degree_name.to_string(),
                 degree_starting_year: body.degree_starting_year as i32,
-                superuser: false,
+                superuser: User::get_number(conn) == 0,
             };
 
             user.insert(conn)

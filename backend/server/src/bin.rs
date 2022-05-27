@@ -32,6 +32,8 @@ async fn main() {
                 backend::organisation::get_admins,
                 backend::organisation::set_admins,
                 backend::organisation::is_admin,
+                backend::organisation::get_from_ids,
+                backend::organisation::invite_uid,
             ],
         )
         .mount(
@@ -55,7 +57,13 @@ async fn main() {
         )
         .mount(
             "/application",
-            routes![backend::application::create_application],
+            routes![
+                backend::application::create_application,
+                backend::application::create_rating,
+                backend::application::submit_answer,
+                backend::application::get_answers,
+                backend::application::get_ratings,
+            ],
         )
         .mount(
             "/role",

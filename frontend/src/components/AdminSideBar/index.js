@@ -13,6 +13,11 @@ import {
   RemoveOrgIcon,
 } from "./adminSidebar.styled";
 import CreateOrganisationForm from "../CreateOrganisationForm";
+<<<<<<< HEAD
+=======
+import { createOrganisation } from "../../api";
+import { fileToDataUrl, base64ToBytes } from "../../utils";
+>>>>>>> 74891ac541859071636b69a92178c42248f70962
 
 const AdminSidebar = ({
   orgList,
@@ -37,11 +42,14 @@ const AdminSidebar = ({
     });
   };
 
-  const onUpload = () => {
+  const onUpload = async () => {
     // FIXME: CHAOS-55, send to the backend
     if (uploadedImage.image && inputText) {
       // FIXME: CHAOS-55, backend request should return new id, this method obv flawed (also floored)
-      const newID = Math.floor(Math.random() * 1000);
+      const imgUrl = base64ToBytes(
+        (await fileToDataUrl(uploadedImage.image)).split(",")[1]
+      );
+      const newID = await createOrganisation(inputText, imgUrl);
       const newOrgList = orgList.concat({
         id: newID,
         icon: uploadedImage.url,
