@@ -1,17 +1,17 @@
 use crate::database::{
     models::{
-        Campaign, NewOrganisation, Organisation, OrganisationUser, SuperUser, User,
-        NewOrganisationUser,
+        Campaign, NewOrganisation, NewOrganisationUser, Organisation, OrganisationUser, SuperUser,
+        User,
     },
-    Database,
     schema::AdminLevel,
+    Database,
 };
 use chrono::NaiveDateTime;
 use rocket::{
-    delete,
-    get, post, put,
+    delete, get, post, put,
     serde::{json::Json, Serialize},
 };
+use std::collections::HashMap;
 
 #[derive(Serialize)]
 pub enum NewOrgError {
@@ -22,7 +22,9 @@ pub enum NewOrgError {
 #[derive(Serialize)]
 pub enum OrgError {
     OrgNotFound,
-    UserIsNotAdmin,
+    InsufficientPerms,
+    UserIsNotInOrg,
+    UserAlreadyInOrg,
 }
 
 #[post("/new", data = "<organisation>")]
@@ -41,8 +43,9 @@ pub async fn new(
             admin_level: AdminLevel::Admin,
         };
 
-        org_user.insert(conn)
-                .ok_or(Json(NewOrgError::FailedToJoin))?;
+        org_user
+            .insert(conn)
+            .ok_or(Json(NewOrgError::FailedToJoin))?;
 
         Ok(())
     })
@@ -57,14 +60,33 @@ pub async fn get_from_id(
     _user: User,
     db: Database,
 ) -> Result<Json<Organisation>, Json<OrgError>> {
-    let res: Option<Organisation> = db
-        .run(move |conn| Organisation::get_from_id(&conn, org_id))
-        .await;
+    db.run(move |conn| {
+        Organisation::get_from_id(&conn, org_id)
+            .ok_or(Json(OrgError::OrgNotFound))
+            .map(|v| Json(v))
+    })
+    .await
+}
 
-    match res {
-        Some(org) => Ok(Json(org)),
-        None => Err(Json(OrgError::OrgNotFound)),
-    }
+#[get("/", data = "<orgs>")]
+pub async fn get_from_ids(
+    orgs: Json<Vec<i32>>,
+    _user: User,
+    db: Database,
+) -> Result<Json<HashMap<i32, Organisation>>, Json<OrgError>> {
+    db.run(move |conn| {
+        let mut res = HashMap::with_capacity(orgs.len());
+
+        for id in orgs.into_inner() {
+            res.insert(
+                id,
+                Organisation::get_from_id(&conn, id).ok_or(Json(OrgError::OrgNotFound))?,
+            );
+        }
+
+        Ok(Json(res))
+    })
+    .await
 }
 
 #[delete("/<org_id>")]
@@ -106,7 +128,7 @@ pub async fn set_admins(
     match res {
         Some(ids) => {
             if !ids.contains(&user.id) {
-                return Err(Json(OrgError::UserIsNotAdmin));
+                return Err(Json(OrgError::InsufficientPerms));
             } else {
                 db.run(move |conn| Organisation::set_admins(&conn, org_id, &admins))
                     .await;
@@ -179,6 +201,44 @@ pub async fn get_associated_campaigns(
                 .map(CampaignResponse::from)
                 .collect(),
         })
+    })
+    .await
+}
+
+#[post("/<organisation_id>/invite/<user_id>", data = "<admin_level>")]
+pub async fn invite_uid(
+    organisation_id: i32,
+    admin_level: Json<AdminLevel>,
+    user_id: i32,
+    user: User,
+    db: Database,
+) -> Result<(), Json<OrgError>> {
+    db.run(move |conn| {
+        let mut level = OrganisationUser::organisation_admin_level(organisation_id, user.id, conn)
+            .check()
+            .map_err(|_| Json(OrgError::InsufficientPerms))?
+            .0;
+
+        if user.superuser {
+            level = AdminLevel::Admin;
+        }
+
+        let admin_level = admin_level.into_inner();
+
+        if level.geq(admin_level) {
+            let new_user = NewOrganisationUser {
+                user_id,
+                organisation_id,
+                admin_level,
+            };
+
+            new_user
+                .insert(conn)
+                .map(|_| ())
+                .ok_or(Json(OrgError::UserAlreadyInOrg))
+        } else {
+            Err(Json(OrgError::InsufficientPerms))
+        }
     })
     .await
 }
