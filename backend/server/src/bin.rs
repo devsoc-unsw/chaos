@@ -31,6 +31,7 @@ async fn main() {
                 backend::organisation::delete,
                 backend::organisation::get_admins,
                 backend::organisation::set_admins,
+                backend::organisation::is_admin,
             ],
         )
         .mount(
@@ -63,6 +64,7 @@ async fn main() {
                 backend::role::update_role,
                 backend::role::new_role,
                 backend::role::get_questions,
+                backend::role::get_applications,
             ],
         )
         .mount(
@@ -70,6 +72,14 @@ async fn main() {
             routes![
                 backend::comment::create_comment,
                 backend::comment::get_comment_from_id
+            ],
+        )
+        .mount(
+            "/question",
+            routes![
+                backend::question::get_question,
+                backend::question::edit_question,
+                backend::question::delete_question
             ],
         )
         .mount("/admin", routes![backend::admin::get,])

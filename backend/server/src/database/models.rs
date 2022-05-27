@@ -759,6 +759,38 @@ pub struct NewQuestion {
     pub required: bool,
 }
 
+#[derive(Serialize)]
+pub struct QuestionResponse {
+    pub id: i32,
+    pub role_id: i32,
+    pub title: String,
+    pub description: Option<String>,
+    pub max_bytes: i32,
+    pub required: bool,
+}
+
+impl std::convert::From<Question> for QuestionResponse {
+    fn from(question: Question) -> Self {
+        Self {
+            id: question.id,
+            role_id: question.role_id,
+            title: question.title,
+            description: question.description,
+            max_bytes: question.max_bytes,
+            required: question.required,
+        }
+    }
+}
+
+#[derive(FromForm, AsChangeset)]
+#[table_name = "questions"]
+pub struct UpdateQuestionInput {
+    pub title: String,
+    pub description: Option<String>,
+    pub max_bytes: i32,
+    pub required: bool,
+}
+
 impl Question {
     pub fn get_all(conn: &PgConnection) -> Vec<Question> {
         use crate::database::schema::questions::dsl::*;
@@ -767,6 +799,21 @@ impl Question {
             .order(id.asc())
             .load(conn)
             .unwrap_or_else(|_| vec![])
+    }
+
+    pub fn update(
+        conn: &PgConnection,
+        question_id: i32,
+        update_question: UpdateQuestionInput,
+    ) -> Option<()> {
+        use crate::database::schema::questions::dsl::*;
+
+        diesel::update(questions.filter(id.eq(question_id)))
+            .set(update_question)
+            .execute(conn)
+            .ok()?;
+
+        Some(())
     }
 
     pub fn get_all_from_role_id(conn: &PgConnection, role_id_val: i32) -> Vec<Question> {
@@ -793,6 +840,12 @@ impl Question {
         diesel::delete(questions.filter(id.eq(question_id)))
             .execute(conn)
             .is_ok()
+    }
+
+    pub fn get_from_id(conn: &PgConnection, question_id: i32) -> Option<Self> {
+        use crate::database::schema::questions::dsl::*;
+
+        questions.filter(id.eq(question_id)).first(conn).ok()
     }
 }
 
@@ -1010,31 +1063,8 @@ impl NewRating {
 }
 
 #[derive(Serialize)]
-pub struct QuestionResponse {
-    pub id: i32,
-    pub role_id: i32,
-    pub title: String,
-    pub description: Option<String>,
-    pub max_bytes: i32,
-    pub required: bool,
-}
-
-#[derive(Serialize)]
 pub struct GetQuestionsResponse {
     pub questions: Vec<QuestionResponse>,
-}
-
-impl std::convert::From<Question> for QuestionResponse {
-    fn from(question: Question) -> Self {
-        Self {
-            id: question.id,
-            role_id: question.role_id,
-            title: question.title,
-            description: question.description,
-            max_bytes: question.max_bytes,
-            required: question.required,
-        }
-    }
 }
 
 #[derive(Serialize)]

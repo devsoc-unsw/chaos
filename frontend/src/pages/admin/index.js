@@ -145,7 +145,7 @@ const Admin = () => {
 
   useEffect(async () => {
     // TODO: CHAOS-55, update organisation with requested data
-    const data = await getAdminData();
+    const data = await (await getAdminData()).json();
     console.log(data);
     setOrgList(orgListData);
     setCampaigns(campaignsData);

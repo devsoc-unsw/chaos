@@ -11,6 +11,7 @@ pub mod database;
 pub mod guard;
 pub mod organisation;
 pub mod permissions;
+pub mod question;
 pub mod role;
 pub mod state;
 pub mod user;

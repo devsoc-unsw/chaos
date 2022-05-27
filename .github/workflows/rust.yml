@@ -2,7 +2,9 @@ name: Rust
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, "renovate/*"]
+  push:
+    branches: ["renovate/*"]
 
 env:
   CARGO_TERM_COLOR: always

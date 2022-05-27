@@ -87,6 +87,7 @@ const AdminContent = ({
           <AdminCampaignContent
             campaigns={campaigns}
             setCampaigns={setCampaigns}
+            orgId={id}
           />
         )}
         {windowSelected === "members" && (
