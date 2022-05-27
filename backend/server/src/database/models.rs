@@ -89,12 +89,40 @@ impl User {
     }
 
     pub fn get_all_org_ids_belonging(&self, conn: &PgConnection) -> Vec<i32> {
-        use crate::database::schema::organisation_users::dsl::*;
+        if self.superuser {
+            return organisations::table
+                .select(organisations::id)
+                .load::<i32>(conn)
+                .unwrap_or_else(|_| vec![]);
+        }
 
-        organisation_users
-            .filter(user_id.eq(self.id))
-            .select(organisation_id)
+        organisation_users::table
+            .filter(organisation_users::user_id.eq(self.id))
+            .select(organisation_users::organisation_id)
             .load::<i32>(conn)
+            .unwrap_or_else(|_| vec![])
+    }
+
+    pub fn get_all_orgs_belonging(&self, conn: &PgConnection) -> Vec<Organisation> {
+        if self.superuser {
+            return organisations::table
+                .load::<Organisation>(conn)
+                .unwrap_or_else(|_| vec![]);
+        }
+
+        organisation_users::table
+            .filter(organisation_users::user_id.eq(self.id))
+            .inner_join(
+                organisations::table.on(organisations::id.eq(organisation_users::organisation_id)),
+            )
+            .select((
+                organisations::id,
+                organisations::name,
+                organisations::logo,
+                organisations::created_at,
+                organisations::updated_at,
+            ))
+            .load::<Organisation>(conn)
             .unwrap_or_else(|_| vec![])
     }
 }
