@@ -30,7 +30,10 @@ const dateToString = (date) =>
 
 const bytesToImage = (bytes) =>
   `data:image/png;base64,${btoa(
-    String.fromCharCode(...new Uint8Array(bytes))
+    new Uint8Array(bytes).reduce(
+      (data, byte) => data + String.fromCharCode(byte),
+      ""
+    )
   )}`;
 
 const fileToDataUrl = (file) => {
