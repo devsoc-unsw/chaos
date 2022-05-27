@@ -13,11 +13,8 @@ import {
   RemoveOrgIcon,
 } from "./adminSidebar.styled";
 import CreateOrganisationForm from "../CreateOrganisationForm";
-<<<<<<< HEAD
-=======
 import { createOrganisation } from "../../api";
 import { fileToDataUrl, base64ToBytes } from "../../utils";
->>>>>>> 74891ac541859071636b69a92178c42248f70962
 
 const AdminSidebar = ({
   orgList,

@@ -177,9 +177,6 @@ const Admin = () => {
             setCampaigns={setCampaigns}
             members={members}
             setMembers={setMembers}
-            id={orgList.find((org) => org.id === orgSelected).id}
-            icon={orgList.find((org) => org.id === orgSelected).icon}
-            orgName={orgList.find((org) => org.id === orgSelected).orgName}
           />
         </AdminContainer>
       </isFormOpenContext.Provider>
