@@ -61,7 +61,7 @@ const Rankings = () => {
               role.name,
               await Promise.all(
                 allApplications[roleIdx].map(async (application) => ({
-                  name: "dummy",
+                  name: application.user_display_name,
                   id: application.id,
                   ratings: await getRatings(application.id),
                 }))
@@ -100,7 +100,7 @@ const Rankings = () => {
               allApplications[roleIdx].map((application, applicationIdx) => [
                 application.id,
                 {
-                  zId: "dummy",
+                  zId: application.user_zid,
                   questions: questions[roleIdx].map(
                     (question, questionIdx) => ({
                       question: question.title,

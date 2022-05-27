@@ -27,6 +27,7 @@ const ApplicationsList = (props) => {
         >
           {applications.map((application) => (
             <Tab
+              sx={{ textTransform: "none" }}
               label={
                 <Grid
                   container

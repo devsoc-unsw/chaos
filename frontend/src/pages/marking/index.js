@@ -77,7 +77,7 @@ const Marking = () => {
             role.name,
             allApplications[roleIdx].map((application, applicationIdx) => ({
               applicationId: application.id,
-              zId: "dummy",
+              zId: application.user_zid,
               mark: ratings[roleIdx][applicationIdx]?.rating,
               questions: questions[roleIdx].map((question, questionIdx) => ({
                 question: question.title,
