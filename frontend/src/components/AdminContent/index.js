@@ -114,7 +114,7 @@ AdminContent.propTypes = {
     PropTypes.shape({
       id: PropTypes.number,
       name: PropTypes.string,
-      role: PropTypes.number,
+      role: PropTypes.string,
     })
   ).isRequired,
   setMembers: PropTypes.func.isRequired,

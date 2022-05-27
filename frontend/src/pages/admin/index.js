@@ -4,6 +4,7 @@ import { AdminContainer } from "./admin.styled";
 import AdminSidebar from "../../components/AdminSideBar";
 import AdminContent from "../../components/AdminContent";
 import { getAdminData } from "../../api";
+import { bytesToImage } from "../../utils";
 
 import DirectorDummy from "../dashboard/director.jpg";
 import ProjectLeadDummy from "../dashboard/project-lead.jpg";
@@ -143,17 +144,63 @@ const Admin = () => {
   const [campaigns, setCampaigns] = useState([]);
   const [members, setMembers] = useState([]);
 
-  useEffect(async () => {
-    // TODO: CHAOS-55, update organisation with requested data
-    const data = await (await getAdminData()).json();
-    console.log(data);
-    setOrgList(orgListData);
-    setCampaigns(campaignsData);
-    setMembers(membersData);
-  }, []);
-
   // FIXME: CHAOS-56, implement default behaviour for users w/ no org
   const [orgSelected, setOrgSelected] = useState(0);
+
+  useEffect(async () => {
+    const data = (await (await getAdminData()).json()).organisations;
+
+    setOrgList(
+      data.map((item) => ({
+        id: item.id,
+        icon: bytesToImage(item.logo),
+        orgName: item.name,
+        campaigns: item.campaigns,
+        members: item.members,
+      }))
+    );
+    if (data !== []) {
+      setOrgSelected(0);
+      const org = data[orgSelected];
+
+      setCampaigns(
+        org.campaigns.map((item) => ({
+          id: item.id,
+          image: bytesToImage(item.cover_image),
+          title: item.name,
+          startDate: item.starts_at,
+          endDate: item.ends_at,
+        }))
+      );
+
+      setMembers(
+        org.members.map((item) => ({
+          id: item.id,
+          name: item.display_name,
+          role: item.role,
+        }))
+      );
+    }
+  }, []);
+
+  useEffect(async () => {
+    setCampaigns(
+      orgList[orgSelected]?.campaigns.map((item) => ({
+        id: item.id,
+        image: bytesToImage(item.cover_image),
+        title: item.name,
+        startDate: item.starts_at,
+        endDate: item.ends_at,
+      })) ?? []
+    );
+    setMembers(
+      orgList[orgSelected]?.members.map((item) => ({
+        id: item.id,
+        name: item.display_name,
+        role: item.role,
+      })) ?? []
+    );
+  }, [orgSelected]);
 
   return (
     <orgContext.Provider
@@ -172,7 +219,7 @@ const Admin = () => {
             setSidebarWidth={setSidebarWidth}
           />
           <AdminContent
-            org={orgList.find((org) => org.id === orgSelected)}
+            org={orgList[orgSelected]}
             campaigns={campaigns}
             setCampaigns={setCampaigns}
             members={members}

@@ -53,7 +53,7 @@ const AdminSidebar = ({
         orgName: inputText,
       });
       setOrgList(newOrgList);
-      setOrgSelected(newID);
+      setOrgSelected(newOrgList.length - 1);
       setUploadedImage({ image: null, url: null });
       setInputText("");
       setIsFormOpen(false);
@@ -93,9 +93,9 @@ const AdminSidebar = ({
             />
           )}
         </CreateOrgButton>
-        {orgList.map((it) => (
-          <OrgButton value={it.id}>
-            <OrgButtonContent onClick={() => setOrgSelected(it.id)}>
+        {orgList.map((it, idx) => (
+          <OrgButton value={idx}>
+            <OrgButtonContent onClick={() => setOrgSelected(idx)}>
               <OrgIcon>
                 <OrgIconImage src={it.icon} />
               </OrgIcon>
