@@ -1681,7 +1681,19 @@
   resolved "https://registry.npmjs.org/@date-io/core/-/core-2.13.1.tgz"
   integrity sha512-pVI9nfkf2qClb2Cxdq0Q4zJhdawMG4ybWZUVGifT78FDwzRMX2SwXBb55s5NRJk0HcIicDuxktmCtemZqMH1Zg==
 
-"@date-io/date-fns@2.13.1", "@date-io/date-fns@^2.11.0":
+"@date-io/core@^2.14.0":
+  version "2.14.0"
+  resolved "https://registry.yarnpkg.com/@date-io/core/-/core-2.14.0.tgz#03e9b9b9fc8e4d561c32dd324df0f3ccd967ef14"
+  integrity sha512-qFN64hiFjmlDHJhu+9xMkdfDG2jLsggNxKXglnekUpXSq8faiqZgtHm2lsHCUuaPDTV6wuXHcCl8J1GQ5wLmPw==
+
+"@date-io/date-fns@2.14.0":
+  version "2.14.0"
+  resolved "https://registry.yarnpkg.com/@date-io/date-fns/-/date-fns-2.14.0.tgz#92ab150f488f294c135c873350d154803cebdbea"
+  integrity sha512-4fJctdVyOd5cKIKGaWUM+s3MUXMuzkZaHuTY15PH70kU1YTMrCoauA7hgQVx9qj0ZEbGrH9VSPYJYnYro7nKiA==
+  dependencies:
+    "@date-io/core" "^2.14.0"
+
+"@date-io/date-fns@^2.11.0":
   version "2.13.1"
   resolved "https://registry.npmjs.org/@date-io/date-fns/-/date-fns-2.13.1.tgz"
   integrity sha512-8fmfwjiLMpFLD+t4NBwDx0eblWnNcgt4NgfT/uiiQTGI81fnPu9tpBMYdAcuWxaV7LLpXgzLBx1SYWAMDVUDQQ==
