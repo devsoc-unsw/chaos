@@ -55,6 +55,8 @@ export const getAllCampaigns = () =>
 export const isAdminInOrganisation = (orgId) =>
   authenticatedRequest({ path: `/organisation/${orgId}/is_admin` });
 
+export const getAdminData = () => authenticatedRequest({ path: "/admin" });
+
 export const createOrganisation = (name, logo) =>
   authenticatedRequest({
     method: "POST",
@@ -67,3 +69,27 @@ export const doDeleteOrg = (org_id) =>
     method: "DELETE",
     path: `/organisation/${org_id}`,
   });
+
+export const getCampaignRoles = (campaignId) =>
+  authenticatedRequest({ path: `/campaign/${campaignId}/roles` });
+
+export const getRoleApplications = (roleId) =>
+  authenticatedRequest({ path: `/role/${roleId}/applications` });
+
+export const getRoleQuestions = (roleId) =>
+  authenticatedRequest({ path: `/role/${roleId}/questions` });
+
+export const setApplicationRating = (applicationId, rating) =>
+  authenticatedRequest({
+    method: "PUT",
+    path: `/application/${applicationId}/rating`,
+    body: {
+      rating,
+    },
+  });
+
+export const getApplicationAnswers = (applicationId) =>
+  authenticatedRequest({ path: `/application/${applicationId}/answers` });
+
+export const getApplicationRatings = (applicationId) =>
+  authenticatedRequest({ path: `/application/${applicationId}/ratings` });

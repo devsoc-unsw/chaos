@@ -1,5 +1,5 @@
-/* eslint-disable react/prop-types */
 import React, { useState } from "react";
+import PropTypes from "prop-types";
 import {
   SidebarContainer,
   OrgButton,
@@ -53,7 +53,7 @@ const AdminSidebar = ({
         orgName: inputText,
       });
       setOrgList(newOrgList);
-      setOrgSelected(newID);
+      setOrgSelected(newOrgList.length - 1);
       setUploadedImage({ image: null, url: null });
       setInputText("");
       setIsFormOpen(false);
@@ -93,9 +93,9 @@ const AdminSidebar = ({
             />
           )}
         </CreateOrgButton>
-        {orgList.map((it) => (
-          <OrgButton value={it.id}>
-            <OrgButtonContent onClick={() => setOrgSelected(it.id)}>
+        {orgList.map((it, idx) => (
+          <OrgButton value={idx}>
+            <OrgButtonContent onClick={() => setOrgSelected(idx)}>
               <OrgIcon>
                 <OrgIconImage src={it.icon} />
               </OrgIcon>
@@ -106,6 +106,23 @@ const AdminSidebar = ({
       </OrgButtonGroup>
     </SidebarContainer>
   );
+};
+
+AdminSidebar.propTypes = {
+  orgList: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number,
+      icon: PropTypes.string,
+      orgName: PropTypes.string,
+    })
+  ).isRequired,
+  setOrgList: PropTypes.func.isRequired,
+  orgSelected: PropTypes.number.isRequired,
+  setOrgSelected: PropTypes.func.isRequired,
+  isFormOpen: PropTypes.bool.isRequired,
+  setIsFormOpen: PropTypes.func.isRequired,
+  sidebarWidth: PropTypes.number.isRequired,
+  setSidebarWidth: PropTypes.func.isRequired,
 };
 
 export default AdminSidebar;

@@ -7,7 +7,7 @@ import FinalRatingCandidateCard from "../FinalRatingCandidateCard";
 import PassBar from "../PassBar";
 
 const DragDropRankings = (props) => {
-  const { rankings, setRankings, selectedPosition } = props;
+  const { rankings, setRankings, selectedPosition, applications } = props;
   const [passIndex, setPassIndex] = useState(0);
 
   useEffect(() => {
@@ -15,6 +15,7 @@ const DragDropRankings = (props) => {
   }, [selectedPosition]);
 
   const onDragEnd = (result) => {
+    // TODO: CHAOS-88 integrate with backend
     const { destination, source, draggableId } = result;
     if (!destination) return;
     if (
@@ -82,6 +83,9 @@ const DragDropRankings = (props) => {
                         name={candidate.name}
                         position={selectedPosition}
                         ratings={candidate.ratings}
+                        application={
+                          applications[selectedPosition][candidate.id]
+                        }
                       />
                     </div>
                   )}
@@ -124,6 +128,9 @@ const DragDropRankings = (props) => {
                         name={candidate.name}
                         position={selectedPosition}
                         ratings={candidate.ratings}
+                        application={
+                          applications[selectedPosition][candidate.id]
+                        }
                         reject
                       />
                     </div>
