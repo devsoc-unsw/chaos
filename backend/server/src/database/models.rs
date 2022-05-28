@@ -173,9 +173,11 @@ impl Organisation {
     pub fn delete(conn: &PgConnection, organisation_id: i32) -> Option<usize> {
         use crate::database::schema::organisations::dsl::*;
 
-        diesel::delete(organisations.filter(id.eq(organisation_id)))
+        let num = diesel::delete(organisations.filter(id.eq(organisation_id)))
             .execute(conn)
-            .ok()
+            .ok()?;
+
+        if num > 0 { Some(num) } else { None }
     }
 
     pub fn delete_deep(conn: &PgConnection, org_id: i32) -> Option<()> {
@@ -183,14 +185,14 @@ impl Organisation {
         let campaigns = Campaign::get_all_from_org_id(conn, org_id);
 
         for campaign in campaigns {
-            Campaign::delete_deep(conn, campaign.id);
+            Campaign::delete_deep(conn, campaign.id)?;
         }
 
         diesel::delete(organisation_users.filter(organisation_id.eq(org_id)))
             .execute(conn)
-            .ok()?;
+            .ok();
 
-        Organisation::delete(conn, org_id);
+        let num = Organisation::delete(conn, org_id)?;
 
         Some(())
     }
@@ -557,11 +559,13 @@ impl Campaign {
 
         diesel::delete(roles.filter(dsl_role_campaign_id.eq(campaign_id)))
             .execute(conn)
-            .ok()?;
+            .ok();
 
-        Campaign::delete(conn, campaign_id);
-
-        Some(())
+        if !Campaign::delete(conn, campaign_id) {
+            None
+        } else {
+            Some(())
+        }
     }
 }
 
@@ -644,28 +648,34 @@ impl Role {
     }
 
     pub fn delete_children(conn: &PgConnection, role: Role) -> Option<()> {
-        let question_items: Vec<Question> = Question::belonging_to(&role).load(conn).ok()?;
-
-        diesel::delete(Question::belonging_to(&role))
-            .execute(conn)
+        let question_items: Vec<Question> =
+            questions::table.filter(questions::role_id.eq(role.id))
+            .load(conn)
             .ok()?;
 
+        println!("Trying to delete questions");
+        diesel::delete(questions::table.filter(questions::role_id.eq(role.id)))
+            .execute(conn)
+            .ok();
+
         for question in question_items {
-            diesel::delete(Answer::belonging_to(&question))
+            diesel::delete(answers::table.filter(answers::question_id.eq(question.id)))
                 .execute(conn)
-                .ok()?;
+                .ok();
         }
 
         let application_items: Vec<Application> =
-            Application::belonging_to(&role).load(conn).ok()?;
+            applications::table.filter(applications::role_id.eq(role.id))
+            .load(conn)
+            .ok()?;
 
         for application in application_items {
             Application::delete_children(conn, application)?;
         }
 
-        diesel::delete(Application::belonging_to(&role))
+        diesel::delete(applications::table.filter(applications::role_id.eq(role.id)))
             .execute(conn)
-            .ok()?;
+            .ok();
 
         Some(())
     }
@@ -677,12 +687,7 @@ impl Role {
 
         Role::delete_children(conn, role)?;
 
-        let deleted = Role::delete(conn, role_id);
-
-        match deleted {
-            true => Some(()),
-            false => None,
-        }
+        if Role::delete(conn, role_id) { Some(()) } else { None }
     }
 }
 
@@ -769,13 +774,13 @@ impl Application {
     }
 
     pub fn delete_children(conn: &PgConnection, application: Application) -> Option<()> {
-        diesel::delete(Rating::belonging_to(&application))
+        diesel::delete(ratings::table.filter(ratings::application_id.eq(application.id)))
             .execute(conn)
-            .ok()?;
+            .ok();
 
-        diesel::delete(Comment::belonging_to(&application))
+        diesel::delete(comments::table.filter(comments::application_id.eq(application.id)))
             .execute(conn)
-            .ok()?;
+            .ok();
 
         Some(())
     }
