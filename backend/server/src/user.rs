@@ -9,19 +9,19 @@ use rocket::{
 };
 
 #[derive(Serialize)]
-pub enum UserError {
-    UserNotFound,
-    CampaignNotFound,
-    PermissionDenied,
-}
-
-#[derive(Serialize)]
 pub struct UserResponse {
     email: String,
     zid: String,
     display_name: String,
     degree_name: String,
     degree_starting_year: i32,
+}
+
+#[derive(Serialize)]
+pub enum UserError {
+    UserNotFound,
+    CampaignNotFound,
+    PermissionDenied,
 }
 
 fn user_is_boss(boss_user: &User, user: &User, conn: &PgConnection) -> bool {
@@ -40,6 +40,17 @@ fn user_is_boss(boss_user: &User, user: &User, conn: &PgConnection) -> bool {
         }
     }
     false
+}
+
+#[get("/")]
+pub async fn get(user: User) -> Result<Json<UserResponse>, Json<UserError>> {
+    Ok(Json(UserResponse {
+        email: user.email,
+        zid: user.zid,
+        display_name: user.display_name,
+        degree_name: user.degree_name,
+        degree_starting_year: user.degree_starting_year,
+    }))
 }
 
 #[get("/<user_id>")]

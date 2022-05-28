@@ -1,74 +1,51 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Container } from "@mui/material";
 import ApplicationForm from "../../components/ApplicationForm";
+import { bytesToImage } from "../../utils";
 import {
   SubmitButton,
   ArrowIcon,
   SubmitWrapper,
 } from "./applicationPage.styled";
-import DummyCampaignHeader from "./director.jpg";
+import { getSelfInfo } from "../../api";
 
 const Application = () => {
-  // FIXME: CHAOS-51, request the following object from backend
+  const campaign = useLocation().state;
+
+  const [selfInfo, setSelfInfo] = useState({});
+  useEffect(() => {
+    const getUserInfo = async () => {
+      const res = await getSelfInfo();
+      const data = await res.json();
+      setSelfInfo(data);
+    };
+    getUserInfo();
+  }, []);
+
   const { campaignName, headerImage, description, roles, questions, userInfo } =
     {
-      campaignName: "Director recruitment",
-      headerImage: DummyCampaignHeader,
-      description: `
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-        eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad
-        minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-        aliquip ex ea commodo consequat. Duis aute irure dolor in
-        reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-        pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-        culpa qui officia deserunt mollit anim id est laborum.
-      `,
-      roles: [
-        {
-          id: "0",
-          title: "Projects",
-          quantity: 3,
-        },
-        {
-          id: "1",
-          title: "Socials",
-          quantity: 2,
-        },
-        {
-          id: "2",
-          title: "Marketing",
-          quantity: 4,
-        },
-      ],
-      questions: [
-        {
-          id: "0",
-          text: "Very important question?",
-          roles: new Set(["0", "2"]),
-        },
-        {
-          id: "1",
-          text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit?",
-          roles: new Set(["0", "1"]),
-        },
-        {
-          id: "2",
-          text: "Another extremely important question?",
-          roles: new Set(["0"]),
-        },
-        {
-          id: "3",
-          text: "What do you think about this question and its importance?",
-          roles: new Set(["2"]),
-        },
-      ],
+      campaignName: campaign.campaign.name,
+      headerImage: bytesToImage(campaign.campaign.cover_image),
+      description: campaign.campaign.description,
+      roles: campaign.roles.map((r) => ({
+        id: r.id,
+        title: r.name,
+        quantity: r.max_available,
+      })),
+      questions: campaign.questions.map((q) => ({
+        id: q.id,
+        text: q.title,
+        roles: new Set([q.role_id]),
+      })),
       userInfo: {
-        name: "John Smith",
-        zid: "z1234567",
-        email: "jsmith@gmail.com",
-        degree: "Bachelor of Science (Computer Science)",
+        name: selfInfo.display_name,
+        zid: selfInfo.zid,
+        email: selfInfo.email,
+        degree: selfInfo.degree_name,
       },
     };
+
   const [rolesSelected, setRolesSelected] = useState([]);
   const [answers, setAnswers] = useState({});
   useEffect(() => {
@@ -81,12 +58,12 @@ const Application = () => {
   }, [questions]);
 
   const onSubmit = () => {
-    // FIXME: CHAOS-51, integrate with backend
     //        CHAOS-53, useNavigate() link to post submission page once it is created :)
     if (rolesSelected.length) {
       rolesSelected.forEach((role) => {
         console.log(role);
       });
+      console.log(`Answers: ${JSON.stringify(answers)}`);
     } else {
       alert(
         "Submission failed, you must select at least one role to apply for!"
