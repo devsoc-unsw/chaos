@@ -26,12 +26,12 @@ const AdminCampaignContent = ({ campaigns, setCampaigns, orgId }) => {
     setCampaigns(campaigns.filter((c) => c.id !== parseInt(campaignId, 10)));
   };
 
-  const onCampaignClick = (e) => {
+  const onCampaignClick = (e, id) => {
     if (e.currentTarget.value) {
       e.preventDefault();
       e.stopPropagation();
     } else {
-      navigate("/marking");
+      navigate(`/marking/${id}`);
     }
   };
 
@@ -54,8 +54,7 @@ const AdminCampaignContent = ({ campaigns, setCampaigns, orgId }) => {
       {campaigns.map((c) => (
         <div>
           <CampaignListItem>
-            {"" /* FIXME: part of CHAOS-55, should nav to marking/<c.id> */}
-            <AdminListItemButton onClick={(e) => onCampaignClick(e)}>
+            <AdminListItemButton onClick={(e) => onCampaignClick(e, c.id)}>
               <CampaignListItemImage src={c.image} />
               <ListItemText align="center">{c.title}</ListItemText>
               <ListItemText align="center">
