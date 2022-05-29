@@ -1,4 +1,3 @@
-import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Grid } from "@mui/material";
 
@@ -21,7 +20,7 @@ const CampaignGrid = ({ campaigns }) => {
             startDate={dateToString(new Date(campaign.campaign.starts_at))}
             endDate={dateToString(new Date(campaign.campaign.ends_at))}
             img={bytesToImage(campaign.campaign.cover_image)}
-            applyClick={() => navigate(`/application`, { state: campaign })}
+            applyClick={() => navigate("/application")}
           />
         </Grid>
       ))}

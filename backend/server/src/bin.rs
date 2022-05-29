@@ -53,11 +53,7 @@ async fn main() {
         )
         .mount(
             "/user",
-            routes![
-                backend::user::get_user,
-                backend::user::get_user_campaigns,
-                backend::user::get,
-            ],
+            routes![backend::user::get_user, backend::user::get_user_campaigns],
         )
         .mount(
             "/application",

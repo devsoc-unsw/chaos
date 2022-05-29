@@ -88,8 +88,6 @@ export const setApplicationRating = (applicationId, rating) =>
     },
   });
 
-export const getSelfInfo = () => authenticatedRequest({ path: "/user" });
-
 export const getApplicationAnswers = (applicationId) =>
   authenticatedRequest({ path: `/application/${applicationId}/answers` });
 

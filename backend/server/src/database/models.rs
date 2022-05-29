@@ -9,7 +9,6 @@ use chrono::Utc;
 use diesel::prelude::BelongingToDsl;
 use diesel::prelude::*;
 use diesel::PgConnection;
-use itertools::Itertools;
 use rocket::FromForm;
 use serde::{Deserialize, Serialize};
 
@@ -178,11 +177,7 @@ impl Organisation {
             .execute(conn)
             .ok()?;
 
-        if num > 0 {
-            Some(num)
-        } else {
-            None
-        }
+        if num > 0 { Some(num) } else { None }
     }
 
     pub fn delete_deep(conn: &PgConnection, org_id: i32) -> Option<()> {
@@ -389,8 +384,7 @@ pub struct NewCampaignInput {
 pub struct CampaignWithRoles {
     pub campaign: Campaign,
     pub roles: Vec<Role>,
-    pub questions: Vec<Question>,
-    pub applied_for: Vec<i32>,
+    applied_for: Vec<i32>,
 }
 
 impl Campaign {
@@ -427,12 +421,6 @@ impl Campaign {
             .map(|campaign| {
                 let campaign_roles = Role::get_all_from_campaign_id(&conn, campaign.id);
 
-                let questions = campaign_roles
-                    .iter()
-                    .map(|x| Question::get_all_from_role_id(conn, x.id).into_iter())
-                    .flatten()
-                    .collect();
-
                 let applied_for: Vec<i32> = campaign_roles
                     .clone()
                     .into_iter()
@@ -455,7 +443,6 @@ impl Campaign {
                     campaign,
                     roles: campaign_roles,
                     applied_for,
-                    questions,
                 }
             })
             .collect()
@@ -661,8 +648,8 @@ impl Role {
     }
 
     pub fn delete_children(conn: &PgConnection, role: Role) -> Option<()> {
-        let question_items: Vec<Question> = questions::table
-            .filter(questions::role_id.eq(role.id))
+        let question_items: Vec<Question> =
+            questions::table.filter(questions::role_id.eq(role.id))
             .load(conn)
             .ok()?;
 
@@ -677,8 +664,8 @@ impl Role {
                 .ok();
         }
 
-        let application_items: Vec<Application> = applications::table
-            .filter(applications::role_id.eq(role.id))
+        let application_items: Vec<Application> =
+            applications::table.filter(applications::role_id.eq(role.id))
             .load(conn)
             .ok()?;
 
@@ -700,11 +687,7 @@ impl Role {
 
         Role::delete_children(conn, role)?;
 
-        if Role::delete(conn, role_id) {
-            Some(())
-        } else {
-            None
-        }
+        if Role::delete(conn, role_id) { Some(()) } else { None }
     }
 }
 
