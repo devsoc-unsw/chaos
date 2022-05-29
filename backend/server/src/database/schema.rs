@@ -2,7 +2,10 @@ use diesel_derive_enum::DbEnum;
 use rocket::FromFormField;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, DbEnum, PartialEq, FromFormField, Serialize, Deserialize)]
+#[derive(
+    Debug, DbEnum, PartialEq, FromFormField, Serialize, Deserialize,
+    Clone, Copy
+)]
 #[DbValueStyle = "PascalCase"]
 pub enum ApplicationStatus {
     Draft,

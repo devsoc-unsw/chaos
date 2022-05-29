@@ -8,7 +8,7 @@ import {
   ArrowIcon,
   SubmitWrapper,
 } from "./applicationPage.styled";
-import { getSelfInfo } from "../../api";
+import { getSelfInfo, newApplication, submitAnswer } from "../../api";
 
 const Application = () => {
   const campaign = useLocation().state;
@@ -61,9 +61,22 @@ const Application = () => {
     //        CHAOS-53, useNavigate() link to post submission page once it is created :)
     if (rolesSelected.length) {
       rolesSelected.forEach((role) => {
-        console.log(role);
+        newApplication(role)
+          .then((res) => res.json())
+          .then((data) => {
+            Object.keys(answers)
+              .filter((qId) => {
+                const question = questions.find(
+                  (q) => Number(q.id) === Number(qId)
+                );
+                const [rId] = question.roles;
+                return rId === data.role_id;
+              })
+              .forEach((qId) =>
+                submitAnswer(data.id, Number(qId), answers[qId])
+              );
+          });
       });
-      console.log(`Answers: ${JSON.stringify(answers)}`);
     } else {
       alert(
         "Submission failed, you must select at least one role to apply for!"

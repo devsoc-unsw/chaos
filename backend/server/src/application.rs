@@ -3,6 +3,7 @@ use crate::database::{
         Answer, Application, NewAnswer, NewApplication, NewRating, OrganisationUser, Rating, User,
     },
     Database,
+    schema::ApplicationStatus,
 };
 use rocket::{
     form::Form,
@@ -20,14 +21,46 @@ pub enum ApplicationError {
     AppNotFound,
 }
 
-#[post("/new", data = "<new_application>")]
+#[derive(Deserialize)]
+pub struct ApplicationReq {
+    pub role_id: i32,
+    pub status: ApplicationStatus,
+}
+
+#[post("/new", data = "<app_req>")]
 pub async fn create_application(
-    new_application: Json<NewApplication>,
-    _user: User,
+    app_req: Json<ApplicationReq>,
+    user: User,
     db: Database,
 ) -> Result<Json<Application>, Json<ApplicationError>> {
+    use crate::database::schema::applications::dsl::*;
+    use diesel::prelude::*;
+    use diesel::query_dsl::RunQueryDsl;
+
+    let new_application = NewApplication {
+        user_id: user.id,
+        role_id: app_req.role_id,
+        status: app_req.status,
+    };
+
     let application = db
-        .run(move |conn| NewApplication::insert(&new_application, conn))
+        .run(move |conn| {
+            let count = applications
+                .filter(
+                    role_id.eq(app_req.role_id)
+                        .and(user_id.eq(user.id))
+                )
+                .select(id)
+                .load::<i32>(conn)
+                .unwrap_or_else(|_| vec![])
+                .len();
+
+            if count > 0 {
+                return None;
+            }
+
+            NewApplication::insert(&new_application, conn)
+        })
         .await
         .ok_or(Json(ApplicationError::UnableToCreate))?;
 
@@ -67,17 +100,16 @@ pub async fn create_rating(
     .await
 }
 
-#[post("/<application_id>/answer", data = "<answer>")]
+#[post("/answer", data = "<answer>")]
 pub async fn submit_answer(
-    application_id: i32,
     user: User,
     db: Database,
     answer: Json<NewAnswer>,
 ) -> Result<Json<()>, Json<ApplicationError>> {
     db.run(move |conn| {
         let application =
-            Application::get(application_id, &conn).ok_or(Json(ApplicationError::AppNotFound))?;
-        if application.user_id != user.id || answer.application_id != application_id {
+            Application::get(answer.application_id, &conn).ok_or(Json(ApplicationError::AppNotFound))?;
+        if application.user_id != user.id {
             return Err(Json(ApplicationError::Unauthorized));
         }
 

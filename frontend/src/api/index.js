@@ -64,6 +64,13 @@ export const createOrganisation = (name, logo) =>
     body: { name, logo },
   });
 
+export const newApplication = (role_id) =>
+  authenticatedRequest({
+    method: "POST",
+    path: "/application/new",
+    body: { role_id, "status": "Pending" },
+  });
+
 export const doDeleteOrg = (org_id) =>
   authenticatedRequest({
     method: "DELETE",
@@ -95,3 +102,14 @@ export const getApplicationAnswers = (applicationId) =>
 
 export const getApplicationRatings = (applicationId) =>
   authenticatedRequest({ path: `/application/${applicationId}/ratings` });
+
+export const submitAnswer = (application_id, question_id, description) =>
+  authenticatedRequest({
+    method: "POST",
+    path: `/application/answer/`,
+    body: {
+      application_id,
+      question_id,
+      description,
+    },
+  });
