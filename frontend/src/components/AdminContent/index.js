@@ -15,6 +15,7 @@ import {
 import { orgContext } from "../../pages/admin";
 import AdminCampaignContent from "./AdminCampaignContent";
 import AdminMembersContent from "./AdminMembersContent";
+import { doDeleteOrg } from "../../api";
 
 const AdminContent = ({
   org,
@@ -38,14 +39,17 @@ const AdminContent = ({
   const { orgSelected, setOrgSelected, orgList, setOrgList } =
     useContext(orgContext);
 
-  const handleDeletion = () => {
-    if (orgSelected === id) {
-      // FIXME: CHAOS-56, doesn"t handle no remaining orgs, also assumes that
-      //        an org exists with id == 0, and that the user is a member
-      //        of this org. Will be fixed when itegrated with backend.
-      setOrgSelected(0);
+  const handleDeletion = async () => {
+    const res = await doDeleteOrg(id);
+    if (res.status === 200) {
+      // FIXME: when array is empty we die???
+      setOrgList(orgList.filter((_, index) => index !== orgSelected));
+      setOrgSelected(
+        orgSelected === orgList.length - 1 ? orgList.length - 2 : orgSelected
+      );
+    } else {
+      // FIXME: should popup and say failed to delete
     }
-    setOrgList(orgList.filter((o) => o.id !== id));
   };
 
   const handleWindowChange = (e, newWindow) => {

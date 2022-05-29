@@ -64,6 +64,12 @@ export const createOrganisation = (name, logo) =>
     body: { name, logo },
   });
 
+export const doDeleteOrg = (org_id) =>
+  authenticatedRequest({
+    method: "DELETE",
+    path: `/organisation/${org_id}`,
+  });
+
 export const getCampaignRoles = (campaignId) =>
   authenticatedRequest({ path: `/campaign/${campaignId}/roles` });
 

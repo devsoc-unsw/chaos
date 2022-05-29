@@ -138,7 +138,6 @@ const Admin = () => {
   const [sidebarWidth, setSidebarWidth] = useState("80px");
   const [isFormOpen, setIsFormOpen] = useState(false);
 
-  // FIXME: CHAOS-55, change this to request orgs from backend
   const [orgList, setOrgList] = useState([]);
 
   const [campaigns, setCampaigns] = useState([]);
@@ -200,7 +199,7 @@ const Admin = () => {
         role: item.role,
       })) ?? []
     );
-  }, [orgSelected]);
+  }, [orgSelected, orgList]);
 
   return (
     <orgContext.Provider
