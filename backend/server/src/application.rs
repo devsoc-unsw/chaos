@@ -2,8 +2,8 @@ use crate::database::{
     models::{
         Answer, Application, NewAnswer, NewApplication, NewRating, OrganisationUser, Rating, User,
     },
-    Database,
     schema::ApplicationStatus,
+    Database,
 };
 use rocket::{
     form::Form,
@@ -46,10 +46,7 @@ pub async fn create_application(
     let application = db
         .run(move |conn| {
             let count = applications
-                .filter(
-                    role_id.eq(app_req.role_id)
-                        .and(user_id.eq(user.id))
-                )
+                .filter(role_id.eq(app_req.role_id).and(user_id.eq(user.id)))
                 .select(id)
                 .load::<i32>(conn)
                 .unwrap_or_else(|_| vec![])
@@ -107,8 +104,8 @@ pub async fn submit_answer(
     answer: Json<NewAnswer>,
 ) -> Result<Json<()>, Json<ApplicationError>> {
     db.run(move |conn| {
-        let application =
-            Application::get(answer.application_id, &conn).ok_or(Json(ApplicationError::AppNotFound))?;
+        let application = Application::get(answer.application_id, &conn)
+            .ok_or(Json(ApplicationError::AppNotFound))?;
         if application.user_id != user.id {
             return Err(Json(ApplicationError::Unauthorized));
         }
