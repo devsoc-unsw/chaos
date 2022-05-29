@@ -5,7 +5,7 @@ use crate::{
     },
     state::ApiState,
 };
-use dotenv_codegen::dotenv;
+use dotenv;
 use jsonwebtoken::{Algorithm, Header, Validation};
 use reqwest::header;
 use rocket::{
@@ -92,9 +92,9 @@ async fn get_access_token(oauth_code: &str, state: &State<ApiState>) -> Option<S
     #[derive(Serialize)]
     struct TokenForm<'a> {
         code: &'a str,
-        client_id: &'static str,
-        client_secret: &'static str,
-        redirect_uri: &'static str,
+        client_id: String,
+        client_secret: String,
+        redirect_uri: String,
         grant_type: &'static str,
     }
 
@@ -113,9 +113,12 @@ async fn get_access_token(oauth_code: &str, state: &State<ApiState>) -> Option<S
         .post(GOOGLE_TOKEN_URL)
         .form(&TokenForm {
             code: oauth_code,
-            client_id: dotenv!("GOOGLE_CLIENT_ID"),
-            client_secret: dotenv!("GOOGLE_CLIENT_SECRET"),
-            redirect_uri: dotenv!("GOOGLE_REDIRECT_URI"),
+            client_id: dotenv::var("GOOGLE_CLIENT_ID")
+                .expect("GOOGLE_CLIENT_ID should be in env"),
+            client_secret: dotenv::var("GOOGLE_CLIENT_SECRET")
+                .expect("GOOGLE_CLIENT_SECRET should be in env"),
+            redirect_uri: dotenv::var("GOOGLE_REDIRECT_URI")
+                .expect("GOOGLE_CLIENT_SECRET should be in env"),
             grant_type: "authorization_code",
         })
         .send()
