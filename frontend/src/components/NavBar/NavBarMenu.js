@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import Button from '@mui/material/Button';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
+import React, { useState } from "react";
+import Button from "@mui/material/Button";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import { useNavigate } from "react-router-dom";
+import { removeStore } from "../../utils";
 
 const BasicMenu = () => {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -16,20 +17,28 @@ const BasicMenu = () => {
     setAnchorEl(null);
   };
 
-  const onNavClick = (nav='') => {
+  const onNavClick = (nav = "") => {
     if (nav) {
       navigate(nav);
     }
     handleClose();
-  }
+  };
+
+  const logout = () => {
+    ["name", "signup_token", "AUTH_TOKEN"].forEach((key) => {
+      removeStore(key);
+      navigate("/");
+      handleClose();
+    });
+  };
 
   return (
     <div>
       <Button
         id="basic-button"
-        aria-controls={open ? 'basic-menu' : undefined}
+        aria-controls={open ? "basic-menu" : undefined}
         aria-haspopup="true"
-        aria-expanded={open ? 'true' : undefined}
+        aria-expanded={open ? "true" : undefined}
         onClick={handleClick}
       >
         Menu
@@ -40,16 +49,25 @@ const BasicMenu = () => {
         open={open}
         onClose={handleClose}
         MenuListProps={{
-          'aria-labelledby': 'basic-button',
+          "aria-labelledby": "basic-button",
         }}
-      > 
-        <MenuItem onClick={/*FIXME*/() => onNavClick('/dashboard')}>Dashboard</MenuItem>
-        <MenuItem onClick={/*FIXME: should be isSuperUser && <MenuItem> so only displays if is admin */() => onNavClick('/admin')}>Admin</MenuItem>
-        <MenuItem onClick={/*FIXME*/handleClose}>Settings</MenuItem>
-        <MenuItem onClick={/*FIXME*/handleClose}>Logout</MenuItem>
+      >
+        <MenuItem onClick={/*FIXME*/ () => onNavClick("/dashboard")}>
+          Dashboard
+        </MenuItem>
+        <MenuItem
+          onClick={
+            /*FIXME: should be isSuperUser && <MenuItem> so only displays if is admin */ () =>
+              onNavClick("/admin")
+          }
+        >
+          Admin
+        </MenuItem>
+        <MenuItem onClick={/*FIXME*/ handleClose}>Settings</MenuItem>
+        <MenuItem onClick={logout}>Logout</MenuItem>
       </Menu>
     </div>
   );
-}
+};
 
 export default BasicMenu;
