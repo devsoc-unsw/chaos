@@ -648,13 +648,16 @@ impl Role {
     }
 
     pub fn delete_children(conn: &PgConnection, role: Role) -> Option<()> {
-        let question_items: Vec<Question> =
-            questions::table.filter(questions::role_id.eq(role.id))
+        use diesel::pg::expression::dsl::any;
+
+        let question_items: Vec<Question> = questions::table
+            .filter(any(questions::role_ids).eq(role.id))
             .load(conn)
             .ok()?;
 
         println!("Trying to delete questions");
-        diesel::delete(questions::table.filter(questions::role_id.eq(role.id)))
+        diesel::delete(questions::table
+            .filter(any(questions::role_ids).eq(role.id)))
             .execute(conn)
             .ok();
 
@@ -794,12 +797,11 @@ impl NewApplication {
     }
 }
 
-#[derive(Identifiable, Queryable, Associations, PartialEq, Serialize)]
-#[belongs_to(Role)]
+#[derive(Identifiable, Queryable, PartialEq, Serialize)]
 #[table_name = "questions"]
 pub struct Question {
     pub id: i32,
-    pub role_id: i32,
+    pub role_ids: Vec<i32>,
     pub title: String,
     pub description: Option<String>,
     pub max_bytes: i32,
@@ -811,7 +813,7 @@ pub struct Question {
 #[derive(Insertable)]
 #[table_name = "questions"]
 pub struct NewQuestion {
-    pub role_id: i32,
+    pub role_ids: Vec<i32>,
     pub title: String,
     pub description: Option<String>,
     pub max_bytes: i32,
@@ -821,7 +823,7 @@ pub struct NewQuestion {
 #[derive(Serialize)]
 pub struct QuestionResponse {
     pub id: i32,
-    pub role_id: i32,
+    pub role_ids: Vec<i32>,
     pub title: String,
     pub description: Option<String>,
     pub max_bytes: i32,
@@ -832,7 +834,7 @@ impl std::convert::From<Question> for QuestionResponse {
     fn from(question: Question) -> Self {
         Self {
             id: question.id,
-            role_id: question.role_id,
+            role_ids: question.role_ids,
             title: question.title,
             description: question.description,
             max_bytes: question.max_bytes,
@@ -851,6 +853,10 @@ pub struct UpdateQuestionInput {
 }
 
 impl Question {
+    pub fn get_first_role(&self) -> i32 {
+        *self.role_ids.get(0).expect("Question should be for at least one role")
+    }
+    
     pub fn get_all(conn: &PgConnection) -> Vec<Question> {
         use crate::database::schema::questions::dsl::*;
 
@@ -877,18 +883,19 @@ impl Question {
 
     pub fn get_all_from_role_id(conn: &PgConnection, role_id_val: i32) -> Vec<Question> {
         use crate::database::schema::questions::dsl::*;
+        use diesel::pg::expression::dsl::any;
 
         questions
-            .filter(role_id.eq(role_id_val))
-            .order(id.asc())
+            .filter(any(role_ids).eq(role_id_val))
             .load(conn)
             .unwrap_or_else(|_| vec![])
     }
 
     pub fn delete_all_from_role_id(conn: &PgConnection, role_id_val: i32) -> bool {
         use crate::database::schema::questions::dsl::*;
+        use diesel::pg::expression::dsl::any;
 
-        diesel::delete(questions.filter(role_id.eq(role_id_val)))
+        diesel::delete(questions.filter(any(role_ids).eq(role_id_val)))
             .execute(conn)
             .is_ok()
     }
