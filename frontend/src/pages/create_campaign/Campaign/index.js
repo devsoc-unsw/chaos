@@ -51,8 +51,8 @@ const CampaignTab = ({ campaign }) => {
               <input {...getInputProps()} />
               {cover === null && (
                 <p>
-                  Drag and drop your campaign cover image, or click to select
-                  an image
+                  Drag and drop your campaign cover image, or click to select an
+                  image
                 </p>
               )}
               {cover !== null && (

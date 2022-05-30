@@ -52,18 +52,18 @@ const BasicMenu = () => {
           "aria-labelledby": "basic-button",
         }}
       >
-        <MenuItem onClick={/*FIXME*/ () => onNavClick("/dashboard")}>
+        <MenuItem onClick={/* FIXME */ () => onNavClick("/dashboard")}>
           Dashboard
         </MenuItem>
         <MenuItem
           onClick={
-            /*FIXME: should be isSuperUser && <MenuItem> so only displays if is admin */ () =>
+            /* FIXME: should be isSuperUser && <MenuItem> so only displays if is admin */ () =>
               onNavClick("/admin")
           }
         >
           Admin
         </MenuItem>
-        <MenuItem onClick={/*FIXME*/ handleClose}>Settings</MenuItem>
+        <MenuItem onClick={/* FIXME */ handleClose}>Settings</MenuItem>
         <MenuItem onClick={logout}>Logout</MenuItem>
       </Menu>
     </div>
