@@ -21,7 +21,7 @@ const Rankings = () => {
   const setNavBarTitle = useContext(SetNavBarTitleContext);
   // TODO: CHAOS-12 handle candidates from multiple positions from BE
   const [selectedPosition, setSelectedPosition] = useState("");
-  const [rankings, setRankings] = useState([]);
+  const [rankings, setRankings] = useState({});
   const [positions, setPositions] = useState([]);
   const [applications, setApplications] = useState({});
 
@@ -117,8 +117,6 @@ const Rankings = () => {
       );
     })();
   }, []);
-
-  console.log(applications);
 
   const handleNext = () => {
     console.log(
