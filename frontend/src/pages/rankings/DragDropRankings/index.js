@@ -150,25 +150,29 @@ DragDropRankings.propTypes = {
     PropTypes.arrayOf(
       PropTypes.shape({
         name: PropTypes.string.isRequired,
-        ratings: PropTypes.shape({
-          rater: PropTypes.string.isRequired,
-          rating: PropTypes.number.isRequired,
-        }),
+        ratings: PropTypes.arrayOf(
+          PropTypes.shape({
+            rater: PropTypes.string.isRequired,
+            rating: PropTypes.number.isRequired,
+          })
+        ).isRequired,
       })
     )
   ).isRequired,
   setRankings: PropTypes.func.isRequired,
   selectedPosition: PropTypes.string.isRequired,
   applications: PropTypes.objectOf(
-    PropTypes.shape({
-      zid: PropTypes.string.isRequired,
-      questions: PropTypes.arrayOf(
-        PropTypes.shape({
-          question: PropTypes.string.isRequired,
-          answer: PropTypes.string.isRequired,
-        })
-      ),
-    })
+    PropTypes.objectOf(
+      PropTypes.shape({
+        zId: PropTypes.string.isRequired,
+        questions: PropTypes.arrayOf(
+          PropTypes.shape({
+            question: PropTypes.string.isRequired,
+            answer: PropTypes.string,
+          })
+        ),
+      })
+    )
   ).isRequired,
 };
 
