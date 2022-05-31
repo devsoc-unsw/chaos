@@ -28,5 +28,12 @@
     "react/jsx-props-no-spreading": [1, {
       "custom": "ignore"
     }]
+  },
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "moduleDirectory": ["node_modules", "src/"]
+      }
+    }
   }
 }

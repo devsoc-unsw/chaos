@@ -5,15 +5,15 @@ import React, {
   useState,
   createContext,
 } from "react";
-import { SetNavBarTitleContext } from "../../App";
+import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 import { AdminContainer } from "./admin.styled";
 import AdminSidebar from "../../components/AdminSideBar";
-import AdminContent from "../../components/AdminContent";
+import AdminContent from "./AdminContent";
 import { getAdminData } from "../../api";
 import { bytesToImage } from "../../utils";
+import { OrgContext } from "./OrgContext";
 
 export const isFormOpenContext = createContext(null);
-export const orgContext = createContext(null);
 
 const Admin = () => {
   const setNavBarTitle = useContext(SetNavBarTitleContext);
@@ -95,7 +95,7 @@ const Admin = () => {
   }, [orgSelected, orgList]);
 
   return (
-    <orgContext.Provider value={orgContextValue}>
+    <OrgContext.Provider value={orgContextValue}>
       <isFormOpenContext.Provider value={isFormOpenContextValue}>
         <AdminContainer>
           <AdminSidebar
@@ -117,7 +117,7 @@ const Admin = () => {
           />
         </AdminContainer>
       </isFormOpenContext.Provider>
-    </orgContext.Provider>
+    </OrgContext.Provider>
   );
 };
 

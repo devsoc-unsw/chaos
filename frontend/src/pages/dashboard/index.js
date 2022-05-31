@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Container } from "@mui/material";
+import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 import CampaignGrid from "./CampaignGrid";
-import { SetNavBarTitleContext } from "../../App";
 
 import { getAllCampaigns } from "../../api";
 

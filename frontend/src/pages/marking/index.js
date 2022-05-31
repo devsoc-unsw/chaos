@@ -3,9 +3,9 @@ import { Box, Container, Button, Grid, Tab } from "@mui/material";
 import { TabContext, TabList } from "@mui/lab";
 
 import { Link, useParams } from "react-router-dom";
+import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 import ReviewerStepper from "../../components/ReviewerStepper";
 import ApplicationsList from "./ApplicationsList";
-import { SetNavBarTitleContext } from "../../App";
 import {
   getApplicationAnswers,
   getApplicationRatings,
