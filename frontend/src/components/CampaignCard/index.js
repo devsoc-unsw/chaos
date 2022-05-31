@@ -22,6 +22,29 @@ import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import { ExpandIconButton } from "./campaignCard.styled";
 
+const positionStatuses = {
+  "Careers Director": "processing",
+  "Socials Director": "offered",
+};
+
+const status = {
+  processing: "Processing application",
+  offered: "Position offered",
+  rejected: "Application rejected",
+};
+
+const colors = {
+  processing: "warning",
+  offered: "success",
+  rejected: "error",
+};
+
+const icons = {
+  processing: <MoreHorizIcon />,
+  offered: <CheckIcon />,
+  rejected: <CloseIcon />,
+};
+
 const CampaignCard = ({
   title,
   appliedFor,
@@ -62,32 +85,10 @@ const CampaignCard = ({
                     <ListItemText
                       primary={
                         // TODO CHAOS-21: use backend to determine status of user application
-                        <Tooltip
-                          title={
-                            position === "Careers Director"
-                              ? "Processing application"
-                              : position === "Socials Director"
-                              ? "Position offered"
-                              : "Application rejected"
-                          }
-                        >
+                        <Tooltip title={status[positionStatuses[position]]}>
                           <Chip
-                            color={
-                              position === "Careers Director"
-                                ? "warning"
-                                : position === "Socials Director"
-                                ? "success"
-                                : "error"
-                            }
-                            icon={
-                              position === "Careers Director" ? (
-                                <MoreHorizIcon />
-                              ) : position === "Socials Director" ? (
-                                <CheckIcon />
-                              ) : (
-                                <CloseIcon />
-                              )
-                            }
+                            color={colors[positionStatuses[position]]}
+                            icon={icons[positionStatuses[position]]}
                             label={position}
                           />
                         </Tooltip>
