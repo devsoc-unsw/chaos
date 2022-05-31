@@ -22,6 +22,17 @@ FinalRatingApplicationComments.propTypes = {
   position: PropTypes.string.isRequired,
   open: PropTypes.bool.isRequired,
   handleClose: PropTypes.func.isRequired,
+  application: PropTypes.shape({
+    applicationId: PropTypes.string.isRequired,
+    zId: PropTypes.string.isRequired,
+    mark: PropTypes.number.isRequired,
+    questions: PropTypes.arrayOf(
+      PropTypes.shape({
+        question: PropTypes.string.isRequired,
+        answer: PropTypes.string.isRequired,
+      })
+    ),
+  }).isRequired,
 };
 
 export default FinalRatingApplicationComments;
