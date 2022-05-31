@@ -46,7 +46,7 @@ const ReviewTab = ({ campaign, onSubmit }) => {
     email: "firstlast@gmail.com",
     degree: "Bachelor of Science (Computer Science)",
   };
-  
+
   return (
     <>
       <InfoTextBox>

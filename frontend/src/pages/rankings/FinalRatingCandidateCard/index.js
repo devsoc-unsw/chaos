@@ -85,6 +85,17 @@ FinalRatingCandidateCard.propTypes = {
     })
   ).isRequired,
   reject: PropTypes.bool,
+  application: PropTypes.shape({
+    applicationId: PropTypes.string.isRequired,
+    zId: PropTypes.string.isRequired,
+    mark: PropTypes.number.isRequired,
+    questions: PropTypes.arrayOf(
+      PropTypes.shape({
+        question: PropTypes.string.isRequired,
+        answer: PropTypes.string.isRequired,
+      })
+    ),
+  }).isRequired,
 };
 
 FinalRatingCandidateCard.defaultProps = {

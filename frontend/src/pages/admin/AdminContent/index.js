@@ -12,10 +12,10 @@ import {
   ContentBody,
 } from "./adminContent.styled";
 
-import { orgContext } from "../../pages/admin";
+import { OrgContext } from "../OrgContext";
 import AdminCampaignContent from "./AdminCampaignContent";
 import AdminMembersContent from "./AdminMembersContent";
-import { doDeleteOrg } from "../../api";
+import { doDeleteOrg } from "../../../api";
 
 const AdminContent = ({
   org,
@@ -37,7 +37,7 @@ const AdminContent = ({
 
   const [windowSelected, setWindowSelected] = useState("campaigns");
   const { orgSelected, setOrgSelected, orgList, setOrgList } =
-    useContext(orgContext);
+    useContext(OrgContext);
 
   const handleDeletion = async () => {
     const res = await doDeleteOrg(id);

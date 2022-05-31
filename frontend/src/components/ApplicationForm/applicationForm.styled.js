@@ -73,7 +73,8 @@ export const SectionHeader = styled("h1")`
 `;
 
 export const RoleButton = styled(ToggleButton)`
-  &.Mui-selected, &.Mui-selected:hover {
+  &.Mui-selected,
+  &.Mui-selected:hover {
     color: white;
     background-color: #084cec;
   }

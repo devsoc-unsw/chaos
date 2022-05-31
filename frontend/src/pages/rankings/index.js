@@ -3,10 +3,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Container, Button, Grid, Typography } from "@mui/material";
 import { red, green } from "@mui/material/colors";
 
+import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 import RankingsToolbar from "./RankingsToolbar";
 import DragDropRankings from "./DragDropRankings";
 import ReviewerStepper from "../../components/ReviewerStepper";
-import { SetNavBarTitleContext } from "../../App";
 import {
   getApplicationAnswers,
   getApplicationRatings,

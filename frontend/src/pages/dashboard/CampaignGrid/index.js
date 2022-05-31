@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import { Grid } from "@mui/material";
 
@@ -27,6 +28,27 @@ const CampaignGrid = ({ campaigns }) => {
       ))}
     </Grid>
   );
+};
+
+CampaignGrid.propTypes = {
+  campaigns: PropTypes.arrayOf(
+    PropTypes.shape({
+      campaign: PropTypes.shape({
+        id: PropTypes.number.isRequired,
+        name: PropTypes.string.isRequired,
+        starts_at: PropTypes.string.isRequired,
+        ends_at: PropTypes.string.isRequired,
+        cover_image: PropTypes.arrayOf(PropTypes.number).isRequired,
+      }).isRequired,
+      applied_for: PropTypes.arrayOf(PropTypes.string).isRequired,
+      roles: PropTypes.arrayOf(
+        PropTypes.shape({
+          name: PropTypes.string.isRequired,
+          max_available: PropTypes.number.isRequired,
+        })
+      ).isRequired,
+    }).isRequired
+  ).isRequired,
 };
 
 export default CampaignGrid;

@@ -57,9 +57,9 @@ const AdminSidebar = ({
       setUploadedImage({ image: null, url: null });
       setInputText("");
       setIsFormOpen(false);
-      alert("New organisation created!");
+      console.log("New organisation created!");
     } else {
-      alert("Both image and text are required!");
+      console.error("Both image and text are required!");
     }
   };
 
