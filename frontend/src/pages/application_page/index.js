@@ -18,7 +18,7 @@ import {
 const Application = () => {
   const [campaign, setCampaign] = useState([]);
 
-  const campaignId = parseInt(useParams().campaignId);
+  const campaignId = parseInt(useParams().campaignId, 10);
   const { state } = useLocation();
 
   const [loading, setLoading] = useState(true);
