@@ -45,7 +45,7 @@ pub fn run_migrations() {
 
 #[rocket::main]
 async fn main() {
-    dotenv::dotenv().unwrap();
+    dotenv::dotenv().ok();
 
     run_migrations();
 
