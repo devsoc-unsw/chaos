@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { Container } from "@mui/material";
 import ApplicationForm from "../../components/ApplicationForm";
 import { bytesToImage } from "../../utils";
@@ -8,10 +8,33 @@ import {
   ArrowIcon,
   SubmitWrapper,
 } from "./applicationPage.styled";
-import { getSelfInfo, newApplication, submitAnswer } from "../../api";
+import {
+  getSelfInfo,
+  newApplication,
+  submitAnswer,
+  getAllCampaigns,
+} from "../../api";
 
 const Application = () => {
-  const campaign = useLocation().state;
+  const [campaign, setCampaign] = useState([]);
+
+  const { campaignId } = useParams();
+
+  const { state } = useLocation();
+
+  useEffect(async () => {
+    setCampaign(
+      state ||
+        (async () => {
+          const res = await getAllCampaigns();
+          const data = await res.json();
+          const current = data.current_campaigns;
+          return current.find((x) => x.campaign.id === campaignId);
+        })()
+    );
+  }, []);
+
+  const [loading, setLoading] = useState(true);
 
   const [selfInfo, setSelfInfo] = useState({});
   useEffect(() => {
@@ -21,7 +44,14 @@ const Application = () => {
       setSelfInfo(data);
     };
     getUserInfo();
+
+    setLoading(false);
   }, []);
+
+  const [rolesSelected, setRolesSelected] = useState([]);
+  const [answers, setAnswers] = useState({});
+
+  if (loading) return <div />;
 
   const { campaignName, headerImage, description, roles, questions, userInfo } =
     {
@@ -33,11 +63,16 @@ const Application = () => {
         title: r.name,
         quantity: r.max_available,
       })),
-      questions: campaign.questions.map((q) => ({
-        id: q.id,
-        text: q.title,
-        roles: new Set([q.role_id]),
-      })),
+      questions: campaign.questions.map((q) => {
+        if (!(q.id in answers)) {
+          answers[q.id] = "";
+        }
+        return {
+          id: q.id,
+          text: q.title,
+          roles: new Set([q.role_id]),
+        };
+      }),
       userInfo: {
         name: selfInfo.display_name,
         zid: selfInfo.zid,
@@ -45,17 +80,6 @@ const Application = () => {
         degree: selfInfo.degree_name,
       },
     };
-
-  const [rolesSelected, setRolesSelected] = useState([]);
-  const [answers, setAnswers] = useState({});
-  useEffect(() => {
-    questions.forEach((q) => {
-      if (!(q.id in answers)) {
-        answers[q.id] = "";
-      }
-    });
-    setAnswers(answers);
-  }, [questions]);
 
   const onSubmit = () => {
     //        CHAOS-53, useNavigate() link to post submission page once it is created :)

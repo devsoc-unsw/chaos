@@ -21,7 +21,7 @@ const CampaignGrid = ({ campaigns }) => {
             startDate={dateToString(new Date(campaign.campaign.starts_at))}
             endDate={dateToString(new Date(campaign.campaign.ends_at))}
             img={bytesToImage(campaign.campaign.cover_image)}
-            applyClick={() => navigate(`/application`, { state: campaign })}
+            applyClick={() => navigate(`/application/${campaign.campaign.id}`, { state: campaign })}
           />
         </Grid>
       ))}

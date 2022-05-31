@@ -32,7 +32,7 @@ const routes = [
   />,
   <Route
     key="ApplicationPage"
-    path="/application"
+    path="/application/:campaignId"
     element={<ApplicationPage />}
   />,
 ];
