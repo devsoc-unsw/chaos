@@ -78,6 +78,8 @@ jobs:
           push: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
           platforms: linux/amd64
           file: frontend/Dockerfile
+          build-args: |
+            REACT_APP_API_BASE_URL=""
           tags: |
             ghcr.io/csesoc/chaos-frontend:${{ github.sha }}
             ghcr.io/csesoc/chaos-frontend:latest

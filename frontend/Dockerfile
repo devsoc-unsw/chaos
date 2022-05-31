@@ -7,6 +7,9 @@ WORKDIR /app
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
 
+ARG REACT_APP_API_BASE_URL
+ENV REACT_APP_API_BASE_URL $REACT_APP_API_BASE_URL
+
 COPY . .
 
 RUN yarn run build
