@@ -75,7 +75,7 @@ const CreateCampaign = () => {
         questions.length === 0 ||
         roles.length === 0
       ) {
-        alert("All fields must be filled before reviewing!");
+        console.error("All fields must be filled before reviewing!");
         return;
       }
     }

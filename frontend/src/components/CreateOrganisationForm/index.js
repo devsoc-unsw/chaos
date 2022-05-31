@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import {
   FormContainer,
   ImageUploadWrapper,
@@ -36,5 +37,16 @@ const CreateOrganisationForm = ({
     <UploadButton onClick={onUpload}>+</UploadButton>
   </FormContainer>
 );
+
+CreateOrganisationForm.propTypes = {
+  uploadedImage: PropTypes.shape({
+    image: PropTypes.instanceOf(File),
+    url: PropTypes.string,
+  }).isRequired,
+  onFileChange: PropTypes.func.isRequired,
+  inputText: PropTypes.string.isRequired,
+  setInputText: PropTypes.func.isRequired,
+  onUpload: PropTypes.func.isRequired,
+};
 
 export default CreateOrganisationForm;

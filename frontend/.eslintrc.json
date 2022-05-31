@@ -24,7 +24,10 @@
         "namedComponents": "arrow-function",
         "unnamedComponents": "arrow-function"
       }
-    ]
+    ],
+    "react/jsx-props-no-spreading": [1, {
+      "custom": "ignore"
+    }]
   },
   "settings": {
     "import/resolver": {
