@@ -118,8 +118,6 @@ const Rankings = () => {
     })();
   }, []);
 
-  console.log(applications);
-
   const handleNext = () => {
     console.log(
       "Order:",
