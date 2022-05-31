@@ -2,9 +2,9 @@ import { Button } from "@mui/material";
 import React, { useContext, useEffect } from "react";
 import { Box } from "@mui/system";
 import { useNavigate } from "react-router-dom";
+import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 import { BackgroundWrapper, ParticleWallpaper } from "../../components";
 import { BoldTitle, Subtitle } from "./landing.styled";
-import { SetNavBarTitleContext } from "../../App";
 import { getStore } from "../../utils";
 
 const OAUTH_CALLBACK_URL =
