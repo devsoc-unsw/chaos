@@ -1,4 +1,10 @@
-import React, { useContext, useEffect, useState, createContext } from "react";
+import React, {
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  createContext,
+} from "react";
 import { SetNavBarTitleContext } from "../../App";
 import { AdminContainer } from "./admin.styled";
 import AdminSidebar from "../../components/AdminSideBar";
@@ -24,6 +30,14 @@ const Admin = () => {
 
   // FIXME: CHAOS-56, implement default behaviour for users w/ no org
   const [orgSelected, setOrgSelected] = useState(0);
+
+  const orgContextValue = useMemo(() => ({
+    orgSelected,
+    setOrgSelected,
+    orgList,
+    setOrgList,
+  }));
+  const isFormOpenContextValue = useMemo(() => ({ isFormOpen, setIsFormOpen }));
 
   useEffect(async () => {
     const data = (await (await getAdminData()).json()).organisations;
@@ -81,10 +95,8 @@ const Admin = () => {
   }, [orgSelected, orgList]);
 
   return (
-    <orgContext.Provider
-      value={{ orgSelected, setOrgSelected, orgList, setOrgList }}
-    >
-      <isFormOpenContext.Provider value={{ isFormOpen, setIsFormOpen }}>
+    <orgContext.Provider value={orgContextValue}>
+      <isFormOpenContext.Provider value={isFormOpenContextValue}>
         <AdminContainer>
           <AdminSidebar
             orgList={orgList}
