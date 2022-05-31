@@ -2,9 +2,10 @@ import React, { useContext, useEffect, useState, createContext } from "react";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 import { AdminContainer } from "./admin.styled";
 import AdminSidebar from "../../components/AdminSideBar";
-import AdminContent from "../../components/AdminContent";
+import AdminContent from "./AdminContent";
 import { getAdminData } from "../../api";
 import { bytesToImage } from "../../utils";
+import { OrgContext } from "./OrgContext";
 
 import DirectorDummy from "../dashboard/director.jpg";
 import ProjectLeadDummy from "../dashboard/project-lead.jpg";
@@ -13,7 +14,6 @@ import CSELogoDummy from "./CSESoc_logo.jpeg";
 import SECLogoDummy from "./SECSoc_logo.jpeg";
 
 export const isFormOpenContext = createContext(null);
-export const orgContext = createContext(null);
 
 // TODO: CHAOS-55, delete once request is implemented
 const campaignsData = [
@@ -202,7 +202,7 @@ const Admin = () => {
   }, [orgSelected, orgList]);
 
   return (
-    <orgContext.Provider
+    <OrgContext.Provider
       value={{ orgSelected, setOrgSelected, orgList, setOrgList }}
     >
       <isFormOpenContext.Provider value={{ isFormOpen, setIsFormOpen }}>
@@ -226,7 +226,7 @@ const Admin = () => {
           />
         </AdminContainer>
       </isFormOpenContext.Provider>
-    </orgContext.Provider>
+    </OrgContext.Provider>
   );
 };
 
