@@ -159,6 +159,17 @@ DragDropRankings.propTypes = {
   ).isRequired,
   setRankings: PropTypes.func.isRequired,
   selectedPosition: PropTypes.string.isRequired,
+  applications: PropTypes.objectOf(
+    PropTypes.shape({
+      zid: PropTypes.string.isRequired,
+      questions: PropTypes.arrayOf(
+        PropTypes.shape({
+          question: PropTypes.string.isRequired,
+          answer: PropTypes.string.isRequired,
+        })
+      ),
+    })
+  ).isRequired,
 };
 
 export default DragDropRankings;

@@ -1,8 +1,9 @@
-import React, { Suspense, createContext, useState } from "react";
+import React, { Suspense, useState } from "react";
 import { BrowserRouter, Routes } from "react-router-dom";
 import { SnackbarProvider } from "notistack";
 import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 import { NavBar, LoadingIndicator } from "./components";
+import { SetNavBarTitleContext } from "./contexts/SetNavbarTitleContext";
 import routes from "./routes";
 
 const theme = createTheme({
@@ -27,8 +28,6 @@ const theme = createTheme({
     },
   },
 });
-
-export const SetNavBarTitleContext = createContext(() => {});
 
 const App = () => {
   const [AppBarTitle, setNavBarTitle] = useState("");

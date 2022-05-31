@@ -102,11 +102,11 @@ const RolesTab = ({ campaign }) => {
 
   const addQuestion = () => {
     if (questions.some((q) => q.text === "")) {
-      alert(
+      console.error(
         "Please add text to existing questions before creating a new question!"
       );
     } else if (roleSelected === "-1") {
-      alert(
+      console.error(
         "Please create and select one or more roles before adding questions!"
       );
     } else {
@@ -120,7 +120,7 @@ const RolesTab = ({ campaign }) => {
   const addRole = () => {
     const newID = uuidv4();
     if (!newRoleName) {
-      alert("Role name is required!");
+      console.error("Role name is required!");
     } else {
       setRoles([
         ...roles,

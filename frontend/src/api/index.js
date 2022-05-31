@@ -2,12 +2,12 @@
 import { getStore } from "../utils";
 import API from "./api";
 
-export const authenticate = async (oauth_token) =>
+export const authenticate = async (oauthToken) =>
   API.request({
     method: "POST",
     path: `/auth/signin`,
     body: {
-      oauth_token,
+      oauth_token: oauthToken,
     },
   });
 
@@ -64,10 +64,17 @@ export const createOrganisation = (name, logo) =>
     body: { name, logo },
   });
 
-export const doDeleteOrg = (org_id) =>
+export const newApplication = (roleId) =>
+  authenticatedRequest({
+    method: "POST",
+    path: "/application/new",
+    body: { role_id: roleId, "status": "Pending" },
+  });
+
+export const doDeleteOrg = (orgId) =>
   authenticatedRequest({
     method: "DELETE",
-    path: `/organisation/${org_id}`,
+    path: `/organisation/${orgId}`,
   });
 
 export const getCampaignRoles = (campaignId) =>
@@ -88,8 +95,21 @@ export const setApplicationRating = (applicationId, rating) =>
     },
   });
 
+export const getSelfInfo = () => authenticatedRequest({ path: "/user" });
+
 export const getApplicationAnswers = (applicationId) =>
   authenticatedRequest({ path: `/application/${applicationId}/answers` });
 
 export const getApplicationRatings = (applicationId) =>
   authenticatedRequest({ path: `/application/${applicationId}/ratings` });
+
+export const submitAnswer = (applicationId, questionId, description) =>
+  authenticatedRequest({
+    method: "POST",
+    path: `/application/answer/`,
+    body: {
+      application_id: applicationId,
+      question_id: questionId,
+      description,
+    },
+  });
