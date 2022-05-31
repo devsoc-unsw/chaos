@@ -48,6 +48,7 @@ const CampaignTab = ({ campaign }) => {
         {({ getRootProps, getInputProps }) => (
           <section>
             <CampaignDropzone {...getRootProps()}>
+              {/* eslint-disable-next-line react/jsx-props-no-spreading -- this *should* be fine here */}
               <input {...getInputProps()} />
               {cover === null && (
                 <p>
