@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import PropTypes from "prop-types";
 import { Dialog, DialogTitle, DialogContent, Divider } from "@mui/material";
 import ApplicationPreviewer from "../../../components/ApplicationPreviewer";
