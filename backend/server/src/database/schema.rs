@@ -102,7 +102,7 @@ table! {
 
 table! {
     use diesel::sql_types::*;
-    
+
     questions (id) {
         id -> Int4,
         role_ids -> Array<Int4>,

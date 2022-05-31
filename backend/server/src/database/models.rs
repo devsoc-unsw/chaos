@@ -199,6 +199,10 @@ impl Organisation {
 
         let num = Organisation::delete(conn, org_id)?;
 
+        if num < 1 {
+            return None;
+        }
+
         Some(())
     }
 
@@ -669,8 +673,7 @@ impl Role {
             .ok()?;
 
         println!("Trying to delete questions");
-        diesel::delete(questions::table
-            .filter(any(questions::role_ids).eq(role.id)))
+        diesel::delete(questions::table.filter(any(questions::role_ids).eq(role.id)))
             .execute(conn)
             .ok();
 
@@ -814,7 +817,7 @@ impl NewApplication {
     }
 }
 
-#[derive(Identifiable, Queryable, PartialEq, Serialize)]
+#[derive(Identifiable, Queryable, PartialEq, Serialize, Debug, QueryableByName)]
 #[table_name = "questions"]
 pub struct Question {
     pub id: i32,
@@ -871,9 +874,12 @@ pub struct UpdateQuestionInput {
 
 impl Question {
     pub fn get_first_role(&self) -> i32 {
-        *self.role_ids.get(0).expect("Question should be for at least one role")
+        *self
+            .role_ids
+            .get(0)
+            .expect("Question should be for at least one role")
     }
-    
+
     pub fn get_all(conn: &PgConnection) -> Vec<Question> {
         use crate::database::schema::questions::dsl::*;
 
@@ -899,22 +905,21 @@ impl Question {
     }
 
     pub fn get_all_from_role_id(conn: &PgConnection, role_id_val: i32) -> Vec<Question> {
-        use crate::database::schema::questions::dsl::*;
-        use diesel::pg::expression::dsl::any;
-
-        questions
-            .filter(any(role_ids).eq(role_id_val))
-            .load(conn)
-            .unwrap_or_else(|_| vec![])
+        diesel::sql_query(&format!(
+            "select * from questions where {} = any(role_ids)",
+            role_id_val
+        ))
+        .load::<Question>(conn)
+        .unwrap_or_else(|_| vec![])
     }
 
     pub fn delete_all_from_role_id(conn: &PgConnection, role_id_val: i32) -> bool {
-        use crate::database::schema::questions::dsl::*;
-        use diesel::pg::expression::dsl::any;
-
-        diesel::delete(questions.filter(any(role_ids).eq(role_id_val)))
-            .execute(conn)
-            .is_ok()
+        diesel::sql_query(&format!(
+            "delete from questions where {} = any(role_ids)",
+            role_id_val
+        ))
+        .execute(conn)
+        .is_ok()
     }
 
     pub fn delete(conn: &PgConnection, question_id: i32) -> bool {

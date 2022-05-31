@@ -6,10 +6,10 @@ extern crate diesel_migrations;
 use backend::auth::Auth;
 use backend::cors::cors;
 use backend::database::Database;
-use rocket::routes;
-use diesel_migrations::*;
-use diesel::prelude::*;
 use diesel::pg::PgConnection;
+use diesel::prelude::*;
+use diesel_migrations::*;
+use rocket::routes;
 use std::env;
 
 #[rocket::get("/foo")]
@@ -29,8 +29,7 @@ pub fn run_migrations() {
     let main_connection = PgConnection::establish(&database_url_no_chaos)
         .expect(&format!("Error connecting to {}", database_url_no_chaos));
 
-    match diesel::sql_query("CREATE DATABASE chaos")
-        .execute(&main_connection) {
+    match diesel::sql_query("CREATE DATABASE chaos").execute(&main_connection) {
         _ => (),
     };
 

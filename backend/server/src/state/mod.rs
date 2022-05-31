@@ -1,14 +1,14 @@
+use dotenv;
 use jsonwebtoken::{DecodingKey, EncodingKey};
+use once_cell::sync::OnceCell;
 use reqwest::Client;
 use serde_json::Value;
-use once_cell::sync::OnceCell;
-use dotenv;
 
 const GOOGLE_OPENID_DISCOVERY_URL: &str =
     "https://accounts.google.com/.well-known/openid-configuration";
 const GOOGLE_OPENID_USERINFO_KEY: &str = "userinfo_endpoint";
 
-pub struct GlobalStringRef { }
+pub struct GlobalStringRef {}
 
 static INSTANCE: OnceCell<String> = OnceCell::new();
 
@@ -28,10 +28,11 @@ pub struct ApiState {
 pub async fn api_state() -> ApiState {
     let reqwest_client = Client::new();
 
-    let jwt_secret = dotenv::var("JWT_SECRET")
-        .expect("JWT_SECRET should be in env");
+    let jwt_secret = dotenv::var("JWT_SECRET").expect("JWT_SECRET should be in env");
 
-    INSTANCE.set(jwt_secret).expect("Failed to initialize jwt_secret");
+    INSTANCE
+        .set(jwt_secret)
+        .expect("Failed to initialize jwt_secret");
 
     let discovery = reqwest::get(GOOGLE_OPENID_DISCOVERY_URL)
         .await
