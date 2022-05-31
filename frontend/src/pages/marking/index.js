@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Box, Container, Button, Grid, Tab } from "@mui/material";
-import { TabContext, TabList, TabPanel } from "@mui/lab";
+import { TabContext, TabList } from "@mui/lab";
 
 import { Link, useParams } from "react-router-dom";
 import ReviewerStepper from "../../components/ReviewerStepper";
