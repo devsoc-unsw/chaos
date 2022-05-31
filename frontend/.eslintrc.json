@@ -25,5 +25,12 @@
         "unnamedComponents": "arrow-function"
       }
     ]
+  },
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "moduleDirectory": ["node_modules", "src/"]
+      }
+    }
   }
 }
