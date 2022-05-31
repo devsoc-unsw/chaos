@@ -1,5 +1,5 @@
 import { styled as muiStyled } from "@mui/material/styles";
-import { Container, TextField, Button } from "@mui/material";
+import { Container, TextField } from "@mui/material";
 import styled from "@emotion/styled";
 
 export const CampaignContainer = muiStyled(Container)(() => ({
