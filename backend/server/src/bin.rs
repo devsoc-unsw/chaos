@@ -40,7 +40,9 @@ async fn main() {
     .into_iter()
     .collect();
 
-    let figment = Figment::from(rocket::Config::default())
+    let mut default_config = rocket::Config::default();
+    default_config.address = "0.0.0.0".parse().unwrap();
+    let figment = Figment::from(default_config)
         .merge(Serialized::defaults(database_map));
 
     rocket::custom(figment)
