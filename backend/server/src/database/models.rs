@@ -6,10 +6,8 @@ use super::schema::{
 };
 use chrono::NaiveDateTime;
 use chrono::Utc;
-use diesel::prelude::BelongingToDsl;
 use diesel::prelude::*;
 use diesel::PgConnection;
-use itertools::Itertools;
 use rocket::FromForm;
 use serde::{Deserialize, Serialize};
 
@@ -197,9 +195,7 @@ impl Organisation {
             .execute(conn)
             .ok();
 
-        let num = Organisation::delete(conn, org_id)?;
-
-        Some(())
+        Organisation::delete(conn, org_id).map(|_| ())
     }
 
     pub fn find_by_name(conn: &PgConnection, organisation_name: &str) -> Option<Organisation> {

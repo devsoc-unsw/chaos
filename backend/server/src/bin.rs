@@ -11,6 +11,8 @@ use diesel_migrations::*;
 use diesel::prelude::*;
 use diesel::pg::PgConnection;
 use std::env;
+use std::collections::HashMap;
+use figment::{Figment, providers::Serialized};
 
 #[rocket::get("/foo")]
 fn authed_call(auth: Auth) -> String {
@@ -19,41 +21,29 @@ fn authed_call(auth: Auth) -> String {
 
 embed_migrations!();
 
-pub fn run_migrations() {
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-
-    assert!(&database_url[database_url.len() - 5..] == "chaos");
-
-    let database_url_no_chaos = String::from(&database_url[..database_url.len() - 5]);
-
-    let main_connection = PgConnection::establish(&database_url_no_chaos)
-        .expect(&format!("Error connecting to {}", database_url_no_chaos));
-
-    match diesel::sql_query("CREATE DATABASE chaos")
-        .execute(&main_connection) {
-        _ => (),
-    };
-
-    let chaos_connection = PgConnection::establish(&database_url)
-        .expect(&format!("Error connecting to {}", database_url));
-
-    embedded_migrations::run_with_output(&chaos_connection, &mut std::io::stdout())
-        .expect("Failed to run migrations");
-
-    println!("Finishing running migrations");
-}
-
 #[rocket::main]
 async fn main() {
     dotenv::dotenv().ok();
 
-    run_migrations();
+    let db_url = run_migrations();
 
     let api_state = backend::state::api_state().await;
 
     let cors = cors();
 
-    rocket::build()
+    let database_map: HashMap<&str, HashMap<&str, HashMap<&str, &str>>> = [
+        ("databases", 
+         [("database", [("url", &db_url[..])].into_iter().collect())]
+            .into_iter().collect()
+        )
+    ]
+    .into_iter()
+    .collect();
+
+    let figment = Figment::from(rocket::Config::default())
+        .merge(Serialized::defaults(database_map));
+
+    rocket::custom(figment)
         .manage(api_state)
         .attach(Database::fairing())
         .attach(cors)
@@ -133,4 +123,30 @@ async fn main() {
         .launch()
         .await
         .unwrap();
+}
+
+fn run_migrations() -> String {
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+
+    assert!(&database_url[database_url.len() - 5..] == "chaos");
+
+    let database_url_no_chaos = String::from(&database_url[..database_url.len() - 5]);
+
+    let main_connection = PgConnection::establish(&database_url_no_chaos)
+        .expect(&format!("Error connecting to {}", database_url_no_chaos));
+
+    match diesel::sql_query("CREATE DATABASE chaos")
+        .execute(&main_connection) {
+        _ => (),
+    };
+
+    let chaos_connection = PgConnection::establish(&database_url)
+        .expect(&format!("Error connecting to {}", database_url));
+
+    embedded_migrations::run_with_output(&chaos_connection, &mut std::io::stdout())
+        .expect("Failed to run migrations");
+
+    println!("Finishing running migrations");
+
+    return database_url;
 }

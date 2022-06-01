@@ -6,7 +6,6 @@ use crate::database::{
     Database,
 };
 use rocket::{
-    form::Form,
     get, post, put,
     serde::{json::Json, Deserialize, Serialize},
     FromForm,

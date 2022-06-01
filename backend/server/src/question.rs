@@ -7,7 +7,6 @@ use crate::database::{
 
 use rocket::{
     delete,
-    form::Form,
     get, put,
     serde::{json::Json, Serialize},
 };
