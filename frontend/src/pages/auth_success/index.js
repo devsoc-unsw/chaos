@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { authenticate } from "../../api";
 import { LoadingIndicator } from "../../components";
@@ -10,10 +10,10 @@ const AuthSuccess = () => {
   const query = useQuery();
   const navigate = useNavigate();
 
-  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
-  const [needsSignup, setNeedsSignup] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState({ message: null });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [needsSignup, setNeedsSignup] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState({ message: null });
 
   useEffect(() => {
     async function attemptAuth() {
