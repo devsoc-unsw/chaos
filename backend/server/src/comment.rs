@@ -6,7 +6,9 @@ use rocket::{
     form::Form,
     get, post,
     serde::{json::Json, Serialize},
+    http::Status,
 };
+use crate::error::JsonErr;
 
 #[derive(Serialize)]
 pub enum CommentError {
@@ -20,7 +22,7 @@ pub async fn create_comment(
     new_comment: Form<NewComment>,
     user: User,
     db: Database,
-) -> Result<Json<Comment>, Json<CommentError>> {
+) -> Result<Json<Comment>, JsonErr<CommentError>> {
     // need to be director to comment
     let app_id = new_comment.application_id; // stack copy of i32
     db.run(move |conn| {
@@ -29,12 +31,12 @@ pub async fn create_comment(
             .check()
     })
     .await
-    .or_else(|_| Err(Json(CommentError::Unauthorized)))?;
+    .or_else(|_| Err(JsonErr(CommentError::Unauthorized, Status::Forbidden)))?;
 
     let comment = db
         .run(move |conn| NewComment::insert(&new_comment, conn))
         .await
-        .ok_or_else(|| Json(CommentError::CouldNotInsert))?;
+        .ok_or_else(|| JsonErr(CommentError::CouldNotInsert, Status::InternalServerError))?;
 
     Ok(Json(comment))
 }
@@ -44,19 +46,19 @@ pub async fn get_comment_from_id(
     comment_id: i32,
     user: User,
     db: Database,
-) -> Result<Json<Comment>, Json<CommentError>> {
+) -> Result<Json<Comment>, JsonErr<CommentError>> {
     db.run(move |conn| {
         OrganisationUser::comment_admin_level(comment_id, user.id, &conn)
             .is_at_least_director()
             .check()
     })
     .await
-    .or_else(|_| Err(Json(CommentError::Unauthorized)))?;
+    .or_else(|_| Err(JsonErr(CommentError::Unauthorized, Status::Forbidden)))?;
 
     let comment = db
         .run(move |conn| Comment::get_from_id(conn, comment_id))
         .await
-        .ok_or_else(|| Json(CommentError::CommentNotFound))?;
+        .ok_or_else(|| JsonErr(CommentError::CommentNotFound, Status::NotFound))?;
 
     Ok(Json(comment))
 }

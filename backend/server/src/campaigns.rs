@@ -5,8 +5,9 @@ use crate::database::{
     },
     Database,
 };
-use rocket::{delete, get, post, put, serde::json::Json};
+use rocket::{delete, get, post, put, serde::json::Json, http::Status};
 use serde::Serialize;
+use crate::error::JsonErr;
 
 #[derive(Serialize)]
 pub enum CampaignError {
@@ -16,14 +17,14 @@ pub enum CampaignError {
 }
 
 #[get("/<campaign_id>")]
-pub async fn get(campaign_id: i32, db: Database) -> Result<Json<Campaign>, Json<CampaignError>> {
+pub async fn get(campaign_id: i32, db: Database) -> Result<Json<Campaign>, JsonErr<CampaignError>> {
     let campaign = db
         .run(move |conn| Campaign::get_from_id(conn, campaign_id))
         .await;
 
     match campaign {
         Some(campaign) => Ok(Json(campaign)),
-        None => Err(Json(CampaignError::CampaignNotFound)),
+        None => Err(JsonErr(CampaignError::CampaignNotFound, Status::NotFound)),
     }
 }
 
@@ -54,12 +55,12 @@ pub async fn update(
     update_campaign: Json<UpdateCampaignInput>,
     user: User,
     db: Database,
-) -> Result<Json<()>, Json<CampaignError>> {
+) -> Result<Json<()>, JsonErr<CampaignError>> {
     db.run(move |conn| {
         OrganisationUser::campaign_admin_level(campaign_id, user.id, &conn)
             .is_at_least_director()
             .check()
-            .or_else(|_| Err(Json(CampaignError::Unauthorized)))?;
+            .or_else(|_| Err(JsonErr(CampaignError::Unauthorized, Status::Forbidden)))?;
 
         Campaign::update(conn, campaign_id, &update_campaign);
 
@@ -73,16 +74,16 @@ pub async fn create(
     new_campaign: Json<NewCampaignInput>,
     user: User,
     db: Database,
-) -> Result<Json<Campaign>, Json<CampaignError>> {
+) -> Result<Json<Campaign>, JsonErr<CampaignError>> {
     let inner = new_campaign.into_inner();
     db.run(move |conn| {
         OrganisationUser::organisation_admin_level(inner.organisation_id, user.id, &conn)
             .is_at_least_director()
             .check()
-            .or_else(|_| Err(Json(CampaignError::Unauthorized)))?;
+            .or_else(|_| Err(JsonErr(CampaignError::Unauthorized, Status::Forbidden)))?;
 
         let campaign =
-            Campaign::create(conn, &inner).ok_or_else(|| Json(CampaignError::UnableToCreate))?;
+            Campaign::create(conn, &inner).ok_or_else(|| JsonErr(CampaignError::UnableToCreate, Status::InternalServerError))?;
 
         Ok(Json(campaign))
     })
@@ -94,13 +95,13 @@ pub async fn delete_campaign(
     campaign_id: i32,
     user: User,
     db: Database,
-) -> Result<Json<()>, Json<CampaignError>> {
+) -> Result<Json<()>, JsonErr<CampaignError>> {
     db.run(move |conn| {
         // need to be admin to create new campaign
         OrganisationUser::campaign_admin_level(campaign_id, user.id, &conn)
             .is_admin()
             .check()
-            .or_else(|_| Err(Json(CampaignError::Unauthorized)))?;
+            .or_else(|_| Err(JsonErr(CampaignError::Unauthorized, Status::Forbidden)))?;
 
         Campaign::delete_deep(conn, campaign_id);
 
@@ -126,16 +127,16 @@ pub async fn roles(
     campaign_id: i32, // campaign_id has namespace conflict
     user: User,
     db: Database,
-) -> Result<Json<RolesResponse>, Json<RolesError>> {
+) -> Result<Json<RolesResponse>, JsonErr<RolesError>> {
     db.run(move |conn| {
         let campaign = Campaign::get_from_id(conn, campaign_id)
-            .ok_or_else(|| Json(RolesError::CampaignNotFound))?;
+            .ok_or_else(|| JsonErr(RolesError::CampaignNotFound, Status::NotFound))?;
 
         OrganisationUser::campaign_admin_level(campaign_id, user.id, &conn)
             .is_at_least_director()
             .or(campaign.published) // only if not (read only and campaign is unpublished)
             .check()
-            .or_else(|_| Err(Json(RolesError::Unauthorized)))?;
+            .or_else(|_| Err(JsonErr(RolesError::Unauthorized, Status::Forbidden)))?;
 
         let roles = Role::get_all_from_campaign_id(conn, campaign.id);
 
