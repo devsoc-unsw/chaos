@@ -13,31 +13,32 @@ const AuthSuccess = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [needsSignup, setNeedsSignup] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState({ message: null });
+  const [error, setError] = useState({ message: "" });
 
   useEffect(() => {
     async function attemptAuth() {
       const code = query.get("code");
       console.log(code);
       if (code) {
-        await authenticate(code)
-          .then((res) => res.json())
-          .then((data) => {
-            if (data[SIGNUP_REQUIRED]) {
-              setNeedsSignup(true);
-              setIsLoading(false);
-              setStore("name", data[SIGNUP_REQUIRED].name);
-              setStore("signup_token", data[SIGNUP_REQUIRED].signup_token);
-            } else {
-              localStorage.setItem("AUTH_TOKEN", data.token);
-              setIsAuthenticated(true);
-              setIsLoading(false);
-            }
-          })
-          .catch((err) => {
-            setIsLoading(false);
-            setError(err);
-          });
+        let data;
+        try {
+          const res = await authenticate(code);
+          data = await res.json();
+        } catch (err) {
+          setIsLoading(false);
+          setError(err);
+        }
+
+        if (data[SIGNUP_REQUIRED]) {
+          setNeedsSignup(true);
+          setIsLoading(false);
+          setStore("name", data[SIGNUP_REQUIRED].name);
+          setStore("signup_token", data[SIGNUP_REQUIRED].signup_token);
+        } else {
+          localStorage.setItem("AUTH_TOKEN", data.token);
+          setIsAuthenticated(true);
+          setIsLoading(false);
+        }
       }
     }
 
