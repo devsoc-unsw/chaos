@@ -2,7 +2,7 @@ const API_URL = process.env.REACT_APP_API_BASE_URL;
 
 // takes in an object
 const API = {
-  request: async ({ path, body, header, queries = {}, method = "GET" }) => {
+  request: ({ path, body, header, queries = {}, method = "GET" }) => {
     const endpoint = new URL(`${API_URL}${path}`);
     endpoint.search = new URLSearchParams(queries);
 

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { authenticate } from "../../api";
 import { LoadingIndicator } from "../../components";
@@ -10,34 +10,37 @@ const AuthSuccess = () => {
   const query = useQuery();
   const navigate = useNavigate();
 
-  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
-  const [needsSignup, setNeedsSignup] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [needsSignup, setNeedsSignup] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState({ message: "" });
 
   useEffect(() => {
     async function attemptAuth() {
       const code = query.get("code");
       console.log(code);
       if (code) {
-        await authenticate(code)
-          .then((res) => res.json())
-          .then((data) => {
-            if (data[SIGNUP_REQUIRED]) {
-              setNeedsSignup(true);
-              setIsLoading(false);
-              setStore("name", data[SIGNUP_REQUIRED].name);
-              setStore("signup_token", data[SIGNUP_REQUIRED].signup_token);
-            } else {
-              localStorage.setItem("AUTH_TOKEN", data.token);
-              setIsAuthenticated(true);
-              setIsLoading(false);
-            }
-          })
-          .catch((err) => {
-            setIsLoading(false);
-            setError(err);
-          });
+        let data;
+        try {
+          const res = await authenticate(code);
+          data = await res.json();
+        } catch (err) {
+          console.error(err);
+          setError(err);
+          setIsLoading(false);
+          return;
+        }
+
+        if (data[SIGNUP_REQUIRED]) {
+          setNeedsSignup(true);
+          setIsLoading(false);
+          setStore("name", data[SIGNUP_REQUIRED].name);
+          setStore("signup_token", data[SIGNUP_REQUIRED].signup_token);
+        } else {
+          localStorage.setItem("AUTH_TOKEN", data.token);
+          setIsAuthenticated(true);
+          setIsLoading(false);
+        }
       }
     }
 
@@ -60,7 +63,7 @@ const AuthSuccess = () => {
     ) : (
       <div>
         <h1>Not Authenticated</h1>
-        {error.message}
+        Error: {error.message}
       </div>
     );
 
