@@ -2,9 +2,11 @@ use crate::database::{
     models::{Application, Campaign, OrganisationUser, User},
     Database,
 };
+use crate::error::JsonErr;
 use diesel::PgConnection;
 use rocket::{
     get,
+    http::Status,
     serde::{json::Json, Serialize},
 };
 
@@ -43,14 +45,14 @@ fn user_is_boss(boss_user: &User, user: &User, conn: &PgConnection) -> bool {
 }
 
 #[get("/")]
-pub async fn get(user: User) -> Result<Json<UserResponse>, Json<UserError>> {
-    Ok(Json(UserResponse {
+pub async fn get(user: User) -> Json<UserResponse> {
+    Json(UserResponse {
         email: user.email,
         zid: user.zid,
         display_name: user.display_name,
         degree_name: user.degree_name,
         degree_starting_year: user.degree_starting_year,
-    }))
+    })
 }
 
 #[get("/<user_id>")]
@@ -58,9 +60,10 @@ pub async fn get_user(
     user_id: i32,
     user: User,
     db: Database,
-) -> Result<Json<UserResponse>, Json<UserError>> {
+) -> Result<Json<UserResponse>, JsonErr<UserError>> {
     db.run(move |conn| {
-        let res = User::get_from_id(&conn, user_id).ok_or(Json(UserError::UserNotFound))?;
+        let res = User::get_from_id(&conn, user_id)
+            .ok_or(JsonErr(UserError::UserNotFound, Status::NotFound))?;
 
         if user_is_boss(&user, &res, conn) {
             Ok(Json(UserResponse {
@@ -71,18 +74,15 @@ pub async fn get_user(
                 degree_starting_year: user.degree_starting_year,
             }))
         } else {
-            Err(Json(UserError::PermissionDenied))
+            Err(JsonErr(UserError::PermissionDenied, Status::Forbidden))
         }
     })
     .await
 }
 
 #[get("/campaigns")]
-pub async fn get_user_campaigns(
-    user: User,
-    db: Database,
-) -> Result<Json<Vec<Campaign>>, Json<UserError>> {
+pub async fn get_user_campaigns(user: User, db: Database) -> Json<Vec<Campaign>> {
     let campaigns = db.run(move |conn| user.get_all_campaigns(conn)).await;
 
-    Ok(Json(campaigns))
+    Json(campaigns)
 }

@@ -6,13 +6,13 @@ extern crate diesel_migrations;
 use backend::auth::Auth;
 use backend::cors::cors;
 use backend::database::Database;
-use rocket::routes;
-use diesel_migrations::*;
-use diesel::prelude::*;
 use diesel::pg::PgConnection;
-use std::env;
+use diesel::prelude::*;
+use diesel_migrations::*;
+use figment::{providers::Serialized, Figment};
+use rocket::routes;
 use std::collections::HashMap;
-use figment::{Figment, providers::Serialized};
+use std::env;
 
 #[rocket::get("/foo")]
 fn authed_call(auth: Auth) -> String {
@@ -31,19 +31,18 @@ async fn main() {
 
     let cors = cors();
 
-    let database_map: HashMap<&str, HashMap<&str, HashMap<&str, &str>>> = [
-        ("databases", 
-         [("database", [("url", &db_url[..])].into_iter().collect())]
-            .into_iter().collect()
-        )
-    ]
+    let database_map: HashMap<&str, HashMap<&str, HashMap<&str, &str>>> = [(
+        "databases",
+        [("database", [("url", &db_url[..])].into_iter().collect())]
+            .into_iter()
+            .collect(),
+    )]
     .into_iter()
     .collect();
 
     let mut default_config = rocket::Config::default();
     default_config.address = "0.0.0.0".parse().unwrap();
-    let figment = Figment::from(default_config)
-        .merge(Serialized::defaults(database_map));
+    let figment = Figment::from(default_config).merge(Serialized::defaults(database_map));
 
     rocket::custom(figment)
         .manage(api_state)
@@ -137,8 +136,7 @@ fn run_migrations() -> String {
     let main_connection = PgConnection::establish(&database_url_no_chaos)
         .expect(&format!("Error connecting to {}", database_url_no_chaos));
 
-    match diesel::sql_query("CREATE DATABASE chaos")
-        .execute(&main_connection) {
+    match diesel::sql_query("CREATE DATABASE chaos").execute(&main_connection) {
         _ => (),
     };
 

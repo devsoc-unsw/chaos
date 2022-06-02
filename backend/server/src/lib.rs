@@ -8,6 +8,7 @@ pub mod campaigns;
 pub mod comment;
 pub mod cors;
 pub mod database;
+pub mod error;
 pub mod guard;
 pub mod organisation;
 pub mod permissions;

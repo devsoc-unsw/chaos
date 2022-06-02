@@ -9,8 +9,7 @@ use crate::database::{
 use chrono::NaiveDateTime;
 use diesel::PgConnection;
 use rocket::{
-    delete,
-    get, post, put,
+    delete, get, post, put,
     serde::{json::Json, Serialize},
 };
 
