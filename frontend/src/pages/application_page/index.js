@@ -18,34 +18,38 @@ import {
 const Application = () => {
   const [campaign, setCampaign] = useState([]);
 
-  const { campaignId } = useParams();
-
+  const campaignId = parseInt(useParams().campaignId, 10);
   const { state } = useLocation();
-
-  useEffect(async () => {
-    setCampaign(
-      state ||
-        (async () => {
-          const res = await getAllCampaigns();
-          const data = await res.json();
-          const current = data.current_campaigns;
-          return current.find((x) => x.campaign.id === campaignId);
-        })()
-    );
-  }, []);
 
   const [loading, setLoading] = useState(true);
 
   const [selfInfo, setSelfInfo] = useState({});
   useEffect(() => {
-    const getUserInfo = async () => {
-      const res = await getSelfInfo();
-      const data = await res.json();
-      setSelfInfo(data);
-    };
-    getUserInfo();
+    const getData = async () => {
+      const getUserInfo = async () => {
+        const res = await getSelfInfo();
+        const data = await res.json();
+        setSelfInfo(data);
+      };
+      await getUserInfo();
 
-    setLoading(false);
+      const getCampaign = async () => {
+        const newCampaign =
+          state ||
+          (await (async () => {
+            const res = await getAllCampaigns();
+            const data = await res.json();
+            const current = data.current_campaigns;
+            return current.find((x) => x.campaign.id === campaignId);
+          })());
+        setCampaign(newCampaign);
+      };
+      await getCampaign();
+
+      setLoading(false);
+    };
+
+    getData();
   }, []);
 
   const [rolesSelected, setRolesSelected] = useState([]);
