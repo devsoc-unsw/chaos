@@ -27,6 +27,7 @@ const AuthSuccess = () => {
         } catch (err) {
           setError(err);
           setIsLoading(false);
+          return;
         }
 
         if (data[SIGNUP_REQUIRED]) {
