@@ -25,8 +25,8 @@ const AuthSuccess = () => {
           const res = await authenticate(code);
           data = await res.json();
         } catch (err) {
-          setIsLoading(false);
           setError(err);
+          setIsLoading(false);
         }
 
         if (data[SIGNUP_REQUIRED]) {
