@@ -25,6 +25,7 @@ const AuthSuccess = () => {
           const res = await authenticate(code);
           data = await res.json();
         } catch (err) {
+          console.error(err);
           setError(err);
           setIsLoading(false);
           return;
