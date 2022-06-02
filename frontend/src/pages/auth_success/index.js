@@ -60,7 +60,7 @@ const AuthSuccess = () => {
     ) : (
       <div>
         <h1>Not Authenticated</h1>
-        {error.message}
+        Error: {error.message}
       </div>
     );
 
