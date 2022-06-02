@@ -13,7 +13,7 @@ const AuthSuccess = () => {
   const [isAuthenticated, setIsAuthenticated] = React.useState(false);
   const [needsSignup, setNeedsSignup] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState(null);
+  const [error, setError] = React.useState({ message: null });
 
   useEffect(() => {
     async function attemptAuth() {
