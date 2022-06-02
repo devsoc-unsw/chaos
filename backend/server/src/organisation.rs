@@ -9,9 +9,10 @@ use crate::database::{
 use crate::error::JsonErr;
 use chrono::NaiveDateTime;
 use rocket::{
-    delete, get, post, put,
-    serde::{json::Json, Serialize},
+    delete, get,
     http::Status,
+    post, put,
+    serde::{json::Json, Serialize},
 };
 use std::collections::HashMap;
 
@@ -82,7 +83,8 @@ pub async fn get_from_ids(
         for id in orgs.into_inner() {
             res.insert(
                 id,
-                Organisation::get_from_id(&conn, id).ok_or(JsonErr(OrgError::OrgNotFound, Status::NotFound))?,
+                Organisation::get_from_id(&conn, id)
+                    .ok_or(JsonErr(OrgError::OrgNotFound, Status::NotFound))?,
             );
         }
 
@@ -93,8 +95,11 @@ pub async fn get_from_ids(
 
 #[delete("/<org_id>")]
 pub async fn delete(org_id: i32, _user: SuperUser, db: Database) -> Result<(), JsonErr<OrgError>> {
-    db.run(move |conn| Organisation::delete_deep(&conn, org_id).ok_or(JsonErr(OrgError::OrgNotFound, Status::NotFound)))
-        .await
+    db.run(move |conn| {
+        Organisation::delete_deep(&conn, org_id)
+            .ok_or(JsonErr(OrgError::OrgNotFound, Status::NotFound))
+    })
+    .await
 }
 
 // ============ /organisation/<org_id>/superusers ============

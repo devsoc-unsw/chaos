@@ -1,7 +1,7 @@
-use rocket::serde::{json::Json, Serialize};
+use rocket::http::Status;
 use rocket::request::Request;
 use rocket::response::{self, Responder};
-use rocket::http::Status;
+use rocket::serde::{json::Json, Serialize};
 
 pub struct JsonErr<T: Serialize>(pub T, pub Status);
 

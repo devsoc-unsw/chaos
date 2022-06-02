@@ -5,12 +5,14 @@ use crate::database::{
     schema::ApplicationStatus,
     Database,
 };
-use rocket::{
-    get, post, put,
-    serde::{json::Json, Deserialize, Serialize},
-    FromForm, http::Status,
-};
 use crate::error::JsonErr;
+use rocket::{
+    get,
+    http::Status,
+    post, put,
+    serde::{json::Json, Deserialize, Serialize},
+    FromForm,
+};
 
 #[derive(Serialize)]
 pub enum ApplicationError {
@@ -59,7 +61,10 @@ pub async fn create_application(
             NewApplication::insert(&new_application, conn)
         })
         .await
-        .ok_or(JsonErr(ApplicationError::UnableToCreate, Status::BadRequest))?;
+        .ok_or(JsonErr(
+            ApplicationError::UnableToCreate,
+            Status::BadRequest,
+        ))?;
 
     Ok(Json(application))
 }
@@ -90,7 +95,10 @@ pub async fn create_rating(
             },
             &conn,
         )
-        .ok_or(JsonErr(ApplicationError::UnableToCreate, Status::InternalServerError))?;
+        .ok_or(JsonErr(
+            ApplicationError::UnableToCreate,
+            Status::InternalServerError,
+        ))?;
 
         Ok(Json(()))
     })
@@ -110,7 +118,10 @@ pub async fn submit_answer(
             return Err(JsonErr(ApplicationError::Unauthorized, Status::Forbidden));
         }
 
-        NewAnswer::insert(&answer, &conn).ok_or(JsonErr(ApplicationError::UnableToCreate, Status::InternalServerError))?;
+        NewAnswer::insert(&answer, &conn).ok_or(JsonErr(
+            ApplicationError::UnableToCreate,
+            Status::InternalServerError,
+        ))?;
 
         Ok(Json(()))
     })
@@ -129,8 +140,8 @@ pub async fn get_answers(
     db: Database,
 ) -> Result<Json<AnswersResponse>, JsonErr<ApplicationError>> {
     db.run(move |conn| {
-        let app =
-            Application::get(application_id, &conn).ok_or(JsonErr(ApplicationError::AppNotFound, Status::NotFound))?;
+        let app = Application::get(application_id, &conn)
+            .ok_or(JsonErr(ApplicationError::AppNotFound, Status::NotFound))?;
 
         OrganisationUser::role_admin_level(app.role_id, user.id, &conn)
             .is_at_least_director()
@@ -156,8 +167,8 @@ pub async fn get_ratings(
     db: Database,
 ) -> Result<Json<RatingsResponse>, JsonErr<ApplicationError>> {
     db.run(move |conn| {
-        let app =
-            Application::get(application_id, &conn).ok_or(JsonErr(ApplicationError::AppNotFound, Status::NotFound))?;
+        let app = Application::get(application_id, &conn)
+            .ok_or(JsonErr(ApplicationError::AppNotFound, Status::NotFound))?;
 
         OrganisationUser::role_admin_level(app.role_id, user.id, &conn)
             .is_at_least_director()

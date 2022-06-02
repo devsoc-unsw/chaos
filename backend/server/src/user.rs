@@ -2,13 +2,13 @@ use crate::database::{
     models::{Application, Campaign, OrganisationUser, User},
     Database,
 };
+use crate::error::JsonErr;
 use diesel::PgConnection;
 use rocket::{
     get,
-    serde::{json::Json, Serialize},
     http::Status,
+    serde::{json::Json, Serialize},
 };
-use crate::error::JsonErr;
 
 #[derive(Serialize)]
 pub struct UserResponse {
@@ -62,7 +62,8 @@ pub async fn get_user(
     db: Database,
 ) -> Result<Json<UserResponse>, JsonErr<UserError>> {
     db.run(move |conn| {
-        let res = User::get_from_id(&conn, user_id).ok_or(JsonErr(UserError::UserNotFound, Status::NotFound))?;
+        let res = User::get_from_id(&conn, user_id)
+            .ok_or(JsonErr(UserError::UserNotFound, Status::NotFound))?;
 
         if user_is_boss(&user, &res, conn) {
             Ok(Json(UserResponse {
@@ -80,10 +81,7 @@ pub async fn get_user(
 }
 
 #[get("/campaigns")]
-pub async fn get_user_campaigns(
-    user: User,
-    db: Database,
-) -> Json<Vec<Campaign>> {
+pub async fn get_user_campaigns(user: User, db: Database) -> Json<Vec<Campaign>> {
     let campaigns = db.run(move |conn| user.get_all_campaigns(conn)).await;
 
     Json(campaigns)

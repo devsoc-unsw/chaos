@@ -2,13 +2,14 @@ use crate::database::{
     models::{Comment, NewComment, OrganisationUser, User},
     Database,
 };
+use crate::error::JsonErr;
 use rocket::{
     form::Form,
-    get, post,
-    serde::{json::Json, Serialize},
+    get,
     http::Status,
+    post,
+    serde::{json::Json, Serialize},
 };
-use crate::error::JsonErr;
 
 #[derive(Serialize)]
 pub enum CommentError {

@@ -1,13 +1,13 @@
 use crate::database::{
     models::{
-        Campaign, CampaignWithRoles, NewCampaignInput, OrganisationUser, Role,
-        UpdateCampaignInput, User,
+        Campaign, CampaignWithRoles, NewCampaignInput, OrganisationUser, Role, UpdateCampaignInput,
+        User,
     },
     Database,
 };
-use rocket::{delete, get, post, put, serde::json::Json, http::Status};
-use serde::Serialize;
 use crate::error::JsonErr;
+use rocket::{delete, get, http::Status, post, put, serde::json::Json};
+use serde::Serialize;
 
 #[derive(Serialize)]
 pub enum CampaignError {
@@ -82,8 +82,8 @@ pub async fn create(
             .check()
             .or_else(|_| Err(JsonErr(CampaignError::Unauthorized, Status::Forbidden)))?;
 
-        let campaign =
-            Campaign::create(conn, &inner).ok_or_else(|| JsonErr(CampaignError::UnableToCreate, Status::InternalServerError))?;
+        let campaign = Campaign::create(conn, &inner)
+            .ok_or_else(|| JsonErr(CampaignError::UnableToCreate, Status::InternalServerError))?;
 
         Ok(Json(campaign))
     })

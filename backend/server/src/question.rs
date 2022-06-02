@@ -7,10 +7,10 @@ use crate::database::{
 use crate::error::JsonErr;
 
 use rocket::{
-    delete,
-    get, put,
-    serde::{json::Json, Serialize},
+    delete, get,
     http::Status,
+    put,
+    serde::{json::Json, Serialize},
 };
 
 use std::convert::From;
@@ -32,7 +32,8 @@ pub async fn get_question(
     db.run(move |conn| {
         let q = Question::get_from_id(&conn, question_id)
             .ok_or(JsonErr(QuestionError::QuestionNotFound, Status::NotFound))?;
-        let r = Role::get_from_id(&conn, q.role_id).ok_or(JsonErr(QuestionError::QuestionNotFound, Status::NotFound))?;
+        let r = Role::get_from_id(&conn, q.role_id)
+            .ok_or(JsonErr(QuestionError::QuestionNotFound, Status::NotFound))?;
         let c = Campaign::get_from_id(&conn, r.campaign_id)
             .ok_or(JsonErr(QuestionError::QuestionNotFound, Status::NotFound))?;
         OrganisationUser::role_admin_level(q.role_id, user.id, conn)
@@ -62,10 +63,17 @@ pub async fn edit_question(
         OrganisationUser::role_admin_level(role.id, user.id, &conn)
             .is_at_least_director()
             .check()
-            .or_else(|_| Err(JsonErr(QuestionError::InsufficientPermissions, Status::Forbidden)))?;
+            .or_else(|_| {
+                Err(JsonErr(
+                    QuestionError::InsufficientPermissions,
+                    Status::Forbidden,
+                ))
+            })?;
 
-        Question::update(&conn, question_id, update_question.into_inner())
-            .ok_or(JsonErr(QuestionError::UpdateFailed, Status::InternalServerError))
+        Question::update(&conn, question_id, update_question.into_inner()).ok_or(JsonErr(
+            QuestionError::UpdateFailed,
+            Status::InternalServerError,
+        ))
     })
     .await
 }
@@ -85,12 +93,20 @@ pub async fn delete_question(
         OrganisationUser::role_admin_level(role.id, user.id, &conn)
             .is_at_least_director()
             .check()
-            .or_else(|_| Err(JsonErr(QuestionError::InsufficientPermissions, Status::Forbidden)))?;
+            .or_else(|_| {
+                Err(JsonErr(
+                    QuestionError::InsufficientPermissions,
+                    Status::Forbidden,
+                ))
+            })?;
 
         if Question::delete(&conn, question_id) {
             Ok(())
         } else {
-            Err(JsonErr(QuestionError::UpdateFailed, Status::InternalServerError))
+            Err(JsonErr(
+                QuestionError::UpdateFailed,
+                Status::InternalServerError,
+            ))
         }
     })
     .await
