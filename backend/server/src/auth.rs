@@ -18,6 +18,7 @@ use rocket::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use crate::error::JsonErr;
 
 const GOOGLE_TOKEN_URL: &str = "https://oauth2.googleapis.com/token";
 const OPENID_EMAIL_FIELD: &str = "email";
@@ -206,16 +207,16 @@ pub async fn signin(
     body: Json<SignInBody>,
     state: &State<ApiState>,
     db: Database,
-) -> Result<Json<SignInResponse>, Json<SignInError>> {
+) -> Result<Json<SignInResponse>, JsonErr<SignInError>> {
     let token = get_access_token(&body.oauth_token, state)
         .await
-        .ok_or(Json(SignInError::InvalidOAuthCode))?;
+        .ok_or(JsonErr(SignInError::InvalidOAuthCode, Status::Forbidden))?;
 
     let details = get_user_details(state, &token).await;
 
     let email = details
         .email
-        .ok_or(Json(SignInError::GoogleOAuthInternalError))?;
+        .ok_or(JsonErr(SignInError::GoogleOAuthInternalError, Status::Forbidden))?;
 
     let user = db
         .run(move |conn| User::get_from_email(conn, &email))
@@ -230,10 +231,10 @@ pub async fn signin(
             )
             .expect("creating jwt should never fail");
 
-            Json(SignInError::SignupRequired {
+            JsonErr(SignInError::SignupRequired {
                 signup_token: token,
                 name: details.name,
-            })
+            }, Status::Forbidden)
         })?;
 
     let auth = AuthJwt {
