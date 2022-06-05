@@ -30,7 +30,8 @@ async fn main() {
 
     let cors = cors();
 
-    let config_map: Value = serde_json::from_str(&format!(r#"{{
+    let config_map: Value = serde_json::from_str(&format!(
+        r#"{{
         "databases": {{
             "database": {{
                 "url": "{}"
@@ -38,10 +39,12 @@ async fn main() {
         }},
         "log_level": "debug",
         "address": "0.0.0.0"
-    }}"#, db_url)).unwrap();
+    }}"#,
+        db_url
+    ))
+    .unwrap();
 
-    let figment = Figment::from(rocket::Config::default())
-        .merge(Serialized::globals(config_map));
+    let figment = Figment::from(rocket::Config::default()).merge(Serialized::globals(config_map));
 
     rocket::custom(figment)
         .manage(api_state)
