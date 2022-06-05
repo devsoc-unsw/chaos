@@ -109,7 +109,7 @@ async fn get_access_token(oauth_code: &str, state: &State<ApiState>) -> Option<S
         id_token: String,
     }
 
-    let token = state
+    let token_json = state
         .reqwest_client
         .post(GOOGLE_TOKEN_URL)
         .form(&TokenForm {
@@ -126,13 +126,20 @@ async fn get_access_token(oauth_code: &str, state: &State<ApiState>) -> Option<S
         .await
         .map_err(|e| eprintln!("Oauth request failed: {}", e))
         .ok()?
-        .json::<TokenResponse>()
+        .json::<Value>()
         .await
-        .map_err(|e| eprintln!("Failed to parse token response: {}", e))
-        .ok()?
-        .access_token;
+        .ok()?;
 
-    Some(token)
+    match serde_json::from_value::<TokenResponse>(token_json.clone()) {
+        Ok(t) => Some(t.access_token),
+        Err(e) => {
+            eprintln!(
+                "Failed to parse token response: {}\nJSON is {}",
+                e, token_json
+            );
+            None
+        }
+    }
 }
 
 struct UserDetails {
@@ -243,7 +250,7 @@ pub async fn signin(
                     signup_token: token,
                     name: details.name,
                 },
-                Status::Forbidden,
+                Status::Ok,
             )
         })?;
 
