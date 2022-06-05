@@ -114,7 +114,8 @@ async fn get_access_token(oauth_code: &str, state: &State<ApiState>) -> Option<S
         .post(GOOGLE_TOKEN_URL)
         .form(&TokenForm {
             code: oauth_code,
-            client_id: dotenv::var("GOOGLE_CLIENT_ID").expect("GOOGLE_CLIENT_ID should be in env"),
+            client_id: dotenv::var("GOOGLE_CLIENT_ID")
+                .expect("GOOGLE_CLIENT_ID should be in env"),
             client_secret: dotenv::var("GOOGLE_CLIENT_SECRET")
                 .expect("GOOGLE_CLIENT_SECRET should be in env"),
             redirect_uri: dotenv::var("GOOGLE_REDIRECT_URI")
@@ -277,7 +278,7 @@ pub async fn signup(
     body: Json<SignUpBody>,
     state: &State<ApiState>,
     db: Database,
-) -> Result<Json<SignUpResponse>, Json<SignUpError>> {
+) -> Result<Json<SignUpResponse>, JsonErr<SignUpError>> {
     let validation = Validation {
         algorithms: vec![Algorithm::HS256],
         validate_exp: false,
@@ -290,14 +291,14 @@ pub async fn signup(
         &validation,
     ) {
         Ok(data) => data.claims.auth_token,
-        Err(_) => return Err(Json(SignUpError::InvalidSignupToken)),
+        Err(_) => return Err(JsonErr(SignUpError::InvalidSignupToken, Status::FailedDependency)),
     };
 
     let details = get_user_details(state, &token).await;
 
     let email = details
         .email
-        .ok_or(Json(SignUpError::GoogleOAuthInternalError))?;
+        .ok_or(JsonErr(SignUpError::GoogleOAuthInternalError, Status::FailedDependency))?;
 
     {
         let email = email.clone();
@@ -307,7 +308,7 @@ pub async fn signup(
             .await
             .is_some()
         {
-            return Err(Json(SignUpError::AccountAlreadyExists));
+            return Err(JsonErr(SignUpError::AccountAlreadyExists, Status::ImUsed));
         }
     }
 
