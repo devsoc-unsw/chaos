@@ -32,14 +32,14 @@ async fn main() {
 
     let config_map: Value = serde_json::from_str(&format!(
         r#"{{
-        "databases": {{
-            "database": {{
-                "url": "{}"
-            }}
-        }},
-        "log_level": "debug",
-        "address": "0.0.0.0"
-    }}"#,
+            "databases": {{
+                "database": {{
+                    "url": "{}"
+                }}
+            }},
+            "log_level": "debug",
+            "address": "0.0.0.0"
+        }}"#,
         db_url
     ))
     .unwrap();

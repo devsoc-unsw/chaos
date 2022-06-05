@@ -123,9 +123,11 @@ async fn get_access_token(oauth_code: &str, state: &State<ApiState>) -> Option<S
         })
         .send()
         .await
+        .map_err(|e| eprintln!("Oauth request failed: {}", e))
         .ok()?
         .json::<TokenResponse>()
         .await
+        .map_err(|e| eprintln!("Failed to parse token response: {}", e))
         .ok()?
         .access_token;
 
@@ -211,7 +213,7 @@ pub async fn signin(
     let token = get_access_token(&body.oauth_token, state)
         .await
         .ok_or_else(|| {
-            eprintln!("Failed to get access token");
+            eprintln!("Failed to get access token for oauth token {}", body.oauth_token);
             JsonErr(SignInError::InvalidOAuthCode, Status::Forbidden)
         })?;
 
