@@ -1,24 +1,52 @@
 extern crate diesel;
 
+#[macro_use]
+extern crate diesel_migrations;
+
 use backend::auth::Auth;
 use backend::cors::cors;
 use backend::database::Database;
-use rocket::routes;
+use diesel::pg::PgConnection;
+use diesel::prelude::*;
+use diesel_migrations::*;
+use figment::{providers::Serialized, Figment};
+use rocket::{routes, serde::json::Value};
+use std::env;
 
 #[rocket::get("/foo")]
 fn authed_call(auth: Auth) -> String {
     format!("hello, your user id is {}", auth.jwt.user_id)
 }
 
+embed_migrations!();
+
 #[rocket::main]
 async fn main() {
-    dotenv::dotenv().unwrap();
+    dotenv::dotenv().ok();
+
+    let db_url = run_migrations();
 
     let api_state = backend::state::api_state().await;
 
     let cors = cors();
 
-    rocket::build()
+    let config_map: Value = serde_json::from_str(&format!(
+        r#"{{
+            "databases": {{
+                "database": {{
+                    "url": "{}"
+                }}
+            }},
+            "log_level": "debug",
+            "address": "0.0.0.0"
+        }}"#,
+        db_url
+    ))
+    .unwrap();
+
+    let figment = Figment::from(rocket::Config::default()).merge(Serialized::globals(config_map));
+
+    rocket::custom(figment)
         .manage(api_state)
         .attach(Database::fairing())
         .attach(cors)
@@ -32,6 +60,8 @@ async fn main() {
                 backend::organisation::get_admins,
                 backend::organisation::set_admins,
                 backend::organisation::is_admin,
+                backend::organisation::get_from_ids,
+                backend::organisation::invite_uid,
             ],
         )
         .mount(
@@ -51,7 +81,11 @@ async fn main() {
         )
         .mount(
             "/user",
-            routes![backend::user::get_user, backend::user::get_user_campaigns],
+            routes![
+                backend::user::get_user,
+                backend::user::get_user_campaigns,
+                backend::user::get,
+            ],
         )
         .mount(
             "/application",
@@ -92,4 +126,29 @@ async fn main() {
         .launch()
         .await
         .unwrap();
+}
+
+fn run_migrations() -> String {
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+
+    assert!(&database_url[database_url.len() - 5..] == "chaos");
+
+    let database_url_no_chaos = String::from(&database_url[..database_url.len() - 5]);
+
+    let main_connection = PgConnection::establish(&database_url_no_chaos)
+        .expect(&format!("Error connecting to {}", database_url_no_chaos));
+
+    match diesel::sql_query("CREATE DATABASE chaos").execute(&main_connection) {
+        _ => (),
+    };
+
+    let chaos_connection = PgConnection::establish(&database_url)
+        .expect(&format!("Error connecting to {}", database_url));
+
+    embedded_migrations::run_with_output(&chaos_connection, &mut std::io::stdout())
+        .expect("Failed to run migrations");
+
+    println!("Finishing running migrations");
+
+    return database_url;
 }

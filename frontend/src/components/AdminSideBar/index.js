@@ -1,5 +1,5 @@
-/* eslint-disable react/prop-types */
 import React, { useState } from "react";
+import PropTypes from "prop-types";
 import {
   SidebarContainer,
   OrgButton,
@@ -12,7 +12,9 @@ import {
   CreateOrgIcon,
   RemoveOrgIcon,
 } from "./adminSidebar.styled";
-import CreateOrganisationForm from "../CreateOrganisationForm"
+import CreateOrganisationForm from "../CreateOrganisationForm";
+import { createOrganisation } from "../../api";
+import { fileToDataUrl, base64ToBytes } from "../../utils";
 
 const AdminSidebar = ({
   orgList,
@@ -37,24 +39,27 @@ const AdminSidebar = ({
     });
   };
 
-  const onUpload = () => {
+  const onUpload = async () => {
     // FIXME: CHAOS-55, send to the backend
     if (uploadedImage.image && inputText) {
       // FIXME: CHAOS-55, backend request should return new id, this method obv flawed (also floored)
-      const newID = Math.floor(Math.random() * 1000);
+      const imgUrl = base64ToBytes(
+        (await fileToDataUrl(uploadedImage.image)).split(",")[1]
+      );
+      const newID = await createOrganisation(inputText, imgUrl);
       const newOrgList = orgList.concat({
         id: newID,
         icon: uploadedImage.url,
         orgName: inputText,
       });
       setOrgList(newOrgList);
-      setOrgSelected(newID);
+      setOrgSelected(newOrgList.length - 1);
       setUploadedImage({ image: null, url: null });
       setInputText("");
       setIsFormOpen(false);
-      alert("New organisation created!");
+      console.log("New organisation created!");
     } else {
-      alert("Both image and text are required!");
+      console.error("Both image and text are required!");
     }
   };
 
@@ -88,9 +93,9 @@ const AdminSidebar = ({
             />
           )}
         </CreateOrgButton>
-        {orgList.map((it) => (
-          <OrgButton value={it.id}>
-            <OrgButtonContent onClick={() => setOrgSelected(it.id)}>
+        {orgList.map((it, idx) => (
+          <OrgButton value={idx}>
+            <OrgButtonContent onClick={() => setOrgSelected(idx)}>
               <OrgIcon>
                 <OrgIconImage src={it.icon} />
               </OrgIcon>
@@ -101,6 +106,23 @@ const AdminSidebar = ({
       </OrgButtonGroup>
     </SidebarContainer>
   );
+};
+
+AdminSidebar.propTypes = {
+  orgList: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number,
+      icon: PropTypes.string,
+      orgName: PropTypes.string,
+    })
+  ).isRequired,
+  setOrgList: PropTypes.func.isRequired,
+  orgSelected: PropTypes.number.isRequired,
+  setOrgSelected: PropTypes.func.isRequired,
+  isFormOpen: PropTypes.bool.isRequired,
+  setIsFormOpen: PropTypes.func.isRequired,
+  sidebarWidth: PropTypes.number.isRequired,
+  setSidebarWidth: PropTypes.func.isRequired,
 };
 
 export default AdminSidebar;

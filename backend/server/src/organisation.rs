@@ -1,39 +1,58 @@
 use crate::database::{
-    models::{Campaign, NewOrganisation, Organisation, OrganisationUser, SuperUser, User},
+    models::{
+        Campaign, NewOrganisation, NewOrganisationUser, Organisation, OrganisationUser, SuperUser,
+        User,
+    },
+    schema::AdminLevel,
     Database,
 };
+use crate::error::JsonErr;
 use chrono::NaiveDateTime;
 use rocket::{
-    delete,
-    get, post, put,
+    delete, get,
+    http::Status,
+    post, put,
     serde::{json::Json, Serialize},
 };
+use std::collections::HashMap;
 
 #[derive(Serialize)]
 pub enum NewOrgError {
     OrgNameAlreadyExists,
+    FailedToJoin,
 }
 
 #[derive(Serialize)]
 pub enum OrgError {
     OrgNotFound,
-    UserIsNotAdmin,
+    InsufficientPerms,
+    UserIsNotInOrg,
+    UserAlreadyInOrg,
 }
 
 #[post("/new", data = "<organisation>")]
 pub async fn new(
     organisation: Json<NewOrganisation>,
-    _user: SuperUser,
+    user: SuperUser,
     db: Database,
-) -> Result<(), Json<NewOrgError>> {
-    let res: Option<Organisation> = db
-        .run(move |conn| NewOrganisation::insert(&organisation, &conn))
-        .await;
+) -> Result<(), JsonErr<NewOrgError>> {
+    db.run(move |conn| {
+        let org = NewOrganisation::insert(&organisation, &conn)
+            .ok_or(JsonErr(NewOrgError::OrgNameAlreadyExists, Status::NotFound))?;
 
-    match res {
-        Some(_) => Ok(()),
-        None => Err(Json(NewOrgError::OrgNameAlreadyExists)),
-    }
+        let org_user = NewOrganisationUser {
+            user_id: user.user().id,
+            organisation_id: org.id,
+            admin_level: AdminLevel::Admin,
+        };
+
+        org_user
+            .insert(conn)
+            .ok_or(JsonErr(NewOrgError::FailedToJoin, Status::Forbidden))?;
+
+        Ok(())
+    })
+    .await
 }
 
 // ============ /organisation/<org_id> ============
@@ -43,22 +62,44 @@ pub async fn get_from_id(
     org_id: i32,
     _user: User,
     db: Database,
-) -> Result<Json<Organisation>, Json<OrgError>> {
-    let res: Option<Organisation> = db
-        .run(move |conn| Organisation::get_from_id(&conn, org_id))
-        .await;
+) -> Result<Json<Organisation>, JsonErr<OrgError>> {
+    db.run(move |conn| {
+        Organisation::get_from_id(&conn, org_id)
+            .ok_or(JsonErr(OrgError::OrgNotFound, Status::NotFound))
+            .map(|v| Json(v))
+    })
+    .await
+}
 
-    match res {
-        Some(org) => Ok(Json(org)),
-        None => Err(Json(OrgError::OrgNotFound)),
-    }
+#[get("/", data = "<orgs>")]
+pub async fn get_from_ids(
+    orgs: Json<Vec<i32>>,
+    _user: User,
+    db: Database,
+) -> Result<Json<HashMap<i32, Organisation>>, JsonErr<OrgError>> {
+    db.run(move |conn| {
+        let mut res = HashMap::with_capacity(orgs.len());
+
+        for id in orgs.into_inner() {
+            res.insert(
+                id,
+                Organisation::get_from_id(&conn, id)
+                    .ok_or(JsonErr(OrgError::OrgNotFound, Status::NotFound))?,
+            );
+        }
+
+        Ok(Json(res))
+    })
+    .await
 }
 
 #[delete("/<org_id>")]
-pub async fn delete(org_id: i32, _user: SuperUser, db: Database) -> Result<(), Json<OrgError>> {
-    db.run(move |conn| Organisation::delete_deep(&conn, org_id))
-        .await
-        .ok_or(Json(OrgError::OrgNotFound))
+pub async fn delete(org_id: i32, _user: SuperUser, db: Database) -> Result<(), JsonErr<OrgError>> {
+    db.run(move |conn| {
+        Organisation::delete_deep(&conn, org_id)
+            .ok_or(JsonErr(OrgError::OrgNotFound, Status::NotFound))
+    })
+    .await
 }
 
 // ============ /organisation/<org_id>/superusers ============
@@ -68,14 +109,14 @@ pub async fn get_admins(
     org_id: i32,
     _user: User,
     db: Database,
-) -> Result<Json<Vec<i32>>, Json<OrgError>> {
+) -> Result<Json<Vec<i32>>, JsonErr<OrgError>> {
     let res = db
         .run(move |conn| Organisation::get_admin_ids(&conn, org_id))
         .await;
 
     match res {
         Some(ids) => Ok(Json(ids)),
-        None => Err(Json(OrgError::OrgNotFound)),
+        None => Err(JsonErr(OrgError::OrgNotFound, Status::NotFound)),
     }
 }
 
@@ -85,7 +126,7 @@ pub async fn set_admins(
     user: User,
     db: Database,
     admins: Json<Vec<i32>>,
-) -> Result<Json<()>, Json<OrgError>> {
+) -> Result<Json<()>, JsonErr<OrgError>> {
     let res = db
         .run(move |conn| Organisation::get_admin_ids(&conn, org_id))
         .await;
@@ -93,7 +134,7 @@ pub async fn set_admins(
     match res {
         Some(ids) => {
             if !ids.contains(&user.id) {
-                return Err(Json(OrgError::UserIsNotAdmin));
+                return Err(JsonErr(OrgError::InsufficientPerms, Status::Forbidden));
             } else {
                 db.run(move |conn| Organisation::set_admins(&conn, org_id, &admins))
                     .await;
@@ -101,7 +142,7 @@ pub async fn set_admins(
             }
         }
 
-        None => Err(Json(OrgError::OrgNotFound)),
+        None => Err(JsonErr(OrgError::OrgNotFound, Status::NotFound)),
     }
 }
 
@@ -166,6 +207,44 @@ pub async fn get_associated_campaigns(
                 .map(CampaignResponse::from)
                 .collect(),
         })
+    })
+    .await
+}
+
+#[post("/<organisation_id>/invite/<user_id>", data = "<admin_level>")]
+pub async fn invite_uid(
+    organisation_id: i32,
+    admin_level: Json<AdminLevel>,
+    user_id: i32,
+    user: User,
+    db: Database,
+) -> Result<(), JsonErr<OrgError>> {
+    db.run(move |conn| {
+        let mut level = OrganisationUser::organisation_admin_level(organisation_id, user.id, conn)
+            .check()
+            .map_err(|_| JsonErr(OrgError::InsufficientPerms, Status::Forbidden))?
+            .0;
+
+        if user.superuser {
+            level = AdminLevel::Admin;
+        }
+
+        let admin_level = admin_level.into_inner();
+
+        if level.geq(admin_level) {
+            let new_user = NewOrganisationUser {
+                user_id,
+                organisation_id,
+                admin_level,
+            };
+
+            new_user
+                .insert(conn)
+                .map(|_| ())
+                .ok_or(JsonErr(OrgError::UserAlreadyInOrg, Status::NotAcceptable))
+        } else {
+            Err(JsonErr(OrgError::InsufficientPerms, Status::Forbidden))
+        }
     })
     .await
 }

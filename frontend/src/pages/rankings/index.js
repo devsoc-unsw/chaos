@@ -1,104 +1,122 @@
 import React, { useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Container, Button, Grid, Typography } from "@mui/material";
 import { red, green } from "@mui/material/colors";
 
+import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 import RankingsToolbar from "./RankingsToolbar";
 import DragDropRankings from "./DragDropRankings";
 import ReviewerStepper from "../../components/ReviewerStepper";
-import { SetNavBarTitleContext } from "../../App";
-
-// TODO: CHAOS-12 retrieve data from BE instead of using dummy data
-const dummyRankings = {
-  "Student Experience Director": [
-    {
-      name: "Hayes Choy",
-      ratings: [
-        { rater: "Shrey Somaiya", rating: 5 },
-        { rater: "Michael Gribben", rating: 5 },
-        { rater: "Haley Gu", rating: 5 },
-      ],
-    },
-    {
-      name: "Giuliana De Bellis",
-      ratings: [
-        { rater: "Shrey Somaiya", rating: 4 },
-        { rater: "Michael Gribben", rating: 4 },
-        { rater: "Haley Gu", rating: 3 },
-      ],
-    },
-    {
-      name: "Colin Hon",
-      ratings: [
-        { rater: "Shrey Somaiya", rating: 2 },
-        { rater: "Michael Gribben", rating: 2 },
-        { rater: "Haley Gu", rating: 2 },
-      ],
-    },
-    {
-      name: "Lachlan Ting",
-      ratings: [
-        { rater: "Shrey Somaiya", rating: 1 },
-        { rater: "Michael Gribben", rating: 2 },
-        { rater: "Haley Gu", rating: 1 },
-      ],
-    },
-    {
-      name: "Evan Lee",
-      ratings: [
-        { rater: "Shrey Somaiya", rating: 1 },
-        { rater: "Michael Gribben", rating: 1 },
-        { rater: "Haley Gu", rating: 1 },
-      ],
-    },
-    {
-      name: "Priscilla Soo",
-      ratings: [
-        { rater: "Shrey Somaiya", rating: 4 },
-        { rater: "Michael Gribben", rating: 4 },
-        { rater: "Haley Gu", rating: 5 },
-      ],
-    },
-    {
-      name: "Timmy Huang",
-      ratings: [
-        { rater: "Shrey Somaiya", rating: 3 },
-        { rater: "Michael Gribben", rating: 3 },
-        { rater: "Haley Gu", rating: 2 },
-      ],
-    },
-  ],
-  "Socials Director": [
-    {
-      name: "Lachlan Ting",
-      ratings: [
-        { rater: "Shrey Somaiya", rating: 5 },
-        { rater: "Michael Gribben", rating: 3 },
-        { rater: "Haley Gu", rating: 1 },
-      ],
-    },
-    {
-      name: "Evan Lee",
-      ratings: [
-        { rater: "Shrey Somaiya", rating: 5 },
-        { rater: "Michael Gribben", rating: 5 },
-        { rater: "Haley Gu", rating: 3 },
-      ],
-    },
-  ],
-};
-
-const dummyPositions = Object.keys(dummyRankings);
+import {
+  getApplicationAnswers,
+  getApplicationRatings,
+  getCampaignRoles,
+  getRoleApplications,
+  getRoleQuestions,
+} from "../../api";
 
 const Rankings = () => {
   const navigate = useNavigate();
+  const { campaignId } = useParams();
   const setNavBarTitle = useContext(SetNavBarTitleContext);
-  useEffect(() => {
-    setNavBarTitle("2022 Subcommittee Recruitment (Hardcoded Title)");
-  }, []);
   // TODO: CHAOS-12 handle candidates from multiple positions from BE
   const [selectedPosition, setSelectedPosition] = useState("");
-  const [rankings, setRankings] = useState(dummyRankings);
+  const [rankings, setRankings] = useState({});
+  const [positions, setPositions] = useState([]);
+  const [applications, setApplications] = useState({});
+
+  useEffect(() => {
+    (async () => {
+      setNavBarTitle("2022 Subcommittee Recruitment (Hardcoded Title)");
+      const rolesResp = await getCampaignRoles(campaignId);
+      const { roles } = await rolesResp.json();
+
+      const allApplications = await Promise.all(
+        roles.map(async (role) => {
+          const resp = await getRoleApplications(role.id);
+          const roleApplications = await resp.json();
+          return roleApplications.applications;
+        })
+      );
+      const getRatings = async (applicationId) => {
+        const resp = await getApplicationRatings(applicationId);
+        const applicationRatings = await resp.json();
+        const userIdsSeen = new Set();
+        return applicationRatings.ratings
+          .reverse()
+          .filter((rating) => {
+            const seen = userIdsSeen.has(rating.rater_user_id);
+            userIdsSeen.add(rating.rater_user_id);
+            return !seen;
+          })
+          .map((rating) => ({
+            rater: `User ${rating.rater_user_id}`,
+            rating: rating.rating,
+          }));
+      };
+      setRankings(
+        Object.fromEntries(
+          await Promise.all(
+            roles.map(async (role, roleIdx) => [
+              role.name,
+              await Promise.all(
+                allApplications[roleIdx].map(async (application) => ({
+                  name: application.user_display_name,
+                  id: application.id,
+                  ratings: await getRatings(application.id),
+                }))
+              ),
+            ])
+          )
+        )
+      );
+      setPositions(roles.map((role) => role.name));
+
+      const questions = await Promise.all(
+        roles.map(async (role) => {
+          const resp = await getRoleQuestions(role.id);
+          const roleQuestions = await resp.json();
+          return roleQuestions.questions;
+        })
+      );
+      const answers = await Promise.all(
+        allApplications.map((a) =>
+          Promise.all(
+            a.map(async (application) => {
+              const resp = await getApplicationAnswers(application.id);
+              const applicationAnswers = await resp.json();
+              return applicationAnswers.answers;
+            })
+          )
+        )
+      );
+
+      // TODO(michael): holy fuck refactor this shit
+      setApplications(
+        Object.fromEntries(
+          roles.map((role, roleIdx) => [
+            role.name,
+            Object.fromEntries(
+              allApplications[roleIdx].map((application, applicationIdx) => [
+                application.id,
+                {
+                  zId: application.user_zid,
+                  questions: questions[roleIdx].map(
+                    (question, questionIdx) => ({
+                      question: question.title,
+                      answer:
+                        answers[roleIdx][applicationIdx][questionIdx]
+                          ?.description,
+                    })
+                  ),
+                },
+              ])
+            ),
+          ])
+        )
+      );
+    })();
+  }, []);
 
   const handleNext = () => {
     console.log(
@@ -128,7 +146,7 @@ const Rankings = () => {
       </Typography>
 
       <RankingsToolbar
-        positions={dummyPositions}
+        positions={positions}
         selectedPosition={selectedPosition}
         setSelectedPosition={setSelectedPosition}
       />
@@ -137,6 +155,7 @@ const Rankings = () => {
         rankings={rankings}
         setRankings={setRankings}
         selectedPosition={selectedPosition}
+        applications={applications}
       />
 
       <Grid container justifyContent="flex-end">

@@ -1,39 +1,104 @@
-import React, { useContext, useEffect, useState, createContext } from "react";
-import { SetNavBarTitleContext } from "../../App";
+import React, {
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  createContext,
+} from "react";
+import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 import { AdminContainer } from "./admin.styled";
 import AdminSidebar from "../../components/AdminSideBar";
-import AdminContent from "../../components/AdminContent";
-
-import CSELogoDummy from "./CSESoc_logo.jpeg";
-import SECLogoDummy from "./SECSoc_logo.jpeg";
+import AdminContent from "./AdminContent";
+import { getAdminData } from "../../api";
+import { bytesToImage } from "../../utils";
+import { OrgContext } from "./OrgContext";
 
 export const isFormOpenContext = createContext(null);
-export const orgContext = createContext(null);
 
 const Admin = () => {
   const setNavBarTitle = useContext(SetNavBarTitleContext);
   useEffect(() => {
     setNavBarTitle("Admin");
   }, []);
-  const [sidebarWidth, setSidebarWidth] = useState('80px');
+  const [sidebarWidth, setSidebarWidth] = useState("80px");
   const [isFormOpen, setIsFormOpen] = useState(false);
 
-  // FIXME: CHAOS-55, change this to request orgs from backend
-  const [orgList, setOrgList] = useState([
-    { id: 0, icon: CSELogoDummy, orgName: "CSESoc" },
-    { id: 1, icon: SECLogoDummy, orgName: "SECSoc" },
-  ]);
+  const [orgList, setOrgList] = useState([]);
+
+  const [campaigns, setCampaigns] = useState([]);
+  const [members, setMembers] = useState([]);
 
   // FIXME: CHAOS-56, implement default behaviour for users w/ no org
   const [orgSelected, setOrgSelected] = useState(0);
 
+  const orgContextValue = useMemo(() => ({
+    orgSelected,
+    setOrgSelected,
+    orgList,
+    setOrgList,
+  }));
+  const isFormOpenContextValue = useMemo(() => ({ isFormOpen, setIsFormOpen }));
+
+  useEffect(async () => {
+    const data = (await (await getAdminData()).json()).organisations;
+
+    setOrgList(
+      data.map((item) => ({
+        id: item.id,
+        icon: bytesToImage(item.logo),
+        orgName: item.name,
+        campaigns: item.campaigns,
+        members: item.members,
+      }))
+    );
+    if (data !== []) {
+      setOrgSelected(0);
+      const org = data[orgSelected];
+
+      setCampaigns(
+        org.campaigns.map((item) => ({
+          id: item.id,
+          image: bytesToImage(item.cover_image),
+          title: item.name,
+          startDate: item.starts_at,
+          endDate: item.ends_at,
+        }))
+      );
+
+      setMembers(
+        org.members.map((item) => ({
+          id: item.id,
+          name: item.display_name,
+          role: item.role,
+        }))
+      );
+    }
+  }, []);
+
+  useEffect(async () => {
+    setCampaigns(
+      orgList[orgSelected]?.campaigns.map((item) => ({
+        id: item.id,
+        image: bytesToImage(item.cover_image),
+        title: item.name,
+        startDate: item.starts_at,
+        endDate: item.ends_at,
+      })) ?? []
+    );
+    setMembers(
+      orgList[orgSelected]?.members.map((item) => ({
+        id: item.id,
+        name: item.display_name,
+        role: item.role,
+      })) ?? []
+    );
+  }, [orgSelected, orgList]);
+
   return (
-    <orgContext.Provider
-      value={{ orgSelected, setOrgSelected, orgList, setOrgList }}
-    >
-      <isFormOpenContext.Provider value={{ isFormOpen, setIsFormOpen }}>
+    <OrgContext.Provider value={orgContextValue}>
+      <isFormOpenContext.Provider value={isFormOpenContextValue}>
         <AdminContainer>
-          <AdminSidebar 
+          <AdminSidebar
             orgList={orgList}
             setOrgList={setOrgList}
             orgSelected={orgSelected}
@@ -43,14 +108,16 @@ const Admin = () => {
             sidebarWidth={sidebarWidth}
             setSidebarWidth={setSidebarWidth}
           />
-          <AdminContent 
-            id={orgList.find((org) => org.id === orgSelected).id}
-            icon={orgList.find((org) => org.id === orgSelected).icon}
-            orgName={orgList.find((org) => org.id === orgSelected).orgName}
+          <AdminContent
+            org={orgList[orgSelected]}
+            campaigns={campaigns}
+            setCampaigns={setCampaigns}
+            members={members}
+            setMembers={setMembers}
           />
         </AdminContainer>
       </isFormOpenContext.Provider>
-    </orgContext.Provider>
+    </OrgContext.Provider>
   );
 };
 

@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-import { Box, Chip, Divider, Grid, TextField, Typography } from "@mui/material";
+import { Box, Divider, Grid, TextField, Typography } from "@mui/material";
 import ApplicationPreviewer from "../../../components/ApplicationPreviewer";
 import { RatingChips } from "./applicationsListTabPanel";
 import { MarkChip } from "../../../components";

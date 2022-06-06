@@ -2,12 +2,12 @@
 import { getStore } from "../utils";
 import API from "./api";
 
-export const authenticate = async (oauth_token) =>
+export const authenticate = async (oauthToken) =>
   API.request({
     method: "POST",
     path: `/auth/signin`,
     body: {
-      oauth_token,
+      oauth_token: oauthToken,
     },
   });
 
@@ -54,3 +54,62 @@ export const getAllCampaigns = () =>
 
 export const isAdminInOrganisation = (orgId) =>
   authenticatedRequest({ path: `/organisation/${orgId}/is_admin` });
+
+export const getAdminData = () => authenticatedRequest({ path: "/admin" });
+
+export const createOrganisation = (name, logo) =>
+  authenticatedRequest({
+    method: "POST",
+    path: "/organisation/new",
+    body: { name, logo },
+  });
+
+export const newApplication = (roleId) =>
+  authenticatedRequest({
+    method: "POST",
+    path: "/application/new",
+    body: { role_id: roleId, status: "Pending" },
+  });
+
+export const doDeleteOrg = (orgId) =>
+  authenticatedRequest({
+    method: "DELETE",
+    path: `/organisation/${orgId}`,
+  });
+
+export const getCampaignRoles = (campaignId) =>
+  authenticatedRequest({ path: `/campaign/${campaignId}/roles` });
+
+export const getRoleApplications = (roleId) =>
+  authenticatedRequest({ path: `/role/${roleId}/applications` });
+
+export const getRoleQuestions = (roleId) =>
+  authenticatedRequest({ path: `/role/${roleId}/questions` });
+
+export const setApplicationRating = (applicationId, rating) =>
+  authenticatedRequest({
+    method: "PUT",
+    path: `/application/${applicationId}/rating`,
+    body: {
+      rating,
+    },
+  });
+
+export const getSelfInfo = () => authenticatedRequest({ path: "/user" });
+
+export const getApplicationAnswers = (applicationId) =>
+  authenticatedRequest({ path: `/application/${applicationId}/answers` });
+
+export const getApplicationRatings = (applicationId) =>
+  authenticatedRequest({ path: `/application/${applicationId}/ratings` });
+
+export const submitAnswer = (applicationId, questionId, description) =>
+  authenticatedRequest({
+    method: "POST",
+    path: `/application/answer/`,
+    body: {
+      application_id: applicationId,
+      question_id: questionId,
+      description,
+    },
+  });

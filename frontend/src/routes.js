@@ -17,8 +17,8 @@ const routes = [
   <Route key="auth" path="/auth/callback" element={<AuthSuccess />} />,
   <Route key="signup" path="/signup" element={<SignupPage />} />,
   <Route key="landing" path="/" element={<LandingPage />} />,
-  <Route key="marking" path="/marking" element={<Marking />} />,
-  <Route key="rankings" path="/rankings" element={<Rankings />} />,
+  <Route key="marking" path="/marking/:campaignId" element={<Marking />} />,
+  <Route key="rankings" path="/rankings/:campaignId" element={<Rankings />} />,
   <Route
     key="finalise-candidates"
     path="/finalise_candidates"
@@ -30,7 +30,11 @@ const routes = [
     path="/campaign/create/:orgId"
     element={<CampaignCreate />}
   />,
-  <Route key="ApplicationPage" path="/application" element={<ApplicationPage />} />,
+  <Route
+    key="ApplicationPage"
+    path="/application/:campaignId"
+    element={<ApplicationPage />}
+  />,
 ];
 
 export default routes;

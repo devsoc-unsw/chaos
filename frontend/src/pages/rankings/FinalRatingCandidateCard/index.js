@@ -21,7 +21,7 @@ const calculateAvg = (ratings) => {
 };
 
 const FinalRatingCandidateCard = (props) => {
-  const { name, position, ratings, reject } = props;
+  const { name, position, ratings, reject, application } = props;
   const [open, setOpen] = useState(false);
 
   const handleOpen = () => {
@@ -69,6 +69,7 @@ const FinalRatingCandidateCard = (props) => {
         position={position}
         open={open}
         handleClose={handleClose}
+        application={application}
       />
     </>
   );
@@ -84,6 +85,17 @@ FinalRatingCandidateCard.propTypes = {
     })
   ).isRequired,
   reject: PropTypes.bool,
+  application: PropTypes.shape({
+    applicationId: PropTypes.string.isRequired,
+    zId: PropTypes.string.isRequired,
+    mark: PropTypes.number.isRequired,
+    questions: PropTypes.arrayOf(
+      PropTypes.shape({
+        question: PropTypes.string.isRequired,
+        answer: PropTypes.string.isRequired,
+      })
+    ),
+  }).isRequired,
 };
 
 FinalRatingCandidateCard.defaultProps = {

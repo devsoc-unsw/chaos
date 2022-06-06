@@ -30,7 +30,10 @@ const dateToString = (date) =>
 
 const bytesToImage = (bytes) =>
   `data:image/png;base64,${btoa(
-    String.fromCharCode(...new Uint8Array(bytes))
+    new Uint8Array(bytes).reduce(
+      (data, byte) => data + String.fromCharCode(byte),
+      ""
+    )
   )}`;
 
 const fileToDataUrl = (file) => {
@@ -51,6 +54,9 @@ const fileToDataUrl = (file) => {
   return dataUrlPromise;
 };
 
+const base64ToBytes = (base64String) =>
+  Array.from(atob(base64String), (c) => c.charCodeAt(0));
+
 // set/retrieve from localstorage
 const getStore = (key) => localStorage.getItem(key);
 const setStore = (key, val) => localStorage.setItem(key, val);
@@ -66,4 +72,5 @@ export {
   isLoggedIn,
   dateToString,
   bytesToImage,
+  base64ToBytes,
 };
