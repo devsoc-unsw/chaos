@@ -97,7 +97,7 @@ pub fn seed() {
 
     for org in &orgs {
         org.insert(&connection)
-           .expect(&format!("Failed to insert org {}.", org.name));
+            .expect(&format!("Failed to insert org {}.", org.name));
     }
 
     assert!(Organisation::get_all(&connection).len() == 2);
@@ -175,7 +175,7 @@ pub fn seed() {
     let question_one = NewQuestion {
         title: "What is the meaning of life?".to_string(),
         max_bytes: 100,
-        role_id: senior_mentor_role.id,
+        role_ids: vec![senior_mentor_role.id],
         required: false,
         description: Some("Please ensure to go into great detail!".to_string()),
     }
@@ -185,7 +185,7 @@ pub fn seed() {
     let question_two = NewQuestion {
         title: "Why do you want to be a Peer Mentor".to_string(),
         max_bytes: 300,
-        role_id: senior_mentor_role.id,
+        role_ids: vec![senior_mentor_role.id, mentor_role.id],
         required: true,
         description: Some("Please explain why you would like to be a peer mentor!".to_string()),
     }
