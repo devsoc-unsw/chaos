@@ -26,8 +26,8 @@ const Application = () => {
     setCampaign(
       state ||
         (async () => {
-          const res = await getAllCampaigns();
-          const data = await res.json();
+          const resp = await getAllCampaigns();
+          const data = await resp.json();
           const current = data.current_campaigns;
           return current.find((x) => x.campaign.id === campaignId);
         })()
@@ -55,7 +55,12 @@ const Application = () => {
 
   const { campaignName, headerImage, description, roles, questions, userInfo } =
     {
-      campaignName: campaign.campaign.name,
+      campaignName: (() => {
+        const { cover_image: _, rest } = campaign.campaign;
+        campaign.campaign = rest;
+        console.log(JSON.stringify(campaign, null, 4));
+        return campaign.campaign.name;
+      })(),
       headerImage: bytesToImage(campaign.campaign.cover_image),
       description: campaign.campaign.description,
       roles: campaign.roles.map((r) => ({
@@ -67,10 +72,11 @@ const Application = () => {
         if (!(q.id in answers)) {
           answers[q.id] = "";
         }
+        console.log(`qeustion: ${JSON.stringify(q)}`);
         return {
           id: q.id,
           text: q.title,
-          roles: new Set([q.role_id]),
+          roles: q.role_ids,
         };
       }),
       userInfo: {

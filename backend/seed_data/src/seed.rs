@@ -97,7 +97,7 @@ pub fn seed() {
 
     for org in &orgs {
         org.insert(&connection)
-           .expect(&format!("Failed to insert org {}.", org.name));
+            .expect(&format!("Failed to insert org {}.", org.name));
     }
 
     assert!(Organisation::get_all(&connection).len() == 2);
