@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Container } from "@mui/material";
 import ApplicationForm from "../../components/ApplicationForm";
 import { bytesToImage } from "../../utils";
@@ -16,6 +16,8 @@ import {
 } from "../../api";
 
 const Application = () => {
+  const navigate = useNavigate();
+
   const [campaign, setCampaign] = useState([]);
 
   const campaignId = parseInt(useParams().campaignId, 10);
@@ -117,6 +119,7 @@ const Application = () => {
               );
           });
       });
+      navigate("/dashboard");
     } else {
       console.error(
         "Submission failed, you must select at least one role to apply for!"
