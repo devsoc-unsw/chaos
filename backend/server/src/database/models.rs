@@ -10,6 +10,7 @@ use diesel::prelude::*;
 use diesel::PgConnection;
 use rocket::FromForm;
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 
 #[derive(Queryable)]
 pub struct User {
@@ -195,7 +196,13 @@ impl Organisation {
             .execute(conn)
             .ok();
 
-        Organisation::delete(conn, org_id).map(|_| ())
+        let num = Organisation::delete(conn, org_id)?;
+
+        if num < 1 {
+            return None;
+        }
+
+        Some(())
     }
 
     pub fn find_by_name(conn: &PgConnection, organisation_name: &str) -> Option<Organisation> {
@@ -405,7 +412,7 @@ impl Campaign {
 
         let now = Utc::now().naive_utc();
         let campaigns_vec: Vec<Campaign> = campaigns
-            .filter(starts_at.lt(now).and(published.eq(true)))
+            .filter(starts_at.lt(now).and(published.eq(true)).and(ends_at.gt(now)))
             .order(id.asc())
             .load(conn)
             .unwrap_or_else(|_| vec![]);
@@ -423,11 +430,23 @@ impl Campaign {
             .map(|campaign| {
                 let campaign_roles = Role::get_all_from_campaign_id(&conn, campaign.id);
 
+                let mut seen = HashSet::new();
+
                 let questions = campaign_roles
                     .iter()
                     .map(|x| Question::get_all_from_role_id(conn, x.id).into_iter())
                     .flatten()
+                    .filter(|x| {
+                        if !seen.contains(&x.id) {
+                            seen.insert(x.id);
+                            true
+                        } else {
+                            false
+                        }
+                    })
                     .collect();
+
+                println!("Questions for campaign {}: {:?}", campaign.name, questions);
 
                 let applied_for: Vec<i32> = campaign_roles
                     .clone()
@@ -657,13 +676,15 @@ impl Role {
     }
 
     pub fn delete_children(conn: &PgConnection, role: Role) -> Option<()> {
+        use diesel::pg::expression::dsl::any;
+
         let question_items: Vec<Question> = questions::table
-            .filter(questions::role_id.eq(role.id))
+            .filter(any(questions::role_ids).eq(role.id))
             .load(conn)
             .ok()?;
 
         println!("Trying to delete questions");
-        diesel::delete(questions::table.filter(questions::role_id.eq(role.id)))
+        diesel::delete(questions::table.filter(any(questions::role_ids).eq(role.id)))
             .execute(conn)
             .ok();
 
@@ -807,12 +828,11 @@ impl NewApplication {
     }
 }
 
-#[derive(Identifiable, Queryable, Associations, PartialEq, Serialize)]
-#[belongs_to(Role)]
+#[derive(Identifiable, Queryable, PartialEq, Serialize, Debug, QueryableByName)]
 #[table_name = "questions"]
 pub struct Question {
     pub id: i32,
-    pub role_id: i32,
+    pub role_ids: Vec<i32>,
     pub title: String,
     pub description: Option<String>,
     pub max_bytes: i32,
@@ -824,7 +844,7 @@ pub struct Question {
 #[derive(Insertable)]
 #[table_name = "questions"]
 pub struct NewQuestion {
-    pub role_id: i32,
+    pub role_ids: Vec<i32>,
     pub title: String,
     pub description: Option<String>,
     pub max_bytes: i32,
@@ -834,7 +854,7 @@ pub struct NewQuestion {
 #[derive(Serialize)]
 pub struct QuestionResponse {
     pub id: i32,
-    pub role_id: i32,
+    pub role_ids: Vec<i32>,
     pub title: String,
     pub description: Option<String>,
     pub max_bytes: i32,
@@ -845,7 +865,7 @@ impl std::convert::From<Question> for QuestionResponse {
     fn from(question: Question) -> Self {
         Self {
             id: question.id,
-            role_id: question.role_id,
+            role_ids: question.role_ids,
             title: question.title,
             description: question.description,
             max_bytes: question.max_bytes,
@@ -864,6 +884,13 @@ pub struct UpdateQuestionInput {
 }
 
 impl Question {
+    pub fn get_first_role(&self) -> i32 {
+        *self
+            .role_ids
+            .get(0)
+            .expect("Question should be for at least one role")
+    }
+
     pub fn get_all(conn: &PgConnection) -> Vec<Question> {
         use crate::database::schema::questions::dsl::*;
 
@@ -889,21 +916,21 @@ impl Question {
     }
 
     pub fn get_all_from_role_id(conn: &PgConnection, role_id_val: i32) -> Vec<Question> {
-        use crate::database::schema::questions::dsl::*;
-
-        questions
-            .filter(role_id.eq(role_id_val))
-            .order(id.asc())
-            .load(conn)
-            .unwrap_or_else(|_| vec![])
+        diesel::sql_query(&format!(
+            "select * from questions where {} = any(role_ids)",
+            role_id_val
+        ))
+        .load::<Question>(conn)
+        .unwrap_or_else(|_| vec![])
     }
 
     pub fn delete_all_from_role_id(conn: &PgConnection, role_id_val: i32) -> bool {
-        use crate::database::schema::questions::dsl::*;
-
-        diesel::delete(questions.filter(role_id.eq(role_id_val)))
-            .execute(conn)
-            .is_ok()
+        diesel::sql_query(&format!(
+            "delete from questions where {} = any(role_ids)",
+            role_id_val
+        ))
+        .execute(conn)
+        .is_ok()
     }
 
     pub fn delete(conn: &PgConnection, question_id: i32) -> bool {

@@ -5,7 +5,7 @@ import React, {
   useState,
   createContext,
 } from "react";
-import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
+import { SetNavBarTitleContext } from "../../contexts/SetNavbarTitleContext";
 import { AdminContainer } from "./admin.styled";
 import AdminSidebar from "../../components/AdminSideBar";
 import AdminContent from "./AdminContent";

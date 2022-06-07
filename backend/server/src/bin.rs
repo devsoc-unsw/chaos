@@ -10,8 +10,7 @@ use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use diesel_migrations::*;
 use figment::{providers::Serialized, Figment};
-use rocket::routes;
-use std::collections::HashMap;
+use rocket::{routes, serde::json::Value};
 use std::env;
 
 #[rocket::get("/foo")]
@@ -31,18 +30,21 @@ async fn main() {
 
     let cors = cors();
 
-    let database_map: HashMap<&str, HashMap<&str, HashMap<&str, &str>>> = [(
-        "databases",
-        [("database", [("url", &db_url[..])].into_iter().collect())]
-            .into_iter()
-            .collect(),
-    )]
-    .into_iter()
-    .collect();
+    let config_map: Value = serde_json::from_str(&format!(
+        r#"{{
+            "databases": {{
+                "database": {{
+                    "url": "{}"
+                }}
+            }},
+            "log_level": "debug",
+            "address": "0.0.0.0"
+        }}"#,
+        db_url
+    ))
+    .unwrap();
 
-    let mut default_config = rocket::Config::default();
-    default_config.address = "0.0.0.0".parse().unwrap();
-    let figment = Figment::from(default_config).merge(Serialized::defaults(database_map));
+    let figment = Figment::from(rocket::Config::default()).merge(Serialized::globals(config_map));
 
     rocket::custom(figment)
         .manage(api_state)
