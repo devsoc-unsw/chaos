@@ -5,6 +5,7 @@ import { ListItemText, Divider, ListItemIcon, IconButton } from "@mui/material";
 import ClearIcon from "@mui/icons-material/Clear";
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
+import { deleteCampaign } from "api";
 import {
   AdminContentList,
   ContentListHeader,
@@ -19,11 +20,14 @@ import {
 const AdminCampaignContent = ({ campaigns, setCampaigns, orgId }) => {
   const navigate = useNavigate();
 
-  const onDelete = (e) => {
+  const onDelete = async (e) => {
     // FIXME: CHAOS-55, integrate with backend to actually delete
     e.stopPropagation();
     const campaignId = e.currentTarget.value;
-    setCampaigns(campaigns.filter((c) => c.id !== parseInt(campaignId, 10)));
+    const res = await deleteCampaign(campaignId);
+    if (res.ok) {
+      setCampaigns(campaigns.filter((c) => c.id !== parseInt(campaignId, 10)));
+    }
   };
 
   const onCampaignClick = (e, id) => {

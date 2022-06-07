@@ -113,3 +113,8 @@ export const submitAnswer = (applicationId, questionId, description) =>
       description,
     },
   });
+
+export const deleteCampaign = (id) => authenticatedRequest({
+  method: "DELETE",
+  path: `/campaign/${id}`,
+});
