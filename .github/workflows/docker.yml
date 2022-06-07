@@ -85,3 +85,34 @@ jobs:
             ghcr.io/csesoc/chaos-frontend:${{ github.sha }}
             ghcr.io/csesoc/chaos-frontend:latest
           labels: ${{ steps.meta.outputs.labels }}
+  deploy:
+    name: Deploy (CD)
+    runs-on: ubuntu-latest
+    needs: [build-client, build-backend]
+    if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+    concurrency: staging
+    environment:
+      name: staging
+      url: https://chaos.staging.csesoc.unsw.edu.au
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          repository: csesoc/deployment
+          token: ${{ secrets.GH_TOKEN }}
+      - name: Install yq - portable yaml processor
+        uses: mikefarah/yq@v4.25.1
+      - name: Update deployment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          git config user.name "CSESoc CD"
+          git config user.email "technical@csesoc.org.au"
+          git checkout -b update/chaos/staging/${{ github.sha }}
+          yq -i '.items[0].spec.template.spec.containers[0].image = "ghcr.io/csesoc/chaos-frontend:${{ github.sha }}"' apps/projects/chaos/staging/deploy-frontend.yml
+          yq -i '.items[0].spec.template.spec.containers[0].image = "ghcr.io/csesoc/chaos-backend:${{ github.sha }}"' apps/projects/chaos/staging/deploy-backend.yml
+          git add . 
+          git commit -m "feat(chaos/staging): update images" 
+          git push -u origin update/chaos/staging/${{ github.sha }}
+          gh pr create --title "feat(chaos/staging): update images" --body "Updates the images for the chaos staging deployment to commit csesoc/chaos@${{ github.sha }}." > URL
+          gh pr merge $(cat URL) --squash -d

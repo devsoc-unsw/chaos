@@ -5,9 +5,11 @@ use crate::database::{
     schema::ApplicationStatus,
     Database,
 };
+use crate::error::JsonErr;
 use rocket::{
-    form::Form,
-    get, post, put,
+    get,
+    http::Status,
+    post, put,
     serde::{json::Json, Deserialize, Serialize},
     FromForm,
 };
@@ -32,7 +34,7 @@ pub async fn create_application(
     app_req: Json<ApplicationReq>,
     user: User,
     db: Database,
-) -> Result<Json<Application>, Json<ApplicationError>> {
+) -> Result<Json<Application>, JsonErr<ApplicationError>> {
     use crate::database::schema::applications::dsl::*;
     use diesel::prelude::*;
     use diesel::query_dsl::RunQueryDsl;
@@ -59,7 +61,10 @@ pub async fn create_application(
             NewApplication::insert(&new_application, conn)
         })
         .await
-        .ok_or(Json(ApplicationError::UnableToCreate))?;
+        .ok_or(JsonErr(
+            ApplicationError::UnableToCreate,
+            Status::BadRequest,
+        ))?;
 
     Ok(Json(application))
 }
@@ -75,12 +80,12 @@ pub async fn create_rating(
     rating: Json<RatingInput>,
     user: User,
     db: Database,
-) -> Result<Json<()>, Json<ApplicationError>> {
+) -> Result<Json<()>, JsonErr<ApplicationError>> {
     db.run(move |conn| {
         OrganisationUser::application_admin_level(application_id, user.id, &conn)
             .is_at_least_director()
             .check()
-            .or_else(|_| Err(ApplicationError::Unauthorized))?;
+            .map_err(|_| JsonErr(ApplicationError::Unauthorized, Status::Forbidden))?;
 
         NewRating::insert(
             &NewRating {
@@ -90,7 +95,10 @@ pub async fn create_rating(
             },
             &conn,
         )
-        .ok_or_else(|| ApplicationError::UnableToCreate)?;
+        .ok_or(JsonErr(
+            ApplicationError::UnableToCreate,
+            Status::InternalServerError,
+        ))?;
 
         Ok(Json(()))
     })
@@ -102,15 +110,18 @@ pub async fn submit_answer(
     user: User,
     db: Database,
     answer: Json<NewAnswer>,
-) -> Result<Json<()>, Json<ApplicationError>> {
+) -> Result<Json<()>, JsonErr<ApplicationError>> {
     db.run(move |conn| {
         let application = Application::get(answer.application_id, &conn)
-            .ok_or(Json(ApplicationError::AppNotFound))?;
+            .ok_or(JsonErr(ApplicationError::AppNotFound, Status::NotFound))?;
         if application.user_id != user.id {
-            return Err(Json(ApplicationError::Unauthorized));
+            return Err(JsonErr(ApplicationError::Unauthorized, Status::Forbidden));
         }
 
-        NewAnswer::insert(&answer, &conn).ok_or(Json(ApplicationError::UnableToCreate))?;
+        NewAnswer::insert(&answer, &conn).ok_or(JsonErr(
+            ApplicationError::UnableToCreate,
+            Status::InternalServerError,
+        ))?;
 
         Ok(Json(()))
     })
@@ -127,15 +138,15 @@ pub async fn get_answers(
     application_id: i32,
     user: User,
     db: Database,
-) -> Result<Json<AnswersResponse>, Json<ApplicationError>> {
+) -> Result<Json<AnswersResponse>, JsonErr<ApplicationError>> {
     db.run(move |conn| {
-        let app =
-            Application::get(application_id, &conn).ok_or(Json(ApplicationError::AppNotFound))?;
+        let app = Application::get(application_id, &conn)
+            .ok_or(JsonErr(ApplicationError::AppNotFound, Status::NotFound))?;
 
         OrganisationUser::role_admin_level(app.role_id, user.id, &conn)
             .is_at_least_director()
             .check()
-            .map_err(|_| Json(ApplicationError::Unauthorized))?;
+            .map_err(|_| JsonErr(ApplicationError::Unauthorized, Status::Forbidden))?;
 
         Ok(Json(AnswersResponse {
             answers: Answer::get_all_from_application_id(conn, application_id),
@@ -154,15 +165,15 @@ pub async fn get_ratings(
     application_id: i32,
     user: User,
     db: Database,
-) -> Result<Json<RatingsResponse>, Json<ApplicationError>> {
+) -> Result<Json<RatingsResponse>, JsonErr<ApplicationError>> {
     db.run(move |conn| {
-        let app =
-            Application::get(application_id, &conn).ok_or(Json(ApplicationError::AppNotFound))?;
+        let app = Application::get(application_id, &conn)
+            .ok_or(JsonErr(ApplicationError::AppNotFound, Status::NotFound))?;
 
         OrganisationUser::role_admin_level(app.role_id, user.id, &conn)
             .is_at_least_director()
             .check()
-            .map_err(|_| Json(ApplicationError::Unauthorized))?;
+            .map_err(|_| JsonErr(ApplicationError::Unauthorized, Status::Forbidden))?;
 
         Ok(Json(RatingsResponse {
             ratings: Rating::get_all_from_application_id(conn, application_id),

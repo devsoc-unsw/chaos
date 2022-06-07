@@ -6,12 +6,11 @@ use super::schema::{
 };
 use chrono::NaiveDateTime;
 use chrono::Utc;
-use diesel::prelude::BelongingToDsl;
 use diesel::prelude::*;
 use diesel::PgConnection;
-use itertools::Itertools;
 use rocket::FromForm;
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 
 #[derive(Queryable)]
 pub struct User {
@@ -413,7 +412,7 @@ impl Campaign {
 
         let now = Utc::now().naive_utc();
         let campaigns_vec: Vec<Campaign> = campaigns
-            .filter(starts_at.lt(now).and(published.eq(true)))
+            .filter(starts_at.lt(now).and(published.eq(true)).and(ends_at.gt(now)))
             .order(id.asc())
             .load(conn)
             .unwrap_or_else(|_| vec![]);
@@ -431,11 +430,23 @@ impl Campaign {
             .map(|campaign| {
                 let campaign_roles = Role::get_all_from_campaign_id(&conn, campaign.id);
 
+                let mut seen = HashSet::new();
+
                 let questions = campaign_roles
                     .iter()
                     .map(|x| Question::get_all_from_role_id(conn, x.id).into_iter())
                     .flatten()
+                    .filter(|x| {
+                        if !seen.contains(&x.id) {
+                            seen.insert(x.id);
+                            true
+                        } else {
+                            false
+                        }
+                    })
                     .collect();
+
+                println!("Questions for campaign {}: {:?}", campaign.name, questions);
 
                 let applied_for: Vec<i32> = campaign_roles
                     .clone()

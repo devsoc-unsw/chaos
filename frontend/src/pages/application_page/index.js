@@ -18,8 +18,7 @@ import {
 const Application = () => {
   const [campaign, setCampaign] = useState([]);
 
-  const { campaignId } = useParams();
-
+  const campaignId = parseInt(useParams().campaignId, 10);
   const { state } = useLocation();
 
   useEffect(async () => {
@@ -38,15 +37,32 @@ const Application = () => {
 
   const [selfInfo, setSelfInfo] = useState({});
   useEffect(() => {
-    const getUserInfo = async () => {
-      const res = await getSelfInfo();
-      const data = await res.json();
-      setSelfInfo(data);
-    };
-    getUserInfo();
+    const getData = async () => {
+      const getUserInfo = async () => {
+        const res = await getSelfInfo();
+        const data = await res.json();
+        setSelfInfo(data);
+      };
+      await getUserInfo();
 
-    setLoading(false);
-  }, []);
+      const getCampaign = async () => {
+        const newCampaign =
+          state ||
+          (await (async () => {
+            const res = await getAllCampaigns();
+            const data = await res.json();
+            const current = data.current_campaigns;
+            return current.find((x) => x.campaign.id === campaignId);
+          })());
+        setCampaign(newCampaign);
+      };
+      await getCampaign();
+
+      setLoading(false);
+    };
+
+    getData();
+  }, [campaign]);
 
   const [rolesSelected, setRolesSelected] = useState([]);
   const [answers, setAnswers] = useState({});
@@ -55,12 +71,7 @@ const Application = () => {
 
   const { campaignName, headerImage, description, roles, questions, userInfo } =
     {
-      campaignName: (() => {
-        const { cover_image: _, rest } = campaign.campaign;
-        campaign.campaign = rest;
-        console.log(JSON.stringify(campaign, null, 4));
-        return campaign.campaign.name;
-      })(),
+      campaignName: campaign.campaign.name,
       headerImage: bytesToImage(campaign.campaign.cover_image),
       description: campaign.campaign.description,
       roles: campaign.roles.map((r) => ({
@@ -72,11 +83,10 @@ const Application = () => {
         if (!(q.id in answers)) {
           answers[q.id] = "";
         }
-        console.log(`qeustion: ${JSON.stringify(q)}`);
         return {
           id: q.id,
           text: q.title,
-          roles: q.role_ids,
+          roles: new Set(q.role_ids),
         };
       }),
       userInfo: {

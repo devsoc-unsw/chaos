@@ -33,6 +33,10 @@ const ApplicationForm = ({
   description,
   userInfo,
 }) => {
+  const questions_with_array = questions.map(({id, text, roles}) => ({id, text, roles: [...roles]}));
+
+  const useless = console.log(`Qs: ${JSON.stringify(questions_with_array, null, 4)}`);
+
   const loggedIn = isLoggedIn();
 
   // FIXME: part of CHAOS-51, handle single question related to many roles
