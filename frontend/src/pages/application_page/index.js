@@ -106,7 +106,7 @@ const Application = () => {
           });
       });
     } else {
-      console.error(
+      alert(
         "Submission failed, you must select at least one role to apply for!"
       );
     }
