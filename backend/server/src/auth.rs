@@ -220,7 +220,10 @@ pub async fn signin(
     let token = get_access_token(&body.oauth_token, state)
         .await
         .ok_or_else(|| {
-            eprintln!("Failed to get access token for oauth token {}", body.oauth_token);
+            eprintln!(
+                "Failed to get access token for oauth token {}",
+                body.oauth_token
+            );
             JsonErr(SignInError::InvalidOAuthCode, Status::Forbidden)
         })?;
 
