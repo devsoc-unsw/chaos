@@ -412,7 +412,12 @@ impl Campaign {
 
         let now = Utc::now().naive_utc();
         let campaigns_vec: Vec<Campaign> = campaigns
-            .filter(starts_at.lt(now).and(published.eq(true)).and(ends_at.gt(now)))
+            .filter(
+                starts_at
+                    .lt(now)
+                    .and(published.eq(true))
+                    .and(ends_at.gt(now)),
+            )
             .order(id.asc())
             .load(conn)
             .unwrap_or_else(|_| vec![]);

@@ -1,6 +1,7 @@
 use crate::database::{
     models::{
-        Answer, Application, NewAnswer, NewApplication, NewRating, OrganisationUser, Question, Rating, User,
+        Answer, Application, NewAnswer, NewApplication, NewRating, OrganisationUser, Question,
+        Rating, User,
     },
     schema::ApplicationStatus,
     Database,
@@ -120,8 +121,10 @@ pub async fn submit_answer(
             return Err(JsonErr(ApplicationError::Unauthorized, Status::Forbidden));
         }
 
-        let question = Question::get_from_id(&conn, answer.question_id)
-            .ok_or(JsonErr(ApplicationError::QuestionNotFound, Status::BadRequest))?;
+        let question = Question::get_from_id(&conn, answer.question_id).ok_or(JsonErr(
+            ApplicationError::QuestionNotFound,
+            Status::BadRequest,
+        ))?;
         if answer.description.len() as i32 > question.max_bytes {
             return Err(JsonErr(ApplicationError::InvalidInput, Status::BadRequest));
         }
