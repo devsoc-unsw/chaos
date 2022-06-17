@@ -7,8 +7,9 @@ use crate::database::{
 use crate::error::JsonErr;
 
 use rocket::{
-    delete, get, put,
+    delete, get,
     http::Status,
+    put,
     serde::{json::Json, Serialize},
 };
 

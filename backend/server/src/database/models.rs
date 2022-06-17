@@ -412,7 +412,12 @@ impl Campaign {
 
         let now = Utc::now().naive_utc();
         let campaigns_vec: Vec<Campaign> = campaigns
-            .filter(starts_at.lt(now).and(published.eq(true)).and(ends_at.gt(now)))
+            .filter(
+                starts_at
+                    .lt(now)
+                    .and(published.eq(true))
+                    .and(ends_at.gt(now)),
+            )
             .order(id.asc())
             .load(conn)
             .unwrap_or_else(|_| vec![]);
@@ -841,12 +846,13 @@ pub struct Question {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Insertable)]
+#[derive(Insertable, Serialize, Deserialize)]
 #[table_name = "questions"]
 pub struct NewQuestion {
     pub role_ids: Vec<i32>,
     pub title: String,
     pub description: Option<String>,
+    #[serde(default)]
     pub max_bytes: i32,
     pub required: bool,
 }
