@@ -96,7 +96,7 @@ export const DummyDivForAlignment = styled("div")`
 `;
 
 export const DummyIconForAlignment = styled(AddIcon)`
-  display: "none";
+  display: none;
 `;
 
 export const AdminDivider = styled(Divider)`
