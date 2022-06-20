@@ -24,6 +24,11 @@ const Rankings = () => {
   const [rankings, setRankings] = useState({});
   const [positions, setPositions] = useState([]);
   const [applications, setApplications] = useState({});
+  const [passIndex, setPassIndex] = useState(0);
+
+  useEffect(() => {
+    setPassIndex(Math.ceil((rankings[selectedPosition]?.length || 0) / 2));
+  }, [selectedPosition]);
 
   useEffect(() => {
     (async () => {
@@ -156,6 +161,8 @@ const Rankings = () => {
         setRankings={setRankings}
         selectedPosition={selectedPosition}
         applications={applications}
+        passIndex={passIndex}
+        setPassIndex={setPassIndex}
       />
 
       <Grid container justifyContent="flex-end">

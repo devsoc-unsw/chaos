@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import PropTypes from "prop-types";
 
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
@@ -7,12 +7,14 @@ import FinalRatingCandidateCard from "../FinalRatingCandidateCard";
 import PassBar from "../PassBar";
 
 const DragDropRankings = (props) => {
-  const { rankings, setRankings, selectedPosition, applications } = props;
-  const [passIndex, setPassIndex] = useState(0);
-
-  useEffect(() => {
-    setPassIndex(Math.ceil((rankings[selectedPosition]?.length || 0) / 2));
-  }, [selectedPosition]);
+  const {
+    rankings,
+    setRankings,
+    selectedPosition,
+    passIndex,
+    setPassIndex,
+    applications,
+  } = props;
 
   const onDragEnd = (result) => {
     // TODO: CHAOS-88 integrate with backend
@@ -161,6 +163,8 @@ DragDropRankings.propTypes = {
   ).isRequired,
   setRankings: PropTypes.func.isRequired,
   selectedPosition: PropTypes.string.isRequired,
+  passIndex: PropTypes.number.isRequired,
+  setPassIndex: PropTypes.func.isRequired,
   applications: PropTypes.objectOf(
     PropTypes.objectOf(
       PropTypes.shape({
