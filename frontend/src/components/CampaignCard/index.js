@@ -23,8 +23,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import { ExpandIconButton } from "./campaignCard.styled";
 
 const positionStatuses = {
-  "Careers Director": "processing",
-  "Socials Director": "offered",
+  "Peer Mentor": "processing",
+  "Senior Mentor": "offered",
 };
 
 const status = {
@@ -60,6 +60,13 @@ const CampaignCard = ({
     setExpanded(!expanded);
   };
 
+  const positionsMap = Object.fromEntries(
+    positions.map(({ id, ...position }) => [id, position])
+  );
+  const appliedForPositions = appliedFor.map(
+    (position) => positionsMap[position].name
+  );
+
   return (
     <Card>
       <CardActionArea>
@@ -80,7 +87,7 @@ const CampaignCard = ({
             <>
               <Divider />
               <List>
-                {appliedFor.map((position) => (
+                {appliedForPositions.map((position) => (
                   <ListItem disablePadding>
                     <ListItemText
                       primary={

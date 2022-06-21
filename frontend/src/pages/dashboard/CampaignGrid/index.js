@@ -16,6 +16,7 @@ const CampaignGrid = ({ campaigns }) => {
             title={campaign.campaign.name}
             appliedFor={campaign.applied_for}
             positions={campaign.roles.map((role) => ({
+              id: role.id,
               name: role.name,
               number: role.max_available,
             }))}
