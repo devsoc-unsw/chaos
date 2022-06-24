@@ -1,6 +1,7 @@
 use crate::database::{
     models::{
-        Answer, Application, NewAnswer, NewApplication, NewRating, OrganisationUser, Rating, User,
+        Answer, Application, NewAnswer, NewApplication, NewRating, OrganisationUser, Question,
+        Rating, User,
     },
     schema::ApplicationStatus,
     Database,
@@ -21,6 +22,8 @@ pub enum ApplicationError {
     RoleNotFound,
     UnableToCreate,
     AppNotFound,
+    QuestionNotFound,
+    InvalidInput,
 }
 
 #[derive(Deserialize)]
@@ -116,6 +119,14 @@ pub async fn submit_answer(
             .ok_or(JsonErr(ApplicationError::AppNotFound, Status::NotFound))?;
         if application.user_id != user.id {
             return Err(JsonErr(ApplicationError::Unauthorized, Status::Forbidden));
+        }
+
+        let question = Question::get_from_id(&conn, answer.question_id).ok_or(JsonErr(
+            ApplicationError::QuestionNotFound,
+            Status::BadRequest,
+        ))?;
+        if answer.description.len() as i32 > question.max_bytes {
+            return Err(JsonErr(ApplicationError::InvalidInput, Status::BadRequest));
         }
 
         NewAnswer::insert(&answer, &conn).ok_or(JsonErr(
