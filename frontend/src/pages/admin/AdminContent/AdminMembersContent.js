@@ -46,40 +46,40 @@ const AdminMembersContent = ({ members, setMembers }) => {
           <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
             <AddIcon />
           </IconButton>
+          <InputPopup
+            title="Invite a user"
+            label="Email"
+            name="email"
+            submitText="Invite"
+            defaultState={{ adminLevel: 1 }}
+            onSubmit={inviteUser}
+            open={Boolean(anchorEl)}
+            anchorEl={anchorEl}
+            setAnchorEl={setAnchorEl}
+          >
+            {({ formValues, handleInputChange }) => (
+              <FormControl>
+                <FormLabel id="admin-level">Admin Level</FormLabel>
+                <RadioGroup
+                  aria-labelledby="admin-level"
+                  value={formValues.adminLevel}
+                  onChange={handleInputChange}
+                  name="adminLevel"
+                  row
+                >
+                  {["Read Only", "Director", "Admin"].map((label, idx) => (
+                    <FormControlLabel
+                      value={idx + 1}
+                      control={<Radio size="small" />}
+                      label={label}
+                    />
+                  ))}
+                </RadioGroup>
+              </FormControl>
+            )}
+          </InputPopup>
         </ListItemIcon>
       </ContentListHeader>
-      <InputPopup
-        title="Invite a user"
-        label="Email"
-        name="email"
-        submitText="Invite"
-        defaultState={{ adminLevel: 1 }}
-        onSubmit={inviteUser}
-        open={Boolean(anchorEl)}
-        anchorEl={anchorEl}
-        setAnchorEl={setAnchorEl}
-      >
-        {({ formValues, handleInputChange }) => (
-          <FormControl>
-            <FormLabel id="admin-level">Admin Level</FormLabel>
-            <RadioGroup
-              aria-labelledby="admin-level"
-              value={formValues.adminLevel}
-              onChange={handleInputChange}
-              name="adminLevel"
-              row
-            >
-              {["Read Only", "Director", "Admin"].map((label, idx) => (
-                <FormControlLabel
-                  value={idx + 1}
-                  control={<Radio size="small" />}
-                  label={label}
-                />
-              ))}
-            </RadioGroup>
-          </FormControl>
-        )}
-      </InputPopup>
       <AdminDivider />
       {members.map((m) => (
         <div>
