@@ -62,6 +62,7 @@ async fn main() {
                 backend::organisation::is_admin,
                 backend::organisation::get_from_ids,
                 backend::organisation::invite_uid,
+                backend::organisation::invite_email,
             ],
         )
         .mount(
