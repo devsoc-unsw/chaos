@@ -214,7 +214,12 @@ pub async fn set_status(
         diesel::update(applications.filter(id.eq(application_id)))
             .set(status.eq(new_status.into_inner()))
             .execute(conn)
-            .map_err(|_| JsonErr(ApplicationError::UnableToUpdate, Status::InternalServerError))?;
+            .map_err(|_| {
+                JsonErr(
+                    ApplicationError::UnableToUpdate,
+                    Status::InternalServerError,
+                )
+            })?;
 
         Ok(Json(()))
     })
