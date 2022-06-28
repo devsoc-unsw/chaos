@@ -393,7 +393,7 @@ pub struct CampaignWithRoles {
     pub campaign: Campaign,
     pub roles: Vec<Role>,
     pub questions: Vec<Question>,
-    pub applied_for: Vec<i32>,
+    pub applied_for: Vec<(i32, ApplicationStatus)>,
 }
 
 impl Campaign {
@@ -453,21 +453,15 @@ impl Campaign {
 
                 println!("Questions for campaign {}: {:?}", campaign.name, questions);
 
-                let applied_for: Vec<i32> = campaign_roles
+                let applied_for: Vec<(i32, ApplicationStatus)> = campaign_roles
                     .clone()
                     .into_iter()
                     .filter_map(|role| {
-                        if Application::get_all_from_role_id(&conn, role.id)
+                        let app = Application::get_all_from_role_id(&conn, role.id)
                             .into_iter()
                             .filter(|app| app.user_id == user_id)
-                            .peekable()
-                            .peek()
-                            .is_some()
-                        {
-                            Some(role.id)
-                        } else {
-                            None
-                        }
+                            .next()?;
+                        Some((role.id, app.status))
                     })
                     .collect();
 

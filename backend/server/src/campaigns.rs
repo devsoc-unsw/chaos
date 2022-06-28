@@ -1,7 +1,7 @@
 use crate::database::{
     models::{
-        Campaign, CampaignWithRoles, NewCampaignInput, OrganisationUser, Role,
-        UpdateCampaignInput, User, RoleUpdate, NewQuestion,
+        Campaign, CampaignWithRoles, NewCampaignInput, NewQuestion, OrganisationUser, Role,
+        RoleUpdate, UpdateCampaignInput, User,
     },
     Database,
 };
@@ -162,9 +162,9 @@ pub async fn new(
                 max_available: role.max_available,
                 finalised: campaign.published,
             };
-            let inserted_role = new_role
-                .insert(conn)
-                .ok_or_else(|| JsonErr(CampaignError::UnableToCreate, Status::InternalServerError))?;
+            let inserted_role = new_role.insert(conn).ok_or_else(|| {
+                JsonErr(CampaignError::UnableToCreate, Status::InternalServerError)
+            })?;
 
             for question in role.questions_for_role {
                 if question < new_questions.len() {
@@ -177,9 +177,10 @@ pub async fn new(
             if question.role_ids.len() == 0 {
                 return Err(JsonErr(CampaignError::InvalidInput, Status::BadRequest));
             }
-            question
-                .insert(conn)
-                .ok_or(JsonErr(CampaignError::UnableToCreate, Status::InternalServerError))?;
+            question.insert(conn).ok_or(JsonErr(
+                CampaignError::UnableToCreate,
+                Status::InternalServerError,
+            ))?;
         }
 
         Ok(Json(campaign))
