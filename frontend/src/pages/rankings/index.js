@@ -190,7 +190,7 @@ const Rankings = () => {
           disabled={Object.keys(passIndices).length !== positions.length}
           onClick={handleNext}
         >
-          Next (Console Log)
+          Next
         </Button>
       </Grid>
     </Container>
