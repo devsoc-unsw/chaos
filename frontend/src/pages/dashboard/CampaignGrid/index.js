@@ -3,8 +3,8 @@ import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import { Grid } from "@mui/material";
 
-import CampaignCard from "../../../components/CampaignCard";
-import { bytesToImage, dateToString } from "../../../utils";
+import CampaignCard from "components/CampaignCard";
+import { bytesToImage, dateToString, tuple } from "utils";
 
 const CampaignGrid = ({ campaigns }) => {
   const navigate = useNavigate();
@@ -45,7 +45,8 @@ CampaignGrid.propTypes = {
         ends_at: PropTypes.string.isRequired,
         cover_image: PropTypes.arrayOf(PropTypes.number).isRequired,
       }).isRequired,
-      applied_for: PropTypes.arrayOf(PropTypes.string).isRequired,
+      applied_for: PropTypes.arrayOf(tuple(PropTypes.number, PropTypes.string))
+        .isRequired,
       roles: PropTypes.arrayOf(
         PropTypes.shape({
           name: PropTypes.string.isRequired,

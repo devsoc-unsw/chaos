@@ -20,6 +20,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
+import { tuple } from "utils";
 import { ExpandIconButton } from "./campaignCard.styled";
 
 const positionStatuses = {
@@ -59,6 +60,8 @@ const CampaignCard = ({
   const handleExpandClick = () => {
     setExpanded(!expanded);
   };
+
+  console.log(appliedFor);
 
   const positionsMap = Object.fromEntries(
     positions.map(({ id, ...position }) => [id, position])
@@ -153,7 +156,8 @@ const CampaignCard = ({
 
 CampaignCard.propTypes = {
   title: PropTypes.string.isRequired,
-  appliedFor: PropTypes.arrayOf(PropTypes.string).isRequired,
+  appliedFor: PropTypes.arrayOf(tuple(PropTypes.number, PropTypes.number))
+    .isRequired,
   positions: PropTypes.arrayOf(
     PropTypes.shape({
       name: PropTypes.string,
