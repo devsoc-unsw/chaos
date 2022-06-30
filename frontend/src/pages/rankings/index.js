@@ -34,6 +34,7 @@ const Rankings = () => {
   };
 
   useEffect(() => {
+    if (Object.hasOwnProperty.call(passIndices, selectedPosition)) return;
     setPassIndex(Math.ceil((rankings[selectedPosition]?.length || 0) / 2));
   }, [selectedPosition]);
 
