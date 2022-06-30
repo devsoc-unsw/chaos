@@ -13,6 +13,7 @@ import {
   getCampaignRoles,
   getRoleApplications,
   getRoleQuestions,
+  setApplicationStatus,
 } from "../../api";
 
 const Rankings = () => {
@@ -135,6 +136,18 @@ const Rankings = () => {
       rankings[selectedPosition].map((candidate) => candidate.name)
     );
     console.log(passIndices);
+    await Promise.all(
+      positions.map((position) =>
+        Promise.all(
+          rankings[position].map((ranking, index) =>
+            setApplicationStatus(
+              ranking.id,
+              index < passIndices[selectedPosition] ? "Success" : "Rejected"
+            )
+          )
+        )
+      )
+    );
     navigate("/finalise_candidates");
   };
 
