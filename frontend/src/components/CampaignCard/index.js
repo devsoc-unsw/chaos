@@ -23,27 +23,22 @@ import CloseIcon from "@mui/icons-material/Close";
 import { tuple } from "utils";
 import { ExpandIconButton } from "./campaignCard.styled";
 
-const positionStatuses = {
-  "Peer Mentor": "processing",
-  "Senior Mentor": "offered",
-};
-
-const status = {
-  processing: "Processing application",
-  offered: "Position offered",
-  rejected: "Application rejected",
-};
-
-const colors = {
-  processing: "warning",
-  offered: "success",
-  rejected: "error",
-};
-
-const icons = {
-  processing: <MoreHorizIcon />,
-  offered: <CheckIcon />,
-  rejected: <CloseIcon />,
+const statuses = {
+  Pending: {
+    title: "Processing application",
+    color: "warning",
+    icon: <MoreHorizIcon />,
+  },
+  Success: {
+    title: "Position offered",
+    color: "success",
+    icon: <CheckIcon />,
+  },
+  Rejected: {
+    title: "Application rejected",
+    color: "error",
+    icon: <CloseIcon />,
+  },
 };
 
 const CampaignCard = ({
@@ -66,9 +61,10 @@ const CampaignCard = ({
   const positionsMap = Object.fromEntries(
     positions.map(({ id, ...position }) => [id, position])
   );
-  const appliedForPositions = appliedFor.map(
-    (position) => positionsMap[position].name
-  );
+  const appliedForPositions = appliedFor.map(([id, status]) => {
+    const position = positionsMap[id];
+    return { position: position.name, status: statuses[status] };
+  });
 
   return (
     <Card>
@@ -90,22 +86,20 @@ const CampaignCard = ({
             <>
               <Divider />
               <List>
-                {appliedForPositions.map((position) => (
-                  <ListItem disablePadding>
-                    <ListItemText
-                      primary={
-                        // TODO CHAOS-21: use backend to determine status of user application
-                        <Tooltip title={status[positionStatuses[position]]}>
-                          <Chip
-                            color={colors[positionStatuses[position]]}
-                            icon={icons[positionStatuses[position]]}
-                            label={position}
-                          />
-                        </Tooltip>
-                      }
-                    />
-                  </ListItem>
-                ))}
+                {appliedForPositions.map(({ position, status }) => {
+                  const { title: tooltipTitle, color, icon } = status;
+                  return (
+                    <ListItem disablePadding>
+                      <ListItemText
+                        primary={
+                          <Tooltip title={tooltipTitle}>
+                            <Chip color={color} icon={icon} label={position} />
+                          </Tooltip>
+                        }
+                      />
+                    </ListItem>
+                  );
+                })}
               </List>
             </>
           )}
