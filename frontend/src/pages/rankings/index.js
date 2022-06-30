@@ -24,7 +24,13 @@ const Rankings = () => {
   const [rankings, setRankings] = useState({});
   const [positions, setPositions] = useState([]);
   const [applications, setApplications] = useState({});
-  const [passIndex, setPassIndex] = useState(0);
+  const [passIndices, setPassIndices] = useState({});
+
+  const passIndex = passIndices[selectedPosition] ?? 0;
+  const setPassIndex = (index) => {
+    if (!selectedPosition) return;
+    setPassIndices({ ...passIndices, [selectedPosition]: index });
+  };
 
   useEffect(() => {
     setPassIndex(Math.ceil((rankings[selectedPosition]?.length || 0) / 2));
@@ -123,11 +129,12 @@ const Rankings = () => {
     })();
   }, []);
 
-  const handleNext = () => {
+  const handleNext = async () => {
     console.log(
       "Order:",
       rankings[selectedPosition].map((candidate) => candidate.name)
     );
+    console.log(passIndices);
     navigate("/finalise_candidates");
   };
 
@@ -166,8 +173,12 @@ const Rankings = () => {
       />
 
       <Grid container justifyContent="flex-end">
-        {/* TODO CHAOS-16: progress to next page */}
-        <Button onClick={handleNext}>Next (Console Log)</Button>
+        <Button
+          disabled={Object.keys(passIndices).length !== positions.length}
+          onClick={handleNext}
+        >
+          Next (Console Log)
+        </Button>
       </Grid>
     </Container>
   );
