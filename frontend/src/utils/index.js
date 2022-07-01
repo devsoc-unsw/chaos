@@ -1,3 +1,5 @@
+import moment from "moment";
+
 function isLogin() {
   return true;
 }
@@ -25,8 +27,7 @@ const months = [
   "Dec",
 ];
 
-const dateToString = (date) =>
-  `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+const dateToString = (date) => moment(date).format("YYYY-MM-DD HH:mm:ss");
 
 const bytesToImage = (bytes) =>
   `data:image/png;base64,${btoa(
