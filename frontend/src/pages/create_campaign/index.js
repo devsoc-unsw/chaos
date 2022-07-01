@@ -120,11 +120,11 @@ const CreateCampaign = () => {
     const roleQuestions = {};
 
     const questionsSend = questions.map((q, i) => {
-      for (const roleId of q.roles) {
-        let array = roleQuestions[roleId] ?? [];
+      q.roles.forEach((roleId) => {
+        const array = roleQuestions[roleId] ?? [];
         array.push(i);
         roleQuestions[roleId] = array;
-      }
+      });
 
       return {
         title: q.text,
