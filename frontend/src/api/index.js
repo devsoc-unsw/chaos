@@ -117,7 +117,7 @@ export const submitAnswer = (applicationId, questionId, description) =>
 export const createCampaign = (campaign, roles, questions) =>
   authenticatedRequest({
     method: "POST",
-    path: "/campaign/new",
+    path: "/campaign",
     body: { campaign, roles, questions },
   });
 

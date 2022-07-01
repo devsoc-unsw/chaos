@@ -1,3 +1,5 @@
+import moment from "moment";
+
 import PropTypes from "prop-types";
 
 export function isLogin() {
@@ -12,23 +14,8 @@ export function isLoggedIn() {
   return true;
 }
 
-const months = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-
 export const dateToString = (date) =>
-  `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+  moment.utc(date).format("YYYY-MM-DD HH:mm:ss");
 
 export const bytesToImage = (bytes) =>
   `data:image/png;base64,${btoa(

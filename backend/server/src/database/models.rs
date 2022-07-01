@@ -377,7 +377,7 @@ pub struct NewCampaign {
     pub published: bool,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct NewCampaignInput {
     pub organisation_id: i32,
     pub name: String,
@@ -411,10 +411,11 @@ impl Campaign {
         use crate::database::schema::campaigns::dsl::*;
 
         let now = Utc::now().naive_utc();
+        println!("now: {}", now);
         let campaigns_vec: Vec<Campaign> = campaigns
             .filter(
                 starts_at
-                    .lt(now)
+                    .le(now)
                     .and(published.eq(true))
                     .and(ends_at.gt(now)),
             )
@@ -554,10 +555,10 @@ impl Campaign {
             name: new_campaign.name.clone(),
             cover_image: new_campaign.cover_image.clone(),
             description: new_campaign.description.clone(),
-            starts_at: NaiveDateTime::parse_from_str(&new_campaign.starts_at, "%Y-%m-%dT%H:%M:%S")
-                .expect("Invalid date format"),
-            ends_at: NaiveDateTime::parse_from_str(&new_campaign.ends_at, "%Y-%m-%dT%H:%M:%S")
-                .expect("Invalid date format"),
+            starts_at: NaiveDateTime::parse_from_str(&new_campaign.starts_at, "%Y-%m-%d %H:%M:%S")
+                .ok()?,
+            ends_at: NaiveDateTime::parse_from_str(&new_campaign.ends_at, "%Y-%m-%d %H:%M:%S")
+                .ok()?,
             published: new_campaign.published,
         };
 
@@ -617,7 +618,7 @@ pub struct Role {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Insertable, AsChangeset, FromForm, Deserialize)]
+#[derive(Insertable, AsChangeset, FromForm, Deserialize, Debug)]
 #[table_name = "roles"]
 pub struct RoleUpdate {
     pub campaign_id: i32,
@@ -889,15 +890,6 @@ impl Question {
             .role_ids
             .get(0)
             .expect("Question should be for at least one role")
-    }
-
-    pub fn get_all(conn: &PgConnection) -> Vec<Question> {
-        use crate::database::schema::questions::dsl::*;
-
-        questions
-            .order(id.asc())
-            .load(conn)
-            .unwrap_or_else(|_| vec![])
     }
 
     pub fn update(
