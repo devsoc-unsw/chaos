@@ -12,7 +12,7 @@ use rocket::{
     delete, get,
     http::Status,
     post, put,
-    serde::{json::Json, Serialize, Deserialize},
+    serde::{json::Json, Deserialize, Serialize},
 };
 use std::collections::HashMap;
 
@@ -225,7 +225,7 @@ pub async fn invite_email(
     user: User,
     db: Database,
 ) -> Result<(), JsonErr<OrgError>> {
-    let EmailInvite { email, admin_level, } = input.into_inner();
+    let EmailInvite { email, admin_level } = input.into_inner();
     db.run(move |conn| {
         let mut level = OrganisationUser::organisation_admin_level(organisation_id, user.id, conn)
             .check()

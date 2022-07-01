@@ -108,21 +108,35 @@ const CreateCampaign = () => {
     const startTimeString = dateToString(startDate);
     const endTimeString = dateToString(endDate);
     const campaignSend = {
-      organisation_id: orgId,
-      campaign_name: campaignName,
+      organisation_id: Number(orgId),
+      name: campaignName,
       cover_image: coverSend,
       description,
       starts_at: startTimeString,
       ends_at: endTimeString,
-      is_draft: isDraft,
+      published: !isDraft,
     };
+
+    const roleQuestions = {};
+
+    const questionsSend = questions.map((q, i) => {
+      for (const roleId of q.roles) {
+        let array = roleQuestions[roleId] ?? [];
+        array.push(i);
+        roleQuestions[roleId] = array;
+      }
+
+      return {
+        title: q.text,
+        required: q.required ?? true,
+      };
+    });
+
     const rolesSend = roles.map((r) => ({
-      title: r.title,
-      quantity: r.quantity,
-    }));
-    const questionsSend = questions.map((q) => ({
-      text: q.text,
-      roles: [...q.roles],
+      name: r.title,
+      min_available: r.quantity,
+      max_available: r.quantity,
+      questions_for_role: roleQuestions[r.id] ?? [],
     }));
 
     const post = await createCampaign(campaignSend, rolesSend, questionsSend);
@@ -130,6 +144,7 @@ const CreateCampaign = () => {
     const status = await post.status;
     if (status === 200) {
       console.log("nice!");
+      navigate("/dashboard");
     } else {
       console.log("something went wrong");
     }

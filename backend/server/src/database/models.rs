@@ -411,6 +411,7 @@ impl Campaign {
         use crate::database::schema::campaigns::dsl::*;
 
         let now = Utc::now().naive_utc();
+        println!("now: {}", now);
         let campaigns_vec: Vec<Campaign> = campaigns
             .filter(
                 starts_at
@@ -762,7 +763,7 @@ impl Application {
             .unwrap_or_else(|_| vec![])
     }
 
-    pub fn get([app_id: i32, conn: &PgConnection) -> Option<Application> {
+    pub fn get(app_id: i32, conn: &PgConnection) -> Option<Application> {
         use crate::database::schema::applications::dsl::*;
 
         applications.filter(id.eq(app_id)).first(conn).ok()
@@ -889,20 +890,6 @@ impl Question {
             .role_ids
             .get(0)
             .expect("Question should be for at least one role")
-    }
-
-    pub fn get_all(conn: &PgConnection) -> Vec<Question> {
-        use crate::database::schema::questions::dsl::*;
-        use crate::database::schema::applications::dsl::*;
-
-        diesel::update(id.eq(application_id))
-            .set(&app)
-            .execute(&conn);
-
-        questions
-            .order(id.asc())
-            .load(conn)
-            .unwrap_or_else(|_| vec![])
     }
 
     pub fn update(

@@ -27,7 +27,7 @@ const months = [
   "Dec",
 ];
 
-const dateToString = (date) => moment(date).format("YYYY-MM-DD HH:mm:ss");
+const dateToString = (date) => moment.utc(date).format("YYYY-MM-DD HH:mm:ss");
 
 const bytesToImage = (bytes) =>
   `data:image/png;base64,${btoa(
