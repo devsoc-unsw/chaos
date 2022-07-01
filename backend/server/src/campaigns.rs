@@ -24,7 +24,13 @@ pub async fn get(campaign_id: i32, db: Database) -> Result<Json<Campaign>, JsonE
         .await;
 
     match campaign {
-        Some(campaign) => Ok(Json(campaign)),
+        Some(campaign) => {
+            if campaign.published {
+                Ok(Json(campaign))
+            } else {
+                Err(JsonErr(CampaignError::Unauthorized, Status::Forbidden))
+            }
+        }
         None => Err(JsonErr(CampaignError::CampaignNotFound, Status::NotFound)),
     }
 }

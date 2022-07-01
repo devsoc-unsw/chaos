@@ -77,6 +77,9 @@ export const doDeleteOrg = (orgId) =>
     path: `/organisation/${orgId}`,
   });
 
+export const getCampaign = (campaignId) =>
+  authenticatedRequest({ path: `/campaign/${campaignId}` });
+
 export const getCampaignRoles = (campaignId) =>
   authenticatedRequest({ path: `/campaign/${campaignId}/roles` });
 

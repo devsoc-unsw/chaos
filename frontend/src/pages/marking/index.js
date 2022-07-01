@@ -13,6 +13,7 @@ import {
   getRoleQuestions,
   getCampaignRoles,
   setApplicationRating,
+  getCampaign,
 } from "../../api";
 
 const Marking = () => {
@@ -25,7 +26,9 @@ const Marking = () => {
 
   useEffect(() => {
     (async () => {
-      setNavBarTitle("2022 Subcommittee Recruitment (Hardcoded Title)");
+      const campaignNameResp = await getCampaign(campaignId);
+      const { name: campaignName } = await campaignNameResp.json();
+      setNavBarTitle(`Marking for ${campaignName}`);
       const rolesResp = await getCampaignRoles(campaignId);
       const { roles } = await rolesResp.json();
 
