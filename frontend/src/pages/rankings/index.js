@@ -13,6 +13,7 @@ import {
   getCampaignRoles,
   getRoleApplications,
   getRoleQuestions,
+  setApplicationStatus,
 } from "../../api";
 
 const Rankings = () => {
@@ -24,6 +25,18 @@ const Rankings = () => {
   const [rankings, setRankings] = useState({});
   const [positions, setPositions] = useState([]);
   const [applications, setApplications] = useState({});
+  const [passIndices, setPassIndices] = useState({});
+
+  const passIndex = passIndices[selectedPosition] ?? 0;
+  const setPassIndex = (index) => {
+    if (!selectedPosition) return;
+    setPassIndices({ ...passIndices, [selectedPosition]: index });
+  };
+
+  useEffect(() => {
+    if (Object.hasOwnProperty.call(passIndices, selectedPosition)) return;
+    setPassIndex(Math.ceil((rankings[selectedPosition]?.length || 0) / 2));
+  }, [selectedPosition]);
 
   useEffect(() => {
     (async () => {
@@ -118,10 +131,23 @@ const Rankings = () => {
     })();
   }, []);
 
-  const handleNext = () => {
+  const handleNext = async () => {
     console.log(
       "Order:",
       rankings[selectedPosition].map((candidate) => candidate.name)
+    );
+    console.log(passIndices);
+    await Promise.all(
+      positions.map((position) =>
+        Promise.all(
+          rankings[position].map((ranking, index) =>
+            setApplicationStatus(
+              ranking.id,
+              index < passIndices[selectedPosition] ? "Success" : "Rejected"
+            )
+          )
+        )
+      )
     );
     navigate("/finalise_candidates");
   };
@@ -156,11 +182,17 @@ const Rankings = () => {
         setRankings={setRankings}
         selectedPosition={selectedPosition}
         applications={applications}
+        passIndex={passIndex}
+        setPassIndex={setPassIndex}
       />
 
       <Grid container justifyContent="flex-end">
-        {/* TODO CHAOS-16: progress to next page */}
-        <Button onClick={handleNext}>Next (Console Log)</Button>
+        <Button
+          disabled={Object.keys(passIndices).length !== positions.length}
+          onClick={handleNext}
+        >
+          Next
+        </Button>
       </Grid>
     </Container>
   );
