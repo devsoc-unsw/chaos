@@ -37,12 +37,12 @@ pub struct DashboardCampaignGroupings {
 
 #[get("/all")]
 pub async fn get_all_campaigns(user: User, db: Database) -> Json<DashboardCampaignGroupings> {
-    let current_campaigns = db
-        .run(move |conn| Campaign::get_all_public_with_roles(conn, user.id))
-        .await;
-    let past_campaigns = db
-        .run(move |conn| Campaign::get_all_public_ended_with_roles(conn, user.id))
-        .await;
+    let (current_campaigns, past_campaigns) = db
+        .run(move |conn|
+            (Campaign::get_all_public_with_roles(conn, user.id)
+            , Campaign::get_all_public_ended_with_roles(conn, user.id)
+            )
+        ).await;
 
     Json(DashboardCampaignGroupings {
         current_campaigns,
@@ -110,6 +110,7 @@ pub struct QuestionInput {
     pub description: Option<String>,
     #[serde(default = "default_max_bytes")]
     pub max_bytes: i32,
+    #[serde(default)]
     pub required: bool,
 }
 
@@ -151,7 +152,10 @@ pub async fn new(
             .or_else(|_| Err(JsonErr(CampaignError::Unauthorized, Status::Forbidden)))?;
 
         let campaign = Campaign::create(conn, &campaign)
-            .ok_or_else(|| JsonErr(CampaignError::UnableToCreate, Status::InternalServerError))?;
+            .ok_or_else(|| {
+                eprintln!("Failed to create campaign for some reason: {:?}", campaign);
+                JsonErr(CampaignError::UnableToCreate, Status::InternalServerError)
+            })?;
 
         for role in roles {
             let new_role = RoleUpdate {
@@ -162,9 +166,12 @@ pub async fn new(
                 max_available: role.max_available,
                 finalised: campaign.published,
             };
-            let inserted_role = new_role.insert(conn).ok_or_else(|| {
-                JsonErr(CampaignError::UnableToCreate, Status::InternalServerError)
-            })?;
+            let inserted_role = new_role
+                .insert(conn)
+                .ok_or_else(|| {
+                    eprintln!("Failed to create role for some reason: {:?}", new_role);
+                    JsonErr(CampaignError::UnableToCreate, Status::InternalServerError)
+                })?;
 
             for question in role.questions_for_role {
                 if question < new_questions.len() {
@@ -177,10 +184,12 @@ pub async fn new(
             if question.role_ids.len() == 0 {
                 return Err(JsonErr(CampaignError::InvalidInput, Status::BadRequest));
             }
-            question.insert(conn).ok_or(JsonErr(
-                CampaignError::UnableToCreate,
-                Status::InternalServerError,
-            ))?;
+            question
+                .insert(conn)
+                .ok_or_else(|| {
+                    eprintln!("Failed to create question for some reason");
+                    JsonErr(CampaignError::UnableToCreate, Status::InternalServerError)
+                })?;
         }
 
         Ok(Json(campaign))
