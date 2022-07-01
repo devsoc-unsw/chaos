@@ -120,3 +120,10 @@ export const createCampaign = (campaign, roles, questions) =>
     path: "/campaign",
     body: { campaign, roles, questions },
   });
+
+export const setApplicationStatus = (applicationId, status) =>
+  authenticatedRequest({
+    method: "PUT",
+    path: `/application/${applicationId}/status`,
+    body: status,
+  });
