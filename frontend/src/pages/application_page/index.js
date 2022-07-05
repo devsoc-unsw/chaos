@@ -98,7 +98,7 @@ const Application = () => {
             if (!res.ok) {
               alert("Error during submission");
             } else {
-              res.json()
+              res.json();
             }
           })
           .then((data) => {
@@ -111,12 +111,11 @@ const Application = () => {
                 return rId === data.role_id;
               })
               .forEach((qId) =>
-                submitAnswer(data.id, Number(qId), answers[qId])
-                  .then((res) => {
-                    if (!res.ok) {
-                      alert("Error during submission");
-                    }
-                  })
+                submitAnswer(data.id, Number(qId), answers[qId]).then((res) => {
+                  if (!res.ok) {
+                    alert("Error during submission");
+                  }
+                })
               );
           });
       });
