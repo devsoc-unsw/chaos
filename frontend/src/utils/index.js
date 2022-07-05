@@ -14,8 +14,11 @@ export function isLoggedIn() {
   return true;
 }
 
-export const dateToString = (date) =>
+export const dateToStringBackend = (date) =>
   moment.utc(date).format("YYYY-MM-DD HH:mm:ss");
+
+export const dateToString = (date) =>
+  moment(date).format("D MMM 'YY");
 
 export const bytesToImage = (bytes) =>
   `data:image/png;base64,${btoa(
