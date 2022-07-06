@@ -95,7 +95,11 @@ const AdminContent = ({
           />
         )}
         {windowSelected === "members" && (
-          <AdminMembersContent members={members} setMembers={setMembers} />
+          <AdminMembersContent
+            orgId={id}
+            members={members}
+            setMembers={setMembers}
+          />
         )}
       </ContentBody>
     </AdminContentContainer>

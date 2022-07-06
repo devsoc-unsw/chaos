@@ -127,3 +127,17 @@ export const setApplicationStatus = (applicationId, status) =>
     path: `/application/${applicationId}/status`,
     body: status,
   });
+
+export const inviteUserToOrg = (
+  email,
+  organisationId,
+  adminLevel = "ReadOnly"
+) =>
+  authenticatedRequest({
+    method: "POST",
+    path: `/organisation/${organisationId}/invite`,
+    body: {
+      email,
+      admin_level: adminLevel,
+    },
+  });

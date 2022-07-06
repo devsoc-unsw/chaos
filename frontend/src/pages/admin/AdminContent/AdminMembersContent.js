@@ -15,6 +15,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
 import PropTypes from "prop-types";
 import InputPopup from "components/InputPopup";
+import { inviteUserToOrg } from "api";
 import {
   AdminContentList,
   DummyIconForAlignment,
@@ -24,15 +25,14 @@ import {
   AdminListItemButton,
 } from "./adminContent.styled";
 
-const AdminMembersContent = ({ members, setMembers }) => {
+const AdminMembersContent = ({ orgId, members, setMembers }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const onDelete = (memberId) => {
     // FIXME: CHAOS-55, integrate with backend to actually delete
     setMembers(members.filter((m) => m.id !== parseInt(memberId, 10)));
   };
-  const inviteUser = (email) => {
-    // TODO: integrate with backend
-    console.log(email);
+  const inviteUser = (formValues) => {
+    inviteUserToOrg(formValues.email, orgId, formValues.adminLevel);
   };
   return (
     <AdminContentList>
@@ -51,7 +51,7 @@ const AdminMembersContent = ({ members, setMembers }) => {
             label="Email"
             name="email"
             submitText="Invite"
-            defaultState={{ adminLevel: 1 }}
+            defaultState={{ adminLevel: "ReadOnly" }}
             onSubmit={inviteUser}
             open={Boolean(anchorEl)}
             anchorEl={anchorEl}
@@ -67,10 +67,10 @@ const AdminMembersContent = ({ members, setMembers }) => {
                   name="adminLevel"
                   row
                 >
-                  {["Read Only", "Director", "Admin"].map((label, idx) => (
+                  {["Read Only", "Director", "Admin"].map((label) => (
                     <FormControlLabel
                       key={label}
-                      value={idx + 1}
+                      value={label.replace(" ", "")}
                       control={<Radio size="small" />}
                       label={label}
                     />
@@ -111,6 +111,7 @@ const AdminMembersContent = ({ members, setMembers }) => {
 };
 
 AdminMembersContent.propTypes = {
+  orgId: PropTypes.number.isRequired,
   members: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.number,
