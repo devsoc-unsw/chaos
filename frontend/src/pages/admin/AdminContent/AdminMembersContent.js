@@ -69,6 +69,7 @@ const AdminMembersContent = ({ members, setMembers }) => {
                 >
                   {["Read Only", "Director", "Admin"].map((label, idx) => (
                     <FormControlLabel
+                      key={label}
                       value={idx + 1}
                       control={<Radio size="small" />}
                       label={label}
@@ -82,7 +83,7 @@ const AdminMembersContent = ({ members, setMembers }) => {
       </ContentListHeader>
       <AdminDivider />
       {members.map((m) => (
-        <div>
+        <div key={m.id}>
           <MemberListItem>
             <AdminListItemButton>
               <ListItemText align="center">{m.name}</ListItemText>
