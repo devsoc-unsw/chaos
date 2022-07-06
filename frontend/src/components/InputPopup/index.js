@@ -35,6 +35,9 @@ const InputPopup = ({
         vertical: "bottom",
         horizontal: "right",
       }}
+      transformOrigin={{
+        horizontal: "right",
+      }}
     >
       <Box p={2} display="flex" flexDirection="column" gap={2}>
         <Typography variant="h6">{title}</Typography>
