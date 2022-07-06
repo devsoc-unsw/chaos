@@ -71,7 +71,7 @@ const InputPopup = ({
 
 InputPopup.propTypes = {
   // eslint-disable-next-line react/require-default-props
-  children: PropTypes.func,
+  children: PropTypes.oneOfType([PropTypes.func, PropTypes.node]),
   title: PropTypes.string.isRequired,
   label: PropTypes.string.isRequired,
   name: PropTypes.string.isRequired,
