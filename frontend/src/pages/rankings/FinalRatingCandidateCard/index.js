@@ -6,7 +6,6 @@ import {
   CandidateCard,
   RatingChip,
   GridCandidateName,
-  BullSpan,
 } from "./finalRatingCandidateCard.styled";
 import { MarkChip } from "../../../components";
 import FinalRatingApplicationComments from "../FinalRatingApplicationComments";
@@ -47,11 +46,7 @@ const FinalRatingCandidateCard = (props) => {
             </GridCandidateName>
             <Grid item>
               <Typography variant="overline" sx={{ margin: "1rem" }}>
-                Domestic
-                <BullSpan>•</BullSpan>
-                3rd Year
-                <BullSpan>•</BullSpan>
-                Software Engineering
+                {/* TODO: put some user info here */}
               </Typography>
             </Grid>
             <Grid item>
