@@ -62,6 +62,7 @@ async fn main() {
                 backend::organisation::is_admin,
                 backend::organisation::get_from_ids,
                 backend::organisation::invite_uid,
+                backend::organisation::invite_email,
             ],
         )
         .mount(
@@ -96,6 +97,7 @@ async fn main() {
                 backend::application::submit_answer,
                 backend::application::get_answers,
                 backend::application::get_ratings,
+                backend::application::set_status,
             ],
         )
         .mount(

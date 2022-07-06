@@ -377,7 +377,7 @@ pub struct NewCampaign {
     pub published: bool,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct NewCampaignInput {
     pub organisation_id: i32,
     pub name: String,
@@ -393,7 +393,7 @@ pub struct CampaignWithRoles {
     pub campaign: Campaign,
     pub roles: Vec<Role>,
     pub questions: Vec<Question>,
-    pub applied_for: Vec<i32>,
+    pub applied_for: Vec<(i32, ApplicationStatus)>,
 }
 
 impl Campaign {
@@ -411,10 +411,11 @@ impl Campaign {
         use crate::database::schema::campaigns::dsl::*;
 
         let now = Utc::now().naive_utc();
+        println!("now: {}", now);
         let campaigns_vec: Vec<Campaign> = campaigns
             .filter(
                 starts_at
-                    .lt(now)
+                    .le(now)
                     .and(published.eq(true))
                     .and(ends_at.gt(now)),
             )
@@ -453,21 +454,15 @@ impl Campaign {
 
                 println!("Questions for campaign {}: {:?}", campaign.name, questions);
 
-                let applied_for: Vec<i32> = campaign_roles
+                let applied_for: Vec<(i32, ApplicationStatus)> = campaign_roles
                     .clone()
                     .into_iter()
                     .filter_map(|role| {
-                        if Application::get_all_from_role_id(&conn, role.id)
+                        let app = Application::get_all_from_role_id(&conn, role.id)
                             .into_iter()
                             .filter(|app| app.user_id == user_id)
-                            .peekable()
-                            .peek()
-                            .is_some()
-                        {
-                            Some(role.id)
-                        } else {
-                            None
-                        }
+                            .next()?;
+                        Some((role.id, app.status))
                     })
                     .collect();
 
@@ -560,10 +555,10 @@ impl Campaign {
             name: new_campaign.name.clone(),
             cover_image: new_campaign.cover_image.clone(),
             description: new_campaign.description.clone(),
-            starts_at: NaiveDateTime::parse_from_str(&new_campaign.starts_at, "%Y-%m-%dT%H:%M:%S")
-                .expect("Invalid date format"),
-            ends_at: NaiveDateTime::parse_from_str(&new_campaign.ends_at, "%Y-%m-%dT%H:%M:%S")
-                .expect("Invalid date format"),
+            starts_at: NaiveDateTime::parse_from_str(&new_campaign.starts_at, "%Y-%m-%d %H:%M:%S")
+                .ok()?,
+            ends_at: NaiveDateTime::parse_from_str(&new_campaign.ends_at, "%Y-%m-%d %H:%M:%S")
+                .ok()?,
             published: new_campaign.published,
         };
 
@@ -623,7 +618,7 @@ pub struct Role {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Insertable, AsChangeset, FromForm, Deserialize)]
+#[derive(Insertable, AsChangeset, FromForm, Deserialize, Debug)]
 #[table_name = "roles"]
 pub struct RoleUpdate {
     pub campaign_id: i32,
@@ -895,15 +890,6 @@ impl Question {
             .role_ids
             .get(0)
             .expect("Question should be for at least one role")
-    }
-
-    pub fn get_all(conn: &PgConnection) -> Vec<Question> {
-        use crate::database::schema::questions::dsl::*;
-
-        questions
-            .order(id.asc())
-            .load(conn)
-            .unwrap_or_else(|_| vec![])
     }
 
     pub fn update(

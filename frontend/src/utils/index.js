@@ -1,34 +1,23 @@
-function isLogin() {
+import moment from "moment";
+
+import PropTypes from "prop-types";
+
+export function isLogin() {
   return true;
 }
 
-function isAdmin() {
+export function isAdmin() {
   return true;
 }
 
-function isLoggedIn() {
+export function isLoggedIn() {
   return true;
 }
 
-const months = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
+export const dateToString = (date) =>
+  moment.utc(date).format("YYYY-MM-DD HH:mm:ss");
 
-const dateToString = (date) =>
-  `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
-
-const bytesToImage = (bytes) =>
+export const bytesToImage = (bytes) =>
   `data:image/png;base64,${btoa(
     new Uint8Array(bytes).reduce(
       (data, byte) => data + String.fromCharCode(byte),
@@ -36,7 +25,7 @@ const bytesToImage = (bytes) =>
     )
   )}`;
 
-const fileToDataUrl = (file) => {
+export const fileToDataUrl = (file) => {
   const validFileTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif"];
   const valid = validFileTypes.find((type) => type === file.type);
 
@@ -54,23 +43,21 @@ const fileToDataUrl = (file) => {
   return dataUrlPromise;
 };
 
-const base64ToBytes = (base64String) =>
+export const base64ToBytes = (base64String) =>
   Array.from(atob(base64String), (c) => c.charCodeAt(0));
 
 // set/retrieve from localstorage
-const getStore = (key) => localStorage.getItem(key);
-const setStore = (key, val) => localStorage.setItem(key, val);
-const removeStore = (key) => localStorage.removeItem(key);
+export const getStore = (key) => localStorage.getItem(key);
+export const setStore = (key, val) => localStorage.setItem(key, val);
+export const removeStore = (key) => localStorage.removeItem(key);
 
-export {
-  isLogin,
-  isAdmin,
-  fileToDataUrl,
-  getStore,
-  setStore,
-  removeStore,
-  isLoggedIn,
-  dateToString,
-  bytesToImage,
-  base64ToBytes,
-};
+// cringe function for PropTypes because PropTypes is cringe (typescript when)
+// from https://stackoverflow.com/a/57496099
+export const tuple = (...validators) =>
+  PropTypes.arrayOf((_, index) => {
+    const currentValidators = validators.filter((__, i) => i === index);
+    if (currentValidators.length <= 0) return true;
+    const [currentValidator] = currentValidators;
+
+    return currentValidator;
+  });
