@@ -56,7 +56,9 @@ const InputPopup = ({
               />
               <Button type="submit">{submitText}</Button>
             </Box>
-            {children?.({ formValues, setFormValue, handleInputChange })}
+            {typeof children === "function"
+              ? children({ formValues, setFormValue, handleInputChange })
+              : children}
           </Box>
         </form>
       </Box>
