@@ -8,11 +8,10 @@ const BackgroundWrapper = ({ children }) => {
     <Box
       sx={{
         display: "flex",
+        flex: 1,
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        minHeight: "100vh",
-        minWidth: "100vw",
         backgroundColor: theme.palette.grey[900],
       }}
     >
