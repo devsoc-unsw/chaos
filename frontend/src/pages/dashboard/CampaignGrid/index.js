@@ -20,8 +20,12 @@ const CampaignGrid = ({ campaigns }) => {
               name: role.name,
               number: role.max_available,
             }))}
-            startDate={dateToStringForCampaignGrid(new Date(campaign.campaign.starts_at))}
-            endDate={dateToStringForCampaignGrid(new Date(campaign.campaign.ends_at))}
+            startDate={dateToStringForCampaignGrid(
+              new Date(campaign.campaign.starts_at)
+            )}
+            endDate={dateToStringForCampaignGrid(
+              new Date(campaign.campaign.ends_at)
+            )}
             img={bytesToImage(campaign.campaign.cover_image)}
             applyClick={() =>
               navigate(`/application/${campaign.campaign.id}`, {
