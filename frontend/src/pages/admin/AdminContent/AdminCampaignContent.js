@@ -15,6 +15,7 @@ import {
   CampaignListItemImage,
   AdminListItemButton,
 } from "./adminContent.styled";
+import { dateToStringForAdminContent } from "utils";
 
 const AdminCampaignContent = ({ campaigns, setCampaigns, orgId }) => {
   const navigate = useNavigate();
@@ -58,7 +59,7 @@ const AdminCampaignContent = ({ campaigns, setCampaigns, orgId }) => {
               <CampaignListItemImage src={c.image} />
               <ListItemText align="center">{c.title}</ListItemText>
               <ListItemText align="center">
-                {c.startDate} - {c.endDate}
+                {dateToStringForAdminContent(new Date(c.startDate))} - {dateToStringForAdminContent(new Date(c.endDate))}
               </ListItemText>
               <ListItemIcon>
                 <IconButton>

@@ -11,7 +11,7 @@ import {
 } from "./reviewTab.styled";
 import ApplicationForm from "../../../components/ApplicationForm";
 import CampaignCard from "../../../components/CampaignCard";
-import { dateToString } from "../../../utils";
+import { dateToStringForBackend } from "../../../utils";
 
 const ReviewTab = ({ campaign, onSubmit }) => {
   const {
@@ -68,8 +68,8 @@ const ReviewTab = ({ campaign, onSubmit }) => {
               number: r.quantity,
               name: r.title,
             }))}
-            startDate={dateToString(startDate)}
-            endDate={dateToString(endDate)}
+            startDate={dateToStringForBackend(startDate)}
+            endDate={dateToStringForBackend(endDate)}
             img={cover}
             applyClick={() => setDisplayForm(!displayForm)}
           />

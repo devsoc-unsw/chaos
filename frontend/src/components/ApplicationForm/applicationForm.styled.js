@@ -80,7 +80,7 @@ export const RoleButton = styled(ToggleButton)`
   }
   border-radius: 20px;
   padding: 5px;
-  paddingleft: 10px;
+  padding-left: 10px;
   padding-right: 10px;
   color: #084cec;
   background-color: white;

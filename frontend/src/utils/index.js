@@ -14,11 +14,14 @@ export function isLoggedIn() {
   return true;
 }
 
-export const dateToStringBackend = (date) =>
-  moment.utc(date).format("YYYY-MM-DD HH:mm:ss");
+export const dateToStringForBackend = (dateObject) =>
+  moment.utc(dateObject).format("YYYY-MM-DD HH:mm:ss");
 
-export const dateToString = (date) =>
-  moment(date).format("D MMM 'YY");
+export const dateToStringForAdminContent = (dateObject) =>
+  moment(dateObject).format("h:mm a (D MMM)");
+
+export const dateToStringForCampaignGrid = (dateObject) =>
+  moment(dateObject).format("H:MM a (D MMM)");
 
 export const bytesToImage = (bytes) =>
   `data:image/png;base64,${btoa(

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Container, Tabs, Tab } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
-import { dateToString, base64ToBytes } from "utils";
+import { dateToStringForBackend, base64ToBytes } from "utils";
 import CampaignTab from "./Campaign";
 import RolesTab from "./Roles";
 import ReviewTab from "./Preview";
@@ -105,15 +105,15 @@ const CreateCampaign = () => {
     const coverSend = base64ToBytes(cover.split(",")[1]);
 
     // const coverSend = cover ? cover.slice(cover.indexOf(";base64,") + 8) : "";
-    const startTimeString = dateToString(startDate);
-    const endTimeString = dateToString(endDate);
+    const startTimeDateString = dateToStringForBackend(startDate);
+    const endTimeDateString = dateToStringForBackend(endDate);
     const campaignSend = {
       organisation_id: Number(orgId),
       name: campaignName,
       cover_image: coverSend,
       description,
-      starts_at: startTimeString,
-      ends_at: endTimeString,
+      starts_at: startTimeDateString,
+      ends_at: endTimeDateString,
       published: !isDraft,
     };
 
