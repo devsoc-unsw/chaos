@@ -17,7 +17,7 @@ COPY . .
 RUN yarn run build
 
 # nginx state for serving content
-FROM nginx:1.21.6-alpine
+FROM nginx:1.23.1-alpine
 COPY ./.nginx/nginx.conf /etc/nginx/nginx.conf
 # Set working directory to nginx asset directory
 WORKDIR /usr/share/nginx/html
