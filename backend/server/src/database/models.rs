@@ -579,6 +579,7 @@ impl Campaign {
         let role_items: Vec<Role> = roles
             .filter(dsl_role_campaign_id.eq(campaign_id))
             .load(conn)
+            .map_err(|x| eprintln!("error in delete deep: {x:?}"))
             .ok()?;
 
         for role in role_items {
@@ -587,6 +588,7 @@ impl Campaign {
 
         diesel::delete(roles.filter(dsl_role_campaign_id.eq(campaign_id)))
             .execute(conn)
+            .map_err(|x| eprintln!("error in delete deep: {x:?}"))
             .ok();
 
         if !Campaign::delete(conn, campaign_id) {
@@ -681,22 +683,26 @@ impl Role {
         let question_items: Vec<Question> = questions::table
             .filter(any(questions::role_ids).eq(role.id))
             .load(conn)
+            .map_err(|x| { eprintln!("error in delete_children: {x:?}"); x })
             .ok()?;
 
         println!("Trying to delete questions");
         diesel::delete(questions::table.filter(any(questions::role_ids).eq(role.id)))
             .execute(conn)
+            .map_err(|x| { eprintln!("error in delete_children: {x:?}"); x })
             .ok();
 
         for question in question_items {
             diesel::delete(answers::table.filter(answers::question_id.eq(question.id)))
                 .execute(conn)
+                .map_err(|x| { eprintln!("error in delete_children: {x:?}"); x })
                 .ok();
         }
 
         let application_items: Vec<Application> = applications::table
             .filter(applications::role_id.eq(role.id))
             .load(conn)
+            .map_err(|x| { eprintln!("error in delete_children: {x:?}"); x })
             .ok()?;
 
         for application in application_items {
@@ -705,6 +711,7 @@ impl Role {
 
         diesel::delete(applications::table.filter(applications::role_id.eq(role.id)))
             .execute(conn)
+            .map_err(|x| { eprintln!("error in delete_children: {x:?}"); x })
             .ok();
 
         Some(())
@@ -804,16 +811,19 @@ impl Application {
 
         diesel::delete(applications.filter(id.eq(application_id)))
             .execute(conn)
+            .map_err(|x| { eprintln!("error in delete application: {x:?}"); x })
             .is_ok()
     }
 
     pub fn delete_children(conn: &PgConnection, application: Application) -> Option<()> {
         diesel::delete(ratings::table.filter(ratings::application_id.eq(application.id)))
             .execute(conn)
+            .map_err(|x| { eprintln!("error in delete application children: {x:?}"); x })
             .ok();
 
         diesel::delete(comments::table.filter(comments::application_id.eq(application.id)))
             .execute(conn)
+            .map_err(|x| { eprintln!("error in delete application children: {x:?}"); x })
             .ok();
 
         Some(())
