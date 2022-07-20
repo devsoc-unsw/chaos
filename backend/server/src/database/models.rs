@@ -582,7 +582,7 @@ impl Campaign {
             .ok()?;
 
         for role in role_items {
-            Role::delete_children(conn, role)?;
+            Role::delete_children(conn, role);
         }
 
         diesel::delete(roles.filter(dsl_role_campaign_id.eq(campaign_id)))
@@ -700,7 +700,7 @@ impl Role {
             .ok()?;
 
         for application in application_items {
-            Application::delete_children(conn, application)?;
+            Application::delete_children(conn, application);
         }
 
         diesel::delete(applications::table.filter(applications::role_id.eq(role.id)))
