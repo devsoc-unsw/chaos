@@ -6,6 +6,7 @@ import ClearIcon from "@mui/icons-material/Clear";
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
 import { deleteCampaign } from "api";
+import { dateToDateString } from "utils";
 import {
   AdminContentList,
   ContentListHeader,
@@ -64,7 +65,7 @@ const AdminCampaignContent = ({ campaigns, setCampaigns, orgId }) => {
               <CampaignListItemImage src={c.image} />
               <ListItemText align="center">{c.title}</ListItemText>
               <ListItemText align="center">
-                {c.startDate} - {c.endDate}
+                {dateToDateString(c.startDate)} - {dateToDateString(c.endDate)}
               </ListItemText>
               <ListItemIcon>
                 <IconButton>
