@@ -17,6 +17,9 @@ export function isLoggedIn() {
 export const dateToString = (date) =>
   moment.utc(date).format("YYYY-MM-DD HH:mm:ss");
 
+export const dateToDateString = (date) =>
+  moment.utc(date).format("DD MMM YYYY");
+
 export const bytesToImage = (bytes) =>
   `data:image/png;base64,${btoa(
     new Uint8Array(bytes).reduce(
