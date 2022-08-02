@@ -8,7 +8,7 @@ import { BoldTitle, Subtitle } from "./landing.styled";
 import { getStore } from "../../utils";
 
 const OAUTH_CALLBACK_URL =
-  getStore("AUTH_TOKEN") || process.env.REACT_APP_OAUTH_CALLBACK_URL;
+  getStore("AUTH_TOKEN") || import.meta.env.VITE_OAUTH_CALLBACK_URL;
 
 const Landing = () => {
   // eslint-disable-next-line no-unused-vars

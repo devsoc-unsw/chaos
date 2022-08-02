@@ -13,6 +13,7 @@
     "@testing-library/jest-dom": "5.16.4",
     "@testing-library/react": "13.3.0",
     "@testing-library/user-event": "12.8.3",
+    "@vitejs/plugin-react": "^2.0.0",
     "date-fns": "2.28.0",
     "http-proxy-middleware": "2.0.6",
     "moment": "2.29.4",
@@ -23,16 +24,15 @@
     "react-dom": "17.0.2",
     "react-dropzone": "12.1.0",
     "react-router-dom": "6.3.0",
-    "react-scripts": "5.0.1",
     "react-tsparticles": "1.43.1",
     "uuid": "8.3.2",
+    "vite": "^3.0.4",
+    "vite-tsconfig-paths": "^3.5.0",
     "web-vitals": "2.1.4"
   },
   "scripts": {
-    "start": "ESLINT_NO_DEV_ERRORS='true' react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
+    "start": "ESLINT_NO_DEV_ERRORS='true' vite",
+    "build": "vite build",
     "lint": "npx eslint 'src/**/*.{js,jsx}'",
     "lint:fix": "npx eslint 'src/**/*.{js,jsx}' --fix",
     "format": "prettier --write ."
