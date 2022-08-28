@@ -13,7 +13,7 @@ const NavBar = (props) => {
   const navigate = useNavigate();
 
   return (
-    <AppBar position="static">
+    <AppBar position="fixed">
       <Toolbar>
         <LogoButton
           size="large"
