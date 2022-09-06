@@ -2,16 +2,17 @@ import tw, { styled } from "twin.macro";
 import { Transition } from "components";
 import { Fragment } from "react";
 
-const StyledBar = tw.div`
-  transition-[width] duration-500
-`;
 const Bar = ({ transitionDelay, ...props }) => (
   <Transition.Child
     as={Fragment}
     enter={tw`transition-[width] duration-500`}
     enterFrom={tw`w-0!`}
   >
-    <StyledBar style={{ transitionDelay: `${transitionDelay}ms` }} {...props} />
+    <div
+      tw="transition-[width] duration-500"
+      style={{ transitionDelay: `${transitionDelay}ms` }}
+      {...props}
+    />
   </Transition.Child>
 );
 
