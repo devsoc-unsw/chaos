@@ -50,7 +50,7 @@ const Campaigns = forwardRef(({ offsetX, offsetY }, ref) => {
             appear={true}
             enter={tw`transition-[width] duration-[600ms]`}
             enterFrom={tw`w-0`}
-            enterTo={tw`w-[275px]`}
+            enterTo={tw`w-72`}
           />
           <Row>
             <Campaign logo={csesoc} active={true} />
@@ -63,7 +63,7 @@ const Campaigns = forwardRef(({ offsetX, offsetY }, ref) => {
             appear={true}
             enter={tw`transition-[width] duration-[600ms] delay-[400ms]`}
             enterFrom={tw`w-0`}
-            enterTo={tw`w-[325px]`}
+            enterTo={tw`w-80`}
           />
           <Row>
             <Campaign logo={compclub} transitionDelay={600} />
