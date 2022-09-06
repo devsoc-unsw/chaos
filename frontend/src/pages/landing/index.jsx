@@ -41,7 +41,7 @@ const Landing = () => {
 
   return (
     <div
-      tw="flex flex-col items-center min-h-screen w-full font-light font-sans bg-gray-50"
+      tw="flex flex-col items-center w-full font-light font-sans bg-gray-50"
       onPointerMove={onPointerMove}
     >
       <div tw="flex w-full p-[50px] max-w-7xl my-auto translate-y-[-100px]">
