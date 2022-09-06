@@ -11,7 +11,6 @@ const toCss = (styles) => css(styles).toString();
 
 const getProps = (props) => {
   return {
-    show: true,
     ...props,
     enter: toCss(props.enter),
     enterFrom: toCss(props.enterFrom),
@@ -27,7 +26,9 @@ const getProps = (props) => {
   };
 };
 
-const Transition = (props) => <HeadlessUiTransition {...getProps(props)} />;
+const Transition = (props) => (
+  <HeadlessUiTransition show={true} {...getProps(props)} />
+);
 
 Transition.Child = (props) => (
   <HeadlessUiTransition.Child {...getProps(props)} />
