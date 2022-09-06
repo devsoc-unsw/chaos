@@ -5,7 +5,6 @@ import { Transition } from "components";
 
 import csesoc from "./CSESoc_logo.jpeg";
 import compclub from "./compclub.png";
-import { Fragment } from "react";
 
 const Container = styled.div({
   ...tw`
@@ -32,13 +31,12 @@ const Campaigns = ({ offsetX, offsetY }) => {
       >
         <section>
           <Transition
-            as={Fragment}
+            as={Heading}
             appear={true}
             enter={tw`transition-[width] duration-[600ms]`}
-            enterFrom={tw`w-0!`}
-          >
-            <Heading tw="w-[275px]" />
-          </Transition>
+            enterFrom={tw`w-0`}
+            enterTo={tw`w-[275px]`}
+          />
           <Row>
             <Campaign logo={csesoc} active={true} />
             <Campaign logo={compclub} active={true} transitionDelay={200} />
@@ -46,13 +44,12 @@ const Campaigns = ({ offsetX, offsetY }) => {
         </section>
         <section>
           <Transition
-            as={Fragment}
+            as={Heading}
             appear={true}
-            enter={tw`transition-[width] duration-[600ms]`}
-            enterFrom={tw`w-0!`}
-          >
-            <Heading tw="w-[325px] delay-[400ms]!" />
-          </Transition>
+            enter={tw`transition-[width] duration-[600ms] delay-[400ms]`}
+            enterFrom={tw`w-0`}
+            enterTo={tw`w-[325px]`}
+          />
           <Row>
             <Campaign logo={compclub} transitionDelay={600} />
             <Campaign logo={csesoc} transitionDelay={800} />
