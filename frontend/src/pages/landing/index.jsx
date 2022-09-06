@@ -1,4 +1,10 @@
-import React, { useContext, useState, useEffect, Fragment } from "react";
+import React, {
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+  Fragment,
+} from "react";
 import tw from "twin.macro";
 import { Link } from "react-router-dom";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
@@ -19,12 +25,18 @@ const Landing = () => {
     setNavBarTitle("");
   }, []);
 
-  const [offsetX, setOffsetX] = useState(0);
-  const [offsetY, setOffsetY] = useState(0);
+  const campaignsRef = useRef(null);
+
+  const [offsetX, setOffsetX] = useState(null);
+  const [offsetY, setOffsetY] = useState(null);
   const onPointerMove = (e) => {
-    const div = e.currentTarget;
-    setOffsetX((e.clientX - (div.offsetLeft + div.clientWidth / 2)) / 100);
-    setOffsetY((e.clientY - (div.offsetTop + div.clientHeight / 2)) / 100);
+    const div = campaignsRef.current;
+    if (div === null) {
+      return;
+    }
+    const { top, left } = div.getBoundingClientRect();
+    setOffsetX((e.clientX - (left + div.clientWidth / 2)) / 50);
+    setOffsetY((e.clientY - (top + div.clientHeight / 2)) / 50);
   };
 
   return (
@@ -73,7 +85,7 @@ const Landing = () => {
             )}
           </Transition>
         </main>
-        <Campaigns offsetX={offsetX} offsetY={offsetY} />
+        <Campaigns ref={campaignsRef} offsetX={offsetX} offsetY={offsetY} />
       </div>
 
       <Waves />
