@@ -6,10 +6,12 @@
     "@date-io/date-fns": "2.14.0",
     "@emotion/react": "11.9.0",
     "@emotion/styled": "11.8.1",
+    "@headlessui/react": "^1.6.6",
     "@mui/icons-material": "5.8.0",
     "@mui/lab": "5.0.0-alpha.83",
     "@mui/material": "5.8.1",
     "@mui/system": "5.8.1",
+    "@stitches/react": "^1.2.8",
     "@testing-library/jest-dom": "5.16.4",
     "@testing-library/react": "13.3.0",
     "@testing-library/user-event": "12.8.3",
@@ -25,6 +27,7 @@
     "react-dropzone": "12.1.0",
     "react-router-dom": "6.3.0",
     "react-tsparticles": "1.43.1",
+    "tailwindcss-gradient": "^1.0.1",
     "uuid": "8.3.2",
     "vite": "^3.0.4",
     "vite-tsconfig-paths": "^3.5.0",
@@ -58,6 +61,7 @@
   "devDependencies": {
     "@babel/preset-env": "7.19.1",
     "@babel/preset-react": "7.18.6",
+    "babel-plugin-macros": "^3.1.0",
     "eslint-config-airbnb": "19.0.4",
     "eslint-config-prettier": "8.5.0",
     "eslint-plugin-import": "2.26.0",
@@ -66,7 +70,9 @@
     "eslint-plugin-react": "7.30.0",
     "eslint-plugin-react-hooks": "4.6.0",
     "husky": "8.0.1",
-    "prettier": "2.6.2"
+    "prettier": "2.6.2",
+    "tailwindcss": "^3.1.8",
+    "twin.macro": "^2.8.2"
   },
   "husky": {
     "hooks": {
