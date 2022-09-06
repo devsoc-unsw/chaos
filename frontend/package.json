@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@date-io/date-fns": "2.13.1",
+    "@date-io/date-fns": "2.14.0",
     "@emotion/react": "11.9.0",
     "@emotion/styled": "11.8.1",
     "@mui/icons-material": "5.8.0",
@@ -11,10 +11,11 @@
     "@mui/material": "5.8.1",
     "@mui/system": "5.8.1",
     "@testing-library/jest-dom": "5.16.4",
-    "@testing-library/react": "12.1.5",
+    "@testing-library/react": "13.3.0",
     "@testing-library/user-event": "12.8.3",
     "date-fns": "2.28.0",
-    "http-proxy-middleware": "^2.0.6",
+    "http-proxy-middleware": "2.0.6",
+    "moment": "2.29.4",
     "notistack": "2.0.5",
     "prop-types": "15.8.1",
     "react": "17.0.2",
@@ -22,9 +23,9 @@
     "react-dom": "17.0.2",
     "react-dropzone": "12.1.0",
     "react-router-dom": "6.3.0",
-    "react-scripts": "^5.0.1",
+    "react-scripts": "5.0.1",
     "react-tsparticles": "1.43.1",
-    "uuid": "^8.3.2",
+    "uuid": "8.3.2",
     "web-vitals": "2.1.4"
   },
   "scripts": {
@@ -55,14 +56,16 @@
     ]
   },
   "devDependencies": {
+    "@babel/preset-env": "7.18.2",
+    "@babel/preset-react": "7.17.12",
     "eslint-config-airbnb": "19.0.4",
     "eslint-config-prettier": "8.5.0",
     "eslint-plugin-import": "2.26.0",
     "eslint-plugin-jsx-a11y": "6.5.1",
     "eslint-plugin-prettier": "4.0.0",
-    "eslint-plugin-react": "^7.30.0",
-    "eslint-plugin-react-hooks": "4.4.0",
-    "husky": "7.0.4",
+    "eslint-plugin-react": "7.30.0",
+    "eslint-plugin-react-hooks": "4.6.0",
+    "husky": "8.0.1",
     "prettier": "2.6.2"
   },
   "husky": {

@@ -77,6 +77,9 @@ export const doDeleteOrg = (orgId) =>
     path: `/organisation/${orgId}`,
   });
 
+export const getCampaign = (campaignId) =>
+  authenticatedRequest({ path: `/campaign/${campaignId}` });
+
 export const getCampaignRoles = (campaignId) =>
   authenticatedRequest({ path: `/campaign/${campaignId}/roles` });
 
@@ -111,5 +114,33 @@ export const submitAnswer = (applicationId, questionId, description) =>
       application_id: applicationId,
       question_id: questionId,
       description,
+    },
+  });
+
+export const createCampaign = (campaign, roles, questions) =>
+  authenticatedRequest({
+    method: "POST",
+    path: "/campaign",
+    body: { campaign, roles, questions },
+  });
+
+export const setApplicationStatus = (applicationId, status) =>
+  authenticatedRequest({
+    method: "PUT",
+    path: `/application/${applicationId}/status`,
+    body: status,
+  });
+
+export const inviteUserToOrg = (
+  email,
+  organisationId,
+  adminLevel = "ReadOnly"
+) =>
+  authenticatedRequest({
+    method: "POST",
+    path: `/organisation/${organisationId}/invite`,
+    body: {
+      email,
+      admin_level: adminLevel,
     },
   });

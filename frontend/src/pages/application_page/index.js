@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Container } from "@mui/material";
 import ApplicationForm from "../../components/ApplicationForm";
 import { bytesToImage } from "../../utils";
@@ -16,10 +16,24 @@ import {
 } from "../../api";
 
 const Application = () => {
+  const navigate = useNavigate();
+
   const [campaign, setCampaign] = useState([]);
 
   const campaignId = parseInt(useParams().campaignId, 10);
   const { state } = useLocation();
+
+  useEffect(async () => {
+    setCampaign(
+      state ||
+        (async () => {
+          const resp = await getAllCampaigns();
+          const data = await resp.json();
+          const current = data.current_campaigns;
+          return current.find((x) => x.campaign.id === campaignId);
+        })()
+    );
+  }, []);
 
   const [loading, setLoading] = useState(true);
 
@@ -50,7 +64,7 @@ const Application = () => {
     };
 
     getData();
-  }, []);
+  }, [campaign]);
 
   const [rolesSelected, setRolesSelected] = useState([]);
   const [answers, setAnswers] = useState({});
@@ -74,7 +88,7 @@ const Application = () => {
         return {
           id: q.id,
           text: q.title,
-          roles: new Set([q.role_id]),
+          roles: new Set(q.role_ids),
         };
       }),
       userInfo: {
@@ -119,6 +133,7 @@ const Application = () => {
               );
           });
       });
+      navigate("/dashboard");
     }
   };
 

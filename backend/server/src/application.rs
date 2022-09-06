@@ -1,6 +1,9 @@
+use diesel::prelude::*;
+
 use crate::database::{
     models::{
-        Answer, Application, NewAnswer, NewApplication, NewRating, OrganisationUser, Rating, User,
+        Answer, Application, NewAnswer, NewApplication, NewRating, OrganisationUser, Question,
+        Rating, User,
     },
     schema::ApplicationStatus,
     Database,
@@ -20,7 +23,10 @@ pub enum ApplicationError {
     UserNotFound,
     RoleNotFound,
     UnableToCreate,
+    UnableToUpdate,
     AppNotFound,
+    QuestionNotFound,
+    InvalidInput,
 }
 
 #[derive(Deserialize)]
@@ -118,6 +124,14 @@ pub async fn submit_answer(
             return Err(JsonErr(ApplicationError::Unauthorized, Status::Forbidden));
         }
 
+        let question = Question::get_from_id(&conn, answer.question_id).ok_or(JsonErr(
+            ApplicationError::QuestionNotFound,
+            Status::BadRequest,
+        ))?;
+        if answer.description.len() as i32 > question.max_bytes {
+            return Err(JsonErr(ApplicationError::InvalidInput, Status::BadRequest));
+        }
+
         NewAnswer::insert(&answer, &conn).ok_or(JsonErr(
             ApplicationError::UnableToCreate,
             Status::InternalServerError,
@@ -178,6 +192,36 @@ pub async fn get_ratings(
         Ok(Json(RatingsResponse {
             ratings: Rating::get_all_from_application_id(conn, application_id),
         }))
+    })
+    .await
+}
+
+#[put("/<application_id>/status", data = "<new_status>")]
+pub async fn set_status(
+    application_id: i32,
+    new_status: Json<ApplicationStatus>,
+    user: User,
+    db: Database,
+) -> Result<Json<()>, JsonErr<ApplicationError>> {
+    use crate::database::schema::applications::dsl::*;
+
+    db.run(move |conn| {
+        OrganisationUser::application_admin_level(application_id, user.id, &conn)
+            .is_at_least_director()
+            .check()
+            .map_err(|_| JsonErr(ApplicationError::Unauthorized, Status::Forbidden))?;
+
+        diesel::update(applications.filter(id.eq(application_id)))
+            .set(status.eq(new_status.into_inner()))
+            .execute(conn)
+            .map_err(|_| {
+                JsonErr(
+                    ApplicationError::UnableToUpdate,
+                    Status::InternalServerError,
+                )
+            })?;
+
+        Ok(Json(()))
     })
     .await
 }

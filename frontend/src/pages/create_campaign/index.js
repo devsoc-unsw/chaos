@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Container, Tabs, Tab } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
+import { dateToString, base64ToBytes } from "utils";
 import CampaignTab from "./Campaign";
 import RolesTab from "./Roles";
 import ReviewTab from "./Preview";
 import { NextButton, ArrowIcon, NextWrapper } from "./createCampaign.styled";
-import { isAdminInOrganisation } from "../../api";
+import { isAdminInOrganisation, createCampaign } from "../../api";
 
 const CreateCampaign = () => {
   const { orgId } = useParams();
@@ -85,8 +86,70 @@ const CreateCampaign = () => {
   // FIXME: CHAOS-64, update submitHandler to account for new data
   //        (roles/questions etc.), part of backend integration
   const submitHandler = async (isDraft) => {
-    console.log(`submit handler -> isDraft=${isDraft}`);
+    if (campaignName.length === 0 && !isDraft) {
+      setError("Campaign name is required");
+    } else if (description === 0 && !isDraft) {
+      setError("Campaign description is required");
+    } else if (cover === null) {
+      setError("Cover image is required");
+    } else if (startDate.getTime() > endDate.getTime()) {
+      setError("Start date must be before end date");
+    } else if (roles.length === 0 && !isDraft) {
+      setError("At least one role is required");
+    } else if (questions.length === 0 && !isDraft) {
+      setError("At least one question is required");
+    } else {
+      setError(null);
+    }
+
+    const coverSend = base64ToBytes(cover.split(",")[1]);
+
+    // const coverSend = cover ? cover.slice(cover.indexOf(";base64,") + 8) : "";
+    const startTimeString = dateToString(startDate);
+    const endTimeString = dateToString(endDate);
+    const campaignSend = {
+      organisation_id: Number(orgId),
+      name: campaignName,
+      cover_image: coverSend,
+      description,
+      starts_at: startTimeString,
+      ends_at: endTimeString,
+      published: !isDraft,
+    };
+
+    const roleQuestions = {};
+
+    const questionsSend = questions.map((q, i) => {
+      q.roles.forEach((roleId) => {
+        const array = roleQuestions[roleId] ?? [];
+        array.push(i);
+        roleQuestions[roleId] = array;
+      });
+
+      return {
+        title: q.text,
+        required: q.required ?? true,
+      };
+    });
+
+    const rolesSend = roles.map((r) => ({
+      name: r.title,
+      min_available: r.quantity,
+      max_available: r.quantity,
+      questions_for_role: roleQuestions[r.id] ?? [],
+    }));
+
+    const post = await createCampaign(campaignSend, rolesSend, questionsSend);
+
+    const status = await post.status;
+    if (status === 200) {
+      console.log("nice!");
+      navigate("/dashboard");
+    } else {
+      console.log("something went wrong");
+    }
   };
+
   return (
     <Container>
       <Tabs

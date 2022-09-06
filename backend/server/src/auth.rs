@@ -114,8 +114,7 @@ async fn get_access_token(oauth_code: &str, state: &State<ApiState>) -> Option<S
         .post(GOOGLE_TOKEN_URL)
         .form(&TokenForm {
             code: oauth_code,
-            client_id: dotenv::var("GOOGLE_CLIENT_ID")
-                .expect("GOOGLE_CLIENT_ID should be in env"),
+            client_id: dotenv::var("GOOGLE_CLIENT_ID").expect("GOOGLE_CLIENT_ID should be in env"),
             client_secret: dotenv::var("GOOGLE_CLIENT_SECRET")
                 .expect("GOOGLE_CLIENT_SECRET should be in env"),
             redirect_uri: dotenv::var("GOOGLE_REDIRECT_URI")
@@ -221,7 +220,10 @@ pub async fn signin(
     let token = get_access_token(&body.oauth_token, state)
         .await
         .ok_or_else(|| {
-            eprintln!("Failed to get access token for oauth token {}", body.oauth_token);
+            eprintln!(
+                "Failed to get access token for oauth token {}",
+                body.oauth_token
+            );
             JsonErr(SignInError::InvalidOAuthCode, Status::Forbidden)
         })?;
 

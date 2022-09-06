@@ -32,11 +32,11 @@ pub async fn get_question(
     db.run(move |conn| {
         let q = Question::get_from_id(&conn, question_id)
             .ok_or(JsonErr(QuestionError::QuestionNotFound, Status::NotFound))?;
-        let r = Role::get_from_id(&conn, q.role_id)
+        let r = Role::get_from_id(&conn, q.get_first_role())
             .ok_or(JsonErr(QuestionError::QuestionNotFound, Status::NotFound))?;
         let c = Campaign::get_from_id(&conn, r.campaign_id)
             .ok_or(JsonErr(QuestionError::QuestionNotFound, Status::NotFound))?;
-        OrganisationUser::role_admin_level(q.role_id, user.id, conn)
+        OrganisationUser::role_admin_level(q.get_first_role(), user.id, conn)
             .is_at_least_director()
             .or(c.published)
             .check()
@@ -57,7 +57,7 @@ pub async fn edit_question(
     db.run(move |conn| {
         let question = Question::get_from_id(&conn, question_id)
             .ok_or(JsonErr(QuestionError::QuestionNotFound, Status::NotFound))?;
-        let role = Role::get_from_id(conn, question.role_id)
+        let role = Role::get_from_id(conn, question.get_first_role())
             .ok_or(JsonErr(QuestionError::QuestionNotFound, Status::NotFound))?;
 
         OrganisationUser::role_admin_level(role.id, user.id, &conn)
@@ -87,7 +87,7 @@ pub async fn delete_question(
     db.run(move |conn| {
         let question = Question::get_from_id(&conn, question_id)
             .ok_or(JsonErr(QuestionError::QuestionNotFound, Status::NotFound))?;
-        let role = Role::get_from_id(conn, question.role_id)
+        let role = Role::get_from_id(conn, question.get_first_role())
             .ok_or(JsonErr(QuestionError::QuestionNotFound, Status::NotFound))?;
 
         OrganisationUser::role_admin_level(role.id, user.id, &conn)
