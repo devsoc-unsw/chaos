@@ -1,9 +1,6 @@
-// import classNames from "classnames";
 import tw, { styled } from "twin.macro";
-// import { CSSTransition } from "react-transition-group";
 import { Transition } from "components";
 import { Fragment } from "react";
-// import styles from "./Campaign.module.scss";
 
 const StyledBar = tw.div`
   transition-[width] duration-500
@@ -14,11 +11,7 @@ const Bar = ({ transitionDelay, ...props }) => (
     enter={tw`transition-[width] duration-500`}
     enterFrom={tw`w-0!`}
   >
-    <StyledBar
-      // className={classNames(styles.bar, className)}
-      style={{ transitionDelay: `${transitionDelay}ms` }}
-      {...props}
-    />
+    <StyledBar style={{ transitionDelay: `${transitionDelay}ms` }} {...props} />
   </Transition.Child>
 );
 
