@@ -44,7 +44,7 @@ const Campaign = ({ logo, active = false, transitionDelay = 0 }) => {
       enterFrom={tw`opacity-0 scale-90 translate-y-4`}
       style={{ transitionDelay: `${transitionDelay}ms` }}
     >
-      <div tw="w-[400px] bg-white rounded-lg shadow-md transition hover:(-translate-y-1 shadow-lg)">
+      <div tw="w-[25rem] bg-white rounded-lg shadow-md transition hover:(-translate-y-1 shadow-lg)">
         <header tw="flex items-center gap-2 p-4">
           <img tw="w-10 rounded" src={logo} alt="logo" />
           <Bars tw="gap-1">
@@ -53,7 +53,7 @@ const Campaign = ({ logo, active = false, transitionDelay = 0 }) => {
           </Bars>
           <Button status={status}>{status.toUpperCase()}</Button>
         </header>
-        <div tw="h-[157px] bg-[#edeeef]"></div>
+        <div tw="h-40 bg-[#edeeef]"></div>
         {active && (
           <Bars tw="gap-1.5 p-4">
             <Bar tw="w-56" transitionDelay={transitionDelay + 300} />
