@@ -7,6 +7,10 @@ import { removeStore } from "utils";
 import { getAllCampaigns } from "api";
 import CampaignGrid from "./CampaignGrid";
 
+import tw from "twin.macro";
+
+const Heading = tw.h2`text-2xl font-bold my-4`;
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const setNavBarTitle = useContext(SetNavBarTitleContext);
@@ -40,13 +44,13 @@ const Dashboard = () => {
   }, []);
   return (
     <Container>
-      <h2>My Campaigns</h2>
+      <Heading>My Campaigns</Heading>
       <CampaignGrid campaigns={myCampaigns} />
 
-      <h2>Available Campaigns</h2>
+      <Heading>Available Campaigns</Heading>
       <CampaignGrid campaigns={currentCampaigns} />
 
-      <h2>Past Campaigns</h2>
+      <Heading>Past Campaigns</Heading>
       <CampaignGrid campaigns={pastCampaigns} />
     </Container>
   );

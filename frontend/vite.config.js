@@ -3,7 +3,18 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
-  plugins: [react(), tsconfigPaths()],
+  plugins: [
+    react({
+      babel: {
+        plugins: ["babel-plugin-macros"],
+      },
+    }),
+    tsconfigPaths(),
+  ],
+  esbuild: {
+    // i don't remember what this is for but it's for something
+    logOverride: { "this-is-undefined-in-esm": "silent" },
+  },
   server: {
     port: 3000,
     proxy: {
