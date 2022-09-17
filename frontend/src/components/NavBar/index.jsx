@@ -6,21 +6,15 @@ import { isLoggedIn } from "../../utils";
 
 const NavButton = styled(NavLink, {
   ...tw`px-2 py-1 text-slate-800 relative`,
-  variants: {
-    active: {
-      true: tw`rounded shadow bg-gradient-to-r to-indigo-700/20 from-blue-700/20`,
-      false: tw`before:(
-          absolute inset-0
-          bg-gradient-to-r from-blue-700 to-indigo-700
-          rounded transition-opacity duration-100 opacity-0
-        )
-        hover:before:opacity-[0.075]
-      `,
-    },
-  },
-  defaultVariants: {
-    active: false,
-  },
+
+  "&.active": tw`rounded shadow bg-gradient-to-r to-indigo-700/20 from-blue-700/20`,
+  "&:not(.active)": tw`before:(
+      absolute inset-0
+      bg-gradient-to-r from-blue-700 to-indigo-700
+      rounded transition-opacity duration-100 opacity-0
+    )
+    hover:before:opacity-[0.075]
+  `,
 });
 
 const NavBar = ({ campaign }) => {
@@ -49,9 +43,7 @@ const NavBar = ({ campaign }) => {
           <div tw="flex gap-2 pr-4 text-slate-900">
             {loggedIn && (
               <>
-                <NavButton to="/dashboard" active>
-                  Dashboard
-                </NavButton>
+                <NavButton to="/dashboard">Dashboard</NavButton>
                 <NavButton to="/admin">Admin</NavButton>
               </>
             )}
