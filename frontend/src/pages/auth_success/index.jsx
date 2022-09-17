@@ -37,6 +37,7 @@ const AuthSuccess = () => {
           setStore("name", data[SIGNUP_REQUIRED].name);
           setStore("signup_token", data[SIGNUP_REQUIRED].signup_token);
         } else {
+          localStorage.setItem("name", data.name);
           localStorage.setItem("AUTH_TOKEN", data.token);
           setIsAuthenticated(true);
           setIsLoading(false);
