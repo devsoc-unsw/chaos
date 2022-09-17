@@ -26,8 +26,6 @@
     "react-router-dom": "6.3.0",
     "react-tsparticles": "1.43.1",
     "uuid": "8.3.2",
-    "vite": "^3.0.4",
-    "vite-tsconfig-paths": "^3.5.0",
     "web-vitals": "2.1.4"
   },
   "scripts": {
@@ -66,7 +64,9 @@
     "eslint-plugin-react": "7.30.0",
     "eslint-plugin-react-hooks": "4.6.0",
     "husky": "8.0.1",
-    "prettier": "2.6.2"
+    "prettier": "2.6.2",
+    "vite": "^3.1.2",
+    "vite-tsconfig-paths": "^3.5.0"
   },
   "husky": {
     "hooks": {
