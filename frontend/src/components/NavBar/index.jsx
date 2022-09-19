@@ -8,7 +8,10 @@ import { isLoggedIn } from "../../utils";
 import chaosImg from "assets/chaos.png";
 
 const NavButton = styled(NavLink, {
-  ...tw`px-2 py-1 text-slate-800 relative`,
+  ...tw`
+    relative px-2 py-1 text-slate-800 rounded
+    transition-shadow ring-blue-400 focus-visible:(ring outline-none)
+  `,
 
   "&.active": tw`rounded shadow bg-gradient-to-r to-indigo-700/20 from-blue-700/20`,
   "&:not(.active)": tw`before:(
@@ -34,7 +37,10 @@ const NavBar = ({ campaign }) => {
   return (
     <header tw="fixed inset-x-0 bg-white py-4 shadow-md bg-gradient-to-r from-[#9dbbfb55] to-[#a78bfa55]">
       <div tw="mx-auto max-w-7xl px-4 flex gap-4 items-center text-[hsl(255.1,30%,22%)]">
-        <Link to="/">
+        <Link
+          to="/"
+          tw="py-2 -my-2 rounded transition-shadow focus-visible:(ring ring-blue-400 outline-none)"
+        >
           <img tw="h-7 filter drop-shadow" src={chaosImg} alt="Chaos" />
         </Link>
         {campaign || "Chaos"}
@@ -63,7 +69,7 @@ const NavBar = ({ campaign }) => {
                 alt="Michael"
               />*/}
               <button
-                tw="ml-3 text-slate-500 hover:text-indigo-600 transition-colors"
+                tw="ml-3 p-1 text-slate-500 hover:text-indigo-600 transition rounded-full focus-visible:(ring ring-blue-400 outline-none)"
                 onClick={logout}
               >
                 <ArrowRightOnRectangleIcon tw="h-6 w-6" />
