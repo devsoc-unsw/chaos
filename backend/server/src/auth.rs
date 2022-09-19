@@ -194,6 +194,7 @@ pub struct SignInBody {
 #[derive(Serialize)]
 pub struct SignInResponse {
     token: String,
+    name: String,
 }
 
 #[derive(Serialize)]
@@ -267,7 +268,7 @@ pub async fn signin(
     )
     .expect("creating jwt should never fail");
 
-    Ok(Json(SignInResponse { token }))
+    Ok(Json(SignInResponse { token, name: user.display_name }))
 }
 
 #[derive(Deserialize, Clone)]
