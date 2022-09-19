@@ -10,9 +10,7 @@ export function isAdmin() {
   return true;
 }
 
-export function isLoggedIn() {
-  return true;
-}
+export const isLoggedIn = () => localStorage.hasOwnProperty("AUTH_TOKEN");
 
 export const dateToString = (date) =>
   moment.utc(date).format("YYYY-MM-DD HH:mm:ss");
