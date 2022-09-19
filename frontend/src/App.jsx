@@ -36,16 +36,16 @@ const App = () => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <SnackbarProvider maxSnack={3}>
-        <Suspense fallback={<LoadingIndicator />}>
-          <SetNavBarTitleContext.Provider value={setNavBarTitle}>
-            <BrowserRouter>
-              <NavBar campaign={AppBarTitle} />
-              <Box pt={8} minHeight="100vh" display="flex">
+        <SetNavBarTitleContext.Provider value={setNavBarTitle}>
+          <BrowserRouter>
+            <NavBar campaign={AppBarTitle} />
+            <Box pt={8} minHeight="100vh" display="flex">
+              <Suspense fallback={<LoadingIndicator />}>
                 <Routes>{routes}</Routes>
-              </Box>
-            </BrowserRouter>
-          </SetNavBarTitleContext.Provider>
-        </Suspense>
+              </Suspense>
+            </Box>
+          </BrowserRouter>
+        </SetNavBarTitleContext.Provider>
       </SnackbarProvider>
     </ThemeProvider>
   );
