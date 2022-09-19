@@ -4,6 +4,8 @@ import PropTypes from "prop-types";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { isLoggedIn } from "../../utils";
 
+import chaosImg from "assets/chaos.png";
+
 const NavButton = styled(NavLink, {
   ...tw`px-2 py-1 text-slate-800 relative`,
 
@@ -32,11 +34,7 @@ const NavBar = ({ campaign }) => {
     <header tw="fixed inset-x-0 bg-white py-4 shadow-md bg-gradient-to-r from-[#9dbbfb55] to-[#a78bfa55]">
       <div tw="mx-auto max-w-7xl px-4 flex gap-4 items-center text-[hsl(255.1,30%,22%)]">
         <Link to="/">
-          <img
-            tw="h-7 filter drop-shadow"
-            src="https://chaos-landing.pages.dev/assets/chaos.cea10b79.png"
-            alt="Chaos"
-          />
+          <img tw="h-7 filter drop-shadow" src={chaosImg} alt="Chaos" />
         </Link>
         {campaign || "Chaos"}
         <div tw="ml-auto flex items-center text-slate-600">
