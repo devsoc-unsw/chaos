@@ -84,7 +84,7 @@ const NavBar = ({ campaign }) => {
           ) : (
             <span tw="border-l border-slate-500 pl-4">
               <a
-                tw="px-3 py-1.5 rounded shadow bg-purple-400/40 text-black hover:bg-purple-400/50"
+                tw="px-3 py-1.5 rounded shadow bg-indigo-400/30 text-black hover:bg-indigo-400/[0.42] transition-colors"
                 href={import.meta.env.VITE_OAUTH_CALLBACK_URL}
               >
                 Get Started
