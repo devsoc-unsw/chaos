@@ -5,9 +5,7 @@ import "twin.macro";
 const LoadingIndicator = () => (
   <div tw="flex flex-col flex-1">
     <LinearProgress />
-    <div tw="w-full h-full flex-1 flex items-center justify-center">
-      Loading...
-    </div>
+    <div tw="flex-1 flex items-center justify-center">Loading...</div>
   </div>
 );
 
