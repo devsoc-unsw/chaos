@@ -23,16 +23,13 @@
     "react-dom": "17.0.2",
     "react-dropzone": "12.1.0",
     "react-router-dom": "6.3.0",
-    "react-scripts": "5.0.1",
     "react-tsparticles": "1.43.1",
     "uuid": "8.3.2",
     "web-vitals": "2.1.4"
   },
   "scripts": {
-    "start": "ESLINT_NO_DEV_ERRORS='true' react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
+    "start": "ESLINT_NO_DEV_ERRORS='true' vite",
+    "build": "vite build",
     "lint": "npx eslint 'src/**/*.{js,jsx}'",
     "lint:fix": "npx eslint 'src/**/*.{js,jsx}' --fix",
     "format": "prettier --write ."
@@ -56,8 +53,11 @@
     ]
   },
   "devDependencies": {
+    "@babel/core": "7.19.1",
     "@babel/preset-env": "7.19.1",
     "@babel/preset-react": "7.18.6",
+    "@vitejs/plugin-react": "^2.0.0",
+    "eslint": "8.23.1",
     "eslint-config-airbnb": "19.0.4",
     "eslint-config-prettier": "8.5.0",
     "eslint-plugin-import": "2.26.0",
@@ -66,7 +66,9 @@
     "eslint-plugin-react": "7.30.0",
     "eslint-plugin-react-hooks": "4.6.0",
     "husky": "8.0.1",
-    "prettier": "2.6.2"
+    "prettier": "2.6.2",
+    "vite": "3.1.2",
+    "vite-tsconfig-paths": "3.5.0"
   },
   "husky": {
     "hooks": {

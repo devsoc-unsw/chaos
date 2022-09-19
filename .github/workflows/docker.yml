@@ -79,8 +79,8 @@ jobs:
           platforms: linux/amd64
           file: frontend/Dockerfile
           build-args: |
-            REACT_APP_API_BASE_URL=${{ secrets.REACT_APP_API_BASE_URL }}
-            REACT_APP_OAUTH_CALLBACK_URL=${{ secrets.REACT_APP_OAUTH_CALLBACK_URL }}
+            VITE_API_BASE_URL=${{ secrets.API_BASE_URL }}
+            VITE_OAUTH_CALLBACK_URL=${{ secrets.OAUTH_CALLBACK_URL }}
           tags: |
             ghcr.io/csesoc/chaos-frontend:${{ github.sha }}
             ghcr.io/csesoc/chaos-frontend:latest

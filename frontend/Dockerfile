@@ -7,10 +7,10 @@ WORKDIR /app
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
 
-ARG REACT_APP_API_BASE_URL
-ARG REACT_APP_OAUTH_CALLBACK_URL
-ENV REACT_APP_API_BASE_URL $REACT_APP_API_BASE_URL
-ENV REACT_APP_OAUTH_CALLBACK_URL $REACT_APP_OAUTH_CALLBACK_URL
+ARG VITE_API_BASE_URL
+ARG VITE_OAUTH_CALLBACK_URL
+ENV VITE_API_BASE_URL $VITE_API_BASE_URL
+ENV VITE_OAUTH_CALLBACK_URL $VITE_OAUTH_CALLBACK_URL
 
 COPY . .
 
@@ -24,7 +24,7 @@ WORKDIR /usr/share/nginx/html
 # Remove default nginx static assets
 RUN rm -rf ./*
 # Copy static assets from builder stage
-COPY --from=builder /app/build .
+COPY --from=builder /app/dist .
 
 EXPOSE 80
 
