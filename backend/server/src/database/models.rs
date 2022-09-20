@@ -10,6 +10,7 @@ use diesel::prelude::*;
 use diesel::PgConnection;
 use rocket::FromForm;
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 
 #[derive(Queryable)]
 pub struct User {
@@ -195,7 +196,13 @@ impl Organisation {
             .execute(conn)
             .ok();
 
-        Organisation::delete(conn, org_id).map(|_| ())
+        let num = Organisation::delete(conn, org_id)?;
+
+        if num < 1 {
+            return None;
+        }
+
+        Some(())
     }
 
     pub fn find_by_name(conn: &PgConnection, organisation_name: &str) -> Option<Organisation> {
@@ -370,7 +377,7 @@ pub struct NewCampaign {
     pub published: bool,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct NewCampaignInput {
     pub organisation_id: i32,
     pub name: String,
@@ -386,7 +393,7 @@ pub struct CampaignWithRoles {
     pub campaign: Campaign,
     pub roles: Vec<Role>,
     pub questions: Vec<Question>,
-    pub applied_for: Vec<i32>,
+    pub applied_for: Vec<(i32, ApplicationStatus)>,
 }
 
 impl Campaign {
@@ -404,8 +411,14 @@ impl Campaign {
         use crate::database::schema::campaigns::dsl::*;
 
         let now = Utc::now().naive_utc();
+        println!("now: {}", now);
         let campaigns_vec: Vec<Campaign> = campaigns
-            .filter(starts_at.lt(now).and(published.eq(true)))
+            .filter(
+                starts_at
+                    .le(now)
+                    .and(published.eq(true))
+                    .and(ends_at.gt(now)),
+            )
             .order(id.asc())
             .load(conn)
             .unwrap_or_else(|_| vec![]);
@@ -423,27 +436,33 @@ impl Campaign {
             .map(|campaign| {
                 let campaign_roles = Role::get_all_from_campaign_id(&conn, campaign.id);
 
+                let mut seen = HashSet::new();
+
                 let questions = campaign_roles
                     .iter()
                     .map(|x| Question::get_all_from_role_id(conn, x.id).into_iter())
                     .flatten()
+                    .filter(|x| {
+                        if !seen.contains(&x.id) {
+                            seen.insert(x.id);
+                            true
+                        } else {
+                            false
+                        }
+                    })
                     .collect();
 
-                let applied_for: Vec<i32> = campaign_roles
+                println!("Questions for campaign {}: {:?}", campaign.name, questions);
+
+                let applied_for: Vec<(i32, ApplicationStatus)> = campaign_roles
                     .clone()
                     .into_iter()
                     .filter_map(|role| {
-                        if Application::get_all_from_role_id(&conn, role.id)
+                        let app = Application::get_all_from_role_id(&conn, role.id)
                             .into_iter()
                             .filter(|app| app.user_id == user_id)
-                            .peekable()
-                            .peek()
-                            .is_some()
-                        {
-                            Some(role.id)
-                        } else {
-                            None
-                        }
+                            .next()?;
+                        Some((role.id, app.status))
                     })
                     .collect();
 
@@ -536,10 +555,10 @@ impl Campaign {
             name: new_campaign.name.clone(),
             cover_image: new_campaign.cover_image.clone(),
             description: new_campaign.description.clone(),
-            starts_at: NaiveDateTime::parse_from_str(&new_campaign.starts_at, "%Y-%m-%dT%H:%M:%S")
-                .expect("Invalid date format"),
-            ends_at: NaiveDateTime::parse_from_str(&new_campaign.ends_at, "%Y-%m-%dT%H:%M:%S")
-                .expect("Invalid date format"),
+            starts_at: NaiveDateTime::parse_from_str(&new_campaign.starts_at, "%Y-%m-%d %H:%M:%S")
+                .ok()?,
+            ends_at: NaiveDateTime::parse_from_str(&new_campaign.ends_at, "%Y-%m-%d %H:%M:%S")
+                .ok()?,
             published: new_campaign.published,
         };
 
@@ -599,7 +618,7 @@ pub struct Role {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Insertable, AsChangeset, FromForm, Deserialize)]
+#[derive(Insertable, AsChangeset, FromForm, Deserialize, Debug)]
 #[table_name = "roles"]
 pub struct RoleUpdate {
     pub campaign_id: i32,
@@ -657,13 +676,15 @@ impl Role {
     }
 
     pub fn delete_children(conn: &PgConnection, role: Role) -> Option<()> {
+        use diesel::pg::expression::dsl::any;
+
         let question_items: Vec<Question> = questions::table
-            .filter(questions::role_id.eq(role.id))
+            .filter(any(questions::role_ids).eq(role.id))
             .load(conn)
             .ok()?;
 
         println!("Trying to delete questions");
-        diesel::delete(questions::table.filter(questions::role_id.eq(role.id)))
+        diesel::delete(questions::table.filter(any(questions::role_ids).eq(role.id)))
             .execute(conn)
             .ok();
 
@@ -807,12 +828,11 @@ impl NewApplication {
     }
 }
 
-#[derive(Identifiable, Queryable, Associations, PartialEq, Serialize)]
-#[belongs_to(Role)]
+#[derive(Identifiable, Queryable, PartialEq, Serialize, Debug, QueryableByName)]
 #[table_name = "questions"]
 pub struct Question {
     pub id: i32,
-    pub role_id: i32,
+    pub role_ids: Vec<i32>,
     pub title: String,
     pub description: Option<String>,
     pub max_bytes: i32,
@@ -821,12 +841,13 @@ pub struct Question {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Insertable)]
+#[derive(Insertable, Serialize, Deserialize)]
 #[table_name = "questions"]
 pub struct NewQuestion {
-    pub role_id: i32,
+    pub role_ids: Vec<i32>,
     pub title: String,
     pub description: Option<String>,
+    #[serde(default)]
     pub max_bytes: i32,
     pub required: bool,
 }
@@ -834,7 +855,7 @@ pub struct NewQuestion {
 #[derive(Serialize)]
 pub struct QuestionResponse {
     pub id: i32,
-    pub role_id: i32,
+    pub role_ids: Vec<i32>,
     pub title: String,
     pub description: Option<String>,
     pub max_bytes: i32,
@@ -845,7 +866,7 @@ impl std::convert::From<Question> for QuestionResponse {
     fn from(question: Question) -> Self {
         Self {
             id: question.id,
-            role_id: question.role_id,
+            role_ids: question.role_ids,
             title: question.title,
             description: question.description,
             max_bytes: question.max_bytes,
@@ -864,13 +885,11 @@ pub struct UpdateQuestionInput {
 }
 
 impl Question {
-    pub fn get_all(conn: &PgConnection) -> Vec<Question> {
-        use crate::database::schema::questions::dsl::*;
-
-        questions
-            .order(id.asc())
-            .load(conn)
-            .unwrap_or_else(|_| vec![])
+    pub fn get_first_role(&self) -> i32 {
+        *self
+            .role_ids
+            .get(0)
+            .expect("Question should be for at least one role")
     }
 
     pub fn update(
@@ -889,21 +908,21 @@ impl Question {
     }
 
     pub fn get_all_from_role_id(conn: &PgConnection, role_id_val: i32) -> Vec<Question> {
-        use crate::database::schema::questions::dsl::*;
-
-        questions
-            .filter(role_id.eq(role_id_val))
-            .order(id.asc())
-            .load(conn)
-            .unwrap_or_else(|_| vec![])
+        diesel::sql_query(&format!(
+            "select * from questions where {} = any(role_ids)",
+            role_id_val
+        ))
+        .load::<Question>(conn)
+        .unwrap_or_else(|_| vec![])
     }
 
     pub fn delete_all_from_role_id(conn: &PgConnection, role_id_val: i32) -> bool {
-        use crate::database::schema::questions::dsl::*;
-
-        diesel::delete(questions.filter(role_id.eq(role_id_val)))
-            .execute(conn)
-            .is_ok()
+        diesel::sql_query(&format!(
+            "delete from questions where {} = any(role_ids)",
+            role_id_val
+        ))
+        .execute(conn)
+        .is_ok()
     }
 
     pub fn delete(conn: &PgConnection, question_id: i32) -> bool {

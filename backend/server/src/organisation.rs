@@ -12,7 +12,7 @@ use rocket::{
     delete, get,
     http::Status,
     post, put,
-    serde::{json::Json, Serialize},
+    serde::{json::Json, Deserialize, Serialize},
 };
 use std::collections::HashMap;
 
@@ -27,6 +27,7 @@ pub enum OrgError {
     OrgNotFound,
     InsufficientPerms,
     UserIsNotInOrg,
+    UserNotFound,
     UserAlreadyInOrg,
 }
 
@@ -207,6 +208,51 @@ pub async fn get_associated_campaigns(
                 .map(CampaignResponse::from)
                 .collect(),
         })
+    })
+    .await
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct EmailInvite {
+    pub email: String,
+    pub admin_level: AdminLevel,
+}
+
+#[post("/<organisation_id>/invite", data = "<input>")]
+pub async fn invite_email(
+    organisation_id: i32,
+    input: Json<EmailInvite>,
+    user: User,
+    db: Database,
+) -> Result<(), JsonErr<OrgError>> {
+    let EmailInvite { email, admin_level } = input.into_inner();
+    db.run(move |conn| {
+        let mut level = OrganisationUser::organisation_admin_level(organisation_id, user.id, conn)
+            .check()
+            .map_err(|_| JsonErr(OrgError::InsufficientPerms, Status::Forbidden))?
+            .0;
+
+        if user.superuser {
+            level = AdminLevel::Admin;
+        }
+
+        let invitee = User::get_from_email(conn, &email)
+            .ok_or(JsonErr(OrgError::UserNotFound, Status::NotFound))?;
+
+        if level.geq(admin_level) {
+            let new_user = NewOrganisationUser {
+                user_id: invitee.id,
+                organisation_id,
+                admin_level,
+            };
+
+            new_user
+                .insert(conn)
+                .map(|_| ())
+                .ok_or(JsonErr(OrgError::UserAlreadyInOrg, Status::NotAcceptable))
+        } else {
+            Err(JsonErr(OrgError::InsufficientPerms, Status::Forbidden))
+        }
     })
     .await
 }
