@@ -70,7 +70,7 @@
     "eslint-plugin-react": "7.31.8",
     "eslint-plugin-react-hooks": "4.6.0",
     "husky": "8.0.1",
-    "prettier": "2.6.2",
+    "prettier": "2.7.1",
     "tailwindcss": "3.1.8",
     "twin.macro": "2.8.2",
     "vite": "3.1.3",
