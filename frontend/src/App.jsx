@@ -1,4 +1,4 @@
-import React, { Suspense, useState } from "react";
+import { Suspense, useState } from "react";
 import { BrowserRouter, Routes } from "react-router-dom";
 import { SnackbarProvider } from "notistack";
 import { Box, CssBaseline, ThemeProvider, createTheme } from "@mui/material";

@@ -3,7 +3,12 @@
     "browser": true,
     "es2021": true
   },
-  "extends": ["plugin:react/recommended", "airbnb", "prettier"],
+  "extends": [
+    "plugin:react/recommended",
+    "airbnb",
+    "prettier",
+    "plugin:react/jsx-runtime"
+  ],
   "parser": "@babel/eslint-parser",
   "parserOptions": {
     "ecmaFeatures": {
@@ -18,6 +23,7 @@
     "prettier/prettier": ["error", { "endOfLine": "auto" }],
     "no-console": "off",
     "import/prefer-default-export": "off",
+    "import/no-extraneous-dependencies": ["error", { "devDependencies": true }],
     "react/function-component-definition": [
       1,
       {
@@ -30,7 +36,8 @@
       {
         "custom": "ignore"
       }
-    ]
+    ],
+    "react/no-unknown-property": [2, { "ignore": ["tw", "css"] }]
   },
   "settings": {
     "import/resolver": {

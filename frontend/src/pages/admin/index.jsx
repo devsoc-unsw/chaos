@@ -1,10 +1,4 @@
-import React, {
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  createContext,
-} from "react";
+import { useContext, useEffect, useMemo, useState, createContext } from "react";
 import { SetNavBarTitleContext } from "../../contexts/SetNavbarTitleContext";
 import { AdminContainer } from "./admin.styled";
 import AdminSidebar from "../../components/AdminSideBar";

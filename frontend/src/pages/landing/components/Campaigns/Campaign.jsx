@@ -1,8 +1,9 @@
+import PropTypes from "prop-types";
 import tw, { styled } from "twin.macro";
 import { Transition } from "components";
 import { Fragment } from "react";
 
-const Bar = ({ transitionDelay, ...props }) => (
+const Bar = ({ transitionDelay, className }) => (
   <Transition.Child
     as={Fragment}
     enter={tw`transition-[width] duration-500`}
@@ -11,10 +12,15 @@ const Bar = ({ transitionDelay, ...props }) => (
     <div
       tw="transition-[width] duration-500"
       style={{ transitionDelay: `${transitionDelay}ms` }}
-      {...props}
+      className={className}
     />
   </Transition.Child>
 );
+
+Bar.propTypes = {
+  transitionDelay: PropTypes.number.isRequired,
+  className: PropTypes.string.isRequired,
+};
 
 const Button = styled.button({
   ...tw`px-3 py-2 ml-auto rounded`,
@@ -39,7 +45,7 @@ const Campaign = ({ logo, active = false, transitionDelay = 0 }) => {
   const status = active ? "pending" : "open";
   return (
     <Transition
-      appear={true}
+      appear
       enter={tw`transition duration-500`}
       enterFrom={tw`opacity-0 scale-90 translate-y-4`}
       style={{ transitionDelay: `${transitionDelay}ms` }}
@@ -53,7 +59,7 @@ const Campaign = ({ logo, active = false, transitionDelay = 0 }) => {
           </Bars>
           <Button status={status}>{status.toUpperCase()}</Button>
         </header>
-        <div tw="h-40 bg-[#edeeef]"></div>
+        <div tw="h-40 bg-[#edeeef]" />
         {active && (
           <Bars tw="gap-1.5 p-4">
             <Bar tw="w-56" transitionDelay={transitionDelay + 300} />
@@ -64,6 +70,17 @@ const Campaign = ({ logo, active = false, transitionDelay = 0 }) => {
       </div>
     </Transition>
   );
+};
+
+Campaign.propTypes = {
+  logo: PropTypes.string.isRequired,
+  active: PropTypes.bool,
+  transitionDelay: PropTypes.number,
+};
+
+Campaign.defaultProps = {
+  active: false,
+  transitionDelay: 0,
 };
 
 export default Campaign;

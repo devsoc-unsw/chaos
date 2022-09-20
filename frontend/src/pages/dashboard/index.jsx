@@ -1,13 +1,12 @@
-import React, { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Container } from "@mui/material";
 
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 import { removeStore } from "utils";
 import { getAllCampaigns } from "api";
-import CampaignGrid from "./CampaignGrid";
-
 import tw from "twin.macro";
+import CampaignGrid from "./CampaignGrid";
 
 const Heading = tw.h2`text-2xl font-bold my-4`;
 

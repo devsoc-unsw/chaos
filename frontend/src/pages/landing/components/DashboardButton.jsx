@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import tw, { styled } from "twin.macro";
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
 
@@ -33,5 +34,9 @@ const DashboardButton = ({ children, ...props }) => (
     {children}
   </Button>
 );
+
+DashboardButton.propTypes = {
+  children: PropTypes.node.isRequired,
+};
 
 export default DashboardButton;

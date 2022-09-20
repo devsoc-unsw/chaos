@@ -11,8 +11,8 @@ const Waves = () => (
   >
     <defs>
       <linearGradient id="gradient" x1="0%" y1="50%" x2="100%" y2="50%">
-        <stop offset="5%" stopColor="#9dbbfb88"></stop>
-        <stop offset="95%" stopColor="#a78bfa88"></stop>
+        <stop offset="5%" stopColor="#9dbbfb88" />
+        <stop offset="95%" stopColor="#a78bfa88" />
       </linearGradient>
     </defs>
     <path
@@ -20,11 +20,11 @@ const Waves = () => (
       stroke="none"
       strokeWidth="0"
       fill="url(#gradient)"
-    ></path>
+    />
     <defs>
       <linearGradient id="gradient" x1="0%" y1="50%" x2="100%" y2="50%">
-        <stop offset="5%" stopColor="#9dbbfbff"></stop>
-        <stop offset="95%" stopColor="#a78bfaff"></stop>
+        <stop offset="5%" stopColor="#9dbbfbff" />
+        <stop offset="95%" stopColor="#a78bfaff" />
       </linearGradient>
     </defs>
     <path
@@ -32,7 +32,7 @@ const Waves = () => (
       stroke="none"
       strokeWidth="0"
       fill="url(#gradient)"
-    ></path>
+    />
   </svg>
 );
 

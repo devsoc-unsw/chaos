@@ -1,4 +1,3 @@
-import React from "react";
 import { Tooltip, SvgIcon, Box } from "@mui/material";
 import { PassBarDivider } from "./passBar.styled";
 

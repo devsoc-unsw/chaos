@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { InputLabel, TextField, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { BackgroundWrapper } from "../../components";
