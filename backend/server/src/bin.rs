@@ -38,7 +38,10 @@ async fn main() {
                 }}
             }},
             "log_level": "debug",
-            "address": "0.0.0.0"
+            "address": "0.0.0.0",
+            "limits": {{
+                "json": "10485760"
+            }}
         }}"#,
         db_url
     ))

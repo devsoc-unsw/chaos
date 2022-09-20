@@ -1,7 +1,7 @@
 import React, { Suspense, useState } from "react";
 import { BrowserRouter, Routes } from "react-router-dom";
 import { SnackbarProvider } from "notistack";
-import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
+import { Box, CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 import { NavBar, LoadingIndicator } from "./components";
 import { SetNavBarTitleContext } from "./contexts/SetNavbarTitleContext";
 import routes from "./routes";
@@ -36,16 +36,16 @@ const App = () => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <SnackbarProvider maxSnack={3}>
-        <Suspense fallback={<LoadingIndicator />}>
-          <SetNavBarTitleContext.Provider value={setNavBarTitle}>
-            <BrowserRouter>
-              <header>
-                <NavBar campaign={AppBarTitle} />
-              </header>
-              <Routes>{routes}</Routes>
-            </BrowserRouter>
-          </SetNavBarTitleContext.Provider>
-        </Suspense>
+        <SetNavBarTitleContext.Provider value={setNavBarTitle}>
+          <BrowserRouter>
+            <NavBar campaign={AppBarTitle} />
+            <Box pt={8} minHeight="100vh" display="flex">
+              <Suspense fallback={<LoadingIndicator />}>
+                <Routes>{routes}</Routes>
+              </Suspense>
+            </Box>
+          </BrowserRouter>
+        </SetNavBarTitleContext.Provider>
       </SnackbarProvider>
     </ThemeProvider>
   );

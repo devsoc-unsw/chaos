@@ -14,6 +14,7 @@ import {
   getRoleApplications,
   getRoleQuestions,
   setApplicationStatus,
+  getCampaign,
 } from "../../api";
 
 const Rankings = () => {
@@ -40,7 +41,9 @@ const Rankings = () => {
 
   useEffect(() => {
     (async () => {
-      setNavBarTitle("2022 Subcommittee Recruitment (Hardcoded Title)");
+      const campaignNameResp = await getCampaign(campaignId);
+      const { name: campaignName } = await campaignNameResp.json();
+      setNavBarTitle(`Ranking for ${campaignName}`);
       const rolesResp = await getCampaignRoles(campaignId);
       const { roles } = await rolesResp.json();
 
@@ -83,6 +86,7 @@ const Rankings = () => {
           )
         )
       );
+      console.log(roles);
       setPositions(roles.map((role) => role.name));
 
       const questions = await Promise.all(

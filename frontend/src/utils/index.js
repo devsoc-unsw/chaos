@@ -10,18 +10,16 @@ export function isAdmin() {
   return true;
 }
 
-export function isLoggedIn() {
-  return true;
-}
+export const isLoggedIn = () => localStorage.hasOwnProperty("AUTH_TOKEN");
 
 export const dateToStringForBackend = (dateObject) =>
   moment.utc(dateObject).format("YYYY-MM-DD HH:mm:ss");
 
-export const dateToStringForAdminContent = (dateObject) =>
-  moment(dateObject).format("h:mm a (D MMM)");
-
 export const dateToStringForCampaignGrid = (dateObject) =>
   moment(dateObject).format("H:MM a (D MMM)");
+
+export const dateToDateString = (date) =>
+  moment.utc(date).format("DD MMM YYYY");
 
 export const bytesToImage = (bytes) =>
   `data:image/png;base64,${btoa(
