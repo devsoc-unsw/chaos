@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Grid } from "@mui/material";
 
 import CampaignCard from "components/CampaignCard";
-import { bytesToImage, dateToString, tuple } from "utils";
+import { bytesToImage, dateToStringForCampaignGrid, tuple } from "utils";
 
 const CampaignGrid = ({ campaigns }) => {
   const navigate = useNavigate();
@@ -20,8 +20,12 @@ const CampaignGrid = ({ campaigns }) => {
               name: role.name,
               number: role.max_available,
             }))}
-            startDate={dateToString(new Date(campaign.campaign.starts_at))}
-            endDate={dateToString(new Date(campaign.campaign.ends_at))}
+            startDate={dateToStringForCampaignGrid(
+              new Date(campaign.campaign.starts_at)
+            )}
+            endDate={dateToStringForCampaignGrid(
+              new Date(campaign.campaign.ends_at)
+            )}
             img={bytesToImage(campaign.campaign.cover_image)}
             applyClick={() =>
               navigate(`/application/${campaign.campaign.id}`, {

@@ -12,8 +12,11 @@ export function isAdmin() {
 
 export const isLoggedIn = () => localStorage.hasOwnProperty("AUTH_TOKEN");
 
-export const dateToString = (date) =>
-  moment.utc(date).format("YYYY-MM-DD HH:mm:ss");
+export const dateToStringForBackend = (dateObject) =>
+  moment.utc(dateObject).format("YYYY-MM-DD HH:mm:ss");
+
+export const dateToStringForCampaignGrid = (dateObject) =>
+  moment(dateObject).format("H:MM a (D MMM)");
 
 export const dateToDateString = (date) =>
   moment.utc(date).format("DD MMM YYYY");
