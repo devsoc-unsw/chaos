@@ -101,20 +101,10 @@ const Application = () => {
 
   const onSubmit = () => {
     //        CHAOS-53, useNavigate() link to post submission page once it is created :)
-    if (!rolesSelected.length) {
-      alert(
-        "Submission failed, you must select at least one role to apply for!"
-      );
-    } else {
+    if (rolesSelected.length) {
       rolesSelected.forEach((role) => {
         newApplication(role)
-          .then((res) => {
-            if (!res.ok) {
-              alert("Error during submission");
-            } else {
-              res.json();
-            }
-          })
+          .then((res) => res.json())
           .then((data) => {
             Object.keys(answers)
               .filter((qId) => {
@@ -125,15 +115,14 @@ const Application = () => {
                 return rId === data.role_id;
               })
               .forEach((qId) =>
-                submitAnswer(data.id, Number(qId), answers[qId]).then((res) => {
-                  if (!res.ok) {
-                    alert("Error during submission");
-                  }
-                })
+                submitAnswer(data.id, Number(qId), answers[qId])
               );
           });
       });
-      navigate("/dashboard");
+    } else {
+      console.error(
+        "Submission failed, you must select at least one role to apply for!"
+      );
     }
   };
 
