@@ -3,9 +3,8 @@ import tw, { styled } from "twin.macro";
 import PropTypes from "prop-types";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { ArrowRightOnRectangleIcon } from "@heroicons/react/24/solid";
-import { isLoggedIn } from "../../utils";
-
 import chaosImg from "assets/chaos.png";
+import { isLoggedIn } from "../../utils";
 
 const NavButton = styled(NavLink, {
   ...tw`
@@ -63,11 +62,11 @@ const NavBar = ({ campaign }) => {
                 </span>
                 !
               </span>
-              {/*<img
+              {/* <img
                 tw="w-8 ml-2 h-auto rounded-full bg-black/10"
                 src="https://static-cdn.jtvnw.net/jtv_user_pictures/103727a4-bb19-497d-a4b5-02ccd17efa64-profile_image-300x300.png"
                 alt="Michael"
-              />*/}
+              /> */}
               <button
                 tw="ml-3 p-1 text-slate-500 hover:text-indigo-600 transition rounded-full focus-visible:(ring ring-blue-400 outline-none)"
                 onClick={logout}

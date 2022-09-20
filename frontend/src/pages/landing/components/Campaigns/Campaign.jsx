@@ -39,7 +39,7 @@ const Campaign = ({ logo, active = false, transitionDelay = 0 }) => {
   const status = active ? "pending" : "open";
   return (
     <Transition
-      appear={true}
+      appear
       enter={tw`transition duration-500`}
       enterFrom={tw`opacity-0 scale-90 translate-y-4`}
       style={{ transitionDelay: `${transitionDelay}ms` }}
@@ -53,7 +53,7 @@ const Campaign = ({ logo, active = false, transitionDelay = 0 }) => {
           </Bars>
           <Button status={status}>{status.toUpperCase()}</Button>
         </header>
-        <div tw="h-40 bg-[#edeeef]"></div>
+        <div tw="h-40 bg-[#edeeef]" />
         {active && (
           <Bars tw="gap-1.5 p-4">
             <Bar tw="w-56" transitionDelay={transitionDelay + 300} />

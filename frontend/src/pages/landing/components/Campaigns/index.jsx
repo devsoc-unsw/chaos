@@ -1,11 +1,11 @@
 import tw, { styled } from "twin.macro";
 
-import Campaign from "./Campaign";
 import { Transition } from "components";
+import { forwardRef } from "react";
+import Campaign from "./Campaign";
 
 import csesoc from "./CSESoc_logo.jpeg";
 import compclub from "./compclub.png";
-import { forwardRef } from "react";
 
 const Container = styled.div({
   ...tw`
@@ -47,20 +47,20 @@ const Campaigns = forwardRef(({ offsetX, offsetY }, ref) => {
         <section>
           <Transition
             as={Heading}
-            appear={true}
+            appear
             enter={tw`transition-[width] duration-[600ms]`}
             enterFrom={tw`w-0`}
             enterTo={tw`w-72`}
           />
           <Row>
-            <Campaign logo={csesoc} active={true} />
-            <Campaign logo={compclub} active={true} transitionDelay={200} />
+            <Campaign logo={csesoc} active />
+            <Campaign logo={compclub} active transitionDelay={200} />
           </Row>
         </section>
         <section>
           <Transition
             as={Heading}
-            appear={true}
+            appear
             enter={tw`transition-[width] duration-[600ms] delay-[400ms]`}
             enterFrom={tw`w-0`}
             enterTo={tw`w-80`}

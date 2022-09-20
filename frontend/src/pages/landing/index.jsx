@@ -8,13 +8,12 @@ import React, {
 import tw from "twin.macro";
 import { Link } from "react-router-dom";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
+import { Transition } from "components";
+import chaosImg from "assets/chaos.png";
 import { getStore } from "../../utils";
 import Campaigns from "./components/Campaigns";
 import DashboardButton from "./components/DashboardButton";
 import Waves from "./components/Waves";
-import { Transition } from "components";
-
-import chaosImg from "assets/chaos.png";
 
 const OAUTH_CALLBACK_URL =
   getStore("AUTH_TOKEN") || import.meta.env.VITE_OAUTH_CALLBACK_URL;
@@ -47,7 +46,7 @@ const Landing = () => {
       <div tw="flex w-full p-[50px] max-w-7xl my-auto translate-y-[-100px]">
         <main>
           <Transition
-            appear={true}
+            appear
             enter={tw`transition duration-[600ms]`}
             enterFrom={tw`opacity-0 -translate-x-6`}
           >
@@ -62,7 +61,7 @@ const Landing = () => {
           </Transition>
           <Transition
             as={Fragment}
-            appear={true}
+            appear
             enter={tw`transition duration-[600ms] delay-[250ms]`}
             enterFrom={tw`opacity-0 translate-y-4`}
             enterTo={tw`text-2xl`}
@@ -70,7 +69,7 @@ const Landing = () => {
             <h2 tw="text-3xl my-4">Recruitment Drives, without the fuss.</h2>
           </Transition>
           <Transition
-            appear={true}
+            appear
             enter={tw`transition duration-[600ms] delay-500`}
             enterFrom={tw`opacity-0 translate-y-4`}
           >
