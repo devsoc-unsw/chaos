@@ -110,28 +110,32 @@ const Application = () => {
         newApplication(role)
           .then((res) => {
             if (!res.ok) {
-              alert("Error during submission");
-            } else {
-              res.json();
+              throw new Error("Error during submission");
             }
+            return res.json();
           })
-          .then((data) => {
-            Object.keys(answers)
-              .filter((qId) => {
-                const question = questions.find(
-                  (q) => Number(q.id) === Number(qId)
-                );
-                const [rId] = question.roles;
-                return rId === data.role_id;
-              })
-              .forEach((qId) =>
-                submitAnswer(data.id, Number(qId), answers[qId]).then((res) => {
-                  if (!res.ok) {
-                    alert("Error during submission");
-                  }
+          .then((data) =>
+            Promise.all(
+              Object.keys(answers)
+                .filter((qId) => {
+                  const question = questions.find(
+                    (q) => Number(q.id) === Number(qId)
+                  );
+                  const [rId] = question.roles;
+                  return rId === data.role_id;
                 })
-              );
-          });
+                .map((qId) =>
+                  submitAnswer(data.id, Number(qId), answers[qId]).then(
+                    (res) => {
+                      if (!res.ok) {
+                        throw new Error("Error during submission");
+                      }
+                    }
+                  )
+                )
+            )
+          )
+          .catch(() => alert("Error during submission"));
       });
       navigate("/dashboard");
     }
