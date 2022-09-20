@@ -124,6 +124,12 @@ export const createCampaign = (campaign, roles, questions) =>
     body: { campaign, roles, questions },
   });
 
+export const deleteCampaign = (id) =>
+  authenticatedRequest({
+    method: "DELETE",
+    path: `/campaign/${id}`,
+  });
+
 export const setApplicationStatus = (applicationId, status) =>
   authenticatedRequest({
     method: "PUT",
