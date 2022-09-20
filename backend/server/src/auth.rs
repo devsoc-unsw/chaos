@@ -114,8 +114,7 @@ async fn get_access_token(oauth_code: &str, state: &State<ApiState>) -> Option<S
         .post(GOOGLE_TOKEN_URL)
         .form(&TokenForm {
             code: oauth_code,
-            client_id: dotenv::var("GOOGLE_CLIENT_ID")
-                .expect("GOOGLE_CLIENT_ID should be in env"),
+            client_id: dotenv::var("GOOGLE_CLIENT_ID").expect("GOOGLE_CLIENT_ID should be in env"),
             client_secret: dotenv::var("GOOGLE_CLIENT_SECRET")
                 .expect("GOOGLE_CLIENT_SECRET should be in env"),
             redirect_uri: dotenv::var("GOOGLE_REDIRECT_URI")
@@ -195,6 +194,7 @@ pub struct SignInBody {
 #[derive(Serialize)]
 pub struct SignInResponse {
     token: String,
+    name: String,
 }
 
 #[derive(Serialize)]
@@ -221,7 +221,10 @@ pub async fn signin(
     let token = get_access_token(&body.oauth_token, state)
         .await
         .ok_or_else(|| {
-            eprintln!("Failed to get access token for oauth token {}", body.oauth_token);
+            eprintln!(
+                "Failed to get access token for oauth token {}",
+                body.oauth_token
+            );
             JsonErr(SignInError::InvalidOAuthCode, Status::Forbidden)
         })?;
 
@@ -265,7 +268,7 @@ pub async fn signin(
     )
     .expect("creating jwt should never fail");
 
-    Ok(Json(SignInResponse { token }))
+    Ok(Json(SignInResponse { token, name: user.display_name }))
 }
 
 #[derive(Deserialize, Clone)]

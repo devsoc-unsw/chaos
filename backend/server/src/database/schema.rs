@@ -101,9 +101,11 @@ table! {
 }
 
 table! {
+    use diesel::sql_types::*;
+
     questions (id) {
         id -> Int4,
-        role_id -> Int4,
+        role_ids -> Array<Int4>,
         title -> Text,
         description -> Nullable<Text>,
         max_bytes -> Int4,
@@ -161,7 +163,8 @@ joinable!(comments -> applications (application_id));
 joinable!(comments -> users (commenter_user_id));
 joinable!(organisation_users -> organisations (organisation_id));
 joinable!(organisation_users -> users (user_id));
-joinable!(questions -> roles (role_id));
+// TODO: can probably make this work to auto join but idk how
+// joinable!(questions -> roles (role_id));
 joinable!(ratings -> applications (application_id));
 joinable!(ratings -> users (rater_user_id));
 joinable!(roles -> campaigns (campaign_id));

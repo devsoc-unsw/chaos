@@ -1,0 +1,20 @@
+ALTER TABLE IF EXISTS questions
+    DROP CONSTRAINT questions_role_id_fkey;
+
+ALTER TABLE IF EXISTS questions
+    ALTER COLUMN role_id TYPE INTEGER[]
+    USING array[role_id]::INTEGER[];
+
+ALTER TABLE IF EXISTS questions
+    RENAME COLUMN role_id TO role_ids;
+
+CREATE TABLE IF NOT EXISTS questions (
+	id SERIAL PRIMARY KEY,
+	role_ids INTEGER[] NOT NULL,
+	title TEXT NOT NULL,
+	description TEXT,
+	max_bytes INTEGER NOT NULL,
+	required BOOLEAN NOT NULL,
+	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
