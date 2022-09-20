@@ -23,6 +23,7 @@
     "prettier/prettier": ["error", { "endOfLine": "auto" }],
     "no-console": "off",
     "import/prefer-default-export": "off",
+    "import/no-extraneous-dependencies": ["error", { "devDependencies": true }],
     "react/function-component-definition": [
       1,
       {
