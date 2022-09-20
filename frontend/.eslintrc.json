@@ -36,7 +36,8 @@
       {
         "custom": "ignore"
       }
-    ]
+    ],
+    "react/no-unknown-property": [2, { "ignore": ["tw", "css"] }]
   },
   "settings": {
     "import/resolver": {
