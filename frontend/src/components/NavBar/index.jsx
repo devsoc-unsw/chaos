@@ -1,4 +1,3 @@
-import React from "react";
 import tw, { styled } from "twin.macro";
 import PropTypes from "prop-types";
 import { Link, NavLink, useNavigate } from "react-router-dom";

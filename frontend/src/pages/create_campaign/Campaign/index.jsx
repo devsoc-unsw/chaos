@@ -1,4 +1,3 @@
-import React from "react";
 import { FormControlLabel, Switch } from "@mui/material";
 import PropTypes from "prop-types";
 import AdapterDateFns from "@mui/lab/AdapterDateFns";

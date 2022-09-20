@@ -1,5 +1,4 @@
 /* eslint-disable react/prop-types */
-import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ListItemText, Divider, ListItemIcon, IconButton } from "@mui/material";
 import ClearIcon from "@mui/icons-material/Clear";

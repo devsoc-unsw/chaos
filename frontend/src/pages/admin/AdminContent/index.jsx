@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import { useState, useContext } from "react";
 import { ToggleButton, ToggleButtonGroup } from "@mui/material";
 import ClearIcon from "@mui/icons-material/Clear";
 import PropTypes from "prop-types";

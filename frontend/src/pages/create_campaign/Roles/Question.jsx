@@ -1,4 +1,3 @@
-import React from "react";
 import PropTypes from "prop-types";
 import { IconButton, TextField } from "@mui/material";
 import ClearIcon from "@mui/icons-material/Clear";

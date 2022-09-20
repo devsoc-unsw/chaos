@@ -1,10 +1,4 @@
-import React, {
-  useContext,
-  useState,
-  useEffect,
-  useRef,
-  Fragment,
-} from "react";
+import { useContext, useState, useEffect, useRef, Fragment } from "react";
 import tw from "twin.macro";
 import { Link } from "react-router-dom";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";

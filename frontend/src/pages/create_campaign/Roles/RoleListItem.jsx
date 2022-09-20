@@ -1,4 +1,3 @@
-import React from "react";
 import PropTypes from "prop-types";
 import { ListItemText, ListItemIcon, IconButton, Divider } from "@mui/material";
 import ClearIcon from "@mui/icons-material/Clear";

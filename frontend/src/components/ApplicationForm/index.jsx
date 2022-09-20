@@ -1,4 +1,3 @@
-import React from "react";
 import PropTypes from "prop-types";
 import { Container, CardMedia, Typography } from "@mui/material";
 import Table from "@mui/material/Table";
