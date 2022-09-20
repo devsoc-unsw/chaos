@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import tw, { styled } from "twin.macro";
 
 import { Transition } from "components";
@@ -74,5 +75,12 @@ const Campaigns = forwardRef(({ offsetX, offsetY }, ref) => {
     </Container>
   );
 });
+
+Campaigns.propTypes = {
+  // eslint-disable-next-line react/require-default-props -- allow null
+  offsetX: PropTypes.number,
+  // eslint-disable-next-line react/require-default-props
+  offsetY: PropTypes.number,
+};
 
 export default Campaigns;
