@@ -101,29 +101,43 @@ const Application = () => {
 
   const onSubmit = () => {
     //        CHAOS-53, useNavigate() link to post submission page once it is created :)
-    if (rolesSelected.length) {
-      rolesSelected.forEach((role) => {
-        newApplication(role)
-          .then((res) => res.json())
-          .then((data) => {
-            Object.keys(answers)
-              .filter((qId) => {
-                const question = questions.find(
-                  (q) => Number(q.id) === Number(qId)
-                );
-                const [rId] = question.roles;
-                return rId === data.role_id;
-              })
-              .forEach((qId) =>
-                submitAnswer(data.id, Number(qId), answers[qId])
-              );
-          });
-      });
-      navigate("/dashboard");
-    } else {
-      console.error(
+    if (!rolesSelected.length) {
+      alert(
         "Submission failed, you must select at least one role to apply for!"
       );
+    } else {
+      rolesSelected.forEach((role) => {
+        newApplication(role)
+          .then((res) => {
+            if (!res.ok) {
+              throw new Error("Error during submission");
+            }
+            return res.json();
+          })
+          .then((data) =>
+            Promise.all(
+              Object.keys(answers)
+                .filter((qId) => {
+                  const question = questions.find(
+                    (q) => Number(q.id) === Number(qId)
+                  );
+                  const [rId] = question.roles;
+                  return rId === data.role_id;
+                })
+                .map((qId) =>
+                  submitAnswer(data.id, Number(qId), answers[qId]).then(
+                    (res) => {
+                      if (!res.ok) {
+                        throw new Error("Error during submission");
+                      }
+                    }
+                  )
+                )
+            )
+          )
+          .catch(() => alert("Error during submission"));
+      });
+      navigate("/dashboard");
     }
   };
 
