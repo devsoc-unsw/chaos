@@ -69,6 +69,7 @@ const NavBar = ({ campaign }) => {
               <button
                 tw="ml-3 p-1 text-slate-500 hover:text-indigo-600 transition rounded-full focus-visible:(ring ring-blue-400 outline-none)"
                 onClick={logout}
+                type="button"
               >
                 <ArrowRightOnRectangleIcon tw="h-6 w-6" />
               </button>
