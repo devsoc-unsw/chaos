@@ -23,6 +23,7 @@ const Row = tw.div`flex gap-6`;
 
 const DEFAULT_ROTATE_X = 6;
 const DEFAULT_ROTATE_Y = -7.5;
+const easing = BezierEasing(0.4, 0, 0.2, 1);
 
 const Campaigns = forwardRef(({ offsetX, offsetY }, ref) => {
   const [multiplier, setMultiplier] = useState(0);
@@ -67,7 +68,6 @@ const Campaigns = forwardRef(({ offsetX, offsetY }, ref) => {
       const elapsed = timestamp - start;
 
       if (previousTimestamp !== timestamp) {
-        const easing = BezierEasing(0.4, 0, 0.2, 1);
         setMultiplier(Math.min(1, easing(elapsed / duration)));
       }
 
