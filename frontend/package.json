@@ -15,7 +15,7 @@
     "@stitches/react": "1.2.8",
     "@testing-library/jest-dom": "5.16.5",
     "@testing-library/react": "13.4.0",
-    "@testing-library/user-event": "12.8.3",
+    "@testing-library/user-event": "14.4.3",
     "date-fns": "2.29.3",
     "http-proxy-middleware": "2.0.6",
     "moment": "2.29.4",
