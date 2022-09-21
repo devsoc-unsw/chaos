@@ -72,6 +72,7 @@ impl<'r> FromRequest<'r> for Auth {
 
         let mut validation = Validation::new(Algorithm::HS256);
         validation.validate_exp = false;
+        validation.required_spec_claims.clear();
 
         let token = match jsonwebtoken::decode::<AuthJwt>(
             token,
@@ -297,6 +298,7 @@ pub async fn signup(
 ) -> Result<Json<SignUpResponse>, JsonErr<SignUpError>> {
     let mut validation = Validation::new(Algorithm::HS256);
     validation.validate_exp = false;
+    validation.required_spec_claims.clear();
 
     let token = match jsonwebtoken::decode::<SignupJwt>(
         &body.signup_token,
