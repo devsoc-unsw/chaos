@@ -28,7 +28,7 @@
     "react-router-dom": "6.4.0",
     "tailwindcss-gradient": "1.0.1",
     "uuid": "8.3.2",
-    "web-vitals": "2.1.4"
+    "web-vitals": "3.0.2"
   },
   "scripts": {
     "start": "ESLINT_NO_DEV_ERRORS='true' vite",
