@@ -27,10 +27,6 @@ const easing = BezierEasing(0.4, 0, 0.2, 1);
 
 const Campaigns = forwardRef(({ offsetX, offsetY }, ref) => {
   const [multiplier, setMultiplier] = useState(0);
-  const [prevRotateX, setPrevRotateX] = useState(DEFAULT_ROTATE_X);
-  const [prevRotateY, setPrevRotateY] = useState(DEFAULT_ROTATE_Y);
-  const [originX, setOriginX] = useState(DEFAULT_ROTATE_X);
-  const [originY, setOriginY] = useState(DEFAULT_ROTATE_Y);
 
   const withinRange =
     offsetX !== null &&
@@ -53,9 +49,6 @@ const Campaigns = forwardRef(({ offsetX, offsetY }, ref) => {
       return;
     }
 
-    setOriginX(prevRotateX);
-    setOriginY(prevRotateY);
-
     let done = false;
     let start;
     let previousTimestamp;
@@ -71,13 +64,7 @@ const Campaigns = forwardRef(({ offsetX, offsetY }, ref) => {
         setMultiplier(Math.min(1, easing(elapsed / duration)));
       }
 
-      if (elapsed >= duration) {
-        setMultiplier(1);
-        return;
-      }
-
-      if (done) {
-        setMultiplier(0);
+      if (elapsed >= duration || done) {
         return;
       }
 
@@ -93,13 +80,8 @@ const Campaigns = forwardRef(({ offsetX, offsetY }, ref) => {
     };
   }, [withinRange]);
 
-  rotateX = originX + multiplier * (rotateX - originX);
-  rotateY = originY + multiplier * (rotateY - originY);
-
-  useEffect(() => {
-    setPrevRotateX(rotateX);
-    setPrevRotateY(rotateY);
-  }, [rotateX, rotateY]);
+  rotateX = DEFAULT_ROTATE_X + multiplier * (rotateX - DEFAULT_ROTATE_X);
+  rotateY = DEFAULT_ROTATE_Y + multiplier * (rotateY - DEFAULT_ROTATE_Y);
 
   return (
     <Container ref={ref}>
