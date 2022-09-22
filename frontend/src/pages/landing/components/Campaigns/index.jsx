@@ -49,7 +49,7 @@ const Campaigns = forwardRef(({ offsetX, offsetY }, ref) => {
       return;
     }
 
-    let done = false;
+    let cancel = false;
     let start;
     let previousTimestamp;
     const duration = 150;
@@ -64,7 +64,7 @@ const Campaigns = forwardRef(({ offsetX, offsetY }, ref) => {
         setMultiplier(Math.min(1, easing(elapsed / duration)));
       }
 
-      if (elapsed >= duration || done) {
+      if (elapsed >= duration || cancel) {
         return;
       }
 
@@ -76,7 +76,7 @@ const Campaigns = forwardRef(({ offsetX, offsetY }, ref) => {
 
     // eslint-disable-next-line consistent-return
     return () => {
-      done = true;
+      cancel = true;
     };
   }, [withinRange]);
 
