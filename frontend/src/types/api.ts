@@ -9,6 +9,104 @@ export type AuthenticateErrResponse =
       };
     };
 
+export type Role = {
+  id: number;
+  campaign_id: number;
+  name: string;
+  description?: string;
+  min_available: number;
+  max_available: number;
+  finalised: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RoleInput = {
+  name: string;
+  description?: string;
+  min_available: number;
+  max_available: number;
+  questions_for_role: number[];
+};
+
+export type Question = {
+  id: number;
+  role_ids: number[];
+  title: string;
+  description?: string;
+  max_bytes: number;
+  required: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type NewQuestion = {
+  role_ids: number[];
+  title: string;
+  description?: string;
+  max_bytes: number;
+  required: boolean;
+};
+
+export type QuestionResponse = {
+  id: number;
+  role_ids: number[];
+  title: string;
+  description?: string;
+  max_bytes: number;
+  required: boolean;
+};
+
+export type QuestionInput = {
+  title: string;
+  description?: string;
+  max_bytes?: number;
+  required?: boolean;
+};
+
+export type AdminLevel = "ReadOnly" | "Director" | "Admin";
+
+export type ApplicationStatus = "Draft" | "Pending" | "Rejected" | "Success";
+
+export type Application = {
+  id: number;
+  user_id: number;
+  role_id: number;
+  status: ApplicationStatus;
+};
+
+export type ApplicationResponse = {
+  id: number;
+  user_id: number;
+  user_email: string;
+  user_zid: string;
+  user_display_name: string;
+  user_degree_name: string;
+  user_degree_starting_year: number;
+  role_id: number;
+  status: ApplicationStatus;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ApplicationAnswer = {
+  id: number;
+  application_id: number;
+  question_id: number;
+  description: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ApplicationRating = {
+  id: number;
+  application_id: number;
+  rater_user_id: number;
+  rating: number;
+  created: string;
+  updated_at: string;
+};
+
 export type Campaign = {
   id: number;
   organisation_id: number;
@@ -47,61 +145,6 @@ export type NewCampaignInput = {
   published: boolean;
 };
 
-export type Question = {
-  id: number;
-  role_ids: number[];
-  title: string;
-  description?: string;
-  max_bytes: number;
-  required: boolean;
-  created_at: string;
-  updated_at: string;
-};
-
-export type NewQuestion = {
-  role_ids: number[];
-  title: string;
-  description?: string;
-  max_bytes: number;
-  required: boolean;
-};
-
-export type QuestionResponse = {
-  id: number;
-  role_ids: number[];
-  title: string;
-  description?: string;
-  max_bytes: number;
-  required: boolean;
-};
-
-export type QuestionInput = {
-  title: string;
-  description?: string;
-  max_bytes?: number;
-  required?: boolean;
-};
-
-export type Role = {
-  id: number;
-  campaign_id: number;
-  name: string;
-  description?: string;
-  min_available: number;
-  max_available: number;
-  finalised: boolean;
-  created_at: string;
-  updated_at: string;
-};
-
-export type RoleInput = {
-  name: string;
-  description?: string;
-  min_available: number;
-  max_available: number;
-  questions_for_role: number[];
-};
-
 export type Organisation = {
   id: number;
   name: string;
@@ -110,61 +153,18 @@ export type Organisation = {
   updated_at: string;
 };
 
-export type OrganisationInfo = {
-  id: number;
-  name: string;
-  logo?: number[];
-  members: OrganisationUserInfo[];
-  campaigns: CampaignInfo[];
-};
-
 export type OrganisationUserInfo = {
   id: number;
   display_name: string;
   role: AdminLevel;
 };
 
-export type AdminLevel = "ReadOnly" | "Director" | "Admin";
-
-export type Application = {
+export type OrganisationInfo = {
   id: number;
-  user_id: number;
-  role_id: number;
-  status: ApplicationStatus;
-};
-
-export type ApplicationStatus = "Draft" | "Pending" | "Rejected" | "Success";
-
-export type ApplicationResponse = {
-  id: number;
-  user_id: number;
-  user_email: string;
-  user_zid: string;
-  user_display_name: string;
-  user_degree_name: string;
-  user_degree_starting_year: number;
-  role_id: number;
-  status: ApplicationStatus;
-  created_at: string;
-  updated_at: string;
-};
-
-export type ApplicationAnswer = {
-  id: number;
-  application_id: number;
-  question_id: number;
-  description: string;
-  created_at: string;
-  updated_at: string;
-};
-
-export type ApplicationRating = {
-  id: number;
-  application_id: number;
-  rater_user_id: number;
-  rating: number;
-  created: string;
-  updated_at: string;
+  name: string;
+  logo?: number[];
+  members: OrganisationUserInfo[];
+  campaigns: CampaignInfo[];
 };
 
 export type UserResponse = {

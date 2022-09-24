@@ -1,3 +1,8 @@
+type Question = {
+  question: string;
+  answer?: string;
+};
+
 export type ApplicationWithQuestions = {
   applicationId: number;
   zId: string;
@@ -7,9 +12,4 @@ export type ApplicationWithQuestions = {
 
 export type ApplicationsWithQuestions = {
   [role: string]: ApplicationWithQuestions[];
-};
-
-type Question = {
-  question: string;
-  answer?: string;
 };
