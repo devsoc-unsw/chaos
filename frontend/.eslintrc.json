@@ -12,11 +12,8 @@
     "plugin:import/typescript",
     "plugin:react/jsx-runtime"
   ],
-  "parser": "@babel/eslint-parser",
+  "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "ecmaFeatures": {
-      "jsx": true
-    },
     "ecmaVersion": 12,
     "sourceType": "module"
   },
