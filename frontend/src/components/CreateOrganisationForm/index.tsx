@@ -9,7 +9,7 @@ import { OrgIconImage } from "../AdminSideBar/adminSidebar.styled";
 import newImageIcon from "./new_image_icon.png";
 
 type Props = {
-  uploadedImage: { image: File; url: string };
+  uploadedImage: { image: File | null; url: string | null };
   onFileChange: ChangeEventHandler<HTMLInputElement>;
   inputText: string;
   setInputText: Dispatch<SetStateAction<string>>;
@@ -26,7 +26,9 @@ const CreateOrganisationForm = ({
   <FormContainer>
     <ImageUploadWrapper htmlFor="imgInput">
       <OrgIconImage
-        src={uploadedImage.image ? uploadedImage.url : newImageIcon}
+        src={
+          uploadedImage.image ? uploadedImage.url ?? undefined : newImageIcon
+        }
       />
       <input
         id="imgInput"

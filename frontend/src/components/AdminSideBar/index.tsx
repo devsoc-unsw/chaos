@@ -49,7 +49,9 @@ const AdminSidebar = ({
 
   const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     setUploadedImage({
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       image: e.target.files![0],
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       url: URL.createObjectURL(e.target.files![0]),
     });
   };
@@ -59,15 +61,20 @@ const AdminSidebar = ({
     if (uploadedImage.image && inputText) {
       // FIXME: CHAOS-55, backend request should return new id, this method obv flawed (also floored)
       const imgUrl = base64ToBytes(
-        (await fileToDataUrl(uploadedImage.image))!.split(",")[1]
+        (await fileToDataUrl(uploadedImage.image)).split(",")[1]
       );
-      const resp = await createOrganisation(inputText, imgUrl);
-      const newOrg = await resp.json();
-      const newOrgList = orgList.concat({
-        id: newOrg.id,
-        icon: uploadedImage.url,
-        orgName: inputText,
-      });
+      const newOrgId = await createOrganisation(inputText, imgUrl);
+      const newOrgList = [
+        ...orgList,
+        {
+          id: newOrgId,
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          icon: uploadedImage.url!,
+          orgName: inputText,
+          campaigns: [],
+          members: [],
+        },
+      ];
       setOrgList(newOrgList);
       setOrgSelected(newOrgList.length - 1);
       setUploadedImage({ image: null, url: null });
