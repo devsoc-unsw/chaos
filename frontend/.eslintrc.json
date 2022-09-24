@@ -19,7 +19,7 @@
   },
   "plugins": ["react", "prettier"],
   "rules": {
-    "react/jsx-filename-extension": [1, { "extensions": [".js", ".jsx"] }],
+    "react/jsx-filename-extension": [1, { "extensions": [".ts", ".tsx"] }],
     "prettier/prettier": ["error", { "endOfLine": "auto" }],
     "no-console": "off",
     "import/prefer-default-export": "off",
