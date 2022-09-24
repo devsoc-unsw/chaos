@@ -4,8 +4,7 @@ import { TabContext, TabList } from "@mui/lab";
 
 import { Link, useParams } from "react-router-dom";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
-import ReviewerStepper from "../../components/ReviewerStepper";
-import ApplicationsList from "./ApplicationsList";
+import ReviewerStepper from "components/ReviewerStepper";
 import {
   getApplicationAnswers,
   getApplicationRatings,
@@ -14,8 +13,10 @@ import {
   getCampaignRoles,
   setApplicationRating,
   getCampaign,
-} from "../../api";
+} from "api";
 import type { ApplicationsWithQuestions } from "types/admin";
+
+import ApplicationsList from "./ApplicationsList";
 
 const Marking = () => {
   const setNavBarTitle = useContext(SetNavBarTitleContext);
