@@ -35,8 +35,8 @@
   "scripts": {
     "start": "ESLINT_NO_DEV_ERRORS='true' vite",
     "build": "vite build",
-    "lint": "npx eslint 'src/**/*.{js,jsx}'",
-    "lint:fix": "npx eslint 'src/**/*.{js,jsx}' --fix",
+    "lint": "npx eslint 'src/**/*.{ts,tsx}'",
+    "lint:fix": "npx eslint 'src/**/*.{ts,tsx}' --fix",
     "format": "prettier --write ."
   },
   "eslintConfig": {
