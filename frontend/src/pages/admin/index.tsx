@@ -10,6 +10,7 @@ import type { Campaign, Member, Organisation } from "./types";
 
 const isFormOpenContext = createContext({
   isFormOpen: false,
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   setIsFormOpen: (_isFormOpen: boolean) => {},
 });
 
@@ -50,6 +51,7 @@ const Admin = () => {
       setOrgList(
         organisations.map((item) => ({
           id: item.id,
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           icon: bytesToImage(item.logo!),
           orgName: item.name,
           campaigns: item.campaigns,
@@ -63,6 +65,7 @@ const Admin = () => {
         setCampaigns(
           org.campaigns.map((item) => ({
             id: item.id,
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             image: bytesToImage(item.cover_image!),
             title: item.name,
             startDate: item.starts_at,
@@ -87,6 +90,7 @@ const Admin = () => {
     setCampaigns(
       orgList[orgSelected]?.campaigns.map((item) => ({
         id: item.id,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         image: bytesToImage(item.cover_image!),
         title: item.name,
         startDate: item.starts_at,
