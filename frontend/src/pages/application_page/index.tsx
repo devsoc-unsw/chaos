@@ -107,6 +107,7 @@ const Application = () => {
   const onSubmit = () => {
     //        CHAOS-53, useNavigate() link to post submission page once it is created :)
     if (!rolesSelected.length) {
+      // eslint-disable-next-line no-alert
       alert(
         "Submission failed, you must select at least one role to apply for!"
       );
@@ -135,6 +136,7 @@ const Application = () => {
                 )
             )
           )
+          // eslint-disable-next-line no-alert
           .catch(() => alert("Error during submission"));
       });
       navigate("/dashboard");
