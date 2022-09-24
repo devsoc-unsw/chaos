@@ -15,7 +15,7 @@ import { Campaign } from "../types";
 
 type Props = {
   campaign: Campaign;
-  onSubmit: (isDraft: boolean) => any;
+  onSubmit: (isDraft: boolean) => void;
 };
 const ReviewTab = ({ campaign, onSubmit }: Props) => {
   const {
@@ -69,6 +69,7 @@ const ReviewTab = ({ campaign, onSubmit }: Props) => {
             }))}
             startDate={dateToStringForBackend(startDate)}
             endDate={dateToStringForBackend(endDate)}
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             img={cover!}
             applyClick={() => setDisplayForm(!displayForm)}
           />
@@ -83,6 +84,7 @@ const ReviewTab = ({ campaign, onSubmit }: Props) => {
           answers={answers}
           setAnswers={setAnswers}
           campaignName={campaignName}
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           headerImage={cover!}
           description={description}
           userInfo={dummyUserInfo}
