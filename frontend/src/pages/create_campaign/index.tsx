@@ -90,19 +90,23 @@ const CreateCampaign = () => {
   const submitHandler = async (isDraft: any) => {
     if (campaignName.length === 0 && !isDraft) {
       return setError("Campaign name is required");
-    } else if (description === "" && !isDraft) {
-      return setError("Campaign description is required");
-    } else if (cover === null) {
-      return setError("Cover image is required");
-    } else if (startDate.getTime() > endDate.getTime()) {
-      return setError("Start date must be before end date");
-    } else if (roles.length === 0 && !isDraft) {
-      return setError("At least one role is required");
-    } else if (questions.length === 0 && !isDraft) {
-      return setError("At least one question is required");
-    } else {
-      setError(null);
     }
+    if (description === "" && !isDraft) {
+      return setError("Campaign description is required");
+    }
+    if (cover === null) {
+      return setError("Cover image is required");
+    }
+    if (startDate.getTime() > endDate.getTime()) {
+      return setError("Start date must be before end date");
+    }
+    if (roles.length === 0 && !isDraft) {
+      return setError("At least one role is required");
+    }
+    if (questions.length === 0 && !isDraft) {
+      return setError("At least one question is required");
+    }
+    setError(null);
 
     const coverSend = base64ToBytes(cover.split(",")[1]);
 

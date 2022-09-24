@@ -19,8 +19,8 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
-import { ExpandIconButton } from "./campaignCard.styled";
 import type { ApplicationStatus, CampaignWithRoles } from "types/api";
+import { ExpandIconButton } from "./campaignCard.styled";
 
 type Status = {
   title: string;

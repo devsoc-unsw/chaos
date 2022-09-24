@@ -7,8 +7,8 @@ import { removeStore } from "utils";
 import { getAllCampaigns } from "api";
 import tw from "twin.macro";
 import { FetchError } from "api/api";
-import CampaignGrid from "./CampaignGrid";
 import type { CampaignWithRoles } from "types/api";
+import CampaignGrid from "./CampaignGrid";
 
 const Heading = tw.h2`text-2xl font-bold my-4`;
 

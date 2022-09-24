@@ -15,6 +15,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
 import InputPopup from "components/InputPopup";
 import { inviteUserToOrg } from "api";
+import { AdminLevel } from "types/api";
 import {
   AdminContentList,
   DummyIconForAlignment,
@@ -24,7 +25,6 @@ import {
   AdminListItemButton,
 } from "./adminContent.styled";
 import type { Member } from "../types";
-import { AdminLevel } from "types/api";
 
 type Props = {
   orgId: number;

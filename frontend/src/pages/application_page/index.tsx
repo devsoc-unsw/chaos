@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Container } from "@mui/material";
+import { CampaignWithRoles, UserResponse } from "types/api";
 import ApplicationForm from "../../components/ApplicationForm";
 import { bytesToImage } from "../../utils";
 import {
@@ -14,7 +15,6 @@ import {
   submitAnswer,
   getAllCampaigns,
 } from "../../api";
-import { CampaignWithRoles, UserResponse } from "types/api";
 
 const Application = () => {
   const navigate = useNavigate();

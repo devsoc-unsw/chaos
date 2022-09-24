@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { ChangeEvent } from "react";
+import { Organisation } from "pages/admin/types";
 import {
   SidebarContainer,
   OrgButton,
@@ -15,7 +16,6 @@ import {
 import CreateOrganisationForm from "../CreateOrganisationForm";
 import { createOrganisation } from "../../api";
 import { fileToDataUrl, base64ToBytes } from "../../utils";
-import { Organisation } from "pages/admin/types";
 
 type Props = {
   orgList: Organisation[];

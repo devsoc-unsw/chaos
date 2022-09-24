@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FetchError } from "api/api";
+import type { AuthenticateErrResponse, AuthenticateResponse } from "types/api";
 import { authenticate } from "../../api";
 import { LoadingIndicator } from "../../components";
 import useQuery from "../../hooks/useQuery";
 import { SIGNUP_REQUIRED } from "../../utils/constants";
 import { setStore } from "../../utils";
-import { FetchError } from "api/api";
-import type { AuthenticateErrResponse, AuthenticateResponse } from "types/api";
 
 const AuthSuccess = () => {
   const query = useQuery();

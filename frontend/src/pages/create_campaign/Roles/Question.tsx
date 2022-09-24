@@ -1,10 +1,10 @@
 import { IconButton, TextField } from "@mui/material";
 import ClearIcon from "@mui/icons-material/Clear";
+import type { ChangeEvent, MouseEventHandler } from "react";
 import {
   QuestionTitle as Title,
   QuestionContent as Content,
 } from "./rolesTab.styled";
-import type { ChangeEvent, MouseEventHandler } from "react";
 import type { Question as IQuestion } from "../types";
 
 type Props = {

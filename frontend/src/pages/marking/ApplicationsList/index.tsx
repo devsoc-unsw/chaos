@@ -1,8 +1,8 @@
 import { Tab, Tabs, Grid } from "@mui/material";
+import type { SyntheticEvent } from "react";
+import type { ApplicationWithQuestions } from "types/admin";
 import ApplicationsListTabPanel from "../ApplicationsListTabPanel";
 import { MarkChip } from "../../../components";
-import type { ApplicationWithQuestions } from "types/admin";
-import type { SyntheticEvent } from "react";
 
 type Props = {
   applications: ApplicationWithQuestions[];

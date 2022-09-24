@@ -1,6 +1,8 @@
 export class FetchError extends Error {
   public status: number;
+
   public statusText: string;
+
   public resp: Response;
 
   constructor(resp: Response) {

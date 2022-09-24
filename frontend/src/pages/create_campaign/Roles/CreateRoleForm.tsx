@@ -1,12 +1,12 @@
 import { IconButton } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import type { Dispatch, SetStateAction } from "react";
 import {
   CreateRoleFormControl as FormControl,
   CreateRoleFormGroup as FormGroup,
   Quantity,
   Name,
 } from "./rolesTab.styled";
-import type { Dispatch, SetStateAction } from "react";
 
 type Props = {
   newRoleQty: number;

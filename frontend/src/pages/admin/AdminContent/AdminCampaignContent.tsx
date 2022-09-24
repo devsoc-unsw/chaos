@@ -6,6 +6,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
 import { deleteCampaign } from "api";
 import { dateToDateString } from "utils";
+import type { Dispatch, MouseEvent, SetStateAction } from "react";
 import {
   AdminContentList,
   ContentListHeader,
@@ -16,7 +17,6 @@ import {
   CampaignListItemImage,
   AdminListItemButton,
 } from "./adminContent.styled";
-import type { Dispatch, MouseEvent, SetStateAction } from "react";
 import type { Campaign } from "../types";
 
 type Props = {
