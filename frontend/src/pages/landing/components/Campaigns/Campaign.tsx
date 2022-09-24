@@ -14,6 +14,7 @@ const Bar = ({
     <div
       tw="transition-[width] duration-500"
       style={{ transitionDelay: `${transitionDelay}ms` }}
+      // eslint-disable-next-line react/jsx-props-no-spreading
       {...props}
     />
   </Transition.Child>
