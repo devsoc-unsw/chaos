@@ -9,18 +9,20 @@ import type { ChangeEventHandler } from "react";
 import { Box, Button, Popover, TextField, Typography } from "@mui/material";
 
 type RenderProps = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   formValues: any;
-  setFormValue: (key: string, value: string) => void;
+  setFormValue: (_key: string, _value: string) => void;
   handleInputChange: ChangeEventHandler<HTMLInputElement>;
 };
 
 type Props = {
-  children: (props: RenderProps) => ReactNode;
+  children: (_props: RenderProps) => ReactNode;
   title: string;
   label: string;
   name: string;
   defaultState: { [k: string]: string };
   submitText: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSubmit: (formValues: any) => void;
   open: boolean;
   anchorEl: Element | null;
