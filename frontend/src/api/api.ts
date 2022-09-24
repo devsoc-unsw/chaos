@@ -8,11 +8,6 @@ export class FetchError extends Error {
   constructor(resp: Response) {
     super(resp.statusText);
 
-    // Maintains proper stack trace for where our error was thrown (only available on V8)
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, FetchError);
-    }
-
     this.name = "FetchError";
     this.status = resp.status;
     this.statusText = resp.statusText;
