@@ -56,11 +56,13 @@ const Application = () => {
       if (state) {
         setCampaign(state);
       } else {
+        // eslint-disable-next-line camelcase -- format from api response
         const { current_campaigns } = await getAllCampaigns();
+        // eslint-disable-next-line camelcase, @typescript-eslint/no-non-null-assertion
         const campaign = current_campaigns.find(
           (x) => x.campaign.id === campaignId
-        );
-        setCampaign(campaign!);
+        )!;
+        setCampaign(campaign);
       }
 
       setLoading(false);
@@ -115,6 +117,7 @@ const Application = () => {
             Promise.all(
               Object.keys(answers)
                 .filter((qId) => {
+                  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                   const question = questions.find(
                     (q) => Number(q.id) === Number(qId)
                   )!;
