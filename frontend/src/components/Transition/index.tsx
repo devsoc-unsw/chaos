@@ -1,6 +1,6 @@
 import { Transition as HeadlessUiTransition } from "@headlessui/react";
 import { css, TwStyle } from "twin.macro";
-import type { ComponentType, PropsWithChildren } from "react";
+import type { ComponentType, HTMLAttributes, PropsWithChildren } from "react";
 
 /**
  * HeadlessUI "Transition"
@@ -11,7 +11,7 @@ import type { ComponentType, PropsWithChildren } from "react";
 const toCss = (styles?: TwStyle) =>
   styles ? css(styles).toString() : undefined;
 
-type Props = {
+type Props = HTMLAttributes<HTMLElement> & {
   as?: ComponentType;
   appear?: boolean;
   enter?: TwStyle;
