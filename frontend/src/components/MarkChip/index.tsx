@@ -6,8 +6,8 @@ type Props = {
   decimal?: boolean;
   colored: boolean;
   variant?: ComponentProps<typeof ColoredChip>["variant"];
-  clickable: boolean;
-  onClick: MouseEventHandler<HTMLDivElement>;
+  clickable?: boolean;
+  onClick?: MouseEventHandler<HTMLDivElement>;
 };
 
 const MarkChip = ({
