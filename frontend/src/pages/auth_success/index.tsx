@@ -25,12 +25,15 @@ const AuthSuccess = () => {
         let data: AuthenticateResponse | AuthenticateErrResponse;
         try {
           data = await authenticate(code);
-        } catch (err: any) {
+        } catch (err) {
           if (err instanceof FetchError) {
             data = await err.resp.json();
           } else {
             console.error(err);
-            setError(err);
+            if (err instanceof Error) {
+              setError(err);
+            }
+            setError({ message: "An unknown error occurred" });
             setIsLoading(false);
             return;
           }
@@ -40,6 +43,7 @@ const AuthSuccess = () => {
           // wtf do we do here
         } else if (SIGNUP_REQUIRED in data) {
           setNeedsSignup(true);
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           setStore("name", data[SIGNUP_REQUIRED].name!);
           setStore("signup_token", data[SIGNUP_REQUIRED].signup_token);
         } else {
