@@ -87,24 +87,30 @@ const CreateCampaign = () => {
 
   // FIXME: CHAOS-64, update submitHandler to account for new data
   //        (roles/questions etc.), part of backend integration
-  const submitHandler = async (isDraft: any) => {
+  const submitHandler = async (isDraft: boolean) => {
     if (campaignName.length === 0 && !isDraft) {
-      return setError("Campaign name is required");
+      setError("Campaign name is required");
+      return;
     }
     if (description === "" && !isDraft) {
-      return setError("Campaign description is required");
+      setError("Campaign description is required");
+      return;
     }
     if (cover === null) {
-      return setError("Cover image is required");
+      setError("Cover image is required");
+      return;
     }
     if (startDate.getTime() > endDate.getTime()) {
-      return setError("Start date must be before end date");
+      setError("Start date must be before end date");
+      return;
     }
     if (roles.length === 0 && !isDraft) {
-      return setError("At least one role is required");
+      setError("At least one role is required");
+      return;
     }
     if (questions.length === 0 && !isDraft) {
-      return setError("At least one question is required");
+      setError("At least one question is required");
+      return;
     }
     setError(null);
 
