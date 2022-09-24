@@ -3,6 +3,7 @@ import AdapterDateFns from "@mui/lab/AdapterDateFns";
 import LocalizationProvider from "@mui/lab/LocalizationProvider";
 import DateTimePicker from "@mui/lab/DateTimePicker";
 import Dropzone from "react-dropzone";
+import type { ComponentProps } from "react";
 import {
   CampaignContainer,
   CampaignDropzone,
@@ -86,7 +87,9 @@ const CampaignTab = ({ campaign }: Props) => {
             inputFormat="dd/MM/yyyy hh:mm a"
             value={startDate}
             onChange={(date: Date) => setStartDate(date)}
-            renderInput={(params: any) => <CampaignTextField {...params} />}
+            renderInput={(params: ComponentProps<typeof CampaignTextField>) => (
+              <CampaignTextField {...params} />
+            )}
           />
           <DateTimePicker
             label="End Date"
@@ -94,7 +97,9 @@ const CampaignTab = ({ campaign }: Props) => {
             minDateTime={startDate}
             value={endDate}
             onChange={(date: Date) => setEndDate(date)}
-            renderInput={(params: any) => <CampaignTextField {...params} />}
+            renderInput={(params: ComponentProps<typeof CampaignTextField>) => (
+              <CampaignTextField {...params} />
+            )}
           />
         </LocalizationProvider>
       </CampaignRowDiv>
