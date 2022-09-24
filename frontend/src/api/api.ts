@@ -23,6 +23,7 @@ type Payload = {
 
 type Params = {
   path: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body?: any;
   header?: { [k: string]: string };
   queries?: { [k: string]: string };
@@ -59,7 +60,7 @@ const request = async ({
 const API = {
   request: async <T>(params: Params): Promise<T> => {
     const resp = await request(params);
-    return await resp.json();
+    return resp.json();
   },
 
   requestEmptyResp: request,
