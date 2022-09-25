@@ -11,12 +11,16 @@ import { isAdminInOrganisation, createCampaign } from "../../api";
 const CreateCampaign = () => {
   const { orgId } = useParams();
   const navigate = useNavigate();
-  useEffect(async () => {
-    const data = await isAdminInOrganisation(orgId);
-    const isAdmin = await data.json();
-    if (!isAdmin) {
-      navigate("/");
-    }
+  useEffect(() => {
+    const fetchData = async () => {
+      const data = await isAdminInOrganisation(orgId);
+      const isAdmin = await data.json();
+      if (!isAdmin) {
+        navigate("/");
+      }
+    };
+
+    fetchData();
   }, []);
 
   const [tab, setTab] = useState(0);
