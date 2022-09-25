@@ -32,10 +32,8 @@ const AdminCampaignContent = ({ campaigns, setCampaigns, orgId }: Props) => {
     // FIXME: CHAOS-55, integrate with backend to actually delete
     e.stopPropagation();
     const campaignId = Number(e.currentTarget.value);
-    const res = await deleteCampaign(campaignId);
-    if (res.ok) {
-      setCampaigns(campaigns.filter((c) => c.id !== campaignId));
-    }
+    await deleteCampaign(campaignId);
+    setCampaigns(campaigns.filter((c) => c.id !== campaignId));
   };
 
   return (
