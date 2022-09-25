@@ -39,15 +39,12 @@ const Bars = styled.div({
   `,
 });
 
-const Campaign = ({
-  logo,
-  active = false,
-  transitionDelay = 0,
-}: {
+type Props = {
   logo: string;
   active?: boolean;
   transitionDelay?: number;
-}) => {
+};
+const Campaign = ({ logo, active = false, transitionDelay = 0 }: Props) => {
   const status = active ? "pending" : "open";
   return (
     <Transition
