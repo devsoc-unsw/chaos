@@ -33,59 +33,67 @@ const Admin = () => {
   }));
   const isFormOpenContextValue = useMemo(() => ({ isFormOpen, setIsFormOpen }));
 
-  useEffect(async () => {
-    const data = (await (await getAdminData()).json()).organisations;
+  useEffect(() => {
+    const fetchData = async () => {
+      const data = (await (await getAdminData()).json()).organisations;
 
-    setOrgList(
-      data.map((item) => ({
-        id: item.id,
-        icon: bytesToImage(item.logo),
-        orgName: item.name,
-        campaigns: item.campaigns,
-        members: item.members,
-      }))
-    );
-    if (data !== []) {
-      setOrgSelected(0);
-      const org = data[orgSelected];
+      setOrgList(
+        data.map((item) => ({
+          id: item.id,
+          icon: bytesToImage(item.logo),
+          orgName: item.name,
+          campaigns: item.campaigns,
+          members: item.members,
+        }))
+      );
+      if (data !== []) {
+        setOrgSelected(0);
+        const org = data[orgSelected];
 
+        setCampaigns(
+          org.campaigns.map((item) => ({
+            id: item.id,
+            image: bytesToImage(item.cover_image),
+            title: item.name,
+            startDate: item.starts_at,
+            endDate: item.ends_at,
+          }))
+        );
+
+        setMembers(
+          org.members.map((item) => ({
+            id: item.id,
+            name: item.display_name,
+            role: item.role,
+          }))
+        );
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
       setCampaigns(
-        org.campaigns.map((item) => ({
+        orgList[orgSelected]?.campaigns.map((item) => ({
           id: item.id,
           image: bytesToImage(item.cover_image),
           title: item.name,
           startDate: item.starts_at,
           endDate: item.ends_at,
-        }))
+        })) ?? []
       );
-
       setMembers(
-        org.members.map((item) => ({
+        orgList[orgSelected]?.members.map((item) => ({
           id: item.id,
           name: item.display_name,
           role: item.role,
-        }))
+        })) ?? []
       );
-    }
-  }, []);
+    };
 
-  useEffect(async () => {
-    setCampaigns(
-      orgList[orgSelected]?.campaigns.map((item) => ({
-        id: item.id,
-        image: bytesToImage(item.cover_image),
-        title: item.name,
-        startDate: item.starts_at,
-        endDate: item.ends_at,
-      })) ?? []
-    );
-    setMembers(
-      orgList[orgSelected]?.members.map((item) => ({
-        id: item.id,
-        name: item.display_name,
-        role: item.role,
-      })) ?? []
-    );
+    fetchData();
   }, [orgSelected, orgList]);
 
   return (

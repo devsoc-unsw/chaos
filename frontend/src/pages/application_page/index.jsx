@@ -23,18 +23,6 @@ const Application = () => {
   const campaignId = parseInt(useParams().campaignId, 10);
   const { state } = useLocation();
 
-  useEffect(async () => {
-    setCampaign(
-      state ||
-        (async () => {
-          const resp = await getAllCampaigns();
-          const data = await resp.json();
-          const current = data.current_campaigns;
-          return current.find((x) => x.campaign.id === campaignId);
-        })()
-    );
-  }, []);
-
   const [loading, setLoading] = useState(true);
 
   const [selfInfo, setSelfInfo] = useState({});
@@ -48,15 +36,18 @@ const Application = () => {
       await getUserInfo();
 
       const getCampaign = async () => {
-        const newCampaign =
-          state ||
-          (await (async () => {
-            const res = await getAllCampaigns();
-            const data = await res.json();
-            const current = data.current_campaigns;
-            return current.find((x) => x.campaign.id === campaignId);
-          })());
-        setCampaign(newCampaign);
+        if (state) {
+          setCampaign(state);
+        } else {
+          const res = await getAllCampaigns();
+          // eslint-disable-next-line camelcase
+          const { current_campaigns } = await res.json();
+          // eslint-disable-next-line camelcase
+          const newCampaign = current_campaigns.find(
+            (x) => x.campaign.id === campaignId
+          );
+          setCampaign(newCampaign);
+        }
       };
       await getCampaign();
 
