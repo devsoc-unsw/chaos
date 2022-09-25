@@ -63,11 +63,11 @@ const AdminSidebar = ({
       const imgUrl = base64ToBytes(
         (await fileToDataUrl(uploadedImage.image)).split(",")[1]
       );
-      const newOrgId = await createOrganisation(inputText, imgUrl);
+      const { id } = await createOrganisation(inputText, imgUrl);
       const newOrgList = [
         ...orgList,
         {
-          id: newOrgId,
+          id,
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           icon: uploadedImage.url!,
           orgName: inputText,

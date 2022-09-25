@@ -95,11 +95,10 @@ export const getAdminData = () =>
   });
 
 export const createOrganisation = (name: string, logo: number[]) =>
-  authenticatedRequest({
+  authenticatedRequest<number>({
     method: "POST",
     path: "/organisation/new",
     body: { name, logo },
-    jsonResp: false,
   });
 
 export const newApplication = (roleId: number) =>
