@@ -57,7 +57,7 @@ const API = {
       throw new FetchError(resp);
     }
 
-    if (jsonResp === true) {
+    if (jsonResp) {
       return resp.json();
     }
     return undefined as T;
