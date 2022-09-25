@@ -54,16 +54,17 @@ const AdminContent = ({
     useContext(OrgContext);
 
   const handleDeletion = async () => {
-    const res = await doDeleteOrg(id);
-    if (res.status === 200) {
-      // FIXME: when array is empty we die???
-      setOrgList(orgList.filter((_, index) => index !== orgSelected));
-      setOrgSelected(
-        orgSelected === orgList.length - 1 ? orgList.length - 2 : orgSelected
-      );
-    } else {
+    try {
+      await doDeleteOrg(id);
+    } catch (e) {
       // FIXME: should popup and say failed to delete
+      return;
     }
+    // FIXME: when array is empty we die???
+    setOrgList(orgList.filter((_, index) => index !== orgSelected));
+    setOrgSelected(
+      orgSelected === orgList.length - 1 ? orgList.length - 2 : orgSelected
+    );
   };
 
   const handleWindowChange = (
