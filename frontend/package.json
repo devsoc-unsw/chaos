@@ -29,7 +29,6 @@
     "react-router-dom": "6.4.1",
     "tailwindcss-gradient": "1.0.1",
     "typescript": "4.8.3",
-    "uuid": "8.3.2",
     "web-vitals": "3.0.2"
   },
   "scripts": {
