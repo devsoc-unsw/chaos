@@ -21,49 +21,47 @@ type Payload = {
   body?: string;
 };
 
-type Params = {
+type Params<T> = {
   path: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body?: any;
   header?: { [k: string]: string };
   queries?: { [k: string]: string };
   method?: string;
-};
-
-const request = async ({
-  path,
-  body,
-  header,
-  queries = {},
-  method = "GET",
-}: Params): Promise<Response> => {
-  const endpoint = new URL(`${window.origin}/api${path}`);
-  endpoint.search = new URLSearchParams(queries).toString();
-
-  const payload: Payload = {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      ...header,
-    },
-  };
-  if (method !== "GET") payload.body = JSON.stringify(body);
-
-  const resp = await fetch(endpoint, payload);
-  if (!resp.ok) {
-    throw new FetchError(resp);
-  }
-  return resp;
-};
+} & (T extends void ? { jsonResp: false } : { jsonResp?: true });
 
 // takes in an object
 const API = {
-  request: async <T>(params: Params): Promise<T> => {
-    const resp = await request(params);
-    return resp.json();
-  },
+  request: async <T = void>({
+    path,
+    body,
+    header,
+    queries = {},
+    method = "GET",
+    jsonResp = true,
+  }: Params<T>): Promise<T> => {
+    const endpoint = new URL(`${window.origin}/api${path}`);
+    endpoint.search = new URLSearchParams(queries).toString();
 
-  requestEmptyResp: request,
+    const payload: Payload = {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        ...header,
+      },
+    };
+    if (method !== "GET") payload.body = JSON.stringify(body);
+
+    const resp = await fetch(endpoint, payload);
+    if (!resp.ok) {
+      throw new FetchError(resp);
+    }
+
+    if (jsonResp === true) {
+      return resp.json();
+    }
+    return undefined as T;
+  },
 };
 
 export default API;

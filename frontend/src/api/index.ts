@@ -65,24 +65,11 @@ export const doSignup = async ({
 //   };
 // };
 
-const authenticatedRequest = <T>(
-  payload: Parameters<typeof API.request>[0]
+const authenticatedRequest = <T = void>(
+  payload: Parameters<typeof API.request<T>>[0]
 ) => {
   const token = `Bearer ${getStore("AUTH_TOKEN")}`;
   return API.request<T>({
-    ...payload,
-    header: {
-      Authorization: token,
-      ...payload.header,
-    },
-  });
-};
-
-const authenticatedRequestEmptyResp = (
-  payload: Parameters<typeof API.request>[0]
-) => {
-  const token = `Bearer ${getStore("AUTH_TOKEN")}`;
-  return API.requestEmptyResp({
     ...payload,
     header: {
       Authorization: token,
@@ -108,10 +95,11 @@ export const getAdminData = () =>
   });
 
 export const createOrganisation = (name: string, logo: number[]) =>
-  authenticatedRequestEmptyResp({
+  authenticatedRequest({
     method: "POST",
     path: "/organisation/new",
     body: { name, logo },
+    jsonResp: false,
   });
 
 export const newApplication = (roleId: number) =>
@@ -122,9 +110,10 @@ export const newApplication = (roleId: number) =>
   });
 
 export const doDeleteOrg = (orgId: number) =>
-  authenticatedRequestEmptyResp({
+  authenticatedRequest({
     method: "DELETE",
     path: `/organisation/${orgId}`,
+    jsonResp: false,
   });
 
 export const getCampaign = (campaignId: number) =>
@@ -146,12 +135,13 @@ export const getRoleQuestions = (roleId: number) =>
   });
 
 export const setApplicationRating = (applicationId: number, rating: number) =>
-  authenticatedRequestEmptyResp({
+  authenticatedRequest({
     method: "PUT",
     path: `/application/${applicationId}/rating`,
     body: {
       rating,
     },
+    jsonResp: false,
   });
 
 export const getSelfInfo = () =>
@@ -172,7 +162,7 @@ export const submitAnswer = (
   questionId: number,
   description: string
 ) =>
-  authenticatedRequestEmptyResp({
+  authenticatedRequest({
     method: "POST",
     path: `/application/answer/`,
     body: {
@@ -180,6 +170,7 @@ export const submitAnswer = (
       question_id: questionId,
       description,
     },
+    jsonResp: false,
   });
 
 export const createCampaign = (
@@ -194,19 +185,21 @@ export const createCampaign = (
   });
 
 export const deleteCampaign = (id: number) =>
-  authenticatedRequestEmptyResp({
+  authenticatedRequest({
     method: "DELETE",
     path: `/campaign/${id}`,
+    jsonResp: false,
   });
 
 export const setApplicationStatus = (
   applicationId: number,
   status: ApplicationStatus
 ) =>
-  authenticatedRequestEmptyResp({
+  authenticatedRequest({
     method: "PUT",
     path: `/application/${applicationId}/status`,
     body: status,
+    jsonResp: false,
   });
 
 export const inviteUserToOrg = (
@@ -214,11 +207,12 @@ export const inviteUserToOrg = (
   organisationId: number,
   adminLevel = "ReadOnly"
 ) =>
-  authenticatedRequestEmptyResp({
+  authenticatedRequest({
     method: "POST",
     path: `/organisation/${organisationId}/invite`,
     body: {
       email,
       admin_level: adminLevel,
     },
+    jsonResp: false,
   });
