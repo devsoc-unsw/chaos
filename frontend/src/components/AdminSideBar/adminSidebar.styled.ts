@@ -1,5 +1,5 @@
 import { styled } from "@mui/material/styles";
-import { Button, ToggleButtonGroup } from "@mui/material";
+import { ToggleButton, ToggleButtonGroup } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 
@@ -27,7 +27,7 @@ export const OrgButtonGroup = styled(ToggleButtonGroup)`
   margin: 0px;
 `;
 
-export const OrgButton = styled(Button)`
+export const OrgButton = styled(ToggleButton)`
   position: relative;
   display: table;
   width: 100%;
