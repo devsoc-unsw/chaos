@@ -126,13 +126,9 @@ const Application = () => {
                   return rId === data.role_id;
                 })
                 .map((qId) =>
-                  submitAnswer(data.id, Number(qId), answers[qId]).then(
-                    (res) => {
-                      if (!res.ok) {
-                        throw new Error("Error during submission");
-                      }
-                    }
-                  )
+                  submitAnswer(data.id, Number(qId), answers[qId]).catch(() => {
+                    throw new Error("Error during submission");
+                  })
                 )
             )
           )
