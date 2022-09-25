@@ -11,6 +11,7 @@ import type {
   Campaign,
   CampaignWithRoles,
   NewCampaignInput,
+  Organisation,
   OrganisationInfo,
   QuestionInput,
   QuestionResponse,
@@ -95,7 +96,7 @@ export const getAdminData = () =>
   });
 
 export const createOrganisation = (name: string, logo: number[]) =>
-  authenticatedRequest<number>({
+  authenticatedRequest<Organisation>({
     method: "POST",
     path: "/organisation/new",
     body: { name, logo },
