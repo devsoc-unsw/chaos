@@ -266,7 +266,10 @@ pub async fn signin(
     )
     .expect("creating jwt should never fail");
 
-    Ok(Json(SignInResponse { token, name: user.display_name }))
+    Ok(Json(SignInResponse {
+        token,
+        name: user.display_name,
+    }))
 }
 
 #[derive(Deserialize, Clone)]
