@@ -18,16 +18,21 @@ const Signup = () => {
 
   const navigate = useNavigate();
   console.log("inside signup");
+
+  const signup = async () => {
+    console.log("posting with:");
+    console.log(formData);
+    const { token } = await doSignup(formData);
+    setStore("AUTH_TOKEN", token);
+    navigate("/dashboard");
+  };
+
   return (
     <BackgroundWrapper>
       <StyledForm
-        onSubmit={async (e) => {
+        onSubmit={(e) => {
           e.preventDefault();
-          console.log("posting with:");
-          console.log(formData);
-          const { token } = await doSignup(formData);
-          setStore("AUTH_TOKEN", token);
-          navigate("/dashboard");
+          void signup();
         }}
       >
         <div>
