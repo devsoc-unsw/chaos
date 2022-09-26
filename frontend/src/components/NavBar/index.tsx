@@ -13,7 +13,9 @@ const NavButton = styled(NavLink, {
   `,
 
   "&.active": tw`rounded shadow bg-gradient-to-r to-indigo-700/20 from-blue-700/20`,
-  "&:not(.active)": tw`before:(
+
+  "&:not(.active)": tw`
+    before:(
       absolute inset-0
       bg-gradient-to-r from-blue-700 to-indigo-700
       rounded transition-opacity duration-100 opacity-0
@@ -79,7 +81,7 @@ const NavBar = ({ campaign }: { campaign: string }) => {
             <span tw="border-l border-slate-500 pl-4">
               <a
                 tw="px-3 py-1.5 rounded shadow bg-indigo-400/30 text-black hover:bg-indigo-400/[0.42] transition-colors"
-                href={import.meta.env.VITE_OAUTH_CALLBACK_URL}
+                href={import.meta.env.VITE_OAUTH_CALLBACK_URL as string}
               >
                 Get Started
               </a>

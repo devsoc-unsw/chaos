@@ -12,6 +12,7 @@ const BackgroundWrapper = ({ children }: PropsWithChildren) => {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
         backgroundColor: theme.palette.grey[900],
       }}
     >

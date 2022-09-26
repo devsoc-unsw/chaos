@@ -3,28 +3,28 @@ import tw, { styled } from "twin.macro";
 
 import type { ComponentProps, ElementType, PropsWithChildren } from "react";
 
-const ButtonShadow = tw.div`
-  filter blur-sm
-  group-hover:(blur translate-y-0.5) group-focus-visible:blur group-active:blur-sm
+const Button = tw.button`
+  relative flex justify-center items-center
+  px-3 py-2 w-max
+  text-[#191d24] font-normal border-0 rounded outline-none ring-blue-500 transition
+  hover:text-black focus-visible:(ring text-black)
 `;
 
-const ButtonBg = tw.div`
-  opacity-50 group-hover:opacity-100 group-focus-visible:opacity-100
+const Bg = tw.div`
+  absolute inset-0 z-[-1]
+  rounded transition
+  bg-gradient-120 from-fuchsia-200 to-indigo-200
 `;
 
-const Button = styled.button({
+const ButtonShadow = styled(Bg, {
   ...tw`
-    relative flex justify-center items-center
-    px-3 py-2 w-max
-    text-[#191d24] font-normal border-0 rounded outline-none ring-blue-500 transition
-    hover:text-black focus-visible:(ring text-black)
+    filter blur-sm
+    group-hover:(blur translate-y-0.5) group-focus-visible:blur group-active:blur-sm
   `,
+});
 
-  [`& > ${ButtonBg}, ${ButtonShadow}`]: tw`
-    absolute inset-0 z-[-1]
-    rounded transition
-    bg-gradient-120 from-fuchsia-200 to-indigo-200
-  `,
+const ButtonBg = styled(Bg, {
+  ...tw`opacity-50 group-hover:opacity-100 group-focus-visible:opacity-100`,
 });
 
 type Props<T extends ElementType> = ComponentProps<typeof Button> & {

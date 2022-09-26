@@ -15,7 +15,7 @@ import Waves from "./components/Waves";
 import type { PointerEvent } from "react";
 
 const OAUTH_CALLBACK_URL =
-  getStore("AUTH_TOKEN") || import.meta.env.VITE_OAUTH_CALLBACK_URL;
+  getStore("AUTH_TOKEN") || (import.meta.env.VITE_OAUTH_CALLBACK_URL as string);
 
 const Landing = () => {
   const setNavBarTitle = useContext(SetNavBarTitleContext);

@@ -58,7 +58,7 @@ const API = {
     }
 
     if (jsonResp) {
-      return resp.json();
+      return resp.json() as Promise<T>;
     }
     return undefined as T;
   },

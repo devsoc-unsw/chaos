@@ -61,7 +61,7 @@ const FinaliseCandidates = () => {
       <TabContext value={tab}>
         <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1 }}>
           <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-            <TabList onChange={(_, t) => setTab(t)}>
+            <TabList onChange={(_, t: string) => setTab(t)}>
               <Tab label="Hayes Choy" value="0" />
               <Tab label="Shrey Somaiya" value="1" />
             </TabList>

@@ -71,11 +71,15 @@ export const doSignup = async ({
 const authenticatedRequest = <T = void>(
   payload: Parameters<typeof API.request<T>>[0]
 ) => {
-  const token = `Bearer ${getStore("AUTH_TOKEN")}`;
+  const token = getStore("AUTH_TOKEN");
+  if (!token) {
+    throw new Error("No token found");
+  }
+
   return API.request<T>({
     ...payload,
     header: {
-      Authorization: token,
+      Authorization: `Bearer ${token}`,
       ...payload.header,
     },
   });
