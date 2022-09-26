@@ -46,8 +46,13 @@ const CampaignTab = ({ campaign }: Props) => {
   return (
     <CampaignContainer>
       <Dropzone
-        onDrop={(acceptedFiles) => onFileUpload(acceptedFiles)}
-        accept={["image/jpeg", "image/jpg", "image/png", "image/gif"]}
+        onDrop={(acceptedFiles) => void onFileUpload(acceptedFiles)}
+        accept={{
+          "image/jpeg": [".jpeg"],
+          "image/jpg": [".jpg"],
+          "image/png": [".png"],
+          "image/gif": [".gif"],
+        }}
         minSize={1024}
         maxSize={3072000}
       >

@@ -59,34 +59,38 @@ const AdminSidebar = ({
     });
   };
 
-  const onUpload = async () => {
-    // FIXME: CHAOS-55, send to the backend
-    if (uploadedImage.image && inputText) {
-      // FIXME: CHAOS-55, backend request should return new id, this method obv flawed (also floored)
-      const imgUrl = base64ToBytes(
-        (await fileToDataUrl(uploadedImage.image)).split(",")[1]
-      );
-      const { id } = await createOrganisation(inputText, imgUrl);
-      const newOrgList = [
-        ...orgList,
-        {
-          id,
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          icon: uploadedImage.url!,
-          orgName: inputText,
-          campaigns: [],
-          members: [],
-        },
-      ];
-      setOrgList(newOrgList);
-      setOrgSelected(newOrgList.length - 1);
-      setUploadedImage({ image: null, url: null });
-      setInputText("");
-      setIsFormOpen(false);
-      console.log("New organisation created!");
-    } else {
-      console.error("Both image and text are required!");
-    }
+  const onUpload = () => {
+    const createOrg = async () => {
+      // FIXME: CHAOS-55, send to the backend
+      if (uploadedImage.image && inputText) {
+        // FIXME: CHAOS-55, backend request should return new id, this method obv flawed (also floored)
+        const imgUrl = base64ToBytes(
+          (await fileToDataUrl(uploadedImage.image)).split(",")[1]
+        );
+        const { id } = await createOrganisation(inputText, imgUrl);
+        const newOrgList = [
+          ...orgList,
+          {
+            id,
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            icon: uploadedImage.url!,
+            orgName: inputText,
+            campaigns: [],
+            members: [],
+          },
+        ];
+        setOrgList(newOrgList);
+        setOrgSelected(newOrgList.length - 1);
+        setUploadedImage({ image: null, url: null });
+        setInputText("");
+        setIsFormOpen(false);
+        console.log("New organisation created!");
+      } else {
+        console.error("Both image and text are required!");
+      }
+    };
+
+    void createOrg();
   };
 
   return (

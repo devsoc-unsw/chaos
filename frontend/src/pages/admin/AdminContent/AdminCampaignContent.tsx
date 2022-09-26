@@ -71,7 +71,7 @@ const AdminCampaignContent = ({ campaigns, setCampaigns, orgId }: Props) => {
                 </IconButton>
               </ListItemIcon>
               <ListItemIcon>
-                <IconButton value={c.id} onClick={(e) => onDelete(e)}>
+                <IconButton value={c.id} onClick={(e) => void onDelete(e)}>
                   <ClearIcon />
                 </IconButton>
               </ListItemIcon>

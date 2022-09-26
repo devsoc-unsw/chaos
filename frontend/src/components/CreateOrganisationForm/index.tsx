@@ -15,7 +15,7 @@ type Props = {
   onFileChange: ChangeEventHandler<HTMLInputElement>;
   inputText: string;
   setInputText: Dispatch<SetStateAction<string>>;
-  onUpload: () => Promise<void>;
+  onUpload: () => void;
 };
 
 const CreateOrganisationForm = ({

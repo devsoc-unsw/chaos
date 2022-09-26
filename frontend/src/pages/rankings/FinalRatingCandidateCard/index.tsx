@@ -10,6 +10,8 @@ import {
   RatingChip,
 } from "./finalRatingCandidateCard.styled";
 
+import type { ApplicationWithQuestions } from "types/admin";
+
 // TODO CHAOS-15: proper algo to aggregate marks
 const calculateAvg = (ratings: { rater: string; rating: number }[]) => {
   if (ratings.length === 0) return 0;
@@ -24,12 +26,7 @@ type Props = {
   position: string;
   ratings: { rater: string; rating: number }[];
   reject?: boolean;
-  application: {
-    applicationId: string;
-    zId: string;
-    mark: number;
-    questions: { question: string; answer: string }[];
-  };
+  application: ApplicationWithQuestions;
 };
 
 const FinalRatingCandidateCard = ({

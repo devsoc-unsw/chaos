@@ -95,11 +95,11 @@ const Marking = () => {
     void fetchData();
   }, []);
 
-  const setMark = async (newMark: number) => {
+  const setMark = (newMark: number) => {
     const newApplications = { ...applications };
     newApplications[selectedPosition][selectedApplication].mark = newMark;
     setApplications(newApplications);
-    await setApplicationRating(
+    void setApplicationRating(
       applications[selectedPosition][selectedApplication].applicationId,
       newMark
     );
@@ -119,7 +119,7 @@ const Marking = () => {
           }}
         >
           <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-            <TabList onChange={(_, t) => setSelectedPosition(t)}>
+            <TabList onChange={(_, t: string) => setSelectedPosition(t)}>
               {Object.keys(applications).map((role) => (
                 <Tab label={role} value={role} key={role} />
               ))}

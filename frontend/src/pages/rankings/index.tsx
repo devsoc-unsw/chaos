@@ -122,6 +122,7 @@ const Rankings = () => {
               allApplications[roleIdx].map((application, applicationIdx) => [
                 application.id,
                 {
+                  applicationId: application.id,
                   zId: application.user_zid,
                   questions: questions[roleIdx].map(
                     (question, questionIdx) => ({
@@ -142,13 +143,13 @@ const Rankings = () => {
     void fetchData();
   }, []);
 
-  const handleNext = async () => {
+  const handleNext = () => {
     console.log(
       "Order:",
       rankings[selectedPosition].map((candidate) => candidate.name)
     );
     console.log(passIndices);
-    await Promise.all(
+    Promise.all(
       positions.map((position) =>
         Promise.all(
           rankings[position].map((ranking, index) =>
@@ -159,8 +160,11 @@ const Rankings = () => {
           )
         )
       )
-    );
-    navigate("/finalise_candidates");
+    )
+      .then(() => navigate("/finalise_candidates"))
+      .catch(() => {
+        // TODO: handle errors
+      });
   };
 
   return (

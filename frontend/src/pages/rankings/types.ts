@@ -1,3 +1,5 @@
+import type { ApplicationWithQuestions } from "types/admin";
+
 export type Ranking = {
   name: string;
   id: number;
@@ -10,9 +12,6 @@ export type Rankings = {
 
 export type Applications = {
   [role: string]: {
-    [id: number]: {
-      zId: string;
-      questions: { question: string; answer?: string }[];
-    };
+    [id: number]: ApplicationWithQuestions;
   };
 };
