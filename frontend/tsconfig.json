@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "baseUrl": "src",
-    "target": "es6",
     "useDefineForClassFields": true,
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": false,
