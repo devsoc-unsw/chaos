@@ -51,9 +51,12 @@
           "index",
           "object",
           "type"
-        ]
+        ],
+        "newlines-between": "always",
+        "alphabetize": { "order": "asc" }
       }
     ],
+    "sort-imports": ["error", { "ignoreDeclarationSort": true }],
     "react/function-component-definition": [
       1,
       {
