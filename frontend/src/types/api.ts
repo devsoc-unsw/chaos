@@ -1,3 +1,11 @@
+type JsonPrimitive = string | number | boolean | null;
+type JsonMap = {
+  // eslint-disable-next-line no-use-before-define
+  [key: string]: JsonPrimitive | JsonMap | JsonArray;
+};
+type JsonArray = Array<JsonPrimitive | JsonMap | JsonArray>;
+export type Json = JsonPrimitive | JsonMap | JsonArray;
+
 export type AuthenticateResponse = { token: string; name: string };
 export type AuthenticateErrResponse =
   | "InvalidOAuthCode"

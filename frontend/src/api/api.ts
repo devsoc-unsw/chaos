@@ -1,3 +1,5 @@
+import type { Json } from "types/api";
+
 export class FetchError extends Error {
   public status: number;
 
@@ -23,8 +25,7 @@ type Payload = {
 
 type Params<T> = {
   path: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  body?: any;
+  body?: Json;
   header?: { [k: string]: string };
   queries?: { [k: string]: string };
   method?: string;
