@@ -39,11 +39,10 @@ const Dashboard = () => {
             );
           }
           navigate("/");
-        } else {
-          throw e;
+          // unreachable but necessary for typescript
+          return;
         }
-        // unreachable but necessary for typescript
-        return;
+        throw e;
       }
       console.log(campaigns);
       const current = campaigns.current_campaigns;
