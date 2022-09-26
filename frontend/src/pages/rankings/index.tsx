@@ -3,8 +3,6 @@ import { green, red } from "@mui/material/colors";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
-
 import {
   getApplicationAnswers,
   getApplicationRatings,
@@ -13,8 +11,9 @@ import {
   getRoleApplications,
   getRoleQuestions,
   setApplicationStatus,
-} from "../../api";
-import ReviewerStepper from "../../components/ReviewerStepper";
+} from "api";
+import ReviewerStepper from "components/ReviewerStepper";
+import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 
 import DragDropRankings from "./DragDropRankings";
 import RankingsToolbar from "./RankingsToolbar";
@@ -44,7 +43,7 @@ const Rankings = () => {
   }, [selectedPosition]);
 
   useEffect(() => {
-    (async () => {
+    const fetchData = async () => {
       const { name: campaignName } = await getCampaign(campaignId);
       setNavBarTitle(`Ranking for ${campaignName}`);
       const { roles } = await getCampaignRoles(campaignId);
@@ -71,22 +70,29 @@ const Rankings = () => {
             rating: rating.rating,
           }));
       };
-      setRankings(
-        Object.fromEntries(
-          await Promise.all(
-            roles.map(async (role, roleIdx) => [
-              role.name,
-              await Promise.all(
-                allApplications[roleIdx].map(async (application) => ({
-                  name: application.user_display_name,
-                  id: application.id,
-                  ratings: await getRatings(application.id),
-                }))
-              ),
-            ])
-          )
+
+      const roleToRankings = (roleIdx: number) =>
+        Promise.all(
+          allApplications[roleIdx].map(async (application) => ({
+            name: application.user_display_name,
+            id: application.id,
+            ratings: await getRatings(application.id),
+          }))
+        );
+      const rankingsArr = await Promise.all(
+        roles.map(
+          async (
+            role,
+            roleIdx
+          ): Promise<[string, Awaited<ReturnType<typeof roleToRankings>>]> => [
+            role.name,
+            await roleToRankings(roleIdx),
+          ]
         )
       );
+      const rankings = Object.fromEntries(rankingsArr);
+      setRankings(rankings);
+
       console.log(roles);
       setPositions(roles.map((role) => role.name));
 
@@ -131,7 +137,9 @@ const Rankings = () => {
           ])
         )
       );
-    })();
+    };
+
+    void fetchData();
   }, []);
 
   const handleNext = async () => {

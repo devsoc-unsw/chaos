@@ -86,7 +86,7 @@ const Admin = () => {
       }
     };
 
-    fetchData();
+    void fetchData();
   }, []);
 
   useEffect(() => {

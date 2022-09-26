@@ -70,7 +70,7 @@ const AdminContent = ({
   ) => {
     if (newWindow) {
       if (newWindow === "delete") {
-        handleDeletion();
+        void handleDeletion();
         setWindowSelected("campaigns");
       } else {
         setWindowSelected(newWindow);

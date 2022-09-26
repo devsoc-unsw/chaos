@@ -27,7 +27,7 @@ import {
 } from "./adminContent.styled";
 
 import type { Member } from "../types";
-import type { Dispatch, SetStateAction } from "react";
+import type { ChangeEventHandler, Dispatch, SetStateAction } from "react";
 import type { AdminLevel } from "types/api";
 
 type Props = {
@@ -46,7 +46,7 @@ const AdminMembersContent = ({ orgId, members, setMembers }: Props) => {
     email: string;
     adminLevel: AdminLevel;
   }) => {
-    inviteUserToOrg(formValues.email, orgId, formValues.adminLevel);
+    void inviteUserToOrg(formValues.email, orgId, formValues.adminLevel);
   };
   return (
     <AdminContentList>
@@ -71,7 +71,15 @@ const AdminMembersContent = ({ orgId, members, setMembers }: Props) => {
             anchorEl={anchorEl}
             setAnchorEl={setAnchorEl}
           >
-            {({ formValues, handleInputChange }) => (
+            {({
+              formValues,
+              handleInputChange,
+            }: {
+              // eslint-disable-next-line react/no-unused-prop-types -- ??? why is this being triggered
+              formValues: { adminLevel: AdminLevel };
+              // eslint-disable-next-line react/no-unused-prop-types
+              handleInputChange: ChangeEventHandler<HTMLInputElement>;
+            }) => (
               <FormControl>
                 <FormLabel id="admin-level">Admin Level</FormLabel>
                 <RadioGroup

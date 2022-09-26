@@ -24,7 +24,7 @@ const CreateCampaign = () => {
       }
     };
 
-    fetchData();
+    void fetchData();
   }, []);
 
   const [tab, setTab] = useState(0);
@@ -91,7 +91,7 @@ const CreateCampaign = () => {
 
   // FIXME: CHAOS-64, update submitHandler to account for new data
   //        (roles/questions etc.), part of backend integration
-  const submitHandler = async (isDraft: boolean) => {
+  const submitHandler = (isDraft: boolean) => {
     if (campaignName.length === 0 && !isDraft) {
       setError("Campaign name is required");
       return;
@@ -155,21 +155,21 @@ const CreateCampaign = () => {
       questions_for_role: roleQuestions[r.id] ?? [],
     }));
 
-    try {
-      await createCampaign(campaignSend, rolesSend, questionsSend);
-    } catch {
-      console.log("something went wrong");
-    }
-
-    console.log("nice!");
-    navigate("/dashboard");
+    createCampaign(campaignSend, rolesSend, questionsSend)
+      .then(() => {
+        console.log("nice!");
+        navigate("/dashboard");
+      })
+      .catch(() => {
+        console.error("something went wrong");
+      });
   };
 
   return (
     <Container>
       <Tabs
         value={tab}
-        onChange={(_e, val) => onTabChange(val)}
+        onChange={(_e, val: number) => onTabChange(val)}
         centered
         style={{ paddingBottom: "30px", paddingTop: "15px" }}
       >

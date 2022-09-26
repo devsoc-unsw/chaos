@@ -30,7 +30,7 @@ const AuthSuccess = () => {
           data = await authenticate(code);
         } catch (err) {
           if (err instanceof FetchError) {
-            data = await err.resp.json();
+            data = (await err.resp.json()) as AuthenticateErrResponse;
           } else {
             console.error(err);
             if (err instanceof Error) {
@@ -58,7 +58,7 @@ const AuthSuccess = () => {
       }
     }
 
-    attemptAuth();
+    void attemptAuth();
   }, []);
 
   useEffect(() => {

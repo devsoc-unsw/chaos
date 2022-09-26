@@ -30,7 +30,7 @@ const Marking = () => {
   const [selectedApplication, setSelectedApplication] = useState(0);
 
   useEffect(() => {
-    (async () => {
+    const fetchData = async () => {
       const { name: campaignName } = await getCampaign(campaignId);
       setNavBarTitle(`Marking for ${campaignName}`);
       const { roles } = await getCampaignRoles(campaignId);
@@ -90,7 +90,9 @@ const Marking = () => {
           ])
         )
       );
-    })();
+    };
+
+    void fetchData();
   }, []);
 
   const setMark = async (newMark: number) => {

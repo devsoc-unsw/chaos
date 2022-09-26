@@ -1,9 +1,7 @@
-import type { ApplicationRating } from "../../types/api";
-
 export type Ranking = {
   name: string;
   id: number;
-  ratings: ApplicationRating[];
+  ratings: { rater: string; rating: number }[];
 };
 
 export type Rankings = {

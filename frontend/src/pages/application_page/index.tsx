@@ -41,7 +41,7 @@ const Application = () => {
   });
 
   const campaignId = Number(useParams().campaignId);
-  const { state } = useLocation();
+  const { state } = useLocation() as { state: CampaignWithRoles };
 
   const [loading, setLoading] = useState(true);
 
@@ -71,7 +71,7 @@ const Application = () => {
       setLoading(false);
     };
 
-    getData();
+    void getData();
   }, [campaign]);
 
   const [rolesSelected, setRolesSelected] = useState<number[]>([]);
