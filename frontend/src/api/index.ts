@@ -4,6 +4,7 @@ import { getStore } from "../utils";
 import API from "./api";
 
 import type {
+  AdminLevel,
   Application,
   ApplicationAnswer,
   ApplicationRating,
@@ -211,7 +212,7 @@ export const setApplicationStatus = (
 export const inviteUserToOrg = (
   email: string,
   organisationId: number,
-  adminLevel = "ReadOnly"
+  adminLevel: AdminLevel = "ReadOnly"
 ) =>
   authenticatedRequest({
     method: "POST",
