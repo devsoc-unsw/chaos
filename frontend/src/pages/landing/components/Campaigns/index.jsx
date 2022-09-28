@@ -1,8 +1,9 @@
+import { forwardRef, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import tw, { styled } from "twin.macro";
+import BezierEasing from "bezier-easing";
 
 import { Transition } from "components";
-import { forwardRef } from "react";
 import Campaign from "./Campaign";
 
 import csesoc from "./CSESoc_logo.jpeg";
@@ -20,7 +21,13 @@ const Container = styled.div({
 const Heading = tw.h1`font-bold text-3xl my-5 h-[1em] rounded-md bg-black/[0.15]`;
 const Row = tw.div`flex gap-6`;
 
+const DEFAULT_ROTATE_X = 6;
+const DEFAULT_ROTATE_Y = -7.5;
+const easing = BezierEasing(0.4, 0, 0.2, 1);
+
 const Campaigns = forwardRef(({ offsetX, offsetY }, ref) => {
+  const [multiplier, setMultiplier] = useState(0);
+
   const withinRange =
     offsetX !== null &&
     offsetY !== null &&
@@ -29,12 +36,51 @@ const Campaigns = forwardRef(({ offsetX, offsetY }, ref) => {
   let rotateX;
   let rotateY;
   if (!withinRange) {
-    rotateX = 6;
-    rotateY = -7.5;
+    rotateX = DEFAULT_ROTATE_X;
+    rotateY = DEFAULT_ROTATE_Y;
   } else {
     rotateX = -offsetY;
     rotateY = offsetX;
   }
+
+  useEffect(() => {
+    if (!withinRange) {
+      setMultiplier(0);
+      return undefined;
+    }
+
+    let cancel = false;
+    let start;
+    let previousTimestamp;
+    const duration = 150;
+
+    const step = (timestamp) => {
+      if (start === undefined) {
+        start = timestamp;
+      }
+      const elapsed = timestamp - start;
+
+      if (previousTimestamp !== timestamp) {
+        setMultiplier(Math.min(1, easing(elapsed / duration)));
+      }
+
+      if (elapsed >= duration || cancel) {
+        return;
+      }
+
+      previousTimestamp = timestamp;
+      window.requestAnimationFrame(step);
+    };
+
+    window.requestAnimationFrame(step);
+
+    return () => {
+      cancel = true;
+    };
+  }, [withinRange]);
+
+  rotateX = DEFAULT_ROTATE_X + multiplier * (rotateX - DEFAULT_ROTATE_X);
+  rotateY = DEFAULT_ROTATE_Y + multiplier * (rotateY - DEFAULT_ROTATE_Y);
 
   return (
     <Container ref={ref}>
