@@ -46,7 +46,7 @@ const Campaigns = forwardRef(({ offsetX, offsetY }, ref) => {
   useEffect(() => {
     if (!withinRange) {
       setMultiplier(0);
-      return;
+      return undefined;
     }
 
     let cancel = false;
@@ -74,7 +74,6 @@ const Campaigns = forwardRef(({ offsetX, offsetY }, ref) => {
 
     window.requestAnimationFrame(step);
 
-    // eslint-disable-next-line consistent-return
     return () => {
       cancel = true;
     };
