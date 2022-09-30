@@ -1,11 +1,11 @@
+import BezierEasing from "bezier-easing";
 import { forwardRef, useEffect, useState } from "react";
 import tw, { styled } from "twin.macro";
-import BezierEasing from "bezier-easing";
 
 import { Transition } from "components";
-import Campaign from "./Campaign";
 
 import csesoc from "./CSESoc_logo.jpeg";
+import Campaign from "./Campaign";
 import compclub from "./compclub.png";
 
 const Container = styled.div({
