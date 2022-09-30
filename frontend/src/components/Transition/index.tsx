@@ -1,4 +1,5 @@
 import { Transition as HeadlessUiTransition } from "@headlessui/react";
+import { useEffect, useState } from "react";
 import { css } from "twin.macro";
 
 import type { ComponentType, HTMLAttributes, PropsWithChildren } from "react";
@@ -15,6 +16,7 @@ const toCss = (styles?: TwStyle) =>
 
 type Props = HTMLAttributes<HTMLElement> & {
   as?: ComponentType;
+  show?: boolean;
   appear?: boolean;
   enter?: TwStyle;
   enterFrom?: TwStyle;
@@ -44,9 +46,14 @@ const getProps = (props: Props) => ({
   afterLeave: () => props.afterLeave?.(),
 });
 
-const Transition = (props: PropsWithChildren<Props>) => (
-  <HeadlessUiTransition show {...getProps(props)} />
-);
+const Transition = (props: PropsWithChildren<Props>) => {
+  // headlessui 1.7 seems to have a race condition if we just set show=true
+  const [isShowing, setIsShowing] = useState(false);
+  useEffect(() => {
+    setIsShowing(true);
+  }, []);
+  return <HeadlessUiTransition {...getProps({ show: isShowing, ...props })} />;
+};
 
 Transition.Child = (props: PropsWithChildren<Props>) => (
   <HeadlessUiTransition.Child {...getProps(props)} />
