@@ -1,6 +1,8 @@
 import { Container, Typography } from "@mui/material";
-import { ApplicationWithQuestions } from "types/admin";
+
 import { Answer, NoAnswer, Question } from "./applicationPreviewer.styled";
+
+import type { ApplicationWithQuestions } from "types/admin";
 
 type Props = {
   application: ApplicationWithQuestions;

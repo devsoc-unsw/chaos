@@ -1,4 +1,4 @@
-import { ApplicationRating } from "../../types/api";
+import type { ApplicationRating } from "../../types/api";
 
 export type Ranking = {
   name: string;

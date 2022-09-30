@@ -1,30 +1,34 @@
-import { Dispatch, SetStateAction, useState } from "react";
-import {
-  ListItemText,
-  Divider,
-  ListItemIcon,
-  IconButton,
-  FormControl,
-  FormLabel,
-  RadioGroup,
-  Radio,
-  FormControlLabel,
-} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
 import ClearIcon from "@mui/icons-material/Clear";
 import EditIcon from "@mui/icons-material/Edit";
-import AddIcon from "@mui/icons-material/Add";
-import InputPopup from "components/InputPopup";
+import {
+  Divider,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
+  IconButton,
+  ListItemIcon,
+  ListItemText,
+  Radio,
+  RadioGroup,
+} from "@mui/material";
+import { useState } from "react";
+
 import { inviteUserToOrg } from "api";
-import { AdminLevel } from "types/api";
+import InputPopup from "components/InputPopup";
+
 import {
   AdminContentList,
-  DummyIconForAlignment,
-  ContentListHeader,
   AdminDivider,
-  MemberListItem,
   AdminListItemButton,
+  ContentListHeader,
+  DummyIconForAlignment,
+  MemberListItem,
 } from "./adminContent.styled";
+
 import type { Member } from "../types";
+import type { Dispatch, SetStateAction } from "react";
+import type { AdminLevel } from "types/api";
 
 type Props = {
   orgId: number;

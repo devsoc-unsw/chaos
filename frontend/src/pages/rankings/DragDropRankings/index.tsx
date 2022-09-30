@@ -1,13 +1,10 @@
-import {
-  DragDropContext,
-  DragDropContextProps,
-  Draggable,
-  Droppable,
-} from "react-beautiful-dnd";
+import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 
 import FinalRatingCandidateCard from "../FinalRatingCandidateCard";
 import PassBar from "../PassBar";
-import type { Rankings, Applications } from "../types";
+
+import type { Applications, Rankings } from "../types";
+import type { DragDropContextProps } from "react-beautiful-dnd";
 
 type Props = {
   rankings: Rankings;

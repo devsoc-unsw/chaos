@@ -1,5 +1,6 @@
-import { ComponentProps, MouseEventHandler } from "react";
 import { ColoredChip } from "./markChip.styled";
+
+import type { ComponentProps, MouseEventHandler } from "react";
 
 type Props = {
   mark: number;

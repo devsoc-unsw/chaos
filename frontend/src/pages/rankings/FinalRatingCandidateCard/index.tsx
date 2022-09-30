@@ -1,13 +1,14 @@
+import { CardContent, Grid, Tooltip, Typography } from "@mui/material";
 import { useState } from "react";
-import { CardContent, Typography, Tooltip, Grid } from "@mui/material";
+
+import { MarkChip } from "../../../components";
+import FinalRatingApplicationComments from "../FinalRatingApplicationComments";
 
 import {
   CandidateCard,
-  RatingChip,
   GridCandidateName,
+  RatingChip,
 } from "./finalRatingCandidateCard.styled";
-import { MarkChip } from "../../../components";
-import FinalRatingApplicationComments from "../FinalRatingApplicationComments";
 
 // TODO CHAOS-15: proper algo to aggregate marks
 const calculateAvg = (ratings: { rater: string; rating: number }[]) => {

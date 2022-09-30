@@ -1,8 +1,8 @@
+import { forwardRef, useEffect, useState } from "react";
 import tw, { styled } from "twin.macro";
 import BezierEasing from "bezier-easing";
 
 import { Transition } from "components";
-import { forwardRef, useEffect, useState } from "react";
 import Campaign from "./Campaign";
 
 import csesoc from "./CSESoc_logo.jpeg";

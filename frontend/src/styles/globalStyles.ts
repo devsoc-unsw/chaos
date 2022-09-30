@@ -1,6 +1,8 @@
 import tw, { globalStyles } from "twin.macro";
-import type { TwStyle } from "twin.macro";
+
 import { globalCss } from "../../stitches.config";
+
+import type { TwStyle } from "twin.macro";
 
 const customStyles = {
   body: tw`antialiased font-sans!`,

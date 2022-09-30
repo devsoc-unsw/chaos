@@ -1,6 +1,8 @@
 import { Transition as HeadlessUiTransition } from "@headlessui/react";
-import { css, TwStyle } from "twin.macro";
+import { css } from "twin.macro";
+
 import type { ComponentType, HTMLAttributes, PropsWithChildren } from "react";
+import type { TwStyle } from "twin.macro";
 
 /**
  * HeadlessUI "Transition"

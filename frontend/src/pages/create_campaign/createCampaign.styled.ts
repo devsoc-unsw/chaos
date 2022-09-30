@@ -1,6 +1,6 @@
-import { styled } from "@mui/material/styles";
-import { Button } from "@mui/material";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import { Button } from "@mui/material";
+import { styled } from "@mui/material/styles";
 
 export const NextWrapper = styled("div")`
   display: flex;

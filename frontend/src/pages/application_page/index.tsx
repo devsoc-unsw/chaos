@@ -1,20 +1,23 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Container } from "@mui/material";
-import { CampaignWithRoles, UserResponse } from "types/api";
-import ApplicationForm from "../../components/ApplicationForm";
-import { bytesToImage } from "../../utils";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+
 import {
-  SubmitButton,
-  ArrowIcon,
-  SubmitWrapper,
-} from "./applicationPage.styled";
-import {
+  getAllCampaigns,
   getSelfInfo,
   newApplication,
   submitAnswer,
-  getAllCampaigns,
 } from "../../api";
+import ApplicationForm from "../../components/ApplicationForm";
+import { bytesToImage } from "../../utils";
+
+import {
+  ArrowIcon,
+  SubmitButton,
+  SubmitWrapper,
+} from "./applicationPage.styled";
+
+import type { CampaignWithRoles, UserResponse } from "types/api";
 
 const Application = () => {
   const navigate = useNavigate();

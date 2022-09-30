@@ -1,21 +1,24 @@
+import { Button, Container, Grid, Typography } from "@mui/material";
+import { green, red } from "@mui/material/colors";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Container, Button, Grid, Typography } from "@mui/material";
-import { red, green } from "@mui/material/colors";
 
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
-import RankingsToolbar from "./RankingsToolbar";
-import DragDropRankings from "./DragDropRankings";
-import ReviewerStepper from "../../components/ReviewerStepper";
+
 import {
   getApplicationAnswers,
   getApplicationRatings,
+  getCampaign,
   getCampaignRoles,
   getRoleApplications,
   getRoleQuestions,
   setApplicationStatus,
-  getCampaign,
 } from "../../api";
+import ReviewerStepper from "../../components/ReviewerStepper";
+
+import DragDropRankings from "./DragDropRankings";
+import RankingsToolbar from "./RankingsToolbar";
+
 import type { Applications, Rankings as IRankings } from "./types";
 
 const Rankings = () => {

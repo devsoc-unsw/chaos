@@ -1,22 +1,24 @@
-import { ChangeEvent, useState } from "react";
-import type { MouseEvent } from "react";
 import AddIcon from "@mui/icons-material/Add";
-import {
-  ContainerDiv,
-  QuestionsDiv,
-  RolesDisplay,
-  QuestionsDisplay,
-  RolesDiv,
-  QuestionsHeader,
-  SectionTitle,
-  RolesListContainer,
-  AddQuestionButton,
-} from "./rolesTab.styled";
-import RoleListItem from "./RoleListItem";
-import Question from "./Question";
-import SelectFromExistingMenu from "./SelectFromExistingMenu";
+import { useState } from "react";
+
 import CreateRoleForm from "./CreateRoleForm";
+import Question from "./Question";
+import RoleListItem from "./RoleListItem";
+import SelectFromExistingMenu from "./SelectFromExistingMenu";
+import {
+  AddQuestionButton,
+  ContainerDiv,
+  QuestionsDisplay,
+  QuestionsDiv,
+  QuestionsHeader,
+  RolesDisplay,
+  RolesDiv,
+  RolesListContainer,
+  SectionTitle,
+} from "./rolesTab.styled";
+
 import type { Campaign } from "../types";
+import type { ChangeEvent, MouseEvent } from "react";
 
 type Props = {
   campaign: Campaign;

@@ -1,6 +1,9 @@
+import { Fragment } from "react";
 import tw, { styled } from "twin.macro";
+
 import { Transition } from "components";
-import { Fragment, HTMLAttributes } from "react";
+
+import type { HTMLAttributes } from "react";
 
 const Bar = ({
   transitionDelay,

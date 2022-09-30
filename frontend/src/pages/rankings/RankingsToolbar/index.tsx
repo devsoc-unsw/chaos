@@ -1,14 +1,15 @@
+import SortIcon from "@mui/icons-material/Sort";
 import {
+  Button,
   FormControl,
   Grid,
-  Select,
   InputLabel,
   MenuItem,
-  Button,
+  Select,
 } from "@mui/material";
+
 import type { SelectChangeEvent } from "@mui/material";
-import SortIcon from "@mui/icons-material/Sort";
-import { Dispatch, SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from "react";
 
 type Props = {
   positions: string[];

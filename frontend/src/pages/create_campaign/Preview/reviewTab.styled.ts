@@ -1,5 +1,6 @@
-import { styled } from "@mui/material/styles";
 import { Button, Grid } from "@mui/material";
+import { styled } from "@mui/material/styles";
+
 import { COLOURS } from "../../../utils/constants";
 
 export const SubmitWrapper = styled("div")`

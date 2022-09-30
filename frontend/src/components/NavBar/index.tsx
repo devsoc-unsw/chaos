@@ -1,7 +1,9 @@
-import tw, { styled } from "twin.macro";
-import { Link, NavLink, useNavigate } from "react-router-dom";
 import { ArrowRightOnRectangleIcon } from "@heroicons/react/24/solid";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import tw, { styled } from "twin.macro";
+
 import chaosImg from "assets/chaos.png";
+
 import { isLoggedIn } from "../../utils";
 
 const NavButton = styled(NavLink, {

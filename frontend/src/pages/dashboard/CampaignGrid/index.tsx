@@ -1,9 +1,10 @@
-import { useNavigate } from "react-router-dom";
 import { Grid } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
 import CampaignCard from "components/CampaignCard";
 import { bytesToImage, dateToStringForCampaignGrid } from "utils";
-import { CampaignWithRoles } from "types/api";
+
+import type { CampaignWithRoles } from "types/api";
 
 const CampaignGrid = ({ campaigns }: { campaigns: CampaignWithRoles[] }) => {
   const navigate = useNavigate();

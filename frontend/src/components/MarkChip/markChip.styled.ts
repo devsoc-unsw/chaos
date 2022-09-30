@@ -1,14 +1,14 @@
-import { styled } from "@mui/material/styles";
 import { Chip } from "@mui/material";
-import { darken } from "@mui/system";
 import {
-  red,
   deepOrange,
-  yellow,
-  lightGreen,
   green,
   grey,
+  lightGreen,
+  red,
+  yellow,
 } from "@mui/material/colors";
+import { styled } from "@mui/material/styles";
+import { darken } from "@mui/system";
 
 const chipColor = (mark: number) => {
   if (mark <= 1) return red[700];

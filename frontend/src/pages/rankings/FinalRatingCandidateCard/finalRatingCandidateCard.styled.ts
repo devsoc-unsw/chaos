@@ -1,6 +1,6 @@
-import { styled } from "@mui/material/styles";
 import { Card, Chip, Grid } from "@mui/material";
-import { red, green } from "@mui/material/colors";
+import { green, red } from "@mui/material/colors";
+import { styled } from "@mui/material/styles";
 
 export const CandidateCard = styled(Card)<{ reject: boolean }>(
   ({ reject }) => ({

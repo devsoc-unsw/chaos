@@ -1,27 +1,24 @@
-import {
-  useState,
-  useContext,
-  Dispatch,
-  SetStateAction,
-  MouseEvent,
-} from "react";
-import { ToggleButton, ToggleButtonGroup } from "@mui/material";
 import ClearIcon from "@mui/icons-material/Clear";
+import { ToggleButton, ToggleButtonGroup } from "@mui/material";
+import { useContext, useState } from "react";
+
+import { doDeleteOrg } from "../../../api";
+import { OrgContext } from "../OrgContext";
+
+import AdminCampaignContent from "./AdminCampaignContent";
+import AdminMembersContent from "./AdminMembersContent";
 import {
   AdminContentContainer,
+  ContentBody,
   ContentHeader,
-  ToggleButtonContainer,
   OrgInfo,
   OrgInfoImage,
   OrgInfoName,
-  ContentBody,
+  ToggleButtonContainer,
 } from "./adminContent.styled";
 
-import { OrgContext } from "../OrgContext";
-import AdminCampaignContent from "./AdminCampaignContent";
-import AdminMembersContent from "./AdminMembersContent";
-import { doDeleteOrg } from "../../../api";
-import { Campaign, Member, Organisation } from "../types";
+import type { Campaign, Member, Organisation } from "../types";
+import type { Dispatch, MouseEvent, SetStateAction } from "react";
 
 type Props = {
   org: Organisation;

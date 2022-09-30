@@ -1,12 +1,14 @@
-import { ChangeEventHandler, Dispatch, SetStateAction } from "react";
+import { OrgIconImage } from "../AdminSideBar/adminSidebar.styled";
+
 import {
   FormContainer,
   ImageUploadWrapper,
   TextInput,
   UploadButton,
 } from "./createOrganisationForm.styled";
-import { OrgIconImage } from "../AdminSideBar/adminSidebar.styled";
 import newImageIcon from "./new_image_icon.png";
+
+import type { ChangeEventHandler, Dispatch, SetStateAction } from "react";
 
 type Props = {
   uploadedImage: { image: File | null; url: string | null };

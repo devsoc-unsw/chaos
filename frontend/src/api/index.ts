@@ -1,6 +1,8 @@
 /* eslint-disable camelcase */
 import { getStore } from "../utils";
+
 import API from "./api";
+
 import type {
   Application,
   ApplicationAnswer,

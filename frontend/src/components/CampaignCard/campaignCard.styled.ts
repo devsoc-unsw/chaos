@@ -1,5 +1,5 @@
-import { styled } from "@mui/material/styles";
 import { IconButton } from "@mui/material/";
+import { styled } from "@mui/material/styles";
 
 export const ExpandIconButton = styled(IconButton)<{ expanded: boolean }>(
   ({ theme, expanded }) => ({

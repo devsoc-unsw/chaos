@@ -1,24 +1,27 @@
-import { Container, CardMedia, Typography } from "@mui/material";
+import { CardMedia, Container, Typography } from "@mui/material";
 import Table from "@mui/material/Table";
 import TableContainer from "@mui/material/TableContainer";
 import TableRow from "@mui/material/TableRow";
-import type { ChangeEvent, Dispatch, SetStateAction } from "react";
+
 import { isLoggedIn } from "../../utils";
+
 import {
-  UserInfoTypography,
-  Section,
-  SectionHeader,
-  CampaignImageCard,
-  RoleButton,
-  Question,
   Answer,
+  AuthLink,
   CampaignDescription,
+  CampaignImageCard,
   FormContainer,
   FormContent,
-  AuthLink,
-  UserInfoCell,
+  Question,
+  RoleButton,
+  Section,
+  SectionHeader,
   SpaceRight,
+  UserInfoCell,
+  UserInfoTypography,
 } from "./applicationForm.styled";
+
+import type { ChangeEvent, Dispatch, SetStateAction } from "react";
 
 type Props = {
   questions: { id: number; text: string; roles: Set<number> }[];

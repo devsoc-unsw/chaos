@@ -1,4 +1,5 @@
-import { Tooltip, SvgIcon, Box } from "@mui/material";
+import { Box, SvgIcon, Tooltip } from "@mui/material";
+
 import { PassBarDivider } from "./passBar.styled";
 
 const PassBar = () => (

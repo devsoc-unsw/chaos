@@ -1,14 +1,16 @@
+import { Container } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Container } from "@mui/material";
+import tw from "twin.macro";
 
+import { getAllCampaigns } from "api";
+import { FetchError } from "api/api";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 import { removeStore } from "utils";
-import { getAllCampaigns } from "api";
-import tw from "twin.macro";
-import { FetchError } from "api/api";
-import type { CampaignWithRoles } from "types/api";
+
 import CampaignGrid from "./CampaignGrid";
+
+import type { CampaignWithRoles } from "types/api";
 
 const Heading = tw.h2`text-2xl font-bold my-4`;
 
@@ -50,7 +52,7 @@ const Dashboard = () => {
       setCurrentCampaigns(current.filter((c) => !c.applied_for.length));
       setPastCampaigns(campaigns.past_campaigns);
     };
-    getCampaigns();
+    void getCampaigns();
   }, []);
   return (
     <Container>

@@ -1,17 +1,20 @@
-import { useState, useEffect } from "react";
 import { Grid } from "@mui/material";
-import {
-  CreateDraftButton,
-  InfoTextBox,
-  InfoText,
-  PublishButton,
-  SubmitWrapper,
-  CampaignCardGrid,
-} from "./reviewTab.styled";
+import { useEffect, useState } from "react";
+
 import ApplicationForm from "../../../components/ApplicationForm";
 import CampaignCard from "../../../components/CampaignCard";
 import { dateToStringForBackend } from "../../../utils";
-import { Campaign } from "../types";
+
+import {
+  CampaignCardGrid,
+  CreateDraftButton,
+  InfoText,
+  InfoTextBox,
+  PublishButton,
+  SubmitWrapper,
+} from "./reviewTab.styled";
+
+import type { Campaign } from "../types";
 
 type Props = {
   campaign: Campaign;

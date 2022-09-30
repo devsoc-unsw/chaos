@@ -1,13 +1,15 @@
-import { ListItemText, ListItemIcon, IconButton, Divider } from "@mui/material";
 import ClearIcon from "@mui/icons-material/Clear";
 import EditIcon from "@mui/icons-material/Edit";
-import { MouseEventHandler } from "react";
+import { Divider, IconButton, ListItemIcon, ListItemText } from "@mui/material";
+
 import {
-  RoleListItemContent as ListItemContent,
   RoleListItemButton as ListItemButton,
+  RoleListItemContent as ListItemContent,
   RoleQuantity,
 } from "./rolesTab.styled";
-import { Campaign, Role } from "../types";
+
+import type { Campaign, Role } from "../types";
+import type { MouseEventHandler } from "react";
 
 type Props = {
   role: Role;

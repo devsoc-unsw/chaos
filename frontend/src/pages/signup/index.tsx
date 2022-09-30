@@ -1,9 +1,11 @@
+import { Button, InputLabel, TextField } from "@mui/material";
 import { useState } from "react";
-import { InputLabel, TextField, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+
+import { doSignup } from "../../api";
 import { BackgroundWrapper } from "../../components";
 import { getStore, setStore } from "../../utils";
-import { doSignup } from "../../api";
+
 import { StyledForm } from "./signup.styled";
 
 const Signup = () => {

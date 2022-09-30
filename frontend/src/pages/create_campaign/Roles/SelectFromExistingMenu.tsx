@@ -1,8 +1,10 @@
-import { Menu, MenuItem } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import type { MouseEventHandler } from "react";
+import { Menu, MenuItem } from "@mui/material";
+
 import { SelectFromExistingButton as Button } from "./rolesTab.styled";
+
 import type { Question } from "../types";
+import type { MouseEventHandler } from "react";
 
 type Props = {
   filteredQuestions: Question[];

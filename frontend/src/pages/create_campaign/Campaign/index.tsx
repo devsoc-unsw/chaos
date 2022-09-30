@@ -1,19 +1,22 @@
-import { FormControlLabel, Switch } from "@mui/material";
 import AdapterDateFns from "@mui/lab/AdapterDateFns";
-import LocalizationProvider from "@mui/lab/LocalizationProvider";
 import DateTimePicker from "@mui/lab/DateTimePicker";
+import LocalizationProvider from "@mui/lab/LocalizationProvider";
+import { FormControlLabel, Switch } from "@mui/material";
 import Dropzone from "react-dropzone";
-import type { ComponentProps } from "react";
+
+import { fileToDataUrl } from "../../../utils";
+
 import {
   CampaignContainer,
   CampaignDropzone,
   CampaignRowDiv,
-  SwitchRowDiv,
   CampaignTextField,
   CoverImage,
+  SwitchRowDiv,
 } from "./campaignTab.styled";
-import { fileToDataUrl } from "../../../utils";
-import { Campaign } from "../types";
+
+import type { Campaign } from "../types";
+import type { ComponentProps } from "react";
 
 type Props = {
   campaign: Campaign;

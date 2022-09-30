@@ -1,13 +1,17 @@
+import { Container, Tab, Tabs } from "@mui/material";
 import { useEffect, useState } from "react";
-import { Container, Tabs, Tab } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
-import { dateToStringForBackend, base64ToBytes } from "utils";
+
+import { base64ToBytes, dateToStringForBackend } from "utils";
+
+import { createCampaign, isAdminInOrganisation } from "../../api";
+
 import CampaignTab from "./Campaign";
-import RolesTab from "./Roles";
 import ReviewTab from "./Preview";
-import { NextButton, ArrowIcon, NextWrapper } from "./createCampaign.styled";
-import { isAdminInOrganisation, createCampaign } from "../../api";
-import { Answers, Question, Role } from "./types";
+import RolesTab from "./Roles";
+import { ArrowIcon, NextButton, NextWrapper } from "./createCampaign.styled";
+
+import type { Answers, Question, Role } from "./types";
 
 const CreateCampaign = () => {
   const orgId = Number(useParams().orgId);

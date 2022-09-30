@@ -1,26 +1,29 @@
-import { ComponentProps, ReactElement, useState } from "react";
+import CheckIcon from "@mui/icons-material/Check";
+import CloseIcon from "@mui/icons-material/Close";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import {
+  Button,
   Card,
+  CardActionArea,
+  CardActions,
   CardContent,
   CardMedia,
-  Typography,
-  CardActionArea,
+  Chip,
   Collapse,
-  CardActions,
-  Button,
+  Divider,
   List,
   ListItem,
   ListItemText,
-  Divider,
-  Chip,
   Tooltip,
+  Typography,
 } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
-import CheckIcon from "@mui/icons-material/Check";
-import CloseIcon from "@mui/icons-material/Close";
-import type { ApplicationStatus, CampaignWithRoles } from "types/api";
+import { useState } from "react";
+
 import { ExpandIconButton } from "./campaignCard.styled";
+
+import type { ComponentProps, ReactElement } from "react";
+import type { ApplicationStatus, CampaignWithRoles } from "types/api";
 
 type Status = {
   title: string;

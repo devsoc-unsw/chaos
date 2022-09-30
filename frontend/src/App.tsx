@@ -1,8 +1,9 @@
+import { Box, CssBaseline, ThemeProvider, createTheme } from "@mui/material";
+import { SnackbarProvider } from "notistack";
 import { Suspense, useState } from "react";
 import { BrowserRouter, Routes } from "react-router-dom";
-import { SnackbarProvider } from "notistack";
-import { Box, CssBaseline, ThemeProvider, createTheme } from "@mui/material";
-import { NavBar, LoadingIndicator } from "./components";
+
+import { LoadingIndicator, NavBar } from "./components";
 import { SetNavBarTitleContext } from "./contexts/SetNavbarTitleContext";
 import routes from "./routes";
 

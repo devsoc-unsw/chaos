@@ -1,8 +1,11 @@
 import { Box, Divider, Grid, TextField, Typography } from "@mui/material";
-import ApplicationPreviewer from "components/ApplicationPreviewer";
+
 import { MarkChip } from "components";
-import type { ApplicationWithQuestions } from "types/admin";
+import ApplicationPreviewer from "components/ApplicationPreviewer";
+
 import { RatingChips } from "./applicationsListTabPanel";
+
+import type { ApplicationWithQuestions } from "types/admin";
 
 type Props = {
   application: ApplicationWithQuestions;

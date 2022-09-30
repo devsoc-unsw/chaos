@@ -1,22 +1,23 @@
-import { useContext, useEffect, useState } from "react";
-import { Box, Container, Button, Grid, Tab } from "@mui/material";
 import { TabContext, TabList } from "@mui/lab";
-
+import { Box, Button, Container, Grid, Tab } from "@mui/material";
+import { useContext, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
-import ReviewerStepper from "components/ReviewerStepper";
+
 import {
   getApplicationAnswers,
   getApplicationRatings,
+  getCampaign,
+  getCampaignRoles,
   getRoleApplications,
   getRoleQuestions,
-  getCampaignRoles,
   setApplicationRating,
-  getCampaign,
 } from "api";
-import type { ApplicationsWithQuestions } from "types/admin";
+import ReviewerStepper from "components/ReviewerStepper";
+import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 
 import ApplicationsList from "./ApplicationsList";
+
+import type { ApplicationsWithQuestions } from "types/admin";
 
 const Marking = () => {
   const setNavBarTitle = useContext(SetNavBarTitleContext);

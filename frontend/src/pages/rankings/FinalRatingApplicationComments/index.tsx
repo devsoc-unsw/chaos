@@ -1,5 +1,7 @@
-import { Dialog, DialogTitle, DialogContent, Divider } from "@mui/material";
+import { Dialog, DialogContent, DialogTitle, Divider } from "@mui/material";
+
 import ApplicationPreviewer from "components/ApplicationPreviewer";
+
 import type { ApplicationWithQuestions } from "types/admin";
 
 type Props = {

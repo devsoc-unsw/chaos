@@ -1,20 +1,18 @@
-import {
-  useContext,
-  useState,
-  useEffect,
-  useRef,
-  Fragment,
-  PointerEvent,
-} from "react";
-import tw from "twin.macro";
+import { Fragment, useContext, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
-import { Transition } from "components";
+import tw from "twin.macro";
+
 import chaosImg from "assets/chaos.png";
+import { Transition } from "components";
+import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
+
 import { getStore } from "../../utils";
+
 import Campaigns from "./components/Campaigns";
 import DashboardButton from "./components/DashboardButton";
 import Waves from "./components/Waves";
+
+import type { PointerEvent } from "react";
 
 const OAUTH_CALLBACK_URL =
   getStore("AUTH_TOKEN") || import.meta.env.VITE_OAUTH_CALLBACK_URL;

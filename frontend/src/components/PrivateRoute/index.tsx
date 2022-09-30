@@ -1,9 +1,11 @@
 /* eslint-disable react/jsx-props-no-spreading */
 
 import { useEffect, useState } from "react";
-import type { ComponentProps } from "react";
 import { Route, useNavigate } from "react-router-dom";
+
 import { isLoggedIn } from "../../utils";
+
+import type { ComponentProps } from "react";
 
 const PrivateRoute = (props: ComponentProps<typeof Route>) => {
   const [loading, setLoading] = useState(true);

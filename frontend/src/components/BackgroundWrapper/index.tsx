@@ -1,4 +1,5 @@
 import { Box, useTheme } from "@mui/system";
+
 import type { PropsWithChildren } from "react";
 
 const BackgroundWrapper = ({ children }: PropsWithChildren) => {
