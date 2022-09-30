@@ -4,9 +4,12 @@
     "es2021": true
   },
   "extends": [
+    "plugin:@typescript-eslint/recommended",
     "plugin:react/recommended",
     "airbnb",
     "prettier",
+    "plugin:import/recommended",
+    "plugin:import/typescript",
     "plugin:react/jsx-runtime"
   ],
   "parser": "@babel/eslint-parser",
