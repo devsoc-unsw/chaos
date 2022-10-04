@@ -29,6 +29,7 @@ pub enum OrgError {
     UserIsNotInOrg,
     UserNotFound,
     UserAlreadyInOrg,
+    Unknown,
 }
 
 #[post("/new", data = "<organisation>")]
@@ -278,16 +279,28 @@ pub async fn invite_uid(
         let admin_level = admin_level.into_inner();
 
         if level.geq(admin_level) {
-            let new_user = NewOrganisationUser {
-                user_id,
-                organisation_id,
-                admin_level,
-            };
+            match OrganisationUser::get(conn, organisation_id, user_id) {
+                Some(u) => {
+                    if u.admin_level.geq(u.admin_level) {
+                        Err(JsonErr(OrgError::InsufficientPerms, Status::Forbidden))
+                    } else {
+                        u.update_admin_level(conn, admin_level)
+                            .ok_or(JsonErr(OrgError::Unknown, Status::InternalServerError))
+                    }
+                }
+                None => {
+                    let new_user = NewOrganisationUser {
+                        user_id,
+                        organisation_id,
+                        admin_level,
+                    };
 
-            new_user
-                .insert(conn)
-                .map(|_| ())
-                .ok_or(JsonErr(OrgError::UserAlreadyInOrg, Status::NotAcceptable))
+                    new_user
+                        .insert(conn)
+                        .map(|_| ())
+                        .ok_or(JsonErr(OrgError::UserAlreadyInOrg, Status::NotAcceptable))
+                }
+            }
         } else {
             Err(JsonErr(OrgError::InsufficientPerms, Status::Forbidden))
         }

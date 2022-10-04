@@ -56,6 +56,16 @@ impl User {
         users.order(id.asc()).load(conn).unwrap_or_else(|_| vec![])
     }
 
+    pub fn make_superuser(&self, conn: &PgConnection) -> Result<(), diesel::result::Error> {
+        use crate::database::schema::users::dsl::*;
+
+        diesel::update(users.filter(id.eq(self.id)))
+            .set(superuser.eq(true))
+            .execute(conn)?;
+
+        Ok(())
+    }
+
     pub fn get_number(conn: &PgConnection) -> i64 {
         use crate::database::schema::users::dsl::*;
         use diesel::dsl::count;
@@ -288,6 +298,20 @@ impl OrganisationUser {
             .ok()
     }
 
+    pub fn update_admin_level(&self, conn: &PgConnection, admin_level_val: AdminLevel) -> Option<()> {
+        use crate::database::schema::organisation_users::dsl::*;
+
+        diesel::update(
+            organisation_users
+                .filter(organisation_id.eq(self.organisation_id))
+                .filter(user_id.eq(self.user_id)),
+        )
+        .set(admin_level.eq(admin_level_val))
+        .execute(conn)
+        .map(|_| ())
+        .ok()
+    }
+
     pub fn get_all(conn: &PgConnection) -> Vec<OrganisationUser> {
         use crate::database::schema::organisation_users::dsl::*;
 
@@ -406,12 +430,16 @@ impl Campaign {
             .unwrap_or_else(|_| vec![])
     }
 
+    pub fn is_running(&self) -> bool {
+        let now = Utc::now().naive_utc();
+        self.starts_at <= now && self.ends_at >= now
+    }
+
     /// return all campaigns that are live to all users
     pub fn get_all_public_with_roles(conn: &PgConnection, user_id: i32) -> Vec<CampaignWithRoles> {
         use crate::database::schema::campaigns::dsl::*;
 
         let now = Utc::now().naive_utc();
-        println!("now: {}", now);
         let campaigns_vec: Vec<Campaign> = campaigns
             .filter(
                 starts_at
@@ -451,8 +479,6 @@ impl Campaign {
                         }
                     })
                     .collect();
-
-                println!("Questions for campaign {}: {:?}", campaign.name, questions);
 
                 let applied_for: Vec<(i32, ApplicationStatus)> = campaign_roles
                     .clone()
@@ -550,6 +576,8 @@ impl Campaign {
     }
 
     pub fn create(conn: &PgConnection, new_campaign: &NewCampaignInput) -> Option<Campaign> {
+        use crate::database::schema::campaigns::dsl::*;
+
         let new_campaign = NewCampaign {
             organisation_id: new_campaign.organisation_id,
             name: new_campaign.name.clone(),
@@ -561,6 +589,15 @@ impl Campaign {
                 .ok()?,
             published: new_campaign.published,
         };
+
+        if campaigns
+            .filter(organisation_id.eq(new_campaign.organisation_id))
+            .filter(name.eq(&new_campaign.name))
+            .first::<Campaign>(conn)
+            .is_ok()
+        {
+            return None;
+        }
 
         new_campaign.insert(conn)
     }
@@ -683,7 +720,6 @@ impl Role {
             .load(conn)
             .ok()?;
 
-        println!("Trying to delete questions");
         diesel::delete(questions::table.filter(any(questions::role_ids).eq(role.id)))
             .execute(conn)
             .ok();
