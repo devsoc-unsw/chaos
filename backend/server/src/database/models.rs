@@ -298,7 +298,11 @@ impl OrganisationUser {
             .ok()
     }
 
-    pub fn update_admin_level(&self, conn: &PgConnection, admin_level_val: AdminLevel) -> Option<()> {
+    pub fn update_admin_level(
+        &self,
+        conn: &PgConnection,
+        admin_level_val: AdminLevel,
+    ) -> Option<()> {
         use crate::database::schema::organisation_users::dsl::*;
 
         diesel::update(

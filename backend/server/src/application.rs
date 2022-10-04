@@ -2,8 +2,8 @@ use diesel::prelude::*;
 
 use crate::database::{
     models::{
-        Answer, Application, NewAnswer, NewApplication, NewRating, OrganisationUser, Question,
-        Rating, User, Role, Campaign,
+        Answer, Application, Campaign, NewAnswer, NewApplication, NewRating, OrganisationUser,
+        Question, Rating, Role, User,
     },
     schema::ApplicationStatus,
     Database,
