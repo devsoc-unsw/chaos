@@ -70,11 +70,9 @@ impl<'r> FromRequest<'r> for Auth {
 
         let token = header.trim_start_matches("Bearer ");
 
-        let validation = Validation {
-            algorithms: vec![Algorithm::HS256],
-            validate_exp: false,
-            ..Default::default()
-        };
+        let mut validation = Validation::new(Algorithm::HS256);
+        validation.validate_exp = false;
+        validation.required_spec_claims.clear();
 
         let token = match jsonwebtoken::decode::<AuthJwt>(
             token,
@@ -194,6 +192,7 @@ pub struct SignInBody {
 #[derive(Serialize)]
 pub struct SignInResponse {
     token: String,
+    name: String,
 }
 
 #[derive(Serialize)]
@@ -267,7 +266,10 @@ pub async fn signin(
     )
     .expect("creating jwt should never fail");
 
-    Ok(Json(SignInResponse { token }))
+    Ok(Json(SignInResponse {
+        token,
+        name: user.display_name,
+    }))
 }
 
 #[derive(Deserialize, Clone)]
@@ -297,11 +299,9 @@ pub async fn signup(
     state: &State<ApiState>,
     db: Database,
 ) -> Result<Json<SignUpResponse>, JsonErr<SignUpError>> {
-    let validation = Validation {
-        algorithms: vec![Algorithm::HS256],
-        validate_exp: false,
-        ..Default::default()
-    };
+    let mut validation = Validation::new(Algorithm::HS256);
+    validation.validate_exp = false;
+    validation.required_spec_claims.clear();
 
     let token = match jsonwebtoken::decode::<SignupJwt>(
         &body.signup_token,

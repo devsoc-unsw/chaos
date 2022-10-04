@@ -38,7 +38,10 @@ async fn main() {
                 }}
             }},
             "log_level": "debug",
-            "address": "0.0.0.0"
+            "address": "0.0.0.0",
+            "limits": {{
+                "json": "10485760"
+            }}
         }}"#,
         db_url
     ))
@@ -125,7 +128,7 @@ async fn main() {
                 backend::question::delete_question
             ],
         )
-        .mount("/admin", routes![backend::admin::get,])
+        .mount("/admin", routes![backend::admin::get, backend::admin::make_superuser])
         .launch()
         .await
         .unwrap();

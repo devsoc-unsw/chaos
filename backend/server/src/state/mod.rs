@@ -21,7 +21,7 @@ impl GlobalStringRef {
 pub struct ApiState {
     pub reqwest_client: Client,
     pub jwt_encoding_key: EncodingKey,
-    pub jwt_decoding_key: DecodingKey<'static>,
+    pub jwt_decoding_key: DecodingKey,
     pub userinfo_endpoint: String,
 }
 

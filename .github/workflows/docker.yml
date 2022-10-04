@@ -25,13 +25,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-multi-buildx
       - name: Docker Login
-        uses: docker/login-action@v1.14.1
+        uses: docker/login-action@v2.0.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GH_TOKEN }}
       - name: Build production image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           context: backend
           builder: ${{ steps.buildx.outputs.name }}
@@ -79,8 +79,8 @@ jobs:
           platforms: linux/amd64
           file: frontend/Dockerfile
           build-args: |
-            REACT_APP_API_BASE_URL=${{ secrets.REACT_APP_API_BASE_URL }}
-            REACT_APP_OAUTH_CALLBACK_URL=${{ secrets.REACT_APP_OAUTH_CALLBACK_URL }}
+            VITE_API_BASE_URL=${{ secrets.API_BASE_URL }}
+            VITE_OAUTH_CALLBACK_URL=${{ secrets.OAUTH_CALLBACK_URL }}
           tags: |
             ghcr.io/csesoc/chaos-frontend:${{ github.sha }}
             ghcr.io/csesoc/chaos-frontend:latest
@@ -101,7 +101,7 @@ jobs:
           repository: csesoc/deployment
           token: ${{ secrets.GH_TOKEN }}
       - name: Install yq - portable yaml processor
-        uses: mikefarah/yq@v4.25.1
+        uses: mikefarah/yq@v4.27.5
       - name: Update deployment
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}

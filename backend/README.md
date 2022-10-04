@@ -12,7 +12,7 @@
   * this might delete code in the backend, make sure to restore any deletions.
 * Run the server with `cargo run --bin server`
   * If you want to run the server and get it to restart upon changes, you can install `cargo watch` with `cargo install cargo-watch`
-  * Then, run `cargo watch -x run` instead
+  * Then, run `cargo watch -x 'run --bin server'` instead
   * It will watch files and continually re-compile upon changes
 * If there are errrors, ask on discord.
 

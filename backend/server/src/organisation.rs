@@ -36,7 +36,7 @@ pub async fn new(
     organisation: Json<NewOrganisation>,
     user: SuperUser,
     db: Database,
-) -> Result<(), JsonErr<NewOrgError>> {
+) -> Result<Json<Organisation>, JsonErr<NewOrgError>> {
     db.run(move |conn| {
         let org = NewOrganisation::insert(&organisation, &conn)
             .ok_or(JsonErr(NewOrgError::OrgNameAlreadyExists, Status::NotFound))?;
@@ -51,7 +51,7 @@ pub async fn new(
             .insert(conn)
             .ok_or(JsonErr(NewOrgError::FailedToJoin, Status::Forbidden))?;
 
-        Ok(())
+        Ok(Json(org))
     })
     .await
 }

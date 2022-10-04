@@ -56,6 +56,16 @@ impl User {
         users.order(id.asc()).load(conn).unwrap_or_else(|_| vec![])
     }
 
+    pub fn make_superuser(&self, conn: &PgConnection) -> Result<(), diesel::result::Error> {
+        use crate::database::schema::users::dsl::*;
+
+        diesel::update(users.filter(id.eq(self.id)))
+            .set(superuser.eq(true))
+            .execute(conn)?;
+
+        Ok(())
+    }
+
     pub fn get_number(conn: &PgConnection) -> i64 {
         use crate::database::schema::users::dsl::*;
         use diesel::dsl::count;

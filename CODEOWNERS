@@ -1,0 +1,8 @@
+backend/ @csesoc/chaos-leads
+frontend/ @csesoc/chaos-leads
+README.md @csesoc/chaos-leads
+
+.github/ @csesoc/technical
+renovate.json @csesoc/technical
+CODEOWNERS @csesoc/technical
+Dockerfile @csesoc/technical
