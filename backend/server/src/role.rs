@@ -267,11 +267,14 @@ pub struct EmailData {
     pub special_bodies: Option<HashMap<i32, String>>,
 }
 
-fn parse_optional(ms: Option<String>, vars: HashSet<String>) -> Result<Option<ParsedTemplate>, JsonErr<RoleError>> {
+fn parse_optional(
+    ms: Option<String>,
+    vars: HashSet<String>,
+) -> Result<Option<ParsedTemplate>, JsonErr<RoleError>> {
     match ms {
         Some(s) => Ok(Some(
             ParsedTemplate::from_template(s, vars)
-                .map_err(|x| JsonErr(x.into(), Status::BadRequest))?
+                .map_err(|x| JsonErr(x.into(), Status::BadRequest))?,
         )),
         None => Ok(None),
     }
@@ -287,27 +290,33 @@ pub async fn send_emails(
     use crate::database::schema::{applications, users};
 
     db.run(move |conn| {
-        let role = Role::get_from_id(conn, role).ok_or(JsonErr(RoleError::RoleNotFound, Status::NotFound))?;
+        let role = Role::get_from_id(conn, role)
+            .ok_or(JsonErr(RoleError::RoleNotFound, Status::NotFound))?;
 
-        let vars: HashSet<String> = [
-            String::from("name"),
-            String::from("role"),
-        ]
-        .into_iter()
-        .collect();
+        let vars: HashSet<String> = [String::from("name"), String::from("role")]
+            .into_iter()
+            .collect();
 
-        let EmailData { success_body, failure_body, special_bodies, subject, users } = data.into_inner();
+        let EmailData {
+            success_body,
+            failure_body,
+            special_bodies,
+            subject,
+            users,
+        } = data.into_inner();
 
         let mut success_parsed = parse_optional(success_body, vars.clone())?;
         let mut rejected_parsed = parse_optional(failure_body, vars.clone())?;
         let mut special_parsed = match special_bodies {
-            Some(m) => {
-                Some(m.into_iter().map(|(k, v)| {
-                    ParsedTemplate::from_template(v, vars.clone())
-                        .map_err(|x| JsonErr(x.into(), Status::BadRequest))
-                        .map(|x| (k, Some(x)))
-                }).collect::<Result<HashMap<_, _>, _>>()?)
-            }
+            Some(m) => Some(
+                m.into_iter()
+                    .map(|(k, v)| {
+                        ParsedTemplate::from_template(v, vars.clone())
+                            .map_err(|x| JsonErr(x.into(), Status::BadRequest))
+                            .map(|x| (k, Some(x)))
+                    })
+                    .collect::<Result<HashMap<_, _>, _>>()?,
+            ),
             None => None,
         };
 
@@ -349,7 +358,10 @@ pub async fn send_emails(
                 }
             }
 
-            let special = special_parsed.as_ref().map(|x| x.contains_key(&uid)).unwrap_or(false);
+            let special = special_parsed
+                .as_ref()
+                .map(|x| x.contains_key(&uid))
+                .unwrap_or(false);
             let body = if special {
                 special_parsed.as_mut().map(|x| x.get_mut(&uid).unwrap())
             } else {
@@ -364,18 +376,25 @@ pub async fn send_emails(
                 let owned_body = parsed.take();
                 let mapped = owned_body
                     .ok_or(JsonErr(RoleError::NoMatchingBody, Status::BadRequest))?
-                    .to_mapped([(String::from("name"), name), (String::from("role"), role.name.clone())].into_iter().collect())
+                    .to_mapped(
+                        [
+                            (String::from("name"), name),
+                            (String::from("role"), role.name.clone()),
+                        ]
+                        .into_iter()
+                        .collect(),
+                    )
                     .map_err(|x| JsonErr(x.into(), Status::BadRequest))?;
 
                 let email_body = mapped.render();
 
                 *parsed = Some(mapped.into());
 
-                send_email(email, subject.clone(), email_body).ok_or(JsonErr(RoleError::EmailError, Status::InternalServerError))?;
+                send_email(email, subject.clone(), email_body)
+                    .ok_or(JsonErr(RoleError::EmailError, Status::InternalServerError))?;
             } else {
                 JsonErr(RoleError::NoMatchingBody, Status::BadRequest);
             }
-
         }
 
         Ok(())
