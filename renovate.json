@@ -11,7 +11,8 @@
     },
     {
       "matchPackageNames": ["node"],
-      "groupName": "node"
+      "groupName": "node",
+      "ignoreUnstable": false
     }
   ]
 }
