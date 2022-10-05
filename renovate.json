@@ -8,6 +8,10 @@
       "matchUpdateTypes": ["patch", "pin", "digest"],
       "automerge": true,
       "automergeType": "branch"
+    },
+    {
+      "matchPackageNames": ["node"],
+      "groupName": "node"
     }
   ]
 }
