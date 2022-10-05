@@ -1186,7 +1186,7 @@
   resolved "https://registry.yarnpkg.com/@headlessui/react/-/react-1.7.3.tgz#853c598ff47b37cdd192c5cbee890d9b610c3ec0"
   integrity sha512-LGp06SrGv7BMaIQlTs8s2G06moqkI0cb0b8stgq7KZ3xcHdH3qMP+cRyV7qe5x4XEW/IGY48BW4fLesD6NQLng==
 
-"@hello-pangea/dnd@^16.0.0":
+"@hello-pangea/dnd@16.0.0":
   version "16.0.0"
   resolved "https://registry.yarnpkg.com/@hello-pangea/dnd/-/dnd-16.0.0.tgz#b97791286395924ffbdb4cd0f27f06f2985766d5"
   integrity sha512-FprEzwrGMvyclVf8pWTrPbUV7/ZFt6NmL76ePj1mMyZG195htDUkmvET6CBwKJTXmV+AE/GyK4Lv3wpCqrlY/g==
