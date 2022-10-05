@@ -36,7 +36,7 @@ const NavBar = ({ campaign }: { campaign: string }) => {
   };
 
   return (
-    <header tw="fixed inset-x-0 bg-white py-4 shadow-md bg-gradient-to-r from-[#9dbbfb55] to-[#a78bfa55]">
+    <header tw="fixed inset-x-0 z-10 bg-white py-4 shadow-md bg-gradient-to-r from-[#9dbbfb55] to-[#a78bfa55]">
       <div tw="mx-auto max-w-7xl px-4 flex gap-4 items-center text-[hsl(255.1,30%,22%)]">
         <Link
           to="/"
