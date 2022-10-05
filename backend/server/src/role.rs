@@ -6,12 +6,18 @@ use crate::database::{
     schema::ApplicationStatus,
     Database,
 };
+use crate::email::*;
+use crate::error::JsonErr;
 use chrono::NaiveDateTime;
+use diesel::prelude::*;
 use diesel::PgConnection;
 use rocket::{
-    delete, get, post, put,
-    serde::{json::Json, Serialize},
+    delete, get,
+    http::Status,
+    post, put,
+    serde::{json::Json, Deserialize, Serialize},
 };
+use std::collections::{HashMap, HashSet};
 
 #[derive(Serialize)]
 pub enum RoleError {
@@ -20,6 +26,11 @@ pub enum RoleError {
     CampaignNotFound,
     Unauthorized,
     RoleAlreadyExists,
+    InvalidExpr,
+    InvalidVariable(String),
+    InvalidMappings,
+    NoMatchingBody,
+    EmailError,
 }
 
 #[derive(Serialize)]
@@ -221,6 +232,153 @@ pub async fn get_applications(
         Ok(Json(GetApplicationsResponse {
             applications: res_vec,
         }))
+    })
+    .await
+}
+
+impl std::convert::From<TemplateErr> for RoleError {
+    fn from(x: TemplateErr) -> Self {
+        match x {
+            TemplateErr::InvalidExpr => RoleError::InvalidExpr,
+            TemplateErr::InvalidVariable(s) => RoleError::InvalidVariable(s),
+            TemplateErr::InvalidMappings => RoleError::InvalidMappings,
+        }
+    }
+}
+
+#[derive(Deserialize)]
+pub enum Selection {
+    #[serde(rename = "all")]
+    All,
+    #[serde(rename = "failed")]
+    Failed,
+    #[serde(rename = "succeeded")]
+    Succeeded,
+    #[serde(rename = "some")]
+    Some(HashSet<i32>),
+}
+
+#[derive(Deserialize)]
+pub struct EmailData {
+    pub users: Selection,
+    pub subject: String,
+    pub success_body: Option<String>,
+    pub failure_body: Option<String>,
+    pub special_bodies: Option<HashMap<i32, String>>,
+}
+
+fn parse_optional(ms: Option<String>, vars: HashSet<String>) -> Result<Option<ParsedTemplate>, JsonErr<RoleError>> {
+    match ms {
+        Some(s) => Ok(Some(
+            ParsedTemplate::from_template(s, vars)
+                .map_err(|x| JsonErr(x.into(), Status::BadRequest))?
+        )),
+        None => Ok(None),
+    }
+}
+
+#[post("/<role>/send_emails", data = "<data>")]
+pub async fn send_emails(
+    role: i32,
+    user: User,
+    db: Database,
+    data: Json<EmailData>,
+) -> Result<(), JsonErr<RoleError>> {
+    use crate::database::schema::{applications, users};
+
+    db.run(move |conn| {
+        let role = Role::get_from_id(conn, role).ok_or(JsonErr(RoleError::RoleNotFound, Status::NotFound))?;
+
+        let vars: HashSet<String> = [
+            String::from("name"),
+            String::from("role"),
+        ]
+        .into_iter()
+        .collect();
+
+        let EmailData { success_body, failure_body, special_bodies, subject, users } = data.into_inner();
+
+        let mut success_parsed = parse_optional(success_body, vars.clone())?;
+        let mut rejected_parsed = parse_optional(failure_body, vars.clone())?;
+        let mut special_parsed = match special_bodies {
+            Some(m) => {
+                Some(m.into_iter().map(|(k, v)| {
+                    ParsedTemplate::from_template(v, vars.clone())
+                        .map_err(|x| JsonErr(x.into(), Status::BadRequest))
+                        .map(|x| (k, Some(x)))
+                }).collect::<Result<HashMap<_, _>, _>>()?)
+            }
+            None => None,
+        };
+
+        OrganisationUser::role_admin_level(role.id, user.id, conn)
+            .is_admin()
+            .check()
+            .map_err(|_| JsonErr(RoleError::Unauthorized, Status::Forbidden))?;
+
+        let epic_iter = applications::table
+            .filter(applications::role_id.eq(role.id))
+            .inner_join(users::table)
+            .select((
+                users::id,
+                users::display_name,
+                users::email,
+                applications::status,
+            ))
+            .load(conn)
+            .unwrap_or_else(|_| vec![])
+            .into_iter();
+
+        for (uid, name, email, status) in epic_iter {
+            match users {
+                Selection::All => (),
+                Selection::Failed => {
+                    if status != ApplicationStatus::Rejected {
+                        continue;
+                    }
+                }
+                Selection::Succeeded => {
+                    if status != ApplicationStatus::Success {
+                        continue;
+                    }
+                }
+                Selection::Some(ref set) => {
+                    if !set.contains(&uid) {
+                        continue;
+                    }
+                }
+            }
+
+            let special = special_parsed.as_ref().map(|x| x.contains_key(&uid)).unwrap_or(false);
+            let body = if special {
+                special_parsed.as_mut().map(|x| x.get_mut(&uid).unwrap())
+            } else {
+                match status {
+                    ApplicationStatus::Success => Some(&mut success_parsed),
+                    ApplicationStatus::Rejected => Some(&mut rejected_parsed),
+                    _ => None,
+                }
+            };
+
+            if let Some(parsed) = body {
+                let owned_body = parsed.take();
+                let mapped = owned_body
+                    .ok_or(JsonErr(RoleError::NoMatchingBody, Status::BadRequest))?
+                    .to_mapped([(String::from("name"), name), (String::from("role"), role.name.clone())].into_iter().collect())
+                    .map_err(|x| JsonErr(x.into(), Status::BadRequest))?;
+
+                let email_body = mapped.render();
+
+                *parsed = Some(mapped.into());
+
+                send_email(email, subject.clone(), email_body).ok_or(JsonErr(RoleError::EmailError, Status::InternalServerError))?;
+            } else {
+                JsonErr(RoleError::NoMatchingBody, Status::BadRequest);
+            }
+
+        }
+
+        Ok(())
     })
     .await
 }

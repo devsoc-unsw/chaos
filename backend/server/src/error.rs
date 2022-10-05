@@ -14,3 +14,11 @@ impl<'r, T: Serialize> Responder<'r, 'r> for JsonErr<T> {
         })
     }
 }
+
+// impl<Y, T> From<JsonErr<T>> for JsonErr<Y>
+//     where T: From<Y>
+// {
+//     fn from((t, s): JsonErr<T>) -> Self {
+//         JsonErr(t.into(), s)
+//     }
+// }

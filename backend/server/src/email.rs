@@ -1,7 +1,8 @@
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{Message, SmtpTransport, Transport};
+use serde::Serialize;
+use std::collections::{HashMap, HashSet};
 use std::env;
-use std::collections::{HashSet, HashMap};
 use std::str::Chars;
 
 ///
@@ -13,7 +14,7 @@ use std::str::Chars;
 ///
 /// Variables will probably be stuff like `role`, `first_name`, `last_name` etc.
 /// Variables are inside {{}} in the template string.
-/// 
+///
 
 pub struct MappedTemplate {
     exprs: Vec<TemplateExpr>,
@@ -23,7 +24,7 @@ pub struct MappedTemplate {
 
 pub struct ParsedTemplate {
     exprs: Vec<TemplateExpr>,
-    vars: HashSet<String>,
+    vars: HashSet<String>, // we end up cloning this heaps, could make it a persistent set instead
 }
 
 enum TemplateExpr {
@@ -31,6 +32,7 @@ enum TemplateExpr {
     Variable(String),
 }
 
+#[derive(Serialize)]
 pub enum TemplateErr {
     InvalidExpr,
     InvalidVariable(String),
@@ -39,8 +41,11 @@ pub enum TemplateErr {
 
 impl ParsedTemplate {
     /// Template is string "thingy thingy so and so {{var}} thingy"
-    /// replaced with "thingy thingy so and so value thingy" 
-    pub fn from_template(template: String, vars: HashSet<String>) -> Result<ParsedTemplate, TemplateErr> {
+    /// replaced with "thingy thingy so and so value thingy"
+    pub fn from_template(
+        template: String,
+        vars: HashSet<String>,
+    ) -> Result<ParsedTemplate, TemplateErr> {
         let mut curr = String::new();
         let mut res = Vec::new();
         let mut s = template.chars();
@@ -88,7 +93,10 @@ impl ParsedTemplate {
         Ok(inside)
     }
 
-    pub fn to_mapped(self, mappings: HashMap<String, String>) -> Result<MappedTemplate, TemplateErr> {
+    pub fn to_mapped(
+        self,
+        mappings: HashMap<String, String>,
+    ) -> Result<MappedTemplate, TemplateErr> {
         for var in &self.vars {
             if !mappings.contains_key(var) {
                 return Err(TemplateErr::InvalidMappings);
@@ -125,10 +133,10 @@ impl MappedTemplate {
     }
 }
 
-pub fn send_email(email: String, subject: String, body: String) -> Option<()> {
+pub fn send_email(to: String, subject: String, body: String) -> Option<()> {
     let email = Message::builder()
         .from("CSESoc <noreply@csesoc.org.au>".parse().unwrap())
-        .to(email.parse().ok()?)
+        .to(to.parse().ok()?)
         .subject(subject)
         .body(body)
         .unwrap();
