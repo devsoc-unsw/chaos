@@ -2,8 +2,8 @@ use diesel::prelude::*;
 
 use crate::database::{
     models::{
-        Answer, Application, NewAnswer, NewApplication, NewRating, OrganisationUser, Question,
-        Rating, User,
+        Answer, Application, Campaign, NewAnswer, NewApplication, NewRating, OrganisationUser,
+        Question, Rating, Role, User,
     },
     schema::ApplicationStatus,
     Database,
@@ -27,6 +27,7 @@ pub enum ApplicationError {
     AppNotFound,
     QuestionNotFound,
     InvalidInput,
+    CampaignEnded,
 }
 
 #[derive(Deserialize)]
@@ -53,6 +54,13 @@ pub async fn create_application(
 
     let application = db
         .run(move |conn| {
+            let role = Role::get_from_id(conn, app_req.role_id)?;
+            let camp = Campaign::get_from_id(conn, role.campaign_id)?;
+
+            if !camp.is_running() {
+                return None;
+            }
+
             let count = applications
                 .filter(role_id.eq(app_req.role_id).and(user_id.eq(user.id)))
                 .select(id)
