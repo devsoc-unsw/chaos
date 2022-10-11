@@ -1,12 +1,12 @@
 import tw, { styled } from "twin.macro";
 
 const MessagePopup = styled.div({
-  ...tw`w-52 p-2 rounded shadow`,
+  ...tw`w-72 p-2 rounded-lg drop-shadow-lg border`,
   variants: {
     type: {
-      error: tw`bg-red-400`,
-      warning: tw`bg-yellow-400`,
-      success: tw`bg-green-400`,
+      error: tw`bg-red-400 border-red-600`,
+      warning: tw`bg-yellow-300 border-yellow-500`,
+      success: tw`bg-green-400 border-green-600`,
     },
   },
 });
