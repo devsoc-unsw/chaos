@@ -18,7 +18,10 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+import moment from "moment";
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import tw, { styled } from "twin.macro";
 
 import { ExpandIconButton } from "./campaignCard.styled";
 
@@ -53,17 +56,37 @@ const statuses: { [status in ApplicationStatus]: Status } = {
   },
 };
 
+const CampaignStatus = styled.div({
+  ...tw`px-2 py-1.5 ml-auto rounded-[0.2rem] text-white`,
+
+  variants: {
+    status: {
+      pending: tw`bg-[hsl(220, 60%, 90%)]`,
+      open: tw`bg-[hsl(220, 93%, 60%)]`,
+      closed: tw`hidden`,
+    },
+  },
+
+  defaultVariants: {
+    status: "open",
+  },
+});
+
+const dateToString = (date: Date) => moment(date).format("D MMM YYYY");
+
 type Props = {
+  organisationLogo: string;
   title: string;
   appliedFor: CampaignWithRoles["applied_for"];
   positions: { id: number | string; name: string; number: number }[];
-  startDate: string;
-  endDate: string;
+  startDate: Date;
+  endDate: Date;
   img: string;
   applyClick: () => void;
 };
 
 const CampaignCard = ({
+  organisationLogo,
   title,
   appliedFor,
   positions,
@@ -87,6 +110,32 @@ const CampaignCard = ({
     const position = positionsMap[id];
     return { position: position.name, status: statuses[status] };
   });
+
+  const status = new Date() > endDate ? "closed" : "open";
+
+  return (
+    <Link to={`/application/${1}`}>
+      <div tw="w-96 bg-white text-sm rounded shadow-md overflow-hidden transition hover:(-translate-y-1 shadow-lg)">
+        <header tw="flex items-center gap-1.5 p-3">
+          <img
+            tw="w-10 h-10 rounded-sm"
+            src={organisationLogo}
+            alt="Organisation"
+          />
+          <div tw="flex flex-col">
+            <p>{title}</p>
+            <p tw="text-gray-500">
+              {dateToString(startDate)} - {dateToString(endDate)}
+            </p>
+          </div>
+          <CampaignStatus status={status}>
+            {status.toUpperCase()}
+          </CampaignStatus>
+        </header>
+        <img src={img} alt="Campaign Cover" />
+      </div>
+    </Link>
+  );
 
   return (
     <Card>

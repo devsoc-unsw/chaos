@@ -1,17 +1,17 @@
 import "twin.macro";
-import { Grid } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
 import CampaignCard from "components/CampaignCard";
-import { bytesToImage, dateToStringForCampaignGrid } from "utils";
+import { bytesToImage } from "utils";
 
 import CampaignLoading from "./CampaignLoading";
 
 import type { ComponentProps } from "react";
-import type { CampaignWithRoles } from "types/api";
+import type { CampaignWithRoles, Organisation } from "types/api";
 
 type Props = {
   campaigns: CampaignWithRoles[];
+  organisations: Organisation[];
   loading: boolean;
   loadingNumCampaigns: number;
   animationDelay?: number;
@@ -20,6 +20,7 @@ type Props = {
 };
 const CampaignGrid = ({
   campaigns,
+  organisations,
   loading,
   loadingNumCampaigns,
   animationDelay = 0,
@@ -45,9 +46,9 @@ const CampaignGrid = ({
   }
 
   return (
-    <Grid container spacing={2} columns={4}>
+    <div tw="flex flex-wrap justify-around gap-4 lg:justify-start">
       {campaigns.map((campaign) => (
-        <Grid item key={campaign.campaign.id} xs={1}>
+        <div key={campaign.campaign.id}>
           <CampaignCard
             title={campaign.campaign.name}
             appliedFor={campaign.applied_for}
@@ -56,22 +57,21 @@ const CampaignGrid = ({
               name: role.name,
               number: role.max_available,
             }))}
-            startDate={dateToStringForCampaignGrid(
-              new Date(campaign.campaign.starts_at)
-            )}
-            endDate={dateToStringForCampaignGrid(
-              new Date(campaign.campaign.ends_at)
-            )}
+            startDate={new Date(campaign.campaign.starts_at)}
+            endDate={new Date(campaign.campaign.ends_at)}
             img={bytesToImage(campaign.campaign.cover_image)}
+            organisationLogo={bytesToImage(
+              organisations[campaign.campaign.organisation_id].logo!
+            )}
             applyClick={() =>
               navigate(`/application/${campaign.campaign.id}`, {
                 state: campaign,
               })
             }
           />
-        </Grid>
+        </div>
       ))}
-    </Grid>
+    </div>
   );
 };
 
