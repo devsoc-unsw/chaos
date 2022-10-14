@@ -15,7 +15,7 @@ const Bar = ({
     enterFrom={tw`w-0!`}
   >
     <div
-      tw="h-2.5 rounded-sm bg-black/5 first:bg-black/[0.15] transition-[width] duration-500"
+      tw="h-2.5 rounded-sm bg-black/5 first:bg-black/[0.15]"
       style={{ transitionDelay: `${transitionDelay}ms` }}
       // eslint-disable-next-line react/jsx-props-no-spreading
       {...props}
