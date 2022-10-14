@@ -2,6 +2,7 @@ import BackgroundWrapper from "./BackgroundWrapper";
 import CampaignCard from "./CampaignCard";
 import LoadingIndicator from "./LoadingIndicator";
 import MarkChip from "./MarkChip";
+import MessagePopup from "./MessagePopup";
 import NavBar from "./NavBar";
 import PrivateRoute from "./PrivateRoute";
 import ReviewerStepper from "./ReviewerStepper";
@@ -16,4 +17,5 @@ export {
   PrivateRoute,
   ReviewerStepper,
   Transition,
+  MessagePopup,
 };

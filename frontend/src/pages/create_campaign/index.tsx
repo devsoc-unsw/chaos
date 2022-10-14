@@ -1,7 +1,8 @@
 import { Container, Tab, Tabs } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
+import { MessagePopupContext } from "contexts/MessagePopupContext";
 import { base64ToBytes, dateToStringForBackend } from "utils";
 
 import { createCampaign, isAdminInOrganisation } from "../../api";
@@ -71,6 +72,8 @@ const CreateCampaign = () => {
   const campaignTabIdx = 0;
   const rolesTabIdx = 1;
   const reviewTabIdx = 2;
+
+  const pushMessage = useContext(MessagePopupContext);
 
   const onTabChange = (newTab: number) => {
     // only allow user to access review tab if all inputs are non-empty
@@ -158,6 +161,10 @@ const CreateCampaign = () => {
     createCampaign(campaignSend, rolesSend, questionsSend)
       .then(() => {
         console.log("nice!");
+        pushMessage({
+          message: "Successfully created campaign!",
+          type: "success",
+        });
         navigate("/dashboard");
       })
       .catch(() => {
