@@ -82,7 +82,7 @@
     "prettier": "2.7.1",
     "tailwindcss": "3.1.8",
     "twin.macro": "2.8.2",
-    "vite": "3.1.7",
+    "vite": "3.1.8",
     "vite-tsconfig-paths": "3.5.1"
   },
   "husky": {
