@@ -24,7 +24,7 @@ const Bar = ({
 );
 
 const Button = styled.button({
-  ...tw`px-3 py-2 ml-auto rounded`,
+  ...tw`px-2 py-1.5 ml-auto rounded-[0.2rem]`,
 
   variants: {
     status: {
@@ -35,10 +35,10 @@ const Button = styled.button({
 });
 
 const Bars = styled.div({
-  ...tw`flex flex-col`,
+  ...tw`flex flex-col gap-1`,
 
   [`& > *`]: tw`
-    h-[14px] rounded-[3px] bg-black/5 first:bg-black/[0.15]
+    h-2.5 rounded-[3px] bg-black/5 first:bg-black/[0.15]
   `,
 });
 
@@ -56,21 +56,21 @@ const Campaign = ({ logo, active = false, transitionDelay = 0 }: Props) => {
       enterFrom={tw`opacity-0 scale-90 translate-y-4`}
       style={{ transitionDelay: `${transitionDelay}ms` }}
     >
-      <div tw="w-[25rem] bg-white rounded-lg shadow-md transition hover:(-translate-y-1 shadow-lg)">
-        <header tw="flex items-center gap-2 p-4">
-          <img tw="w-10 rounded" src={logo} alt="logo" />
-          <Bars tw="gap-1">
-            <Bar tw="w-40" transitionDelay={transitionDelay} />
-            <Bar tw="w-36" transitionDelay={transitionDelay + 150} />
+      <div tw="w-72 bg-white rounded shadow-md transition hover:(-translate-y-1 shadow-lg)">
+        <header tw="flex items-center gap-1.5 p-3">
+          <img tw="w-7 rounded-sm" src={logo} alt="logo" />
+          <Bars>
+            <Bar tw="w-28" transitionDelay={transitionDelay} />
+            <Bar tw="w-24" transitionDelay={transitionDelay + 150} />
           </Bars>
           <Button status={status}>{status.toUpperCase()}</Button>
         </header>
-        <div tw="h-40 bg-[#edeeef]" />
+        <div tw="h-28 bg-[#edeeef]" />
         {active && (
-          <Bars tw="gap-1.5 p-4">
-            <Bar tw="w-56" transitionDelay={transitionDelay + 300} />
-            <Bar tw="w-44" transitionDelay={transitionDelay + 450} />
-            <Bar tw="w-40" transitionDelay={transitionDelay + 600} />
+          <Bars tw="p-3">
+            <Bar tw="w-40" transitionDelay={transitionDelay + 300} />
+            <Bar tw="w-32" transitionDelay={transitionDelay + 450} />
+            <Bar tw="w-28" transitionDelay={transitionDelay + 600} />
           </Bars>
         )}
       </div>

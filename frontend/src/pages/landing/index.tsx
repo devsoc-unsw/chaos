@@ -33,8 +33,8 @@ const Landing = () => {
       return;
     }
     const { top, left } = div.getBoundingClientRect();
-    setOffsetX((e.clientX - (left + div.clientWidth / 2)) / 50);
-    setOffsetY((e.clientY - (top + div.clientHeight / 2)) / 50);
+    setOffsetX((e.clientX - (left + div.clientWidth / 2)) / 40);
+    setOffsetY((e.clientY - (top + div.clientHeight / 2)) / 40);
   };
 
   return (
