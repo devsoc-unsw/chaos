@@ -12,7 +12,7 @@ import CampaignGrid from "./CampaignGrid";
 
 import type { CampaignWithRoles } from "types/api";
 
-const Heading = tw.h2`text-2xl font-bold my-4`;
+const Heading = tw.h2`text-2xl font-semibold my-4`;
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -63,7 +63,8 @@ const Dashboard = () => {
         loading={isLoading}
         loadingNumCampaigns={1}
         campaigns={myCampaigns}
-        active
+        defaultText="You haven't applied to any campaigns 😦"
+        status="pending"
       />
 
       <Heading>Available Campaigns</Heading>
@@ -71,7 +72,9 @@ const Dashboard = () => {
         loading={isLoading}
         loadingNumCampaigns={2}
         animationDelay={400}
+        defaultText="There aren't any campaigns currently available 😭"
         campaigns={currentCampaigns}
+        status="open"
       />
 
       <Heading>Past Campaigns</Heading>
@@ -79,7 +82,9 @@ const Dashboard = () => {
         loading={isLoading}
         loadingNumCampaigns={2}
         animationDelay={800}
+        defaultText="There aren't any campaigns that have already closed 😮 Apply to the ones currently open!"
         campaigns={pastCampaigns}
+        status="closed"
       />
     </div>
   );

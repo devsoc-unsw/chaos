@@ -7,6 +7,7 @@ import { bytesToImage, dateToStringForCampaignGrid } from "utils";
 
 import CampaignLoading from "./CampaignLoading";
 
+import type { ComponentProps } from "react";
 import type { CampaignWithRoles } from "types/api";
 
 type Props = {
@@ -14,14 +15,16 @@ type Props = {
   loading: boolean;
   loadingNumCampaigns: number;
   animationDelay?: number;
-  active?: boolean;
+  defaultText: string;
+  status?: ComponentProps<typeof CampaignLoading>["status"];
 };
 const CampaignGrid = ({
   campaigns,
   loading,
   loadingNumCampaigns,
   animationDelay = 0,
-  active,
+  defaultText,
+  status,
 }: Props) => {
   const navigate = useNavigate();
 
@@ -31,10 +34,14 @@ const CampaignGrid = ({
         {Array(loadingNumCampaigns)
           .fill(null)
           .map((_) => (
-            <CampaignLoading active={active} animationDelay={animationDelay} />
+            <CampaignLoading status={status} animationDelay={animationDelay} />
           ))}
       </div>
     );
+  }
+
+  if (!campaigns.length) {
+    return <div tw="text-gray-700">{defaultText}</div>;
   }
 
   return (
