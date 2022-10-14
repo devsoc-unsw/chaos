@@ -15,7 +15,7 @@ const Bar = ({
     enterFrom={tw`w-0!`}
   >
     <div
-      tw="transition-[width] duration-500"
+      tw="h-2.5 rounded-sm bg-black/5 first:bg-black/[0.15] transition-[width] duration-500"
       style={{ transitionDelay: `${transitionDelay}ms` }}
       // eslint-disable-next-line react/jsx-props-no-spreading
       {...props}
@@ -34,13 +34,7 @@ const Button = styled.button({
   },
 });
 
-const Bars = styled.div({
-  ...tw`flex flex-col gap-1`,
-
-  [`& > *`]: tw`
-    h-2.5 rounded-[3px] bg-black/5 first:bg-black/[0.15]
-  `,
-});
+const Bars = tw.div`flex flex-col gap-1`;
 
 type Props = {
   logo: string;
