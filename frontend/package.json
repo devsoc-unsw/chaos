@@ -7,7 +7,7 @@
     "@emotion/react": "11.10.4",
     "@emotion/styled": "11.10.4",
     "@headlessui/react": "1.7.3",
-    "@hello-pangea/dnd": "16.0.0",
+    "@hello-pangea/dnd": "16.0.1",
     "@heroicons/react": "2.0.12",
     "@mui/icons-material": "5.10.9",
     "@mui/lab": "5.0.0-alpha.103",
