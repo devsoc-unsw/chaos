@@ -63,7 +63,7 @@ const App = () => {
                   <Routes>{routes}</Routes>
                 </Suspense>
               </Box>
-              <div tw="fixed right-4 bottom-4 space-y-2">
+              <div tw="fixed right-4 bottom-4 space-y-3">
                 {messagePopup.map((message) => (
                   <MessagePopup type={message.type}>
                     {message.message}
