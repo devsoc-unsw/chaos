@@ -1,45 +1,15 @@
-import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import moment from "moment";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import tw, { styled } from "twin.macro";
+import "twin.macro";
 
 import Modal from "components/Modal";
 
+import CampaignStatus from "./CampaignStatus";
+
 import type { VariantProps } from "@stitches/react";
-import type { ComponentProps, MouseEvent, PropsWithChildren } from "react";
+import type { MouseEvent } from "react";
 import type { CampaignWithRoles } from "types/api";
-
-const StatusIndicator = ({
-  children,
-  ...props
-}: PropsWithChildren<ComponentProps<"button">>) => (
-  // TODO: open roles popup on click
-  // TODO: i really do not like this (in terms of ui/ux), is there a better way to do it?
-  // eslint-disable-next-line react/jsx-props-no-spreading
-  <button type="button" {...props}>
-    <InformationCircleIcon tw="h-5 w-5" />
-    {children}
-  </button>
-);
-
-const CampaignStatus = styled(StatusIndicator, {
-  ...tw`px-2 py-1.5 flex items-center gap-1 ml-auto rounded-[0.2rem] text-white`,
-
-  variants: {
-    status: {
-      pending: tw`bg-[hsl(220, 60%, 90%)] text-black`,
-      open: tw`bg-[hsl(220, 93%, 60%)]`,
-      closed: tw`hidden`,
-      offered: tw`bg-green-300 text-green-900`,
-      rejected: tw`bg-red-300 text-red-900`,
-    },
-  },
-
-  defaultVariants: {
-    status: "open",
-  },
-});
 
 const dateToString = (date: Date) => moment(date).format("D MMM YYYY");
 
@@ -65,8 +35,6 @@ const CampaignCard = ({
   img,
 }: Props) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  console.log(appliedFor);
 
   const positionsMap = Object.fromEntries(
     positions.map(({ id, ...position }) => [id, position])
