@@ -1,6 +1,22 @@
-import { Modal } from "components";
+import tw, { styled } from "twin.macro";
+
+import Modal from "components/Modal";
 
 import type { CampaignWithRoles } from "types/api";
+
+const Position = styled.li({
+  ...tw`px-2 py-1.5 rounded`,
+
+  variants: {
+    status: {
+      Draft: {},
+      Pending: tw`bg-gray-100`,
+      Rejected: tw`bg-red-100`,
+      Success: tw`bg-green-100`,
+      undefined: tw`bg-gray-200`,
+    },
+  },
+});
 
 type Props = {
   appliedFor: CampaignWithRoles["applied_for"];
@@ -26,11 +42,11 @@ const Popup = ({ appliedFor, positions, open, closeModal }: Props) => {
       open={open}
       closeModal={closeModal}
     >
-      <ul tw="flex flex-col gap-0.5">
+      <ul tw="flex flex-col gap-2">
         {positions.map((pos) => (
-          <li key={pos.id} tw="p-1">
-            {pos.name} - {positionStatuses[pos.id]?.status}
-          </li>
+          <Position key={pos.id} status={positionStatuses[pos.id]?.status}>
+            {pos.name}
+          </Position>
         ))}
       </ul>
     </Modal>
