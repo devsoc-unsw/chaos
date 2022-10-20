@@ -28,8 +28,9 @@ const Card = ({
   img,
   openModal,
 }: Props) => {
-  let status: VariantProps<typeof CampaignStatus>["status"];
   const date = new Date();
+
+  let status: VariantProps<typeof CampaignStatus>["status"];
   if (appliedFor.some(([_, status]) => status === "Success")) {
     status = "offered";
   } else if (appliedFor.some(([_, status]) => status === "Rejected")) {
@@ -41,6 +42,7 @@ const Card = ({
   } else {
     status = "open";
   }
+
   return (
     <div tw="w-96 bg-white text-sm rounded shadow-md overflow-hidden transition hover:(-translate-y-1 shadow-lg)">
       <header tw="flex items-center gap-1.5 p-3">
