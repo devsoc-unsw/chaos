@@ -79,8 +79,8 @@ const CampaignStatus = styled(StatusIndicator, {
       pending: tw`bg-[hsl(220, 60%, 90%)] text-black`,
       open: tw`bg-[hsl(220, 93%, 60%)]`,
       closed: tw`hidden`,
-      offered: tw`bg-green-400`,
-      rejected: tw`bg-red-400`,
+      offered: tw`bg-green-300 text-green-900`,
+      rejected: tw`bg-red-300 text-red-900`,
     },
   },
 
