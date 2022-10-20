@@ -57,6 +57,7 @@ const CampaignGrid = ({
       {campaigns.map((campaign) => (
         <div key={campaign.campaign.id}>
           <CampaignCard
+            campaignId={campaign.campaign.id}
             title={campaign.campaign.name}
             appliedFor={campaign.applied_for}
             positions={campaign.roles.map((role) => ({

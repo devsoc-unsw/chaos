@@ -75,6 +75,7 @@ const CampaignStatus = styled.div({
 const dateToString = (date: Date) => moment(date).format("D MMM YYYY");
 
 type Props = {
+  campaignId?: number;
   organisationLogo: string;
   title: string;
   appliedFor: CampaignWithRoles["applied_for"];
@@ -86,6 +87,7 @@ type Props = {
 };
 
 const CampaignCard = ({
+  campaignId,
   organisationLogo,
   title,
   appliedFor,
@@ -113,38 +115,40 @@ const CampaignCard = ({
 
   const status = new Date() > endDate ? "closed" : "open";
 
-  return (
-    <Link to={`/application/${1}`}>
-      <div tw="w-96 bg-white text-sm rounded shadow-md overflow-hidden transition hover:(-translate-y-1 shadow-lg)">
-        <header tw="flex items-center gap-1.5 p-3">
-          <img
-            tw="w-10 h-10 rounded-sm"
-            src={organisationLogo}
-            alt="Organisation"
-          />
-          <div tw="flex flex-col">
-            <p>{title}</p>
-            <p tw="text-gray-500">
-              {dateToString(startDate)} - {dateToString(endDate)}
-            </p>
-          </div>
-          <CampaignStatus status={status}>
-            {status.toUpperCase()}
-          </CampaignStatus>
-        </header>
-        <div
-          tw="grid place-items-center bg-[#edeeef]"
-          css={{ aspectRatio: "16/9" }}
-        >
-          <img
-            tw="w-full max-h-full object-contain"
-            src={img}
-            alt="Campaign Cover"
-          />
+  const content = (
+    <div tw="w-96 bg-white text-sm rounded shadow-md overflow-hidden transition hover:(-translate-y-1 shadow-lg)">
+      <header tw="flex items-center gap-1.5 p-3">
+        <img
+          tw="w-10 h-10 rounded-sm"
+          src={organisationLogo}
+          alt="Organisation"
+        />
+        <div tw="flex flex-col">
+          <p>{title}</p>
+          <p tw="text-gray-500">
+            {dateToString(startDate)} - {dateToString(endDate)}
+          </p>
         </div>
+        <CampaignStatus status={status}>{status.toUpperCase()}</CampaignStatus>
+      </header>
+      <div
+        tw="grid place-items-center bg-[#edeeef]"
+        css={{ aspectRatio: "16/9" }}
+      >
+        <img
+          tw="w-full max-h-full object-contain"
+          src={img}
+          alt="Campaign Cover"
+        />
       </div>
-    </Link>
+    </div>
   );
+
+  if (campaignId === undefined) {
+    return content;
+  }
+
+  return <Link to={`/application/${campaignId}`}>{content}</Link>;
 
   return (
     <Card>
