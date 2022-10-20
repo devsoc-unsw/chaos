@@ -50,7 +50,7 @@ const CampaignGrid = ({
   console.log(organisations, campaigns);
 
   return (
-    <div tw="flex flex-wrap justify-around gap-4 lg:justify-start">
+    <div tw="pb-4 flex flex-wrap justify-around gap-4 lg:justify-start">
       {campaigns.map((campaign) => (
         <div key={campaign.campaign.id}>
           <CampaignCard
