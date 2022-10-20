@@ -34,8 +34,13 @@ const CampaignGrid = ({
       <div tw="flex gap-4">
         {Array(loadingNumCampaigns)
           .fill(null)
-          .map((_) => (
-            <CampaignLoading status={status} animationDelay={animationDelay} />
+          .map((_, i) => (
+            <CampaignLoading
+              // eslint-disable-next-line react/no-array-index-key
+              key={i}
+              status={status}
+              animationDelay={animationDelay}
+            />
           ))}
       </div>
     );
@@ -44,6 +49,8 @@ const CampaignGrid = ({
   if (!campaigns.length) {
     return <div tw="text-gray-700">{defaultText}</div>;
   }
+
+  console.log(organisations, campaigns);
 
   return (
     <div tw="flex flex-wrap justify-around gap-4 lg:justify-start">
