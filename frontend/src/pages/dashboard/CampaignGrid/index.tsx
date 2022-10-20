@@ -11,7 +11,7 @@ import type { CampaignWithRoles, Organisation } from "types/api";
 
 type Props = {
   campaigns: CampaignWithRoles[];
-  organisations: Organisation[];
+  organisations: { [orgId: number]: Organisation };
   loading: boolean;
   loadingNumCampaigns: number;
   animationDelay?: number;

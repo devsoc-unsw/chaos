@@ -21,7 +21,9 @@ const Dashboard = () => {
     []
   );
   const [pastCampaigns, setPastCampaigns] = useState<CampaignWithRoles[]>([]);
-  const [organisations, setOrganisations] = useState<Organisation[]>([]);
+  const [organisations, setOrganisations] = useState<{
+    [orgId: number]: Organisation;
+  }>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -49,12 +51,13 @@ const Dashboard = () => {
         throw e;
       }
 
-      setOrganisations(
-        await Promise.all(
-          [...campaigns.current_campaigns, ...campaigns.past_campaigns].map(
-            (c) => getOrganisation(c.campaign.organisation_id)
-          )
+      const organisations = await Promise.all(
+        [...campaigns.current_campaigns, ...campaigns.past_campaigns].map((c) =>
+          getOrganisation(c.campaign.organisation_id)
         )
+      );
+      setOrganisations(
+        Object.fromEntries(organisations.map((org) => [org.id, org]))
       );
 
       const current = campaigns.current_campaigns;
