@@ -30,10 +30,14 @@ const CreateCampaign = () => {
 
   const [tab, setTab] = useState(0);
   const [campaignName, setCampaignName] = useState("");
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(
-    new Date(Date.now() + 14 * 3600 * 1000 * 24)
-  );
+  const [startDate, setStartDate] = useState(() => {
+    const initialState = new Date();
+    return initialState;
+  });
+  const [endDate, setEndDate] = useState(() => {
+    const initialState = new Date(Date.now() + 14 * 3600 * 1000 * 24);
+    return initialState;
+  });
   const [description, setDescription] = useState("");
   const [interviewStage, setInterviewStage] = useState(false);
   const [scoringStage, setScoringStage] = useState(false);
