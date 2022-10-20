@@ -43,15 +43,17 @@ const Modal = ({
             leaveFrom={tw`opacity-100 scale-100`}
             leaveTo={tw`opacity-0 scale-95`}
           >
-            <Dialog.Panel tw="w-full max-w-md p-6 rounded bg-white shadow-xl overflow-hidden transform transition-[opacity,transform]">
+            <Dialog.Panel tw="w-full max-w-lg p-4 rounded bg-white shadow-xl overflow-hidden transform transition-[opacity,transform]">
               <Dialog.Title
                 as="h3"
-                tw="text-lg font-medium leading-6 text-gray-900"
+                tw="text-2xl font-medium leading-8 text-gray-900"
               >
                 {title}
               </Dialog.Title>
               {description && (
-                <Dialog.Description>{description}</Dialog.Description>
+                <Dialog.Description tw="text-sm text-gray-600">
+                  {description}
+                </Dialog.Description>
               )}
               <div tw="mt-2">{children}</div>
             </Dialog.Panel>

@@ -100,6 +100,7 @@ const CampaignCard = ({
   const popup = (
     <Modal
       title="Campaign Roles"
+      description="Roles available for this campaign"
       open={isModalOpen}
       closeModal={() => setIsModalOpen(false)}
     >
