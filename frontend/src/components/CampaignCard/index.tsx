@@ -27,6 +27,7 @@ import { ExpandIconButton } from "./campaignCard.styled";
 
 import type { ComponentProps, ReactElement } from "react";
 import type { ApplicationStatus, CampaignWithRoles } from "types/api";
+import { VariantProps } from "@stitches/react";
 
 type Status = {
   title: string;
@@ -61,9 +62,11 @@ const CampaignStatus = styled.div({
 
   variants: {
     status: {
-      pending: tw`bg-[hsl(220, 60%, 90%)]`,
+      pending: tw`bg-[hsl(220, 60%, 90%)] text-black`,
       open: tw`bg-[hsl(220, 93%, 60%)]`,
       closed: tw`hidden`,
+      offered: tw`bg-green-400`,
+      rejected: tw`bg-red-400`,
     },
   },
 
@@ -113,7 +116,19 @@ const CampaignCard = ({
     return { position: position.name, status: statuses[status] };
   });
 
-  const status = new Date() > endDate ? "closed" : "open";
+  const date = new Date();
+  let status: VariantProps<typeof CampaignStatus>["status"];
+  if (appliedFor.some(([_, status]) => status === "Success")) {
+    status = "offered";
+  } else if (appliedFor.some(([_, status]) => status === "Rejected")) {
+    status = "rejected";
+  } else if (date > endDate) {
+    status = "closed";
+  } else if (appliedFor.length) {
+    status = "pending";
+  } else {
+    status = "open";
+  }
 
   const content = (
     <div tw="w-96 bg-white text-sm rounded shadow-md overflow-hidden transition hover:(-translate-y-1 shadow-lg)">
