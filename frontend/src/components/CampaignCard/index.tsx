@@ -132,7 +132,16 @@ const CampaignCard = ({
             {status.toUpperCase()}
           </CampaignStatus>
         </header>
-        <img src={img} alt="Campaign Cover" />
+        <div
+          tw="grid place-items-center bg-[#edeeef]"
+          css={{ aspectRatio: "16/9" }}
+        >
+          <img
+            tw="w-full max-h-full object-contain"
+            src={img}
+            alt="Campaign Cover"
+          />
+        </div>
       </div>
     </Link>
   );
