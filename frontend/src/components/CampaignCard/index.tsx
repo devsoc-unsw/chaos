@@ -24,10 +24,17 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import tw, { styled } from "twin.macro";
 
+import Modal from "components/Modal";
+
 import { ExpandIconButton } from "./campaignCard.styled";
 
 import type { VariantProps } from "@stitches/react";
-import type { ComponentProps, PropsWithChildren, ReactElement } from "react";
+import type {
+  ComponentProps,
+  MouseEvent,
+  PropsWithChildren,
+  ReactElement,
+} from "react";
 import type { ApplicationStatus, CampaignWithRoles } from "types/api";
 
 type Status = {
@@ -61,14 +68,14 @@ const statuses: { [status in ApplicationStatus]: Status } = {
 const StatusIndicator = ({
   children,
   ...props
-}: PropsWithChildren<ComponentProps<"div">>) => (
+}: PropsWithChildren<ComponentProps<"button">>) => (
   // TODO: open roles popup on click
-  // TODO: i really do not like this, is there a better way to do it?
+  // TODO: i really do not like this (in terms of ui/ux), is there a better way to do it?
   // eslint-disable-next-line react/jsx-props-no-spreading
-  <div {...props}>
+  <button type="button" {...props}>
     <InformationCircleIcon tw="h-5 w-5" />
     {children}
-  </div>
+  </button>
 );
 
 const CampaignStatus = styled(StatusIndicator, {
@@ -115,6 +122,7 @@ const CampaignCard = ({
   applyClick,
 }: Props) => {
   const [expanded, setExpanded] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleExpandClick = () => {
     setExpanded(!expanded);
@@ -144,6 +152,12 @@ const CampaignCard = ({
     status = "open";
   }
 
+  const openModal = (e: MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsModalOpen(true);
+  };
+
   const content = (
     <div tw="w-96 bg-white text-sm rounded shadow-md overflow-hidden transition hover:(-translate-y-1 shadow-lg)">
       <header tw="flex items-center gap-1.5 p-3">
@@ -158,7 +172,9 @@ const CampaignCard = ({
             {dateToString(startDate)} - {dateToString(endDate)}
           </p>
         </div>
-        <CampaignStatus status={status}>{status.toUpperCase()}</CampaignStatus>
+        <CampaignStatus status={status} onClick={openModal}>
+          {status.toUpperCase()}
+        </CampaignStatus>
       </header>
       <div
         tw="grid place-items-center bg-[#edeeef]"
@@ -173,11 +189,31 @@ const CampaignCard = ({
     </div>
   );
 
+  const popup = (
+    <Modal
+      title="Campaign Roles"
+      open={isModalOpen}
+      closeModal={() => setIsModalOpen(false)}
+    >
+      aaaaaa
+    </Modal>
+  );
+
   if (campaignId === undefined) {
-    return content;
+    return (
+      <>
+        {content}
+        {popup}
+      </>
+    );
   }
 
-  return <Link to={`/application/${campaignId}`}>{content}</Link>;
+  return (
+    <>
+      <Link to={`/application/${campaignId}`}>{content}</Link>
+      {popup}
+    </>
+  );
 
   return (
     <Card>

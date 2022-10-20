@@ -20,7 +20,7 @@ const Modal = ({
   children,
 }: PropsWithChildren<Props>) => (
   <Transition appear show={open} as={Fragment}>
-    <Dialog as="div" tw="relative z-10" onClose={closeModal}>
+    <Dialog tw="relative z-10" onClose={closeModal}>
       <Transition.Child
         as={Fragment}
         enter={tw`ease-out duration-300`}
