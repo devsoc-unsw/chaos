@@ -1,3 +1,4 @@
+import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -25,9 +26,9 @@ import tw, { styled } from "twin.macro";
 
 import { ExpandIconButton } from "./campaignCard.styled";
 
-import type { ComponentProps, ReactElement } from "react";
+import type { VariantProps } from "@stitches/react";
+import type { ComponentProps, PropsWithChildren, ReactElement } from "react";
 import type { ApplicationStatus, CampaignWithRoles } from "types/api";
-import { VariantProps } from "@stitches/react";
 
 type Status = {
   title: string;
@@ -57,8 +58,21 @@ const statuses: { [status in ApplicationStatus]: Status } = {
   },
 };
 
-const CampaignStatus = styled.div({
-  ...tw`px-2 py-1.5 ml-auto rounded-[0.2rem] text-white`,
+const StatusIndicator = ({
+  children,
+  ...props
+}: PropsWithChildren<ComponentProps<"div">>) => (
+  // TODO: open roles popup on click
+  // TODO: i really do not like this, is there a better way to do it?
+  // eslint-disable-next-line react/jsx-props-no-spreading
+  <div {...props}>
+    <InformationCircleIcon tw="h-5 w-5" />
+    {children}
+  </div>
+);
+
+const CampaignStatus = styled(StatusIndicator, {
+  ...tw`px-2 py-1.5 flex items-center gap-1 ml-auto rounded-[0.2rem] text-white`,
 
   variants: {
     status: {
