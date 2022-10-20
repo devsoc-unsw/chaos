@@ -78,14 +78,39 @@ const CreateCampaign = () => {
   const onTabChange = (newTab: number) => {
     // only allow user to access review tab if all inputs are non-empty
     if (newTab === reviewTabIdx) {
-      if (
-        campaignName === "" ||
-        description === "" ||
-        cover === null ||
-        questions.length === 0 ||
-        roles.length === 0
-      ) {
-        console.error("All fields must be filled before reviewing!");
+      if (campaignName === "") {
+        pushMessage({
+          message: "Campaign name is required!",
+          type: "error",
+        });
+        return;
+      }
+      if (description === "") {
+        pushMessage({
+          message: "Campaign description is required!",
+          type: "error",
+        });
+        return;
+      }
+      if (cover === null) {
+        pushMessage({
+          message: "Campaign cover is required!",
+          type: "error",
+        });
+        return;
+      }
+      if (questions.length === 0) {
+        pushMessage({
+          message: "At least one question is required!",
+          type: "error",
+        });
+        return;
+      }
+      if (roles.length === 0) {
+        pushMessage({
+          message: "At least one role is required!",
+          type: "error",
+        });
         return;
       }
     }
@@ -169,6 +194,10 @@ const CreateCampaign = () => {
       })
       .catch(() => {
         console.error("something went wrong");
+        pushMessage({
+          message: "Something went wrong",
+          type: "error",
+        });
       });
   };
 

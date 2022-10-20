@@ -43,11 +43,12 @@ const App = () => {
   const pushMessage = useCallback(
     (message: Message) => {
       setMessagePopup([...messagePopup, message]);
+
       setTimeout(() => {
         setMessagePopup(messagePopup.slice(1));
       }, 5000);
     },
-    [setMessagePopup]
+    [setMessagePopup, messagePopup]
   );
 
   return (
