@@ -1,5 +1,4 @@
 import "twin.macro";
-import { useNavigate } from "react-router-dom";
 
 import CampaignCard from "components/CampaignCard";
 import { bytesToImage } from "utils";
@@ -27,8 +26,6 @@ const CampaignGrid = ({
   defaultText,
   status,
 }: Props) => {
-  const navigate = useNavigate();
-
   if (loading) {
     return (
       <div tw="flex gap-4">
@@ -71,11 +68,6 @@ const CampaignGrid = ({
             organisationLogo={bytesToImage(
               organisations[campaign.campaign.organisation_id].logo!
             )}
-            applyClick={() =>
-              navigate(`/application/${campaign.campaign.id}`, {
-                state: campaign,
-              })
-            }
           />
         </div>
       ))}
