@@ -56,22 +56,17 @@ const CampaignCard = ({
       appliedFor={appliedFor}
       positions={positions}
       open={isModalOpen}
-      closeModal={closeModal}
+      closeModal={() => setIsModalOpen(false)}
     />
   );
 
-  if (campaignId === undefined) {
-    return (
-      <>
-        {content}
-        {popup}
-      </>
-    );
-  }
-
   return (
     <>
-      <Link to={`/application/${campaignId}`}>{content}</Link>
+      {campaignId === undefined ? (
+        content
+      ) : (
+        <Link to={`/application/${campaignId}`}>{content}</Link>
+      )}
       {popup}
     </>
   );
