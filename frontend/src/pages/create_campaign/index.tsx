@@ -30,8 +30,10 @@ const CreateCampaign = () => {
 
   const [tab, setTab] = useState(0);
   const [campaignName, setCampaignName] = useState("");
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(new Date());
+  const [startDate, setStartDate] = useState(() => new Date());
+  const [endDate, setEndDate] = useState(
+    () => new Date(Date.now() + 14 * 3600 * 1000 * 24)
+  );
   const [description, setDescription] = useState("");
   const [interviewStage, setInterviewStage] = useState(false);
   const [scoringStage, setScoringStage] = useState(false);
@@ -193,9 +195,9 @@ const CreateCampaign = () => {
         navigate("/dashboard");
       })
       .catch(() => {
-        console.error("something went wrong");
+        console.error("Something went wrong");
         pushMessage({
-          message: "Something went wrong",
+          message: "Something went wrong on backend!",
           type: "error",
         });
       });
