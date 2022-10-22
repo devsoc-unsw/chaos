@@ -5,6 +5,7 @@ import "twin.macro";
 import Card from "./Card";
 import Popup from "./Popup";
 
+import type { Position } from "./types";
 import type { MouseEvent } from "react";
 import type { CampaignWithRoles } from "types/api";
 
@@ -13,7 +14,7 @@ type Props = {
   organisationLogo: string;
   title: string;
   appliedFor: CampaignWithRoles["applied_for"];
-  positions: { id: number | string; name: string; number: number }[];
+  positions: Position[];
   startDate: Date;
   endDate: Date;
   img: string;
@@ -36,8 +37,6 @@ const CampaignCard = ({
     e.preventDefault();
     setIsModalOpen(true);
   };
-
-  const closeModal = () => setIsModalOpen(false);
 
   const content = (
     <Card
