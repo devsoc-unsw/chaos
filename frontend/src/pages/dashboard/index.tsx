@@ -22,6 +22,7 @@ const Dashboard = () => {
     []
   );
   const [pastCampaigns, setPastCampaigns] = useState<CampaignWithRoles[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   useEffect(() => {
     setNavBarTitle("Your Dashboard");
 
@@ -51,20 +52,36 @@ const Dashboard = () => {
       setMyCampaigns(current.filter((c) => c.applied_for.length));
       setCurrentCampaigns(current.filter((c) => !c.applied_for.length));
       setPastCampaigns(campaigns.past_campaigns);
+      setIsLoading(false);
     };
     void getCampaigns();
   }, []);
   return (
-    <Container>
+    <div tw="px-6 w-full max-w-7xl mx-auto">
       <Heading>My Campaigns</Heading>
-      <CampaignGrid campaigns={myCampaigns} />
+      <CampaignGrid
+        loading={isLoading}
+        loadingNumCampaigns={1}
+        campaigns={myCampaigns}
+        active
+      />
 
       <Heading>Available Campaigns</Heading>
-      <CampaignGrid campaigns={currentCampaigns} />
+      <CampaignGrid
+        loading={isLoading}
+        loadingNumCampaigns={2}
+        animationDelay={400}
+        campaigns={currentCampaigns}
+      />
 
       <Heading>Past Campaigns</Heading>
-      <CampaignGrid campaigns={pastCampaigns} />
-    </Container>
+      <CampaignGrid
+        loading={isLoading}
+        loadingNumCampaigns={2}
+        animationDelay={800}
+        campaigns={pastCampaigns}
+      />
+    </div>
   );
 };
 

@@ -1,13 +1,42 @@
+import "twin.macro";
 import { Grid } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
 import CampaignCard from "components/CampaignCard";
 import { bytesToImage, dateToStringForCampaignGrid } from "utils";
 
+import CampaignLoading from "./CampaignLoading";
+
 import type { CampaignWithRoles } from "types/api";
 
-const CampaignGrid = ({ campaigns }: { campaigns: CampaignWithRoles[] }) => {
+type Props = {
+  campaigns: CampaignWithRoles[];
+  loading: boolean;
+  loadingNumCampaigns: number;
+  animationDelay?: number;
+  active?: boolean;
+};
+const CampaignGrid = ({
+  campaigns,
+  loading,
+  loadingNumCampaigns,
+  animationDelay = 0,
+  active,
+}: Props) => {
   const navigate = useNavigate();
+
+  if (loading) {
+    return (
+      <div tw="flex gap-4">
+        {Array(loadingNumCampaigns)
+          .fill(null)
+          .map((_) => (
+            <CampaignLoading active={active} animationDelay={animationDelay} />
+          ))}
+      </div>
+    );
+  }
+
   return (
     <Grid container spacing={2} columns={4}>
       {campaigns.map((campaign) => (
