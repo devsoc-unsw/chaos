@@ -126,7 +126,8 @@ const Marking = () => {
       <Grid container justifyContent="flex-end">
         <Button
           component={Link}
-          to={`/rankings/${campaignId}`}
+          to="../rankings"
+          relative="path"
           disabled={Object.values(applications).some((a) =>
             a.some((application) => application.mark === 0)
           )}

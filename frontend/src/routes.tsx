@@ -20,8 +20,8 @@ const routes = [
   <Route key="landing" path="/" element={<LandingPage />} />,
   <Route key="review" path="/review/:campaignId" element={<Review />}>
     <Route key="marking" path=":roleId/marking" element={<Marking />} />,
+    <Route key="rankings" path=":roleId/rankings" element={<Rankings />} />,
   </Route>,
-  <Route key="rankings" path="/rankings/:campaignId" element={<Rankings />} />,
   <Route
     key="finalise-candidates"
     path="/finalise_candidates"
