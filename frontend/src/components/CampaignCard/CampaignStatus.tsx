@@ -1,4 +1,4 @@
-import { InformationCircleIcon } from "@heroicons/react/24/outline";
+import { ChevronUpDownIcon } from "@heroicons/react/20/solid";
 import tw, { styled } from "twin.macro";
 
 import type { ComponentProps, PropsWithChildren } from "react";
@@ -11,7 +11,7 @@ const StatusIndicator = ({
   // TODO: i really do not like this (in terms of ui/ux), is there a better way to do it?
   // eslint-disable-next-line react/jsx-props-no-spreading
   <button type="button" {...props}>
-    <InformationCircleIcon tw="h-5 w-5" />
+    <ChevronUpDownIcon tw="w-4 h-4 -mx-0.5" />
     {children}
   </button>
 );
