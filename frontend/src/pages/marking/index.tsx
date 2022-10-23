@@ -2,6 +2,7 @@ import { TabContext, TabList } from "@mui/lab";
 import { Box, Button, Container, Grid, Tab } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import "twin.macro";
 
 import {
   getApplicationAnswers,
@@ -16,6 +17,7 @@ import ReviewerStepper from "components/ReviewerStepper";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 
 import ApplicationsList from "./ApplicationsList";
+import RolesSidebar from "./RolesSidebar";
 
 import type { ApplicationsWithQuestions } from "types/admin";
 
@@ -106,49 +108,40 @@ const Marking = () => {
   };
 
   return (
-    <Container>
-      <ReviewerStepper activeStep={0} />
+    <div tw="flex-1">
+      <RolesSidebar
+        roles={Object.keys(applications)}
+        selectedPosition={selectedPosition}
+        setSelectedPosition={setSelectedPosition}
+      />
 
-      <TabContext value={selectedPosition}>
-        <Box
-          sx={{
-            border: 1,
-            borderColor: "divider",
-            borderRadius: 1,
-            marginBottom: 2,
-          }}
-        >
-          <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-            <TabList onChange={(_, t: string) => setSelectedPosition(t)}>
-              {Object.keys(applications).map((role) => (
-                <Tab label={role} value={role} key={role} />
-              ))}
-            </TabList>
-          </Box>
-        </Box>
-      </TabContext>
+      <div tw="pl-80">
+        <Container>
+          <ReviewerStepper activeStep={0} />
 
-      {Object.keys(applications).length ? (
-        <ApplicationsList
-          applications={applications[selectedPosition] || []}
-          setMark={setMark}
-          selectedApplication={selectedApplication}
-          setSelectedApplication={setSelectedApplication}
-        />
-      ) : null}
+          {Object.keys(applications).length ? (
+            <ApplicationsList
+              applications={applications[selectedPosition] || []}
+              setMark={setMark}
+              selectedApplication={selectedApplication}
+              setSelectedApplication={setSelectedApplication}
+            />
+          ) : null}
 
-      <Grid container justifyContent="flex-end">
-        <Button
-          component={Link}
-          to={`/rankings/${campaignId}`}
-          disabled={Object.values(applications).some((a) =>
-            a.some((application) => application.mark === 0)
-          )}
-        >
-          Next (Rankings)
-        </Button>
-      </Grid>
-    </Container>
+          <Grid container justifyContent="flex-end">
+            <Button
+              component={Link}
+              to={`/rankings/${campaignId}`}
+              disabled={Object.values(applications).some((a) =>
+                a.some((application) => application.mark === 0)
+              )}
+            >
+              Next (Rankings)
+            </Button>
+          </Grid>
+        </Container>
+      </div>
+    </div>
   );
 };
 
