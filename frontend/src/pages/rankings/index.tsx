@@ -24,8 +24,9 @@ const Rankings = () => {
   const navigate = useNavigate();
   const campaignId = Number(useParams().campaignId);
   const setNavBarTitle = useContext(SetNavBarTitleContext);
-  // TODO: CHAOS-12 handle candidates from multiple positions from BE
-  const [selectedPosition, setSelectedPosition] = useState("");
+  const [roles, setRoles] = useState<{ [id: number]: string }>({});
+  const roleId = Number(useParams().roleId);
+  const selectedPosition = roles[roleId];
   const [rankings, setRankings] = useState<IRankings>({});
   const [positions, setPositions] = useState<string[]>([]);
   const [applications, setApplications] = useState<Applications>({});
@@ -47,6 +48,9 @@ const Rankings = () => {
       const { name: campaignName } = await getCampaign(campaignId);
       setNavBarTitle(`Ranking for ${campaignName}`);
       const { roles } = await getCampaignRoles(campaignId);
+      setRoles(
+        Object.fromEntries(roles.map(({ id, ...role }) => [id, role.name]))
+      );
       console.log("roles", roles);
 
       const allApplications = await Promise.all(
@@ -185,12 +189,6 @@ const Rankings = () => {
         </Typography>{" "}
         and then press <b>Next</b> to confirm your selections.
       </Typography>
-
-      <RankingsToolbar
-        positions={positions}
-        selectedPosition={selectedPosition}
-        setSelectedPosition={setSelectedPosition}
-      />
 
       <DragDropRankings
         rankings={rankings}

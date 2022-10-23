@@ -138,7 +138,7 @@ const DragDropRankings = ({
                         position={selectedPosition}
                         ratings={candidate.ratings}
                         application={
-                          applications[selectedPosition][candidate.id]
+                          applications[selectedPosition]?.[candidate.id]
                         }
                         reject
                       />

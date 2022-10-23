@@ -20,7 +20,6 @@ import ApplicationsList from "./ApplicationsList";
 import type { ApplicationsWithQuestions } from "types/admin";
 
 const Marking = () => {
-  console.log("AAAAAAAAAAAAA");
   const setNavBarTitle = useContext(SetNavBarTitleContext);
   const campaignId = Number(useParams().campaignId);
   // TODO: CHAOS-12 handle candidates from multiple positions from BE
