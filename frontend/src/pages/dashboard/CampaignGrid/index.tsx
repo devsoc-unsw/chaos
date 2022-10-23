@@ -1,6 +1,6 @@
-import "twin.macro";
+import tw from "twin.macro";
 
-import CampaignCard from "components/CampaignCard";
+import { CampaignCard, Transition } from "components";
 import { bytesToImage } from "utils";
 
 import CampaignLoading from "./CampaignLoading";
@@ -50,10 +50,18 @@ const CampaignGrid = ({
   console.log(organisations, campaigns);
 
   return (
-    <div tw="pb-4 flex flex-wrap justify-around gap-4 lg:justify-start">
-      {campaigns.map((campaign) => (
-        <div key={campaign.campaign.id}>
+    <div tw="flex flex-wrap justify-around pb-4 gap-4 lg:justify-start">
+      {campaigns.map((campaign, i) => (
+        <Transition
+          appear
+          enter={{
+            ...tw`transition duration-[750ms]`,
+            transitionDelay: `${i * 150}ms`,
+          }}
+          enterFrom={tw`translate-y-4 opacity-0`}
+        >
           <CampaignCard
+            key={campaign.campaign.id}
             campaignId={campaign.campaign.id}
             title={campaign.campaign.name}
             appliedFor={campaign.applied_for}
@@ -69,7 +77,7 @@ const CampaignGrid = ({
               organisations[campaign.campaign.organisation_id].logo!
             )}
           />
-        </div>
+        </Transition>
       ))}
     </div>
   );
