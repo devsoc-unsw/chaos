@@ -1,23 +1,26 @@
 import { lazy } from "react";
 import { Route } from "react-router-dom";
 
-const LandingPage = lazy(() => import("./pages/landing"));
-const DashboardPage = lazy(() => import("./pages/dashboard"));
+const Admin = lazy(() => import("./pages/admin"));
+const ApplicationPage = lazy(() => import("./pages/application_page"));
 const AuthSuccess = lazy(() => import("./pages/auth_success"));
-const SignupPage = lazy(() => import("./pages/signup"));
+const CampaignCreate = lazy(() => import("./pages/create_campaign"));
+const DashboardPage = lazy(() => import("./pages/dashboard"));
+const FinaliseCandidates = lazy(() => import("./pages/finalise_candidates"));
+const LandingPage = lazy(() => import("./pages/landing"));
 const Marking = lazy(() => import("./pages/marking"));
 const Rankings = lazy(() => import("./pages/rankings"));
-const FinaliseCandidates = lazy(() => import("./pages/finalise_candidates"));
-const Admin = lazy(() => import("./pages/admin"));
-const CampaignCreate = lazy(() => import("./pages/create_campaign"));
-const ApplicationPage = lazy(() => import("./pages/application_page"));
+const Review = lazy(() => import("./pages/review"));
+const SignupPage = lazy(() => import("./pages/signup"));
 
 const routes = [
   <Route key="dashboard" path="/dashboard" element={<DashboardPage />} />,
   <Route key="auth" path="/auth/callback" element={<AuthSuccess />} />,
   <Route key="signup" path="/signup" element={<SignupPage />} />,
   <Route key="landing" path="/" element={<LandingPage />} />,
-  <Route key="marking" path="/marking/:campaignId" element={<Marking />} />,
+  <Route key="review" path="/review/:campaignId" element={<Review />}>
+    <Route key="marking" path=":roleId/marking" element={<Marking />} />,
+  </Route>,
   <Route key="rankings" path="/rankings/:campaignId" element={<Rankings />} />,
   <Route
     key="finalise-candidates"

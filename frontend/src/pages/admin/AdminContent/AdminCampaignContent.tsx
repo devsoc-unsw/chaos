@@ -57,7 +57,7 @@ const AdminCampaignContent = ({ campaigns, setCampaigns, orgId }: Props) => {
       {campaigns.map((c) => (
         <div>
           <CampaignListItem>
-            <AdminListItemButton onClick={(_) => navigate(`/marking/${c.id}`)}>
+            <AdminListItemButton onClick={(_) => navigate(`/review/${c.id}`)}>
               <CampaignListItemImage src={c.image} />
               <ListItemText sx={{ textAlign: "center" }}>
                 {c.title}
