@@ -9,7 +9,8 @@ import RolesSidebar from "pages/marking/RolesSidebar";
 import type { Role } from "types/api";
 
 const Review = () => {
-  const campaignId = Number(useParams().campaignId);
+  const params = useParams();
+  const campaignId = Number(params.campaignId);
   const navigate = useNavigate();
 
   const setNavBarTitle = useContext(SetNavBarTitleContext);
@@ -21,7 +22,7 @@ const Review = () => {
       setNavBarTitle(`Review Candidates for ${campaignName}`);
       const { roles } = await getCampaignRoles(campaignId);
       setRoles(roles);
-      if (roles.length > 0) {
+      if (roles.length > 0 && params.roleId === undefined) {
         navigate(`${roles[0].id}/marking`);
       }
     };
