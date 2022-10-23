@@ -7,8 +7,6 @@ const StatusIndicator = ({
   children,
   ...props
 }: PropsWithChildren<ComponentProps<"button">>) => (
-  // TODO: open roles popup on click
-  // TODO: i really do not like this (in terms of ui/ux), is there a better way to do it?
   // eslint-disable-next-line react/jsx-props-no-spreading
   <button type="button" {...props}>
     <ChevronUpDownIcon tw="w-4 h-4 -mx-0.5" />
