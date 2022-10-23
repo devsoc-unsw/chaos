@@ -27,7 +27,9 @@ const Marking = () => {
   const [applications, setApplications] = useState<ApplicationsWithQuestions>(
     {}
   );
-  const [selectedPosition, setSelectedPosition] = useState("");
+  const [roles, setRoles] = useState<{ [id: number]: string }>({});
+  const roleId = Number(useParams().roleId);
+  const selectedPosition = roles[roleId];
   const [selectedApplication, setSelectedApplication] = useState(0);
 
   useEffect(() => {
@@ -35,6 +37,9 @@ const Marking = () => {
       const { name: campaignName } = await getCampaign(campaignId);
       setNavBarTitle(`Marking for ${campaignName}`);
       const { roles } = await getCampaignRoles(campaignId);
+      setRoles(
+        Object.fromEntries(roles.map(({ id, ...role }) => [id, role.name]))
+      );
 
       // TODO(michael): REFACTOR ALL THIS
       const allApplications = await Promise.all(
@@ -72,7 +77,6 @@ const Marking = () => {
 
       console.log(allApplications);
 
-      setSelectedPosition(roles[0].name);
       setSelectedApplication(allApplications[0][0]?.id);
       setApplications(
         Object.fromEntries(
