@@ -1,18 +1,17 @@
-import { Container } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import tw from "twin.macro";
 
-import { getAllCampaigns } from "api";
+import { getAllCampaigns, getOrganisation } from "api";
 import { FetchError } from "api/api";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 import { removeStore } from "utils";
 
 import CampaignGrid from "./CampaignGrid";
 
-import type { CampaignWithRoles } from "types/api";
+import type { CampaignWithRoles, Organisation } from "types/api";
 
-const Heading = tw.h2`text-2xl font-bold my-4`;
+const Heading = tw.h2`my-3 text-2xl font-semibold`;
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -22,6 +21,11 @@ const Dashboard = () => {
     []
   );
   const [pastCampaigns, setPastCampaigns] = useState<CampaignWithRoles[]>([]);
+  const [organisations, setOrganisations] = useState<{
+    [orgId: number]: Organisation;
+  }>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     setNavBarTitle("Your Dashboard");
 
@@ -46,25 +50,60 @@ const Dashboard = () => {
         }
         throw e;
       }
-      console.log(campaigns);
+
+      const organisations = await Promise.all(
+        [...campaigns.current_campaigns, ...campaigns.past_campaigns].map((c) =>
+          getOrganisation(c.campaign.organisation_id)
+        )
+      );
+      setOrganisations(
+        Object.fromEntries(organisations.map((org) => [org.id, org]))
+      );
+
       const current = campaigns.current_campaigns;
       setMyCampaigns(current.filter((c) => c.applied_for.length));
       setCurrentCampaigns(current.filter((c) => !c.applied_for.length));
       setPastCampaigns(campaigns.past_campaigns);
+      setIsLoading(false);
     };
+
     void getCampaigns();
   }, []);
+
   return (
-    <Container>
+    <div tw="px-6 pt-2 pb-6 w-full max-w-7xl mx-auto">
       <Heading>My Campaigns</Heading>
-      <CampaignGrid campaigns={myCampaigns} />
+      <CampaignGrid
+        loading={isLoading}
+        loadingNumCampaigns={1}
+        campaigns={myCampaigns}
+        organisations={organisations}
+        defaultText="You haven't applied to any campaigns 😦"
+        status="pending"
+      />
 
       <Heading>Available Campaigns</Heading>
-      <CampaignGrid campaigns={currentCampaigns} />
+      <CampaignGrid
+        loading={isLoading}
+        loadingNumCampaigns={2}
+        animationDelay={400}
+        defaultText="There aren't any campaigns currently available 😭"
+        campaigns={currentCampaigns}
+        organisations={organisations}
+        status="open"
+      />
 
       <Heading>Past Campaigns</Heading>
-      <CampaignGrid campaigns={pastCampaigns} />
-    </Container>
+      <CampaignGrid
+        loading={isLoading}
+        loadingNumCampaigns={2}
+        animationDelay={800}
+        defaultText="There aren't any campaigns that have already closed 😮 Apply to the ones currently open!"
+        campaigns={pastCampaigns}
+        organisations={organisations}
+        status="closed"
+      />
+    </div>
   );
 };
 

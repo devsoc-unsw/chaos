@@ -33,13 +33,13 @@ const Landing = () => {
       return;
     }
     const { top, left } = div.getBoundingClientRect();
-    setOffsetX((e.clientX - (left + div.clientWidth / 2)) / 50);
-    setOffsetY((e.clientY - (top + div.clientHeight / 2)) / 50);
+    setOffsetX((e.clientX - (left + div.clientWidth / 2)) / 40);
+    setOffsetY((e.clientY - (top + div.clientHeight / 2)) / 40);
   };
 
   return (
     <div
-      tw="flex flex-col items-center w-full font-light bg-gray-50"
+      tw="flex flex-col items-center w-full font-light"
       onPointerMove={onPointerMove}
     >
       <div tw="flex w-full p-[50px] max-w-7xl my-auto translate-y-[-100px]">

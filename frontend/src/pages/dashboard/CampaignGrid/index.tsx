@@ -1,18 +1,68 @@
-import { Grid } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import tw from "twin.macro";
 
-import CampaignCard from "components/CampaignCard";
-import { bytesToImage, dateToStringForCampaignGrid } from "utils";
+import { CampaignCard, Transition } from "components";
+import { bytesToImage } from "utils";
 
-import type { CampaignWithRoles } from "types/api";
+import CampaignLoading from "./CampaignLoading";
 
-const CampaignGrid = ({ campaigns }: { campaigns: CampaignWithRoles[] }) => {
-  const navigate = useNavigate();
+import type { ComponentProps } from "react";
+import type { CampaignWithRoles, Organisation } from "types/api";
+
+type Props = {
+  campaigns: CampaignWithRoles[];
+  organisations: { [orgId: number]: Organisation };
+  loading: boolean;
+  loadingNumCampaigns: number;
+  animationDelay?: number;
+  defaultText: string;
+  status?: ComponentProps<typeof CampaignLoading>["status"];
+};
+const CampaignGrid = ({
+  campaigns,
+  organisations,
+  loading,
+  loadingNumCampaigns,
+  animationDelay = 0,
+  defaultText,
+  status,
+}: Props) => {
+  if (loading) {
+    return (
+      <div tw="flex gap-4">
+        {Array(loadingNumCampaigns)
+          .fill(null)
+          .map((_, i) => (
+            <CampaignLoading
+              // eslint-disable-next-line react/no-array-index-key
+              key={i}
+              status={status}
+              animationDelay={animationDelay}
+            />
+          ))}
+      </div>
+    );
+  }
+
+  if (!campaigns.length) {
+    return <div tw="text-gray-700">{defaultText}</div>;
+  }
+
+  console.log(organisations, campaigns);
+
   return (
-    <Grid container spacing={2} columns={4}>
-      {campaigns.map((campaign) => (
-        <Grid item key={campaign.campaign.id} xs={1}>
+    <div tw="flex flex-wrap justify-around pb-4 gap-4 lg:justify-start">
+      {campaigns.map((campaign, i) => (
+        <Transition
+          appear
+          enter={{
+            ...tw`transition duration-[750ms]`,
+            transitionDelay: `${i * 150}ms`,
+          }}
+          enterFrom={tw`translate-y-4 opacity-0`}
+        >
           <CampaignCard
+            key={campaign.campaign.id}
+            campaignId={campaign.campaign.id}
             title={campaign.campaign.name}
             appliedFor={campaign.applied_for}
             positions={campaign.roles.map((role) => ({
@@ -20,22 +70,16 @@ const CampaignGrid = ({ campaigns }: { campaigns: CampaignWithRoles[] }) => {
               name: role.name,
               number: role.max_available,
             }))}
-            startDate={dateToStringForCampaignGrid(
-              new Date(campaign.campaign.starts_at)
-            )}
-            endDate={dateToStringForCampaignGrid(
-              new Date(campaign.campaign.ends_at)
-            )}
+            startDate={new Date(campaign.campaign.starts_at)}
+            endDate={new Date(campaign.campaign.ends_at)}
             img={bytesToImage(campaign.campaign.cover_image)}
-            applyClick={() =>
-              navigate(`/application/${campaign.campaign.id}`, {
-                state: campaign,
-              })
-            }
+            organisationLogo={bytesToImage(
+              organisations[campaign.campaign.organisation_id].logo!
+            )}
           />
-        </Grid>
+        </Transition>
       ))}
-    </Grid>
+    </div>
   );
 };
 
