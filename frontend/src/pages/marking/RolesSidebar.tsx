@@ -3,11 +3,19 @@ import tw, { styled } from "twin.macro";
 import type { Dispatch, SetStateAction } from "react";
 
 const RoleItem = styled.button({
-  ...tw`px-3 py-1.5 rounded-sm w-full text-left font-normal`,
+  ...tw`px-3 py-1.5 rounded w-full text-left font-normal`,
+
+  ...tw`relative z-0 hover:before:opacity-20`,
+  "&::before": {
+    content: "",
+    ...tw`z-[-1] absolute opacity-0 transition-opacity rounded inset-0 bg-gradient-to-r from-blue-300 to-violet-300`,
+  },
 
   variants: {
     active: {
-      true: tw`bg-blue-300/30 shadow-sm`,
+      true: {
+        ...tw`shadow-sm before:opacity-30!`,
+      },
     },
   },
 });
