@@ -7,7 +7,7 @@ const Bar = ({
   ...props
 }: HTMLAttributes<HTMLDivElement> & { animationDelay: number }) => (
   <div
-    tw="h-2.5 rounded-sm bg-black/5 first:bg-black/[0.15] animate-pulse"
+    tw="h-3 rounded-sm bg-black/5 first:bg-black/[0.15] animate-pulse"
     css={{ animationDelay: `${animationDelay}ms` }}
     // eslint-disable-next-line react/jsx-props-no-spreading
     {...props}
@@ -37,28 +37,21 @@ type Props = {
   animationDelay?: number;
 };
 const CampaignLoading = ({ status, animationDelay = 0 }: Props) => (
-  <div tw="w-72 bg-white text-xs rounded shadow-md transition hover:(-translate-y-1 shadow-lg)">
+  <div tw="w-96 bg-white text-xs rounded shadow-md transition hover:(-translate-y-1 shadow-lg)">
     <header tw="flex items-center gap-1.5 p-3">
       <div
-        tw="w-7 h-7 rounded-sm bg-black/10 animate-pulse"
+        tw="w-10 h-10 rounded-sm bg-black/10 animate-pulse"
         css={{ animationDelay: `${animationDelay}ms` }}
       />
       <Bars>
-        <Bar tw="w-28" animationDelay={animationDelay} />
-        <Bar tw="w-24" animationDelay={animationDelay + 150} />
+        <Bar tw="w-36" animationDelay={animationDelay} />
+        <Bar tw="w-32" animationDelay={animationDelay + 150} />
       </Bars>
       <Button status={status} css={{ animationDelay: `${animationDelay}ms` }}>
         {status?.toUpperCase()}
       </Button>
     </header>
-    <div tw="h-28 bg-[#edeeef]" />
-    {status === "pending" && (
-      <Bars tw="p-3">
-        <Bar tw="w-40" animationDelay={animationDelay + 300} />
-        <Bar tw="w-32" animationDelay={animationDelay + 450} />
-        <Bar tw="w-28" animationDelay={animationDelay + 600} />
-      </Bars>
-    )}
+    <div tw="bg-[#edeeef]" css={{ aspectRatio: "16/9" }} />
   </div>
 );
 
