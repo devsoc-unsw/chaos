@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { Outlet, useParams } from "react-router-dom";
+import { Outlet, useNavigate, useParams } from "react-router-dom";
 import "twin.macro";
 
 import { getCampaign, getCampaignRoles } from "api";
@@ -10,6 +10,8 @@ import type { Role } from "types/api";
 
 const Review = () => {
   const campaignId = Number(useParams().campaignId);
+  const navigate = useNavigate();
+
   const setNavBarTitle = useContext(SetNavBarTitleContext);
   const [roles, setRoles] = useState<Role[]>([]);
 
@@ -19,6 +21,9 @@ const Review = () => {
       setNavBarTitle(`Review Candidates for ${campaignName}`);
       const { roles } = await getCampaignRoles(campaignId);
       setRoles(roles);
+      if (roles.length > 0) {
+        navigate(`${roles[0].id}/marking`);
+      }
     };
 
     void fetchData();
