@@ -10,7 +10,7 @@ import {
   RatingChip,
 } from "./finalRatingCandidateCard.styled";
 
-import type { ApplicationWithQuestions } from "types/admin";
+import type { ApplicationWithQuestions } from "pages/admin/types";
 
 // TODO CHAOS-15: proper algo to aggregate marks
 const calculateAvg = (ratings: { rater: string; rating: number }[]) => {
