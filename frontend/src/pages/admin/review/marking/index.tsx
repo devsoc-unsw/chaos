@@ -11,6 +11,7 @@ import {
   getRoleQuestions,
   setApplicationRating,
 } from "api";
+import { LoadingIndicator } from "components";
 import ReviewerStepper from "components/ReviewerStepper";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 
@@ -21,6 +22,7 @@ import type { ApplicationWithQuestions } from "pages/admin/types";
 const Marking = () => {
   const setNavBarTitle = useContext(SetNavBarTitleContext);
   const campaignId = Number(useParams().campaignId);
+  const [loading, setLoading] = useState(true);
   const [applications, setApplications] = useState<ApplicationWithQuestions[]>(
     []
   );
@@ -28,6 +30,8 @@ const Marking = () => {
   const [selectedApplication, setSelectedApplication] = useState(0);
 
   useEffect(() => {
+    setLoading(true);
+
     const fetchData = async () => {
       const { name: campaignName } = await getCampaign(campaignId);
       setNavBarTitle(`Marking for ${campaignName}`);
@@ -59,6 +63,7 @@ const Marking = () => {
           })),
         }))
       );
+      setLoading(false);
     };
 
     void fetchData();
@@ -73,6 +78,10 @@ const Marking = () => {
       newMark
     );
   };
+
+  if (loading) {
+    return <LoadingIndicator />;
+  }
 
   return (
     <Container>

@@ -11,6 +11,7 @@ import {
   getRoleQuestions,
   setApplicationStatus,
 } from "api";
+import LoadingIndicator from "components/LoadingIndicator";
 import ReviewerStepper from "components/ReviewerStepper";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 
@@ -23,6 +24,7 @@ const Rankings = () => {
   const campaignId = Number(useParams().campaignId);
   const setNavBarTitle = useContext(SetNavBarTitleContext);
   const roleId = Number(useParams().roleId);
+  const [loading, setLoading] = useState(true);
   const [rankings, setRankings] = useState<Ranking[]>([]);
   const [applications, setApplications] = useState<Applications>({});
   const [passIndex, setPassIndex] = useState(0);
@@ -32,6 +34,7 @@ const Rankings = () => {
   }, [rankings]);
 
   useEffect(() => {
+    setLoading(true);
     const fetchData = async () => {
       const { name: campaignName } = await getCampaign(campaignId);
       setNavBarTitle(`Ranking for ${campaignName}`);
@@ -86,6 +89,7 @@ const Rankings = () => {
           ])
         )
       );
+      setLoading(false);
     };
 
     void fetchData();
@@ -109,6 +113,10 @@ const Rankings = () => {
         // TODO: handle errors
       });
   };
+
+  if (loading) {
+    return <LoadingIndicator />;
+  }
 
   return (
     <Container>
