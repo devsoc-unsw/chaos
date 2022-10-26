@@ -1,4 +1,0 @@
-{
-  "coc.preferences.formatOnSaveFiletypes": ["html", "css", "json"],
-  "eslint.autoFixOnSave": true
-}
