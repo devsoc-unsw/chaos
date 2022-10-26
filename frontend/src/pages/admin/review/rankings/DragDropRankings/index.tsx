@@ -3,13 +3,12 @@ import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import FinalRatingCandidateCard from "../FinalRatingCandidateCard";
 import PassBar from "../PassBar";
 
-import type { Applications, Rankings } from "../types";
+import type { Applications, Ranking } from "../types";
 import type { DragDropContextProps } from "@hello-pangea/dnd";
 
 type Props = {
-  rankings: Rankings;
-  setRankings: (rankings: Rankings) => void;
-  selectedPosition: string;
+  rankings: Ranking[];
+  setRankings: (rankings: Ranking[]) => void;
   passIndex: number;
   setPassIndex: (passIndex: number) => void;
   applications: Applications;
@@ -18,7 +17,6 @@ type Props = {
 const DragDropRankings = ({
   rankings,
   setRankings,
-  selectedPosition,
   passIndex,
   setPassIndex,
   applications,
@@ -37,7 +35,7 @@ const DragDropRankings = ({
       setPassIndex(destination.index);
     } else {
       // Dragged a candidate
-      const newRankings = Array.from(rankings[selectedPosition]);
+      const newRankings = Array.from(rankings);
       const srcIdx = source.index - Number(source.index > passIndex);
       const destIdx =
         destination.index -
@@ -48,11 +46,11 @@ const DragDropRankings = ({
       newRankings.splice(
         destIdx,
         0,
-        rankings[selectedPosition].filter(
+        rankings.filter(
           (candidate: { name: string }) => candidate.name === draggableId
         )[0]
       );
-      setRankings({ ...rankings, [selectedPosition]: newRankings });
+      setRankings(newRankings);
 
       // If candidate was dragged to the other side of pass bar, update position of pass bar
       if (source.index > passIndex && destination.index <= passIndex) {
@@ -72,37 +70,12 @@ const DragDropRankings = ({
             // eslint-disable-next-line react/jsx-props-no-spreading
             {...droppableProvided.droppableProps}
           >
-            {rankings[selectedPosition]
-              ?.slice(0, passIndex)
-              .map((candidate, index) => (
-                <Draggable
-                  key={candidate.name}
-                  draggableId={candidate.name}
-                  index={index}
-                >
-                  {(draggableProvided) => (
-                    <div
-                      ref={draggableProvided.innerRef}
-                      // eslint-disable-next-line react/jsx-props-no-spreading
-                      {...draggableProvided.draggableProps}
-                      // eslint-disable-next-line react/jsx-props-no-spreading
-                      {...draggableProvided.dragHandleProps}
-                    >
-                      <FinalRatingCandidateCard
-                        name={candidate.name}
-                        position={selectedPosition}
-                        ratings={candidate.ratings}
-                        application={
-                          applications[selectedPosition][candidate.id]
-                        }
-                      />
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-
-            {selectedPosition in rankings && (
-              <Draggable draggableId="pass-bar" index={passIndex}>
+            {rankings?.slice(0, passIndex).map((candidate, index) => (
+              <Draggable
+                key={candidate.name}
+                draggableId={candidate.name}
+                index={index}
+              >
                 {(draggableProvided) => (
                   <div
                     ref={draggableProvided.innerRef}
@@ -111,41 +84,54 @@ const DragDropRankings = ({
                     // eslint-disable-next-line react/jsx-props-no-spreading
                     {...draggableProvided.dragHandleProps}
                   >
-                    <PassBar />
+                    <FinalRatingCandidateCard
+                      name={candidate.name}
+                      ratings={candidate.ratings}
+                      application={applications[candidate.id]}
+                    />
                   </div>
                 )}
               </Draggable>
-            )}
+            ))}
 
-            {rankings[selectedPosition]
-              ?.slice(passIndex)
-              .map((candidate, index) => (
-                <Draggable
-                  key={candidate.name}
-                  draggableId={candidate.name}
-                  index={index + passIndex + 1}
+            <Draggable draggableId="pass-bar" index={passIndex}>
+              {(draggableProvided) => (
+                <div
+                  ref={draggableProvided.innerRef}
+                  // eslint-disable-next-line react/jsx-props-no-spreading
+                  {...draggableProvided.draggableProps}
+                  // eslint-disable-next-line react/jsx-props-no-spreading
+                  {...draggableProvided.dragHandleProps}
                 >
-                  {(draggableProvided) => (
-                    <div
-                      ref={draggableProvided.innerRef}
-                      // eslint-disable-next-line react/jsx-props-no-spreading
-                      {...draggableProvided.draggableProps}
-                      // eslint-disable-next-line react/jsx-props-no-spreading
-                      {...draggableProvided.dragHandleProps}
-                    >
-                      <FinalRatingCandidateCard
-                        name={candidate.name}
-                        position={selectedPosition}
-                        ratings={candidate.ratings}
-                        application={
-                          applications[selectedPosition]?.[candidate.id]
-                        }
-                        reject
-                      />
-                    </div>
-                  )}
-                </Draggable>
-              ))}
+                  <PassBar />
+                </div>
+              )}
+            </Draggable>
+
+            {rankings?.slice(passIndex).map((candidate, index) => (
+              <Draggable
+                key={candidate.name}
+                draggableId={candidate.name}
+                index={index + passIndex + 1}
+              >
+                {(draggableProvided) => (
+                  <div
+                    ref={draggableProvided.innerRef}
+                    // eslint-disable-next-line react/jsx-props-no-spreading
+                    {...draggableProvided.draggableProps}
+                    // eslint-disable-next-line react/jsx-props-no-spreading
+                    {...draggableProvided.dragHandleProps}
+                  >
+                    <FinalRatingCandidateCard
+                      name={candidate.name}
+                      ratings={candidate.ratings}
+                      application={applications?.[candidate.id]}
+                      reject
+                    />
+                  </div>
+                )}
+              </Draggable>
+            ))}
             {droppableProvided.placeholder}
           </div>
         )}

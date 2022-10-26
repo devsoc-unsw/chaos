@@ -11,7 +11,5 @@ export type Rankings = {
 };
 
 export type Applications = {
-  [role: string]: {
-    [id: number]: ApplicationWithQuestions;
-  };
+  [id: number]: ApplicationWithQuestions;
 };

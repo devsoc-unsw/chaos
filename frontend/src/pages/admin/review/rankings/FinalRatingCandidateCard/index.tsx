@@ -23,7 +23,7 @@ const calculateAvg = (ratings: { rater: string; rating: number }[]) => {
 
 type Props = {
   name: string;
-  position: string;
+  position?: string;
   ratings: { rater: string; rating: number }[];
   reject?: boolean;
   application: ApplicationWithQuestions;

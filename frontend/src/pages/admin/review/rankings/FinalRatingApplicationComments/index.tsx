@@ -6,7 +6,7 @@ import type { ApplicationWithQuestions } from "pages/admin/types";
 
 type Props = {
   name: string;
-  position: string;
+  position?: string;
   open: boolean;
   handleClose: () => void;
   application: ApplicationWithQuestions;
@@ -14,7 +14,7 @@ type Props = {
 
 const FinalRatingApplicationComments = ({
   name,
-  position,
+  position = "position",
   open,
   handleClose,
   application,
