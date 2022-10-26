@@ -1,8 +1,9 @@
-import { useContext, useEffect, useState } from "react";
+import { Suspense, useContext, useEffect, useState } from "react";
 import { Outlet, useNavigate, useParams } from "react-router-dom";
 import "twin.macro";
 
 import { getCampaign, getCampaignRoles } from "api";
+import { LoadingIndicator } from "components";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 
 import RolesSidebar from "./RolesSidebar";
@@ -36,7 +37,9 @@ const Review = () => {
       <RolesSidebar roles={roles} />
 
       <div tw="pl-80">
-        <Outlet />
+        <Suspense fallback={<LoadingIndicator />}>
+          <Outlet />
+        </Suspense>
       </div>
     </div>
   );
