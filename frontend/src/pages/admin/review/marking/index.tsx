@@ -62,7 +62,7 @@ const Marking = () => {
     };
 
     void fetchData();
-  }, []);
+  }, [roleId]);
 
   const setMark = (newMark: number) => {
     const newApplications = [...applications];

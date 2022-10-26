@@ -89,7 +89,7 @@ const Rankings = () => {
     };
 
     void fetchData();
-  }, []);
+  }, [roleId]);
 
   const handleNext = () => {
     console.log(
