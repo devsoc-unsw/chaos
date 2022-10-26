@@ -23,7 +23,6 @@ const calculateAvg = (ratings: { rater: string; rating: number }[]) => {
 
 type Props = {
   name: string;
-  position?: string;
   ratings: { rater: string; rating: number }[];
   reject?: boolean;
   application: ApplicationWithQuestions;
@@ -31,7 +30,6 @@ type Props = {
 
 const FinalRatingCandidateCard = ({
   name,
-  position,
   ratings,
   reject = false,
   application,
@@ -77,7 +75,6 @@ const FinalRatingCandidateCard = ({
       </CandidateCard>
       <FinalRatingApplicationComments
         name={name}
-        position={position}
         open={open}
         handleClose={handleClose}
         application={application}

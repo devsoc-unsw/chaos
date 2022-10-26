@@ -1,5 +1,10 @@
 import { Suspense, useContext, useEffect, useState } from "react";
-import { Outlet, useNavigate, useParams } from "react-router-dom";
+import {
+  Outlet,
+  useNavigate,
+  useOutletContext,
+  useParams,
+} from "react-router-dom";
 import "twin.macro";
 
 import { getCampaign, getCampaignRoles } from "api";
@@ -38,11 +43,13 @@ const Review = () => {
 
       <div tw="pl-80">
         <Suspense fallback={<LoadingIndicator />}>
-          <Outlet />
+          <Outlet context={Object.fromEntries(roles.map((r) => [r.id, r]))} />
         </Suspense>
       </div>
     </div>
   );
 };
+
+export const useRoles = () => useOutletContext<{ [id: number]: Role }>();
 
 export default Review;

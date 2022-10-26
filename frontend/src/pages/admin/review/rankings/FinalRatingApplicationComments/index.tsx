@@ -1,12 +1,14 @@
 import { Dialog, DialogContent, DialogTitle, Divider } from "@mui/material";
+import { useParams } from "react-router-dom";
 
 import ApplicationPreviewer from "components/ApplicationPreviewer";
+
+import { useRoles } from "../..";
 
 import type { ApplicationWithQuestions } from "pages/admin/types";
 
 type Props = {
   name: string;
-  position?: string;
   open: boolean;
   handleClose: () => void;
   application: ApplicationWithQuestions;
@@ -14,18 +16,22 @@ type Props = {
 
 const FinalRatingApplicationComments = ({
   name,
-  position = "position",
   open,
   handleClose,
   application,
-}: Props) => (
-  <Dialog onClose={handleClose} open={open}>
-    <DialogTitle>{`${name}'s Application for ${position}`}</DialogTitle>
-    <Divider />
-    <DialogContent>
-      <ApplicationPreviewer application={application} />
-    </DialogContent>
-  </Dialog>
-);
+}: Props) => {
+  const roles = useRoles();
+  const roleId = Number(useParams().roleId);
+
+  return (
+    <Dialog onClose={handleClose} open={open}>
+      <DialogTitle>{`${name}'s Application for ${roles[roleId]?.name}`}</DialogTitle>
+      <Divider />
+      <DialogContent>
+        <ApplicationPreviewer application={application} />
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 export default FinalRatingApplicationComments;
