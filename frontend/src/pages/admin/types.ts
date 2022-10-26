@@ -25,3 +25,15 @@ export type Member = {
   name: string;
   role: AdminLevel;
 };
+
+type Question = {
+  question: string;
+  answer?: string;
+};
+
+export type ApplicationWithQuestions = {
+  applicationId: number;
+  zId: string;
+  mark?: number;
+  questions: Question[];
+};

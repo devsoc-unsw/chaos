@@ -1,7 +1,7 @@
 import { CardContent, Grid, Tooltip, Typography } from "@mui/material";
 import { useState } from "react";
 
-import { MarkChip } from "../../../components";
+import { MarkChip } from "../../../../../components";
 import FinalRatingApplicationComments from "../FinalRatingApplicationComments";
 
 import {
@@ -10,7 +10,7 @@ import {
   RatingChip,
 } from "./finalRatingCandidateCard.styled";
 
-import type { ApplicationWithQuestions } from "types/admin";
+import type { ApplicationWithQuestions } from "pages/admin/types";
 
 // TODO CHAOS-15: proper algo to aggregate marks
 const calculateAvg = (ratings: { rater: string; rating: number }[]) => {
@@ -23,7 +23,6 @@ const calculateAvg = (ratings: { rater: string; rating: number }[]) => {
 
 type Props = {
   name: string;
-  position: string;
   ratings: { rater: string; rating: number }[];
   reject?: boolean;
   application: ApplicationWithQuestions;
@@ -31,7 +30,6 @@ type Props = {
 
 const FinalRatingCandidateCard = ({
   name,
-  position,
   ratings,
   reject = false,
   application,
@@ -77,7 +75,6 @@ const FinalRatingCandidateCard = ({
       </CandidateCard>
       <FinalRatingApplicationComments
         name={name}
-        position={position}
         open={open}
         handleClose={handleClose}
         application={application}

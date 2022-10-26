@@ -5,7 +5,7 @@ import ApplicationPreviewer from "components/ApplicationPreviewer";
 
 import { RatingChips } from "./applicationsListTabPanel";
 
-import type { ApplicationWithQuestions } from "types/admin";
+import type { ApplicationWithQuestions } from "pages/admin/types";
 
 type Props = {
   application: ApplicationWithQuestions;
