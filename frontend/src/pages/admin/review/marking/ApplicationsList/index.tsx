@@ -19,8 +19,6 @@ const ApplicationsList = ({
   selectedApplication,
   setSelectedApplication,
 }: Props) => {
-  // TODO: CHAOS-12 handle candidates from multiple positions from BE
-
   const handleChange = (
     _event: SyntheticEvent<Element, Event>,
     newValue: number

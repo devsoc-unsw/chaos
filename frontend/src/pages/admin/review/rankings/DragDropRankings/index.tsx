@@ -22,7 +22,6 @@ const DragDropRankings = ({
   applications,
 }: Props) => {
   const onDragEnd: DragDropContextProps["onDragEnd"] = (result) => {
-    // TODO: CHAOS-88 integrate with backend
     const { destination, source, draggableId } = result;
     if (!destination) return;
     if (

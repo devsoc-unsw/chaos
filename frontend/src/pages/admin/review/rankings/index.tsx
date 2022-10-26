@@ -71,7 +71,6 @@ const Rankings = () => {
         })
       );
 
-      // TODO(michael): holy fuck refactor this shit
       setApplications(
         Object.fromEntries(
           applications.map((application, applicationIdx) => [
