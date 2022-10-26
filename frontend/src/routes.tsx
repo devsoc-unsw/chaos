@@ -8,8 +8,8 @@ const CampaignCreate = lazy(() => import("./pages/create_campaign"));
 const DashboardPage = lazy(() => import("./pages/dashboard"));
 const FinaliseCandidates = lazy(() => import("./pages/finalise_candidates"));
 const LandingPage = lazy(() => import("./pages/landing"));
-const Marking = lazy(() => import("./pages/marking"));
-const Rankings = lazy(() => import("./pages/rankings"));
+const Marking = lazy(() => import("./pages/review/marking"));
+const Rankings = lazy(() => import("./pages/review/rankings"));
 const Review = lazy(() => import("./pages/review"));
 const SignupPage = lazy(() => import("./pages/signup"));
 

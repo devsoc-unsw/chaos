@@ -1,7 +1,7 @@
 import { CardContent, Grid, Tooltip, Typography } from "@mui/material";
 import { useState } from "react";
 
-import { MarkChip } from "../../../components";
+import { MarkChip } from "../../../../components";
 import FinalRatingApplicationComments from "../FinalRatingApplicationComments";
 
 import {

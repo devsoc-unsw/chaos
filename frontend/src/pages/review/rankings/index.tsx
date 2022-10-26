@@ -16,7 +16,6 @@ import ReviewerStepper from "components/ReviewerStepper";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 
 import DragDropRankings from "./DragDropRankings";
-import RankingsToolbar from "./RankingsToolbar";
 
 import type { Applications, Rankings as IRankings } from "./types";
 

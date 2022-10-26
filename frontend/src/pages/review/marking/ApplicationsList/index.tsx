@@ -1,6 +1,6 @@
 import { Grid, Tab, Tabs } from "@mui/material";
 
-import { MarkChip } from "../../../components";
+import { MarkChip } from "../../../../components";
 import ApplicationsListTabPanel from "../ApplicationsListTabPanel";
 
 import type { SyntheticEvent } from "react";

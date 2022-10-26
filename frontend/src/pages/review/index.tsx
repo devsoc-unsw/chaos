@@ -4,7 +4,8 @@ import "twin.macro";
 
 import { getCampaign, getCampaignRoles } from "api";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
-import RolesSidebar from "pages/marking/RolesSidebar";
+
+import RolesSidebar from "./RolesSidebar";
 
 import type { Role } from "types/api";
 
