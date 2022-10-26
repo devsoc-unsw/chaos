@@ -48,7 +48,6 @@ const Marking = () => {
         })
       );
 
-      setSelectedApplication(applications[0]?.id);
       setApplications(
         applications.map((application, applicationIdx) => ({
           applicationId: application.id,
@@ -66,7 +65,7 @@ const Marking = () => {
   }, []);
 
   const setMark = (newMark: number) => {
-    const newApplications = { ...applications };
+    const newApplications = [...applications];
     newApplications[selectedApplication].mark = newMark;
     setApplications(newApplications);
     void setApplicationRating(
