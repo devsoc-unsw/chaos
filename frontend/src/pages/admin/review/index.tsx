@@ -41,7 +41,7 @@ const Review = () => {
     <div tw="flex-1">
       <RolesSidebar roles={roles} />
 
-      <div tw="h-full pl-80">
+      <div tw="h-full pl-80 flex">
         <Suspense fallback={<LoadingIndicator />}>
           <Outlet context={Object.fromEntries(roles.map((r) => [r.id, r]))} />
         </Suspense>
