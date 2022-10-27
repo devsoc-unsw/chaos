@@ -241,12 +241,19 @@ const CreateCampaign = () => {
       })
       .catch(async (err) => {
         if (err instanceof FetchError) {
-          const data = (await err.resp.json()) as string;
+          try {
+            const data = (await err.resp.json()) as string;
 
-          pushMessage({
-            message: `Internal Error: ${data}`,
-            type: "error",
-          });
+            pushMessage({
+              message: `Internal Error: ${data}`,
+              type: "error",
+            });
+          } catch {
+            pushMessage({
+              message: `Internal Error: Response Invalid`,
+              type: "error",
+            });
+          }
 
           return;
         }
