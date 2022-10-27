@@ -102,18 +102,62 @@ const CreateCampaign = () => {
         });
         return;
       }
-      if (questions.length === 0) {
+
+      if (roles.length === 0) {
         pushMessage({
-          message: "At least one question is required!",
+          message: "You need to create at least one role",
           type: "error",
         });
         return;
       }
-      if (roles.length === 0) {
-        pushMessage({
-          message: "At least one role is required!",
-          type: "error",
+
+      const roleMap = new Map<number, Role>();
+      const roleCheckSet = new Set<number>();
+      let flag = true;
+
+      roles.forEach((role) => {
+        roleMap.set(role.id, role);
+        roleCheckSet.add(role.id);
+      });
+
+      questions.forEach((question) => {
+        // Go through all the roles of a question and remove if its not a role
+        question.roles.forEach((role) => {
+          if (!roleMap.has(role)) {
+            question.roles.delete(role);
+          }
         });
+
+        if (question.roles.size === 0) {
+          pushMessage({
+            message: `The question '${question.text}' is not assigned to a role`,
+            type: "error",
+          });
+          flag = false;
+        } else {
+          question.roles.forEach((roleId) => {
+            if (roleCheckSet.has(roleId)) {
+              roleCheckSet.delete(roleId);
+            }
+          });
+        }
+      });
+
+      if (roleCheckSet.size !== 0) {
+        flag = false;
+        roleCheckSet.forEach((roleID) => {
+          const role = roleMap.get(roleID);
+
+          if (role) {
+            pushMessage({
+              message: `The role '${role.title}' does not have any questions`,
+              type: "error",
+            });
+          }
+        });
+      }
+
+      if (!flag) {
         return;
       }
     }
@@ -197,13 +241,14 @@ const CreateCampaign = () => {
       })
       .catch(async (err) => {
         if (err instanceof FetchError) {
-          // TODO: Check that err.resp is valid
           const data = (await err.resp.json()) as string;
 
           pushMessage({
             message: `Internal Error: ${data}`,
             type: "error",
           });
+
+          return;
         }
 
         console.error("Something went wrong");
