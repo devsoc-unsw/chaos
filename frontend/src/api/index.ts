@@ -102,6 +102,11 @@ export const getAdminData = () =>
     path: "/admin",
   });
 
+export const getOrganisation = (organisationId: number) =>
+  authenticatedRequest<Organisation>({
+    path: `/organisation/${organisationId}`,
+  });
+
 export const createOrganisation = (name: string, logo: number[]) =>
   authenticatedRequest<Organisation>({
     method: "POST",

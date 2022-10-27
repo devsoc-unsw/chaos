@@ -2,6 +2,7 @@ import { Container, Tab, Tabs } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
+import { FetchError } from "api/api";
 import { MessagePopupContext } from "contexts/MessagePopupContext";
 import { base64ToBytes, dateToStringForBackend } from "utils";
 
@@ -96,7 +97,7 @@ const CreateCampaign = () => {
       }
       if (cover === null) {
         pushMessage({
-          message: "Campaign cover is required!",
+          message: "Campaign cover image is required!",
           type: "error",
         });
         return;
@@ -194,7 +195,17 @@ const CreateCampaign = () => {
         });
         navigate("/dashboard");
       })
-      .catch(() => {
+      .catch(async (err) => {
+        if (err instanceof FetchError) {
+          // TODO: Check that err.resp is valid
+          const data = (await err.resp.json()) as string;
+
+          pushMessage({
+            message: `Internal Error: ${data}`,
+            type: "error",
+          });
+        }
+
         console.error("Something went wrong");
         pushMessage({
           message: "Something went wrong on backend!",

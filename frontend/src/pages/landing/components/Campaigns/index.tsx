@@ -17,11 +17,11 @@ const Container = styled.div({
   perspective: 700,
 });
 
-const Heading = tw.h1`font-bold text-3xl my-5 h-[1em] rounded-md bg-black/[0.15]`;
-const Row = tw.div`flex gap-6`;
+const Heading = tw.h1`font-bold text-xl my-3 h-[1em] rounded bg-black/[0.15]`;
+const Row = tw.div`flex gap-4`;
 
-const DEFAULT_ROTATE_X = 6;
-const DEFAULT_ROTATE_Y = -7.5;
+const DEFAULT_ROTATE_X = 7.5;
+const DEFAULT_ROTATE_Y = -9;
 const easing = BezierEasing(0.4, 0, 0.2, 1);
 
 type Props = {
@@ -89,10 +89,10 @@ const Campaigns = forwardRef<HTMLDivElement, Props>(
     return (
       <Container ref={ref}>
         <aside
-          tw="flex flex-col gap-4 mt-[-50px]"
+          tw="flex flex-col gap-3 mt-[-50px] text-xs"
           css={!withinRange ? tw`transition-transform duration-100` : undefined}
           style={{
-            transform: `scale(0.7) rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(1deg)`,
+            transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(1deg)`,
           }}
         >
           <section>
@@ -101,7 +101,7 @@ const Campaigns = forwardRef<HTMLDivElement, Props>(
               appear
               enter={tw`transition-[width] duration-[600ms]`}
               enterFrom={tw`w-0`}
-              enterTo={tw`w-72`}
+              enterTo={tw`w-52`}
             />
             <Row>
               <Campaign logo={csesoc} active />
@@ -114,7 +114,7 @@ const Campaigns = forwardRef<HTMLDivElement, Props>(
               appear
               enter={tw`transition-[width] duration-[600ms] delay-[400ms]`}
               enterFrom={tw`w-0`}
-              enterTo={tw`w-80`}
+              enterTo={tw`w-56`}
             />
             <Row>
               <Campaign logo={compclub} transitionDelay={600} />

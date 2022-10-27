@@ -74,7 +74,6 @@ const ReviewTab = ({ campaign, onSubmit }: Props) => {
             endDate={dateToStringForBackend(endDate)}
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             img={cover!}
-            applyClick={() => setDisplayForm(!displayForm)}
           />
         </Grid>
       </CampaignCardGrid>

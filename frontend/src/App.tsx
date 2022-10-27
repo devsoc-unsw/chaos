@@ -2,6 +2,7 @@ import { Box, CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 import { SnackbarProvider } from "notistack";
 import { Suspense, useCallback, useState } from "react";
 import { BrowserRouter, Routes } from "react-router-dom";
+import "twin.macro";
 
 import { MessagePopupContext } from "contexts/MessagePopupContext";
 
@@ -10,8 +11,6 @@ import { SetNavBarTitleContext } from "./contexts/SetNavbarTitleContext";
 import routes from "./routes";
 
 import type { Message } from "contexts/MessagePopupContext";
-
-import "twin.macro";
 
 const theme = createTheme({
   palette: {
@@ -59,7 +58,7 @@ const App = () => {
           <SetNavBarTitleContext.Provider value={setNavBarTitle}>
             <BrowserRouter>
               <NavBar campaign={AppBarTitle} />
-              <Box pt={8} minHeight="100vh" display="flex">
+              <Box pt={8} minHeight="100vh" display="flex" tw="bg-gray-50">
                 <Suspense fallback={<LoadingIndicator />}>
                   <Routes>{routes}</Routes>
                 </Suspense>
