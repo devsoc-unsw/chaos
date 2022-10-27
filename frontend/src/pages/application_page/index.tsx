@@ -60,9 +60,12 @@ const Application = () => {
         setCampaign(state);
       } else {
         // eslint-disable-next-line camelcase -- format from api response
-        const { current_campaigns: currentCampaigns } = await getAllCampaigns();
+        const {
+          past_campaigns: pastCampaigns,
+          current_campaigns: currentCampaigns,
+        } = await getAllCampaigns();
         // eslint-disable-next-line camelcase, @typescript-eslint/no-non-null-assertion
-        const campaign = currentCampaigns.find(
+        const campaign = [...pastCampaigns, ...currentCampaigns].find(
           (x) => x.campaign.id === campaignId
         )!;
         setCampaign(campaign);

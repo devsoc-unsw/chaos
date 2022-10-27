@@ -1,4 +1,4 @@
-import type { ApplicationWithQuestions } from "types/admin";
+import type { ApplicationWithQuestions } from "pages/admin/types";
 
 export type Ranking = {
   name: string;
@@ -11,7 +11,5 @@ export type Rankings = {
 };
 
 export type Applications = {
-  [role: string]: {
-    [id: number]: ApplicationWithQuestions;
-  };
+  [id: number]: ApplicationWithQuestions;
 };

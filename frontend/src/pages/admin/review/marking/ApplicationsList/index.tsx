@@ -1,10 +1,10 @@
 import { Grid, Tab, Tabs } from "@mui/material";
 
-import { MarkChip } from "../../../components";
+import { MarkChip } from "../../../../../components";
 import ApplicationsListTabPanel from "../ApplicationsListTabPanel";
 
+import type { ApplicationWithQuestions } from "pages/admin/types";
 import type { SyntheticEvent } from "react";
-import type { ApplicationWithQuestions } from "types/admin";
 
 type Props = {
   applications: ApplicationWithQuestions[];
@@ -19,8 +19,6 @@ const ApplicationsList = ({
   selectedApplication,
   setSelectedApplication,
 }: Props) => {
-  // TODO: CHAOS-12 handle candidates from multiple positions from BE
-
   const handleChange = (
     _event: SyntheticEvent<Element, Event>,
     newValue: number
