@@ -36,7 +36,7 @@ pub struct ApplicationReq {
     pub status: ApplicationStatus,
 }
 
-#[post("/new", data = "<app_req>")]
+#[post("/", data = "<app_req>")]
 pub async fn create_application(
     app_req: Json<ApplicationReq>,
     user: User,

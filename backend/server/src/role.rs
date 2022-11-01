@@ -91,7 +91,7 @@ pub async fn delete_role(role_id: i32, user: User, db: Database) -> Result<(), J
     .await
 }
 
-#[post("/new", data = "<role>")]
+#[post("/", data = "<role>")]
 pub async fn new_role(
     role: Json<RoleUpdate>,
     user: User,
