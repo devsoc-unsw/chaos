@@ -2,6 +2,7 @@ import { Container, Tab, Tabs } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
+import { FetchError } from "api/api";
 import { MessagePopupContext } from "contexts/MessagePopupContext";
 import { base64ToBytes, dateToStringForBackend } from "utils";
 
@@ -80,14 +81,83 @@ const CreateCampaign = () => {
   const onTabChange = (newTab: number) => {
     // only allow user to access review tab if all inputs are non-empty
     if (newTab === reviewTabIdx) {
-      if (
-        campaignName === "" ||
-        description === "" ||
-        cover === null ||
-        questions.length === 0 ||
-        roles.length === 0
-      ) {
-        console.error("All fields must be filled before reviewing!");
+      if (campaignName === "") {
+        pushMessage({
+          message: "Campaign name is required!",
+          type: "error",
+        });
+        return;
+      }
+      if (description === "") {
+        pushMessage({
+          message: "Campaign description is required!",
+          type: "error",
+        });
+        return;
+      }
+      if (cover === null) {
+        pushMessage({
+          message: "Campaign cover image is required!",
+          type: "error",
+        });
+        return;
+      }
+
+      if (roles.length === 0) {
+        pushMessage({
+          message: "You need to create at least one role",
+          type: "error",
+        });
+        return;
+      }
+
+      const roleMap = new Map<number, Role>();
+      const roleCheckSet = new Set<number>();
+      let flag = true;
+
+      roles.forEach((role) => {
+        roleMap.set(role.id, role);
+        roleCheckSet.add(role.id);
+      });
+
+      questions.forEach((question) => {
+        // Go through all the roles of a question and remove if its not a role
+        question.roles.forEach((role) => {
+          if (!roleMap.has(role)) {
+            question.roles.delete(role);
+          }
+        });
+
+        if (question.roles.size === 0) {
+          pushMessage({
+            message: `The question '${question.text}' is not assigned to a role`,
+            type: "error",
+          });
+          flag = false;
+        } else {
+          question.roles.forEach((roleId) => {
+            if (roleCheckSet.has(roleId)) {
+              roleCheckSet.delete(roleId);
+            }
+          });
+        }
+      });
+
+      if (roleCheckSet.size !== 0) {
+        flag = false;
+        roleCheckSet.forEach((roleID) => {
+          const role = roleMap.get(roleID);
+
+          if (role) {
+            pushMessage({
+              message: `The role '${role.title}' does not have any questions`,
+              type: "error",
+            });
+          }
+        });
+      }
+
+      if (!flag) {
         return;
       }
     }
@@ -169,8 +239,30 @@ const CreateCampaign = () => {
         });
         navigate("/dashboard");
       })
-      .catch(() => {
-        console.error("something went wrong");
+      .catch(async (err) => {
+        if (err instanceof FetchError) {
+          try {
+            const data = (await err.resp.json()) as string;
+
+            pushMessage({
+              message: `Internal Error: ${data}`,
+              type: "error",
+            });
+          } catch {
+            pushMessage({
+              message: `Internal Error: Response Invalid`,
+              type: "error",
+            });
+          }
+
+          return;
+        }
+
+        console.error("Something went wrong");
+        pushMessage({
+          message: "Something went wrong on backend!",
+          type: "error",
+        });
       });
   };
 
