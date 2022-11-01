@@ -110,14 +110,14 @@ export const getOrganisation = (organisationId: number) =>
 export const createOrganisation = (name: string, logo: number[]) =>
   authenticatedRequest<Organisation>({
     method: "POST",
-    path: "/organisation/new",
+    path: "/organisation/",
     body: { name, logo },
   });
 
 export const newApplication = (roleId: number) =>
   authenticatedRequest<Application>({
     method: "POST",
-    path: "/application/new",
+    path: "/application/",
     body: { role_id: roleId, status: "Pending" },
   });
 

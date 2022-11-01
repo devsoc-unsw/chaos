@@ -78,7 +78,6 @@ async fn main() {
                 backend::campaigns::get,
                 backend::campaigns::update,
                 backend::campaigns::roles,
-                backend::campaigns::create,
                 backend::campaigns::new,
                 backend::campaigns::delete_campaign,
                 backend::campaigns::get_all_campaigns,
