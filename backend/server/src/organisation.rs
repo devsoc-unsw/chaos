@@ -104,6 +104,39 @@ pub async fn delete(org_id: i32, _user: SuperUser, db: Database) -> Result<(), J
     .await
 }
 
+#[delete("/<org_id>/<member_id>")]
+pub async fn delete_member(org_id: i32, member_id: i32, user: User, db: Database) -> Result<(), JsonErr<OrgError>> {
+    db.run(move |conn| {
+        let mut level = OrganisationUser::organisation_admin_level(org_id, user.id, conn)
+            .check()
+            .map_err(|_| JsonErr(OrgError::InsufficientPerms, Status::Forbidden))?
+            .0;
+
+        if user.superuser {
+            level = AdminLevel::Admin;
+        }
+
+        let delete_user = OrganisationUser::get(conn, org_id, member_id);
+        if delete_user.is_none() {
+            return Err(JsonErr(OrgError::UserNotFound, Status::Forbidden))
+        }
+        let delete_user = delete_user.unwrap();
+
+        let delete_level = OrganisationUser::organisation_admin_level(org_id, delete_user.id, conn)
+            .check()
+            .map_err(|_| JsonErr(OrgError::InsufficientPerms, Status::Forbidden))?
+            .0;
+
+        if level.geq(delete_level) {
+            delete_user.remove(conn).ok_or_else(|| JsonErr(OrgError::Unknown, Status::Forbidden))
+        } else {
+            Err(JsonErr(OrgError::InsufficientPerms, Status::Forbidden))
+        }
+    })
+    .await
+}
+
+
 // ============ /organisation/<org_id>/superusers ============
 
 #[get("/<org_id>/superusers")]

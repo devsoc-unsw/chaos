@@ -347,6 +347,18 @@ impl OrganisationUser {
             .load(conn)
             .unwrap_or_else(|_| vec![])
     }
+
+    pub fn remove(
+        &self,
+        conn: &PgConnection
+    ) -> Option<()> {
+        use crate::database::schema::organisation_users::dsl::*;
+
+        diesel::delete(organisation_users.filter(organisation_id.eq(self.organisation_id).and(user_id.eq(self.user_id))))
+            .execute(conn)
+            .ok()
+            .map(|_| ())
+    }
 }
 
 impl NewOrganisationUser {
