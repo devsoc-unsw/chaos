@@ -62,7 +62,7 @@ const Card = ({
         </CampaignStatus>
       </header>
       <div
-        tw="grid place-items-center bg-[#edeeef]"
+        tw="flex items-center justify-center bg-[#edeeef]"
         css={{ aspectRatio: "16/9" }}
       >
         <img
