@@ -75,7 +75,7 @@ const Application = () => {
     };
 
     void getData();
-  }, [campaign]);
+  }, []);
 
   const [rolesSelected, setRolesSelected] = useState<number[]>([]);
   const [answers, setAnswers] = useState<{ [question: string]: string }>({});
