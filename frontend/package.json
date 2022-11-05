@@ -26,7 +26,7 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-dropzone": "14.2.3",
-    "react-router-dom": "6.4.2",
+    "react-router-dom": "6.4.3",
     "tailwindcss-gradient": "1.0.1",
     "typescript": "4.8.4",
     "web-vitals": "3.0.4"
