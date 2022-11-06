@@ -6,7 +6,7 @@
     "@date-io/date-fns": "2.16.0",
     "@emotion/react": "11.10.5",
     "@emotion/styled": "11.10.5",
-    "@headlessui/react": "1.7.3",
+    "@headlessui/react": "1.7.4",
     "@hello-pangea/dnd": "16.0.1",
     "@heroicons/react": "2.0.13",
     "@mui/icons-material": "5.10.9",
