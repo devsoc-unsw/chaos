@@ -1,3 +1,4 @@
+import { EnvelopeIcon } from "@heroicons/react/20/solid";
 import { Container } from "@mui/material";
 import moment from "moment";
 import { useEffect, useState } from "react";
@@ -21,8 +22,6 @@ import {
 } from "./applicationPage.styled";
 
 import type { CampaignWithRoles, Organisation, UserResponse } from "types/api";
-
-import { EnvelopeIcon } from "@heroicons/react/20/solid";
 
 const dateToString = (date: string) =>
   moment(new Date(date)).format("D MMM YYYY");
@@ -74,12 +73,11 @@ const Application = () => {
       if (state) {
         setCampaign(state);
       } else {
-        // eslint-disable-next-line camelcase -- format from api response
         const {
           past_campaigns: pastCampaigns,
           current_campaigns: currentCampaigns,
         } = await getAllCampaigns();
-        // eslint-disable-next-line camelcase, @typescript-eslint/no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const campaign = [...pastCampaigns, ...currentCampaigns].find(
           (x) => x.campaign.id === campaignId
         )!;
@@ -165,17 +163,17 @@ const Application = () => {
   };
 
   return (
-    <div tw="flex flex-col flex-1 max-w-7xl p-6 mx-auto gap-4">
-      <div tw="flex flex-col items-center gap-6 bg-white rounded shadow p-6 md:(flex-row items-start)">
+    <div tw="mx-auto flex flex-1 max-w-7xl flex-col gap-4 p-6">
+      <div tw="flex flex-col items-center gap-6 rounded bg-white p-6 shadow md:(flex-row items-start)">
         <div tw="flex flex-col gap-2">
-          <div tw="flex gap-2 items-center">
+          <div tw="flex items-center gap-2">
             <img
-              tw="rounded h-20 shadow"
+              tw="h-20 rounded shadow"
               // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               src={bytesToImage(organisation.logo!)}
               alt={organisation.name}
             />
-            <div tw="flex flex-col gap-2 justify-center">
+            <div tw="flex flex-col justify-center gap-2">
               <h1 tw="text-3xl">{campaign.campaign.name}</h1>
               <p>
                 {dateToString(campaign.campaign.starts_at)} -{" "}
@@ -192,17 +190,17 @@ const Application = () => {
               <span>·</span>
               <span>{userInfo.degree}</span>
             </p>
-            <p tw="flex gap-1 items-center text-gray-800 text-sm">
-              <EnvelopeIcon tw="w-4 h-4" /> {userInfo.email}
+            <p tw="flex items-center gap-1 text-gray-800 text-sm">
+              <EnvelopeIcon tw="h-4 w-4" /> {userInfo.email}
             </p>
           </div>
         </div>
         <div
-          tw="flex items-center justify-center m-auto mr-0 max-w-xl md:w-1/2 flex-shrink-0 shadow rounded bg-[#edeeef] overflow-hidden"
+          tw="m-auto mr-0 flex max-w-xl flex-shrink-0 items-center justify-center overflow-hidden rounded shadow bg-[#edeeef] md:w-1/2"
           css={{ aspectRatio: "16/9" }}
         >
           <img
-            tw="w-full max-h-full object-contain"
+            tw="max-h-full w-full object-contain"
             src={headerImage}
             alt={campaignName}
           />
@@ -210,14 +208,13 @@ const Application = () => {
       </div>
 
       <div tw="flex flex-1 gap-4">
-        <div tw="rounded shadow bg-white p-4">
+        <div tw="rounded bg-white p-4 shadow">
           <ul>
             {roles.map((role) => (
               <li key={role.id}>{role.title}</li>
             ))}
           </ul>
         </div>
-        <div tw="flex-1 p-4 rounded shadow bg-white"></div>
       </div>
     </div>
   );
