@@ -1,6 +1,4 @@
-import { EnvelopeIcon } from "@heroicons/react/20/solid";
 import { Container } from "@mui/material";
-import moment from "moment";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import "twin.macro";
@@ -15,6 +13,7 @@ import {
 import ApplicationForm from "../../components/ApplicationForm";
 import { bytesToImage } from "../../utils";
 
+import CampaignDetails from "./CampaignDetails";
 import {
   ArrowIcon,
   SubmitButton,
@@ -22,9 +21,6 @@ import {
 } from "./applicationPage.styled";
 
 import type { CampaignWithRoles, Organisation, UserResponse } from "types/api";
-
-const dateToString = (date: string) =>
-  moment(new Date(date)).format("D MMM YYYY");
 
 const Application = () => {
   const navigate = useNavigate();
@@ -164,48 +160,14 @@ const Application = () => {
 
   return (
     <div tw="mx-auto flex flex-1 max-w-7xl flex-col gap-4 p-6">
-      <div tw="flex flex-col items-center gap-6 rounded bg-white p-6 shadow md:(flex-row items-start)">
-        <div tw="flex flex-col gap-2">
-          <div tw="flex items-center gap-2">
-            <img
-              tw="h-20 rounded shadow"
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              src={bytesToImage(organisation.logo!)}
-              alt={organisation.name}
-            />
-            <div tw="flex flex-col justify-center gap-2">
-              <h1 tw="text-3xl">{campaign.campaign.name}</h1>
-              <p>
-                {dateToString(campaign.campaign.starts_at)} -{" "}
-                {dateToString(campaign.campaign.ends_at)}
-              </p>
-            </div>
-          </div>
-          <div tw="flex items-center leading-relaxed">{description}</div>
-          <div>
-            <h3 tw="text-xl leading-loose">You&apos;re applying as:</h3>
-            <p tw="flex gap-1.5">
-              <span>{userInfo.name}</span>
-              <span tw="font-light italic">({userInfo.zid})</span>
-              <span>·</span>
-              <span>{userInfo.degree}</span>
-            </p>
-            <p tw="flex items-center gap-1 text-gray-800 text-sm">
-              <EnvelopeIcon tw="h-4 w-4" /> {userInfo.email}
-            </p>
-          </div>
-        </div>
-        <div
-          tw="m-auto mr-0 flex max-w-xl flex-shrink-0 items-center justify-center overflow-hidden rounded shadow bg-[#edeeef] md:w-1/2"
-          css={{ aspectRatio: "16/9" }}
-        >
-          <img
-            tw="max-h-full w-full object-contain"
-            src={headerImage}
-            alt={campaignName}
-          />
-        </div>
-      </div>
+      <CampaignDetails
+        campaignName={campaignName}
+        headerImage={headerImage}
+        organisation={organisation}
+        campaign={campaign}
+        description={description}
+        userInfo={userInfo}
+      />
 
       <div tw="flex flex-1 gap-4">
         <div tw="rounded bg-white p-4 shadow">
