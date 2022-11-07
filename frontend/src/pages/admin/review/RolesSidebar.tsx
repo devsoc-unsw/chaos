@@ -9,7 +9,12 @@ const RoleItem = styled(Link, {
   ...tw`relative z-0 hover:before:opacity-20`,
   "&::before": {
     content: "",
-    ...tw`absolute inset-0 rounded from-blue-300 to-violet-300 opacity-0 transition-opacity bg-gradient-to-r z-[-1]`,
+    // eslint-disable-next-line prettier/prettier
+    ...tw`
+      absolute inset-0 z-[-1]
+      bg-gradient-to-r from-blue-300 to-violet-300
+      rounded opacity-0 transition-opacity
+    `,
   },
 
   variants: {

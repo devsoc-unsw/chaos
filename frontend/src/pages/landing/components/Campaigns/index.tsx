@@ -9,7 +9,12 @@ import Campaign from "./Campaign";
 import compclub from "./compclub.png";
 
 const Container = styled.div({
-  ...tw`absolute top-1/2 flex -translate-y-1/2 items-center justify-center right-[50px] w-[650px] h-[600px] z-[-1]`,
+  // eslint-disable-next-line prettier/prettier
+  ...tw`
+    absolute top-1/2 right-[50px] w-[650px] h-[600px]
+    flex items-center justify-center
+    -translate-y-1/2 z-[-1]
+  `,
   perspective: 700,
 });
 
