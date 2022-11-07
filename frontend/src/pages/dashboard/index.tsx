@@ -11,7 +11,7 @@ import CampaignGrid from "./CampaignGrid";
 
 import type { CampaignWithRoles, Organisation } from "types/api";
 
-const Heading = tw.h2`my-3 text-2xl font-semibold`;
+const Heading = tw.h2`my-3 font-semibold text-2xl`;
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -71,7 +71,7 @@ const Dashboard = () => {
   }, []);
 
   return (
-    <div tw="px-6 pt-2 pb-6 w-full max-w-7xl mx-auto">
+    <div tw="mx-auto w-full max-w-7xl px-6 pt-2 pb-6">
       <Heading>My Campaigns</Heading>
       <CampaignGrid
         loading={isLoading}

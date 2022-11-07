@@ -44,10 +44,10 @@ const Card = ({
   }
 
   return (
-    <div tw="w-96 bg-white text-sm rounded shadow-md overflow-hidden transition hover:(-translate-y-1 shadow-lg)">
+    <div tw="w-96 overflow-hidden rounded bg-white text-sm shadow-md transition hover:(-translate-y-1 shadow-lg)">
       <header tw="flex items-center gap-1.5 p-3">
         <img
-          tw="w-10 h-10 rounded-sm"
+          tw="h-10 w-10 rounded-sm"
           src={organisationLogo}
           alt="Organisation"
         />
@@ -66,7 +66,7 @@ const Card = ({
         css={{ aspectRatio: "16/9" }}
       >
         <img
-          tw="w-full max-h-full object-contain"
+          tw="max-h-full w-full object-contain"
           src={img}
           alt="Campaign Cover"
         />

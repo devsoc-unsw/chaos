@@ -3,24 +3,12 @@ import tw, { styled } from "twin.macro";
 
 import type { ComponentProps, ElementType, PropsWithChildren } from "react";
 
-const Button = tw.button`
-  relative flex justify-center items-center
-  px-3 py-2 w-max
-  text-[#191d24] font-normal border-0 rounded outline-none ring-blue-500 transition
-  hover:text-black focus-visible:(ring text-black)
-`;
+const Button = tw.button`relative flex w-max items-center justify-center rounded border-0 px-3 py-2 font-normal outline-none ring-blue-500 transition text-[#191d24] hover:text-black focus-visible:(text-black ring)`;
 
-const Bg = tw.div`
-  absolute inset-0 z-[-1]
-  rounded transition
-  bg-gradient-120 from-fuchsia-200 to-indigo-200
-`;
+const Bg = tw.div`absolute inset-0 rounded from-fuchsia-200 to-indigo-200 transition bg-gradient-120 z-[-1]`;
 
 const ButtonShadow = styled(Bg, {
-  ...tw`
-    filter blur-sm
-    group-hover:(blur translate-y-0.5) group-focus-visible:blur group-active:blur-sm
-  `,
+  ...tw`blur-sm filter group-hover:(translate-y-0.5 blur) group-focus-visible:blur group-active:blur-sm`,
 });
 
 const ButtonBg = styled(Bg, {

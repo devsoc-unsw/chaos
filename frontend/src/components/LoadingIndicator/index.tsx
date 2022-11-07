@@ -2,9 +2,9 @@ import { LinearProgress } from "@mui/material";
 import "twin.macro";
 
 const LoadingIndicator = () => (
-  <div tw="flex flex-col flex-1 h-full">
+  <div tw="flex flex-1 h-full flex-col">
     <LinearProgress />
-    <div tw="flex items-center justify-center flex-1">Loading...</div>
+    <div tw="flex flex-1 items-center justify-center">Loading...</div>
   </div>
 );
 

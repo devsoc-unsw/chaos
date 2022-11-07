@@ -39,19 +39,19 @@ const Landing = () => {
 
   return (
     <div
-      tw="flex flex-col items-center w-full font-light"
+      tw="flex w-full flex-col items-center font-light"
       onPointerMove={onPointerMove}
     >
-      <div tw="flex w-full p-[50px] max-w-7xl my-auto translate-y-[-100px]">
+      <div tw="my-auto flex w-full max-w-7xl p-[50px] translate-y-[-100px]">
         <main>
           <Transition
             appear
             enter={tw`transition duration-[600ms]`}
-            enterFrom={tw`opacity-0 -translate-x-6`}
+            enterFrom={tw`-translate-x-6 opacity-0`}
           >
             <h1 tw="text-5xl">
               <img
-                tw="inline h-[1em] filter drop-shadow-md"
+                tw="inline drop-shadow-md filter h-[1em]"
                 src={chaosImg}
                 alt="Chaos Logo"
               />{" "}
@@ -62,15 +62,15 @@ const Landing = () => {
             as={Fragment}
             appear
             enter={tw`transition duration-[600ms] delay-[250ms]`}
-            enterFrom={tw`opacity-0 translate-y-4`}
+            enterFrom={tw`translate-y-4 opacity-0`}
             enterTo={tw`text-2xl`}
           >
-            <h2 tw="text-3xl my-4">Recruitment Drives, without the fuss.</h2>
+            <h2 tw="my-4 text-3xl">Recruitment Drives, without the fuss.</h2>
           </Transition>
           <Transition
             appear
-            enter={tw`transition duration-[600ms] delay-500`}
-            enterFrom={tw`opacity-0 translate-y-4`}
+            enter={tw`transition delay-500 duration-[600ms]`}
+            enterFrom={tw`translate-y-4 opacity-0`}
           >
             {getStore("AUTH_TOKEN") ? (
               <DashboardButton as={Link} to="/dashboard">

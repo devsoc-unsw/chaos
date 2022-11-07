@@ -6,7 +6,7 @@ import type { Position } from "./types";
 import type { CampaignWithRoles } from "types/api";
 
 const PositionItem = styled.li({
-  ...tw`px-2 py-1.5 rounded`,
+  ...tw`rounded px-2 py-1.5`,
 
   variants: {
     status: {

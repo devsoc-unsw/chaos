@@ -9,15 +9,11 @@ import Campaign from "./Campaign";
 import compclub from "./compclub.png";
 
 const Container = styled.div({
-  ...tw`
-    absolute top-1/2 right-[50px] w-[650px] h-[600px]
-    flex items-center justify-center
-    -translate-y-1/2 z-[-1]
-  `,
+  ...tw`absolute top-1/2 flex -translate-y-1/2 items-center justify-center right-[50px] w-[650px] h-[600px] z-[-1]`,
   perspective: 700,
 });
 
-const Heading = tw.h1`font-bold text-xl my-3 h-[1em] rounded bg-black/[0.15]`;
+const Heading = tw.h1`my-3 rounded bg-black/[0.15] font-bold text-xl h-[1em]`;
 const Row = tw.div`flex gap-4`;
 
 const DEFAULT_ROTATE_X = 7.5;
@@ -89,7 +85,7 @@ const Campaigns = forwardRef<HTMLDivElement, Props>(
     return (
       <Container ref={ref}>
         <aside
-          tw="flex flex-col gap-3 mt-[-50px] text-xs"
+          tw="flex flex-col gap-3 text-xs mt-[-50px]"
           css={!withinRange ? tw`transition-transform duration-100` : undefined}
           style={{
             transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(1deg)`,

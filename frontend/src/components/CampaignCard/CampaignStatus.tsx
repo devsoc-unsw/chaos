@@ -9,17 +9,17 @@ const StatusIndicator = ({
 }: PropsWithChildren<ComponentProps<"button">>) => (
   // eslint-disable-next-line react/jsx-props-no-spreading
   <button type="button" {...props}>
-    <ChevronUpDownIcon tw="w-4 h-4 -mx-0.5" />
+    <ChevronUpDownIcon tw="-mx-0.5 h-4 w-4" />
     {children}
   </button>
 );
 
 const CampaignStatus = styled(StatusIndicator, {
-  ...tw`px-2 py-1.5 flex items-center gap-1 ml-auto rounded-[0.2rem] text-white`,
+  ...tw`ml-auto flex items-center gap-1 px-2 py-1.5 text-white rounded-[0.2rem]`,
 
   variants: {
     status: {
-      pending: tw`bg-[hsl(220, 60%, 90%)] text-black`,
+      pending: tw`text-black bg-[hsl(220, 60%, 90%)]`,
       open: tw`bg-[hsl(220, 93%, 60%)]`,
       closed: tw`bg-gray-100 text-black`,
       offered: tw`bg-green-200 text-green-900`,

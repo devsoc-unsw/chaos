@@ -4,16 +4,12 @@ import tw, { styled } from "twin.macro";
 import type { Role } from "types/api";
 
 const RoleItem = styled(Link, {
-  ...tw`block px-3 py-1.5 rounded w-full text-left font-normal`,
+  ...tw`block w-full rounded px-3 py-1.5 text-left font-normal`,
 
   ...tw`relative z-0 hover:before:opacity-20`,
   "&::before": {
     content: "",
-    ...tw`
-      absolute inset-0 z-[-1]
-      rounded bg-gradient-to-r from-blue-300 to-violet-300
-      opacity-0 transition-opacity
-    `,
+    ...tw`absolute inset-0 rounded from-blue-300 to-violet-300 opacity-0 transition-opacity bg-gradient-to-r z-[-1]`,
   },
 
   variants: {
@@ -29,7 +25,7 @@ type Props = {
 const RolesSidebar = ({ roles }: Props) => {
   const roleId = Number(useParams().roleId);
   return (
-    <nav tw="absolute bottom-0 left-0 p-4 bg-white shadow-xl top-16 w-80">
+    <nav tw="absolute bottom-0 left-0 top-16 w-80 bg-white p-4 shadow-xl">
       <h2 tw="mb-4 text-2xl">Roles</h2>
       <ul tw="flex flex-col gap-1">
         {roles.map((role) => (
