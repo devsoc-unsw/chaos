@@ -1,6 +1,8 @@
 import moment from "moment";
 import "twin.macro";
 
+import Card from "components/Card";
+
 import CampaignStatus from "./CampaignStatus";
 
 import type { VariantProps } from "@stitches/react";
@@ -19,7 +21,7 @@ type Props = {
   openModal: MouseEventHandler<HTMLButtonElement>;
 };
 
-const Card = ({
+const Content = ({
   organisationLogo,
   title,
   appliedFor,
@@ -44,7 +46,7 @@ const Card = ({
   }
 
   return (
-    <div tw="w-96 overflow-hidden rounded bg-white text-sm shadow-md transition hover:(-translate-y-1 shadow-lg)">
+    <Card tw="w-96 overflow-hidden p-0 text-sm" hoverable>
       <header tw="flex items-center gap-1.5 p-3">
         <img
           tw="h-10 w-10 rounded-sm"
@@ -61,18 +63,15 @@ const Card = ({
           {status.toUpperCase()}
         </CampaignStatus>
       </header>
-      <div
-        tw="flex items-center justify-center bg-[#edeeef]"
-        css={{ aspectRatio: "16/9" }}
-      >
+      <div tw="flex items-center justify-center overflow-hidden bg-[#edeeef] aspect-ratio[16/9]">
         <img
           tw="max-h-full w-full object-contain"
           src={img}
           alt="Campaign Cover"
         />
       </div>
-    </div>
+    </Card>
   );
 };
 
-export default Card;
+export default Content;

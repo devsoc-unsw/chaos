@@ -1,7 +1,8 @@
-import { Container } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import "twin.macro";
+
+import Card from "components/Card";
 
 import {
   getAllCampaigns,
@@ -10,15 +11,9 @@ import {
   newApplication,
   submitAnswer,
 } from "../../api";
-import ApplicationForm from "../../components/ApplicationForm";
 import { bytesToImage } from "../../utils";
 
 import CampaignDetails from "./CampaignDetails";
-import {
-  ArrowIcon,
-  SubmitButton,
-  SubmitWrapper,
-} from "./applicationPage.styled";
 
 import type { CampaignWithRoles, Organisation, UserResponse } from "types/api";
 
@@ -159,7 +154,7 @@ const Application = () => {
   };
 
   return (
-    <div tw="mx-auto flex flex-1 max-w-7xl flex-col gap-4 p-6">
+    <div tw="mx-auto flex flex-1 max-w-7xl flex-col gap-4 p-4">
       <CampaignDetails
         campaignName={campaignName}
         headerImage={headerImage}
@@ -170,38 +165,16 @@ const Application = () => {
       />
 
       <div tw="flex flex-1 gap-4">
-        <div tw="rounded bg-white p-4 shadow">
+        <Card>
           <ul>
             {roles.map((role) => (
               <li key={role.id}>{role.title}</li>
             ))}
           </ul>
-        </div>
+        </Card>
+        <Card tw="flex-1" />
       </div>
     </div>
-  );
-
-  return (
-    <Container>
-      <ApplicationForm
-        questions={questions}
-        roles={roles}
-        rolesSelected={rolesSelected}
-        setRolesSelected={setRolesSelected}
-        answers={answers}
-        setAnswers={setAnswers}
-        campaignName={campaignName}
-        headerImage={headerImage}
-        description={description}
-        userInfo={userInfo}
-      />
-      <SubmitWrapper>
-        <SubmitButton variant="contained" onClick={onSubmit}>
-          Submit
-          <ArrowIcon />
-        </SubmitButton>
-      </SubmitWrapper>
-    </Container>
   );
 };
 

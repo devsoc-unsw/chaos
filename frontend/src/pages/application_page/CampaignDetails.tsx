@@ -2,6 +2,7 @@ import { EnvelopeIcon } from "@heroicons/react/20/solid";
 import moment from "moment";
 import "twin.macro";
 
+import Card from "components/Card";
 import { bytesToImage } from "utils";
 
 import type { CampaignWithRoles, Organisation } from "types/api";
@@ -30,11 +31,11 @@ const CampaignDetails = ({
   description,
   userInfo,
 }: Props) => (
-  <header tw="flex flex-col items-center gap-6 rounded bg-white p-6 shadow md:(flex-row items-start)">
+  <Card as="header" tw="items-center gap-6 md:(flex-row items-start)">
     <article tw="flex flex-col gap-2">
       <div tw="flex items-center gap-2">
         <img
-          tw="h-20 rounded shadow"
+          tw="h-20 rounded shadow-md"
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           src={bytesToImage(organisation.logo!)}
           alt={organisation.name}
@@ -63,17 +64,14 @@ const CampaignDetails = ({
       </div>
     </article>
 
-    <aside
-      tw="m-auto mr-0 flex max-w-xl flex-shrink-0 items-center justify-center overflow-hidden rounded shadow bg-[#edeeef] md:w-1/2"
-      css={{ aspectRatio: "16/9" }}
-    >
+    <aside tw="m-auto mr-0 flex max-w-xl flex-shrink-0 items-center justify-center overflow-hidden rounded shadow-md bg-[#edeeef] aspect-ratio[16/9] md:w-1/2">
       <img
         tw="max-h-full w-full object-contain"
         src={headerImage}
         alt={campaignName}
       />
     </aside>
-  </header>
+  </Card>
 );
 
 export default CampaignDetails;
