@@ -185,6 +185,7 @@ const ApplicationPage = () => {
           roleQuestions={roleQuestions}
           answers={answers}
           setAnswer={setAnswer}
+          onSubmit={onSubmit}
         />
       </div>
     </div>

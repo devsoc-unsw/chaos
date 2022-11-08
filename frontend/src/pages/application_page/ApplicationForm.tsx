@@ -1,5 +1,8 @@
 import "twin.macro";
 
+import { ChevronRightIcon } from "@heroicons/react/20/solid";
+
+import Button from "components/Button";
 import Card from "components/Card";
 import Textarea from "components/Textarea";
 
@@ -12,6 +15,7 @@ type Props = {
   roleQuestions: RoleQuestions;
   answers: { [question: number]: string };
   setAnswer: (_question: number, _answer: string) => void;
+  onSubmit: () => void;
 };
 const ApplicationForm = ({
   roles,
@@ -19,6 +23,7 @@ const ApplicationForm = ({
   roleQuestions,
   answers,
   setAnswer,
+  onSubmit,
 }: Props) => (
   <Card tw="flex-1">
     <h2 tw="text-2xl">Questions</h2>
@@ -37,6 +42,11 @@ const ApplicationForm = ({
         ))}
       </section>
     ))}
+    <div tw="flex justify-end">
+      <Button tw="flex items-center" onClick={onSubmit}>
+        Submit <ChevronRightIcon tw="w-6 h-6 -mr-2" />
+      </Button>
+    </div>
   </Card>
 );
 
