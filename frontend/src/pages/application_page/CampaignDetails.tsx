@@ -64,7 +64,7 @@ const CampaignDetails = ({
       </div>
     </article>
 
-    <aside tw="m-auto mr-0 flex max-w-xl flex-shrink-0 items-center justify-center overflow-hidden rounded shadow-md bg-[#edeeef] aspect-ratio[16/9] md:w-1/2">
+    <aside tw="m-auto flex max-w-lg flex-shrink-0 items-center justify-center overflow-hidden rounded shadow-md bg-[#edeeef] aspect-ratio[16/9] md:w-1/2">
       <img
         tw="max-h-full w-full object-contain"
         src={headerImage}
