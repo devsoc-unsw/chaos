@@ -1,9 +1,9 @@
 use crate::database::{
-    models::{AdminInfoResponse, OrganisationInfo, OrganisationUser, User, SuperUser},
+    models::{AdminInfoResponse, OrganisationInfo, OrganisationUser, SuperUser, User},
     Database,
 };
 use crate::error::JsonErr;
-use rocket::{get, post, serde::json::Json, http::Status};
+use rocket::{get, http::Status, post, serde::json::Json};
 
 #[get("/")]
 pub async fn get(user: User, db: Database) -> Json<AdminInfoResponse> {
@@ -25,8 +25,12 @@ pub async fn get(user: User, db: Database) -> Json<AdminInfoResponse> {
     })
 }
 
-#[post("/make_superuser", data="<email>")]
-pub async fn make_superuser(_user: SuperUser, db: Database, email: Json<String>) -> Result<(), JsonErr<()>> {
+#[post("/make_superuser", data = "<email>")]
+pub async fn make_superuser(
+    _user: SuperUser,
+    db: Database,
+    email: Json<String>,
+) -> Result<(), JsonErr<()>> {
     db.run(move |conn| {
         User::get_from_email(conn, &email.into_inner())
             .map(|user| user.make_superuser(conn).ok())

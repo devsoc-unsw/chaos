@@ -127,7 +127,10 @@ async fn main() {
                 backend::question::delete_question
             ],
         )
-        .mount("/admin", routes![backend::admin::get, backend::admin::make_superuser])
+        .mount(
+            "/admin",
+            routes![backend::admin::get, backend::admin::make_superuser],
+        )
         .launch()
         .await
         .unwrap();
