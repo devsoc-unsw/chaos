@@ -8,9 +8,12 @@ module.exports = {
     colors,
     extend: {
       fontFamily: {
-        sans: ["Open Sans", ...defaultTheme.fontFamily.sans],
+        sans: ["Lato", ...defaultTheme.fontFamily.sans],
       },
     },
   },
-  plugins: [require("tailwindcss-gradient")],
+  plugins: [
+    require("tailwindcss-gradient"),
+    require('@tailwindcss/forms'),
+  ],
 };

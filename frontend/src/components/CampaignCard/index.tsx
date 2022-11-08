@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import "twin.macro";
 
-import Card from "./Card";
+import Content from "./Content";
 import Popup from "./Popup";
 
 import type { Position } from "./types";
@@ -39,7 +39,7 @@ const CampaignCard = ({
   };
 
   const content = (
-    <Card
+    <Content
       organisationLogo={organisationLogo}
       title={title}
       appliedFor={appliedFor}
