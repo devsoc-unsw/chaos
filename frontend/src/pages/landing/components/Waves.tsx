@@ -2,7 +2,7 @@ import "twin.macro";
 
 const Waves = () => (
   <svg
-    tw="absolute bottom-0 h-auto pointer-events-none"
+    tw="pointer-events-none absolute bottom-0 h-auto"
     width="100%"
     height="100%"
     id="svg"
