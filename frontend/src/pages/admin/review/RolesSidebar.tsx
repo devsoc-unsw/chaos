@@ -1,30 +1,10 @@
 import { Link, useParams } from "react-router-dom";
-import tw, { styled } from "twin.macro";
+import "twin.macro";
 
 import NavCard from "components/NavCard";
+import NavItem from "components/NavCard/NavItem";
 
 import type { Role } from "types/api";
-
-const RoleItem = styled(Link, {
-  ...tw`block w-full rounded px-3 py-1.5 text-left font-normal`,
-
-  ...tw`relative z-0 hover:before:opacity-20`,
-  "&::before": {
-    content: "",
-    // eslint-disable-next-line prettier/prettier
-    ...tw`
-      absolute inset-0 z-[-1]
-      bg-gradient-to-r from-blue-300 to-violet-300
-      rounded opacity-0 transition-opacity
-    `,
-  },
-
-  variants: {
-    active: {
-      true: tw`shadow-sm before:opacity-30!`,
-    },
-  },
-});
 
 type Props = {
   roles: Role[];
@@ -38,9 +18,13 @@ const RolesSidebar = ({ roles }: Props) => {
     >
       {roles.map((role) => (
         <li key={role.id}>
-          <RoleItem to={`${role.id}/marking`} active={role.id === roleId}>
+          <NavItem
+            as={Link}
+            to={`${role.id}/marking`}
+            active={role.id === roleId}
+          >
             {role.name}
-          </RoleItem>
+          </NavItem>
         </li>
       ))}
     </NavCard>

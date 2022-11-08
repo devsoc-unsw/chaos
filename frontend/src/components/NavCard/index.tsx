@@ -1,6 +1,6 @@
 import "twin.macro";
 
-import Card from "./Card";
+import Card from "components/Card";
 
 import type { ComponentProps, PropsWithChildren } from "react";
 
