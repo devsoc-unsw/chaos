@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import "twin.macro";
 
@@ -14,6 +14,7 @@ import {
 import { bytesToImage } from "../../utils";
 
 import CampaignDetails from "./CampaignDetails";
+import RolesSidebar from "./RolesSidebar";
 
 import type { CampaignWithRoles, Organisation, UserResponse } from "types/api";
 
@@ -87,6 +88,24 @@ const Application = () => {
 
   const [rolesSelected, setRolesSelected] = useState<number[]>([]);
   const [answers, setAnswers] = useState<{ [question: string]: string }>({});
+
+  const toggleRole = useCallback(
+    (roleId: number) => {
+      if (rolesSelected.includes(roleId)) {
+        setRolesSelected(rolesSelected.filter((r) => r !== roleId));
+      } else {
+        setRolesSelected([...rolesSelected, roleId]);
+      }
+    },
+    [rolesSelected]
+  );
+
+  const setAnswer = useCallback(
+    (question: string, answer: string) => {
+      setAnswers({ ...answers, [question]: answer });
+    },
+    [answers]
+  );
 
   if (loading) return <div />;
 
@@ -165,13 +184,11 @@ const Application = () => {
       />
 
       <div tw="flex flex-1 gap-4">
-        <Card>
-          <ul>
-            {roles.map((role) => (
-              <li key={role.id}>{role.title}</li>
-            ))}
-          </ul>
-        </Card>
+        <RolesSidebar
+          roles={campaign.roles}
+          rolesSelected={rolesSelected}
+          toggleRole={toggleRole}
+        />
         <Card tw="flex-1" />
       </div>
     </div>
