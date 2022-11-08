@@ -4208,9 +4208,10 @@ prettier-linter-helpers@^1.0.0:
   dependencies:
     fast-diff "^1.1.2"
 
-"prettier-plugin-twin.macro@https://github.com/mohammadsiyou/prettier-plugin-twin.macro":
-  version "1.0.10"
-  resolved "https://github.com/mohammadsiyou/prettier-plugin-twin.macro#2db0f7fadd8c1a4d2bc4c058cac8c6e59f76d75b"
+prettier-plugin-twin.macro@1.0.11:
+  version "1.0.11"
+  resolved "https://registry.yarnpkg.com/prettier-plugin-twin.macro/-/prettier-plugin-twin.macro-1.0.11.tgz#6e14e5dd6523ef53eb968526061b0c362f0464fa"
+  integrity sha512-Gf91VSesFYpFAyRidZV9ZtZicN76v5NrXd1MdyJpT0TWDnWIVQFoewj6PA8dizvEzprTJlhEjeISQjAOLQkFxA==
 
 prettier@2.7.1:
   version "2.7.1"
