@@ -17,10 +17,10 @@ interface Props {
   campaign: CampaignWithRoles;
   description: string;
   userInfo: {
-    name: string;
+    display_name: string;
     zid: string;
     email: string;
-    degree: string;
+    degree_name: string;
   };
 }
 const CampaignDetails = ({
@@ -53,10 +53,10 @@ const CampaignDetails = ({
       <div>
         <h3 tw="text-xl leading-loose">You&apos;re applying as:</h3>
         <p tw="flex gap-1.5">
-          <span>{userInfo.name}</span>
+          <span>{userInfo.display_name}</span>
           <span tw="font-light italic">({userInfo.zid})</span>
           <span>·</span>
-          <span>{userInfo.degree}</span>
+          <span>{userInfo.degree_name}</span>
         </p>
         <p tw="flex items-center gap-1 text-gray-800 text-sm">
           <EnvelopeIcon tw="h-4 w-4" /> {userInfo.email}

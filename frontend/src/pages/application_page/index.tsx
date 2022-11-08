@@ -109,33 +109,16 @@ const Application = () => {
 
   if (loading) return <div />;
 
-  const { campaignName, headerImage, description, roles, questions, userInfo } =
-    {
-      campaignName: campaign.campaign.name,
-      headerImage: bytesToImage(campaign.campaign.cover_image),
-      description: campaign.campaign.description,
-      roles: campaign.roles.map((r) => ({
-        id: r.id,
-        title: r.name,
-        quantity: r.max_available,
-      })),
-      questions: campaign.questions.map((q) => {
-        if (!(q.id in answers)) {
-          answers[q.id] = "";
-        }
-        return {
-          id: q.id,
-          text: q.title,
-          roles: new Set(q.role_ids),
-        };
-      }),
-      userInfo: {
-        name: selfInfo.display_name,
-        zid: selfInfo.zid,
-        email: selfInfo.email,
-        degree: selfInfo.degree_name,
-      },
+  const questions = campaign.questions.map((q) => {
+    if (!(q.id in answers)) {
+      answers[q.id] = "";
+    }
+    return {
+      id: q.id,
+      text: q.title,
+      roles: new Set(q.role_ids),
     };
+  });
 
   const onSubmit = () => {
     //        CHAOS-53, useNavigate() link to post submission page once it is created :)
@@ -175,12 +158,12 @@ const Application = () => {
   return (
     <div tw="mx-auto flex flex-1 max-w-7xl flex-col gap-4 p-4">
       <CampaignDetails
-        campaignName={campaignName}
-        headerImage={headerImage}
+        campaignName={campaign.campaign.name}
+        headerImage={bytesToImage(campaign.campaign.cover_image)}
         organisation={organisation}
         campaign={campaign}
-        description={description}
-        userInfo={userInfo}
+        description={campaign.campaign.description}
+        userInfo={selfInfo}
       />
 
       <div tw="flex flex-1 gap-4">
