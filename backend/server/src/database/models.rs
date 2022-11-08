@@ -853,9 +853,9 @@ impl Application {
         let comments = Comment::get_all_from_application_id(conn, application.id);
         let answers = Answer::get_all_from_application_id(conn, application.id);
 
-        ratings.into_iter().map(|rating| Rating::delete_deep(conn, rating.id)).collect::<Vec<bool>>();
-        comments.into_iter().map(|comment| Comment::delete_deep(conn, comment.id)).collect::<Vec<bool>>();
-        answers.into_iter().map(|answer| Answer::delete_deep(conn, answer.id)).collect::<Vec<bool>>();
+        ratings.into_iter().for_each(|rating| {Rating::delete_deep(conn, rating.id);});
+        comments.into_iter().for_each(|comment| {Comment::delete_deep(conn, comment.id);});
+        answers.into_iter().for_each(|answer| {Answer::delete_deep(conn, answer.id);});
 
         match Application::delete(conn, application.id) {
             true => Some(()),
