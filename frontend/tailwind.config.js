@@ -8,7 +8,7 @@ module.exports = {
     colors,
     extend: {
       fontFamily: {
-        sans: ["Open Sans", ...defaultTheme.fontFamily.sans],
+        sans: ["Lato", ...defaultTheme.fontFamily.sans],
       },
     },
   },
