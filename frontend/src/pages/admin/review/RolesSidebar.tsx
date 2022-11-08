@@ -1,6 +1,8 @@
 import { Link, useParams } from "react-router-dom";
 import tw, { styled } from "twin.macro";
 
+import NavCard from "components/NavCard";
+
 import type { Role } from "types/api";
 
 const RoleItem = styled(Link, {
@@ -30,18 +32,18 @@ type Props = {
 const RolesSidebar = ({ roles }: Props) => {
   const roleId = Number(useParams().roleId);
   return (
-    <nav tw="absolute bottom-0 left-0 top-16 w-80 bg-white p-4 shadow-xl">
-      <h2 tw="mb-4 text-2xl">Roles</h2>
-      <ul tw="flex flex-col gap-1">
-        {roles.map((role) => (
-          <li key={role.id}>
-            <RoleItem to={`${role.id}/marking`} active={role.id === roleId}>
-              {role.name}
-            </RoleItem>
-          </li>
-        ))}
-      </ul>
-    </nav>
+    <NavCard
+      tw="fixed bottom-0 left-0 top-16 rounded-none shadow-xl"
+      title="Roles"
+    >
+      {roles.map((role) => (
+        <li key={role.id}>
+          <RoleItem to={`${role.id}/marking`} active={role.id === roleId}>
+            {role.name}
+          </RoleItem>
+        </li>
+      ))}
+    </NavCard>
   );
 };
 
