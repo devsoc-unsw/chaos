@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import "twin.macro";
 
 import Card from "components/Card";
+import { Application } from "types/api";
 
 import {
   getAllCampaigns,
@@ -13,12 +14,14 @@ import {
 } from "../../api";
 import { bytesToImage } from "../../utils";
 
+import ApplicationForm from "./ApplicationForm";
 import CampaignDetails from "./CampaignDetails";
 import RolesSidebar from "./RolesSidebar";
 
+import type { RoleQuestions } from "./types";
 import type { CampaignWithRoles, Organisation, UserResponse } from "types/api";
 
-const Application = () => {
+const ApplicationPage = () => {
   const navigate = useNavigate();
 
   const [campaign, setCampaign] = useState<CampaignWithRoles>({
@@ -87,7 +90,7 @@ const Application = () => {
   }, []);
 
   const [rolesSelected, setRolesSelected] = useState<number[]>([]);
-  const [answers, setAnswers] = useState<{ [question: string]: string }>({});
+  const [answers, setAnswers] = useState<{ [question: number]: string }>({});
 
   const toggleRole = useCallback(
     (roleId: number) => {
@@ -101,7 +104,7 @@ const Application = () => {
   );
 
   const setAnswer = useCallback(
-    (question: string, answer: string) => {
+    (question: number, answer: string) => {
       setAnswers({ ...answers, [question]: answer });
     },
     [answers]
@@ -120,7 +123,14 @@ const Application = () => {
     };
   });
 
-  const onSubmit = () => {
+  const roleQuestions: RoleQuestions = Object.fromEntries(
+    campaign.roles.map((role) => [role.id, []])
+  );
+  questions.forEach(({ roles, ...question }) =>
+    roles.forEach((role) => roleQuestions[role].push(question))
+  );
+
+  const onSubmit = async () => {
     //        CHAOS-53, useNavigate() link to post submission page once it is created :)
     if (!rolesSelected.length) {
       // eslint-disable-next-line no-alert
@@ -128,29 +138,26 @@ const Application = () => {
         "Submission failed, you must select at least one role to apply for!"
       );
     } else {
-      rolesSelected.forEach((role) => {
-        newApplication(role)
-          .then((data) =>
-            Promise.all(
+      try {
+        await Promise.all(
+          rolesSelected.map(async (role) => {
+            const application = await newApplication(role);
+            await Promise.all(
               Object.keys(answers)
-                .filter((qId) => {
-                  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                  const question = questions.find(
-                    (q) => Number(q.id) === Number(qId)
-                  )!;
-                  const [rId] = question.roles;
-                  return rId === data.role_id;
-                })
-                .map((qId) =>
-                  submitAnswer(data.id, Number(qId), answers[qId]).catch(() => {
-                    throw new Error("Error during submission");
-                  })
+                .map(Number)
+                .filter((qId) =>
+                  questions
+                    .find((q) => q.id === qId)
+                    ?.roles.has(application.role_id)
                 )
-            )
-          )
-          // eslint-disable-next-line no-alert
-          .catch(() => alert("Error during submission"));
-      });
+                .map((qId) => submitAnswer(application.id, qId, answers[qId]))
+            );
+          })
+        );
+      } catch (e) {
+        // eslint-disable-next-line no-alert
+        alert("Error during submission");
+      }
       navigate("/dashboard");
     }
   };
@@ -172,10 +179,16 @@ const Application = () => {
           rolesSelected={rolesSelected}
           toggleRole={toggleRole}
         />
-        <Card tw="flex-1" />
+        <ApplicationForm
+          roles={campaign.roles}
+          rolesSelected={rolesSelected}
+          roleQuestions={roleQuestions}
+          answers={answers}
+          setAnswer={setAnswer}
+        />
       </div>
     </div>
   );
 };
 
-export default Application;
+export default ApplicationPage;
