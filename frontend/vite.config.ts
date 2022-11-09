@@ -11,6 +11,11 @@ export default defineConfig({
     }),
     tsconfigPaths(),
   ],
+  optimizeDeps: {
+    esbuildOptions: {
+      target: "es2020",
+    },
+  },
   esbuild: {
     // i don't remember what this is for but it's for something
     logOverride: { "this-is-undefined-in-esm": "silent" },
