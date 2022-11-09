@@ -46,10 +46,10 @@ const Content = ({
   }
 
   return (
-    <Card tw="w-96 overflow-hidden p-0 text-sm" hoverable>
+    <Card tw="p-0 overflow-hidden text-sm w-96" hoverable>
       <header tw="flex items-center gap-1.5 p-3">
         <img
-          tw="h-10 w-10 rounded-sm"
+          tw="w-10 h-10 rounded-sm"
           src={organisationLogo}
           alt="Organisation"
         />
@@ -63,9 +63,9 @@ const Content = ({
           {status.toUpperCase()}
         </CampaignStatus>
       </header>
-      <div tw="flex items-center justify-center overflow-hidden bg-[#edeeef] aspect-ratio[16/9]">
+      <div tw="flex items-center justify-center overflow-hidden bg-[#edeeef] aspect-[16/9]">
         <img
-          tw="max-h-full w-full object-contain"
+          tw="object-contain w-full max-h-full"
           src={img}
           alt="Campaign Cover"
         />
