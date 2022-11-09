@@ -2,8 +2,8 @@ use diesel::prelude::*;
 
 use crate::database::{
     models::{
-        Answer, Application, Campaign, NewAnswer, NewApplication, NewRating, OrganisationUser,
-        Question, Rating, Role, User,
+        Answer, Application, Campaign, Comment, NewAnswer, NewApplication, NewRating,
+        OrganisationUser, Question, Rating, Role, User,
     },
     schema::ApplicationStatus,
     Database,
@@ -230,6 +230,33 @@ pub async fn set_status(
             })?;
 
         Ok(Json(()))
+    })
+    .await
+}
+
+#[derive(Serialize)]
+pub struct CommentsResponse {
+    comments: Vec<Comment>,
+}
+
+#[get("/<application_id>/comments")]
+pub async fn get_comments(
+    application_id: i32,
+    user: User,
+    db: Database,
+) -> Result<Json<CommentsResponse>, JsonErr<ApplicationError>> {
+    db.run(move |conn| {
+        let app = Application::get(application_id, &conn)
+            .ok_or(JsonErr(ApplicationError::AppNotFound, Status::NotFound))?;
+
+        OrganisationUser::role_admin_level(app.role_id, user.id, &conn)
+            .is_at_least_director()
+            .check()
+            .map_err(|_| JsonErr(ApplicationError::Unauthorized, Status::Forbidden))?;
+
+        Ok(Json(CommentsResponse {
+            comments: Comment::get_all_from_application_id(conn, application_id),
+        }))
     })
     .await
 }
