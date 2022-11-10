@@ -40,7 +40,7 @@ const CampaignLoading = ({ status, animationDelay = 0 }: Props) => (
   <div tw="w-96 rounded bg-white text-xs shadow-md transition hover:(-translate-y-1 shadow-lg)">
     <header tw="flex items-center gap-1.5 p-3">
       <div
-        tw="h-10 w-10 animate-pulse rounded-sm bg-black/10"
+        tw="w-10 h-10 rounded-sm animate-pulse bg-black/10"
         css={{ animationDelay: `${animationDelay}ms` }}
       />
       <Bars>
@@ -51,7 +51,7 @@ const CampaignLoading = ({ status, animationDelay = 0 }: Props) => (
         {status?.toUpperCase()}
       </Button>
     </header>
-    <div tw="bg-[#edeeef]" css={{ aspectRatio: "16/9" }} />
+    <div tw="bg-[#edeeef] aspect-video" />
   </div>
 );
 
