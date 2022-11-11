@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
+
+import { MessagePopupContext } from "contexts/MessagePopupContext";
 
 import { createOrganisation } from "../../api";
 import { base64ToBytes, fileToDataUrl } from "../../utils";
@@ -50,6 +52,8 @@ const AdminSidebar = ({
   });
   const [inputText, setInputText] = useState("");
 
+  const pushMessage = useContext(MessagePopupContext);
+
   const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     setUploadedImage({
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -84,9 +88,21 @@ const AdminSidebar = ({
         setUploadedImage({ image: null, url: null });
         setInputText("");
         setIsFormOpen(false);
-        console.log("New organisation created!");
-      } else {
-        console.error("Both image and text are required!");
+
+        pushMessage({
+          message: "New organisation created!",
+          type: "success",
+        });
+      } else if (!inputText) {
+        pushMessage({
+          message: "An organisation name is required!",
+          type: "error",
+        });
+      } else if (!uploadedImage.image) {
+        pushMessage({
+          message: "An organisation logo image is required!",
+          type: "error",
+        });
       }
     };
 
