@@ -130,36 +130,34 @@ const ApplicationPage = () => {
     roles.forEach((role) => roleQuestions[role].push(question))
   );
 
-  const onSubmit = async () => {
+  const onSubmit = () => {
     //        CHAOS-53, useNavigate() link to post submission page once it is created :)
     if (!rolesSelected.length) {
       // eslint-disable-next-line no-alert
       alert(
         "Submission failed, you must select at least one role to apply for!"
       );
-    } else {
-      try {
-        await Promise.all(
-          rolesSelected.map(async (role) => {
-            const application = await newApplication(role);
-            await Promise.all(
-              Object.keys(answers)
-                .map(Number)
-                .filter((qId) =>
-                  questions
-                    .find((q) => q.id === qId)
-                    ?.roles.has(application.role_id)
-                )
-                .map((qId) => submitAnswer(application.id, qId, answers[qId]))
-            );
-          })
-        );
-      } catch (e) {
-        // eslint-disable-next-line no-alert
-        alert("Error during submission");
-      }
-      navigate("/dashboard");
+      return;
     }
+
+    Promise.all(
+      rolesSelected.map(async (role) => {
+        const application = await newApplication(role);
+        await Promise.all(
+          Object.keys(answers)
+            .map(Number)
+            .filter((qId) =>
+              questions
+                .find((q) => q.id === qId)
+                ?.roles.has(application.role_id)
+            )
+            .map((qId) => submitAnswer(application.id, qId, answers[qId]))
+        );
+      })
+    )
+      .then(() => navigate("/dashboard"))
+      // eslint-disable-next-line no-alert
+      .catch(() => alert("Error during submission"));
   };
 
   return (
