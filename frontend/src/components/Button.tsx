@@ -5,7 +5,7 @@ const Button = styled.button({
 
   variants: {
     color: {
-      primary: tw`bg-[hsl(220, 93%, 60%)] text-white`,
+      primary: tw`bg-[hsl(220, 93%, 60%)] text-white transition-opacity disabled:(opacity-50 cursor-not-allowed)`,
     },
   },
 
