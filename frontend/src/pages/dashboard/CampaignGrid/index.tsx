@@ -50,7 +50,7 @@ const CampaignGrid = ({
   console.log(organisations, campaigns);
 
   return (
-    <div tw="flex flex-wrap justify-around pb-4 gap-4 lg:justify-start">
+    <div tw="flex flex-wrap justify-around gap-4 pb-4 lg:justify-start">
       {campaigns.map((campaign, i) => (
         <Transition
           appear

@@ -3,24 +3,23 @@ import tw, { styled } from "twin.macro";
 
 import type { ComponentProps, ElementType, PropsWithChildren } from "react";
 
+// eslint-disable-next-line prettier/prettier
 const Button = tw.button`
-  relative flex justify-center items-center
-  px-3 py-2 w-max
-  text-[#191d24] font-normal border-0 rounded outline-none ring-blue-500 transition
-  hover:text-black focus-visible:(ring text-black)
+  relative flex items-center justify-center
+  w-max px-3 py-2
+  rounded border-0 text-[#191d24] font-normal outline-none ring-blue-500 transition
+  hover:text-black focus-visible:(text-black ring)
 `;
 
+// eslint-disable-next-line prettier/prettier
 const Bg = tw.div`
   absolute inset-0 z-[-1]
   rounded transition
-  bg-gradient-120 from-fuchsia-200 to-indigo-200
+  from-fuchsia-200 to-indigo-200 bg-gradient-120
 `;
 
 const ButtonShadow = styled(Bg, {
-  ...tw`
-    filter blur-sm
-    group-hover:(blur translate-y-0.5) group-focus-visible:blur group-active:blur-sm
-  `,
+  ...tw`blur-sm filter group-hover:(translate-y-0.5 blur) group-focus-visible:blur group-active:blur-sm`,
 });
 
 const ButtonBg = styled(Bg, {

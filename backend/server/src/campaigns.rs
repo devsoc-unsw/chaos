@@ -78,27 +78,6 @@ pub async fn update(
     .await
 }
 
-#[post("/new", data = "<new_campaign>")]
-pub async fn create(
-    new_campaign: Json<NewCampaignInput>,
-    user: User,
-    db: Database,
-) -> Result<Json<Campaign>, JsonErr<CampaignError>> {
-    let inner = new_campaign.into_inner();
-    db.run(move |conn| {
-        OrganisationUser::organisation_admin_level(inner.organisation_id, user.id, &conn)
-            .is_at_least_director()
-            .check()
-            .or_else(|_| Err(JsonErr(CampaignError::Unauthorized, Status::Forbidden)))?;
-
-        let campaign = Campaign::create(conn, &inner)
-            .ok_or_else(|| JsonErr(CampaignError::UnableToCreate, Status::InternalServerError))?;
-
-        Ok(Json(campaign))
-    })
-    .await
-}
-
 #[derive(Serialize, Deserialize)]
 pub struct RoleInput {
     pub name: String,

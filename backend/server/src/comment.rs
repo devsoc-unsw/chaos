@@ -18,7 +18,7 @@ pub enum CommentError {
     CommentNotFound,
 }
 
-#[post("/new", data = "<new_comment>")]
+#[post("/", data = "<new_comment>")]
 pub async fn create_comment(
     new_comment: Form<NewComment>,
     user: User,

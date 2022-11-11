@@ -1,4 +1,5 @@
 import { Box, Divider, Grid, TextField, Typography } from "@mui/material";
+import tw from "twin.macro";
 
 import { MarkChip } from "components";
 import ApplicationPreviewer from "components/ApplicationPreviewer";
@@ -72,6 +73,7 @@ const ApplicationsListTabPanel = ({ application, setMark }: Props) => (
 
       {/* TODO CHAOS-18: save comments to backend */}
       <TextField
+        css={{ "& textarea": tw`ring-0` }}
         id={`${application.applicationId}-comments`}
         label="Your comments"
         multiline

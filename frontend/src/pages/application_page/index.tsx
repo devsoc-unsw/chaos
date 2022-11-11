@@ -1,25 +1,27 @@
-import { Container } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import "twin.macro";
+
+import Card from "components/Card";
+import { Application } from "types/api";
 
 import {
   getAllCampaigns,
+  getOrganisation,
   getSelfInfo,
   newApplication,
   submitAnswer,
 } from "../../api";
-import ApplicationForm from "../../components/ApplicationForm";
 import { bytesToImage } from "../../utils";
 
-import {
-  ArrowIcon,
-  SubmitButton,
-  SubmitWrapper,
-} from "./applicationPage.styled";
+import ApplicationForm from "./ApplicationForm";
+import CampaignDetails from "./CampaignDetails";
+import RolesSidebar from "./RolesSidebar";
 
-import type { CampaignWithRoles, UserResponse } from "types/api";
+import type { RoleQuestions } from "./types";
+import type { CampaignWithRoles, Organisation, UserResponse } from "types/api";
 
-const Application = () => {
+const ApplicationPage = () => {
   const navigate = useNavigate();
 
   const [campaign, setCampaign] = useState<CampaignWithRoles>({
@@ -38,6 +40,13 @@ const Application = () => {
     roles: [],
     questions: [],
     applied_for: [],
+  });
+  const [organisation, setOrganisation] = useState<Organisation>({
+    id: -1,
+    name: "",
+    logo: [],
+    created_at: "",
+    updated_at: "",
   });
 
   const campaignId = Number(useParams().campaignId);
@@ -59,56 +68,67 @@ const Application = () => {
       if (state) {
         setCampaign(state);
       } else {
-        // eslint-disable-next-line camelcase -- format from api response
         const {
           past_campaigns: pastCampaigns,
           current_campaigns: currentCampaigns,
         } = await getAllCampaigns();
-        // eslint-disable-next-line camelcase, @typescript-eslint/no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const campaign = [...pastCampaigns, ...currentCampaigns].find(
           (x) => x.campaign.id === campaignId
         )!;
         setCampaign(campaign);
+
+        const organisationId = campaign.campaign.organisation_id;
+        const organisation = await getOrganisation(organisationId);
+        setOrganisation(organisation);
       }
 
       setLoading(false);
     };
 
     void getData();
-  }, [campaign]);
+  }, []);
 
   const [rolesSelected, setRolesSelected] = useState<number[]>([]);
-  const [answers, setAnswers] = useState<{ [question: string]: string }>({});
+  const [answers, setAnswers] = useState<{ [question: number]: string }>({});
+
+  const toggleRole = useCallback(
+    (roleId: number) => {
+      if (rolesSelected.includes(roleId)) {
+        setRolesSelected(rolesSelected.filter((r) => r !== roleId));
+      } else {
+        setRolesSelected([...rolesSelected, roleId]);
+      }
+    },
+    [rolesSelected]
+  );
+
+  const setAnswer = useCallback(
+    (question: number, answer: string) => {
+      setAnswers({ ...answers, [question]: answer });
+    },
+    [answers]
+  );
 
   if (loading) return <div />;
 
-  const { campaignName, headerImage, description, roles, questions, userInfo } =
-    {
-      campaignName: campaign.campaign.name,
-      headerImage: bytesToImage(campaign.campaign.cover_image),
-      description: campaign.campaign.description,
-      roles: campaign.roles.map((r) => ({
-        id: r.id,
-        title: r.name,
-        quantity: r.max_available,
-      })),
-      questions: campaign.questions.map((q) => {
-        if (!(q.id in answers)) {
-          answers[q.id] = "";
-        }
-        return {
-          id: q.id,
-          text: q.title,
-          roles: new Set(q.role_ids),
-        };
-      }),
-      userInfo: {
-        name: selfInfo.display_name,
-        zid: selfInfo.zid,
-        email: selfInfo.email,
-        degree: selfInfo.degree_name,
-      },
+  const questions = campaign.questions.map((q) => {
+    if (!(q.id in answers)) {
+      answers[q.id] = "";
+    }
+    return {
+      id: q.id,
+      text: q.title,
+      roles: new Set(q.role_ids),
     };
+  });
+
+  const roleQuestions: RoleQuestions = Object.fromEntries(
+    campaign.roles.map((role) => [role.id, []])
+  );
+  questions.forEach(({ roles, ...question }) =>
+    roles.forEach((role) => roleQuestions[role].push(question))
+  );
 
   const onSubmit = () => {
     //        CHAOS-53, useNavigate() link to post submission page once it is created :)
@@ -117,56 +137,57 @@ const Application = () => {
       alert(
         "Submission failed, you must select at least one role to apply for!"
       );
-    } else {
-      rolesSelected.forEach((role) => {
-        newApplication(role)
-          .then((data) =>
-            Promise.all(
-              Object.keys(answers)
-                .filter((qId) => {
-                  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                  const question = questions.find(
-                    (q) => Number(q.id) === Number(qId)
-                  )!;
-                  const [rId] = question.roles;
-                  return rId === data.role_id;
-                })
-                .map((qId) =>
-                  submitAnswer(data.id, Number(qId), answers[qId]).catch(() => {
-                    throw new Error("Error during submission");
-                  })
-                )
-            )
-          )
-          // eslint-disable-next-line no-alert
-          .catch(() => alert("Error during submission"));
-      });
-      navigate("/dashboard");
+      return;
     }
+
+    Promise.all(
+      rolesSelected.map(async (role) => {
+        const application = await newApplication(role);
+        await Promise.all(
+          Object.keys(answers)
+            .map(Number)
+            .filter((qId) =>
+              questions
+                .find((q) => q.id === qId)
+                ?.roles.has(application.role_id)
+            )
+            .map((qId) => submitAnswer(application.id, qId, answers[qId]))
+        );
+      })
+    )
+      .then(() => navigate("/dashboard"))
+      // eslint-disable-next-line no-alert
+      .catch(() => alert("Error during submission"));
   };
 
   return (
-    <Container>
-      <ApplicationForm
-        questions={questions}
-        roles={roles}
-        rolesSelected={rolesSelected}
-        setRolesSelected={setRolesSelected}
-        answers={answers}
-        setAnswers={setAnswers}
-        campaignName={campaignName}
-        headerImage={headerImage}
-        description={description}
-        userInfo={userInfo}
+    <div tw="mx-auto flex flex-1 max-w-7xl flex-col gap-4 p-4">
+      <CampaignDetails
+        campaignName={campaign.campaign.name}
+        headerImage={bytesToImage(campaign.campaign.cover_image)}
+        organisation={organisation}
+        campaign={campaign}
+        description={campaign.campaign.description}
+        userInfo={selfInfo}
       />
-      <SubmitWrapper>
-        <SubmitButton variant="contained" onClick={onSubmit}>
-          Submit
-          <ArrowIcon />
-        </SubmitButton>
-      </SubmitWrapper>
-    </Container>
+
+      <div tw="flex flex-1 gap-4">
+        <RolesSidebar
+          roles={campaign.roles}
+          rolesSelected={rolesSelected}
+          toggleRole={toggleRole}
+        />
+        <ApplicationForm
+          roles={campaign.roles}
+          rolesSelected={rolesSelected}
+          roleQuestions={roleQuestions}
+          answers={answers}
+          setAnswer={setAnswer}
+          onSubmit={onSubmit}
+        />
+      </div>
+    </div>
   );
 };
 
-export default Application;
+export default ApplicationPage;

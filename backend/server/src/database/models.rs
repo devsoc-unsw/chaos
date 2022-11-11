@@ -623,7 +623,9 @@ impl Campaign {
             .map_err(|x| eprintln!("error in delete deep: {x:?}"))
             .ok()?;
 
-        role_items.into_iter().for_each(|role| {Role::delete_deep(conn, role.id);});
+        role_items.into_iter().for_each(|role| {
+            Role::delete_deep(conn, role.id);
+        });
 
         if !Campaign::delete(conn, campaign_id) {
             None
@@ -717,25 +719,37 @@ impl Role {
         let question_items: Vec<Question> = questions::table
             .filter(any(questions::role_ids).eq(role.id))
             .load(conn)
-            .map_err(|x| { eprintln!("error in delete_children: {x:?}"); x })
+            .map_err(|x| {
+                eprintln!("error in delete_children: {x:?}");
+                x
+            })
             .ok()?;
 
         diesel::delete(questions::table.filter(any(questions::role_ids).eq(role.id)))
             .execute(conn)
-            .map_err(|x| { eprintln!("error in delete_children: {x:?}"); x })
+            .map_err(|x| {
+                eprintln!("error in delete_children: {x:?}");
+                x
+            })
             .ok();
 
         for question in question_items {
             diesel::delete(answers::table.filter(answers::question_id.eq(question.id)))
                 .execute(conn)
-                .map_err(|x| { eprintln!("error in delete_children: {x:?}"); x })
+                .map_err(|x| {
+                    eprintln!("error in delete_children: {x:?}");
+                    x
+                })
                 .ok();
         }
 
         let application_items: Vec<Application> = applications::table
             .filter(applications::role_id.eq(role.id))
             .load(conn)
-            .map_err(|x| { eprintln!("error in delete_children: {x:?}"); x })
+            .map_err(|x| {
+                eprintln!("error in delete_children: {x:?}");
+                x
+            })
             .ok()?;
 
         for application in application_items {
@@ -744,7 +758,10 @@ impl Role {
 
         diesel::delete(applications::table.filter(applications::role_id.eq(role.id)))
             .execute(conn)
-            .map_err(|x| { eprintln!("error in delete_children: {x:?}"); x })
+            .map_err(|x| {
+                eprintln!("error in delete_children: {x:?}");
+                x
+            })
             .ok();
 
         Some(())
@@ -754,8 +771,12 @@ impl Role {
         let questions = Question::get_all_from_role_id(conn, role_id);
         let applications = Application::get_all_from_role_id(conn, role_id);
 
-        questions.into_iter().for_each(|question| {Question::delete_deep(conn, question.id);});
-        applications.into_iter().for_each(|application| {Application::delete_deep(conn, application);});
+        questions.into_iter().for_each(|question| {
+            Question::delete_deep(conn, question.id);
+        });
+        applications.into_iter().for_each(|application| {
+            Application::delete_deep(conn, application);
+        });
 
         if Role::delete(conn, role_id) {
             Some(())
@@ -844,7 +865,10 @@ impl Application {
 
         diesel::delete(applications.filter(id.eq(application_id)))
             .execute(conn)
-            .map_err(|x| { eprintln!("error in delete application: {x:?}"); x })
+            .map_err(|x| {
+                eprintln!("error in delete application: {x:?}");
+                x
+            })
             .is_ok()
     }
 
@@ -853,13 +877,19 @@ impl Application {
         let comments = Comment::get_all_from_application_id(conn, application.id);
         let answers = Answer::get_all_from_application_id(conn, application.id);
 
-        ratings.into_iter().map(|rating| Rating::delete_deep(conn, rating.id)).collect::<Vec<bool>>();
-        comments.into_iter().map(|comment| Comment::delete_deep(conn, comment.id)).collect::<Vec<bool>>();
-        answers.into_iter().map(|answer| Answer::delete_deep(conn, answer.id)).collect::<Vec<bool>>();
+        ratings.into_iter().for_each(|rating| {
+            Rating::delete_deep(conn, rating.id);
+        });
+        comments.into_iter().for_each(|comment| {
+            Comment::delete_deep(conn, comment.id);
+        });
+        answers.into_iter().for_each(|answer| {
+            Answer::delete_deep(conn, answer.id);
+        });
 
         match Application::delete(conn, application.id) {
             true => Some(()),
-            false => None
+            false => None,
         }
     }
 }
@@ -978,12 +1008,15 @@ impl Question {
     }
 
     pub fn delete_deep(conn: &PgConnection, question_id: i32) -> bool {
-        Answer::get_all_from_question_id(conn, question_id).into_iter().for_each(|answer| {Answer::delete_deep(conn, answer.id);});
+        Answer::get_all_from_question_id(conn, question_id)
+            .into_iter()
+            .for_each(|answer| {
+                Answer::delete_deep(conn, answer.id);
+            });
 
         Question::delete(conn, question_id)
     }
 
-    
     pub fn get_from_id(conn: &PgConnection, question_id: i32) -> Option<Self> {
         use crate::database::schema::questions::dsl::*;
 
@@ -1067,7 +1100,6 @@ impl Answer {
             .execute(conn)
             .is_ok()
     }
-
 }
 
 impl NewAnswer {
@@ -1142,7 +1174,6 @@ impl Comment {
             .execute(conn)
             .is_ok()
     }
-
 }
 
 impl NewComment {

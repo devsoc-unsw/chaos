@@ -32,7 +32,7 @@ pub enum OrgError {
     Unknown,
 }
 
-#[post("/new", data = "<organisation>")]
+#[post("/", data = "<organisation>")]
 pub async fn new(
     organisation: Json<NewOrganisation>,
     user: SuperUser,

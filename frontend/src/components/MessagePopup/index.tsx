@@ -1,7 +1,7 @@
 import tw, { styled } from "twin.macro";
 
 const MessagePopup = styled.div({
-  ...tw`w-72 p-2 rounded-md drop-shadow-lg shadow-md`,
+  ...tw`w-72 rounded-md p-2 shadow-md drop-shadow-lg`,
   variants: {
     type: {
       error: tw`bg-red-300 text-red-900`,

@@ -23,10 +23,10 @@ const Modal = ({
     <Dialog tw="relative z-10" onClose={closeModal}>
       <Transition.Child
         as={Fragment}
-        enter={tw`ease-out duration-300`}
+        enter={tw`duration-300 ease-out`}
         enterFrom={tw`opacity-0`}
         enterTo={tw`opacity-100`}
-        leave={tw`ease-in duration-200`}
+        leave={tw`duration-200 ease-in`}
         leaveFrom={tw`opacity-100`}
         leaveTo={tw`opacity-0`}
       >
@@ -34,19 +34,19 @@ const Modal = ({
       </Transition.Child>
 
       <div tw="fixed inset-0 overflow-y-auto">
-        <div tw="flex items-center justify-center min-h-full p-4">
+        <div tw="flex min-h-full items-center justify-center p-4">
           <Transition.Child
             as={Fragment}
-            enter={tw`ease-out duration-300`}
-            enterFrom={tw`opacity-0 scale-95 translate-y-2`}
-            leave={tw`ease-in duration-200`}
-            leaveFrom={tw`opacity-100 scale-100`}
-            leaveTo={tw`opacity-0 scale-95 translate-y-2`}
+            enter={tw`duration-300 ease-out`}
+            enterFrom={tw`translate-y-2 scale-95 opacity-0`}
+            leave={tw`duration-200 ease-in`}
+            leaveFrom={tw`scale-100 opacity-100`}
+            leaveTo={tw`translate-y-2 scale-95 opacity-0`}
           >
-            <Dialog.Panel tw="w-full max-w-lg p-4 rounded bg-white shadow-xl overflow-hidden transform transition-[opacity,transform]">
+            <Dialog.Panel tw="w-full max-w-lg transform overflow-hidden rounded bg-white p-4 shadow-xl transition-[opacity,transform]">
               <Dialog.Title
                 as="h3"
-                tw="text-2xl font-medium text-gray-900 leading-8"
+                tw="font-medium text-2xl text-gray-900 leading-8"
               >
                 {title}
               </Dialog.Title>

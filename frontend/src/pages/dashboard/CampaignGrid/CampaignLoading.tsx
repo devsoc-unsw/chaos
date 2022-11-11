@@ -7,7 +7,7 @@ const Bar = ({
   ...props
 }: HTMLAttributes<HTMLDivElement> & { animationDelay: number }) => (
   <div
-    tw="h-3 rounded-sm bg-black/5 first:bg-black/[0.15] animate-pulse"
+    tw="h-3 animate-pulse rounded-sm bg-black/5 first:bg-black/[0.15]"
     css={{ animationDelay: `${animationDelay}ms` }}
     // eslint-disable-next-line react/jsx-props-no-spreading
     {...props}
@@ -15,7 +15,7 @@ const Bar = ({
 );
 
 const Button = styled.button({
-  ...tw`px-2 py-1.5 ml-auto rounded-[0.2rem] text-transparent animate-pulse`,
+  ...tw`ml-auto animate-pulse px-2 py-1.5 text-transparent rounded-[0.2rem]`,
 
   variants: {
     status: {
@@ -37,10 +37,10 @@ type Props = {
   animationDelay?: number;
 };
 const CampaignLoading = ({ status, animationDelay = 0 }: Props) => (
-  <div tw="w-96 bg-white text-xs rounded shadow-md transition hover:(-translate-y-1 shadow-lg)">
+  <div tw="w-96 rounded bg-white text-xs shadow-md transition hover:(-translate-y-1 shadow-lg)">
     <header tw="flex items-center gap-1.5 p-3">
       <div
-        tw="w-10 h-10 rounded-sm bg-black/10 animate-pulse"
+        tw="w-10 h-10 rounded-sm animate-pulse bg-black/10"
         css={{ animationDelay: `${animationDelay}ms` }}
       />
       <Bars>
@@ -51,7 +51,7 @@ const CampaignLoading = ({ status, animationDelay = 0 }: Props) => (
         {status?.toUpperCase()}
       </Button>
     </header>
-    <div tw="bg-[#edeeef]" css={{ aspectRatio: "16/9" }} />
+    <div tw="bg-[#edeeef] aspect-video" />
   </div>
 );
 

@@ -78,7 +78,6 @@ async fn main() {
                 backend::campaigns::get,
                 backend::campaigns::update,
                 backend::campaigns::roles,
-                backend::campaigns::create,
                 backend::campaigns::new,
                 backend::campaigns::delete_campaign,
                 backend::campaigns::get_all_campaigns,
@@ -101,6 +100,7 @@ async fn main() {
                 backend::application::get_answers,
                 backend::application::get_ratings,
                 backend::application::set_status,
+                backend::application::get_comments,
             ],
         )
         .mount(
@@ -128,7 +128,10 @@ async fn main() {
                 backend::question::delete_question
             ],
         )
-        .mount("/admin", routes![backend::admin::get, backend::admin::make_superuser])
+        .mount(
+            "/admin",
+            routes![backend::admin::get, backend::admin::make_superuser],
+        )
         .launch()
         .await
         .unwrap();
