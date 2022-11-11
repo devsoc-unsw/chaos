@@ -43,7 +43,11 @@ const ApplicationForm = ({
       </section>
     ))}
     <div tw="flex justify-end">
-      <Button tw="flex items-center" onClick={onSubmit}>
+      <Button
+        tw="flex items-center"
+        onClick={onSubmit}
+        disabled={rolesSelected.length === 0}
+      >
         Submit <ChevronRightIcon tw="w-6 h-6 -mr-2" />
       </Button>
     </div>
