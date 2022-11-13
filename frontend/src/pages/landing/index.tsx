@@ -38,12 +38,9 @@ const Landing = () => {
   };
 
   return (
-    <div
-      tw="flex w-full flex-col items-center font-light"
-      onPointerMove={onPointerMove}
-    >
+    <div tw="flex w-full flex-col items-center" onPointerMove={onPointerMove}>
       <div tw="my-auto flex w-full max-w-7xl p-[50px] translate-y-[-100px]">
-        <main>
+        <main tw="font-light">
           <Transition
             appear
             enter={tw`transition duration-[600ms]`}
