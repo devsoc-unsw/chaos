@@ -140,8 +140,8 @@ pub fn seed() {
         name: "2022 Peer Mentor Recruitment".to_string(),
         description: "Peer mentors are an important part of CSESoc and university life at UNSW. We are looking for enthusiastic students who are passionate about helping first-year students, gaining leadership experience, communication skills, some resume-worthy additions, and having a lot of fun in the upcoming term (Term 1, 2022)! 🎉".to_string(),
         organisation_id: csesoc_org.id,
-        starts_at: NaiveDate::from_ymd(2022, 1, 1).and_hms(10, 00, 00),
-        ends_at: NaiveDate::from_ymd(2022, 2, 20).and_hms(23, 59, 59),
+        starts_at: NaiveDate::from_ymd_opt(2022, 1, 1).unwrap().and_hms_opt(10, 00, 00).unwrap(),
+        ends_at: NaiveDate::from_ymd_opt(2022, 2, 20).unwrap().and_hms_opt(23, 59, 59).unwrap(),
         cover_image: Some(std::fs::read("./assets/csesoc_peer_mentoring.jpg").unwrap()),
         published: true,
     }.insert(&connection).expect("failed to insert new campaign");
