@@ -63,7 +63,7 @@ const Content = ({
           {status.toUpperCase()}
         </CampaignStatus>
       </header>
-      <div tw="flex items-center justify-center overflow-hidden bg-[#edeeef] aspect-video">
+      <div tw="flex items-center justify-center overflow-hidden bg-[#edeeef] aspect-w-16 aspect-h-9">
         <img
           tw="object-contain w-full max-h-full"
           src={img}

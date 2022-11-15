@@ -51,7 +51,7 @@ const CampaignLoading = ({ status, animationDelay = 0 }: Props) => (
         {status?.toUpperCase()}
       </Button>
     </header>
-    <div tw="bg-[#edeeef] aspect-video" />
+    <div tw="bg-[#edeeef] aspect-w-16 aspect-h-9" />
   </div>
 );
 
