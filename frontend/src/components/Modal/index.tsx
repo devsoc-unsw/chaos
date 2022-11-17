@@ -1,23 +1,26 @@
 import { Dialog } from "@headlessui/react";
-import { Fragment } from "react";
+import { ComponentProps, Fragment } from "react";
 import tw from "twin.macro";
 
 import Transition from "components/Transition";
 
 import type { PropsWithChildren } from "react";
 
+const Body = tw.div`mt-2 flex flex-col gap-2`;
+
 type Props = {
   open: boolean;
   closeModal: () => void;
   title: string;
   description?: string;
-};
+} & ComponentProps<typeof Body>;
 const Modal = ({
   open,
   closeModal,
   title,
   description,
   children,
+  ...props
 }: PropsWithChildren<Props>) => (
   <Transition appear show={open} as={Fragment}>
     <Dialog tw="relative z-10" onClose={closeModal}>
@@ -55,7 +58,7 @@ const Modal = ({
                   {description}
                 </Dialog.Description>
               )}
-              <div tw="mt-2">{children}</div>
+              <Body {...props}>{children}</Body>
             </Dialog.Panel>
           </Transition.Child>
         </div>

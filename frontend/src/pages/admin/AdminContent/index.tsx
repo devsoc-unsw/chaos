@@ -130,17 +130,13 @@ const AdminContent = ({
         title="Delete Organisation"
         description={org?.orgName}
       >
-        <div tw="flex flex-col gap-2">
-          <p>
-            Are you sure you want to delete this organisation?{" "}
-            <strong tw="font-semibold">
-              This action is permanent and irreversible.
-            </strong>
-          </p>
-          <TwButton color="danger" onClick={() => void handleDeletion()}>
-            Yes, delete this organisation
-          </TwButton>
-        </div>
+        <p>
+          Are you sure you want to delete this organisation?{" "}
+          <strong>This action is permanent and irreversible.</strong>
+        </p>
+        <TwButton color="danger" onClick={() => void handleDeletion()}>
+          Yes, delete this organisation
+        </TwButton>
       </Modal>
     </AdminContentContainer>
   );
