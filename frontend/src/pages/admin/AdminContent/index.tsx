@@ -3,8 +3,10 @@ import { Button, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { useContext, useState } from "react";
 import "twin.macro";
 
+import { FetchError } from "api/api";
 import { Modal } from "components";
 import TwButton from "components/Button";
+import { MessagePopupContext } from "contexts/MessagePopupContext";
 
 import { doDeleteOrg } from "../../../api";
 import { OrgContext } from "../OrgContext";
@@ -41,7 +43,7 @@ const AdminContent = ({
 }: Props) => {
   let id: number;
   let icon;
-  let orgName;
+  let orgName: string;
   if (org) {
     ({ id, icon, orgName } = org);
   } else {
@@ -54,13 +56,29 @@ const AdminContent = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { orgSelected, setOrgSelected, orgList, setOrgList } =
     useContext(OrgContext);
+  const pushMessage = useContext(MessagePopupContext);
 
   const handleDeletion = async () => {
     try {
       await doDeleteOrg(id);
     } catch (e) {
-      // FIXME: should popup and say failed to delete
-      return;
+      let message = `Deleting organisation '${orgName}' failed: `;
+      if (e instanceof FetchError) {
+        if (e.data !== undefined) {
+          message += JSON.stringify(message);
+        } else {
+          message += "unknown server error";
+        }
+      } else {
+        message += "unknown error";
+      }
+
+      pushMessage({
+        type: "error",
+        message,
+      });
+
+      throw e;
     }
     // FIXME: when array is empty we die???
     setOrgList(orgList.filter((_, index) => index !== orgSelected));
