@@ -48,7 +48,7 @@ const AdminCampaignContent = ({ campaigns, setCampaigns, orgId }: Props) => {
     try {
       await deleteCampaign(selectedCampaign.id);
     } catch (e) {
-      let message = `Deleting campaign ${selectedCampaign.title} failed: `;
+      let message = `Deleting campaign '${selectedCampaign.title}' failed: `;
       if (e instanceof FetchError) {
         if (e.data !== undefined) {
           message += JSON.stringify(message);
