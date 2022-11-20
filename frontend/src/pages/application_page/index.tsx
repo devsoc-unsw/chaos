@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import "twin.macro";
 
+import Container from "components/Container";
+
 import {
   getAllCampaigns,
   getOrganisation,
@@ -158,7 +160,7 @@ const ApplicationPage = () => {
   };
 
   return (
-    <div tw="mx-auto flex flex-1 max-w-7xl flex-col gap-4 p-4">
+    <Container tw="gap-4">
       <CampaignDetails
         campaignName={campaign.campaign.name}
         headerImage={bytesToImage(campaign.campaign.cover_image)}
@@ -183,7 +185,7 @@ const ApplicationPage = () => {
           onSubmit={onSubmit}
         />
       </div>
-    </div>
+    </Container>
   );
 };
 
