@@ -14,6 +14,7 @@ import {
 import { bytesToImage } from "../../utils";
 
 import ApplicationForm from "./ApplicationForm";
+import ApplicationPageLoading from "./ApplicationPageLoading";
 import CampaignDetails from "./CampaignDetails";
 import RolesSidebar from "./RolesSidebar";
 
@@ -109,7 +110,7 @@ const ApplicationPage = () => {
     [answers]
   );
 
-  if (loading) return <div />;
+  if (loading) return <ApplicationPageLoading />;
 
   const questions = campaign.questions.map((q) => {
     if (!(q.id in answers)) {
