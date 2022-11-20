@@ -63,7 +63,7 @@ const Landing = () => {
             enterFrom={tw`translate-y-4 opacity-0`}
             enterTo={tw`text-2xl`}
           >
-            <h2 tw="my-4 text-3xl">Recruitment Drives, without the fuss.</h2>
+            <h2 tw="my-4 text-3xl">Recruitment drives, without the chaos.</h2>
           </Transition>
           <Transition
             appear
