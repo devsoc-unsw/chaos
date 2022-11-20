@@ -4509,10 +4509,10 @@ tsutils@^3.21.0:
   dependencies:
     tslib "^1.8.1"
 
-twin.macro@3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/twin.macro/-/twin.macro-3.0.0.tgz#f36a77c0fe8dbb3b18e2fa4895d0046cf238cf77"
-  integrity sha512-NZHhRmMaDDgJL3QDqDKGQkCMHd1gd9q2wFXYUz4nyRcGPhvOaxbR3SaQS2bi+oc6NZGqjlDjCtjRryafgaszHA==
+twin.macro@3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/twin.macro/-/twin.macro-3.0.1.tgz#21fe8577d566838ddca532747ef5993fa19c1cfd"
+  integrity sha512-0mpdfQYpfCyPYa37MC/WKHCLQrwlqe6b2bM+uKaku5Iwe6bxHvEhcfXp8E8TyAdTupenYTvI6nHZvrh7msSFkQ==
   dependencies:
     "@babel/template" "^7.18.10"
     babel-plugin-macros "^3.1.0"
