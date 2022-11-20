@@ -12,6 +12,12 @@ const LINE_DELAY = 50;
 const SECTION_DELAY = NUM_QUESTIONS * (lineStyles.length * LINE_DELAY);
 const QUESTION_DELAY = lineStyles.length * LINE_DELAY;
 
+const descriptionStyles = [tw`w-80`, tw`w-96`, tw`w-56`];
+const userInfoStyles = [tw`h-4 w-52`, tw`w-72`, tw`w-64`];
+
+const descLen = descriptionStyles.length + 1;
+const infoLen = descLen + userInfoStyles.length;
+
 const Group = tw.div`flex flex-col gap-1.5 mt-2`;
 
 const ApplicationPageLoading = () => (
@@ -27,15 +33,15 @@ const ApplicationPageLoading = () => (
         </div>
 
         <Group>
-          <PulsingBar tw="w-80" animationDelay={200} />
-          <PulsingBar tw="w-96" animationDelay={300} />
-          <PulsingBar tw="w-56" animationDelay={400} />
+          {descriptionStyles.map((css, i) => (
+            <PulsingBar css={css} animationDelay={100 + i * 100} />
+          ))}
         </Group>
 
         <Group>
-          <PulsingBar tw="h-4 w-52" animationDelay={500} />
-          <PulsingBar tw="w-72" animationDelay={600} />
-          <PulsingBar tw="w-64" animationDelay={700} />
+          {userInfoStyles.map((css, i) => (
+            <PulsingBar css={css} animationDelay={(descLen + i) * 100} />
+          ))}
         </Group>
       </article>
 
@@ -46,15 +52,20 @@ const ApplicationPageLoading = () => (
 
     <div tw="flex flex-1 gap-4">
       <NavCard
-        title={<PulsingBar tw="h-6 w-28" animationDelay={800} standalone />}
+        title={
+          <PulsingBar tw="h-6 w-28" animationDelay={infoLen * 100} standalone />
+        }
       >
         <div tw="flex flex-col gap-1.5">
-          <PulsingBar tw="h-4 w-52" animationDelay={900} />
-          <PulsingBar tw="h-4 w-36" animationDelay={1000} />
-          <PulsingBar tw="h-4 w-28" animationDelay={1100} />
-          <PulsingBar tw="h-4 w-44" animationDelay={1200} />
-          <PulsingBar tw="h-4 w-20" animationDelay={1300} />
-          <PulsingBar tw="h-4 w-32" animationDelay={1400} />
+          {[tw`w-52`, tw`w-36`, tw`w-28`, tw`w-44`, tw`w-20`, tw`w-32`].map(
+            (css, i) => (
+              <PulsingBar
+                tw="h-4"
+                css={css}
+                animationDelay={(infoLen + i) * 100}
+              />
+            )
+          )}
         </div>
       </NavCard>
 
