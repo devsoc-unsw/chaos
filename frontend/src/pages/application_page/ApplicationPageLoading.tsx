@@ -5,6 +5,8 @@ import Container from "components/Container";
 import NavCard from "components/NavCard";
 import PulsingBar from "components/PulsingBar";
 
+import type { TwStyle } from "twin.macro";
+
 const NUM_SECTIONS = 2;
 const NUM_QUESTIONS = 2;
 const lineStyles = [tw`w-96`, tw`w-80`, tw`w-64`, tw`w-48`];
@@ -18,12 +20,33 @@ const userInfoStyles = [tw`h-4 w-52`, tw`w-72`, tw`w-64`];
 const descLen = descriptionStyles.length + 1;
 const infoLen = descLen + userInfoStyles.length;
 
-const Group = tw.div`flex flex-col gap-1.5 mt-2`;
+type GroupProps = {
+  styles?: TwStyle[];
+  commonStyles?: TwStyle;
+  animationDelay?: number;
+  individualDelay?: number;
+};
+const Group = ({
+  styles,
+  commonStyles,
+  animationDelay = 0,
+  individualDelay = 100,
+}: GroupProps) => (
+  <div tw="flex flex-col gap-1.5">
+    {styles &&
+      styles.map((css, i) => (
+        <PulsingBar
+          css={{ ...commonStyles, ...css }}
+          animationDelay={animationDelay + i * individualDelay}
+        />
+      ))}
+  </div>
+);
 
 const ApplicationPageLoading = () => (
   <Container tw="gap-4">
     <Card tw="items-center gap-6 md:flex-row">
-      <article tw="flex flex-col w-full gap-2">
+      <article tw="flex flex-col w-full gap-4">
         <div tw="flex items-center gap-2">
           <PulsingBar tw="w-20 h-20 rounded shadow-md" standalone />
           <div tw="flex flex-col justify-center gap-2">
@@ -32,17 +55,8 @@ const ApplicationPageLoading = () => (
           </div>
         </div>
 
-        <Group>
-          {descriptionStyles.map((css, i) => (
-            <PulsingBar css={css} animationDelay={100 + i * 100} />
-          ))}
-        </Group>
-
-        <Group>
-          {userInfoStyles.map((css, i) => (
-            <PulsingBar css={css} animationDelay={(descLen + i) * 100} />
-          ))}
-        </Group>
+        <Group styles={descriptionStyles} animationDelay={100} />
+        <Group styles={userInfoStyles} animationDelay={descLen * 100} />
       </article>
 
       <div tw="w-full max-w-lg">
@@ -56,17 +70,11 @@ const ApplicationPageLoading = () => (
           <PulsingBar tw="h-6 w-28" animationDelay={infoLen * 100} standalone />
         }
       >
-        <div tw="flex flex-col gap-1.5">
-          {[tw`w-52`, tw`w-36`, tw`w-28`, tw`w-44`, tw`w-20`, tw`w-32`].map(
-            (css, i) => (
-              <PulsingBar
-                tw="h-4"
-                css={css}
-                animationDelay={(infoLen + i) * 100}
-              />
-            )
-          )}
-        </div>
+        <Group
+          styles={[tw`w-52`, tw`w-36`, tw`w-28`, tw`w-44`, tw`w-20`, tw`w-32`]}
+          commonStyles={tw`h-4`}
+          animationDelay={infoLen * 100}
+        />
       </NavCard>
 
       <Card tw="flex-1">
@@ -74,29 +82,23 @@ const ApplicationPageLoading = () => (
         {Array(NUM_SECTIONS)
           .fill(null)
           .map((_, i) => (
-            <section tw="my-4 flex flex-col gap-1">
+            <section tw="my-4 flex flex-col gap-4">
               <PulsingBar
                 tw="h-4 w-72"
                 animationDelay={100 + i * SECTION_DELAY}
               />
-              <div tw="flex flex-col gap-2">
+              <div tw="flex flex-col gap-4">
                 {Array(NUM_QUESTIONS)
                   .fill(null)
                   .map((_, j) => (
-                    <div tw="mt-2 flex flex-col gap-1.5">
-                      {lineStyles.map((css, k) => (
-                        <PulsingBar
-                          tw="first:bg-black/10!"
-                          css={css}
-                          animationDelay={
-                            100 +
-                            i * SECTION_DELAY +
-                            j * QUESTION_DELAY +
-                            k * LINE_DELAY
-                          }
-                        />
-                      ))}
-                    </div>
+                    <Group
+                      styles={lineStyles}
+                      commonStyles={tw`first:bg-black/10!`}
+                      animationDelay={
+                        100 + i * SECTION_DELAY + j * QUESTION_DELAY
+                      }
+                      individualDelay={LINE_DELAY}
+                    />
                   ))}
               </div>
             </section>
