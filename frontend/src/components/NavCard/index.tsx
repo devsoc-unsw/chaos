@@ -2,11 +2,11 @@ import "twin.macro";
 
 import Card from "components/Card";
 
-import type { ComponentProps, PropsWithChildren } from "react";
+import type { ComponentProps, PropsWithChildren, ReactNode } from "react";
 
 type Props = {
-  title: string;
-} & ComponentProps<typeof Card>;
+  title: ReactNode;
+} & Omit<ComponentProps<typeof Card>, "title">;
 
 const NavCard = ({ title, children, ...props }: PropsWithChildren<Props>) => (
   <Card as="nav" tw="w-80" {...props}>

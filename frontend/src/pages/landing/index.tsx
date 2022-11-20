@@ -4,6 +4,7 @@ import tw from "twin.macro";
 
 import chaosImg from "assets/chaos.png";
 import { Transition } from "components";
+import Container from "components/Container";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 
 import { getStore } from "../../utils";
@@ -38,8 +39,8 @@ const Landing = () => {
   };
 
   return (
-    <div tw="flex w-full flex-col items-center" onPointerMove={onPointerMove}>
-      <div tw="my-auto flex w-full max-w-7xl p-[50px] translate-y-[-100px]">
+    <div tw="flex flex-1 justify-center" onPointerMove={onPointerMove}>
+      <Container tw="my-auto p-12 translate-y-[-100px]">
         <main tw="font-light">
           <Transition
             appear
@@ -81,7 +82,7 @@ const Landing = () => {
           </Transition>
         </main>
         <Campaigns ref={campaignsRef} offsetX={offsetX} offsetY={offsetY} />
-      </div>
+      </Container>
 
       <Waves />
     </div>

@@ -4,6 +4,7 @@ import tw from "twin.macro";
 
 import { getAllCampaigns, getOrganisation } from "api";
 import { FetchError } from "api/api";
+import Container from "components/Container";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 import { removeStore } from "utils";
 
@@ -71,7 +72,7 @@ const Dashboard = () => {
   }, []);
 
   return (
-    <div tw="mx-auto w-full max-w-7xl px-6 pt-2 pb-6">
+    <Container>
       <Heading>My Campaigns</Heading>
       <CampaignGrid
         loading={isLoading}
@@ -103,7 +104,7 @@ const Dashboard = () => {
         organisations={organisations}
         status="closed"
       />
-    </div>
+    </Container>
   );
 };
 

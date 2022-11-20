@@ -2,8 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import "twin.macro";
 
-import Card from "components/Card";
-import { Application } from "types/api";
+import Container from "components/Container";
 
 import {
   getAllCampaigns,
@@ -15,6 +14,7 @@ import {
 import { bytesToImage } from "../../utils";
 
 import ApplicationForm from "./ApplicationForm";
+import ApplicationPageLoading from "./ApplicationPageLoading";
 import CampaignDetails from "./CampaignDetails";
 import RolesSidebar from "./RolesSidebar";
 
@@ -110,7 +110,7 @@ const ApplicationPage = () => {
     [answers]
   );
 
-  if (loading) return <div />;
+  if (loading) return <ApplicationPageLoading />;
 
   const questions = campaign.questions.map((q) => {
     if (!(q.id in answers)) {
@@ -161,7 +161,7 @@ const ApplicationPage = () => {
   };
 
   return (
-    <div tw="mx-auto flex flex-1 max-w-7xl flex-col gap-4 p-4">
+    <Container tw="gap-4">
       <CampaignDetails
         campaignName={campaign.campaign.name}
         headerImage={bytesToImage(campaign.campaign.cover_image)}
@@ -186,7 +186,7 @@ const ApplicationPage = () => {
           onSubmit={onSubmit}
         />
       </div>
-    </div>
+    </Container>
   );
 };
 
