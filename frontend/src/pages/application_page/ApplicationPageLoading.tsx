@@ -79,30 +79,24 @@ const ApplicationPageLoading = () => (
 
       <Card tw="flex-1">
         <PulsingBar tw="h-6 w-32 mb-2" />
-        {Array(NUM_SECTIONS)
-          .fill(null)
-          .map((_, i) => (
-            <section tw="my-4 flex flex-col gap-4">
-              <PulsingBar
-                tw="h-4 w-72"
-                animationDelay={100 + i * SECTION_DELAY}
-              />
-              <div tw="flex flex-col gap-4">
-                {Array(NUM_QUESTIONS)
-                  .fill(null)
-                  .map((_, j) => (
-                    <Group
-                      styles={lineStyles}
-                      commonStyles={tw`first:bg-black/10!`}
-                      animationDelay={
-                        100 + i * SECTION_DELAY + j * QUESTION_DELAY
-                      }
-                      individualDelay={LINE_DELAY}
-                    />
-                  ))}
-              </div>
-            </section>
-          ))}
+        {Array.from(Array(NUM_SECTIONS)).map((_, i) => (
+          <section tw="my-4 flex flex-col gap-4">
+            <PulsingBar
+              tw="h-4 w-72"
+              animationDelay={100 + i * SECTION_DELAY}
+            />
+            <div tw="flex flex-col gap-4">
+              {Array.from(Array(NUM_QUESTIONS)).map((_, j) => (
+                <Group
+                  styles={lineStyles}
+                  commonStyles={tw`first:bg-black/10!`}
+                  animationDelay={100 + i * SECTION_DELAY + j * QUESTION_DELAY}
+                  individualDelay={LINE_DELAY}
+                />
+              ))}
+            </div>
+          </section>
+        ))}
       </Card>
     </div>
   </Container>
