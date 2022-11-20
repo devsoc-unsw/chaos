@@ -21,7 +21,7 @@ const descLen = descriptionStyles.length + 1;
 const infoLen = descLen + userInfoStyles.length;
 
 type GroupProps = {
-  styles?: TwStyle[];
+  styles: TwStyle[];
   commonStyles?: TwStyle;
   animationDelay?: number;
   individualDelay?: number;
@@ -33,13 +33,12 @@ const Group = ({
   individualDelay = 100,
 }: GroupProps) => (
   <div tw="flex flex-col gap-1.5">
-    {styles &&
-      styles.map((css, i) => (
-        <PulsingBar
-          css={{ ...commonStyles, ...css }}
-          animationDelay={animationDelay + i * individualDelay}
-        />
-      ))}
+    {styles.map((css, i) => (
+      <PulsingBar
+        css={{ ...commonStyles, ...css }}
+        animationDelay={animationDelay + i * individualDelay}
+      />
+    ))}
   </div>
 );
 
