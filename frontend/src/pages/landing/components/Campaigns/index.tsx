@@ -9,7 +9,6 @@ import Campaign from "./Campaign";
 import compclub from "./compclub.png";
 
 const Container = styled.div({
-  // eslint-disable-next-line prettier/prettier
   ...tw`
     absolute top-1/2 right-[50px] w-[650px] h-[600px]
     flex items-center justify-center

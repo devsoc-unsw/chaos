@@ -3,9 +3,9 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import tw, { styled } from "twin.macro";
 
 import chaosImg from "assets/chaos.png";
+import Container from "components/Container";
 
 import { isLoggedIn } from "../../utils";
-import Container from "components/Container";
 
 const NavButton = styled(NavLink, {
   ...tw`relative rounded px-2 py-1 text-slate-800`,
@@ -13,7 +13,6 @@ const NavButton = styled(NavLink, {
 
   "&.active": tw`rounded from-blue-700/20 to-indigo-700/20 shadow bg-gradient-to-r`,
 
-  // eslint-disable-next-line prettier/prettier
   "&:not(.active)": tw`
     before:(
       absolute inset-0

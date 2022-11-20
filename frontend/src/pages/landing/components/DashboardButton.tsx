@@ -3,7 +3,6 @@ import tw, { styled } from "twin.macro";
 
 import type { ComponentProps, ElementType, PropsWithChildren } from "react";
 
-// eslint-disable-next-line prettier/prettier
 const Button = tw.button`
   relative flex items-center justify-center
   w-max px-3 py-2
@@ -11,7 +10,6 @@ const Button = tw.button`
   hover:text-black focus-visible:(text-black ring)
 `;
 
-// eslint-disable-next-line prettier/prettier
 const Bg = tw.div`
   absolute inset-0 z-[-1]
   rounded transition

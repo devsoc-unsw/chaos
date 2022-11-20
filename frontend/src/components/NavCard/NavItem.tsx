@@ -6,7 +6,6 @@ const NavItem = styled.div({
   ...tw`relative z-0 hover:before:opacity-20`,
   "&::before": {
     content: "",
-    // eslint-disable-next-line prettier/prettier
     ...tw`
       absolute inset-0 z-[-1]
       bg-gradient-to-r from-blue-300 to-violet-300
