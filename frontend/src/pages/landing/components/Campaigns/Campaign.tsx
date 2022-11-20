@@ -23,7 +23,7 @@ const Bar = ({
   </Transition.Child>
 );
 
-const Button = styled.button({
+const Button = styled.div({
   ...tw`ml-auto px-2 py-1.5 rounded-[0.2rem]`,
 
   variants: {
