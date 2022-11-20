@@ -20,18 +20,18 @@ const userInfoStyles = [tw`h-4 w-52`, tw`w-72`, tw`w-64`];
 const descLen = descriptionStyles.length + 1;
 const infoLen = descLen + userInfoStyles.length;
 
-type GroupProps = {
+type BarsProps = {
   styles: TwStyle[];
   commonStyles?: TwStyle;
   animationDelay?: number;
   individualDelay?: number;
 };
-const Group = ({
+const Bars = ({
   styles,
   commonStyles,
   animationDelay = 0,
   individualDelay = 100,
-}: GroupProps) => (
+}: BarsProps) => (
   <div tw="flex flex-col gap-1.5">
     {styles.map((css, i) => (
       <PulsingBar
@@ -54,8 +54,8 @@ const ApplicationPageLoading = () => (
           </div>
         </div>
 
-        <Group styles={descriptionStyles} animationDelay={100} />
-        <Group styles={userInfoStyles} animationDelay={descLen * 100} />
+        <Bars styles={descriptionStyles} animationDelay={100} />
+        <Bars styles={userInfoStyles} animationDelay={descLen * 100} />
       </article>
 
       <div tw="w-full max-w-lg">
@@ -69,7 +69,7 @@ const ApplicationPageLoading = () => (
           <PulsingBar tw="h-6 w-28" animationDelay={infoLen * 100} standalone />
         }
       >
-        <Group
+        <Bars
           styles={[tw`w-52`, tw`w-36`, tw`w-28`, tw`w-44`, tw`w-20`, tw`w-32`]}
           commonStyles={tw`h-4`}
           animationDelay={infoLen * 100}
@@ -86,7 +86,7 @@ const ApplicationPageLoading = () => (
             />
             <div tw="flex flex-col gap-4">
               {Array.from(Array(NUM_QUESTIONS)).map((_, j) => (
-                <Group
+                <Bars
                   styles={lineStyles}
                   commonStyles={tw`first:bg-black/10!`}
                   animationDelay={100 + i * SECTION_DELAY + j * QUESTION_DELAY}
