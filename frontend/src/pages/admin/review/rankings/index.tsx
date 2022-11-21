@@ -188,7 +188,7 @@ const Rankings = () => {
       />
 
       <Grid container justifyContent="flex-end">
-        <Button component={Link} to="../finalise">
+        <Button component={Link} to="../finalise" relative="path">
           Next
         </Button>
       </Grid>
