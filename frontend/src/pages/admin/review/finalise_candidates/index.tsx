@@ -1,6 +1,6 @@
 import { Tab } from "@headlessui/react";
 import { Container } from "@mui/material";
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import "twin.macro";
 
@@ -93,6 +93,23 @@ const FinaliseCandidates = () => {
   const [selectedTab, setSelectedTab] = useState(0);
   const [preview, setPreview] = useState(false);
 
+  const params = useMemo(
+    () => ({
+      role: roles[roleId]?.name,
+      organisation,
+    }),
+    [roles, organisation]
+  );
+
+  const renderEmail = useCallback(
+    (id: number, name: string) =>
+      Object.entries(params).reduce(
+        (x, [param, value]) => x.replace(`{${param}}`, value),
+        emails[id].replace(name, name)
+      ),
+    [emails, params]
+  );
+
   if (loading || orgLoading) {
     return <LoadingIndicator />;
   }
@@ -107,9 +124,10 @@ const FinaliseCandidates = () => {
           <Tab.Panels>
             {tabs.map(({ id, name }) => (
               <Tab.Panel
+                key={id}
                 as={Email}
                 preview={preview}
-                params={{ name, role: roles[roleId].name, organisation }}
+                renderEmail={() => renderEmail(id, name)}
                 size="large"
                 value={emails[id]}
                 onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
@@ -125,7 +143,13 @@ const FinaliseCandidates = () => {
         <Button color="white" onClick={() => setPreview(!preview)}>
           {preview ? "Edit" : "Preview"}
         </Button>
-        <Button>Send Email</Button>
+        <Button
+          onClick={() => {
+            /* TODO: send the email to the backend */
+          }}
+        >
+          Send Email
+        </Button>
       </div>
     </Container>
   );
