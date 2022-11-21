@@ -100,6 +100,7 @@ async fn main() {
                 backend::application::get_answers,
                 backend::application::get_ratings,
                 backend::application::set_status,
+                backend::application::set_private_status,
                 backend::application::get_comments,
             ],
         )
