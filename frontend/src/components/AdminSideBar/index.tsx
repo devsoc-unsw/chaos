@@ -103,6 +103,11 @@ const AdminSidebar = ({
           message: "An organisation logo image is required!",
           type: "error",
         });
+      } else {
+        pushMessage({
+          message: "Organisation unknown error occurred",
+          type: "error",
+        });
       }
     };
 
