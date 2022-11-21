@@ -1,10 +1,16 @@
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import { Box, Container, Grid, Tab, Typography } from "@mui/material";
-import { useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 
-import { ReviewerStepper } from "components";
+import { LoadingIndicator, ReviewerStepper } from "components";
+import { MessagePopupContext } from "contexts/MessagePopupContext";
+import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
+import useFetch from "hooks/useFetch";
 
 import { FinalisedEntry } from "./finaliseCandidates.styled";
+
+import type { ApplicationResponse, Campaign } from "types/api";
 
 const dummyCandidates = [
   {
@@ -31,37 +37,46 @@ const dummyCandidates = [
 ];
 
 const FinaliseCandidates = () => {
-  const finalised = dummyCandidates.filter((candidate) => candidate.finalised);
-  const notFinalised = dummyCandidates.filter(
-    (candidate) => !candidate.finalised
+  const campaignId = Number(useParams().campaignId);
+  const setNavBarTitle = useContext(SetNavBarTitleContext);
+  const roleId = Number(useParams().roleId);
+  useFetch<Campaign>(`/campaign/${campaignId}`, undefined, {}, [], ({ name }) =>
+    setNavBarTitle(name)
   );
-  // TODO: CHAOS-71 generate tabs and emails for each finalised member
+
+  const pushMessage = useContext(MessagePopupContext);
+
+  const {
+    data: applications,
+    loading,
+    error,
+    errorMsg,
+  } = useFetch<ApplicationResponse>(
+    `/role/${roleId}/applications`,
+    undefined,
+    {},
+    []
+  );
+
   const [tab, setTab] = useState("0");
+
+  useEffect(() => {
+    if (error) {
+      pushMessage({
+        type: "error",
+        message: errorMsg,
+      });
+    }
+  }, [error]);
+
+  if (loading) {
+    return <LoadingIndicator />;
+  }
+
   return (
     <Container>
       <ReviewerStepper activeStep={2} />
 
-      <Grid container spacing={2} p={2}>
-        <Grid item xs={6}>
-          <Typography variant="h2">Finalised</Typography>
-          <ul>
-            {finalised.map((candidate) => (
-              <FinalisedEntry key={candidate.role}>
-                {candidate.role} -{" "}
-                <span className="name">{candidate.name}</span>
-              </FinalisedEntry>
-            ))}
-          </ul>
-        </Grid>
-        <Grid item xs={6}>
-          <Typography variant="h2">Not Finalised</Typography>
-          <ul>
-            {notFinalised.map((candidate) => (
-              <li key={candidate.role}>{candidate.role}</li>
-            ))}
-          </ul>
-        </Grid>
-      </Grid>
       <TabContext value={tab}>
         <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1 }}>
           <Box sx={{ borderBottom: 1, borderColor: "divider" }}>

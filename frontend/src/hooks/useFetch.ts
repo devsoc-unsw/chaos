@@ -46,7 +46,8 @@ const useFetch = <T = void>(
   url: string,
   body?: Json,
   options?: Options<T>,
-  deps?: unknown[]
+  deps?: unknown[],
+  callback?: (_data: T) => void
 ) => {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
@@ -91,7 +92,6 @@ const useFetch = <T = void>(
 
       let resp;
       try {
-        console.log(fetchUrl);
         resp = await fetch(fetchUrl, {
           headers: {
             // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -118,8 +118,10 @@ const useFetch = <T = void>(
           } catch (e) {
             setError(true);
           }
+          data = data as T;
 
-          setData(data as T);
+          setData(data);
+          callback?.(data);
         }
       } catch (e) {
         if (e instanceof DOMException && e.name === "AbortError") {
