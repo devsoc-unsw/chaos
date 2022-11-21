@@ -8,7 +8,7 @@ const Rejected = `Hi {name},
 
 Thank you for applying for {role}. Unfortunately, we regret to inform you that you have been unsuccessful with your application.
 
-Get owned :omegalul:
+Get owned loser :omegalul:
 
 {organisation}`;
 
