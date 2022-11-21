@@ -2,13 +2,16 @@ import { Tab } from "@headlessui/react";
 import { Container } from "@mui/material";
 import { useContext, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+import "twin.macro";
 
 import { LoadingIndicator, ReviewerStepper } from "components";
 import Tabs from "components/Tabs";
+import Textarea from "components/Textarea";
 import { MessagePopupContext } from "contexts/MessagePopupContext";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 import useFetch from "hooks/useFetch";
 
+import type { ChangeEvent } from "react";
 import type { Campaign, RoleApplications } from "types/api";
 
 const FinaliseCandidates = () => {
@@ -16,6 +19,8 @@ const FinaliseCandidates = () => {
   const setNavBarTitle = useContext(SetNavBarTitleContext);
   const roleId = Number(useParams().roleId);
   const pushMessage = useContext(MessagePopupContext);
+
+  const [emails, setEmails] = useState<{ [id: number]: string }>({});
 
   useFetch<Campaign>(`/campaign/${campaignId}`, undefined, {}, [], ({ name }) =>
     setNavBarTitle(name)
@@ -37,8 +42,13 @@ const FinaliseCandidates = () => {
     }
   }, [error]);
 
+  const applications = data?.applications ?? [];
   const tabs = useMemo(
-    () => data?.applications.map((a) => a.user_display_name) ?? [],
+    () =>
+      applications.map((a) => ({
+        id: a.id,
+        name: a.user_display_name,
+      })) ?? [],
     [data]
   );
   const [selectedTab, setSelectedTab] = useState(0);
@@ -52,7 +62,20 @@ const FinaliseCandidates = () => {
       <ReviewerStepper activeStep={2} />
 
       <Tab.Group selectedIndex={selectedTab} onChange={setSelectedTab}>
-        <Tabs tabs={tabs} selectedTab={selectedTab} />
+        <div tw="flex flex-col gap-1">
+          <Tabs tabs={tabs} />
+          <Tab.Panels>
+            {tabs.map(({ id }) => (
+              <Tab.Panel
+                as={Textarea}
+                value={emails[id]}
+                onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
+                  setEmails({ ...emails, [id]: e.target.value })
+                }
+              />
+            ))}
+          </Tab.Panels>
+        </div>
       </Tab.Group>
     </Container>
   );

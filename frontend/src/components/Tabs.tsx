@@ -10,21 +10,20 @@ const TabContents = styled("div", {
 
   variants: {
     active: {
-      true: tw`rounded shadow bg-white border-gray-200 text-indigo-600`,
+      true: tw`rounded shadow bg-white border-gray-300 text-indigo-600`,
       false: tw`text-gray-700`,
     },
   },
 });
 
 type Props = {
-  tabs: string[];
-  selectedTab: number;
+  tabs: { id: number; name: string }[];
 };
-const Tabs = ({ tabs, selectedTab }: Props) => (
+const Tabs = ({ tabs }: Props) => (
   <Tab.List tw="flex gap-1">
-    {tabs.map((tab, i) => (
-      <Tab tw="outline-none" className="group">
-        <TabContents active={i === selectedTab}>{tab}</TabContents>
+    {tabs.map(({ id, name }) => (
+      <Tab key={id} tw="outline-none" className="group">
+        {({ selected }) => <TabContents active={selected}>{name}</TabContents>}
       </Tab>
     ))}
   </Tab.List>
