@@ -5,6 +5,7 @@ const Textarea = styled("textarea", {
     block w-full mt-1 rounded-md
     border-gray-300 shadow-sm
     transition
+    hover:border-blue-300
     focus:(border-blue-300 ring ring-blue-200 ring-opacity-50)
   `,
 
