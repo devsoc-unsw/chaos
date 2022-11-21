@@ -31,7 +31,7 @@ const CampaignDetails = ({
   description,
   userInfo,
 }: Props) => (
-  <Card as="header" tw="items-center gap-6 md:(flex-row items-start)">
+  <Card as="header" tw="items-center gap-6 md:(flex-row items-center)">
     <article tw="flex flex-col w-full gap-2">
       <div tw="flex items-center gap-2">
         <img
@@ -64,13 +64,15 @@ const CampaignDetails = ({
       </div>
     </article>
 
-    <aside tw="m-auto w-full flex max-w-lg flex-shrink-0 items-center justify-center overflow-hidden rounded shadow-md bg-[#edeeef] aspect-video md:(w-1/2 mr-0)">
-      <img
-        tw="object-contain w-full max-h-full"
-        src={headerImage}
-        alt={campaignName}
-      />
-    </aside>
+    <div tw="w-full max-w-lg">
+      <aside tw="overflow-hidden rounded shadow-md bg-[#edeeef] aspect-w-16 aspect-h-9">
+        <img
+          tw="object-contain w-full h-full"
+          src={headerImage}
+          alt={campaignName}
+        />
+      </aside>
+    </div>
   </Card>
 );
 

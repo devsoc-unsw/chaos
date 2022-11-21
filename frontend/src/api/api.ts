@@ -5,15 +5,12 @@ export class FetchError extends Error {
 
   public statusText: string;
 
-  public resp: Response;
-
-  constructor(resp: Response) {
+  constructor(public resp: Response, public data?: unknown) {
     super(resp.statusText);
 
     this.name = "FetchError";
     this.status = resp.status;
     this.statusText = resp.statusText;
-    this.resp = resp;
   }
 }
 
@@ -55,7 +52,14 @@ const API = {
 
     const resp = await fetch(endpoint, payload);
     if (!resp.ok) {
-      throw new FetchError(resp);
+      let data;
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        data = await resp.json();
+      } catch (e) {
+        // just let data be undefined
+      }
+      throw new FetchError(resp, data);
     }
 
     if (jsonResp) {

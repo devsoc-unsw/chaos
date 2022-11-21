@@ -1,21 +1,11 @@
 import tw, { styled } from "twin.macro";
 
-import type { HTMLAttributes } from "react";
+import PulsingBar from "components/PulsingBar";
+import { Pulse, pulseCss } from "styles/animations";
 
-const Bar = ({
-  animationDelay,
-  ...props
-}: HTMLAttributes<HTMLDivElement> & { animationDelay: number }) => (
-  <div
-    tw="h-3 animate-pulse rounded-sm bg-black/5 first:bg-black/[0.15]"
-    css={{ animationDelay: `${animationDelay}ms` }}
-    // eslint-disable-next-line react/jsx-props-no-spreading
-    {...props}
-  />
-);
-
-const Button = styled.button({
-  ...tw`ml-auto animate-pulse px-2 py-1.5 text-transparent rounded-[0.2rem]`,
+const Button = styled(Pulse, {
+  ...tw`ml-auto px-2 py-1.5 text-transparent rounded-[0.2rem]`,
+  ...pulseCss,
 
   variants: {
     status: {
@@ -39,19 +29,16 @@ type Props = {
 const CampaignLoading = ({ status, animationDelay = 0 }: Props) => (
   <div tw="w-96 rounded bg-white text-xs shadow-md transition hover:(-translate-y-1 shadow-lg)">
     <header tw="flex items-center gap-1.5 p-3">
-      <div
-        tw="w-10 h-10 rounded-sm animate-pulse bg-black/10"
-        css={{ animationDelay: `${animationDelay}ms` }}
-      />
+      <PulsingBar tw="w-10 h-10" animationDelay={animationDelay} standalone />
       <Bars>
-        <Bar tw="w-36" animationDelay={animationDelay} />
-        <Bar tw="w-32" animationDelay={animationDelay + 150} />
+        <PulsingBar tw="w-36" animationDelay={animationDelay} />
+        <PulsingBar tw="w-32" animationDelay={animationDelay + 150} />
       </Bars>
-      <Button status={status} css={{ animationDelay: `${animationDelay}ms` }}>
+      <Button status={status} style={{ animationDelay: `${animationDelay}ms` }}>
         {status?.toUpperCase()}
       </Button>
     </header>
-    <div tw="bg-[#edeeef] aspect-video" />
+    <div tw="bg-[#edeeef] aspect-w-16 aspect-h-9" />
   </div>
 );
 

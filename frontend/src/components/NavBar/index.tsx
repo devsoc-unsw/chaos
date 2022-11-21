@@ -3,6 +3,7 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import tw, { styled } from "twin.macro";
 
 import chaosImg from "assets/chaos.png";
+import Container from "components/Container";
 
 import { isLoggedIn } from "../../utils";
 
@@ -12,7 +13,6 @@ const NavButton = styled(NavLink, {
 
   "&.active": tw`rounded from-blue-700/20 to-indigo-700/20 shadow bg-gradient-to-r`,
 
-  // eslint-disable-next-line prettier/prettier
   "&:not(.active)": tw`
     before:(
       absolute inset-0
@@ -35,8 +35,8 @@ const NavBar = ({ campaign }: { campaign: string }) => {
   };
 
   return (
-    <header tw="fixed inset-x-0 z-10 bg-white py-4 shadow-md bg-gradient-to-r from-[#9dbbfb55] to-[#a78bfa55]">
-      <div tw="mx-auto flex max-w-7xl items-center gap-4 px-4 text-[hsl(255.1,30%,22%)]">
+    <header tw="fixed inset-x-0 z-10 bg-white shadow-md bg-gradient-to-r from-[#9dbbfb55] to-[#a78bfa55]">
+      <Container tw="flex-row items-center gap-4 text-[hsl(255.1,30%,22%)]">
         <Link
           to="/"
           tw="-my-2 rounded py-2 transition-shadow focus-visible:(outline-none ring ring-blue-400)"
@@ -87,7 +87,7 @@ const NavBar = ({ campaign }: { campaign: string }) => {
             </span>
           )}
         </div>
-      </div>
+      </Container>
     </header>
   );
 };
