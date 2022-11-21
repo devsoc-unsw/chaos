@@ -813,6 +813,7 @@ pub struct NewApplication {
     pub user_id: i32,
     pub role_id: i32,
     pub status: ApplicationStatus,
+    pub private_status: ApplicationStatus,
 }
 
 impl Application {

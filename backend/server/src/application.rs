@@ -50,6 +50,7 @@ pub async fn create_application(
         user_id: user.id,
         role_id: app_req.role_id,
         status: app_req.status,
+        private_status: app_req.status,
     };
 
     let application = db
