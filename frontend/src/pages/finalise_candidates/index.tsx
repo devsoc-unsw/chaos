@@ -2,6 +2,8 @@ import { TabContext, TabList, TabPanel } from "@mui/lab";
 import { Box, Container, Grid, Tab, Typography } from "@mui/material";
 import { useState } from "react";
 
+import { ReviewerStepper } from "components";
+
 import { FinalisedEntry } from "./finaliseCandidates.styled";
 
 const dummyCandidates = [
@@ -37,6 +39,8 @@ const FinaliseCandidates = () => {
   const [tab, setTab] = useState("0");
   return (
     <Container>
+      <ReviewerStepper activeStep={2} />
+
       <Grid container spacing={2} p={2}>
         <Grid item xs={6}>
           <Typography variant="h2">Finalised</Typography>
