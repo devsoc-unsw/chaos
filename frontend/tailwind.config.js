@@ -8,6 +8,14 @@ module.exports = {
       fontFamily: {
         sans: ["Nunito", ...defaultTheme.fontFamily.sans],
       },
+      colors: {
+        brand: {
+          50: 'hsl(220, 93%, 97%)',
+          500: 'hsl(220, 93%, 60%)',
+          600: 'hsl(220, 93%, 54%)',
+          900: 'hsl(220, 70%, 30%)',
+        },
+      },
     },
   },
   plugins: [

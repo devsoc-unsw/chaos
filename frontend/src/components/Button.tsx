@@ -8,8 +8,9 @@ const Button = styled.button({
 
   variants: {
     color: {
-      primary: tw`bg-[hsl(220, 93%, 60%)] text-white hocus:bg-[hsl(220, 93%, 54%)]`,
+      primary: tw`bg-brand-500 text-white hocus:bg-brand-600`,
       danger: tw`bg-red-600 text-white hocus:bg-red-700`,
+      white: tw`bg-white border border-brand-500 text-black hocus:(bg-brand-50 text-brand-900)`,
     },
   },
 

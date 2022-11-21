@@ -96,7 +96,10 @@ const FinaliseCandidates = () => {
         </div>
       </Tab.Group>
 
-      <Button tw="ml-auto mt-4">Send Email</Button>
+      <div tw="ml-auto mt-4 flex gap-2">
+        <Button color="white">Preview</Button>
+        <Button>Send Email</Button>
+      </div>
     </Container>
   );
 };
