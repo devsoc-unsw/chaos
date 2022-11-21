@@ -105,7 +105,7 @@ const FinaliseCandidates = () => {
     (id: number, name: string) =>
       Object.entries(params).reduce(
         (x, [param, value]) => x.replace(`{${param}}`, value),
-        emails[id].replace(name, name)
+        emails[id].replace("{name}", name)
       ),
     [emails, params]
   );
