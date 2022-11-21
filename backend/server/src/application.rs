@@ -33,7 +33,6 @@ pub enum ApplicationError {
 #[derive(Deserialize)]
 pub struct ApplicationReq {
     pub role_id: i32,
-    pub status: ApplicationStatus,
 }
 
 #[post("/", data = "<app_req>")]
@@ -49,8 +48,8 @@ pub async fn create_application(
     let new_application = NewApplication {
         user_id: user.id,
         role_id: app_req.role_id,
-        status: app_req.status,
-        private_status: app_req.status,
+        status: ApplicationStatus::Pending,
+        private_status: ApplicationStatus::Pending,
     };
 
     let application = db

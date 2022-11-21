@@ -120,7 +120,7 @@ export const newApplication = (roleId: number) =>
   authenticatedRequest<Application>({
     method: "POST",
     path: "/application/",
-    body: { role_id: roleId, status: "Pending" },
+    body: { role_id: roleId },
   });
 
 export const doDeleteOrg = (orgId: number) =>
