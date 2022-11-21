@@ -19,6 +19,32 @@ import useFetch from "hooks/useFetch";
 import DragDropRankings from "./DragDropRankings";
 
 import type { Applications, Ranking } from "./types";
+import type { ApplicationStatus } from "types/api";
+
+const statusCmp = (x: ApplicationStatus, y: ApplicationStatus) => {
+  switch (x) {
+    case "Success":
+      return y === "Success" ? 0 : -1;
+    case "Rejected":
+      return y === "Rejected" ? 0 : 1;
+    default:
+      switch (y) {
+        case "Success":
+          return 1;
+        case "Rejected":
+          return -1;
+        default:
+          return 0;
+      }
+  }
+};
+
+const ratingsMean = (ratings: Ranking["ratings"]) =>
+  ratings.reduce((x, y) => x + y.rating, 0) / ratings.length;
+
+const rankingCmp = (x: Ranking, y: Ranking) =>
+  statusCmp(x.status, y.status) ||
+  ratingsMean(y.ratings) - ratingsMean(x.ratings);
 
 const Rankings = () => {
   const campaignId = Number(useParams().campaignId);
@@ -91,11 +117,14 @@ const Rankings = () => {
         applications.map(async (application) => ({
           name: application.user_display_name,
           id: application.id,
+          status: application.private_status,
           ratings: await getRatings(application.id),
         }))
       );
+      rankings.sort(rankingCmp);
       setRankings(rankings);
-      setPassIndex(Math.ceil((rankings.length || 0) / 2));
+      const passIndex = rankings.findIndex((r) => r.status !== "Success");
+      setPassIndex(passIndex === -1 ? rankings.length : passIndex);
 
       const { questions } = await getRoleQuestions(roleId);
 
