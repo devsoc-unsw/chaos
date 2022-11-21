@@ -87,7 +87,7 @@ const FinaliseCandidates = () => {
       applications.map((a) => ({
         id: a.id,
         name: a.user_display_name,
-      })) ?? [],
+      })),
     [data]
   );
   const [selectedTab, setSelectedTab] = useState(0);
