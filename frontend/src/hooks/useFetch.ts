@@ -47,7 +47,8 @@ const useFetch = <T = void>(
   body?: Json,
   options?: Options<T>,
   deps?: unknown[],
-  callback?: (_data: T) => void
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  callback?: (_data: T) => any
 ) => {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
