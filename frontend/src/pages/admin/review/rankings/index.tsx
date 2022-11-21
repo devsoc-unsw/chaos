@@ -82,7 +82,7 @@ const Rankings = () => {
       if (!success.some(Boolean)) {
         pushMessage({
           type: "success",
-          message: "Updated private application statuses for role",
+          message: "Updated internal application statuses for role",
         });
       }
     };

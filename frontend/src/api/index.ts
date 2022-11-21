@@ -20,6 +20,7 @@ import type {
   QuestionInput,
   QuestionResponse,
   Role,
+  RoleApplications,
   RoleInput,
   UserResponse,
 } from "../types/api";
@@ -138,7 +139,7 @@ export const getCampaignRoles = (campaignId: number) =>
   });
 
 export const getRoleApplications = (roleId: number) =>
-  authenticatedRequest<{ applications: ApplicationResponse[] }>({
+  authenticatedRequest<RoleApplications>({
     path: `/role/${roleId}/applications`,
   });
 

@@ -38,6 +38,10 @@ export type RoleInput = {
   questions_for_role: number[];
 };
 
+export type RoleApplications = {
+  applications: ApplicationResponse[];
+};
+
 export type Question = {
   id: number;
   role_ids: number[];
