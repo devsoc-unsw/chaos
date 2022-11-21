@@ -68,6 +68,7 @@ const FinaliseCandidates = () => {
             {tabs.map(({ id }) => (
               <Tab.Panel
                 as={Textarea}
+                size="large"
                 value={emails[id]}
                 onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
                   setEmails({ ...emails, [id]: e.target.value })
