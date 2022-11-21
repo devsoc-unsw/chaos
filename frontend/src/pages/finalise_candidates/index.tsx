@@ -5,11 +5,14 @@ import { useParams } from "react-router-dom";
 import "twin.macro";
 
 import { LoadingIndicator, ReviewerStepper } from "components";
+import Button from "components/Button";
 import Tabs from "components/Tabs";
 import Textarea from "components/Textarea";
 import { MessagePopupContext } from "contexts/MessagePopupContext";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 import useFetch from "hooks/useFetch";
+
+import emailTemplates from "./email_templates";
 
 import type { ChangeEvent } from "react";
 import type { Campaign, RoleApplications } from "types/api";
@@ -42,6 +45,20 @@ const FinaliseCandidates = () => {
     }
   }, [error]);
 
+  useEffect(() => {
+    if (data !== null) {
+      const newEmails = Object.fromEntries(
+        data.applications
+          .filter(({ id }) => !(id in emails))
+          .map(({ id, private_status: status }) => [
+            id,
+            emailTemplates[status] ?? "",
+          ])
+      );
+      setEmails({ ...emails, ...newEmails });
+    }
+  }, [data]);
+
   const applications = data?.applications ?? [];
   const tabs = useMemo(
     () =>
@@ -58,7 +75,7 @@ const FinaliseCandidates = () => {
   }
 
   return (
-    <Container>
+    <Container tw="flex! flex-col">
       <ReviewerStepper activeStep={2} />
 
       <Tab.Group selectedIndex={selectedTab} onChange={setSelectedTab}>
@@ -78,6 +95,8 @@ const FinaliseCandidates = () => {
           </Tab.Panels>
         </div>
       </Tab.Group>
+
+      <Button tw="ml-auto mt-4">Send Email</Button>
     </Container>
   );
 };
