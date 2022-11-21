@@ -1,7 +1,7 @@
 import { Button, Container, Grid, Typography } from "@mui/material";
 import { green, red } from "@mui/material/colors";
 import { useContext, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 import {
   getApplicationAnswers,
@@ -9,18 +9,18 @@ import {
   getCampaign,
   getRoleApplications,
   getRoleQuestions,
-  setApplicationStatus,
 } from "api";
 import LoadingIndicator from "components/LoadingIndicator";
 import ReviewerStepper from "components/ReviewerStepper";
+import { MessagePopupContext } from "contexts/MessagePopupContext";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
+import useFetch from "hooks/useFetch";
 
 import DragDropRankings from "./DragDropRankings";
 
 import type { Applications, Ranking } from "./types";
 
 const Rankings = () => {
-  const navigate = useNavigate();
   const campaignId = Number(useParams().campaignId);
   const setNavBarTitle = useContext(SetNavBarTitleContext);
   const roleId = Number(useParams().roleId);
@@ -29,8 +29,39 @@ const Rankings = () => {
   const [applications, setApplications] = useState<Applications>({});
   const [passIndex, setPassIndex] = useState(0);
 
+  const pushMessage = useContext(MessagePopupContext);
+  const { put } = useFetch<void>("/application", undefined, {
+    abortBehaviour: "sameUrl",
+    jsonResp: false,
+  });
+
   useEffect(() => {
-    setPassIndex(Math.ceil((rankings.length || 0) / 2));
+    const updateRankings = async () => {
+      const success = await Promise.all(
+        rankings.map(async (ranking, index) => {
+          const { error, errorMsg, aborted } = await put(
+            `/${ranking.id}/private_status`,
+            index < passIndex ? "Success" : "Rejected"
+          );
+          if (error) {
+            pushMessage({
+              type: "error",
+              message: `Failed to update status for ${ranking.name}: ${errorMsg}`,
+            });
+          }
+          return !error && !aborted;
+        })
+      );
+
+      if (!success.some(Boolean)) {
+        pushMessage({
+          type: "success",
+          message: "Updated private application statuses for role",
+        });
+      }
+    };
+
+    void updateRankings();
   }, [rankings]);
 
   useEffect(() => {
@@ -64,6 +95,7 @@ const Rankings = () => {
         }))
       );
       setRankings(rankings);
+      setPassIndex(Math.ceil((rankings.length || 0) / 2));
 
       const { questions } = await getRoleQuestions(roleId);
 
@@ -94,25 +126,6 @@ const Rankings = () => {
 
     void fetchData();
   }, [roleId]);
-
-  const handleNext = () => {
-    console.log(
-      "Order:",
-      rankings.map((candidate) => candidate.name)
-    );
-    Promise.all(
-      rankings.map((ranking, index) =>
-        setApplicationStatus(
-          ranking.id,
-          index < passIndex ? "Success" : "Rejected"
-        )
-      )
-    )
-      .then(() => navigate("/finalise_candidates"))
-      .catch(() => {
-        // TODO: handle errors
-      });
-  };
 
   if (loading) {
     return <LoadingIndicator />;
@@ -146,7 +159,9 @@ const Rankings = () => {
       />
 
       <Grid container justifyContent="flex-end">
-        <Button onClick={handleNext}>Next</Button>
+        <Button component={Link} to="../finalise">
+          Next
+        </Button>
       </Grid>
     </Container>
   );

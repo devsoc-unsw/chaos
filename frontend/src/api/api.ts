@@ -44,6 +44,7 @@ const API = {
     const payload: Payload = {
       method,
       headers: {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         "Content-Type": "application/json",
         ...header,
       },

@@ -21,12 +21,13 @@ const routes = [
   <Route key="review" path="/admin/review/:campaignId" element={<Review />}>
     <Route key="marking" path=":roleId/marking" element={<Marking />} />,
     <Route key="rankings" path=":roleId/rankings" element={<Rankings />} />,
+    <Route
+      key="finalise"
+      path=":roleId/finalise"
+      element={<FinaliseCandidates />}
+    />
+    ,
   </Route>,
-  <Route
-    key="finalise-candidates"
-    path="/finalise_candidates"
-    element={<FinaliseCandidates />}
-  />,
   <Route key="Admin" path="/Admin" element={<Admin />} />,
   <Route
     key="create-campaign"
