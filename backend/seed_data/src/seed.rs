@@ -201,6 +201,7 @@ pub fn seed() {
             .unwrap()
             .id,
         status: ApplicationStatus::Pending,
+        private_status: ApplicationStatus::Pending,
     }
     .insert(&connection)
     .expect("Failed to insert application");
@@ -211,6 +212,7 @@ pub fn seed() {
             .unwrap()
             .id,
         status: ApplicationStatus::Pending,
+        private_status: ApplicationStatus::Pending,
     }
     .insert(&connection)
     .expect("Failed to insert application");
