@@ -57,12 +57,9 @@ const FinaliseCandidates = () => {
   const { get: getOrg, loading: orgLoading } =
     useFetch<Organisation>(`/organisation`);
 
-  useFetch<Campaign>(
-    `/campaign/${campaignId}`,
-    undefined,
-    {},
-    [],
-    async ({ name, organisation_id: orgId }) => {
+  useFetch<Campaign>(`/campaign/${campaignId}`, {
+    deps: [],
+    onSuccess: async ({ name, organisation_id: orgId }) => {
       setNavBarTitle(name);
       const { data } = await getOrg(`/${orgId}`);
       if (data === undefined) {
@@ -73,14 +70,12 @@ const FinaliseCandidates = () => {
         return;
       }
       setOrganisation(data.name);
-    }
-  );
+    },
+  });
 
   const { data, loading, error, errorMsg } = useFetch<RoleApplications>(
     `/role/${roleId}/applications`,
-    undefined,
-    {},
-    []
+    { deps: [] }
   );
 
   useEffect(() => {

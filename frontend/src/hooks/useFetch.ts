@@ -41,15 +41,14 @@ type FetchReturn<T> = {
 type Options<T> = Parameters<typeof fetch>[1] & {
   headers?: { [k: string]: string };
   abortBehaviour?: AbortBehaviour;
+  deps?: unknown[];
+  body?: Json;
+  errorPopup?: boolean;
+  errorPrefix?: string;
+  onSuccess?: (_data: T) => unknown;
+  onError?: (_data: string) => unknown;
 } & (T extends void ? { jsonResp: false } : { jsonResp?: true });
-const useFetch = <T = void>(
-  url: string,
-  body?: Json,
-  options?: Options<T>,
-  deps?: unknown[],
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  callback?: (_data: T) => any
-) => {
+const useFetch = <T = void>(url: string, options?: Options<T>) => {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -106,23 +105,18 @@ const useFetch = <T = void>(
           signal: controller?.signal,
         });
         if (!resp.ok) {
-          error = true;
-          setError(true);
-          errorMsg = await resp.text();
-          setErrorMsg(errorMsg);
-          return { error, errorMsg, aborted: false };
+          throw new Error(await resp.text());
         }
 
         if (!(options?.jsonResp === false)) {
           try {
             data = (await resp.json()) as T;
           } catch (e) {
-            setError(true);
+            throw new Error("Error parsing response from server");
           }
-          data = data as T;
 
           setData(data);
-          callback?.(data);
+          options?.onSuccess?.(data);
         }
       } catch (e) {
         if (e instanceof DOMException && e.name === "AbortError") {
@@ -137,6 +131,7 @@ const useFetch = <T = void>(
           errorMsg = "unknown error";
         }
         setErrorMsg(errorMsg);
+        options?.onError?.(errorMsg);
       } finally {
         setLoading(false);
       }
@@ -147,17 +142,17 @@ const useFetch = <T = void>(
   );
 
   useEffect(() => {
-    if (deps === undefined) {
+    if (options?.deps === undefined) {
       return;
     }
 
-    void doFetch("", options, body);
-  }, [url, body, ...(deps ?? [])]);
+    void doFetch("", options, options?.body);
+  }, [url, options?.body, ...(options?.deps ?? [])]);
 
   const makeFetch = useCallback(
     (method: string) => (url: string, body?: Json, options?: Options<T>) =>
       doFetch(url, { ...options, method } as Options<T>, body),
-    [url, body]
+    [url, options?.body]
   );
 
   return {

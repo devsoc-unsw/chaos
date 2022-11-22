@@ -56,7 +56,7 @@ const Rankings = () => {
   const [passIndex, setPassIndex] = useState(0);
 
   const pushMessage = useContext(MessagePopupContext);
-  const { put } = useFetch<void>("/application", undefined, {
+  const { put } = useFetch<void>("/application", {
     abortBehaviour: "sameUrl",
     jsonResp: false,
   });
