@@ -1,5 +1,5 @@
 import { Tab } from "@headlessui/react";
-import { EyeIcon } from "@heroicons/react/24/solid";
+import { EyeIcon, PaperAirplaneIcon } from "@heroicons/react/24/solid";
 import { Container } from "@mui/material";
 import {
   Fragment,
@@ -167,7 +167,14 @@ const FinaliseCandidates = () => {
             /* TODO: send the email to the backend */
           }}
         >
-          Send Email
+          Send <PaperAirplaneIcon tw="w-4 h-4" />
+        </Button>
+        <Button
+          onClick={() => {
+            /* TODO: send the email to the backend */
+          }}
+        >
+          Send All <PaperAirplaneIcon tw="w-4 h-4" />
         </Button>
       </div>
     </Container>

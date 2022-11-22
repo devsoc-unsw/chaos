@@ -44,7 +44,7 @@ const ApplicationForm = ({
     ))}
     <div tw="flex justify-end">
       <Button
-        tw="flex items-center"
+        tw="gap-0"
         onClick={onSubmit}
         disabled={rolesSelected.length === 0}
       >

@@ -1,6 +1,6 @@
 const Success = `Hi {name},
 
-Thank you for applying for {role} and attending the interview :) We had many applicants this year and your application really stood out! Congratulations - we want you on the team for 2022!
+Thank you for applying for {role} and attending the interview :) We had many applicants this year and your application really stood out! Congratulations - we want you on the team for 2023!
 
 {organisation}`;
 
