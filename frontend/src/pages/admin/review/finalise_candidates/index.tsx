@@ -95,6 +95,7 @@ const FinaliseCandidates = () => {
       applications.map((a) => ({
         id: a.id,
         name: a.user_display_name,
+        status: a.private_status,
       })),
     [data]
   );
@@ -154,29 +155,35 @@ const FinaliseCandidates = () => {
                 )}
               </Tab.Panel>
             ))}
+            <div tw="ml-auto mt-4 flex">
+              <div>
+                <Button color="white">
+                  Use for all {tabs[selectedTab].status.toLowerCase()}
+                </Button>
+              </div>
+              <div tw="ml-auto flex gap-2">
+                <Button color="white" onClick={() => setPreview(!preview)}>
+                  {preview ? "Edit" : "Preview"}
+                </Button>
+                <Button
+                  onClick={() => {
+                    /* TODO: send the email to the backend */
+                  }}
+                >
+                  Send <PaperAirplaneIcon tw="w-4 h-4" />
+                </Button>
+                <Button
+                  onClick={() => {
+                    /* TODO: send the email to the backend */
+                  }}
+                >
+                  Send All <PaperAirplaneIcon tw="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
           </Tab.Panels>
         </div>
       </Tab.Group>
-
-      <div tw="ml-auto mt-4 flex justify-end gap-2">
-        <Button color="white" onClick={() => setPreview(!preview)}>
-          {preview ? "Edit" : "Preview"}
-        </Button>
-        <Button
-          onClick={() => {
-            /* TODO: send the email to the backend */
-          }}
-        >
-          Send <PaperAirplaneIcon tw="w-4 h-4" />
-        </Button>
-        <Button
-          onClick={() => {
-            /* TODO: send the email to the backend */
-          }}
-        >
-          Send All <PaperAirplaneIcon tw="w-4 h-4" />
-        </Button>
-      </div>
     </Container>
   );
 };
