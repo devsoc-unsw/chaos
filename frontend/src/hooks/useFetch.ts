@@ -68,11 +68,7 @@ const useFetch = <T = void>(url: string, options?: Options<T>) => {
   }, []);
 
   const doFetch = useCallback(
-    async (
-      fetchUrl = "",
-      options?: Options<T>,
-      body?: Json
-    ): Promise<FetchReturn<T>> => {
+    async (fetchUrl = "", options?: Options<T>): Promise<FetchReturn<T>> => {
       const controller = getController(
         fetchUrl,
         controllers.current,
@@ -107,7 +103,7 @@ const useFetch = <T = void>(url: string, options?: Options<T>) => {
             ...headers,
           },
           ...init,
-          body: JSON.stringify(body),
+          body: JSON.stringify(options?.body),
           signal: controller?.signal,
         });
         status = resp.status;
@@ -173,7 +169,7 @@ const useFetch = <T = void>(url: string, options?: Options<T>) => {
       return;
     }
 
-    void doFetch("", options, options?.body);
+    void doFetch("", options);
   }, [url, options?.body, ...(options?.deps ?? [])]);
 
   const outerOptions = options;
