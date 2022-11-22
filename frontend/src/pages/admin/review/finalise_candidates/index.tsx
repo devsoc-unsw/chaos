@@ -1,4 +1,5 @@
 import { Tab } from "@headlessui/react";
+import { EyeIcon } from "@heroicons/react/24/solid";
 import { Container } from "@mui/material";
 import {
   Fragment,
@@ -134,10 +135,13 @@ const FinaliseCandidates = () => {
                 {preview ? (
                   <Textarea
                     as="div"
-                    tw="px-3 py-2 bg-white border outline-none whitespace-pre-wrap"
+                    tw="bg-white border outline-none overflow-hidden whitespace-pre-wrap"
                     size="lg"
                   >
-                    {renderEmail(id, name)}
+                    <header tw="px-3 py-2 flex items-center bg-gray-100 shadow-sm">
+                      <EyeIcon tw="w-4 h-4" /> Preview
+                    </header>
+                    <div tw="px-3 py-2">{renderEmail(id, name)}</div>
                   </Textarea>
                 ) : (
                   <Textarea
