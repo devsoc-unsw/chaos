@@ -130,7 +130,9 @@ const useFetch = <T = void>(url: string, options?: Options<T>) => {
         setError(true);
         if (e instanceof Error) {
           errorMsg = e.message;
-        } else {
+        }
+
+        if (!errorMsg) {
           errorMsg = "unknown error";
         }
         setErrorMsg(errorMsg);
