@@ -112,9 +112,10 @@ const FinaliseCandidates = () => {
         id: a.id,
         name: a.user_display_name,
         contents: (
-          <>
-            {a.user_display_name} {tabIcons[a.private_status]}
-          </>
+          <div tw="flex">
+            <span tw="mx-auto px-1.5">{a.user_display_name}</span>
+            <span tw="self-end">{tabIcons[a.private_status]}</span>
+          </div>
         ),
         status: a.private_status,
       })),
