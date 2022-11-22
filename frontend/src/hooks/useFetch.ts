@@ -90,9 +90,8 @@ const useFetch = <T = void>(url: string, options?: Options<T>) => {
       const token = getStore("AUTH_TOKEN");
       const { headers, ...init } = options ?? {};
 
-      let resp;
       try {
-        resp = await fetch(`${baseUrl}/${url}`, {
+        const resp = await fetch(`${baseUrl}/${url}`, {
           headers: {
             // eslint-disable-next-line @typescript-eslint/naming-convention
             "Content-Type": "application/json",
