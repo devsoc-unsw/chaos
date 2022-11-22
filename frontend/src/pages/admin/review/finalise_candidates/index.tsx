@@ -48,44 +48,32 @@ const FinaliseCandidates = () => {
   const campaignId = Number(useParams().campaignId);
   const setNavBarTitle = useContext(SetNavBarTitleContext);
   const roleId = Number(useParams().roleId);
-  const pushMessage = useContext(MessagePopupContext);
   const roles = useRoles();
   const [organisation, setOrganisation] = useState("ORGANISATION");
 
   const [emails, setEmails] = useState<{ [id: number]: string }>({});
 
-  const { get: getOrg, loading: orgLoading } =
-    useFetch<Organisation>(`/organisation`);
+  const { get: getOrg, loading: orgLoading } = useFetch<Organisation>(
+    `/organisation`,
+    {
+      errorSummary: "Error getting organisation",
+      onSuccess: ({ name }) => setOrganisation(name),
+    }
+  );
 
   useFetch<Campaign>(`/campaign/${campaignId}`, {
     deps: [],
-    onSuccess: async ({ name, organisation_id: orgId }) => {
+    errorSummary: "Error getting campaign",
+    onSuccess: ({ name, organisation_id: orgId }) => {
       setNavBarTitle(name);
-      const { data } = await getOrg(`/${orgId}`);
-      if (data === undefined) {
-        pushMessage({
-          type: "error",
-          message: "error getting organisation name",
-        });
-        return;
-      }
-      setOrganisation(data.name);
+      void getOrg(`/${orgId}`);
     },
   });
 
-  const { data, loading, error, errorMsg } = useFetch<RoleApplications>(
+  const { data, loading } = useFetch<RoleApplications>(
     `/role/${roleId}/applications`,
-    { deps: [] }
+    { deps: [], errorSummary: "Error getting applications" }
   );
-
-  useEffect(() => {
-    if (error) {
-      pushMessage({
-        type: "error",
-        message: errorMsg,
-      });
-    }
-  }, [error]);
 
   useEffect(() => {
     if (data !== null) {
