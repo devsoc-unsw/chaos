@@ -72,22 +72,22 @@ const FinaliseCandidates = () => {
 
   const { data, loading } = useFetch<RoleApplications>(
     `/role/${roleId}/applications`,
-    { deps: [], errorSummary: "Error getting applications" }
-  );
-
-  useEffect(() => {
-    if (data !== null) {
-      const newEmails = Object.fromEntries(
-        data.applications
-          .filter(({ id }) => !(id in emails))
-          .map(({ id, private_status: status }) => [
-            id,
-            emailTemplates[status] ?? "",
-          ])
-      );
-      setEmails({ ...emails, ...newEmails });
+    {
+      deps: [],
+      errorSummary: "Error getting applications",
+      onSuccess: ({ applications }) => {
+        const newEmails = Object.fromEntries(
+          applications
+            .filter(({ id }) => !(id in emails))
+            .map(({ id, private_status: status }) => [
+              id,
+              emailTemplates[status] ?? "",
+            ])
+        );
+        setEmails({ ...emails, ...newEmails });
+      },
     }
-  }, [data]);
+  );
 
   const applications = data?.applications ?? [];
   const tabs = useMemo(
