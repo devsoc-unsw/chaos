@@ -115,7 +115,7 @@ const FinaliseCandidates = () => {
   }
 
   return (
-    <Container tw="flex! flex-col">
+    <Container>
       <ReviewerStepper activeStep={2} />
 
       <Tab.Group selectedIndex={selectedTab} onChange={setSelectedTab} vertical>
@@ -138,7 +138,7 @@ const FinaliseCandidates = () => {
         </div>
       </Tab.Group>
 
-      <div tw="ml-auto mt-4 flex gap-2">
+      <div tw="ml-auto mt-4 flex justify-end gap-2">
         <Button color="white" onClick={() => setPreview(!preview)}>
           {preview ? "Edit" : "Preview"}
         </Button>
