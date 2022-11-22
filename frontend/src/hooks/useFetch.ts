@@ -67,10 +67,13 @@ const useFetch = <T = void>(url: string, options?: Options<T>) => {
     setRetry({});
   }, []);
 
+  const external = !url.startsWith("/");
+  const baseUrl = !external ? `${window.origin}/api${url}` : url;
+
   const doFetch = useCallback(
-    async (fetchUrl = "", options?: Options<T>): Promise<FetchReturn<T>> => {
+    async (url = "", options?: Options<T>): Promise<FetchReturn<T>> => {
       const controller = getController(
-        fetchUrl,
+        url,
         controllers.current,
         abortBehaviour
       );
@@ -83,23 +86,18 @@ const useFetch = <T = void>(url: string, options?: Options<T>) => {
       setLoading(true);
       setError(error);
 
+      // TODO: move auth tokens to cookies
       const token = getStore("AUTH_TOKEN");
-      const baseUrl = url.startsWith("/") ? `${window.origin}/api${url}` : url;
-      // eslint-disable-next-line no-param-reassign
-      fetchUrl =
-        fetchUrl.length === 0 || fetchUrl.startsWith("/")
-          ? `${baseUrl}${fetchUrl}`
-          : fetchUrl;
       const { headers, ...init } = options ?? {};
 
       let resp;
       try {
-        resp = await fetch(fetchUrl, {
+        resp = await fetch(`${baseUrl}/${url}`, {
           headers: {
             // eslint-disable-next-line @typescript-eslint/naming-convention
             "Content-Type": "application/json",
             // eslint-disable-next-line @typescript-eslint/naming-convention
-            ...(token && { Authorization: `Bearer ${token}` }),
+            ...(token && !external && { Authorization: `Bearer ${token}` }),
             ...headers,
           },
           ...init,
