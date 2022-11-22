@@ -129,7 +129,11 @@ const FinaliseCandidates = () => {
 
       <Tab.Group selectedIndex={selectedTab} onChange={setSelectedTab} vertical>
         <div tw="flex overflow-hidden">
-          <Tabs tw="p-1 overflow-y-auto" tabs={tabs} vertical />
+          <Tabs
+            tw="p-1 min-w-28 max-w-48 overflow-y-auto"
+            tabs={tabs}
+            vertical
+          />
           <Tab.Panels tw="flex-1 p-1">
             {tabs.map(({ id, name }) => (
               <Tab.Panel key={id} as={Fragment}>

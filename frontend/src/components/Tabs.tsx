@@ -13,7 +13,7 @@ const TabList = styled(Tab.List, {
      * Make sure to include the `vertical` prop on the containing `Tab.Group` for accessibility if this is true.
      */
     vertical: {
-      true: tw`flex-col min-w-28 max-w-48`,
+      true: tw`flex-col`,
     },
   },
 });
