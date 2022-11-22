@@ -1,19 +1,26 @@
 import { Tab } from "@headlessui/react";
 import { Container } from "@mui/material";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import {
+  Fragment,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useParams } from "react-router-dom";
 import "twin.macro";
 
 import { LoadingIndicator, ReviewerStepper } from "components";
 import Button from "components/Button";
 import Tabs from "components/Tabs";
+import Textarea from "components/Textarea";
 import { MessagePopupContext } from "contexts/MessagePopupContext";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 import useFetch from "hooks/useFetch";
 
 import { useRoles } from "..";
 
-import Email from "./Email";
 import emailTemplates from "./email_templates";
 
 import type { ChangeEvent } from "react";
@@ -123,16 +130,25 @@ const FinaliseCandidates = () => {
           <Tabs tabs={tabs} vertical />
           <Tab.Panels tw="flex-1">
             {tabs.map(({ id, name }) => (
-              <Tab.Panel
-                key={id}
-                as={Email}
-                preview={preview}
-                renderEmail={() => renderEmail(id, name)}
-                value={emails[id]}
-                onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
-                  setEmails({ ...emails, [id]: e.target.value })
-                }
-              />
+              <Tab.Panel key={id} as={Fragment}>
+                {preview ? (
+                  <Textarea
+                    as="div"
+                    tw="px-3 py-2 bg-white border outline-none whitespace-pre-wrap"
+                    size="lg"
+                  >
+                    {renderEmail(id, name)}
+                  </Textarea>
+                ) : (
+                  <Textarea
+                    size="lg"
+                    value={emails[id]}
+                    onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
+                      setEmails({ ...emails, [id]: e.target.value })
+                    }
+                  />
+                )}
+              </Tab.Panel>
             ))}
           </Tab.Panels>
         </div>
