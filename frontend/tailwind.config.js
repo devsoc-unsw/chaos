@@ -16,6 +16,7 @@ module.exports = {
           900: 'hsl(220, 70%, 30%)',
         },
       },
+      minHeight: defaultTheme.height,
     },
   },
   plugins: [

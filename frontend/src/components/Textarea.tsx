@@ -11,8 +11,8 @@ const Textarea = styled("textarea", {
 
   variants: {
     size: {
-      md: tw`min-h-[12rem]`,
-      lg: tw`min-h-[16rem]`,
+      md: tw`min-h-48`,
+      lg: tw`min-h-64`,
     },
   },
 });
