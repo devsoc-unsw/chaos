@@ -18,6 +18,10 @@ const TabContents = styled("div", {
 
 type Props = {
   tabs: { id: number; name: string }[];
+  /**
+   * Display the tab list in a vertical column rather than a row.
+   * Make sure to include the `vertical` prop on the containing `Tab.Group` for accessibility if this is true.
+   */
   vertical?: boolean;
 };
 const Tabs = ({ tabs, vertical }: Props) => (
