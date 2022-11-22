@@ -134,11 +134,19 @@ const FinaliseCandidates = () => {
   );
 
   const renderEmail = useCallback(
-    (id: number, name: string) =>
-      Object.entries({ name, ...params }).reduce(
-        (x, [param, value]) => x.replaceAll(`{${param}}`, value),
-        emails[id]
-      ),
+    (id: number, name: string) => {
+      const emailParams = { name, ...params };
+      return emails[id].replaceAll(
+        new RegExp(
+          Object.keys(emailParams)
+            .map((p) => `{${p}}`)
+            .join("|"),
+          "g"
+        ),
+        (p) =>
+          emailParams[p.substring(1, p.length - 1) as keyof typeof emailParams]
+      );
+    },
     [emails, params]
   );
 
