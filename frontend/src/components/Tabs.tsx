@@ -18,9 +18,10 @@ const TabContents = styled("div", {
 
 type Props = {
   tabs: { id: number; name: string }[];
+  vertical?: boolean;
 };
-const Tabs = ({ tabs }: Props) => (
-  <Tab.List tw="flex gap-1">
+const Tabs = ({ tabs, vertical }: Props) => (
+  <Tab.List tw="flex gap-1" css={{ ...(vertical && tw`flex-col`) }}>
     {tabs.map(({ id, name }) => (
       <Tab key={id} tw="outline-none" className="group">
         {({ selected }) => <TabContents active={selected}>{name}</TabContents>}

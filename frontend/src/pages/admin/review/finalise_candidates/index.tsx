@@ -118,10 +118,10 @@ const FinaliseCandidates = () => {
     <Container tw="flex! flex-col">
       <ReviewerStepper activeStep={2} />
 
-      <Tab.Group selectedIndex={selectedTab} onChange={setSelectedTab}>
-        <div tw="flex flex-col gap-1">
-          <Tabs tabs={tabs} />
-          <Tab.Panels>
+      <Tab.Group selectedIndex={selectedTab} onChange={setSelectedTab} vertical>
+        <div tw="flex gap-2">
+          <Tabs tabs={tabs} vertical />
+          <Tab.Panels tw="flex-1">
             {tabs.map(({ id, name }) => (
               <Tab.Panel
                 key={id}

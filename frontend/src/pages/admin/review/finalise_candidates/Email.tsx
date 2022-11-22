@@ -10,7 +10,7 @@ type Props = ComponentProps<typeof Textarea> & {
 };
 const Email = ({ preview, renderEmail, ...props }: Props) =>
   preview ? (
-    <div tw="mt-1 whitespace-pre-wrap px-3 py-2 rounded-md min-h-[12rem] bg-white border border-gray-300 shadow-sm">
+    <div tw="px-3 py-2 rounded-md min-h-[12rem] bg-white border border-gray-300 shadow-sm whitespace-pre-wrap">
       {renderEmail()}
     </div>
   ) : (

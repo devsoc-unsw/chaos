@@ -2,7 +2,7 @@ import tw, { styled } from "twin.macro";
 
 const Textarea = styled("textarea", {
   ...tw`
-    block w-full mt-1 rounded-md
+    block w-full rounded-md
     border-gray-300 shadow-sm
     transition
     hover:border-blue-300
