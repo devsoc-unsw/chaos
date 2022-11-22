@@ -96,9 +96,9 @@ const FinaliseCandidates = () => {
         id: a.id,
         name: a.user_display_name,
         contents: (
-          <div tw="flex">
-            <span tw="mx-auto px-1.5">{a.user_display_name}</span>
-            <span tw="self-end">{tabIcons[a.private_status]}</span>
+          <div tw="flex gap-2">
+            <span tw="">{a.user_display_name}</span>
+            <span tw="ml-auto self-end">{tabIcons[a.private_status]}</span>
           </div>
         ),
         status: a.private_status,
@@ -144,7 +144,7 @@ const FinaliseCandidates = () => {
       <Tab.Group selectedIndex={selectedTab} onChange={setSelectedTab} vertical>
         <div tw="flex overflow-hidden">
           <Tabs
-            tw="p-1 min-w-32 max-w-48 overflow-y-auto"
+            tw="p-1 min-w-36 max-w-48 overflow-y-auto"
             tabs={tabs}
             vertical
           />
