@@ -6,7 +6,6 @@ import type { ComponentProps } from "react";
 type Props = ComponentProps<typeof Textarea> & {
   preview: boolean;
   renderEmail: () => string;
-  value: string;
 };
 const Email = ({ preview, renderEmail, ...props }: Props) =>
   preview ? (
@@ -14,7 +13,7 @@ const Email = ({ preview, renderEmail, ...props }: Props) =>
       {renderEmail()}
     </div>
   ) : (
-    <Textarea {...props} />
+    <Textarea size="lg" {...props} />
   );
 
 export default Email;

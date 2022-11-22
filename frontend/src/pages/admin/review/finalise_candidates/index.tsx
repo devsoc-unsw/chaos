@@ -128,7 +128,6 @@ const FinaliseCandidates = () => {
                 as={Email}
                 preview={preview}
                 renderEmail={() => renderEmail(id, name)}
-                size="large"
                 value={emails[id]}
                 onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
                   setEmails({ ...emails, [id]: e.target.value })
