@@ -49,7 +49,7 @@ const CampaignDetails = ({
         <h3 tw="text-xl leading-loose">You&apos;re applying as:</h3>
         <p tw="flex gap-1.5">
           <span>{userInfo.display_name}</span>
-          <span tw="italic font-light">({userInfo.zid})</span>
+          <span tw="italic font-extralight">({userInfo.zid})</span>
           <span>·</span>
           <span>{userInfo.degree_name}</span>
         </p>
