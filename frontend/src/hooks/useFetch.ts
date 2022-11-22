@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 
+import { MessagePopupContext } from "contexts/MessagePopupContext";
 import { getStore } from "utils";
 
 import type { Json } from "types/api";
@@ -44,7 +45,7 @@ type Options<T> = Parameters<typeof fetch>[1] & {
   deps?: unknown[];
   body?: Json;
   errorPopup?: boolean;
-  errorPrefix?: string;
+  errorSummary?: string;
   onSuccess?: (_data: T) => unknown;
   onError?: (_data: string) => unknown;
 } & (T extends void ? { jsonResp: false } : { jsonResp?: true });
@@ -57,6 +58,8 @@ const useFetch = <T = void>(url: string, options?: Options<T>) => {
 
   const [abortBehaviour] = useState(options?.abortBehaviour ?? "all");
   const controllers = useRef<Controllers>({});
+
+  const pushMessage = useContext(MessagePopupContext);
 
   const refetch = useCallback(() => {
     setRetry({});
@@ -131,7 +134,18 @@ const useFetch = <T = void>(url: string, options?: Options<T>) => {
           errorMsg = "unknown error";
         }
         setErrorMsg(errorMsg);
+
         options?.onError?.(errorMsg);
+        if (options?.errorPopup || options?.errorSummary) {
+          let message = errorMsg;
+          if (options?.errorSummary) {
+            message = `${options.errorSummary}: ${message}`;
+          }
+          pushMessage({
+            type: "error",
+            message,
+          });
+        }
       } finally {
         setLoading(false);
       }
