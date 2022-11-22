@@ -135,9 +135,9 @@ const FinaliseCandidates = () => {
 
   const renderEmail = useCallback(
     (id: number, name: string) =>
-      Object.entries(params).reduce(
+      Object.entries({ name, ...params }).reduce(
         (x, [param, value]) => x.replaceAll(`{${param}}`, value),
-        emails[id].replaceAll("{name}", name)
+        emails[id]
       ),
     [emails, params]
   );
