@@ -16,14 +16,14 @@ const TabList = styled(Tab.List, {
 
 const TabButton = styled("button", {
   ...tw`
-    px-3 py-2 border border-transparent outline-none
+    px-3 py-2 border border-transparent rounded outline-none transition
     focus:(ring border-indigo-500) ring-blue-600 ring-opacity-30
   `,
 
   variants: {
     active: {
-      true: tw`rounded shadow bg-white border-gray-300 text-indigo-600`,
-      false: tw`text-gray-700`,
+      true: tw`shadow bg-white border-gray-300 text-indigo-600 hover:(border-indigo-600 text-indigo-700)`,
+      false: tw`text-gray-700 hover:text-indigo-600`,
     },
   },
 });
