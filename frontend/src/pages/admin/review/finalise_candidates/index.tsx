@@ -3,6 +3,7 @@ import {
   CheckIcon,
   EyeIcon,
   PaperAirplaneIcon,
+  PencilIcon,
   XMarkIcon,
 } from "@heroicons/react/24/solid";
 import { Container } from "@mui/material";
@@ -37,7 +38,7 @@ import type {
   RoleApplications,
 } from "types/api";
 
-const Icon = styled.div(tw`inline w-4 h-4`);
+const Icon = styled.span(tw`inline w-4 h-4`);
 const tabIcons: { [status in ApplicationStatus]?: ReactNode } = {
   Success: <Icon as={CheckIcon} tw="text-green-600" />,
   Rejected: <Icon as={XMarkIcon} tw="text-red-600" />,
@@ -162,7 +163,7 @@ const FinaliseCandidates = () => {
                 {preview ? (
                   <Textarea
                     as="div"
-                    tw="bg-white border outline-none overflow-hidden whitespace-pre-wrap"
+                    tw="bg-white border shadow outline-none overflow-hidden whitespace-pre-wrap"
                     size="lg"
                   >
                     <header tw="px-3 py-2 flex items-center bg-gray-100 shadow-sm">
@@ -172,6 +173,7 @@ const FinaliseCandidates = () => {
                   </Textarea>
                 ) : (
                   <Textarea
+                    tw="shadow"
                     size="lg"
                     value={emails[id]}
                     onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
@@ -189,7 +191,15 @@ const FinaliseCandidates = () => {
               </div>
               <div tw="ml-auto flex gap-2">
                 <Button color="white" onClick={() => setPreview(!preview)}>
-                  {preview ? "Edit" : "Preview"}
+                  {preview ? (
+                    <>
+                      <Icon as={PencilIcon} /> Edit
+                    </>
+                  ) : (
+                    <>
+                      <Icon as={EyeIcon} /> Preview
+                    </>
+                  )}
                 </Button>
                 <Button
                   onClick={() => {

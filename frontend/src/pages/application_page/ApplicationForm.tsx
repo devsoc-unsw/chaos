@@ -44,11 +44,11 @@ const ApplicationForm = ({
     ))}
     <div tw="flex justify-end">
       <Button
-        tw="inline-flex items-center"
+        tw="gap-0"
         onClick={onSubmit}
         disabled={rolesSelected.length === 0}
       >
-        Submit <ChevronRightIcon tw="inline w-6 h-6 -mr-2" />
+        Submit <ChevronRightIcon tw="w-6 h-6 -mr-2" />
       </Button>
     </div>
   </Card>
