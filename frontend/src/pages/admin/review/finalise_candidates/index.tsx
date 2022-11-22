@@ -124,12 +124,12 @@ const FinaliseCandidates = () => {
   }
 
   return (
-    <Container>
+    <Container tw="max-h-[calc(100vh - 4rem)] flex! flex-col">
       <ReviewerStepper activeStep={2} />
 
       <Tab.Group selectedIndex={selectedTab} onChange={setSelectedTab} vertical>
-        <div tw="flex gap-2">
-          <Tabs tabs={tabs} vertical />
+        <div tw="flex gap-2 overflow-hidden">
+          <Tabs tw="overflow-y-auto" tabs={tabs} vertical />
           <Tab.Panels tw="flex-1">
             {tabs.map(({ id, name }) => (
               <Tab.Panel key={id} as={Fragment}>

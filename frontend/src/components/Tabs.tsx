@@ -8,8 +8,12 @@ const TabList = styled(Tab.List, {
   ...tw`flex gap-1`,
 
   variants: {
+    /**
+     * Display the tab list in a vertical column rather than a row.
+     * Make sure to include the `vertical` prop on the containing `Tab.Group` for accessibility if this is true.
+     */
     vertical: {
-      true: tw`flex-col`,
+      true: tw`flex-col min-w-28 max-w-48`,
     },
   },
 });
@@ -28,16 +32,11 @@ const TabButton = styled("button", {
   },
 });
 
-type Props = {
+type Props = ComponentProps<typeof TabList> & {
   tabs: { id: number; name: string }[];
-  /**
-   * Display the tab list in a vertical column rather than a row.
-   * Make sure to include the `vertical` prop on the containing `Tab.Group` for accessibility if this is true.
-   */
-  vertical?: ComponentProps<typeof TabList>["vertical"];
 };
-const Tabs = ({ tabs, vertical }: Props) => (
-  <TabList as="div" vertical={vertical}>
+const Tabs = ({ tabs, vertical, ...props }: Props) => (
+  <TabList as="div" vertical={vertical} {...props}>
     {tabs.map(({ id, name }) => (
       <Tab as={Fragment} key={id}>
         {({ selected }) => <TabButton active={selected}>{name}</TabButton>}

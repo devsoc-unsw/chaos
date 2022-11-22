@@ -16,6 +16,8 @@ module.exports = {
           900: 'hsl(220, 70%, 30%)',
         },
       },
+      minWidth: defaultTheme.width,
+      maxWidth: defaultTheme.width,
       minHeight: defaultTheme.height,
     },
   },
