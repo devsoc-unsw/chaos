@@ -2,9 +2,8 @@ import tw, { styled } from "twin.macro";
 
 const Button = styled.button({
   ...tw`
-    px-3 py-1.5 inline-flex items-center gap-1
-    rounded shadow transition disabled:(opacity-50 cursor-not-allowed)
-    outline-none focus:ring
+    px-3 py-1.5 rounded shadow transition outline-none
+    disabled:(opacity-50 cursor-not-allowed) focus:ring
   `,
 
   variants: {

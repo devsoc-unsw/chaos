@@ -2,7 +2,7 @@ import { Tab } from "@headlessui/react";
 import { Fragment } from "react";
 import tw, { styled } from "twin.macro";
 
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 
 const TabList = styled(Tab.List, {
   ...tw`flex gap-1`,
@@ -33,13 +33,13 @@ const TabButton = styled("button", {
 });
 
 type Props = ComponentProps<typeof TabList> & {
-  tabs: { id: number; name: string }[];
+  tabs: { id: number; contents: ReactNode }[];
 };
 const Tabs = ({ tabs, vertical, ...props }: Props) => (
   <TabList as="div" vertical={vertical} {...props}>
-    {tabs.map(({ id, name }) => (
+    {tabs.map(({ id, contents }) => (
       <Tab as={Fragment} key={id}>
-        {({ selected }) => <TabButton active={selected}>{name}</TabButton>}
+        {({ selected }) => <TabButton active={selected}>{contents}</TabButton>}
       </Tab>
     ))}
   </TabList>

@@ -1,5 +1,10 @@
 import { Tab } from "@headlessui/react";
-import { EyeIcon, PaperAirplaneIcon } from "@heroicons/react/24/solid";
+import {
+  CheckIcon,
+  EyeIcon,
+  PaperAirplaneIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/solid";
 import { Container } from "@mui/material";
 import {
   Fragment,
@@ -10,7 +15,7 @@ import {
   useState,
 } from "react";
 import { useParams } from "react-router-dom";
-import "twin.macro";
+import tw, { styled } from "twin.macro";
 
 import { LoadingIndicator, ReviewerStepper } from "components";
 import Button from "components/Button";
@@ -24,8 +29,19 @@ import { useRoles } from "..";
 
 import emailTemplates from "./email_templates";
 
-import type { ChangeEvent } from "react";
-import type { Campaign, Organisation, RoleApplications } from "types/api";
+import type { ChangeEvent, ReactNode } from "react";
+import type {
+  ApplicationStatus,
+  Campaign,
+  Organisation,
+  RoleApplications,
+} from "types/api";
+
+const Icon = styled.div(tw`inline w-4 h-4`);
+const tabIcons: { [status in ApplicationStatus]?: ReactNode } = {
+  Success: <Icon as={CheckIcon} tw="text-green-600" />,
+  Rejected: <Icon as={XMarkIcon} tw="text-red-600" />,
+};
 
 const FinaliseCandidates = () => {
   const campaignId = Number(useParams().campaignId);
@@ -95,6 +111,11 @@ const FinaliseCandidates = () => {
       applications.map((a) => ({
         id: a.id,
         name: a.user_display_name,
+        contents: (
+          <>
+            {a.user_display_name} {tabIcons[a.private_status]}
+          </>
+        ),
         status: a.private_status,
       })),
     [data]
@@ -130,7 +151,7 @@ const FinaliseCandidates = () => {
       <Tab.Group selectedIndex={selectedTab} onChange={setSelectedTab} vertical>
         <div tw="flex overflow-hidden">
           <Tabs
-            tw="p-1 min-w-28 max-w-48 overflow-y-auto"
+            tw="p-1 min-w-32 max-w-48 overflow-y-auto"
             tabs={tabs}
             vertical
           />
@@ -174,14 +195,14 @@ const FinaliseCandidates = () => {
                     /* TODO: send the email to the backend */
                   }}
                 >
-                  Send <PaperAirplaneIcon tw="w-4 h-4" />
+                  Send <Icon as={PaperAirplaneIcon} />
                 </Button>
                 <Button
                   onClick={() => {
                     /* TODO: send the email to the backend */
                   }}
                 >
-                  Send All <PaperAirplaneIcon tw="w-4 h-4" />
+                  Send All <Icon as={PaperAirplaneIcon} />
                 </Button>
               </div>
             </div>
