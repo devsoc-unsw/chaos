@@ -128,9 +128,9 @@ const FinaliseCandidates = () => {
       <ReviewerStepper activeStep={2} />
 
       <Tab.Group selectedIndex={selectedTab} onChange={setSelectedTab} vertical>
-        <div tw="flex gap-2 overflow-hidden">
-          <Tabs tw="overflow-y-auto" tabs={tabs} vertical />
-          <Tab.Panels tw="flex-1">
+        <div tw="flex overflow-hidden">
+          <Tabs tw="p-1 overflow-y-auto" tabs={tabs} vertical />
+          <Tab.Panels tw="flex-1 p-1">
             {tabs.map(({ id, name }) => (
               <Tab.Panel key={id} as={Fragment}>
                 {preview ? (
