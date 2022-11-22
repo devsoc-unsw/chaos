@@ -34,6 +34,7 @@ const getController = (
 
 type FetchReturn<T> = {
   data?: T;
+  status?: number;
   error: boolean;
   errorMsg?: string;
   aborted: boolean;
@@ -52,6 +53,7 @@ type Options<T> = Parameters<typeof fetch>[1] & {
 const useFetch = <T = void>(url: string, options?: Options<T>) => {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState(0);
   const [error, setError] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [_, setRetry] = useState({});
@@ -78,6 +80,7 @@ const useFetch = <T = void>(url: string, options?: Options<T>) => {
       );
 
       let data;
+      let status;
       let error = false;
       let errorMsg: string | undefined;
 
@@ -107,6 +110,8 @@ const useFetch = <T = void>(url: string, options?: Options<T>) => {
           body: JSON.stringify(body),
           signal: controller?.signal,
         });
+        status = resp.status;
+        setStatus(status);
         if (!resp.ok) {
           throw new Error(await resp.text());
         }
@@ -152,7 +157,13 @@ const useFetch = <T = void>(url: string, options?: Options<T>) => {
         setLoading(false);
       }
 
-      return { data, error, errorMsg, aborted: false } as FetchReturn<T>;
+      return {
+        data,
+        status,
+        error,
+        errorMsg,
+        aborted: false,
+      } as FetchReturn<T>;
     },
     []
   );
@@ -165,15 +176,17 @@ const useFetch = <T = void>(url: string, options?: Options<T>) => {
     void doFetch("", options, options?.body);
   }, [url, options?.body, ...(options?.deps ?? [])]);
 
+  const outerOptions = options;
   const makeFetch = useCallback(
-    (method: string) => (url: string, body?: Json, options?: Options<T>) =>
-      doFetch(url, { ...options, method } as Options<T>, body),
+    (method: string) => (url: string, options?: Options<T>) =>
+      doFetch(url, { ...outerOptions, ...options, method } as Options<T>),
     [url, options?.body]
   );
 
   return {
     data,
     loading,
+    status,
     error,
     errorMsg,
     refetch,
