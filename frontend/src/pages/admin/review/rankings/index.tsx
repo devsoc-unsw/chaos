@@ -65,16 +65,13 @@ const Rankings = () => {
     const updateRankings = async () => {
       const success = await Promise.all(
         rankings.map(async (ranking, index) => {
-          const { error, errorMsg, aborted } = await put(
+          const { error, aborted } = await put(
             `/${ranking.id}/private_status`,
-            index < passIndex ? "Success" : "Rejected"
+            {
+              body: index < passIndex ? "Success" : "Rejected",
+              errorSummary: `Failed to update status for ${ranking.name}`,
+            }
           );
-          if (error) {
-            pushMessage({
-              type: "error",
-              message: `Failed to update status for ${ranking.name}: ${errorMsg}`,
-            });
-          }
           return !error && !aborted;
         })
       );

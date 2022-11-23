@@ -171,8 +171,12 @@ const useFetch = <T = void>(url: string, options?: Options<T>) => {
 
   const outerOptions = options;
   const makeFetch = useCallback(
-    (method: string) => (url: string, options?: Options<T>) =>
-      doFetch(url, { ...outerOptions, ...options, method } as Options<T>),
+    (method: string) =>
+      (
+        url: string,
+        options?: Omit<Options<T>, "jsonResp" | "abortBehaviour" | "deps">
+      ) =>
+        doFetch(url, { ...outerOptions, ...options, method } as Options<T>),
     [url, options?.body]
   );
 
