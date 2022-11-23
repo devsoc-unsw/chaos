@@ -7,14 +7,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/solid";
 import { Container } from "@mui/material";
-import {
-  Fragment,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { Fragment, useCallback, useContext, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import tw, { styled } from "twin.macro";
 
@@ -22,7 +15,6 @@ import { LoadingIndicator, ReviewerStepper } from "components";
 import Button from "components/Button";
 import Tabs from "components/Tabs";
 import Textarea from "components/Textarea";
-import { MessagePopupContext } from "contexts/MessagePopupContext";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 import useFetch from "hooks/useFetch";
 
@@ -152,20 +144,20 @@ const FinaliseCandidates = () => {
             {tabs.map(({ id, name }) => (
               <Tab.Panel key={id} as={Fragment}>
                 {preview ? (
-                  <Textarea
+                  <Textarea.Wrapper
                     as="div"
-                    tw="bg-white border shadow outline-none overflow-hidden whitespace-pre-wrap"
+                    tw="shadow whitespace-pre-wrap"
                     size="lg"
                   >
-                    <header tw="px-3 py-2 flex items-center bg-gray-100 shadow-sm">
+                    <Textarea.Header>
                       <EyeIcon tw="w-4 h-4" /> Preview
-                    </header>
+                    </Textarea.Header>
                     <div tw="px-3 py-2">{renderEmail(id, name)}</div>
-                  </Textarea>
+                  </Textarea.Wrapper>
                 ) : (
                   <Textarea
-                    tw="shadow"
                     size="lg"
+                    tw="shadow"
                     value={emails[id]}
                     onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
                       setEmails({ ...emails, [id]: e.target.value })

@@ -30,7 +30,9 @@ module.exports = {
   },
   plugins: [
     require("tailwindcss-gradient"),
-    require("@tailwindcss/forms"),
+    require("@tailwindcss/forms")({
+      strategy: "class",
+    }),
     require("@tailwindcss/aspect-ratio"),
   ],
 };
