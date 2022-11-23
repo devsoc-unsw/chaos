@@ -8,12 +8,12 @@ const Button = styled.button({
 
   variants: {
     color: {
-      primary: tw`bg-brand-500 text-white ring-brand-500/40 hover:bg-brand-600`,
-      danger: tw`bg-red-600 text-white ring-red-600/40 hover:bg-red-700`,
+      primary: tw`bg-brand-500 text-white ring-brand-500/40 hover:bg-brand-600 active:bg-brand-700`,
+      danger: tw`bg-red-600 text-white ring-red-600/40 hover:bg-red-700 active:bg-red-800`,
       white: tw`
-        bg-white border border-brand-300 text-gray-900
-        ring-brand-300/40
+        bg-white border border-brand-300 text-gray-900 ring-brand-300/40
         hover:(bg-brand-50 text-brand-950 border-brand-400)
+        active:bg-brand-75
       `,
     },
   },
