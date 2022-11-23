@@ -146,8 +146,8 @@ const FinaliseCandidates = () => {
                 {preview ? (
                   <Textarea.Wrapper
                     as="div"
-                    tw="shadow whitespace-pre-wrap"
                     size="lg"
+                    tw="shadow overflow-y-auto whitespace-pre-wrap"
                   >
                     <Textarea.Header>
                       <EyeIcon tw="w-4 h-4" /> Preview
@@ -157,7 +157,7 @@ const FinaliseCandidates = () => {
                 ) : (
                   <Textarea
                     size="lg"
-                    tw="shadow"
+                    tw="shadow overflow-y-auto"
                     value={emails[id]}
                     onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
                       setEmails({ ...emails, [id]: e.target.value })
