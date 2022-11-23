@@ -1,10 +1,10 @@
 import { Dialog } from "@headlessui/react";
-import { ComponentProps, Fragment } from "react";
+import { Fragment } from "react";
 import tw from "twin.macro";
 
 import Transition from "components/Transition";
 
-import type { PropsWithChildren } from "react";
+import type { ComponentProps, PropsWithChildren } from "react";
 
 const Body = tw.div`mt-2 flex flex-col gap-2`;
 
