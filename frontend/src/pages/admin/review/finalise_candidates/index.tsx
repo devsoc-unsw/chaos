@@ -112,6 +112,8 @@ const FinaliseCandidates = () => {
     (id: number, name: string) => {
       const emailParams = { name, ...params };
       return emails[id].replaceAll(
+        // this should be fine because we know all the param names ahead of time and none of them
+        // contain characters that would fuck up the regex
         new RegExp(
           Object.keys(emailParams)
             .map((p) => `{${p}}`)
