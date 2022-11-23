@@ -125,6 +125,19 @@ const FinaliseCandidates = () => {
     [emails, params]
   );
 
+  const useForAll = useCallback(() => {
+    const tab = tabs[selectedTab];
+    const newEmails = Object.fromEntries(
+      tabs
+        .filter(({ status }) => status === tab.status)
+        .map(({ id }) => [id, emails[tab.id]])
+    );
+    setEmails({
+      ...emails,
+      ...newEmails,
+    });
+  }, [selectedTab, tabs, emails]);
+
   if (loading || orgLoading) {
     return <LoadingIndicator />;
   }
@@ -168,7 +181,7 @@ const FinaliseCandidates = () => {
             ))}
             <div tw="ml-auto mt-4 flex">
               <div>
-                <Button color="white">
+                <Button color="white" onClick={useForAll}>
                   Use for all {tabs[selectedTab].status.toLowerCase()}
                 </Button>
               </div>
