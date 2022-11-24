@@ -42,13 +42,13 @@ const Signup = () => {
 
       <Card
         as="form"
-        tw="gap-2 px-8 py-6"
+        tw="gap-4 px-8 py-6"
         onSubmit={(e) => {
           e.preventDefault();
           void signup();
         }}
       >
-        <div tw="flex flex-col gap-2 self-center">
+        <div tw="flex flex-col gap-2">
           <Input.Label>
             <Input.LabelText required>Full Name</Input.LabelText>
             <Input
@@ -101,7 +101,7 @@ const Signup = () => {
           </Input.Label>
         </div>
 
-        <Button tw="mt-2 justify-center font-medium" type="submit">
+        <Button tw="justify-center font-medium" type="submit">
           Sign Up
         </Button>
       </Card>
