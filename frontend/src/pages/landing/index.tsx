@@ -44,6 +44,7 @@ const Landing = () => {
         <main tw="font-light">
           <Transition
             appear
+            show
             enter={tw`transition duration-[600ms]`}
             enterFrom={tw`-translate-x-6 opacity-0`}
           >
@@ -59,6 +60,7 @@ const Landing = () => {
           <Transition
             as={Fragment}
             appear
+            show
             enter={tw`transition duration-[600ms] delay-[250ms]`}
             enterFrom={tw`translate-y-4 opacity-0`}
             enterTo={tw`text-2xl`}
@@ -67,6 +69,7 @@ const Landing = () => {
           </Transition>
           <Transition
             appear
+            show
             enter={tw`transition delay-500 duration-[600ms]`}
             enterFrom={tw`translate-y-4 opacity-0`}
           >

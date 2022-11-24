@@ -54,6 +54,7 @@ const CampaignGrid = ({
       {campaigns.map((campaign, i) => (
         <Transition
           appear
+          show
           enter={{
             ...tw`transition duration-[750ms]`,
             transitionDelay: `${i * 150}ms`,
