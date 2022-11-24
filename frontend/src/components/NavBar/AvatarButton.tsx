@@ -6,7 +6,7 @@ import tw, { styled } from "twin.macro";
 
 import Transition from "components/Transition";
 
-const Button = styled(Popover.Button, {
+const ToggleButton = styled(Popover.Button, {
   ...tw`
     w-8 h-8 text-xs flex items-center justify-center
     bg-slate-500/10 text-violet-700 font-semibold
@@ -14,6 +14,13 @@ const Button = styled(Popover.Button, {
     hover:bg-slate-500/20 focus:(outline-none ring ring-indigo-600/50)
   `,
 });
+
+const ItemButton = tw.button`
+  px-2 py-1 flex items-center justify-end gap-1
+  rounded-md
+  hover:(bg-gray-50 text-indigo-700)
+  focus-within:(outline-none ring ring-indigo-600/50)
+`;
 
 const AvatarButton = () => {
   const name = localStorage.getItem("name") ?? "";
@@ -33,7 +40,7 @@ const AvatarButton = () => {
   return (
     <Popover tw="relative">
       <>
-        <Button>{initials}</Button>
+        <ToggleButton>{initials}</ToggleButton>
         <Transition
           as={Fragment}
           enter={tw`transition ease-out duration-200`}
@@ -46,13 +53,9 @@ const AvatarButton = () => {
               Logged in as <span tw="text-indigo-600">{name}</span>
             </div>
             <div tw="px-2 py-2 flex flex-col gap-1 text-gray-600">
-              <button
-                tw="px-2 py-1 flex items-center justify-end gap-1 rounded-md hover:(bg-gray-50 text-indigo-700)"
-                type="button"
-                onClick={logout}
-              >
+              <ItemButton onClick={logout}>
                 Logout <ArrowRightOnRectangleIcon tw="inline w-4 h-4" />
-              </button>
+              </ItemButton>
             </div>
           </Popover.Panel>
         </Transition>
