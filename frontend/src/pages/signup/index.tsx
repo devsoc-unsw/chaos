@@ -36,7 +36,7 @@ const Signup = () => {
         <img tw="h-12 mx-auto filter drop-shadow" src={chaosImg} alt="Chaos" />
         <div tw="my-4">
           <h1 tw="text-4xl">Create an account</h1>
-          <p tw="text-gray-600 mb-2">To start using chaos</p>
+          <p tw="text-gray-600">To start using chaos</p>
         </div>
       </header>
 
