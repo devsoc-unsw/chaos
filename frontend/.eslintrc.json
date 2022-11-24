@@ -107,7 +107,14 @@
     "react/require-default-props": "off",
     "@typescript-eslint/consistent-type-imports": "error",
     "no-void": "off",
-    "jsx-a11y/label-has-associated-control": ["error", { "assert": "either" }]
+    "jsx-a11y/label-has-associated-control": [
+      "error",
+      {
+        "assert": "either",
+        "labelComponents": ["Input.Label"],
+        "controlComponents": ["Input", "Textarea"]
+      }
+    ]
   },
   "settings": {
     "import/resolver": {
