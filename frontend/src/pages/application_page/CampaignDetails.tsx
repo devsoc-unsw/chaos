@@ -5,7 +5,7 @@ import "twin.macro";
 import Card from "components/Card";
 import { bytesToImage } from "utils";
 
-import type { CampaignWithRoles, Organisation } from "types/api";
+import type { CampaignWithRoles, Organisation, UserResponse } from "types/api";
 
 const dateToString = (date: string) =>
   moment(new Date(date)).format("D MMM YYYY");
@@ -16,12 +16,7 @@ interface Props {
   organisation: Organisation;
   campaign: CampaignWithRoles;
   description: string;
-  userInfo: {
-    display_name: string;
-    zid: string;
-    email: string;
-    degree_name: string;
-  };
+  userInfo: UserResponse;
 }
 const CampaignDetails = ({
   campaignName,
@@ -54,7 +49,7 @@ const CampaignDetails = ({
         <h3 tw="text-xl leading-loose">You&apos;re applying as:</h3>
         <p tw="flex gap-1.5">
           <span>{userInfo.display_name}</span>
-          <span tw="italic font-light">({userInfo.zid})</span>
+          <span tw="italic font-extralight">({userInfo.zid})</span>
           <span>·</span>
           <span>{userInfo.degree_name}</span>
         </p>

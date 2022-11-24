@@ -161,6 +161,7 @@ pub struct ApplicationResponse {
     pub user_degree_starting_year: i32,
     pub role_id: i32,
     pub status: ApplicationStatus,
+    pub private_status: ApplicationStatus,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -179,6 +180,7 @@ impl ApplicationResponse {
             user_zid: user.zid,
             role_id: app.role_id,
             status: app.status,
+            private_status: app.private_status,
             created_at: app.created_at,
             updated_at: app.updated_at,
         })

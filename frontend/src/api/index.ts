@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable camelcase */
 import { getStore } from "../utils";
 
@@ -19,6 +20,7 @@ import type {
   QuestionInput,
   QuestionResponse,
   Role,
+  RoleApplications,
   RoleInput,
   UserResponse,
 } from "../types/api";
@@ -118,7 +120,7 @@ export const newApplication = (roleId: number) =>
   authenticatedRequest<Application>({
     method: "POST",
     path: "/application/",
-    body: { role_id: roleId, status: "Pending" },
+    body: { role_id: roleId },
   });
 
 export const doDeleteOrg = (orgId: number) =>
@@ -137,7 +139,7 @@ export const getCampaignRoles = (campaignId: number) =>
   });
 
 export const getRoleApplications = (roleId: number) =>
-  authenticatedRequest<{ applications: ApplicationResponse[] }>({
+  authenticatedRequest<RoleApplications>({
     path: `/role/${roleId}/applications`,
   });
 

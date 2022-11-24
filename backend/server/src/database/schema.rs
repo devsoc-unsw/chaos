@@ -45,6 +45,7 @@ table! {
         user_id -> Int4,
         role_id -> Int4,
         status -> ApplicationStatusMapping,
+        private_status -> ApplicationStatusMapping,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }

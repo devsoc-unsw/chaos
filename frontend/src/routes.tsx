@@ -6,7 +6,9 @@ const ApplicationPage = lazy(() => import("./pages/application_page"));
 const AuthSuccess = lazy(() => import("./pages/auth_success"));
 const CampaignCreate = lazy(() => import("./pages/create_campaign"));
 const DashboardPage = lazy(() => import("./pages/dashboard"));
-const FinaliseCandidates = lazy(() => import("./pages/finalise_candidates"));
+const FinaliseCandidates = lazy(
+  () => import("./pages/admin/review/finalise_candidates")
+);
 const LandingPage = lazy(() => import("./pages/landing"));
 const Marking = lazy(() => import("./pages/admin/review/marking"));
 const Rankings = lazy(() => import("./pages/admin/review/rankings"));
@@ -21,12 +23,13 @@ const routes = [
   <Route key="review" path="/admin/review/:campaignId" element={<Review />}>
     <Route key="marking" path=":roleId/marking" element={<Marking />} />,
     <Route key="rankings" path=":roleId/rankings" element={<Rankings />} />,
+    <Route
+      key="finalise"
+      path=":roleId/finalise"
+      element={<FinaliseCandidates />}
+    />
+    ,
   </Route>,
-  <Route
-    key="finalise-candidates"
-    path="/finalise_candidates"
-    element={<FinaliseCandidates />}
-  />,
   <Route key="Admin" path="/Admin" element={<Admin />} />,
   <Route
     key="create-campaign"

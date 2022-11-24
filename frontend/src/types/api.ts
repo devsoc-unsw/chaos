@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 type JsonPrimitive = string | number | boolean | null;
 type JsonMap = {
   // eslint-disable-next-line no-use-before-define
@@ -35,6 +36,10 @@ export type RoleInput = {
   min_available: number;
   max_available: number;
   questions_for_role: number[];
+};
+
+export type RoleApplications = {
+  applications: ApplicationResponse[];
 };
 
 export type Question = {
@@ -93,6 +98,7 @@ export type ApplicationResponse = {
   user_degree_starting_year: number;
   role_id: number;
   status: ApplicationStatus;
+  private_status: ApplicationStatus;
   created_at: string;
   updated_at: string;
 };

@@ -802,6 +802,7 @@ pub struct Application {
     pub user_id: i32,
     pub role_id: i32,
     pub status: ApplicationStatus,
+    pub private_status: ApplicationStatus,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -812,6 +813,7 @@ pub struct NewApplication {
     pub user_id: i32,
     pub role_id: i32,
     pub status: ApplicationStatus,
+    pub private_status: ApplicationStatus,
 }
 
 impl Application {
