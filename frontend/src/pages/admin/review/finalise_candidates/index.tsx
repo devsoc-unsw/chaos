@@ -15,6 +15,7 @@ import { LoadingIndicator, ReviewerStepper } from "components";
 import Button from "components/Button";
 import Tabs from "components/Tabs";
 import Textarea from "components/Textarea";
+import { MessagePopupContext } from "contexts/MessagePopupContext";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 import useFetch from "hooks/useFetch";
 
@@ -29,6 +30,7 @@ import type {
   Organisation,
   RoleApplications,
 } from "types/api";
+import type { DropFirst } from "types/util";
 
 const Icon = styled.span(tw`inline w-4 h-4`);
 const tabIcons: { [status in ApplicationStatus]?: ReactNode } = {
@@ -42,6 +44,7 @@ const FinaliseCandidates = () => {
   const roleId = Number(useParams().roleId);
   const roles = useRoles();
   const [organisation, setOrganisation] = useState("ORGANISATION");
+  const pushMessage = useContext(MessagePopupContext);
 
   const [emails, setEmails] = useState<{ [id: number]: string }>({});
 
@@ -81,10 +84,9 @@ const FinaliseCandidates = () => {
     }
   );
 
-  const applications = data?.applications ?? [];
   const tabs = useMemo(
     () =>
-      applications.map((a) => ({
+      data?.applications.map((a) => ({
         id: a.id,
         name: a.user_display_name,
         contents: (
@@ -94,9 +96,10 @@ const FinaliseCandidates = () => {
           </div>
         ),
         status: a.private_status,
-      })),
+      })) ?? [],
     [data]
   );
+  const applications = Object.fromEntries(tabs.map(({ id, ...t }) => [id, t]));
   const [selectedTab, setSelectedTab] = useState(0);
   const [preview, setPreview] = useState(false);
 
@@ -139,6 +142,46 @@ const FinaliseCandidates = () => {
       ...newEmails,
     });
   }, [selectedTab, tabs, emails]);
+
+  const putStatus = (() => {
+    const { put: putApplication } = useFetch("/application", {
+      abortBehaviour: "sameUrl",
+      jsonResp: false,
+    });
+
+    return useCallback(
+      (
+        applicationId: number,
+        ...args: DropFirst<Parameters<typeof putApplication>>
+      ) => putApplication(`/${applicationId}/status`, ...args),
+      [putApplication]
+    );
+  })();
+
+  const sendEmail = useCallback(
+    // TODO: actually send the email, this just updates the public status
+    async (tab: number) => {
+      const { id, status, name } = tabs[tab];
+      const { error, aborted } = await putStatus(id, {
+        body: status,
+        errorSummary: `Failed to release result for ${name}`,
+      });
+      return !error && !aborted;
+    },
+    [putStatus]
+  );
+
+  const sendAll = useCallback(async () => {
+    console.log(1);
+    const success = await Promise.all(tabs.map((_, i) => sendEmail(i)));
+
+    if (success.every(Boolean)) {
+      pushMessage({
+        type: "success",
+        message: "Updated all application statuses for role",
+      });
+    }
+  }, [sendEmail, pushMessage]);
 
   if (loading || orgLoading) {
     return <LoadingIndicator />;
@@ -199,18 +242,10 @@ const FinaliseCandidates = () => {
                     </>
                   )}
                 </Button>
-                <Button
-                  onClick={() => {
-                    /* TODO: send the email to the backend */
-                  }}
-                >
+                <Button onClick={() => void sendEmail(selectedTab)}>
                   Send <Icon as={PaperAirplaneIcon} />
                 </Button>
-                <Button
-                  onClick={() => {
-                    /* TODO: send the email to the backend */
-                  }}
-                >
+                <Button onClick={() => void sendAll()}>
                   Send All <Icon as={PaperAirplaneIcon} />
                 </Button>
               </div>

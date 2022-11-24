@@ -76,7 +76,7 @@ const Rankings = () => {
         })
       );
 
-      if (!success.some(Boolean)) {
+      if (success.every(Boolean)) {
         pushMessage({
           type: "success",
           message: "Updated internal application statuses for role",
