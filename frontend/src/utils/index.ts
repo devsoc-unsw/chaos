@@ -8,8 +8,7 @@ export function isAdmin(): boolean {
   return true;
 }
 
-export const isLoggedIn = (): boolean =>
-  Object.prototype.hasOwnProperty.call(localStorage, "AUTH_TOKEN");
+export const isLoggedIn = (): boolean => Boolean(localStorage.AUTH_TOKEN);
 
 export const dateToStringForBackend = (dateObject: Date): string =>
   moment.utc(dateObject).format("YYYY-MM-DD HH:mm:ss");

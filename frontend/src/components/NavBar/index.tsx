@@ -1,11 +1,12 @@
-import { ArrowRightOnRectangleIcon } from "@heroicons/react/24/solid";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import tw, { styled } from "twin.macro";
 
 import chaosImg from "assets/chaos.png";
 import Container from "components/Container";
 
 import { isLoggedIn } from "../../utils";
+
+import AvatarButton from "./AvatarButton";
 
 const NavButton = styled(NavLink, {
   ...tw`relative rounded px-2 py-1 text-slate-800`,
@@ -25,14 +26,6 @@ const NavButton = styled(NavLink, {
 
 const NavBar = ({ campaign }: { campaign: string }) => {
   const loggedIn = isLoggedIn();
-  const navigate = useNavigate();
-
-  const logout = () => {
-    ["name", "signup_token", "AUTH_TOKEN"].forEach((key) => {
-      localStorage.removeItem(key);
-      navigate("/");
-    });
-  };
 
   return (
     <header tw="fixed inset-x-0 z-10 bg-white shadow-md bg-gradient-to-r from-[#9dbbfb55] to-[#a78bfa55]">
@@ -45,7 +38,7 @@ const NavBar = ({ campaign }: { campaign: string }) => {
         </Link>
         {campaign || "Chaos"}
         <div tw="ml-auto flex items-center text-slate-600">
-          <div tw="flex gap-2 pr-4 text-slate-900">
+          <div tw="flex gap-1 pr-4 text-slate-900">
             {loggedIn && (
               <>
                 <NavButton to="/dashboard">Dashboard</NavButton>
@@ -54,38 +47,19 @@ const NavBar = ({ campaign }: { campaign: string }) => {
             )}
             <NavButton to="/about">About</NavButton>
           </div>
-          {loggedIn ? (
-            <>
-              <span tw="border-slate-500 border-l pl-4">
-                Hi,{" "}
-                <span tw="font-normal text-indigo-600">
-                  {localStorage.getItem("name")}
-                </span>
-                !
-              </span>
-              {/* <img
-                tw="w-8 ml-2 h-auto rounded-full bg-black/10"
-                src="https://static-cdn.jtvnw.net/jtv_user_pictures/103727a4-bb19-497d-a4b5-02ccd17efa64-profile_image-300x300.png"
-                alt="Michael"
-              /> */}
-              <button
-                tw="ml-3 rounded-full p-1 text-slate-500 transition hover:text-indigo-600 focus-visible:(outline-none ring ring-blue-400)"
-                onClick={logout}
-                type="button"
-              >
-                <ArrowRightOnRectangleIcon tw="h-6 w-6" />
-              </button>
-            </>
-          ) : (
-            <span tw="border-slate-500 border-l pl-4">
+          <div tw="flex items-center gap-4">
+            <span tw="border-slate-500 border-l">&#x200b;</span>
+            {loggedIn ? (
+              <AvatarButton />
+            ) : (
               <a
                 tw="rounded bg-indigo-400/30 px-3 py-1.5 text-black shadow transition-colors hover:bg-indigo-400/[0.42]"
                 href={import.meta.env.VITE_OAUTH_CALLBACK_URL as string}
               >
                 Get Started
               </a>
-            </span>
-          )}
+            )}
+          </div>
         </div>
       </Container>
     </header>
