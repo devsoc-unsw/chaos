@@ -1,8 +1,12 @@
-import { Link, NavLink } from "react-router-dom";
+import { InformationCircleIcon } from "@heroicons/react/24/outline";
+import { useState } from "react";
+import { NavLink, Link as RouterLink } from "react-router-dom";
 import tw, { styled } from "twin.macro";
 
 import chaosImg from "assets/chaos.png";
 import Container from "components/Container";
+import Link from "components/Link";
+import Modal from "components/Modal";
 
 import { isLoggedIn } from "../../utils";
 
@@ -26,26 +30,34 @@ const NavButton = styled(NavLink, {
 
 const NavBar = ({ campaign }: { campaign: string }) => {
   const loggedIn = isLoggedIn();
+  const [aboutOpen, setAboutOpen] = useState(false);
 
   return (
     <header tw="fixed inset-x-0 z-10 bg-white shadow-md bg-gradient-to-r from-[#9dbbfb55] to-[#a78bfa55]">
       <Container tw="flex-row items-center gap-4 text-[hsl(255.1,30%,22%)]">
-        <Link
+        <RouterLink
           to="/"
           tw="-my-2 rounded py-2 transition-shadow focus-visible:(outline-none ring ring-blue-400)"
         >
           <img tw="h-7 drop-shadow filter" src={chaosImg} alt="Chaos" />
-        </Link>
+        </RouterLink>
         {campaign || "Chaos"}
         <div tw="ml-auto flex items-center text-slate-600">
-          <div tw="flex gap-1 pr-4 text-slate-900">
+          <div tw="flex items-center gap-1 pr-2">
             {loggedIn && (
               <>
                 <NavButton to="/dashboard">Dashboard</NavButton>
                 <NavButton to="/admin">Admin</NavButton>
               </>
             )}
-            <NavButton to="/about">About</NavButton>
+            <button
+              tw="p-1 text-slate-800 rounded-full transition hover:(bg-slate-500/10 text-slate-900)"
+              type="button"
+              onClick={() => setAboutOpen(true)}
+            >
+              <InformationCircleIcon tw="h-6 w-6" />
+              <span tw="sr-only">About Chaos</span>
+            </button>
           </div>
           <div tw="flex items-center gap-4">
             <span tw="border-slate-500 border-l">&#x200b;</span>
@@ -62,6 +74,31 @@ const NavBar = ({ campaign }: { campaign: string }) => {
           </div>
         </div>
       </Container>
+      <Modal
+        open={aboutOpen}
+        closeModal={() => setAboutOpen(false)}
+        closeButton
+        title="About Chaos"
+        description="Simplifying recruitment"
+      >
+        <p>
+          Chaos is a platform for simplifying applying and recruiting for
+          student society subcommittees at UNSW.
+        </p>
+
+        <p>
+          It was created by CSESoc Projects – a place for student-led projects
+          where you can learn something new, and make some friends along the
+          way. Chaos is free and{" "}
+          <Link
+            href="https://github.com/csesoc/chaos"
+            target="_blank"
+            rel="noreferrer"
+          >
+            open-source.
+          </Link>
+        </p>
+      </Modal>
     </header>
   );
 };
