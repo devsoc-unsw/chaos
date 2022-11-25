@@ -13,7 +13,7 @@
     "@mui/lab": "5.0.0-alpha.109",
     "@mui/material": "5.10.15",
     "@mui/system": "5.10.15",
-    "@mui/x-date-pickers": "5.0.8",
+    "@mui/x-date-pickers": "5.0.9",
     "@stitches/react": "1.2.8",
     "@testing-library/jest-dom": "5.16.5",
     "@testing-library/react": "13.4.0",
