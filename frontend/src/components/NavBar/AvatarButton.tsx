@@ -26,7 +26,9 @@ const AvatarButton = () => {
   const name = localStorage.getItem("name") ?? "";
   const initials = name
     .split(" ")
-    .map((n) => n[0])
+    // this non-exhaustively matches other latin alphabets, not just enligh
+    // https://stackoverflow.com/a/32567789
+    .map((n) => [...n].find((c) => c.toLowerCase() !== c.toUpperCase()) ?? n[0])
     .join("");
 
   const navigate = useNavigate();
