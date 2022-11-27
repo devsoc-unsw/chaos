@@ -1166,10 +1166,10 @@
   dependencies:
     client-only "^0.0.1"
 
-"@hello-pangea/dnd@16.1.0":
-  version "16.1.0"
-  resolved "https://registry.yarnpkg.com/@hello-pangea/dnd/-/dnd-16.1.0.tgz#642e5a280611ce5b787561ead508c371cb49ae4d"
-  integrity sha512-k91JYEkPBfT7uqiksvTP0UwAo+Sssm7EkmQdNhiBBAJKndSlPFYuyN3UuJ28UQGrSwAZDuHY3eAbb+E/HU7VtQ==
+"@hello-pangea/dnd@16.2.0":
+  version "16.2.0"
+  resolved "https://registry.yarnpkg.com/@hello-pangea/dnd/-/dnd-16.2.0.tgz#58cbadeb56f8c7a381da696bb7aa3bfbb87876ec"
+  integrity sha512-inACvMcvvLr34CG0P6+G/3bprVKhwswxjcsFUSJ+fpOGjhvDj9caiA9X3clby0lgJ6/ILIJjyedHZYECB7GAgA==
   dependencies:
     "@babel/runtime" "^7.19.4"
     css-box-model "^1.2.1"
