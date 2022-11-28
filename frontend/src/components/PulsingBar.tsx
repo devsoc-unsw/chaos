@@ -8,10 +8,19 @@ const Bar = styled(Pulse, {
   ...tw`h-3 rounded-sm`,
 
   variants: {
-    standalone: {
-      true: tw`bg-black/10`,
-      false: tw`bg-black/5 first:bg-black/[0.15]`,
+    color: {
+      black: tw`bg-black`,
+      red: tw`bg-red-600`,
     },
+    standalone: {
+      true: tw`bg-opacity-10!`,
+      false: tw`(bg-opacity-5 first:bg-opacity-[0.15])!`,
+    },
+  },
+
+  defaultVariants: {
+    standalone: false,
+    color: "black",
   },
 });
 
@@ -20,7 +29,7 @@ const PulsingBar = ({
   ...props
 }: ComponentProps<typeof Bar> & { animationDelay?: number }) => (
   <Bar
-    tw="h-3 rounded-sm bg-black/5 first:bg-black/[0.15]"
+    tw="h-3 rounded-sm"
     style={{ animationDelay: `${animationDelay}ms` }}
     {...props}
   />
