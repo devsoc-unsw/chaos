@@ -6,6 +6,7 @@ import { SetNavBarTitleContext } from "../../contexts/SetNavbarTitleContext";
 import { bytesToImage } from "../../utils";
 
 import AdminContent from "./AdminContent";
+import AdminLoading from "./AdminLoading";
 import { OrgContext } from "./OrgContext";
 import { AdminContainer } from "./admin.styled";
 
@@ -29,6 +30,7 @@ const Admin = () => {
 
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // FIXME: CHAOS-56, implement default behaviour for users w/ no org
   const [orgSelected, setOrgSelected] = useState(0);
@@ -84,6 +86,8 @@ const Admin = () => {
           }))
         );
       }
+
+      setLoading(false);
     };
 
     void fetchData();
@@ -108,6 +112,10 @@ const Admin = () => {
       })) ?? []
     );
   }, [orgSelected, orgList]);
+
+  if (loading) {
+    return <AdminLoading />;
+  }
 
   return (
     <OrgContext.Provider value={orgContextValue}>
