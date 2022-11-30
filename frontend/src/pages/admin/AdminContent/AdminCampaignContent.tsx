@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 
 import { deleteCampaign } from "api";
 import { FetchError } from "api/api";
-import { Modal } from "components";
+import { CampaignCard, Modal } from "components";
 import Button from "components/Button";
 import { MessagePopupContext } from "contexts/MessagePopupContext";
 import { dateToDateString } from "utils";
@@ -30,9 +30,15 @@ type Props = {
   campaigns: Campaign[];
   setCampaigns: Dispatch<SetStateAction<Campaign[]>>;
   orgId: number;
+  orgLogo: string;
 };
 
-const AdminCampaignContent = ({ campaigns, setCampaigns, orgId }: Props) => {
+const AdminCampaignContent = ({
+  campaigns,
+  setCampaigns,
+  orgId,
+  orgLogo,
+}: Props) => {
   const navigate = useNavigate();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign>({
@@ -69,6 +75,22 @@ const AdminCampaignContent = ({ campaigns, setCampaigns, orgId }: Props) => {
     setCampaigns(campaigns.filter((c) => c.id !== selectedCampaign.id));
     setShowDeleteDialog(false);
   };
+
+  return (
+    <div tw="flex flex-wrap gap-4">
+      {campaigns.map((c) => (
+        <CampaignCard
+          campaignId={c.id}
+          organisationLogo={orgLogo}
+          title={c.title}
+          appliedFor={[]}
+          positions={[]}
+          startDate={c.startDate}
+          endDate={c.endDate}
+        />
+      ))}
+    </div>
+  );
 
   return (
     <AdminContentList>

@@ -6,7 +6,7 @@ import Card from "components/Card";
 import CampaignStatus from "./CampaignStatus";
 
 import type { VariantProps } from "@stitches/react";
-import type { MouseEventHandler } from "react";
+import type { MouseEventHandler, PropsWithChildren } from "react";
 import type { CampaignWithRoles } from "types/api";
 
 const dateToString = (date: Date) => moment(date).format("D MMM YYYY");
@@ -29,7 +29,8 @@ const Content = ({
   endDate,
   img,
   openModal,
-}: Props) => {
+  children,
+}: PropsWithChildren<Props>) => {
   const date = new Date();
 
   let status: VariantProps<typeof CampaignStatus>["status"];
@@ -59,9 +60,11 @@ const Content = ({
             {dateToString(startDate)} - {dateToString(endDate)}
           </p>
         </div>
-        <CampaignStatus status={status} onClick={openModal}>
-          {status.toUpperCase()}
-        </CampaignStatus>
+        {children || (
+          <CampaignStatus status={status} onClick={openModal}>
+            {status.toUpperCase()}
+          </CampaignStatus>
+        )}
       </header>
       <div tw="flex items-center justify-center overflow-hidden bg-[#edeeef] aspect-w-16 aspect-h-9">
         <img
