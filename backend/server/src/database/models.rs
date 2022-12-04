@@ -252,6 +252,27 @@ impl Organisation {
         .execute(conn)
         .ok()
     }
+
+    pub fn get_logo(conn: &PgConnection, org_id: i32) -> Option<String> {
+        use crate::database::schema::organisations::dsl::*;
+
+        organisations
+            .filter(id.eq(org_id))
+            .select(logo)
+            .first(conn)
+            .unwrap()
+    }
+
+    pub fn set_logo(conn: &PgConnection, org_id: i32, new_logo: &str) -> String {
+        use crate::database::schema::organisations::dsl::*;
+
+        diesel::update(organisations.find(org_id))
+            .set(logo.eq(new_logo))
+            .get_result::<Organisation>(conn)
+            .unwrap()
+            .logo
+            .unwrap()
+    }
 }
 
 impl NewOrganisation {
@@ -430,6 +451,27 @@ impl Campaign {
             .order(id.asc())
             .load(conn)
             .unwrap_or_else(|_| vec![])
+    }
+
+    pub fn get_cover_image(conn: &PgConnection, campaign_id: i32) -> Option<String> {
+        use crate::database::schema::campaigns::dsl::*;
+
+        campaigns
+            .filter(id.eq(campaign_id))
+            .select(cover_image)
+            .first(conn)
+            .unwrap()
+    }
+
+    pub fn set_cover_image(conn: &PgConnection, campaign_id: i32, new_cover_image: &str) -> String {
+        use crate::database::schema::campaigns::dsl::*;
+
+        diesel::update(campaigns.find(campaign_id))
+            .set(cover_image.eq(new_cover_image))
+            .get_result::<Campaign>(conn)
+            .unwrap()
+            .cover_image
+            .unwrap()
     }
 
     pub fn is_running(&self) -> bool {

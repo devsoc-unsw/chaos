@@ -66,6 +66,7 @@ async fn main() {
                 backend::organisation::get_from_ids,
                 backend::organisation::invite_uid,
                 backend::organisation::invite_email,
+                backend::organisation::set_logo,
             ],
         )
         .mount(
@@ -81,6 +82,7 @@ async fn main() {
                 backend::campaigns::new,
                 backend::campaigns::delete_campaign,
                 backend::campaigns::get_all_campaigns,
+                backend::campaigns::set_cover_image,
             ],
         )
         .mount(

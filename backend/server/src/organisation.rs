@@ -9,12 +9,16 @@ use crate::database::{
 use crate::error::JsonErr;
 use chrono::NaiveDateTime;
 use rocket::{
+    data::{Data, ToByteUnit},
     delete, get,
     http::Status,
     post, put,
     serde::{json::Json, Deserialize, Serialize},
 };
 use std::collections::HashMap;
+use std::fs::remove_file;
+use std::path::Path;
+use uuid::Uuid;
 
 #[derive(Serialize)]
 pub enum NewOrgError {
@@ -120,6 +124,42 @@ pub async fn get_admins(
         Some(ids) => Ok(Json(ids)),
         None => Err(JsonErr(OrgError::OrgNotFound, Status::NotFound)),
     }
+}
+
+#[put("/<org_id>/logo", data = "<image>")]
+pub async fn set_logo(
+    org_id: i32,
+    user: User,
+    db: Database,
+    image: Data<'_>,
+) -> Result<Json<String>, JsonErr<OrgError>> {
+    db.run(move |conn| {
+        OrganisationUser::organisation_admin_level(org_id, user.id, &conn)
+            .is_at_least_director()
+            .check()
+            .or_else(|_| Err(JsonErr(OrgError::InsufficientPerms, Status::Forbidden)))
+    })
+    .await?;
+
+    let res = db
+        .run(move |conn| Organisation::get_logo(&conn, org_id))
+        .await;
+
+    if let Some(filename) = res {
+        remove_file(Path::new("images").join(filename)).ok();
+    }
+
+    let mut buffer = Uuid::encode_buffer();
+    let filename = Uuid::new_v4().as_hyphenated().encode_lower(&mut buffer);
+
+    let path = Path::new("images").join(filename);
+
+    image.open(5.mebibytes()).into_file(&path).await.ok();
+
+    Ok(Json(
+        db.run(move |conn| Organisation::set_logo(&conn, org_id, path.to_str().unwrap()))
+            .await,
+    ))
 }
 
 #[put("/<org_id>/admins", data = "<admins>")]
