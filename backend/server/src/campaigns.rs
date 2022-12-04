@@ -294,7 +294,6 @@ pub async fn set_cover_image(
             ))
         })?;
 
-
     Ok(Json(
         db.run(move |conn| Campaign::set_cover_image(&conn, campaign_id, path.to_str().unwrap()))
             .await,

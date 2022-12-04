@@ -10,7 +10,7 @@ use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use diesel_migrations::*;
 use figment::{providers::Serialized, Figment};
-use rocket::{routes, serde::json::Value, fs::FileServer};
+use rocket::{fs::FileServer, routes, serde::json::Value};
 use std::env;
 
 #[rocket::get("/foo")]

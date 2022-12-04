@@ -11,6 +11,8 @@ use diesel::PgConnection;
 use rocket::FromForm;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
+use std::fs::remove_file;
+use std::path::Path;
 
 #[derive(Queryable)]
 pub struct User {
@@ -195,6 +197,10 @@ impl Organisation {
 
     pub fn delete_deep(conn: &PgConnection, org_id: i32) -> Option<()> {
         use crate::database::schema::organisation_users::dsl::*;
+        if let Some(logo) = Organisation::get_logo(conn, org_id) {
+            remove_file(Path::new("images").join(logo)).ok()?;
+        }
+
         let campaigns = Campaign::get_all_from_org_id(conn, org_id);
 
         for campaign in campaigns {
@@ -656,6 +662,10 @@ impl Campaign {
 
     pub fn delete_deep(conn: &PgConnection, campaign_id: i32) -> Option<()> {
         use crate::database::schema::roles::dsl::{campaign_id as dsl_role_campaign_id, roles};
+
+        if let Some(cover_image) = Campaign::get_cover_image(conn, campaign_id) {
+            remove_file(Path::new("images").join(cover_image)).ok()?;
+        }
 
         let role_items: Vec<Role> = roles
             .filter(dsl_role_campaign_id.eq(campaign_id))
