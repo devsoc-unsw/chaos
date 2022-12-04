@@ -10,7 +10,7 @@ use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use diesel_migrations::*;
 use figment::{providers::Serialized, Figment};
-use rocket::{routes, serde::json::Value};
+use rocket::{routes, serde::json::Value, fs::FileServer};
 use std::env;
 
 #[rocket::get("/foo")]
@@ -135,6 +135,7 @@ async fn main() {
             "/admin",
             routes![backend::admin::get, backend::admin::make_superuser],
         )
+        .mount("/images", FileServer::from("images"))
         .launch()
         .await
         .unwrap();
