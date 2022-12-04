@@ -109,12 +109,24 @@ export const getOrganisation = (organisationId: number) =>
     path: `/organisation/${organisationId}`,
   });
 
-export const createOrganisation = (name: string, logo: number[]) =>
+export const createOrganisation = (name: string) =>
   authenticatedRequest<Organisation>({
     method: "POST",
     path: "/organisation/",
-    body: { name, logo },
+    body: { name },
   });
+
+export const setOrgLogo = (orgId: number, logo: File) => {
+  const formData = new FormData();
+  formData.append("image", logo);
+
+  return authenticatedRequest<string>({
+    method: "PUT",
+    path: `/organisation/${orgId}/logo`,
+    body: formData,
+    jsonBody: false,
+  });
+};
 
 export const newApplication = (roleId: number) =>
   authenticatedRequest<Application>({

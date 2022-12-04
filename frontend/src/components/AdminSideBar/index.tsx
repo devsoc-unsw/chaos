@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { createOrganisation } from "../../api";
+import { createOrganisation, setOrgLogo } from "../../api";
 import { base64ToBytes, fileToDataUrl } from "../../utils";
 import CreateOrganisationForm from "../CreateOrganisationForm";
 
@@ -64,16 +64,17 @@ const AdminSidebar = ({
       // FIXME: CHAOS-55, send to the backend
       if (uploadedImage.image && inputText) {
         // FIXME: CHAOS-55, backend request should return new id, this method obv flawed (also floored)
-        const imgUrl = base64ToBytes(
-          (await fileToDataUrl(uploadedImage.image)).split(",")[1]
-        );
-        const { id } = await createOrganisation(inputText, imgUrl);
+        // const imgUrl = base64ToBytes(
+        //   (await fileToDataUrl(uploadedImage.image)).split(",")[1]
+        // );
+        const { id } = await createOrganisation(inputText);
+        const logo = await setOrgLogo(id, uploadedImage.image);
         const newOrgList = [
           ...orgList,
           {
             id,
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            icon: uploadedImage.url!,
+            icon: logo,
             orgName: inputText,
             campaigns: [],
             members: [],
