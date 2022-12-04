@@ -243,18 +243,25 @@ pub async fn roles(
     .await
 }
 
+#[derive(Serialize)]
+pub enum LogoError {
+    Unauthorized,
+    ImageDeletionFailure,
+    ImageStoreFailure,
+}
+
 #[put("/<campaign_id>/cover_image", data = "<image>")]
 pub async fn set_cover_image(
     campaign_id: i32,
     user: User,
     db: Database,
     image: Data<'_>,
-) -> Result<Json<String>, JsonErr<CampaignError>> {
+) -> Result<Json<String>, JsonErr<LogoError>> {
     db.run(move |conn| {
         OrganisationUser::campaign_admin_level(campaign_id, user.id, &conn)
             .is_at_least_director()
             .check()
-            .or_else(|_| Err(JsonErr(CampaignError::Unauthorized, Status::Forbidden)))
+            .or_else(|_| Err(JsonErr(LogoError::Unauthorized, Status::Forbidden)))
     })
     .await?;
 
@@ -263,7 +270,12 @@ pub async fn set_cover_image(
         .await;
 
     if let Some(filename) = res {
-        remove_file(Path::new("images").join(filename)).ok();
+        remove_file(Path::new("images").join(filename)).or_else(|_| {
+            Err(JsonErr(
+                LogoError::ImageDeletionFailure,
+                Status::InternalServerError,
+            ))
+        })?;
     }
 
     let mut buffer = Uuid::encode_buffer();
@@ -271,7 +283,17 @@ pub async fn set_cover_image(
 
     let path = Path::new("images").join(filename);
 
-    image.open(5.mebibytes()).into_file(&path).await.ok();
+    image
+        .open(5.mebibytes())
+        .into_file(&path)
+        .await
+        .or_else(|_| {
+            Err(JsonErr(
+                LogoError::ImageStoreFailure,
+                Status::InternalServerError,
+            ))
+        })?;
+
 
     Ok(Json(
         db.run(move |conn| Campaign::set_cover_image(&conn, campaign_id, path.to_str().unwrap()))
