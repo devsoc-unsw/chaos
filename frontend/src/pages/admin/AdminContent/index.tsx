@@ -25,6 +25,7 @@ import {
 
 import type { Campaign, Member, Organisation } from "../types";
 import type { Dispatch, MouseEvent, SetStateAction } from "react";
+import { fileToUrl } from "utils";
 
 type Props = {
   org: Organisation;
@@ -101,7 +102,7 @@ const AdminContent = ({
     <AdminContentContainer>
       <ContentHeader>
         <OrgInfo>
-          <OrgInfoImage src={icon} />
+          <OrgInfoImage src={fileToUrl(icon)} />
           <OrgInfoName>{orgName}</OrgInfoName>
         </OrgInfo>
         <ToggleButtonContainer>
