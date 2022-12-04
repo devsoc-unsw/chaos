@@ -164,7 +164,7 @@ pub async fn is_admin(org_id: i32, user: User, db: Database) -> Json<bool> {
 pub struct CampaignResponse {
     pub id: i32,
     pub name: String,
-    pub cover_image: Option<Vec<u8>>,
+    pub cover_image: Option<String>,
     pub description: String,
     pub starts_at: NaiveDateTime,
     pub ends_at: NaiveDateTime,

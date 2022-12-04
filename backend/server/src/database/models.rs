@@ -149,7 +149,7 @@ impl NewUser {
 pub struct Organisation {
     pub id: i32,
     pub name: String,
-    pub logo: Option<Vec<u8>>,
+    pub logo: Option<String>,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -158,7 +158,6 @@ pub struct Organisation {
 #[table_name = "organisations"]
 pub struct NewOrganisation {
     pub name: String,
-    pub logo: Option<Vec<u8>>,
 }
 
 impl Organisation {
@@ -363,7 +362,7 @@ pub struct Campaign {
     pub id: i32,
     pub organisation_id: i32,
     pub name: String,
-    pub cover_image: Option<Vec<u8>>,
+    pub cover_image: Option<String>,
     pub description: String,
     pub starts_at: NaiveDateTime,
     pub ends_at: NaiveDateTime,
@@ -375,7 +374,7 @@ pub struct Campaign {
 #[derive(FromForm, Deserialize)]
 pub struct UpdateCampaignInput {
     pub name: String,
-    pub cover_image: Option<Vec<u8>>,
+    pub cover_image: Option<String>,
     pub description: String,
     pub starts_at: String,
     pub ends_at: String,
@@ -386,7 +385,7 @@ pub struct UpdateCampaignInput {
 #[table_name = "campaigns"]
 pub struct UpdateCampaignChangeset {
     pub name: String,
-    pub cover_image: Option<Vec<u8>>,
+    pub cover_image: Option<String>,
     pub description: String,
     pub starts_at: NaiveDateTime,
     pub ends_at: NaiveDateTime,
@@ -398,7 +397,7 @@ pub struct UpdateCampaignChangeset {
 pub struct NewCampaign {
     pub organisation_id: i32,
     pub name: String,
-    pub cover_image: Option<Vec<u8>>,
+    pub cover_image: Option<String>,
     pub description: String,
     pub starts_at: NaiveDateTime,
     pub ends_at: NaiveDateTime,
@@ -409,7 +408,6 @@ pub struct NewCampaign {
 pub struct NewCampaignInput {
     pub organisation_id: i32,
     pub name: String,
-    pub cover_image: Option<Vec<u8>>,
     pub description: String,
     pub starts_at: String,
     pub ends_at: String,
@@ -585,7 +583,7 @@ impl Campaign {
         let new_campaign = NewCampaign {
             organisation_id: new_campaign.organisation_id,
             name: new_campaign.name.clone(),
-            cover_image: new_campaign.cover_image.clone(),
+            cover_image: None,
             description: new_campaign.description.clone(),
             starts_at: NaiveDateTime::parse_from_str(&new_campaign.starts_at, "%Y-%m-%d %H:%M:%S")
                 .ok()?,
@@ -1271,7 +1269,7 @@ pub struct GetQuestionsResponse {
 pub struct CampaignInfo {
     pub id: i32,
     pub name: String,
-    pub cover_image: Option<Vec<u8>>,
+    pub cover_image: Option<String>,
     pub starts_at: NaiveDateTime,
     pub ends_at: NaiveDateTime,
 }
@@ -1324,7 +1322,7 @@ impl OrganisationUserInfo {
 pub struct OrganisationInfo {
     pub id: i32,
     pub name: String,
-    pub logo: Option<Vec<u8>>,
+    pub logo: Option<String>,
     pub members: Vec<OrganisationUserInfo>,
     pub campaigns: Vec<CampaignInfo>,
 }
