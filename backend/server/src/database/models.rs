@@ -198,7 +198,7 @@ impl Organisation {
     pub fn delete_deep(conn: &PgConnection, org_id: i32) -> Option<()> {
         use crate::database::schema::organisation_users::dsl::*;
         if let Some(logo) = Organisation::get_logo(conn, org_id) {
-            remove_file(Path::new("images").join(logo)).ok()?;
+            remove_file(Path::new(&logo)).ok();
         }
 
         let campaigns = Campaign::get_all_from_org_id(conn, org_id);
@@ -664,7 +664,7 @@ impl Campaign {
         use crate::database::schema::roles::dsl::{campaign_id as dsl_role_campaign_id, roles};
 
         if let Some(cover_image) = Campaign::get_cover_image(conn, campaign_id) {
-            remove_file(Path::new("images").join(cover_image)).ok()?;
+            remove_file(Path::new(&cover_image)).ok()?;
         }
 
         let role_items: Vec<Role> = roles
