@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { createOrganisation, setOrgLogo } from "../../api";
-import { base64ToBytes, fileToDataUrl, fileToUrl } from "../../utils";
+import { fileToUrl } from "../../utils";
 import CreateOrganisationForm from "../CreateOrganisationForm";
 
 import {
