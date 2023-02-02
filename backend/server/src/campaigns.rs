@@ -94,6 +94,7 @@ fn default_max_bytes() -> i32 {
 #[derive(Serialize, Deserialize)]
 pub struct QuestionInput {
     pub title: String,
+    pub common_question: bool,
     pub description: Option<String>,
     #[serde(default = "default_max_bytes")]
     pub max_bytes: i32,
@@ -143,6 +144,8 @@ pub async fn new(
             JsonErr(CampaignError::UnableToCreate, Status::InternalServerError)
         })?;
 
+        let mut inserted_role_ids: Vec<i32> = vec![];
+
         for role in roles {
             let new_role = RoleUpdate {
                 campaign_id: campaign.id,
@@ -157,9 +160,18 @@ pub async fn new(
                 JsonErr(CampaignError::UnableToCreate, Status::InternalServerError)
             })?;
 
-            for question in role.questions_for_role {
-                if question < new_questions.len() {
-                    new_questions[question].role_ids.push(inserted_role.id);
+            inserted_role_ids.push(inserted_role.id);
+        }
+
+        for role in 0..inserted_role_ids.len() {
+            for question in roles[role].questions_for_role {
+                if questions[question].common_question && new_questions[question].role_ids.len() == 0 {
+                    new_questions[question].role_ids == inserted_role_ids.clone();
+                } else if new_questions[question].role_ids.len() == 0 {
+                    new_questions[question].role_ids.push(inserted_role_ids[role])
+                } else {
+                    eprintln!("Question is not common, yet has multiple roles asking for it");
+                    JsonErr(CampaignError::UnableToCreate, Status::BadRequest)
                 }
             }
         }
