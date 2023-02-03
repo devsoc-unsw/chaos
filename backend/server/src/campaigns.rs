@@ -71,7 +71,7 @@ pub async fn update(
             .check()
             .or_else(|_| Err(JsonErr(CampaignError::Unauthorized, Status::Forbidden)))?;
 
-        Campaign::update(&conn, campaign_id, &update_campaign);
+        Campaign::update(conn, campaign_id, &update_campaign);
 
         Ok(Json(()))
     })
@@ -139,7 +139,7 @@ pub async fn new(
             .check()
             .or_else(|_| Err(JsonErr(CampaignError::Unauthorized, Status::Forbidden)))?;
 
-        let campaign = Campaign::create(&conn, &campaign).ok_or_else(|| {
+        let campaign = Campaign::create(conn, &campaign).ok_or_else(|| {
             eprintln!("Failed to create campaign for some reason: {:?}", campaign);
             JsonErr(CampaignError::UnableToCreate, Status::InternalServerError)
         })?;
@@ -155,7 +155,7 @@ pub async fn new(
                 max_available: role.max_available,
                 finalised: campaign.published,
             };
-            let inserted_role = new_role.insert(&conn).ok_or_else(|| {
+            let inserted_role = new_role.insert(conn).ok_or_else(|| {
                 eprintln!("Failed to create role for some reason: {:?}", new_role);
                 JsonErr(CampaignError::UnableToCreate, Status::InternalServerError)
             })?;
@@ -180,7 +180,7 @@ pub async fn new(
             if question.role_ids.len() == 0 {
                 return Err(JsonErr(CampaignError::InvalidInput, Status::BadRequest));
             }
-            question.insert(&conn).ok_or_else(|| {
+            question.insert(conn).ok_or_else(|| {
                 eprintln!("Failed to create question for some reason");
                 JsonErr(CampaignError::UnableToCreate, Status::InternalServerError)
             })?;
@@ -204,7 +204,7 @@ pub async fn delete_campaign(
             .check()
             .or_else(|_| Err(JsonErr(CampaignError::Unauthorized, Status::Forbidden)))?;
 
-        Campaign::delete_deep(&conn, campaign_id);
+        Campaign::delete_deep(conn, campaign_id);
 
         Ok(Json(()))
     })
