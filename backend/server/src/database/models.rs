@@ -633,6 +633,10 @@ impl Campaign {
             Some(())
         }
     }
+
+    pub fn export(conn: &PgConnection, campaign_id: i32) -> () {
+        todo!()
+    }
 }
 
 impl NewCampaign {

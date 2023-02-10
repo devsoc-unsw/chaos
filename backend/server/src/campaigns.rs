@@ -58,6 +58,27 @@ pub async fn get_all_campaigns(user: User, db: Database) -> Json<DashboardCampai
     })
 }
 
+#[get("/<campaign_id>/export")]
+pub async fn get_csv_for_campaign(
+    campaign_id: i32,
+    user: User,
+    db: Database,
+    ) -> Result<(), JsonErr<CampaignError>> {
+    db.run(move |conn| {
+        // need to be at least director to download csv file
+        OrganisationUser::campaign_admin_level(campaign_id, user.id, &conn)
+            .is_at_least_director()
+            .check()
+            .or_else(|_| Err(JsonErr(CampaignError::Unauthorized, Status::Forbidden)))?;
+
+        Ok(Campaign::export(conn, campaign_id))
+    })
+    .await
+
+    //todo!();
+
+}
+
 #[put("/<campaign_id>", data = "<update_campaign>")]
 pub async fn update(
     campaign_id: i32,
