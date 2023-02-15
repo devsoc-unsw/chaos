@@ -6,11 +6,14 @@ use super::schema::{
 };
 use chrono::NaiveDateTime;
 use chrono::Utc;
+use csv::ByteRecord;
 use diesel::prelude::*;
 use diesel::PgConnection;
 use rocket::FromForm;
+use rocket::response::stream::ByteStream;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
+use std::error::Error;
 
 #[derive(Queryable)]
 pub struct User {
@@ -634,9 +637,6 @@ impl Campaign {
         }
     }
 
-    pub fn export(conn: &PgConnection, campaign_id: i32) -> () {
-        todo!()
-    }
 }
 
 impl NewCampaign {
@@ -788,6 +788,34 @@ impl Role {
             None
         }
     }
+
+    pub fn export(conn: &PgConnection, role_id: i32) -> Result<ByteStream![Vec<u8>], Box<dyn Error>> {
+        let apps = Application::get_all_from_role_id(conn, role_id);
+
+        let mut wtr = csv::WriterBuilder::new()
+            .has_headers(false)
+            .from_writer(vec![]);
+        let header = vec![
+            "TimeStamp",
+            "Email",
+            "FullName",
+            "Pronouns",
+            "Gender",
+            "zID",
+            "Degree",
+            "Year",
+            "Domestic/Intertnational",
+            "FullMemberOfCsesoc",
+        ];
+
+        wtr.write_record(&header)?;
+
+        Ok(ByteStream! {
+            for i in 0..10u8 {
+                yield vec![i, i + 1, i + 2];
+            }
+        })
+    }
 }
 
 impl RoleUpdate {
@@ -809,6 +837,20 @@ pub struct Application {
     pub private_status: ApplicationStatus,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
+}
+
+struct ExportVersionApplication {
+    pub time_stamp: String,
+    pub email: String,
+    pub full_name: String,
+    pub pronouns: String,
+    pub gender: String,
+    pub z_id: String,
+    pub degree: String,
+    pub year: String,
+    pub dom_int: String,
+    pub full_member: String,
+    // TODO
 }
 
 #[derive(Insertable, FromForm, Deserialize)]

@@ -10,4 +10,3 @@ server = { path="../server" }
 diesel = "1.4.8"
 chrono = "0.4.23"
 dotenv = "0.15.0"
-csv = "1.1"

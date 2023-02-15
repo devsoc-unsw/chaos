@@ -11,6 +11,8 @@ use diesel::PgConnection;
 use rocket::{
     delete, get, post, put,
     serde::{json::Json, Serialize},
+    futures::stream::Stream,
+    response::stream::ByteStream,
 };
 
 #[derive(Serialize)]
@@ -53,6 +55,27 @@ pub async fn get_role(
         Some(role) => Ok(Json(RoleResponse::from(role))),
         None => Err(Json(RoleError::RoleNotFound)),
     }
+}
+
+#[get("/<role_id>/export")]
+pub async fn get_csv_for_role(
+    role_id: i32,
+    user: User,
+    db: Database,
+    ) -> Result<ByteStream![Vec<u8>], Json<RoleError>> {
+    db.run(move |conn| {
+        // need to be at least director to download csv file
+        OrganisationUser::role_admin_level(role_id, user.id, &conn)
+            .is_at_least_director()
+            .check()
+            .or_else(|_| Err(Json(RoleError::Unauthorized)))?;
+
+
+        Role::export(conn, role_id).map_err(|_| Json(RoleError::RoleAlreadyExists))
+    })
+    .await
+    //todo!();
+
 }
 
 #[put("/<role_id>", data = "<role_update>")]
