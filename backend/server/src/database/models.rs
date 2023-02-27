@@ -960,8 +960,7 @@ pub struct UpdateQuestionInput {
 
 impl Question {
     pub fn get_first_role(&self) -> i32 {
-        self
-            .role_id
+        self.role_id
             .expect("Question should be for at least one role")
     }
 
@@ -980,8 +979,7 @@ impl Question {
         Some(())
     }
 
-    pub fn
-    get_all_from_role_id(conn: &PgConnection, role_id_val: i32) -> Vec<Question> {
+    pub fn get_all_from_role_id(conn: &PgConnection, role_id_val: i32) -> Vec<Question> {
         diesel::sql_query(&format!(
             "select * from questions where {} = role_id or role_id is null",
             role_id_val

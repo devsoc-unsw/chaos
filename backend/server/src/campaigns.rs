@@ -171,7 +171,6 @@ pub async fn new(
                     return Err(JsonErr(CampaignError::UnableToCreate, Status::BadRequest));
                 }
             }
-
         }
 
         for question in new_questions {
