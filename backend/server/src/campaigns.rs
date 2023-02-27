@@ -119,15 +119,15 @@ pub async fn new(
     let NewCampaignWithData {
         campaign,
         roles,
-        questions,
+        mut questions,
     } = inner;
 
     let mut new_questions: Vec<NewQuestion> = questions
-        .into_iter()
+        .iter_mut()
         .map(|x| NewQuestion {
-            role_ids: vec![],
-            title: x.title,
-            description: x.description,
+            role_id: None,
+            title: x.title.clone(),
+            description: x.description.clone(),
             max_bytes: x.max_bytes,
             required: x.required,
         })
@@ -144,8 +144,6 @@ pub async fn new(
             JsonErr(CampaignError::UnableToCreate, Status::InternalServerError)
         })?;
 
-        let mut inserted_role_ids: Vec<i32> = vec![];
-
         for role in roles {
             let new_role = RoleUpdate {
                 campaign_id: campaign.id,
@@ -160,26 +158,23 @@ pub async fn new(
                 JsonErr(CampaignError::UnableToCreate, Status::InternalServerError)
             })?;
 
-            inserted_role_ids.push(inserted_role.id);
-        }
-
-        for role in 0..inserted_role_ids.len() {
-            for question in roles[role].questions_for_role {
-                if questions[question].common_question && new_questions[question].role_ids.len() == 0 {
-                    new_questions[question].role_ids == inserted_role_ids.clone();
-                } else if new_questions[question].role_ids.len() == 0 {
-                    new_questions[question].role_ids.push(inserted_role_ids[role])
+            for question in role.questions_for_role {
+                if questions[question].common_question {
+                    // If question is common
+                    new_questions[question].role_id = None;
+                } else if let None = new_questions[question].role_id {
+                    // If question is unique and no role_id assigned to it
+                    new_questions[question].role_id = Option::from(inserted_role.id);
                 } else {
+                    // If question is meant to be unique, but already has a role_id assigned to it
                     eprintln!("Question is not common, yet has multiple roles asking for it");
-                    JsonErr(CampaignError::UnableToCreate, Status::BadRequest)
+                    return Err(JsonErr(CampaignError::UnableToCreate, Status::BadRequest));
                 }
             }
+
         }
 
         for question in new_questions {
-            if question.role_ids.len() == 0 {
-                return Err(JsonErr(CampaignError::InvalidInput, Status::BadRequest));
-            }
             question.insert(conn).ok_or_else(|| {
                 eprintln!("Failed to create question for some reason");
                 JsonErr(CampaignError::UnableToCreate, Status::InternalServerError)

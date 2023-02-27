@@ -106,7 +106,7 @@ table! {
 
     questions (id) {
         id -> Int4,
-        role_ids -> Array<Int4>,
+        role_id -> Nullable<Int4>,
         title -> Text,
         description -> Nullable<Text>,
         max_bytes -> Int4,
