@@ -1,10 +1,10 @@
-use crate::database::{
+use crate::{database::{
     models::{
         Campaign, CampaignWithRoles, NewCampaignInput, NewQuestion, OrganisationUser, Role,
         RoleUpdate, UpdateCampaignInput, User,
     },
     Database,
-};
+}, images::{try_decode_data, get_image_path, save_image, ImageLocation, get_http_image_path}};
 use crate::error::JsonErr;
 use rocket::{
     data::{Data, ToByteUnit},
@@ -28,9 +28,14 @@ pub enum CampaignError {
 
 #[get("/<campaign_id>")]
 pub async fn get(campaign_id: i32, db: Database) -> Result<Json<Campaign>, JsonErr<CampaignError>> {
-    let campaign = db
+    let mut campaign = db
         .run(move |conn| Campaign::get_from_id(conn, campaign_id))
         .await;
+
+    campaign = campaign.map(|mut campaign| {
+        campaign.cover_image = campaign.cover_image.map(|logo_uuid| get_http_image_path(ImageLocation::ORGANISATIONS, &logo_uuid));
+        campaign
+    });
 
     match campaign {
         Some(campaign) => {
@@ -268,34 +273,29 @@ pub async fn set_cover_image(
     let res = db
         .run(move |conn| Campaign::get_cover_image(&conn, campaign_id))
         .await;
+    let is_new_uuid = res.is_none();
 
-    if let Some(filename) = res {
-        remove_file(Path::new("images").join(filename)).or_else(|_| {
-            Err(JsonErr(
-                LogoError::ImageDeletionFailure,
-                Status::InternalServerError,
-            ))
-        })?;
+    let logo_uuid = res.unwrap_or(Uuid::new_v4().as_hyphenated().to_string());
+
+    let image = try_decode_data(image).await.or_else(|_| {
+        Err(JsonErr(
+            LogoError::ImageDeletionFailure,
+            Status::InternalServerError,
+        ))
+    })?;
+
+    save_image(image, ImageLocation::CAMPAIGNS, &logo_uuid).map_err(|_| {
+        JsonErr(
+            LogoError::ImageStoreFailure,
+            Status::InternalServerError,
+        )
+    })?;
+
+    let logo_uuid_clone = logo_uuid.clone();
+
+    if is_new_uuid {
+        db.run(move |conn| Campaign::set_cover_image(&conn, campaign_id, &logo_uuid_clone)).await;
     }
 
-    let mut buffer = Uuid::encode_buffer();
-    let filename = Uuid::new_v4().as_hyphenated().encode_lower(&mut buffer);
-
-    let path = Path::new("images").join(filename);
-
-    image
-        .open(5.mebibytes())
-        .into_file(&path)
-        .await
-        .or_else(|_| {
-            Err(JsonErr(
-                LogoError::ImageStoreFailure,
-                Status::InternalServerError,
-            ))
-        })?;
-
-    Ok(Json(
-        db.run(move |conn| Campaign::set_cover_image(&conn, campaign_id, path.to_str().unwrap()))
-            .await,
-    ))
+    Ok(Json(get_http_image_path(ImageLocation::CAMPAIGNS, &logo_uuid)))
 }

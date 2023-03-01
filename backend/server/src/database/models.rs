@@ -160,6 +160,7 @@ pub struct Organisation {
 #[table_name = "organisations"]
 pub struct NewOrganisation {
     pub name: String,
+    pub logo: Option<String>
 }
 
 impl Organisation {
