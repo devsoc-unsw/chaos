@@ -1,6 +1,7 @@
 use diesel_derive_enum::DbEnum;
 use rocket::FromFormField;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 #[derive(Debug, DbEnum, PartialEq, FromFormField, Serialize, Deserialize, Clone, Copy)]
 #[DbValueStyle = "PascalCase"]
@@ -9,6 +10,17 @@ pub enum ApplicationStatus {
     Pending,
     Rejected,
     Success,
+}
+
+impl fmt::Display for ApplicationStatus {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ApplicationStatus::Draft => write!(f, "Draft"),
+            ApplicationStatus::Pending => write!(f, "Pending"),
+            ApplicationStatus::Rejected => write!(f, "Rejected"),
+            ApplicationStatus::Success => write!(f, "Success"),
+        }
+    }
 }
 
 #[derive(Debug, DbEnum, PartialEq, Serialize, Deserialize, Clone, Copy)]

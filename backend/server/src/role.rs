@@ -73,8 +73,8 @@ pub async fn get_csv_for_role(
 
         Role::export(conn, role_id).map_err(|_| Json(RoleError::RoleAlreadyExists))
     })
-    .await
-    //todo!();
+    .await;
+    todo!();
 
 }
 

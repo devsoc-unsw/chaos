@@ -789,32 +789,45 @@ impl Role {
         }
     }
 
-    pub fn export(conn: &PgConnection, role_id: i32) -> Result<ByteStream![Vec<u8>], Box<dyn Error>> {
+    pub fn export(conn: &PgConnection, role_id: i32) -> Result<Vec<u8>, Box<dyn Error>> {
+
         let apps = Application::get_all_from_role_id(conn, role_id);
 
         let mut wtr = csv::WriterBuilder::new()
             .has_headers(false)
             .from_writer(vec![]);
-        let header = vec![
-            "TimeStamp",
-            "Email",
-            "FullName",
-            "Pronouns",
-            "Gender",
-            "zID",
-            "Degree",
-            "Year",
-            "Domestic/Intertnational",
-            "FullMemberOfCsesoc",
+        let mut header = vec![
+            "Email".to_string(),
+            "FullName".to_string(),
+            "Pronouns".to_string(),
+            "Gender".to_string(),
+            "zID".to_string(),
+            "Degree".to_string(),
+            "Year".to_string(),
+            "Domestic/Intertnational".to_string(),
+            "FullMemberOfCsesoc".to_string(),
+            "ApplicationID".to_string(),
+            "Status".to_string(),
+            "PrivateStatus".to_string(),
+            "TimeCreated".to_string(),
+            "TimeUpdated".to_string(),
         ];
+
+
+        // Then we will add all the titles of the questions in this role as column headers.
+        for question in Question::get_all_from_role_id(conn, role_id) {
+            header.push(question.title);
+        }
 
         wtr.write_record(&header)?;
 
-        Ok(ByteStream! {
-            for i in 0..10u8 {
-                yield vec![i, i + 1, i + 2];
-            }
-        })
+        // Write all the application records into the csv
+        for application in Application::get_all_from_role_id(conn, role_id) {
+            wtr.serialize(&Application::get_export_version(conn, application));
+        }
+
+        // Return the completed vector of bytes
+        return Ok(vec![])
     }
 }
 
@@ -839,8 +852,8 @@ pub struct Application {
     pub updated_at: NaiveDateTime,
 }
 
+#[derive(serde::Serialize, PartialEq, )]
 struct ExportVersionApplication {
-    pub time_stamp: String,
     pub email: String,
     pub full_name: String,
     pub pronouns: String,
@@ -850,7 +863,12 @@ struct ExportVersionApplication {
     pub year: String,
     pub dom_int: String,
     pub full_member: String,
-    // TODO
+    pub application_id: String,
+    pub status: String,
+    pub private_status: String,
+    pub time_created: String,
+    pub time_updated: String,
+    pub answers: Vec<String>,
 }
 
 #[derive(Insertable, FromForm, Deserialize)]
@@ -906,6 +924,30 @@ impl Application {
             .order(id.asc())
             .load(conn)
             .unwrap_or_else(|_| vec![])
+    }
+
+    pub fn get_export_version(conn: &PgConnection, application: Application) -> ExportVersionApplication {
+
+        let applicant = User::get_from_id(conn, application.user_id);
+        let answers = Answer::get_all_from_application_id(conn, application.id);
+        ExportVersionApplication {
+            email: (),
+            full_name: (),
+            pronouns: (),
+            gender: (),
+            z_id: (),
+            degree: (),
+            year: (),
+            dom_int: (),
+            full_member: (),
+            application_id: application.id.to_string(),
+            status: application.status.to_string(),
+            private_status: application.private_status.to_string(),
+            time_created: application.created_at.to_string(),
+            time_updated: application.updated_at.to_string(),
+            answers: answers.into_iter().map(|ans| ans.description).collect()
+        }
+
     }
 
     pub fn delete(conn: &PgConnection, application_id: i32) -> bool {
