@@ -1,3 +1,4 @@
+
 use super::schema::AdminLevel;
 use super::schema::ApplicationStatus;
 use super::schema::{
@@ -904,6 +905,20 @@ impl NewApplication {
     }
 }
 
+    /**
+     * 
+     * 
+     * 
+     * 
+     * add New fields to Question sturct (also migration).
+     * We store the serailised struct in DB as TEXT
+     * 
+     * 
+     * 
+     * 
+     */
+
+    // pub what_ever_name_this_question_data_is_to_be: String
 #[derive(Identifiable, Queryable, PartialEq, Serialize, Debug, QueryableByName)]
 #[table_name = "questions"]
 pub struct Question {
@@ -917,6 +932,19 @@ pub struct Question {
     pub updated_at: NaiveDateTime,
 }
 
+/**
+     * 
+     * 
+     * 
+     * Add enum field to NewQuestion
+     * 
+     * 
+     * 
+     * 
+     * This means FE must pass in correctly formated JSON struct for our question data
+     * 
+     * pub question_data: String,
+     */
 #[derive(Insertable, Serialize, Deserialize)]
 #[table_name = "questions"]
 pub struct NewQuestion {
@@ -927,6 +955,7 @@ pub struct NewQuestion {
     pub max_bytes: i32,
     pub required: bool,
 }
+
 
 #[derive(Serialize)]
 pub struct QuestionResponse {

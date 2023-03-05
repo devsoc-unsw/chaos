@@ -5,6 +5,7 @@ use crate::database::{
     },
     Database,
 };
+use crate::question_types::QuestionTypeEnum;
 use crate::error::JsonErr;
 use rocket::{delete, get, http::Status, post, put, serde::json::Json};
 use serde::{Deserialize, Serialize};
@@ -99,6 +100,7 @@ pub struct QuestionInput {
     pub max_bytes: i32,
     #[serde(default)]
     pub required: bool,
+    pub question_data: QuestionTypeEnum,
 }
 
 #[derive(Deserialize)]

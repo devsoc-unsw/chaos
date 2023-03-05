@@ -15,4 +15,6 @@ pub mod permissions;
 pub mod question;
 pub mod role;
 pub mod state;
+pub mod question_types;
 pub mod user;
+
