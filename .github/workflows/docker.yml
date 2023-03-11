@@ -1,6 +1,10 @@
 name: Docker
 
-on: [push]
+on:
+  pull_request:
+    branches: [main, "renovate/*"]
+  push:
+    branches: ["*"]
 
 jobs:
   build-backend:
@@ -111,8 +115,8 @@ jobs:
           git checkout -b update/chaos/staging/${{ github.sha }}
           yq -i '.items[0].spec.template.spec.containers[0].image = "ghcr.io/csesoc/chaos-frontend:${{ github.sha }}"' apps/projects/chaos/staging/deploy-frontend.yml
           yq -i '.items[0].spec.template.spec.containers[0].image = "ghcr.io/csesoc/chaos-backend:${{ github.sha }}"' apps/projects/chaos/staging/deploy-backend.yml
-          git add . 
-          git commit -m "feat(chaos/staging): update images" 
+          git add .
+          git commit -m "feat(chaos/staging): update images"
           git push -u origin update/chaos/staging/${{ github.sha }}
           gh pr create --title "feat(chaos/staging): update images" --body "Updates the images for the chaos staging deployment to commit csesoc/chaos@${{ github.sha }}." > URL
           gh pr merge $(cat URL) --squash -d
