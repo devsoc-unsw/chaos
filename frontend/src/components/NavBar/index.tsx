@@ -1,5 +1,5 @@
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, Link as RouterLink } from "react-router-dom";
 import tw, { styled } from "twin.macro";
 
@@ -29,8 +29,12 @@ const NavButton = styled(NavLink, {
 });
 
 const NavBar = ({ campaign }: { campaign: string }) => {
-  const loggedIn = isLoggedIn();
+  const [loggedIn, setLoggedIn] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
+
+  useEffect(() => {
+    setLoggedIn(isLoggedIn());
+  });
 
   return (
     <header tw="fixed inset-x-0 z-10 bg-white shadow-md bg-gradient-to-r from-[#9dbbfb55] to-[#a78bfa55]">
@@ -62,7 +66,7 @@ const NavBar = ({ campaign }: { campaign: string }) => {
           <div tw="flex items-center gap-4">
             <span tw="border-slate-500 border-l">&#x200b;</span>
             {loggedIn ? (
-              <AvatarButton />
+              <AvatarButton onLogout={() => setLoggedIn(false)} />
             ) : (
               <a
                 tw="rounded bg-indigo-400/30 px-3 py-1.5 text-black shadow transition-colors hover:bg-indigo-400/[0.42]"

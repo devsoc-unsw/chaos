@@ -22,7 +22,7 @@ const ItemButton = tw.button`
   focus-within:(outline-none ring ring-indigo-600/50)
 `;
 
-const AvatarButton = () => {
+const AvatarButton = ({ onLogout }: { onLogout: () => void }) => {
   const name = localStorage.getItem("name") ?? "";
   const initials = name
     .split(" ")
@@ -36,6 +36,7 @@ const AvatarButton = () => {
     ["name", "signup_token", "AUTH_TOKEN"].forEach((key) => {
       localStorage.removeItem(key);
       navigate("/");
+      onLogout();
     });
   };
 
