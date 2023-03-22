@@ -26,5 +26,9 @@
       "schedule": ["before 5am every monday"],
       "addLabels": ["deps: minor"]
     },
+    {
+      "matchUpdateTypes": ["major"],
+      "addLabels": ["deps: major"]
+    },
   ]
 }
