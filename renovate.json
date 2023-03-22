@@ -13,6 +13,18 @@
       "matchPackageNames": ["node"],
       "groupName": "node",
       "ignoreUnstable": false
-    }
+    },
+    {
+      "matchUpdateTypes": ["patch"],
+      "groupName": "weekly patch updates",
+      "schedule": ["before 5am every monday"],
+      "addLabels": ["deps: patches"]
+    },
+    {
+      "matchUpdateTypes": ["minor"],
+      "groupName": "weekly minor updates",
+      "schedule": ["before 5am every monday"],
+      "addLabels": ["deps: minor"]
+    },
   ]
 }
