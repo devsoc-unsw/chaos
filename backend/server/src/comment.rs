@@ -6,7 +6,7 @@ use crate::error::JsonErr;
 use rocket::{
     get,
     http::Status,
-    post,
+    put,
     serde::{json::Json, Deserialize, Serialize},
 };
 
@@ -23,7 +23,7 @@ pub enum CommentError {
     CommentNotFound,
 }
 
-#[post("/", data = "<new_comment_input>")]
+#[put("/", data = "<new_comment_input>")]
 pub async fn create_comment(
     new_comment_input: Json<NewCommentInput>,
     user: User,
