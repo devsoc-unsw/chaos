@@ -4,12 +4,17 @@ use crate::database::{
 };
 use crate::error::JsonErr;
 use rocket::{
-    form::Form,
     get,
     http::Status,
-    post,
-    serde::{json::Json, Serialize},
+    put,
+    serde::{json::Json, Deserialize, Serialize},
 };
+
+#[derive(Deserialize)]
+pub struct NewCommentInput {
+    pub application_id: i32,
+    pub description: String,
+}
 
 #[derive(Serialize)]
 pub enum CommentError {
@@ -18,14 +23,14 @@ pub enum CommentError {
     CommentNotFound,
 }
 
-#[post("/", data = "<new_comment>")]
+#[put("/", data = "<new_comment_input>")]
 pub async fn create_comment(
-    new_comment: Form<NewComment>,
+    new_comment_input: Json<NewCommentInput>,
     user: User,
     db: Database,
 ) -> Result<Json<Comment>, JsonErr<CommentError>> {
     // need to be director to comment
-    let app_id = new_comment.application_id; // stack copy of i32
+    let app_id = new_comment_input.application_id; // stack copy of i32
     db.run(move |conn| {
         OrganisationUser::application_admin_level(app_id, user.id, &conn)
             .is_at_least_director()
@@ -34,6 +39,11 @@ pub async fn create_comment(
     .await
     .or_else(|_| Err(JsonErr(CommentError::Unauthorized, Status::Forbidden)))?;
 
+    let new_comment = NewComment {
+        application_id: new_comment_input.application_id,
+        commenter_user_id: user.id,
+        description: new_comment_input.description.to_string(),
+    };
     let comment = db
         .run(move |conn| NewComment::insert(&new_comment, conn))
         .await
