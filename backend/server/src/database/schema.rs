@@ -11,6 +11,14 @@ pub enum ApplicationStatus {
     Success,
 }
 
+#[derive(Debug, DbEnum, PartialEq, FromFormField, Serialize, Deserialize, Clone, Copy)]
+#[DbValueStyle = "PascalCase"]
+pub enum QuestionTypes {
+    ShortAnswer,
+    MultiSelect,
+}
+
+
 #[derive(Debug, DbEnum, PartialEq, Serialize, Deserialize, Clone, Copy)]
 #[DbValueStyle = "PascalCase"]
 pub enum AdminLevel {
@@ -103,6 +111,7 @@ table! {
 
 table! {
     use diesel::sql_types::*;
+    use super::QuestionTypesMapping;
 
     questions (id) {
         id -> Int4,
@@ -113,6 +122,7 @@ table! {
         required -> Bool,
         created_at -> Timestamp,
         updated_at -> Timestamp,
+        question_type -> QuestionTypesMapping,
     }
 }
 

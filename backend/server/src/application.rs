@@ -7,7 +7,7 @@ use crate::{database::{
     },
     schema::ApplicationStatus,
     Database,
-}, question_types::QuestionTypeEnum};
+}};
 use crate::error::JsonErr;
 use rocket::{
     get,
@@ -119,32 +119,14 @@ pub async fn create_rating(
     .await
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct AnswerInput {
-    pub application_id: i32,
-    pub question_id: i32,
-    pub description: String,
-    pub question_data: QuestionTypeEnum,
-}
-
-impl From<Json<AnswerInput>> for NewAnswer {
-    fn from(a: Json<AnswerInput>) -> Self {
-        NewAnswer { 
-            application_id: a.application_id,
-            question_id: a.question_id,
-            description: a.into_inner().description,
-        }
-    }
-}
 
 #[post("/answer", data = "<answer>")]
 pub async fn submit_answer(
     user: User,
     db: Database,
-    answer: Json<AnswerInput>,
+    answer: Json<NewAnswer>,
 ) -> Result<Json<()>, JsonErr<ApplicationError>> {
     db.run(move |conn| {
-        
         let application = Application::get(answer.application_id, &conn)
             .ok_or(JsonErr(ApplicationError::AppNotFound, Status::NotFound))?;
         if application.user_id != user.id {
@@ -159,7 +141,7 @@ pub async fn submit_answer(
             return Err(JsonErr(ApplicationError::InvalidInput, Status::BadRequest));
         }
 
-        NewAnswer::insert(&answer.into(), &conn).ok_or(JsonErr(
+        NewAnswer::insert(&answer, &conn).ok_or(JsonErr(
             ApplicationError::UnableToCreate,
             Status::InternalServerError,
         ))?;

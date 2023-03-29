@@ -1,6 +1,6 @@
-
 use super::schema::AdminLevel;
 use super::schema::ApplicationStatus;
+use super::schema::QuestionTypes;
 use super::schema::{
     answers, applications, campaigns, comments, organisation_users, organisations, questions,
     ratings, roles, users,
@@ -911,14 +911,19 @@ impl NewApplication {
      * 
      * 
      * add New fields to Question sturct (also migration).
-     * We store the serailised struct in DB as TEXT
      * 
+     * New question_type which is a enum to identify which type it is
+     * pub question_type: QuestionTypeEnum
      * 
+     * New question_data which will not be stored in db rather will provide info for separate specific
+     * question type table. The table to insert/query determined by question_type field
+     * pub question_data: QuestionDataEnum
      * 
+     * id of QuestionData
+     * pub question_data_id: i32
      * 
      */
 
-    // pub what_ever_name_this_question_data_is_to_be: String
 #[derive(Identifiable, Queryable, PartialEq, Serialize, Debug, QueryableByName)]
 #[table_name = "questions"]
 pub struct Question {
@@ -930,6 +935,7 @@ pub struct Question {
     pub required: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
+    pub question_type: QuestionTypes,
 }
 
 /**
@@ -943,7 +949,8 @@ pub struct Question {
      * 
      * This means FE must pass in correctly formated JSON struct for our question data
      * 
-     * pub question_data: String,
+     * pub question_type: QuestionTypeEnum
+     * pub question_data: QuestionDataEnum
      */
 #[derive(Insertable, Serialize, Deserialize)]
 #[table_name = "questions"]
@@ -954,6 +961,7 @@ pub struct NewQuestion {
     #[serde(default)]
     pub max_bytes: i32,
     pub required: bool,
+    pub question_type: QuestionTypes,
 }
 
 
@@ -1058,6 +1066,15 @@ impl Question {
 impl NewQuestion {
     pub fn insert(&self, conn: &PgConnection) -> Option<Question> {
         use crate::database::schema::questions::dsl::*;
+
+        /*
+         * 
+         * 
+         * CHANGEME!
+         * 
+         * 
+         * 
+         */
 
         self.insert_into(questions).get_result(conn).ok()
     }

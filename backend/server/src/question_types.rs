@@ -6,10 +6,14 @@ use serde::{Deserialize, Serialize};
  */
 
 
-#[derive(Deserialize, Serialize)]
-pub enum QuestionTypeEnum {
-
+#[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
+pub enum QuestionDataEnum {
+    ShortAnswer,
+    MultiSelect(MultiSelect),
 }
+
+
+#[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
 pub struct MultiSelect {
 
 }

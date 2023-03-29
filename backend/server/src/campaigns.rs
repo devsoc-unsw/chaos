@@ -1,11 +1,10 @@
-use crate::database::{
+use crate::{database::{
     models::{
         Campaign, CampaignWithRoles, NewCampaignInput, NewQuestion, OrganisationUser, Role,
         RoleUpdate, UpdateCampaignInput, User,
     },
-    Database,
-};
-use crate::question_types::QuestionTypeEnum;
+    Database, schema::QuestionTypes,
+}, question_types::QuestionDataEnum};
 use crate::error::JsonErr;
 use rocket::{delete, get, http::Status, post, put, serde::json::Json};
 use serde::{Deserialize, Serialize};
@@ -100,7 +99,8 @@ pub struct QuestionInput {
     pub max_bytes: i32,
     #[serde(default)]
     pub required: bool,
-    pub question_data: QuestionTypeEnum,
+    pub question_data: QuestionDataEnum,
+    pub question_type: QuestionTypes,
 }
 
 #[derive(Deserialize)]
@@ -123,6 +123,13 @@ pub async fn new(
         questions,
     } = inner;
 
+    let mut question_data:Vec<QuestionDataEnum> = Vec::new();
+    questions
+        .iter()
+        .for_each(|x| {
+            question_data.push(x.question_data.clone())
+        });
+
     let mut new_questions: Vec<NewQuestion> = questions
         .into_iter()
         .map(|x| NewQuestion {
@@ -131,6 +138,7 @@ pub async fn new(
             description: x.description,
             max_bytes: x.max_bytes,
             required: x.required,
+            question_type: x.question_type,
         })
         .collect();
 
@@ -170,10 +178,13 @@ pub async fn new(
             if question.role_ids.len() == 0 {
                 return Err(JsonErr(CampaignError::InvalidInput, Status::BadRequest));
             }
-            question.insert(conn).ok_or_else(|| {
+            let inserted_question = question.insert(conn).ok_or_else(|| {
                 eprintln!("Failed to create question for some reason");
                 JsonErr(CampaignError::UnableToCreate, Status::InternalServerError)
             })?;
+
+            // Insert QuestionDataEnum into db here
+
         }
 
         Ok(Json(campaign))
