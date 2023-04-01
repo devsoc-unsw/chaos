@@ -1067,15 +1067,6 @@ impl NewQuestion {
     pub fn insert(&self, conn: &PgConnection) -> Option<Question> {
         use crate::database::schema::questions::dsl::*;
 
-        /*
-         * 
-         * 
-         * CHANGEME!
-         * 
-         * 
-         * 
-         */
-
         self.insert_into(questions).get_result(conn).ok()
     }
 }
