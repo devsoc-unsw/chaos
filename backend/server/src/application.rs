@@ -7,7 +7,7 @@ use crate::{database::{
     },
     schema::ApplicationStatus,
     Database,
-}};
+}, question_types::AnswerDataEnum};
 use crate::error::JsonErr;
 use rocket::{
     get,
@@ -119,14 +119,24 @@ pub async fn create_rating(
     .await
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct AnswerWithData {
+    pub answer: NewAnswer,
+    pub data: AnswerDataEnum,
+}
 
-#[post("/answer", data = "<answer>")]
+
+#[post("/answer", data = "<answer_with_data>")]
 pub async fn submit_answer(
     user: User,
     db: Database,
-    answer: Json<NewAnswer>,
+    answer_with_data: Json<AnswerWithData>,
 ) -> Result<Json<()>, JsonErr<ApplicationError>> {
     db.run(move |conn| {
+        let answer_with_data = answer_with_data.into_inner();
+        let answer = answer_with_data.answer;
+        let data = answer_with_data.data;
+
         let application = Application::get(answer.application_id, &conn)
             .ok_or(JsonErr(ApplicationError::AppNotFound, Status::NotFound))?;
         if application.user_id != user.id {
@@ -141,7 +151,14 @@ pub async fn submit_answer(
             return Err(JsonErr(ApplicationError::InvalidInput, Status::BadRequest));
         }
 
-        NewAnswer::insert(&answer, &conn).ok_or(JsonErr(
+        let mut inserted_answer = NewAnswer::insert(&answer, &conn).ok_or(JsonErr(
+            ApplicationError::UnableToCreate,
+            Status::InternalServerError,
+        ))?;
+
+
+        // Insert the Answer Data UwU
+        AnswerDataEnum::insert_answer_data(data, conn, &inserted_answer).ok_or(JsonErr(
             ApplicationError::UnableToCreate,
             Status::InternalServerError,
         ))?;

@@ -34,6 +34,9 @@ impl AdminLevel {
 }
 
 table! {
+    use diesel::sql_types::*;
+    use super::QuestionTypesMapping;
+
     answers (id) {
         id -> Int4,
         application_id -> Int4,
@@ -41,6 +44,7 @@ table! {
         description -> Text,
         created_at -> Timestamp,
         updated_at -> Timestamp,
+        answer_type -> QuestionTypesMapping,
     }
 }
 

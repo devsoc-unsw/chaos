@@ -1,3 +1,5 @@
+use crate::question_types::QuestionDataEnum;
+
 use super::schema::AdminLevel;
 use super::schema::ApplicationStatus;
 use super::schema::QuestionTypes;
@@ -973,20 +975,32 @@ pub struct QuestionResponse {
     pub description: Option<String>,
     pub max_bytes: i32,
     pub required: bool,
+    pub question_data: QuestionDataEnum,
+    pub question_type: QuestionTypes,
 }
 
-impl std::convert::From<Question> for QuestionResponse {
-    fn from(question: Question) -> Self {
+impl std::convert::From<(Question, QuestionDataEnum)> for QuestionResponse {
+    fn from(question_with_data: (Question, QuestionDataEnum)) -> Self {
         Self {
-            id: question.id,
-            role_ids: question.role_ids,
-            title: question.title,
-            description: question.description,
-            max_bytes: question.max_bytes,
-            required: question.required,
+            id: question_with_data.0.id,
+            role_ids: question_with_data.0.role_ids,
+            title: question_with_data.0.title,
+            description: question_with_data.0.description,
+            max_bytes: question_with_data.0.max_bytes,
+            required: question_with_data.0.required,
+            question_type: question_with_data.0.question_type,
+            question_data: question_with_data.1
         }
     }
 }
+
+// impl QuestionResponse {
+//     fn build_question_response() -> Self {
+//         Self {
+
+//         }
+//     }
+// }
 
 #[derive(FromForm, AsChangeset, Deserialize)]
 #[table_name = "questions"]
@@ -1081,14 +1095,16 @@ pub struct Answer {
     pub description: String,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
+    pub answer_type: QuestionTypes,
 }
 
-#[derive(Insertable, Deserialize)]
+#[derive(Insertable, Deserialize, Serialize)]
 #[table_name = "answers"]
 pub struct NewAnswer {
     pub application_id: i32,
     pub question_id: i32,
     pub description: String,
+    pub answer_type: QuestionTypes,
 }
 
 impl Answer {
