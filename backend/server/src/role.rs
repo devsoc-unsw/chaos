@@ -145,7 +145,7 @@ pub async fn get_questions(
         let mut questions_with_data = Vec::new();
         
         for question in Question::get_all_from_role_id(conn, role_id) {
-            let data = QuestionDataEnum::get_from_question_id(conn, question.id)
+            let data = QuestionDataEnum::get_from_question(conn, &question)
                 .ok_or(Json(QuestionsError::QuestionDataNotFound))?;
             questions_with_data.push((question, data));
         }

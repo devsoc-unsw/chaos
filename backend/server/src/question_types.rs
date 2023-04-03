@@ -58,10 +58,22 @@ impl QuestionDataEnum {
         }
 
         match question.question_type {
-            QuestionTypes::ShortAnswer => {None},
+            QuestionTypes::ShortAnswer => {Some(AnswerDataEnum::ShortAnswer);},
             QuestionTypes::MultiSelect => todo!(),
         }
 
+        None
+    }
+
+    pub fn get_from_question(conn: &PgConnection, question: &Question) -> Option<Self> {
+        let question_id = question.id;
+
+        match question.question_type {
+            QuestionTypes::ShortAnswer => {Some(QuestionDataEnum::ShortAnswer);},
+            QuestionTypes::MultiSelect => todo!(),
+        }
+
+        None
     }
 }
 
@@ -80,6 +92,17 @@ impl AnswerDataEnum {
             AnswerDataEnum::MultiSelect(multi_select_data) => {
                 // Insert Multi Select Data into table
             },
+        }
+
+        None
+    }
+
+    pub fn get_from_answer(conn: &PgConnection, answer: &Answer) -> Option<Self> {
+        let answer_id = answer.id;
+
+        match answer.answer_type {
+            QuestionTypes::ShortAnswer => {Some(AnswerDataEnum::ShortAnswer);},
+            QuestionTypes::MultiSelect => todo!(),
         }
 
         None

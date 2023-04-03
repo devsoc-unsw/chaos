@@ -28,6 +28,7 @@ pub enum ApplicationError {
     QuestionNotFound,
     InvalidInput,
     CampaignEnded,
+    AnswerDataNotFound,
 }
 
 #[derive(Deserialize)]
@@ -151,7 +152,7 @@ pub async fn submit_answer(
             return Err(JsonErr(ApplicationError::InvalidInput, Status::BadRequest));
         }
 
-        let mut inserted_answer = NewAnswer::insert(&answer, &conn).ok_or(JsonErr(
+        let inserted_answer = NewAnswer::insert(&answer, &conn).ok_or(JsonErr(
             ApplicationError::UnableToCreate,
             Status::InternalServerError,
         ))?;
@@ -170,7 +171,13 @@ pub async fn submit_answer(
 
 #[derive(Serialize)]
 pub struct AnswersResponse {
-    answers: Vec<Answer>,
+    answers: Vec<AnswerResponse>,
+}
+
+#[derive(Serialize)]
+pub struct AnswerResponse {
+    answer: Answer,
+    data: AnswerDataEnum,
 }
 
 #[get("/<application_id>/answers")]
@@ -188,8 +195,16 @@ pub async fn get_answers(
             .check()
             .map_err(|_| JsonErr(ApplicationError::Unauthorized, Status::Forbidden))?;
 
+        let mut response: Vec<AnswerResponse> = Vec::new();
+
+        for answer in Answer::get_all_from_application_id(conn, application_id) {
+            let data = AnswerDataEnum::get_from_answer(conn, &answer)
+                .ok_or(JsonErr(ApplicationError::AnswerDataNotFound, Status::NotFound))?;
+            response.push(AnswerResponse { answer: answer, data: data });
+        }
+
         Ok(Json(AnswersResponse {
-            answers: Answer::get_all_from_application_id(conn, application_id),
+            answers: response,
         }))
     })
     .await
