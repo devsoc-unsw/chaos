@@ -1,11 +1,11 @@
-use crate::database::{
+use crate::{database::{
     models::{
         Campaign, NewOrganisation, NewOrganisationUser, Organisation, OrganisationUser, SuperUser,
         User,
     },
     schema::AdminLevel,
     Database,
-};
+}, images::{try_decode_data, ImageLocation, save_image, get_http_image_path}};
 use crate::error::JsonErr;
 use chrono::NaiveDateTime;
 use rocket::{
@@ -72,7 +72,10 @@ pub async fn get_from_id(
     db.run(move |conn| {
         Organisation::get_from_id(&conn, org_id)
             .ok_or(JsonErr(OrgError::OrgNotFound, Status::NotFound))
-            .map(|v| Json(v))
+            .map(|mut v| {
+                v.logo = v.logo.map(|logo_uuid| get_http_image_path(ImageLocation::ORGANISATIONS, &logo_uuid));
+                Json(v)
+            })
     })
     .await
 }
@@ -151,36 +154,31 @@ pub async fn set_logo(
     let res = db
         .run(move |conn| Organisation::get_logo(&conn, org_id))
         .await;
+    let is_new_uuid = res.is_none();
 
-    if let Some(filename) = res {
-        remove_file(Path::new("images").join(filename)).or_else(|_| {
-            Err(JsonErr(
-                LogoError::ImageDeletionFailure,
-                Status::InternalServerError,
-            ))
-        })?;
+    let logo_uuid = res.unwrap_or(Uuid::new_v4().as_hyphenated().to_string());
+
+    let image = try_decode_data(image).await.or_else(|_| {
+        Err(JsonErr(
+            LogoError::ImageDeletionFailure,
+            Status::InternalServerError,
+        ))
+    })?;
+
+    save_image(image, ImageLocation::ORGANISATIONS, &logo_uuid).map_err(|_| {
+        JsonErr(
+            LogoError::ImageStoreFailure,
+            Status::InternalServerError,
+        )
+    })?;
+
+    let logo_uuid_clone = logo_uuid.clone();
+
+    if is_new_uuid {
+        db.run(move |conn| Organisation::set_logo(&conn, org_id, &logo_uuid_clone)).await;
     }
 
-    let mut buffer = Uuid::encode_buffer();
-    let filename = Uuid::new_v4().as_hyphenated().encode_lower(&mut buffer);
-
-    let path = Path::new("images").join(filename);
-
-    image
-        .open(5.mebibytes())
-        .into_file(&path)
-        .await
-        .or_else(|_| {
-            Err(JsonErr(
-                LogoError::ImageStoreFailure,
-                Status::InternalServerError,
-            ))
-        })?;
-
-    Ok(Json(
-        db.run(move |conn| Organisation::set_logo(&conn, org_id, path.to_str().unwrap()))
-            .await,
-    ))
+    Ok(Json(get_http_image_path(ImageLocation::ORGANISATIONS, &logo_uuid)))
 }
 
 #[put("/<org_id>/admins", data = "<admins>")]

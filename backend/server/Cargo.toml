@@ -35,8 +35,4 @@ image = "0.24.4"
 
 [dependencies.uuid]
 version = "1.2.2"
-features = [
-    "v4",                # Lets you generate random UUIDs
-    "fast-rng",          # Use a faster (but still sufficiently random) RNG
-    "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
-]
+features = ["v4", "fast-rng", "macro-diagnostics"]
