@@ -1124,7 +1124,7 @@ pub struct Comment {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Insertable, FromForm)]
+#[derive(Insertable)]
 #[table_name = "comments"]
 pub struct NewComment {
     pub application_id: i32,
