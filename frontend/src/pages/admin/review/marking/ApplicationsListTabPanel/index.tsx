@@ -19,7 +19,7 @@ type Props = {
 const ApplicationsListTabPanel = ({ application, setMark }: Props) => {
   const [comments, setComments] = useState("");
 
-  const { post: postComment } = useFetch<PostCommentRespone>("/comment", {
+  const { put: putComment } = useFetch<PostCommentRespone>("/comment", {
     abortBehaviour: "sameUrl",
   });
 
@@ -30,7 +30,7 @@ const ApplicationsListTabPanel = ({ application, setMark }: Props) => {
       application_id: application.applicationId,
     };
 
-    void postComment("/", { body: reqBody });
+    void putComment("/", { body: reqBody });
   };
 
   return (
