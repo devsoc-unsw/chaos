@@ -7,7 +7,7 @@ use crate::{
         },
         Database,
     },
-    images::{get_http_image_path, get_image_path, save_image, try_decode_data, ImageLocation},
+    images::{get_http_image_path, save_image, try_decode_data, ImageLocation},
 };
 use rocket::{data::Data, delete, get, http::Status, post, put, serde::json::Json};
 use serde::{Deserialize, Serialize};

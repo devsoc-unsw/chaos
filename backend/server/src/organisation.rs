@@ -1,23 +1,24 @@
-use crate::{database::{
-    models::{
-        Campaign, NewOrganisation, NewOrganisationUser, Organisation, OrganisationUser, SuperUser,
-        User,
-    },
-    schema::AdminLevel,
-    Database,
-}, images::{try_decode_data, ImageLocation, save_image, get_http_image_path}};
 use crate::error::JsonErr;
+use crate::{
+    database::{
+        models::{
+            Campaign, NewOrganisation, NewOrganisationUser, Organisation, OrganisationUser,
+            SuperUser, User,
+        },
+        schema::AdminLevel,
+        Database,
+    },
+    images::{get_http_image_path, save_image, try_decode_data, ImageLocation},
+};
 use chrono::NaiveDateTime;
 use rocket::{
-    data::{Data, ToByteUnit},
+    data::Data,
     delete, get,
     http::Status,
     post, put,
     serde::{json::Json, Deserialize, Serialize},
 };
 use std::collections::HashMap;
-use std::fs::remove_file;
-use std::path::Path;
 use uuid::Uuid;
 
 #[derive(Serialize)]
@@ -73,7 +74,9 @@ pub async fn get_from_id(
         Organisation::get_from_id(&conn, org_id)
             .ok_or(JsonErr(OrgError::OrgNotFound, Status::NotFound))
             .map(|mut v| {
-                v.logo = v.logo.map(|logo_uuid| get_http_image_path(ImageLocation::ORGANISATIONS, &logo_uuid));
+                v.logo = v
+                    .logo
+                    .map(|logo_uuid| get_http_image_path(ImageLocation::ORGANISATIONS, &logo_uuid));
                 Json(v)
             })
     })
@@ -165,20 +168,20 @@ pub async fn set_logo(
         ))
     })?;
 
-    save_image(image, ImageLocation::ORGANISATIONS, &logo_uuid).map_err(|_| {
-        JsonErr(
-            LogoError::ImageStoreFailure,
-            Status::InternalServerError,
-        )
-    })?;
+    save_image(image, ImageLocation::ORGANISATIONS, &logo_uuid)
+        .map_err(|_| JsonErr(LogoError::ImageStoreFailure, Status::InternalServerError))?;
 
     let logo_uuid_clone = logo_uuid.clone();
 
     if is_new_uuid {
-        db.run(move |conn| Organisation::set_logo(&conn, org_id, &logo_uuid_clone)).await;
+        db.run(move |conn| Organisation::set_logo(&conn, org_id, &logo_uuid_clone))
+            .await;
     }
 
-    Ok(Json(get_http_image_path(ImageLocation::ORGANISATIONS, &logo_uuid)))
+    Ok(Json(get_http_image_path(
+        ImageLocation::ORGANISATIONS,
+        &logo_uuid,
+    )))
 }
 
 #[put("/<org_id>/admins", data = "<admins>")]
