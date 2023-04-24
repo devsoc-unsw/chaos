@@ -1,3 +1,5 @@
+use crate::images::get_http_image_path;
+
 use super::schema::AdminLevel;
 use super::schema::ApplicationStatus;
 use super::schema::{
@@ -160,7 +162,7 @@ pub struct Organisation {
 #[table_name = "organisations"]
 pub struct NewOrganisation {
     pub name: String,
-    pub logo: Option<String>
+    pub logo: Option<String>,
 }
 
 impl Organisation {
@@ -450,6 +452,13 @@ pub struct CampaignWithRoles {
     pub applied_for: Vec<(i32, ApplicationStatus)>,
 }
 
+impl CampaignWithRoles {
+    pub fn with_http_cover_image(mut self) -> Self {
+        self.campaign = self.campaign.with_http_cover_image();
+        self
+    }
+}
+
 impl Campaign {
     pub fn get_all(conn: &PgConnection) -> Vec<Campaign> {
         use crate::database::schema::campaigns::dsl::*;
@@ -468,6 +477,13 @@ impl Campaign {
             .select(cover_image)
             .first(conn)
             .unwrap()
+    }
+
+    pub fn with_http_cover_image(mut self) -> Self {
+        self.cover_image = self.cover_image.map(|logo_uuid| {
+            get_http_image_path(crate::images::ImageLocation::CAMPAIGNS, &logo_uuid)
+        });
+        self
     }
 
     pub fn set_cover_image(conn: &PgConnection, campaign_id: i32, new_cover_image: &str) -> String {
@@ -1386,7 +1402,9 @@ impl OrganisationInfo {
         Self {
             id: organisation.id,
             name: organisation.name,
-            logo: organisation.logo,
+            logo: organisation.logo.map(|logo_uuid| {
+                get_http_image_path(crate::images::ImageLocation::ORGANISATIONS, &logo_uuid)
+            }),
             members: OrganisationUserInfo::get_all_from_organisation_id(conn, organisation.id),
             campaigns: Campaign::get_all_from_org_id(conn, organisation.id)
                 .into_iter()

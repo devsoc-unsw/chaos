@@ -1,21 +1,17 @@
-use crate::{database::{
-    models::{
-        Campaign, CampaignWithRoles, NewCampaignInput, NewQuestion, OrganisationUser, Role,
-        RoleUpdate, UpdateCampaignInput, User,
-    },
-    Database,
-}, images::{try_decode_data, get_image_path, save_image, ImageLocation, get_http_image_path}};
 use crate::error::JsonErr;
-use rocket::{
-    data::{Data, ToByteUnit},
-    delete, get,
-    http::Status,
-    post, put,
-    serde::json::Json,
+use crate::{
+    database::{
+        models::{
+            Campaign, CampaignWithRoles, NewCampaignInput, NewQuestion, OrganisationUser, Role,
+            RoleUpdate, UpdateCampaignInput, User,
+        },
+        Database,
+    },
+    images::{get_http_image_path, get_image_path, save_image, try_decode_data, ImageLocation},
 };
+use rocket::{data::Data, delete, get, http::Status, post, put, serde::json::Json};
 use serde::{Deserialize, Serialize};
-use std::fs::remove_file;
-use std::path::Path;
+
 use uuid::Uuid;
 
 #[derive(Serialize)]
@@ -33,7 +29,9 @@ pub async fn get(campaign_id: i32, db: Database) -> Result<Json<Campaign>, JsonE
         .await;
 
     campaign = campaign.map(|mut campaign| {
-        campaign.cover_image = campaign.cover_image.map(|logo_uuid| get_http_image_path(ImageLocation::ORGANISATIONS, &logo_uuid));
+        campaign.cover_image = campaign
+            .cover_image
+            .map(|logo_uuid| get_http_image_path(ImageLocation::ORGANISATIONS, &logo_uuid));
         campaign
     });
 
@@ -57,11 +55,18 @@ pub struct DashboardCampaignGroupings {
 
 #[get("/all")]
 pub async fn get_all_campaigns(user: User, db: Database) -> Json<DashboardCampaignGroupings> {
+    fn with_http_cover_images(campaigns: Vec<CampaignWithRoles>) -> Vec<CampaignWithRoles> {
+        campaigns
+            .into_iter()
+            .map(CampaignWithRoles::with_http_cover_image)
+            .collect()
+    }
+
     let (current_campaigns, past_campaigns) = db
         .run(move |conn| {
             (
-                Campaign::get_all_public_with_roles(conn, user.id),
-                Campaign::get_all_public_ended_with_roles(conn, user.id),
+                with_http_cover_images(Campaign::get_all_public_with_roles(conn, user.id)),
+                with_http_cover_images(Campaign::get_all_public_ended_with_roles(conn, user.id)),
             )
         })
         .await;
@@ -284,18 +289,18 @@ pub async fn set_cover_image(
         ))
     })?;
 
-    save_image(image, ImageLocation::CAMPAIGNS, &logo_uuid).map_err(|_| {
-        JsonErr(
-            LogoError::ImageStoreFailure,
-            Status::InternalServerError,
-        )
-    })?;
+    save_image(image, ImageLocation::CAMPAIGNS, &logo_uuid)
+        .map_err(|_| JsonErr(LogoError::ImageStoreFailure, Status::InternalServerError))?;
 
     let logo_uuid_clone = logo_uuid.clone();
 
     if is_new_uuid {
-        db.run(move |conn| Campaign::set_cover_image(&conn, campaign_id, &logo_uuid_clone)).await;
+        db.run(move |conn| Campaign::set_cover_image(&conn, campaign_id, &logo_uuid_clone))
+            .await;
     }
 
-    Ok(Json(get_http_image_path(ImageLocation::CAMPAIGNS, &logo_uuid)))
+    Ok(Json(get_http_image_path(
+        ImageLocation::CAMPAIGNS,
+        &logo_uuid,
+    )))
 }
