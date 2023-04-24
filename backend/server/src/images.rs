@@ -1,9 +1,11 @@
 use image::{io::Reader as ImageReader, DynamicImage, ImageError};
 use rocket::{data::ToByteUnit, Data};
 use std::{
+    fs,
     io::{self, Cursor},
     path::{Path, PathBuf},
 };
+use strum::{EnumIter, IntoEnumIterator};
 
 pub enum ImageDecodeError {
     ImageError(ImageError),
@@ -36,6 +38,7 @@ pub async fn try_decode_data(data: Data<'_>) -> Result<DynamicImage, ImageDecode
 const HTTP_IMAGE_BASE_PATH: &str = "/images/";
 const IMAGE_BASE_PATH: &str = "./images/";
 
+#[derive(EnumIter)]
 pub enum ImageLocation {
     CAMPAIGNS,
     ORGANISATIONS,
@@ -54,6 +57,11 @@ pub fn save_image(
     location: ImageLocation,
     image_uuid: &str,
 ) -> Result<PathBuf, ImageError> {
+    ImageLocation::iter().for_each(|location| {
+        fs::create_dir_all(Path::new(IMAGE_BASE_PATH).join(image_location_to_string(location)))
+            .ok();
+    });
+
     let path = get_image_path(location, image_uuid);
 
     match image.save_with_format(&path, image::ImageFormat::Png) {
