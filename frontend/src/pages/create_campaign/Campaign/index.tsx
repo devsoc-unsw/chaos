@@ -2,9 +2,8 @@ import { FormControlLabel, Switch } from "@mui/material";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { useState } from "react";
 import Dropzone from "react-dropzone";
-
-import { fileToDataUrl } from "../../../utils";
 
 import {
   CampaignContainer,
@@ -38,9 +37,16 @@ const CampaignTab = ({ campaign }: Props) => {
     cover,
     setCover,
   } = campaign;
+  const [imageSrc, setImageSrc] = useState<string>();
   const onFileUpload = async (acceptedFiles: File[]) => {
-    const fileUrl = await fileToDataUrl(acceptedFiles[0]);
-    setCover(fileUrl);
+    const file = acceptedFiles[0];
+    setCover(file);
+
+    const reader = new FileReader();
+    reader.addEventListener("load", () => {
+      setImageSrc(reader.result as string);
+    });
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -68,7 +74,7 @@ const CampaignTab = ({ campaign }: Props) => {
                 </p>
               )}
               {cover !== null && (
-                <CoverImage src={cover} alt="campaign cover" />
+                <CoverImage src={imageSrc} alt="campaign cover" />
               )}
             </CampaignDropzone>
           </section>

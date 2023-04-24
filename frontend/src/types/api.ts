@@ -158,6 +158,11 @@ export type NewCampaignInput = {
   published: boolean;
 };
 
+export type LogoError =
+  | "Unauthorized"
+  | "ImageDeletionFailure"
+  | "ImageStoreFailure";
+
 export type Organisation = {
   id: number;
   name: string;

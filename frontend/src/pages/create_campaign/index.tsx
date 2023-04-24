@@ -6,7 +6,7 @@ import { FetchError } from "api/api";
 import { MessagePopupContext } from "contexts/MessagePopupContext";
 import { base64ToBytes, dateToStringForBackend } from "utils";
 
-import { createCampaign, isAdminInOrganisation } from "../../api";
+import { createCampaign, isAdminInOrganisation, setCampaignCoverImage } from "../../api";
 
 import CampaignTab from "./Campaign";
 import ReviewTab from "./Preview";
@@ -14,6 +14,7 @@ import RolesTab from "./Roles";
 import { ArrowIcon, NextButton, NextWrapper } from "./createCampaign.styled";
 
 import type { Answers, Question, Role } from "./types";
+import useFetch from "hooks/useFetch";
 
 const CreateCampaign = () => {
   const orgId = Number(useParams().orgId);
@@ -38,7 +39,7 @@ const CreateCampaign = () => {
   const [description, setDescription] = useState("");
   const [interviewStage, setInterviewStage] = useState(false);
   const [scoringStage, setScoringStage] = useState(false);
-  const [cover, setCover] = useState<string | null>(null);
+  const [cover, setCover] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
   const [roleSelected, setRoleSelected] = useState(0);
@@ -164,9 +165,7 @@ const CreateCampaign = () => {
     setTab(newTab);
   };
 
-  // FIXME: CHAOS-64, update submitHandler to account for new data
-  //        (roles/questions etc.), part of backend integration
-  const submitHandler = (isDraft: boolean) => {
+  const submitHandler = async (isDraft: boolean) => {
     if (campaignName.length === 0 && !isDraft) {
       setError("Campaign name is required");
       return;
@@ -193,15 +192,12 @@ const CreateCampaign = () => {
     }
     setError(null);
 
-    const coverSend = base64ToBytes(cover.split(",")[1]);
-
     // const coverSend = cover ? cover.slice(cover.indexOf(";base64,") + 8) : "";
     const startTimeDateString = dateToStringForBackend(startDate);
     const endTimeDateString = dateToStringForBackend(endDate);
     const campaignSend = {
       organisation_id: Number(orgId),
       name: campaignName,
-      cover_image: coverSend,
       description,
       starts_at: startTimeDateString,
       ends_at: endTimeDateString,
@@ -230,40 +226,38 @@ const CreateCampaign = () => {
       questions_for_role: roleQuestions[r.id] ?? [],
     }));
 
-    createCampaign(campaignSend, rolesSend, questionsSend)
-      .then(() => {
-        console.log("nice!");
-        pushMessage({
-          message: "Successfully created campaign!",
-          type: "success",
-        });
-        navigate("/dashboard");
-      })
-      .catch(async (err) => {
-        if (err instanceof FetchError) {
-          try {
-            const data = (await err.resp.json()) as string;
+    try {
+      const { id: campaignId } = await createCampaign(
+        campaignSend,
+        rolesSend,
+        questionsSend
+      );
+      await setCampaignCoverImage(campaignId, cover);
+    } catch (err) {
+      if (err instanceof FetchError) {
+        try {
+          const data = (await err.resp.json()) as string;
 
-            pushMessage({
-              message: `Internal Error: ${data}`,
-              type: "error",
-            });
-          } catch {
-            pushMessage({
-              message: `Internal Error: Response Invalid`,
-              type: "error",
-            });
-          }
-
-          return;
+          pushMessage({
+            message: `Internal Error: ${data}`,
+            type: "error",
+          });
+        } catch {
+          pushMessage({
+            message: `Internal Error: Response Invalid`,
+            type: "error",
+          });
         }
 
-        console.error("Something went wrong");
-        pushMessage({
-          message: "Something went wrong on backend!",
-          type: "error",
-        });
+        return;
+      }
+
+      console.error("Something went wrong");
+      pushMessage({
+        message: "Something went wrong on backend!",
+        type: "error",
       });
+    }
   };
 
   return (
