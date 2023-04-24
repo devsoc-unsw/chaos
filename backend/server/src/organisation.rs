@@ -238,7 +238,9 @@ impl std::convert::From<Campaign> for CampaignResponse {
         Self {
             id: campaign.id,
             name: campaign.name,
-            cover_image: campaign.cover_image,
+            cover_image: campaign
+                .cover_image
+                .map(|image| get_http_image_path(ImageLocation::CAMPAIGNS, &image)),
             description: campaign.description,
             starts_at: campaign.starts_at,
             ends_at: campaign.ends_at,
