@@ -2,7 +2,7 @@ import { FormControlLabel, Switch } from "@mui/material";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Dropzone from "react-dropzone";
 
 import {
@@ -39,15 +39,25 @@ const CampaignTab = ({ campaign }: Props) => {
   } = campaign;
   const [imageSrc, setImageSrc] = useState<string>();
   const onFileUpload = async (acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    setCover(file);
+    setCover(acceptedFiles[0]);
+  };
+
+  useEffect(() => {
+    if (cover === null) {
+      // have to be consistent in returning a function to make eslint happy
+      return () => {};
+    }
 
     const reader = new FileReader();
     reader.addEventListener("load", () => {
       setImageSrc(reader.result as string);
     });
-    reader.readAsDataURL(file);
-  };
+    reader.readAsDataURL(cover);
+
+    return () => {
+      reader.abort();
+    };
+  }, [cover]);
 
   return (
     <CampaignContainer>
