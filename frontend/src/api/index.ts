@@ -116,7 +116,7 @@ export const createOrganisation = (name: string) =>
     body: { name },
   });
 
-export const setOrgLogo = (orgId: number, logo: File) =>
+export const putOrgLogo = (orgId: number, logo: File) =>
   authenticatedRequest<string>({
     method: "PUT",
     path: `/organisation/${orgId}/logo`,

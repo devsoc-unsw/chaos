@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { createOrganisation, setOrgLogo } from "../../api";
+import { createOrganisation, putOrgLogo } from "../../api";
 import { fileToUrl } from "../../utils";
 import CreateOrganisationForm from "../CreateOrganisationForm";
 
@@ -63,7 +63,7 @@ const AdminSidebar = ({
     const createOrg = async () => {
       if (uploadedImage.image && inputText) {
         const { id } = await createOrganisation(inputText);
-        const logo = await setOrgLogo(id, uploadedImage.image);
+        const logo = await putOrgLogo(id, uploadedImage.image);
         const newOrgList = [
           ...orgList,
           {
