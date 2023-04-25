@@ -1,4 +1,4 @@
-use crate::images::get_http_image_path;
+use crate::images::{get_http_image_path, ImageLocation};
 
 use super::schema::AdminLevel;
 use super::schema::ApplicationStatus;
@@ -480,9 +480,9 @@ impl Campaign {
     }
 
     pub fn with_http_cover_image(mut self) -> Self {
-        self.cover_image = self.cover_image.map(|logo_uuid| {
-            get_http_image_path(crate::images::ImageLocation::CAMPAIGNS, &logo_uuid)
-        });
+        self.cover_image = self
+            .cover_image
+            .map(|logo_uuid| get_http_image_path(ImageLocation::CAMPAIGNS, &logo_uuid));
         self
     }
 
@@ -1348,7 +1348,9 @@ impl std::convert::From<Campaign> for CampaignInfo {
         Self {
             id: campaign.id,
             name: campaign.name,
-            cover_image: campaign.cover_image,
+            cover_image: campaign
+                .cover_image
+                .map(|image| get_http_image_path(ImageLocation::CAMPAIGNS, &image)),
             starts_at: campaign.starts_at,
             ends_at: campaign.ends_at,
         }
@@ -1402,9 +1404,9 @@ impl OrganisationInfo {
         Self {
             id: organisation.id,
             name: organisation.name,
-            logo: organisation.logo.map(|logo_uuid| {
-                get_http_image_path(crate::images::ImageLocation::ORGANISATIONS, &logo_uuid)
-            }),
+            logo: organisation
+                .logo
+                .map(|logo_uuid| get_http_image_path(ImageLocation::ORGANISATIONS, &logo_uuid)),
             members: OrganisationUserInfo::get_all_from_organisation_id(conn, organisation.id),
             campaigns: Campaign::get_all_from_org_id(conn, organisation.id)
                 .into_iter()
