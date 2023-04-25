@@ -57,7 +57,7 @@ const AdminContent = ({
 
   const [windowSelected, setWindowSelected] = useState("campaigns");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showEditOrgDialog, setShowEditOrgDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [orgLogo, setOrgLogo] = useState<File>();
   const [imageSrc, setImageSrc] = useState<string>();
   const { orgSelected, setOrgSelected, orgList, setOrgList } =
@@ -161,7 +161,6 @@ const AdminContent = ({
     }
 
     const newOrgList = [...orgList];
-    console.log(id, newOrgLogo);
     newOrgList[newOrgList.findIndex((org) => org.id === id)].icon = newOrgLogo;
     setOrgList(newOrgList);
 
@@ -182,7 +181,7 @@ const AdminContent = ({
           <button
             tw="text-gray-500 hover:text-gray-800 transition-colors"
             type="button"
-            onClick={() => setShowEditOrgDialog(true)}
+            onClick={() => setShowEditDialog(true)}
           >
             <PencilIcon tw="w-8 h-8" />
           </button>
@@ -226,8 +225,8 @@ const AdminContent = ({
       </ContentBody>
 
       <Modal
-        open={showEditOrgDialog}
-        closeModal={() => setShowEditOrgDialog(false)}
+        open={showEditDialog}
+        closeModal={() => setShowEditDialog(false)}
         title="Edit Organisation"
         description={org?.orgName}
         closeButton
