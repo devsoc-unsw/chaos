@@ -43,7 +43,9 @@ const CampaignDetails = ({
           </p>
         </div>
       </div>
-      <p tw="flex items-center leading-relaxed">{description}</p>
+      <p tw="flex items-center leading-relaxed whitespace-pre-wrap">
+        {description}
+      </p>
 
       <div>
         <h3 tw="text-xl leading-loose">You&apos;re applying as:</h3>
