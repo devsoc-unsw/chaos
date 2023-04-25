@@ -2,9 +2,9 @@ import { DeleteForeverRounded } from "@mui/icons-material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import { Divider, IconButton, ListItemIcon, ListItemText } from "@mui/material";
-import { upload } from "@testing-library/user-event/dist/types/utility";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import "twin.macro";
 
 import { deleteCampaign, setCampaignCoverImage } from "api";
 import { FetchError } from "api/api";
