@@ -129,8 +129,9 @@ const AdminContent = ({
       return;
     }
 
+    let newOrgLogo;
     try {
-      await putOrgLogo(id, orgLogo);
+      newOrgLogo = await putOrgLogo(id, orgLogo);
     } catch (err) {
       if (err instanceof FetchError) {
         try {
@@ -155,7 +156,19 @@ const AdminContent = ({
         message: "Something went wrong on backend!",
         type: "error",
       });
+
+      return;
     }
+
+    const newOrgList = [...orgList];
+    console.log(id, newOrgLogo);
+    newOrgList[newOrgList.findIndex((org) => org.id === id)].icon = newOrgLogo;
+    setOrgList(newOrgList);
+
+    pushMessage({
+      message: "Updated organisation logo",
+      type: "success",
+    });
   };
 
   return (
