@@ -1,13 +1,13 @@
+import { PencilIcon } from "@heroicons/react/24/solid";
 import { DeleteForeverRounded } from "@mui/icons-material";
 import { Button, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
-import tw from "twin.macro";
-
-import Dropzone from "react-dropzone";
+import "twin.macro";
 
 import { FetchError } from "api/api";
 import { Modal } from "components";
 import TwButton from "components/Button";
+import Dropzone from "components/Dropzone";
 import { MessagePopupContext } from "contexts/MessagePopupContext";
 import { fileToUrl } from "utils";
 
@@ -28,8 +28,6 @@ import {
 
 import type { Campaign, Member, Organisation } from "../types";
 import type { Dispatch, MouseEvent, SetStateAction } from "react";
-
-import { PencilIcon } from "@heroicons/react/24/solid";
 
 type Props = {
   org: Organisation;
@@ -69,7 +67,7 @@ const AdminContent = ({
   useEffect(() => {
     if (orgLogo === undefined) {
       // have to be consistent in returning a function to make eslint happy
-      return () => { };
+      return () => {};
     }
 
     const reader = new FileReader();
@@ -221,41 +219,18 @@ const AdminContent = ({
         description={org?.orgName}
         closeButton
       >
-        <Dropzone
-          onDrop={([file]) => setOrgLogo(file)}
-          accept={{
-            "image/jpeg": [".jpeg"],
-            "image/jpg": [".jpg"],
-            "image/png": [".png"],
-            "image/gif": [".gif"],
-          }}
-          minSize={1024}
-          maxSize={3072000}
-        >
-          {({ getRootProps, getInputProps, isDragActive }) => (
-            <section>
-              <div
-                tw="h-64 p-4 flex items-center justify-center bg-gray-50 text-center border border-dashed border-gray-300 rounded cursor-pointer hover:border-brand-600 transition-colors"
-                css={{ ...(isDragActive && tw`border-brand-600`) }}
-                // eslint-disable-next-line react/jsx-props-no-spreading -- this *should* be fine here
-                {...getRootProps()}
-              >
-                {/* eslint-disable-next-line react/jsx-props-no-spreading -- this *should* be fine here */}
-                <input {...getInputProps()} />
-                {orgLogo === undefined ? (
-                  <p>
-                    Drag and drop your organisation logo image, or click to
-                    select an image
-                  </p>
-                ) : (
-                  <img
-                    tw="max-w-full max-h-full"
-                    src={imageSrc}
-                    alt="campaign cover"
-                  />
-                )}
-              </div>
-            </section>
+        <Dropzone onDrop={([file]) => setOrgLogo(file)}>
+          {orgLogo === undefined ? (
+            <p>
+              Drag and drop your organisation logo image, or click to select an
+              image
+            </p>
+          ) : (
+            <img
+              tw="max-w-full max-h-full"
+              src={imageSrc}
+              alt="campaign cover"
+            />
           )}
         </Dropzone>
         <TwButton onClick={() => void uploadOrgLogo()} tw="ml-auto">
