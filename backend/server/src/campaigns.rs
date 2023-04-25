@@ -275,12 +275,7 @@ pub async fn set_cover_image(
     })
     .await?;
 
-    let res = db
-        .run(move |conn| Campaign::get_cover_image(&conn, campaign_id))
-        .await;
-    let is_new_uuid = res.is_none();
-
-    let logo_uuid = res.unwrap_or(Uuid::new_v4().as_hyphenated().to_string());
+    let logo_uuid = Uuid::new_v4().as_hyphenated().to_string();
 
     let image = try_decode_data(image).await.or_else(|_| {
         Err(JsonErr(
@@ -294,10 +289,8 @@ pub async fn set_cover_image(
 
     let logo_uuid_clone = logo_uuid.clone();
 
-    if is_new_uuid {
-        db.run(move |conn| Campaign::set_cover_image(&conn, campaign_id, &logo_uuid_clone))
-            .await;
-    }
+    db.run(move |conn| Campaign::set_cover_image(&conn, campaign_id, &logo_uuid_clone))
+        .await;
 
     Ok(Json(get_http_image_path(
         ImageLocation::CAMPAIGNS,
