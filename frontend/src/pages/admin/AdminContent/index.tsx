@@ -1,7 +1,7 @@
 import { DeleteForeverRounded } from "@mui/icons-material";
 import { Button, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
-import "twin.macro";
+import tw from "twin.macro";
 
 import Dropzone from "react-dropzone";
 
@@ -69,7 +69,7 @@ const AdminContent = ({
   useEffect(() => {
     if (orgLogo === undefined) {
       // have to be consistent in returning a function to make eslint happy
-      return () => {};
+      return () => { };
     }
 
     const reader = new FileReader();
@@ -232,10 +232,11 @@ const AdminContent = ({
           minSize={1024}
           maxSize={3072000}
         >
-          {({ getRootProps, getInputProps }) => (
+          {({ getRootProps, getInputProps, isDragActive }) => (
             <section>
               <div
                 tw="h-64 p-4 flex items-center justify-center bg-gray-50 text-center border border-dashed border-gray-300 rounded cursor-pointer hover:border-brand-600 transition-colors"
+                css={{ ...(isDragActive && tw`border-brand-600`) }}
                 // eslint-disable-next-line react/jsx-props-no-spreading -- this *should* be fine here
                 {...getRootProps()}
               >
