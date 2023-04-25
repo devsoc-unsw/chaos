@@ -43,7 +43,7 @@ const ApplicationPage = () => {
   const [organisation, setOrganisation] = useState<Organisation>({
     id: -1,
     name: "",
-    logo: [],
+    logo: "",
     created_at: "",
     updated_at: "",
   });
