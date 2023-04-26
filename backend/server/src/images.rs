@@ -36,7 +36,7 @@ pub async fn try_decode_data(data: Data<'_>) -> Result<DynamicImage, ImageDecode
 }
 
 const HTTP_IMAGE_BASE_PATH: &str = "/images/";
-const IMAGE_BASE_PATH: &str = "./images/";
+pub const IMAGE_BASE_PATH: &str = "./images/";
 
 #[derive(EnumIter)]
 pub enum ImageLocation {
