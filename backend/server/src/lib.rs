@@ -16,3 +16,4 @@ pub mod question;
 pub mod role;
 pub mod state;
 pub mod user;
+pub mod images;

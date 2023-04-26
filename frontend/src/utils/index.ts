@@ -19,13 +19,7 @@ export const dateToStringForCampaignGrid = (dateObject: Date): string =>
 export const dateToDateString = (date: Date | string): string =>
   moment.utc(date).format("DD MMM YYYY");
 
-export const bytesToImage = (bytes: number[]): string =>
-  `data:image/png;base64,${btoa(
-    new Uint8Array(bytes).reduce(
-      (data, byte) => data + String.fromCharCode(byte),
-      ""
-    )
-  )}`;
+export const fileToUrl = (filename: string): string => `/api/${filename}`;
 
 export const fileToDataUrl = (file: File): Promise<string> => {
   const validFileTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif"];

@@ -14,7 +14,6 @@ export const ToggleButtonContainer = styled("div")`
   align-items: center;
   background-color: white;
   height: 100%;
-  width: 50%;
   margin-right: 80px;
 `;
 
