@@ -24,7 +24,6 @@ const ApplicationsListTabPanel = ({ application, setMark }: Props) => {
   });
 
   const updateComments = () => {
-    console.log(comments);
     const reqBody = {
       description: comments,
       application_id: application.applicationId,
@@ -91,7 +90,6 @@ const ApplicationsListTabPanel = ({ application, setMark }: Props) => {
           </Grid>
         </RatingChips>
 
-        {/* TODO CHAOS-18: save comments to backend */}
         <TextField
           css={{ "& textarea": tw`ring-0` }}
           id={`${application.applicationId}-comments`}
