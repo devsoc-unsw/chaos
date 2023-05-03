@@ -19,7 +19,7 @@ rocket_sync_db_pools = { version = "0.1.0-rc.2", features = ["diesel_postgres_po
 # pull rocket_cors from git master until crates.io artifact builds on stable
 rocket_cors = { git = "https://github.com/lawliet89/rocket_cors", branch = "master" }
 diesel = { version = "1.4.8", features = ["postgres", "r2d2", "chrono"] }
-diesel-derive-enum = { version = "1", features = ["postgres"] }
+diesel-derive-enum = { version = "2", features = ["postgres"] }
 dotenv = "0.15.0"
 dotenv_codegen = "0.15.0"
 reqwest = { version = "0.11.13", features = ["json"] }
