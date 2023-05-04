@@ -1,20 +1,25 @@
-use crate::database::{
-    models::{
-        Campaign, NewOrganisation, NewOrganisationUser, Organisation, OrganisationUser, SuperUser,
-        User,
-    },
-    schema::AdminLevel,
-    Database,
-};
 use crate::error::JsonErr;
+use crate::{
+    database::{
+        models::{
+            Campaign, NewOrganisation, NewOrganisationUser, Organisation, OrganisationUser,
+            SuperUser, User,
+        },
+        schema::AdminLevel,
+        Database,
+    },
+    images::{get_http_image_path, save_image, try_decode_data, ImageLocation},
+};
 use chrono::NaiveDateTime;
 use rocket::{
+    data::Data,
     delete, get,
     http::Status,
     post, put,
     serde::{json::Json, Deserialize, Serialize},
 };
 use std::collections::HashMap;
+use uuid::Uuid;
 
 #[derive(Serialize)]
 pub enum NewOrgError {
@@ -68,7 +73,12 @@ pub async fn get_from_id(
     db.run(move |conn| {
         Organisation::get_from_id(&conn, org_id)
             .ok_or(JsonErr(OrgError::OrgNotFound, Status::NotFound))
-            .map(|v| Json(v))
+            .map(|mut v| {
+                v.logo = v
+                    .logo
+                    .map(|logo_uuid| get_http_image_path(ImageLocation::ORGANISATIONS, &logo_uuid));
+                Json(v)
+            })
     })
     .await
 }
@@ -122,6 +132,51 @@ pub async fn get_admins(
     }
 }
 
+#[derive(Serialize)]
+pub enum LogoError {
+    Unauthorized,
+    ImageDeletionFailure,
+    ImageStoreFailure,
+}
+
+#[put("/<org_id>/logo", data = "<image>")]
+pub async fn set_logo(
+    org_id: i32,
+    user: User,
+    db: Database,
+    image: Data<'_>,
+) -> Result<Json<String>, JsonErr<LogoError>> {
+    db.run(move |conn| {
+        OrganisationUser::organisation_admin_level(org_id, user.id, &conn)
+            .is_at_least_director()
+            .check()
+            .or_else(|_| Err(JsonErr(LogoError::Unauthorized, Status::Forbidden)))
+    })
+    .await?;
+
+    let logo_uuid = Uuid::new_v4().as_hyphenated().to_string();
+
+    let image = try_decode_data(image).await.or_else(|_| {
+        Err(JsonErr(
+            LogoError::ImageDeletionFailure,
+            Status::InternalServerError,
+        ))
+    })?;
+
+    save_image(image, ImageLocation::ORGANISATIONS, &logo_uuid)
+        .map_err(|_| JsonErr(LogoError::ImageStoreFailure, Status::InternalServerError))?;
+
+    let logo_uuid_clone = logo_uuid.clone();
+
+    db.run(move |conn| Organisation::set_logo(&conn, org_id, &logo_uuid_clone))
+        .await;
+
+    Ok(Json(get_http_image_path(
+        ImageLocation::ORGANISATIONS,
+        &logo_uuid,
+    )))
+}
+
 #[put("/<org_id>/admins", data = "<admins>")]
 pub async fn set_admins(
     org_id: i32,
@@ -164,7 +219,7 @@ pub async fn is_admin(org_id: i32, user: User, db: Database) -> Json<bool> {
 pub struct CampaignResponse {
     pub id: i32,
     pub name: String,
-    pub cover_image: Option<Vec<u8>>,
+    pub cover_image: Option<String>,
     pub description: String,
     pub starts_at: NaiveDateTime,
     pub ends_at: NaiveDateTime,
@@ -176,7 +231,9 @@ impl std::convert::From<Campaign> for CampaignResponse {
         Self {
             id: campaign.id,
             name: campaign.name,
-            cover_image: campaign.cover_image,
+            cover_image: campaign
+                .cover_image
+                .map(|image| get_http_image_path(ImageLocation::CAMPAIGNS, &image)),
             description: campaign.description,
             starts_at: campaign.starts_at,
             ends_at: campaign.ends_at,

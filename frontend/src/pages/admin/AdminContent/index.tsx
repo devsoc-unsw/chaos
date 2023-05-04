@@ -1,14 +1,17 @@
+import { PencilIcon } from "@heroicons/react/24/solid";
 import { DeleteForeverRounded } from "@mui/icons-material";
 import { Button, ToggleButton, ToggleButtonGroup } from "@mui/material";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import "twin.macro";
 
 import { FetchError } from "api/api";
 import { Modal } from "components";
 import TwButton from "components/Button";
+import Dropzone from "components/Dropzone";
 import { MessagePopupContext } from "contexts/MessagePopupContext";
+import { fileToUrl } from "utils";
 
-import { doDeleteOrg } from "../../../api";
+import { doDeleteOrg, putOrgLogo } from "../../../api";
 import { OrgContext } from "../OrgContext";
 
 import AdminCampaignContent from "./AdminCampaignContent";
@@ -54,9 +57,29 @@ const AdminContent = ({
 
   const [windowSelected, setWindowSelected] = useState("campaigns");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [orgLogo, setOrgLogo] = useState<File>();
+  const [imageSrc, setImageSrc] = useState<string>();
   const { orgSelected, setOrgSelected, orgList, setOrgList } =
     useContext(OrgContext);
   const pushMessage = useContext(MessagePopupContext);
+
+  useEffect(() => {
+    if (orgLogo === undefined) {
+      // have to be consistent in returning a function to make eslint happy
+      return () => {};
+    }
+
+    const reader = new FileReader();
+    reader.addEventListener("load", () => {
+      setImageSrc(reader.result as string);
+    });
+    reader.readAsDataURL(orgLogo);
+
+    return () => {
+      reader.abort();
+    };
+  }, [orgLogo]);
 
   const handleDeletion = async () => {
     try {
@@ -97,33 +120,92 @@ const AdminContent = ({
     }
   };
 
+  const uploadOrgLogo = async () => {
+    if (orgLogo === undefined) {
+      pushMessage({
+        message: "No organisation logo given.",
+        type: "error",
+      });
+      return;
+    }
+
+    let newOrgLogo;
+    try {
+      newOrgLogo = await putOrgLogo(id, orgLogo);
+    } catch (err) {
+      if (err instanceof FetchError) {
+        try {
+          const data = (await err.resp.json()) as string;
+
+          pushMessage({
+            message: `Internal Error: ${data}`,
+            type: "error",
+          });
+        } catch {
+          pushMessage({
+            message: `Internal Error: Response Invalid`,
+            type: "error",
+          });
+        }
+
+        return;
+      }
+
+      console.error("Something went wrong");
+      pushMessage({
+        message: "Something went wrong on backend!",
+        type: "error",
+      });
+
+      return;
+    }
+
+    const newOrgList = [...orgList];
+    newOrgList[newOrgList.findIndex((org) => org.id === id)].icon = newOrgLogo;
+    setOrgList(newOrgList);
+
+    pushMessage({
+      message: "Updated organisation logo",
+      type: "success",
+    });
+  };
+
   return (
     <AdminContentContainer>
       <ContentHeader>
         <OrgInfo>
-          <OrgInfoImage src={icon} />
+          <OrgInfoImage src={fileToUrl(icon)} />
           <OrgInfoName>{orgName}</OrgInfoName>
         </OrgInfo>
-        <ToggleButtonContainer>
-          <ToggleButtonGroup
-            color="primary"
-            value={windowSelected}
-            size="large"
-            exclusive
-            onChange={handleWindowChange}
+        <div tw="flex gap-4 items-center">
+          <button
+            tw="text-gray-500 hover:text-gray-800 transition-colors"
+            type="button"
+            onClick={() => setShowEditDialog(true)}
           >
-            <ToggleButton value="campaigns">Campaigns</ToggleButton>
-            <ToggleButton value="members">Members</ToggleButton>
-            <Button
-              variant="contained"
-              color="error"
-              disableElevation
-              onClick={() => setShowDeleteDialog(true)}
+            <PencilIcon tw="w-8 h-8" />
+          </button>
+          <ToggleButtonContainer>
+            <ToggleButtonGroup
+              color="primary"
+              value={windowSelected}
+              size="large"
+              exclusive
+              onChange={handleWindowChange}
             >
-              <DeleteForeverRounded />
-            </Button>
-          </ToggleButtonGroup>
-        </ToggleButtonContainer>
+              <ToggleButton value="campaigns">Campaigns</ToggleButton>
+              <ToggleButton value="members">Members</ToggleButton>
+              <Button
+                variant="contained"
+                color="error"
+                disableElevation
+                onClick={() => setShowDeleteDialog(true)}
+              >
+                <DeleteForeverRounded />
+              </Button>
+            </ToggleButtonGroup>
+          </ToggleButtonContainer>
+        </div>
       </ContentHeader>
       <ContentBody>
         {windowSelected === "campaigns" && (
@@ -143,10 +225,37 @@ const AdminContent = ({
       </ContentBody>
 
       <Modal
+        open={showEditDialog}
+        closeModal={() => setShowEditDialog(false)}
+        title="Edit Organisation"
+        description={org?.orgName}
+        closeButton
+      >
+        <Dropzone onDrop={([file]) => setOrgLogo(file)}>
+          {orgLogo === undefined ? (
+            <p>
+              Drag and drop your organisation logo image, or click to select an
+              image
+            </p>
+          ) : (
+            <img
+              tw="max-w-full max-h-full"
+              src={imageSrc}
+              alt="campaign cover"
+            />
+          )}
+        </Dropzone>
+        <TwButton onClick={() => void uploadOrgLogo()} tw="ml-auto">
+          Update organisation logo
+        </TwButton>
+      </Modal>
+
+      <Modal
         open={showDeleteDialog}
         closeModal={() => setShowDeleteDialog(false)}
         title="Delete Organisation"
         description={org?.orgName}
+        closeButton
       >
         <p>
           Are you sure you want to delete this organisation?{" "}

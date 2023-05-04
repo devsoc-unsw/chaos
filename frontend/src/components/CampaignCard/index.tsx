@@ -11,7 +11,7 @@ import type { CampaignWithRoles } from "types/api";
 
 type Props = {
   campaignId?: number;
-  organisationLogo: string;
+  organisationLogo?: string;
   title: string;
   appliedFor: CampaignWithRoles["applied_for"];
   positions: Position[];
