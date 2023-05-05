@@ -192,3 +192,12 @@ export type UserResponse = {
   degree_name: string;
   degree_starting_year: number;
 };
+
+export type PostCommentRespone = {
+  id: number;
+  application_id: number;
+  commenter_user_id: number;
+  description: string;
+  created_at: string;
+  updated_at: string;
+};
