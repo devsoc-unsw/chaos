@@ -3,7 +3,6 @@ import moment from "moment";
 import "twin.macro";
 
 import Card from "components/Card";
-import { bytesToImage } from "utils";
 
 import type { CampaignWithRoles, Organisation, UserResponse } from "types/api";
 
@@ -32,7 +31,7 @@ const CampaignDetails = ({
         <img
           tw="h-20 rounded shadow-md"
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          src={bytesToImage(organisation.logo!)}
+          src={organisation.logo && `/api/${organisation.logo}`}
           alt={organisation.name}
         />
         <div tw="flex flex-col justify-center gap-2">
@@ -43,7 +42,9 @@ const CampaignDetails = ({
           </p>
         </div>
       </div>
-      <p tw="flex items-center leading-relaxed">{description}</p>
+      <p tw="flex items-center leading-relaxed whitespace-pre-wrap">
+        {description}
+      </p>
 
       <div>
         <h3 tw="text-xl leading-loose">You&apos;re applying as:</h3>
@@ -63,7 +64,7 @@ const CampaignDetails = ({
       <aside tw="overflow-hidden rounded shadow-md bg-[#edeeef] aspect-w-16 aspect-h-9">
         <img
           tw="object-contain w-full h-full"
-          src={headerImage}
+          src={headerImage && `/api/${headerImage}`}
           alt={campaignName}
         />
       </aside>

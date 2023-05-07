@@ -1,7 +1,6 @@
 import tw from "twin.macro";
 
 import { CampaignCard, Transition } from "components";
-import { bytesToImage } from "utils";
 
 import CampaignLoading from "./CampaignLoading";
 
@@ -73,10 +72,10 @@ const CampaignGrid = ({
             }))}
             startDate={new Date(campaign.campaign.starts_at)}
             endDate={new Date(campaign.campaign.ends_at)}
-            img={bytesToImage(campaign.campaign.cover_image)}
-            organisationLogo={bytesToImage(
-              organisations[campaign.campaign.organisation_id].logo!
-            )}
+            img={campaign.campaign.cover_image}
+            organisationLogo={
+              organisations[campaign.campaign.organisation_id].logo
+            }
           />
         </Transition>
       ))}

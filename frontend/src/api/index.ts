@@ -109,11 +109,19 @@ export const getOrganisation = (organisationId: number) =>
     path: `/organisation/${organisationId}`,
   });
 
-export const createOrganisation = (name: string, logo: number[]) =>
+export const createOrganisation = (name: string) =>
   authenticatedRequest<Organisation>({
     method: "POST",
     path: "/organisation/",
-    body: { name, logo },
+    body: { name },
+  });
+
+export const putOrgLogo = (orgId: number, logo: File) =>
+  authenticatedRequest<string>({
+    method: "PUT",
+    path: `/organisation/${orgId}/logo`,
+    body: logo,
+    jsonBody: false,
   });
 
 export const newApplication = (roleId: number) =>
@@ -196,6 +204,14 @@ export const createCampaign = (
     method: "POST",
     path: "/campaign",
     body: { campaign, roles, questions },
+  });
+
+export const setCampaignCoverImage = (campaignId: number, cover_image: File) =>
+  authenticatedRequest<string>({
+    method: "PUT",
+    path: `/campaign/${campaignId}/cover_image`,
+    body: cover_image,
+    jsonBody: false,
   });
 
 export const deleteCampaign = (id: number) =>

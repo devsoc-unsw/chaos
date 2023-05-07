@@ -17,4 +17,4 @@ pub mod role;
 pub mod state;
 pub mod question_types;
 pub mod user;
-
+pub mod images;

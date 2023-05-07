@@ -1,7 +1,7 @@
 use diesel::PgConnection;
 use serde::{Deserialize, Serialize};
 
-use crate::database::{schema::QuestionTypes, Database, models::{Question, Answer}};
+use crate::database::{schema::QuestionTypes, models::{Question, Answer}};
 /**
  * In this file, add new question types that we need to implement
  * e.g.

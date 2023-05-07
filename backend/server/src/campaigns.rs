@@ -1,13 +1,19 @@
-use crate::{database::{
-    models::{
-        Campaign, CampaignWithRoles, NewCampaignInput, NewQuestion, OrganisationUser, Role,
-        RoleUpdate, UpdateCampaignInput, User,
-    },
-    Database, schema::QuestionTypes,
-}, question_types::QuestionDataEnum};
 use crate::error::JsonErr;
-use rocket::{delete, get, http::Status, post, put, serde::json::Json};
+use crate::{
+    database::{
+        models::{
+            Campaign, CampaignWithRoles, NewCampaignInput, NewQuestion, OrganisationUser, Role,
+            RoleUpdate, UpdateCampaignInput, User,
+        },
+        Database, schema::QuestionTypes,
+    },
+    images::{get_http_image_path, save_image, try_decode_data, ImageLocation},
+    question_types::QuestionDataEnum
+};
+use rocket::{data::Data, delete, get, http::Status, post, put, serde::json::Json};
 use serde::{Deserialize, Serialize};
+
+use uuid::Uuid;
 
 #[derive(Serialize)]
 pub enum CampaignError {
@@ -19,9 +25,16 @@ pub enum CampaignError {
 
 #[get("/<campaign_id>")]
 pub async fn get(campaign_id: i32, db: Database) -> Result<Json<Campaign>, JsonErr<CampaignError>> {
-    let campaign = db
+    let mut campaign = db
         .run(move |conn| Campaign::get_from_id(conn, campaign_id))
         .await;
+
+    campaign = campaign.map(|mut campaign| {
+        campaign.cover_image = campaign
+            .cover_image
+            .map(|logo_uuid| get_http_image_path(ImageLocation::ORGANISATIONS, &logo_uuid));
+        campaign
+    });
 
     match campaign {
         Some(campaign) => {
@@ -43,11 +56,18 @@ pub struct DashboardCampaignGroupings {
 
 #[get("/all")]
 pub async fn get_all_campaigns(user: User, db: Database) -> Json<DashboardCampaignGroupings> {
+    fn with_http_cover_images(campaigns: Vec<CampaignWithRoles>) -> Vec<CampaignWithRoles> {
+        campaigns
+            .into_iter()
+            .map(CampaignWithRoles::with_http_cover_image)
+            .collect()
+    }
+
     let (current_campaigns, past_campaigns) = db
         .run(move |conn| {
             (
-                Campaign::get_all_public_with_roles(conn, user.id),
-                Campaign::get_all_public_ended_with_roles(conn, user.id),
+                with_http_cover_images(Campaign::get_all_public_with_roles(conn, user.id)),
+                with_http_cover_images(Campaign::get_all_public_ended_with_roles(conn, user.id)),
             )
         })
         .await;
@@ -245,4 +265,49 @@ pub async fn roles(
         Ok(Json(RolesResponse { roles }))
     })
     .await
+}
+
+#[derive(Serialize)]
+pub enum LogoError {
+    Unauthorized,
+    ImageDeletionFailure,
+    ImageStoreFailure,
+}
+
+#[put("/<campaign_id>/cover_image", data = "<image>")]
+pub async fn set_cover_image(
+    campaign_id: i32,
+    user: User,
+    db: Database,
+    image: Data<'_>,
+) -> Result<Json<String>, JsonErr<LogoError>> {
+    db.run(move |conn| {
+        OrganisationUser::campaign_admin_level(campaign_id, user.id, &conn)
+            .is_at_least_director()
+            .check()
+            .or_else(|_| Err(JsonErr(LogoError::Unauthorized, Status::Forbidden)))
+    })
+    .await?;
+
+    let logo_uuid = Uuid::new_v4().as_hyphenated().to_string();
+
+    let image = try_decode_data(image).await.or_else(|_| {
+        Err(JsonErr(
+            LogoError::ImageDeletionFailure,
+            Status::InternalServerError,
+        ))
+    })?;
+
+    save_image(image, ImageLocation::CAMPAIGNS, &logo_uuid)
+        .map_err(|_| JsonErr(LogoError::ImageStoreFailure, Status::InternalServerError))?;
+
+    let logo_uuid_clone = logo_uuid.clone();
+
+    db.run(move |conn| Campaign::set_cover_image(&conn, campaign_id, &logo_uuid_clone))
+        .await;
+
+    Ok(Json(get_http_image_path(
+        ImageLocation::CAMPAIGNS,
+        &logo_uuid,
+    )))
 }

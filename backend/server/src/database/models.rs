@@ -1,4 +1,5 @@
 use crate::question_types::QuestionDataEnum;
+use crate::images::{get_http_image_path, ImageLocation};
 
 use super::schema::AdminLevel;
 use super::schema::ApplicationStatus;
@@ -14,6 +15,8 @@ use diesel::PgConnection;
 use rocket::FromForm;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
+use std::fs::remove_file;
+use std::path::Path;
 
 #[derive(Queryable)]
 pub struct User {
@@ -152,7 +155,7 @@ impl NewUser {
 pub struct Organisation {
     pub id: i32,
     pub name: String,
-    pub logo: Option<Vec<u8>>,
+    pub logo: Option<String>,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
@@ -161,7 +164,7 @@ pub struct Organisation {
 #[table_name = "organisations"]
 pub struct NewOrganisation {
     pub name: String,
-    pub logo: Option<Vec<u8>>,
+    pub logo: Option<String>,
 }
 
 impl Organisation {
@@ -199,6 +202,10 @@ impl Organisation {
 
     pub fn delete_deep(conn: &PgConnection, org_id: i32) -> Option<()> {
         use crate::database::schema::organisation_users::dsl::*;
+        if let Some(logo) = Organisation::get_logo(conn, org_id) {
+            remove_file(Path::new(&logo)).ok();
+        }
+
         let campaigns = Campaign::get_all_from_org_id(conn, org_id);
 
         for campaign in campaigns {
@@ -255,6 +262,27 @@ impl Organisation {
         .set(admin_level.eq(AdminLevel::Admin))
         .execute(conn)
         .ok()
+    }
+
+    pub fn get_logo(conn: &PgConnection, org_id: i32) -> Option<String> {
+        use crate::database::schema::organisations::dsl::*;
+
+        organisations
+            .filter(id.eq(org_id))
+            .select(logo)
+            .first(conn)
+            .unwrap()
+    }
+
+    pub fn set_logo(conn: &PgConnection, org_id: i32, new_logo: &str) -> String {
+        use crate::database::schema::organisations::dsl::*;
+
+        diesel::update(organisations.find(org_id))
+            .set(logo.eq(new_logo))
+            .get_result::<Organisation>(conn)
+            .unwrap()
+            .logo
+            .unwrap()
     }
 }
 
@@ -366,7 +394,7 @@ pub struct Campaign {
     pub id: i32,
     pub organisation_id: i32,
     pub name: String,
-    pub cover_image: Option<Vec<u8>>,
+    pub cover_image: Option<String>,
     pub description: String,
     pub starts_at: NaiveDateTime,
     pub ends_at: NaiveDateTime,
@@ -378,7 +406,7 @@ pub struct Campaign {
 #[derive(FromForm, Deserialize)]
 pub struct UpdateCampaignInput {
     pub name: String,
-    pub cover_image: Option<Vec<u8>>,
+    pub cover_image: Option<String>,
     pub description: String,
     pub starts_at: String,
     pub ends_at: String,
@@ -389,7 +417,7 @@ pub struct UpdateCampaignInput {
 #[table_name = "campaigns"]
 pub struct UpdateCampaignChangeset {
     pub name: String,
-    pub cover_image: Option<Vec<u8>>,
+    pub cover_image: Option<String>,
     pub description: String,
     pub starts_at: NaiveDateTime,
     pub ends_at: NaiveDateTime,
@@ -401,7 +429,7 @@ pub struct UpdateCampaignChangeset {
 pub struct NewCampaign {
     pub organisation_id: i32,
     pub name: String,
-    pub cover_image: Option<Vec<u8>>,
+    pub cover_image: Option<String>,
     pub description: String,
     pub starts_at: NaiveDateTime,
     pub ends_at: NaiveDateTime,
@@ -412,7 +440,6 @@ pub struct NewCampaign {
 pub struct NewCampaignInput {
     pub organisation_id: i32,
     pub name: String,
-    pub cover_image: Option<Vec<u8>>,
     pub description: String,
     pub starts_at: String,
     pub ends_at: String,
@@ -427,6 +454,13 @@ pub struct CampaignWithRoles {
     pub applied_for: Vec<(i32, ApplicationStatus)>,
 }
 
+impl CampaignWithRoles {
+    pub fn with_http_cover_image(mut self) -> Self {
+        self.campaign = self.campaign.with_http_cover_image();
+        self
+    }
+}
+
 impl Campaign {
     pub fn get_all(conn: &PgConnection) -> Vec<Campaign> {
         use crate::database::schema::campaigns::dsl::*;
@@ -435,6 +469,34 @@ impl Campaign {
             .order(id.asc())
             .load(conn)
             .unwrap_or_else(|_| vec![])
+    }
+
+    pub fn get_cover_image(conn: &PgConnection, campaign_id: i32) -> Option<String> {
+        use crate::database::schema::campaigns::dsl::*;
+
+        campaigns
+            .filter(id.eq(campaign_id))
+            .select(cover_image)
+            .first(conn)
+            .unwrap()
+    }
+
+    pub fn with_http_cover_image(mut self) -> Self {
+        self.cover_image = self
+            .cover_image
+            .map(|logo_uuid| get_http_image_path(ImageLocation::CAMPAIGNS, &logo_uuid));
+        self
+    }
+
+    pub fn set_cover_image(conn: &PgConnection, campaign_id: i32, new_cover_image: &str) -> String {
+        use crate::database::schema::campaigns::dsl::*;
+
+        diesel::update(campaigns.find(campaign_id))
+            .set(cover_image.eq(new_cover_image))
+            .get_result::<Campaign>(conn)
+            .unwrap()
+            .cover_image
+            .unwrap()
     }
 
     pub fn is_running(&self) -> bool {
@@ -588,7 +650,7 @@ impl Campaign {
         let new_campaign = NewCampaign {
             organisation_id: new_campaign.organisation_id,
             name: new_campaign.name.clone(),
-            cover_image: new_campaign.cover_image.clone(),
+            cover_image: None,
             description: new_campaign.description.clone(),
             starts_at: NaiveDateTime::parse_from_str(&new_campaign.starts_at, "%Y-%m-%d %H:%M:%S")
                 .ok()?,
@@ -619,6 +681,10 @@ impl Campaign {
 
     pub fn delete_deep(conn: &PgConnection, campaign_id: i32) -> Option<()> {
         use crate::database::schema::roles::dsl::{campaign_id as dsl_role_campaign_id, roles};
+
+        if let Some(cover_image) = Campaign::get_cover_image(conn, campaign_id) {
+            remove_file(Path::new(&cover_image)).ok()?;
+        }
 
         let role_items: Vec<Role> = roles
             .filter(dsl_role_campaign_id.eq(campaign_id))
@@ -1177,7 +1243,7 @@ pub struct Comment {
     pub updated_at: NaiveDateTime,
 }
 
-#[derive(Insertable, FromForm)]
+#[derive(Insertable)]
 #[table_name = "comments"]
 pub struct NewComment {
     pub application_id: i32,
@@ -1324,7 +1390,7 @@ pub struct GetQuestionsResponse {
 pub struct CampaignInfo {
     pub id: i32,
     pub name: String,
-    pub cover_image: Option<Vec<u8>>,
+    pub cover_image: Option<String>,
     pub starts_at: NaiveDateTime,
     pub ends_at: NaiveDateTime,
 }
@@ -1334,7 +1400,9 @@ impl std::convert::From<Campaign> for CampaignInfo {
         Self {
             id: campaign.id,
             name: campaign.name,
-            cover_image: campaign.cover_image,
+            cover_image: campaign
+                .cover_image
+                .map(|image| get_http_image_path(ImageLocation::CAMPAIGNS, &image)),
             starts_at: campaign.starts_at,
             ends_at: campaign.ends_at,
         }
@@ -1377,7 +1445,7 @@ impl OrganisationUserInfo {
 pub struct OrganisationInfo {
     pub id: i32,
     pub name: String,
-    pub logo: Option<Vec<u8>>,
+    pub logo: Option<String>,
     pub members: Vec<OrganisationUserInfo>,
     pub campaigns: Vec<CampaignInfo>,
 }
@@ -1388,7 +1456,9 @@ impl OrganisationInfo {
         Self {
             id: organisation.id,
             name: organisation.name,
-            logo: organisation.logo,
+            logo: organisation
+                .logo
+                .map(|logo_uuid| get_http_image_path(ImageLocation::ORGANISATIONS, &logo_uuid)),
             members: OrganisationUserInfo::get_all_from_organisation_id(conn, organisation.id),
             campaigns: Campaign::get_all_from_org_id(conn, organisation.id)
                 .into_iter()

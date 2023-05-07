@@ -32,8 +32,8 @@ export type Campaign = {
   setInterviewStage: Dispatch<SetStateAction<boolean>>;
   scoringStage: boolean;
   setScoringStage: Dispatch<SetStateAction<boolean>>;
-  cover: string | null;
-  setCover: Dispatch<SetStateAction<string | null>>;
+  cover: File | null;
+  setCover: Dispatch<SetStateAction<File | null>>;
   error: string | null;
   setError: Dispatch<SetStateAction<string | null>>;
   roles: Role[];

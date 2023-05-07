@@ -40,7 +40,7 @@ type FetchReturn<T> = {
   aborted: boolean;
 } & ({ error: true; errorMsg: string } | { error: false; errorMsg: undefined });
 
-type Options<T> = Parameters<typeof fetch>[1] & {
+type Options<T> = Omit<Parameters<typeof fetch>[1], "body"> & {
   headers?: { [k: string]: string };
   abortBehaviour?: AbortBehaviour;
   deps?: unknown[];
