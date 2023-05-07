@@ -783,10 +783,8 @@ impl Role {
     }
 
     pub fn delete_children(conn: &PgConnection, role: Role) -> Option<()> {
-        use diesel::pg::expression::dsl::any;
-
         let question_items: Vec<Question> = questions::table
-            .filter(any(questions::role_ids).eq(role.id))
+            .filter(questions::role_id.eq(role.id))
             .load(conn)
             .map_err(|x| {
                 eprintln!("error in delete_children: {x:?}");
@@ -794,7 +792,7 @@ impl Role {
             })
             .ok()?;
 
-        diesel::delete(questions::table.filter(any(questions::role_ids).eq(role.id)))
+        diesel::delete(questions::table.filter(questions::role_id.eq(role.id)))
             .execute(conn)
             .map_err(|x| {
                 eprintln!("error in delete_children: {x:?}");
@@ -996,7 +994,7 @@ impl NewApplication {
 #[table_name = "questions"]
 pub struct Question {
     pub id: i32,
-    pub role_ids: Vec<i32>,
+    pub role_id: Option<i32>,
     pub title: String,
     pub description: Option<String>,
     pub max_bytes: i32,
@@ -1023,7 +1021,7 @@ pub struct Question {
 #[derive(Insertable, Serialize, Deserialize)]
 #[table_name = "questions"]
 pub struct NewQuestion {
-    pub role_ids: Vec<i32>,
+    pub role_id: Option<i32>,
     pub title: String,
     pub description: Option<String>,
     #[serde(default)]
@@ -1036,7 +1034,7 @@ pub struct NewQuestion {
 #[derive(Serialize)]
 pub struct QuestionResponse {
     pub id: i32,
-    pub role_ids: Vec<i32>,
+    pub role_id: Option<i32>,
     pub title: String,
     pub description: Option<String>,
     pub max_bytes: i32,
@@ -1049,7 +1047,7 @@ impl std::convert::From<(Question, QuestionDataEnum)> for QuestionResponse {
     fn from(question_with_data: (Question, QuestionDataEnum)) -> Self {
         Self {
             id: question_with_data.0.id,
-            role_ids: question_with_data.0.role_ids,
+            role_id: question_with_data.0.role_id,
             title: question_with_data.0.title,
             description: question_with_data.0.description,
             max_bytes: question_with_data.0.max_bytes,
@@ -1079,9 +1077,7 @@ pub struct UpdateQuestionInput {
 
 impl Question {
     pub fn get_first_role(&self) -> i32 {
-        *self
-            .role_ids
-            .get(0)
+        self.role_id
             .expect("Question should be for at least one role")
     }
 
@@ -1102,7 +1098,7 @@ impl Question {
 
     pub fn get_all_from_role_id(conn: &PgConnection, role_id_val: i32) -> Vec<Question> {
         diesel::sql_query(&format!(
-            "select * from questions where {} = any(role_ids)",
+            "select * from questions where {} = role_id or role_id is null",
             role_id_val
         ))
         .load::<Question>(conn)
@@ -1111,7 +1107,7 @@ impl Question {
 
     pub fn delete_all_from_role_id(conn: &PgConnection, role_id_val: i32) -> bool {
         diesel::sql_query(&format!(
-            "delete from questions where {} = any(role_ids)",
+            "delete from questions where {} = role_id",
             role_id_val
         ))
         .execute(conn)

@@ -114,6 +114,7 @@ fn default_max_bytes() -> i32 {
 #[derive(Serialize, Deserialize)]
 pub struct QuestionInput {
     pub title: String,
+    pub common_question: bool,
     pub description: Option<String>,
     #[serde(default = "default_max_bytes")]
     pub max_bytes: i32,
@@ -140,7 +141,7 @@ pub async fn new(
     let NewCampaignWithData {
         campaign,
         roles,
-        questions,
+        mut questions,
     } = inner;
 
     let mut question_data:Vec<QuestionDataEnum> = Vec::new();
@@ -151,11 +152,11 @@ pub async fn new(
         });
 
     let mut new_questions: Vec<NewQuestion> = questions
-        .into_iter()
+        .iter_mut()
         .map(|x| NewQuestion {
-            role_ids: vec![],
-            title: x.title,
-            description: x.description,
+            role_id: None,
+            title: x.title.clone(),
+            description: x.description.clone(),
             max_bytes: x.max_bytes,
             required: x.required,
             question_type: x.question_type,
@@ -188,23 +189,29 @@ pub async fn new(
             })?;
 
             for question in role.questions_for_role {
-                if question < new_questions.len() {
-                    new_questions[question].role_ids.push(inserted_role.id);
+                if questions[question].common_question {
+                    // If question is common
+                    new_questions[question].role_id = None;
+                } else if let None = new_questions[question].role_id {
+                    // If question is unique and no role_id assigned to it
+                    new_questions[question].role_id = Option::from(inserted_role.id);
+                } else {
+                    // If question is meant to be unique, but already has a role_id assigned to it
+                    eprintln!("Question is not common, yet has multiple roles asking for it");
+                    return Err(JsonErr(CampaignError::UnableToCreate, Status::BadRequest));
                 }
             }
         }
 
         for question in new_questions {
-            if question.role_ids.len() == 0 {
-                return Err(JsonErr(CampaignError::InvalidInput, Status::BadRequest));
-            }
-            let inserted_question = question.insert(conn).ok_or_else(|| {
+            question.insert(conn).ok_or_else(|| {
                 eprintln!("Failed to create question for some reason");
                 JsonErr(CampaignError::UnableToCreate, Status::InternalServerError)
             })?;
 
             // Insert QuestionDataEnum into db here
-
+            // Use the method insert_question_data() of QuestionDataEnum
+            todo!();
         }
 
         Ok(Json(campaign))
