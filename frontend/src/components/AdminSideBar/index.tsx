@@ -1,7 +1,6 @@
 import { useState } from "react";
 
 import { createOrganisation, putOrgLogo } from "../../api";
-import { fileToUrl } from "../../utils";
 import CreateOrganisationForm from "../CreateOrganisationForm";
 
 import {
@@ -122,7 +121,7 @@ const AdminSidebar = ({
           <OrgButton value={idx} onClick={() => setOrgSelected(idx)}>
             <OrgButtonContent>
               <OrgIcon>
-                <OrgIconImage src={fileToUrl(it.icon)} />
+                <OrgIconImage src={it.icon} />
               </OrgIcon>
               <OrgName>{it.orgName}</OrgName>
             </OrgButtonContent>

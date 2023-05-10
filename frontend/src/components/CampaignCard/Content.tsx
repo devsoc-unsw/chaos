@@ -2,7 +2,6 @@ import moment from "moment";
 import "twin.macro";
 
 import Card from "components/Card";
-import { fileToUrl } from "utils";
 
 import CampaignStatus from "./CampaignStatus";
 
@@ -51,8 +50,7 @@ const Content = ({
       <header tw="flex items-center gap-1.5 p-3">
         <img
           tw="w-10 h-10 rounded-sm"
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          src={fileToUrl(organisationLogo!)}
+          src={organisationLogo}
           alt="Organisation"
         />
         <div tw="flex flex-col">
@@ -68,7 +66,7 @@ const Content = ({
       <div tw="flex items-center justify-center overflow-hidden bg-[#edeeef] aspect-w-16 aspect-h-9">
         <img
           tw="object-contain w-full max-h-full"
-          src={fileToUrl(img)}
+          src={img}
           alt="Campaign Cover"
         />
       </div>

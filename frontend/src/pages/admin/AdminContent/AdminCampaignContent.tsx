@@ -167,7 +167,7 @@ const AdminCampaignContent = ({ campaigns, setCampaigns, orgId }: Props) => {
         <div>
           <CampaignListItem>
             <AdminListItemButton onClick={(_) => navigate(`review/${c.id}`)}>
-              <CampaignListItemImage src={`/api/${c.image}`} />
+              <CampaignListItemImage src={c.image} />
               <ListItemText sx={{ textAlign: "center" }}>
                 {c.title}
               </ListItemText>
