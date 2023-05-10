@@ -35,7 +35,7 @@ pub async fn try_decode_data(data: Data<'_>) -> Result<DynamicImage, ImageDecode
     data.open(5.mebibytes()).into_bytes().await.map(|bytes| try_decode_bytes(bytes.to_vec())).map_err(|e| e.into()).and_then(|v| v.map_err(|e| e.into()))
 }
 
-const HTTP_IMAGE_BASE_PATH: &str = "/api/images/";
+const HTTP_IMAGE_BASE_PATH: &str = "/api/static/images/";
 pub const IMAGE_BASE_PATH: &str = "./images/";
 
 #[derive(EnumIter)]
