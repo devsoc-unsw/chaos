@@ -19,8 +19,6 @@ export const dateToStringForCampaignGrid = (dateObject: Date): string =>
 export const dateToDateString = (date: Date | string): string =>
   moment.utc(date).format("DD MMM YYYY");
 
-export const fileToUrl = (filename: string): string => `/api/${filename}`;
-
 export const fileToDataUrl = (file: File): Promise<string> => {
   const validFileTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif"];
   const valid = validFileTypes.find((type) => type === file.type);

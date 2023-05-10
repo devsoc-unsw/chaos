@@ -9,7 +9,6 @@ import { Modal } from "components";
 import TwButton from "components/Button";
 import Dropzone from "components/Dropzone";
 import { MessagePopupContext } from "contexts/MessagePopupContext";
-import { fileToUrl } from "utils";
 
 import { doDeleteOrg, putOrgLogo } from "../../../api";
 import { OrgContext } from "../OrgContext";
@@ -174,7 +173,7 @@ const AdminContent = ({
     <AdminContentContainer>
       <ContentHeader>
         <OrgInfo>
-          <OrgInfoImage src={fileToUrl(icon)} />
+          <OrgInfoImage src={icon} />
           <OrgInfoName>{orgName}</OrgInfoName>
         </OrgInfo>
         <div tw="flex gap-4 items-center">
