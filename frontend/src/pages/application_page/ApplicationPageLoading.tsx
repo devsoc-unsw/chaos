@@ -35,6 +35,8 @@ const Bars = ({
   <div tw="flex flex-col gap-1.5">
     {styles.map((css, i) => (
       <PulsingBar
+        // eslint-disable-next-line react/no-array-index-key
+        key={i}
         css={{ ...commonStyles, ...css }}
         animationDelay={animationDelay + i * individualDelay}
       />
@@ -79,7 +81,8 @@ const ApplicationPageLoading = () => (
       <Card tw="flex-1">
         <PulsingBar tw="h-6 w-32 mb-2" />
         {Array.from(Array(NUM_SECTIONS)).map((_, i) => (
-          <section tw="my-4 flex flex-col gap-4">
+          // eslint-disable-next-line react/no-array-index-key
+          <section key={i} tw="my-4 flex flex-col gap-4">
             <PulsingBar
               tw="h-4 w-72"
               animationDelay={100 + i * SECTION_DELAY}
@@ -87,6 +90,8 @@ const ApplicationPageLoading = () => (
             <div tw="flex flex-col gap-4">
               {Array.from(Array(NUM_QUESTIONS)).map((_, j) => (
                 <Bars
+                  // eslint-disable-next-line react/no-array-index-key
+                  key={j}
                   styles={lineStyles}
                   commonStyles={tw`first:bg-black/10!`}
                   animationDelay={100 + i * SECTION_DELAY + j * QUESTION_DELAY}
