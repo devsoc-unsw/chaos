@@ -100,7 +100,7 @@ const AdminSidebar = ({
         exclusive
         size="large"
       >
-        <CreateOrgButton value={-1} isFormOpen={isFormOpen}>
+        <CreateOrgButton isFormOpen={isFormOpen} value={-1}>
           <OrgButtonContent onClick={() => setIsFormOpen(!isFormOpen)}>
             <OrgIcon>
               {isFormOpen ? <RemoveOrgIcon /> : <CreateOrgIcon />}

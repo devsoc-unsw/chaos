@@ -19,14 +19,14 @@ const chipColor = (mark: number) => {
   return green[700];
 };
 
-export const ColoredChip = styled(Chip)<{ mark: number; colored: boolean }>(
-  ({ mark, colored }) => ({
-    backgroundColor: colored ? chipColor(mark) : grey[200],
-    fontSize: "14px",
-    fontWeight: colored ? "bold" : "normal",
-    color: colored ? "white" : "black",
-    "&:hover": {
-      backgroundColor: colored ? darken(chipColor(mark), 0.1) : grey[300],
-    },
-  })
-);
+export const ColoredChip = styled(Chip, {
+  shouldForwardProp: (prop) => prop !== "mark" && prop !== "colored",
+})<{ mark: number; colored: boolean }>(({ mark, colored }) => ({
+  backgroundColor: colored ? chipColor(mark) : grey[200],
+  fontSize: "14px",
+  fontWeight: colored ? "bold" : "normal",
+  color: colored ? "white" : "black",
+  "&:hover": {
+    backgroundColor: colored ? darken(chipColor(mark), 0.1) : grey[300],
+  },
+}));
