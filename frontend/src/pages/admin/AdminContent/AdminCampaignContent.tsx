@@ -3,7 +3,7 @@ import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import { Divider, IconButton, ListItemIcon, ListItemText } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "twin.macro";
 
 import { deleteCampaign, setCampaignCoverImage } from "api";
@@ -52,7 +52,7 @@ const AdminCampaignContent = ({ campaigns, setCampaigns, orgId }: Props) => {
   useEffect(() => {
     if (coverImage === undefined) {
       // have to be consistent in returning a function to make eslint happy
-      return () => {};
+      return () => { };
     }
 
     const reader = new FileReader();
@@ -157,9 +157,9 @@ const AdminCampaignContent = ({ campaigns, setCampaigns, orgId }: Props) => {
           <DummyIconForAlignment />
         </ListItemIcon>
         <ListItemIcon>
-          <IconButton>
-            <AddIcon onClick={() => navigate(`/campaign/create/${orgId}`)} />
-          </IconButton>
+          <Link tw="p-2" to={`/campaign/create/${orgId}`}>
+            <AddIcon />
+          </Link>
         </ListItemIcon>
       </ContentListHeader>
       <AdminDivider />

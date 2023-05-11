@@ -2,8 +2,7 @@ import { styled } from "@mui/material/styles";
 
 export const FormContainer = styled("div")(() => ({
   display: "flex",
-  padding: "4px",
-  paddingTop: "26px",
+  padding: "16px 9px",
 }));
 
 export const ImageUploadWrapper = styled("label")(() => ({
