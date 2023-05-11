@@ -156,6 +156,24 @@ export const getRoleQuestions = (roleId: number) =>
     path: `/role/${roleId}/questions`,
   });
 
+export const postEmail = ({
+  applicantId,
+  roleId,
+  subject,
+  body,
+}: {
+  applicantId: number;
+  roleId: number;
+  subject: string;
+  body: string;
+}) =>
+  authenticatedRequest({
+    method: "POST",
+    path: `/role/${roleId}/email`,
+    body: { dest_id: applicantId, subject, body },
+    jsonResp: false,
+  });
+
 export const setApplicationRating = (applicationId: number, rating: number) =>
   authenticatedRequest({
     method: "PUT",
