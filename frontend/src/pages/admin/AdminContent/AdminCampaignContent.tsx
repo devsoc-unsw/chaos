@@ -164,7 +164,7 @@ const AdminCampaignContent = ({ campaigns, setCampaigns, orgId }: Props) => {
       </ContentListHeader>
       <AdminDivider />
       {campaigns.map((c) => (
-        <div>
+        <div key={c.id}>
           <CampaignListItem>
             <AdminListItemButton onClick={(_) => navigate(`review/${c.id}`)}>
               <CampaignListItemImage src={c.image} />

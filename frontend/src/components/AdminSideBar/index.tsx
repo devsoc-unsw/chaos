@@ -118,7 +118,11 @@ const AdminSidebar = ({
           )}
         </CreateOrgButton>
         {orgList.map((it, idx) => (
-          <OrgButton value={idx} onClick={() => setOrgSelected(idx)}>
+          <OrgButton
+            key={it.id}
+            value={idx}
+            onClick={() => setOrgSelected(idx)}
+          >
             <OrgButtonContent>
               <OrgIcon>
                 <OrgIconImage src={it.icon} />
