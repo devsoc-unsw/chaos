@@ -42,11 +42,10 @@ export const OrgButtonContent = styled("div")`
   padding: 4px;
 `;
 
-export const CreateOrgButton = styled(OrgButton, {
-  shouldForwardProp: (prop) => prop !== "isFormOpen",
-})<{ isFormOpen: boolean }>(({ isFormOpen }) => ({
-  height: isFormOpen ? "180px" : "90px",
-}));
+export const CreateOrgButton = styled(OrgButton)`
+  height: 90px;
+  border-bottom: 0;
+`;
 
 export const CreateOrgIcon = styled(AddIcon)`
   font-size: 30px;

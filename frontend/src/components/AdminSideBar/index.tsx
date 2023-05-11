@@ -100,13 +100,17 @@ const AdminSidebar = ({
         exclusive
         size="large"
       >
-        <CreateOrgButton isFormOpen={isFormOpen} value={-1}>
-          <OrgButtonContent onClick={() => setIsFormOpen(!isFormOpen)}>
-            <OrgIcon>
-              {isFormOpen ? <RemoveOrgIcon /> : <CreateOrgIcon />}
-            </OrgIcon>
-            <OrgName style={{ paddingLeft: "10px" }}>New Organisation</OrgName>
-          </OrgButtonContent>
+        <div tw="border-bottom border-black/[0.12]">
+          <CreateOrgButton value={-1}>
+            <OrgButtonContent onClick={() => setIsFormOpen(!isFormOpen)}>
+              <OrgIcon>
+                {isFormOpen ? <RemoveOrgIcon /> : <CreateOrgIcon />}
+              </OrgIcon>
+              <OrgName style={{ paddingLeft: "10px" }}>
+                New Organisation
+              </OrgName>
+            </OrgButtonContent>
+          </CreateOrgButton>
           {isFormOpen && (
             <CreateOrganisationForm
               uploadedImage={uploadedImage}
@@ -116,7 +120,7 @@ const AdminSidebar = ({
               onUpload={onUpload}
             />
           )}
-        </CreateOrgButton>
+        </div>
         {orgList.map((it, idx) => (
           <OrgButton
             key={it.id}
