@@ -11,7 +11,6 @@ import {
   newApplication,
   submitAnswer,
 } from "../../api";
-import { bytesToImage } from "../../utils";
 
 import ApplicationForm from "./ApplicationForm";
 import ApplicationPageLoading from "./ApplicationPageLoading";
@@ -29,7 +28,7 @@ const ApplicationPage = () => {
       id: -1,
       organisation_id: -1,
       name: "",
-      cover_image: [],
+      cover_image: "",
       description: "",
       starts_at: "",
       ends_at: "",
@@ -44,7 +43,7 @@ const ApplicationPage = () => {
   const [organisation, setOrganisation] = useState<Organisation>({
     id: -1,
     name: "",
-    logo: [],
+    logo: "",
     created_at: "",
     updated_at: "",
   });
@@ -164,7 +163,7 @@ const ApplicationPage = () => {
     <Container tw="gap-4">
       <CampaignDetails
         campaignName={campaign.campaign.name}
-        headerImage={bytesToImage(campaign.campaign.cover_image)}
+        headerImage={campaign.campaign.cover_image}
         organisation={organisation}
         campaign={campaign}
         description={campaign.campaign.description}

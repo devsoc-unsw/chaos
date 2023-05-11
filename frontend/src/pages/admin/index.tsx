@@ -3,7 +3,6 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { getAdminData } from "../../api";
 import AdminSidebar from "../../components/AdminSideBar";
 import { SetNavBarTitleContext } from "../../contexts/SetNavbarTitleContext";
-import { bytesToImage } from "../../utils";
 
 import AdminContent from "./AdminContent";
 import AdminLoading from "./AdminLoading";
@@ -57,7 +56,7 @@ const Admin = () => {
         organisations.map((item) => ({
           id: item.id,
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          icon: bytesToImage(item.logo!),
+          icon: item.logo!,
           orgName: item.name,
           campaigns: item.campaigns,
           members: item.members,
@@ -71,7 +70,7 @@ const Admin = () => {
           org.campaigns.map((item) => ({
             id: item.id,
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            image: bytesToImage(item.cover_image!),
+            image: item.cover_image!,
             title: item.name,
             startDate: item.starts_at,
             endDate: item.ends_at,
@@ -98,7 +97,7 @@ const Admin = () => {
       orgList[orgSelected]?.campaigns.map((item) => ({
         id: item.id,
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        image: bytesToImage(item.cover_image!),
+        image: item.cover_image!,
         title: item.name,
         startDate: item.starts_at,
         endDate: item.ends_at,

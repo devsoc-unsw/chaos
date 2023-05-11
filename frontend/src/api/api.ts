@@ -17,16 +17,17 @@ export class FetchError extends Error {
 type Payload = {
   method: string;
   headers: { [k: string]: string };
-  body?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  body?: any;
 };
 
 type Params<T> = {
   path: string;
-  body?: Json;
   header?: { [k: string]: string };
   queries?: { [k: string]: string };
   method?: string;
-} & (T extends void ? { jsonResp: false } : { jsonResp?: true });
+} & ({ body?: Json; jsonBody?: true } | { body?: unknown; jsonBody: false }) &
+  (T extends void ? { jsonResp: false } : { jsonResp?: true });
 
 // takes in an object
 const API = {
@@ -36,6 +37,7 @@ const API = {
     header,
     queries = {},
     method = "GET",
+    jsonBody = true,
     jsonResp = true,
   }: Params<T>): Promise<T> => {
     const endpoint = new URL(`${window.origin}/api${path}`);
@@ -45,11 +47,11 @@ const API = {
       method,
       headers: {
         // eslint-disable-next-line @typescript-eslint/naming-convention
-        "Content-Type": "application/json",
+        ...(jsonBody && { "Content-Type": "application/json" }),
         ...header,
       },
     };
-    if (method !== "GET") payload.body = JSON.stringify(body);
+    if (method !== "GET") payload.body = jsonBody ? JSON.stringify(body) : body;
 
     const resp = await fetch(endpoint, payload);
     if (!resp.ok) {

@@ -8,6 +8,11 @@ if [ "$answer" != "y" ]; then
     exit 1
 fi
 
+echo "Deleting images directory"
+rm -rf images
+
 cd server/src && diesel database reset
 
 cd ../../seed_data && cargo run --bin seed_data
+
+mv images ..
