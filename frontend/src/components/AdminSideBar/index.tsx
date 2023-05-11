@@ -1,7 +1,6 @@
 import { useState } from "react";
 
-import { createOrganisation } from "../../api";
-import { base64ToBytes, fileToDataUrl } from "../../utils";
+import { createOrganisation, putOrgLogo } from "../../api";
 import CreateOrganisationForm from "../CreateOrganisationForm";
 
 import {
@@ -61,19 +60,14 @@ const AdminSidebar = ({
 
   const onUpload = () => {
     const createOrg = async () => {
-      // FIXME: CHAOS-55, send to the backend
       if (uploadedImage.image && inputText) {
-        // FIXME: CHAOS-55, backend request should return new id, this method obv flawed (also floored)
-        const imgUrl = base64ToBytes(
-          (await fileToDataUrl(uploadedImage.image)).split(",")[1]
-        );
-        const { id } = await createOrganisation(inputText, imgUrl);
+        const { id } = await createOrganisation(inputText);
+        const logo = await putOrgLogo(id, uploadedImage.image);
         const newOrgList = [
           ...orgList,
           {
             id,
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            icon: uploadedImage.url!,
+            icon: logo,
             orgName: inputText,
             campaigns: [],
             members: [],
@@ -100,31 +94,35 @@ const AdminSidebar = ({
       onMouseOver={() => setSidebarWidth("280px")}
       onMouseOut={() => setSidebarWidth("80px")}
     >
+      <CreateOrgButton value={-1}>
+        <OrgButtonContent onClick={() => setIsFormOpen(!isFormOpen)}>
+          <OrgIcon>
+            {isFormOpen ? <RemoveOrgIcon /> : <CreateOrgIcon />}
+          </OrgIcon>
+          <OrgName style={{ paddingLeft: "10px" }}>New Organisation</OrgName>
+        </OrgButtonContent>
+      </CreateOrgButton>
       <OrgButtonGroup
         orientation="vertical"
         value={orgSelected}
         exclusive
         size="large"
       >
-        <CreateOrgButton value={-1} isFormOpen={isFormOpen}>
-          <OrgButtonContent onClick={() => setIsFormOpen(!isFormOpen)}>
-            <OrgIcon>
-              {isFormOpen ? <RemoveOrgIcon /> : <CreateOrgIcon />}
-            </OrgIcon>
-            <OrgName style={{ paddingLeft: "10px" }}>New Organisation</OrgName>
-          </OrgButtonContent>
-          {isFormOpen && (
-            <CreateOrganisationForm
-              uploadedImage={uploadedImage}
-              onFileChange={onFileChange}
-              inputText={inputText}
-              setInputText={setInputText}
-              onUpload={onUpload}
-            />
-          )}
-        </CreateOrgButton>
+        {isFormOpen && (
+          <CreateOrganisationForm
+            uploadedImage={uploadedImage}
+            onFileChange={onFileChange}
+            inputText={inputText}
+            setInputText={setInputText}
+            onUpload={onUpload}
+          />
+        )}
         {orgList.map((it, idx) => (
-          <OrgButton value={idx} onClick={() => setOrgSelected(idx)}>
+          <OrgButton
+            key={it.id}
+            value={idx}
+            onClick={() => setOrgSelected(idx)}
+          >
             <OrgButtonContent>
               <OrgIcon>
                 <OrgIconImage src={it.icon} />

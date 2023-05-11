@@ -32,3 +32,9 @@ once_cell = "1.16.0"
 diesel_migrations = "1.4.0"
 figment = { version = "0.10", features = ["env", "toml", "json"] }
 lettre = "0.10.1"
+image = "0.24.4"
+strum = { version = "0.24", features = ["derive"] }
+
+[dependencies.uuid]
+version = "1.2.2"
+features = ["v4", "fast-rng", "macro-diagnostics"]

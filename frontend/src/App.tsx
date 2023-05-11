@@ -1,6 +1,6 @@
 import { Box, CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 import { SnackbarProvider } from "notistack";
-import { Suspense, useCallback, useState } from "react";
+import { Suspense, useCallback, useRef, useState } from "react";
 import { BrowserRouter, Routes } from "react-router-dom";
 import "twin.macro";
 
@@ -38,10 +38,15 @@ const theme = createTheme({
 const App = () => {
   const [AppBarTitle, setNavBarTitle] = useState("");
   const [messagePopup, setMessagePopup] = useState<Message[]>([]);
+  const nextMessageId = useRef(1);
 
   const pushMessage = useCallback(
-    (message: Message) => {
-      setMessagePopup([...messagePopup, message]);
+    (message: Omit<Message, "id">) => {
+      setMessagePopup([
+        ...messagePopup,
+        // eslint-disable-next-line no-plusplus
+        { ...message, id: nextMessageId.current++ },
+      ]);
 
       setTimeout(() => {
         setMessagePopup(messagePopup.slice(1));
@@ -65,7 +70,7 @@ const App = () => {
               </Box>
               <div tw="fixed right-4 bottom-4 space-y-3">
                 {messagePopup.map((message) => (
-                  <MessagePopup type={message.type}>
+                  <MessagePopup key={message.id} type={message.type}>
                     {message.message}
                   </MessagePopup>
                 ))}

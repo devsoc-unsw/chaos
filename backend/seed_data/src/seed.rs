@@ -2,6 +2,7 @@
 
 use backend::database::models::*;
 use backend::database::schema::{AdminLevel, ApplicationStatus};
+use backend::images::{save_image, try_decode_bytes};
 use chrono::naive::NaiveDate;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
@@ -83,15 +84,21 @@ pub fn seed() {
     println!("... Added {} users\n", users.len());
 
     // create two organisations
+    let csesoc_org_logo_id = "d6b7b23d-064b-40f2-9b73-9a4cd32ee9c6";
+    let degrees_org_logo_id = "adebf7f3-aa1e-4712-b5ca-051430bfaf8e";
+    let csesoc_org_logo = try_decode_bytes(std::fs::read("./assets/csesoc_logo.png").unwrap()).expect("./assets/csesoc_logo.png missing!");
+    let degrees_org_logo = try_decode_bytes(std::fs::read("./assets/180DC.png").unwrap()).expect("./assets/180DC.png missing!");
+    save_image(csesoc_org_logo, backend::images::ImageLocation::ORGANISATIONS, csesoc_org_logo_id).expect("Failed saving CSESoc Logo");
+    save_image(degrees_org_logo, backend::images::ImageLocation::ORGANISATIONS, degrees_org_logo_id).expect("Failed saving 180DC Logo");
 
     let orgs = vec![
         NewOrganisation {
             name: "CSESoc UNSW".to_string(),
-            logo: Some(std::fs::read("./assets/csesoc_logo.png").unwrap()),
+            logo: Some(csesoc_org_logo_id.to_string()),
         },
         NewOrganisation {
             name: "180 Degrees Consulting".to_string(),
-            logo: Some(std::fs::read("./assets/180DC.png").unwrap()),
+            logo: Some(degrees_org_logo_id.to_string()),
         },
     ];
 
@@ -136,13 +143,17 @@ pub fn seed() {
     println!("... Adding clarence as csesoc director\n");
     // create peer mentoring campaign for csesoc
 
+    let peer_mentoring_logo_id = "523fde49-027a-4fc8-b296-aaefe9e215d6";
+    let peer_mentoring_logo = try_decode_bytes(std::fs::read("./assets/csesoc_peer_mentoring.jpg").unwrap()).expect("./assets/csesoc_peer_mentoring.jpg missing!");
+    save_image(peer_mentoring_logo, backend::images::ImageLocation::CAMPAIGNS, peer_mentoring_logo_id).expect("Failed saving Peer Mentoring Logo");
+
     let new_campaign = NewCampaign {
         name: "2022 Peer Mentor Recruitment".to_string(),
         description: "Peer mentors are an important part of CSESoc and university life at UNSW. We are looking for enthusiastic students who are passionate about helping first-year students, gaining leadership experience, communication skills, some resume-worthy additions, and having a lot of fun in the upcoming term (Term 1, 2022)! 🎉".to_string(),
         organisation_id: csesoc_org.id,
         starts_at: NaiveDate::from_ymd_opt(2022, 1, 1).unwrap().and_hms_opt(10, 00, 00).unwrap(),
         ends_at: NaiveDate::from_ymd_opt(2022, 2, 20).unwrap().and_hms_opt(23, 59, 59).unwrap(),
-        cover_image: Some(std::fs::read("./assets/csesoc_peer_mentoring.jpg").unwrap()),
+        cover_image: Some(peer_mentoring_logo_id.to_string()),
         published: true,
     }.insert(&connection).expect("failed to insert new campaign");
 
