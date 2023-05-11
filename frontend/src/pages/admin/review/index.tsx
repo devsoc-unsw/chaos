@@ -1,4 +1,5 @@
-import { Suspense, useContext, useEffect, useState } from "react";
+import { Suspense, useContext } from "react";
+import { useQuery } from "react-query";
 import {
   Outlet,
   useNavigate,
@@ -21,21 +22,24 @@ const Review = () => {
   const navigate = useNavigate();
 
   const setNavBarTitle = useContext(SetNavBarTitleContext);
-  const [roles, setRoles] = useState<Role[]>([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const { name: campaignName } = await getCampaign(campaignId);
-      setNavBarTitle(`Review Candidates for ${campaignName}`);
-      const { roles } = await getCampaignRoles(campaignId);
-      setRoles(roles);
-      if (roles.length > 0 && params.roleId === undefined) {
-        navigate(`${roles[0].id}/marking`);
-      }
-    };
+  useQuery(["campaign", campaignId], () => getCampaign(campaignId), {
+    onSuccess: (campaign) => {
+      setNavBarTitle(`Review Candidates for ${campaign.name}`);
+    },
+  });
 
-    void fetchData();
-  }, []);
+  const { data: { roles = [] } = {} } = useQuery(
+    ["campaignRols", campaignId],
+    () => getCampaignRoles(campaignId),
+    {
+      onSuccess: ({ roles }) => {
+        if (roles.length > 0 && params.roleId === undefined) {
+          navigate(`${roles[0].id}/marking`);
+        }
+      },
+    }
+  );
 
   return (
     <div tw="flex-1">

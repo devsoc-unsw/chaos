@@ -6,7 +6,7 @@ import type {
 
 export type Organisation = {
   id: number;
-  icon: string;
+  icon?: string;
   orgName: string;
   campaigns: CampaignInfo[];
   members: OrganisationUserInfo[];
@@ -14,7 +14,7 @@ export type Organisation = {
 
 export type Campaign = {
   id: number;
-  image: string;
+  image?: string;
   title: string;
   startDate: string;
   endDate: string;

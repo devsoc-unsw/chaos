@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import "twin.macro";
 
@@ -19,74 +19,37 @@ import RolesSidebar from "./RolesSidebar";
 
 import type { RoleQuestions } from "./types";
 import type { CampaignWithRoles, Organisation, UserResponse } from "types/api";
+import { useQuery } from "react-query";
 
 const ApplicationPage = () => {
   const navigate = useNavigate();
-
-  const [campaign, setCampaign] = useState<CampaignWithRoles>({
-    campaign: {
-      id: -1,
-      organisation_id: -1,
-      name: "",
-      cover_image: "",
-      description: "",
-      starts_at: "",
-      ends_at: "",
-      published: false,
-      created_at: "",
-      updated_at: "",
-    },
-    roles: [],
-    questions: [],
-    applied_for: [],
-  });
-  const [organisation, setOrganisation] = useState<Organisation>({
-    id: -1,
-    name: "",
-    logo: "",
-    created_at: "",
-    updated_at: "",
-  });
-
   const campaignId = Number(useParams().campaignId);
-  const { state } = useLocation() as { state: CampaignWithRoles };
 
-  const [loading, setLoading] = useState(true);
+  const { data: selfInfo } = useQuery("selfInfo", getSelfInfo);
+  const { data: campaigns } = useQuery("allCampaigns", getAllCampaigns);
 
-  const [selfInfo, setSelfInfo] = useState<UserResponse>({
-    email: "",
-    zid: "",
-    display_name: "",
-    degree_name: "",
-    degree_starting_year: -1,
-  });
-  useEffect(() => {
-    const getData = async () => {
-      setSelfInfo(await getSelfInfo());
+  const campaign = useMemo(
+    () =>
+      [
+        ...(campaigns?.current_campaigns ?? []),
+        ...(campaigns?.past_campaigns ?? []),
+      ].find((x) => x.campaign.id === campaignId),
+    [campaigns]
+  );
 
-      if (state) {
-        setCampaign(state);
-      } else {
-        const {
-          past_campaigns: pastCampaigns,
-          current_campaigns: currentCampaigns,
-        } = await getAllCampaigns();
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const campaign = [...pastCampaigns, ...currentCampaigns].find(
-          (x) => x.campaign.id === campaignId
-        )!;
-        setCampaign(campaign);
+  const organisationId = campaign?.campaign.organisation_id;
+  const { data: organisation } = useQuery(
+    ["organisation", organisationId],
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- we ensure that it's not undefined below
+    () => getOrganisation(organisationId!),
+    { enabled: organisationId !== undefined }
+  );
 
-        const organisationId = campaign.campaign.organisation_id;
-        const organisation = await getOrganisation(organisationId);
-        setOrganisation(organisation);
-      }
-
-      setLoading(false);
-    };
-
-    void getData();
-  }, []);
+  // using an array with .includes doesn't hint typescript to the variables being not undefined :(
+  const loading =
+    selfInfo === undefined ||
+    campaign === undefined ||
+    organisation === undefined;
 
   const [rolesSelected, setRolesSelected] = useState<number[]>([]);
   const [answers, setAnswers] = useState<{ [question: number]: string }>({});

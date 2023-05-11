@@ -1,5 +1,6 @@
 import { Button, Container, Grid } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
+import { useQuery } from "react-query";
 import { Link, useParams } from "react-router-dom";
 import "twin.macro";
 
@@ -29,13 +30,16 @@ const Marking = () => {
   const roleId = Number(useParams().roleId);
   const [selectedApplication, setSelectedApplication] = useState(0);
 
+  useQuery(["campaign", campaignId], () => getCampaign(campaignId), {
+    onSuccess: (campaign) => {
+      setNavBarTitle(`Marking for ${campaign.name}`);
+    },
+  });
+
   useEffect(() => {
     setLoading(true);
 
     const fetchData = async () => {
-      const { name: campaignName } = await getCampaign(campaignId);
-      setNavBarTitle(`Marking for ${campaignName}`);
-
       const { applications } = await getRoleApplications(roleId);
 
       const { questions } = await getRoleQuestions(roleId);

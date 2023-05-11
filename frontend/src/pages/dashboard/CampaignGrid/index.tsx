@@ -5,11 +5,10 @@ import { CampaignCard, Transition } from "components";
 import CampaignLoading from "./CampaignLoading";
 
 import type { ComponentProps } from "react";
-import type { CampaignWithRoles, Organisation } from "types/api";
+import type { CampaignWithRoles } from "types/api";
 
 type Props = {
   campaigns: CampaignWithRoles[];
-  organisations: { [orgId: number]: Organisation };
   loading: boolean;
   loadingNumCampaigns: number;
   animationDelay?: number;
@@ -18,7 +17,6 @@ type Props = {
 };
 const CampaignGrid = ({
   campaigns,
-  organisations,
   loading,
   loadingNumCampaigns,
   animationDelay = 0,
@@ -46,8 +44,6 @@ const CampaignGrid = ({
     return <div tw="text-gray-700">{defaultText}</div>;
   }
 
-  console.log(organisations, campaigns);
-
   return (
     <div tw="flex flex-wrap justify-around gap-4 pb-4 lg:justify-start">
       {campaigns.map((campaign, i) => (
@@ -60,23 +56,7 @@ const CampaignGrid = ({
           }}
           enterFrom={tw`translate-y-4 opacity-0`}
         >
-          <CampaignCard
-            key={campaign.campaign.id}
-            campaignId={campaign.campaign.id}
-            title={campaign.campaign.name}
-            appliedFor={campaign.applied_for}
-            positions={campaign.roles.map((role) => ({
-              id: role.id,
-              name: role.name,
-              number: role.max_available,
-            }))}
-            startDate={new Date(campaign.campaign.starts_at)}
-            endDate={new Date(campaign.campaign.ends_at)}
-            img={campaign.campaign.cover_image}
-            organisationLogo={
-              organisations[campaign.campaign.organisation_id].logo
-            }
-          />
+          <CampaignCard key={campaign.campaign.id} campaign={campaign} />
         </Transition>
       ))}
     </div>

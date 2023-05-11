@@ -21,7 +21,6 @@ import type { ChangeEvent } from "react";
 
 type Props = {
   orgList: Organisation[];
-  setOrgList: (orgList: Organisation[]) => void;
   orgSelected: number;
   setOrgSelected: (orgSelected: number) => void;
   isFormOpen: boolean;
@@ -32,7 +31,6 @@ type Props = {
 
 const AdminSidebar = ({
   orgList,
-  setOrgList,
   orgSelected,
   setOrgSelected,
   isFormOpen,
@@ -73,7 +71,6 @@ const AdminSidebar = ({
             members: [],
           },
         ];
-        setOrgList(newOrgList);
         setOrgSelected(newOrgList.length - 1);
         setUploadedImage({ image: null, url: null });
         setInputText("");

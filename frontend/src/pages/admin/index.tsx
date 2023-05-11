@@ -1,21 +1,13 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
+import { useQuery } from "react-query";
 
-import { getAdminData } from "../../api";
-import AdminSidebar from "../../components/AdminSideBar";
-import { SetNavBarTitleContext } from "../../contexts/SetNavbarTitleContext";
+import { getAdminData } from "api";
+import AdminSidebar from "components/AdminSideBar";
+import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 
 import AdminContent from "./AdminContent";
 import AdminLoading from "./AdminLoading";
-import { OrgContext } from "./OrgContext";
 import { AdminContainer } from "./admin.styled";
-
-import type { Campaign, Member, Organisation } from "./types";
-
-const isFormOpenContext = createContext({
-  isFormOpen: false,
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  setIsFormOpen: (_isFormOpen: boolean) => {},
-});
 
 const Admin = () => {
   const setNavBarTitle = useContext(SetNavBarTitleContext);
@@ -25,121 +17,71 @@ const Admin = () => {
   const [sidebarWidth, setSidebarWidth] = useState("80px");
   const [isFormOpen, setIsFormOpen] = useState(false);
 
-  const [orgList, setOrgList] = useState<Organisation[]>([]);
-
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [members, setMembers] = useState<Member[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: { organisations } = {} } = useQuery("adminData", getAdminData);
+  const orgList = useMemo(
+    () =>
+      organisations?.map((item) => ({
+        id: item.id,
+        icon: item.logo,
+        orgName: item.name,
+        campaigns: item.campaigns,
+        members: item.members,
+      })),
+    [organisations]
+  );
 
   // FIXME: CHAOS-56, implement default behaviour for users w/ no org
   const [orgSelected, setOrgSelected] = useState(0);
 
-  const orgContextValue = useMemo(
-    () => ({
-      orgSelected,
-      setOrgSelected,
-      orgList,
-      setOrgList,
-    }),
-    [orgSelected, setOrgSelected, orgList, setOrgList]
-  );
-  const isFormOpenContextValue = useMemo(
-    () => ({ isFormOpen, setIsFormOpen }),
-    [isFormOpen, setIsFormOpen]
-  );
+  const org = organisations?.[orgSelected];
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const { organisations } = await getAdminData();
-
-      setOrgList(
-        organisations.map((item) => ({
-          id: item.id,
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          icon: item.logo!,
-          orgName: item.name,
-          campaigns: item.campaigns,
-          members: item.members,
-        }))
-      );
-      if (organisations.length > 0) {
-        setOrgSelected(0);
-        const org = organisations[orgSelected];
-
-        setCampaigns(
-          org.campaigns.map((item) => ({
-            id: item.id,
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            image: item.cover_image!,
-            title: item.name,
-            startDate: item.starts_at,
-            endDate: item.ends_at,
-          }))
-        );
-
-        setMembers(
-          org.members.map((item) => ({
-            id: item.id,
-            name: item.display_name,
-            role: item.role,
-          }))
-        );
-      }
-
-      setLoading(false);
-    };
-
-    void fetchData();
-  }, []);
-
-  useEffect(() => {
-    setCampaigns(
-      orgList[orgSelected]?.campaigns.map((item) => ({
+  const campaigns = useMemo(
+    () =>
+      org?.campaigns.map((item) => ({
         id: item.id,
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        image: item.cover_image!,
+        image: item.cover_image,
         title: item.name,
         startDate: item.starts_at,
         endDate: item.ends_at,
-      })) ?? []
-    );
-    setMembers(
-      orgList[orgSelected]?.members.map((item) => ({
+      })),
+    [organisations]
+  );
+
+  const members = useMemo(
+    () =>
+      org?.members.map((item) => ({
         id: item.id,
         name: item.display_name,
         role: item.role,
-      })) ?? []
-    );
-  }, [orgSelected, orgList]);
+      })),
+    [organisations]
+  );
 
-  if (loading) {
+  if (
+    orgList === undefined ||
+    campaigns === undefined ||
+    members === undefined
+  ) {
     return <AdminLoading />;
   }
 
   return (
-    <OrgContext.Provider value={orgContextValue}>
-      <isFormOpenContext.Provider value={isFormOpenContextValue}>
-        <AdminContainer>
-          <AdminSidebar
-            orgList={orgList}
-            setOrgList={setOrgList}
-            orgSelected={orgSelected}
-            setOrgSelected={setOrgSelected}
-            isFormOpen={isFormOpen}
-            setIsFormOpen={setIsFormOpen}
-            sidebarWidth={sidebarWidth}
-            setSidebarWidth={setSidebarWidth}
-          />
-          <AdminContent
-            org={orgList[orgSelected]}
-            campaigns={campaigns}
-            setCampaigns={setCampaigns}
-            members={members}
-            setMembers={setMembers}
-          />
-        </AdminContainer>
-      </isFormOpenContext.Provider>
-    </OrgContext.Provider>
+    <AdminContainer>
+      <AdminSidebar
+        orgList={orgList}
+        orgSelected={orgSelected}
+        setOrgSelected={setOrgSelected}
+        isFormOpen={isFormOpen}
+        setIsFormOpen={setIsFormOpen}
+        sidebarWidth={sidebarWidth}
+        setSidebarWidth={setSidebarWidth}
+      />
+      <AdminContent
+        org={orgList[orgSelected]}
+        campaigns={campaigns}
+        members={members}
+      />
+    </AdminContainer>
   );
 };
 

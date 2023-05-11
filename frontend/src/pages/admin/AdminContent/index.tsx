@@ -26,23 +26,15 @@ import {
 } from "./adminContent.styled";
 
 import type { Campaign, Member, Organisation } from "../types";
-import type { Dispatch, MouseEvent, SetStateAction } from "react";
+import type { MouseEvent } from "react";
 
 type Props = {
   org: Organisation;
   campaigns: Campaign[];
-  setCampaigns: Dispatch<SetStateAction<Campaign[]>>;
   members: Member[];
-  setMembers: Dispatch<SetStateAction<Member[]>>;
 };
 
-const AdminContent = ({
-  org,
-  campaigns,
-  setCampaigns,
-  members,
-  setMembers,
-}: Props) => {
+const AdminContent = ({ org, campaigns, members }: Props) => {
   let id: number;
   let icon;
   let orgName: string;
@@ -54,7 +46,9 @@ const AdminContent = ({
     orgName = "...";
   }
 
-  const [windowSelected, setWindowSelected] = useState("campaigns");
+  const [windowSelected, setWindowSelected] = useState<"campaigns" | "members">(
+    "campaigns"
+  );
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [orgLogo, setOrgLogo] = useState<File>();
@@ -112,7 +106,7 @@ const AdminContent = ({
 
   const handleWindowChange = (
     _: MouseEvent<HTMLElement>,
-    newWindow: string
+    newWindow: "campaigns" | "members"
   ) => {
     if (newWindow) {
       setWindowSelected(newWindow);
@@ -169,6 +163,11 @@ const AdminContent = ({
     });
   };
 
+  const contentBodies = {
+    campaigns: <AdminCampaignContent campaigns={campaigns} orgId={id} />,
+    members: <AdminMembersContent orgId={id} members={members} />,
+  };
+
   return (
     <AdminContentContainer>
       <ContentHeader>
@@ -206,22 +205,7 @@ const AdminContent = ({
           </ToggleButtonContainer>
         </div>
       </ContentHeader>
-      <ContentBody>
-        {windowSelected === "campaigns" && (
-          <AdminCampaignContent
-            campaigns={campaigns}
-            setCampaigns={setCampaigns}
-            orgId={id}
-          />
-        )}
-        {windowSelected === "members" && (
-          <AdminMembersContent
-            orgId={id}
-            members={members}
-            setMembers={setMembers}
-          />
-        )}
-      </ContentBody>
+      <ContentBody>{contentBodies[windowSelected]}</ContentBody>
 
       <Modal
         open={showEditDialog}

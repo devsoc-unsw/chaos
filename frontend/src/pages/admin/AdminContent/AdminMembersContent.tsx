@@ -33,14 +33,13 @@ import type { AdminLevel } from "types/api";
 type Props = {
   orgId: number;
   members: Member[];
-  setMembers: Dispatch<SetStateAction<Member[]>>;
 };
 
-const AdminMembersContent = ({ orgId, members, setMembers }: Props) => {
+const AdminMembersContent = ({ orgId, members }: Props) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const onDelete = (memberId: string) => {
     // FIXME: CHAOS-55, integrate with backend to actually delete
-    setMembers(members.filter((m) => m.id !== Number(memberId)));
+    // setMembers(members.filter((m) => m.id !== Number(memberId)));
   };
   const inviteUser = (formValues: {
     email: string;

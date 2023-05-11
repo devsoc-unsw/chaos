@@ -11,6 +11,7 @@ import { SetNavBarTitleContext } from "./contexts/SetNavbarTitleContext";
 import routes from "./routes";
 
 import type { Message } from "contexts/MessagePopupContext";
+import { QueryClient, QueryClientProvider } from "react-query";
 
 const theme = createTheme({
   palette: {
@@ -35,6 +36,8 @@ const theme = createTheme({
   },
 });
 
+const queryClient = new QueryClient();
+
 const App = () => {
   const [AppBarTitle, setNavBarTitle] = useState("");
   const [messagePopup, setMessagePopup] = useState<Message[]>([]);
@@ -56,21 +59,23 @@ const App = () => {
       <SnackbarProvider maxSnack={3}>
         <MessagePopupContext.Provider value={pushMessage}>
           <SetNavBarTitleContext.Provider value={setNavBarTitle}>
-            <BrowserRouter>
-              <NavBar campaign={AppBarTitle} />
-              <Box pt={8} minHeight="100vh" display="flex" tw="bg-gray-50">
-                <Suspense fallback={<LoadingIndicator />}>
-                  <Routes>{routes}</Routes>
-                </Suspense>
-              </Box>
-              <div tw="fixed right-4 bottom-4 space-y-3">
-                {messagePopup.map((message) => (
-                  <MessagePopup type={message.type}>
-                    {message.message}
-                  </MessagePopup>
-                ))}
-              </div>
-            </BrowserRouter>
+            <QueryClientProvider client={queryClient}>
+              <BrowserRouter>
+                <NavBar campaign={AppBarTitle} />
+                <Box pt={8} minHeight="100vh" display="flex" tw="bg-gray-50">
+                  <Suspense fallback={<LoadingIndicator />}>
+                    <Routes>{routes}</Routes>
+                  </Suspense>
+                </Box>
+                <div tw="fixed right-4 bottom-4 space-y-3">
+                  {messagePopup.map((message) => (
+                    <MessagePopup type={message.type}>
+                      {message.message}
+                    </MessagePopup>
+                  ))}
+                </div>
+              </BrowserRouter>
+            </QueryClientProvider>
           </SetNavBarTitleContext.Provider>
         </MessagePopupContext.Provider>
       </SnackbarProvider>

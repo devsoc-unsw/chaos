@@ -26,15 +26,13 @@ import {
 } from "./adminContent.styled";
 
 import type { Campaign } from "../types";
-import type { Dispatch, SetStateAction } from "react";
 
 type Props = {
   campaigns: Campaign[];
-  setCampaigns: Dispatch<SetStateAction<Campaign[]>>;
   orgId: number;
 };
 
-const AdminCampaignContent = ({ campaigns, setCampaigns, orgId }: Props) => {
+const AdminCampaignContent = ({ campaigns, orgId }: Props) => {
   const navigate = useNavigate();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
