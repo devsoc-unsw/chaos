@@ -56,7 +56,7 @@ const FinaliseCandidates = () => {
     }
   );
 
-  useFetch<Campaign>(`/campaign/${campaignId}`, {
+  const { data: campaign } = useFetch<Campaign>(`/campaign/${campaignId}`, {
     deps: [],
     errorSummary: "Error getting campaign",
     onSuccess: ({ name, organisation_id: orgId }) => {
@@ -88,6 +88,7 @@ const FinaliseCandidates = () => {
     () =>
       data?.applications.map((a) => ({
         id: a.id,
+        applicantId: a.user_id,
         name: a.user_display_name,
         contents: (
           <div tw="flex gap-2">
@@ -158,10 +159,23 @@ const FinaliseCandidates = () => {
     );
   })();
 
+  const { post: sendPostEmail } = useFetch(`/role/${roleId}/email`);
+
   const sendEmail = useCallback(
-    // TODO: actually send the email, this just updates the public status
     async (tab: number) => {
-      const { id, status, name } = tabs[tab];
+      if (campaign === null) {
+        return false;
+      }
+
+      const { id, applicantId, status, name } = tabs[tab];
+      await sendPostEmail("", {
+        body: {
+          dest_id: applicantId,
+          roleId,
+          subject: `${campaign.name} application outcome`,
+          body: renderEmail(id, name),
+        },
+      });
       const { error, aborted } = await putStatus(id, {
         body: status,
         errorSummary: `Failed to release result for ${name}`,
