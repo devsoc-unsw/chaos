@@ -94,33 +94,29 @@ const AdminSidebar = ({
       onMouseOver={() => setSidebarWidth("280px")}
       onMouseOut={() => setSidebarWidth("80px")}
     >
+      <CreateOrgButton value={-1}>
+        <OrgButtonContent onClick={() => setIsFormOpen(!isFormOpen)}>
+          <OrgIcon>
+            {isFormOpen ? <RemoveOrgIcon /> : <CreateOrgIcon />}
+          </OrgIcon>
+          <OrgName style={{ paddingLeft: "10px" }}>New Organisation</OrgName>
+        </OrgButtonContent>
+      </CreateOrgButton>
       <OrgButtonGroup
         orientation="vertical"
         value={orgSelected}
         exclusive
         size="large"
       >
-        <div tw="border-bottom border-black/[0.12]">
-          <CreateOrgButton value={-1}>
-            <OrgButtonContent onClick={() => setIsFormOpen(!isFormOpen)}>
-              <OrgIcon>
-                {isFormOpen ? <RemoveOrgIcon /> : <CreateOrgIcon />}
-              </OrgIcon>
-              <OrgName style={{ paddingLeft: "10px" }}>
-                New Organisation
-              </OrgName>
-            </OrgButtonContent>
-          </CreateOrgButton>
-          {isFormOpen && (
-            <CreateOrganisationForm
-              uploadedImage={uploadedImage}
-              onFileChange={onFileChange}
-              inputText={inputText}
-              setInputText={setInputText}
-              onUpload={onUpload}
-            />
-          )}
-        </div>
+        {isFormOpen && (
+          <CreateOrganisationForm
+            uploadedImage={uploadedImage}
+            onFileChange={onFileChange}
+            inputText={inputText}
+            setInputText={setInputText}
+            onUpload={onUpload}
+          />
+        )}
         {orgList.map((it, idx) => (
           <OrgButton
             key={it.id}
