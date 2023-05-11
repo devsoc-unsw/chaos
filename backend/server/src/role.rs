@@ -237,7 +237,6 @@ pub async fn get_applications(
 #[derive(Serialize, Deserialize)]
 pub struct EmailApplicants {
     pub dest_id: i32,
-    pub role_id: i32,
     pub subject: String,
     pub body: String,
 }
@@ -278,7 +277,12 @@ pub async fn email_applicant(
 
 pub fn send_email(to: String, subject: String, body: String) -> Option<()> {
     let email = Message::builder()
-        .from("CSESoc <noreply@csesoc.org.au>".parse().unwrap())
+        .from(
+            env::var("EMAIL_FROM")
+                .expect("EMAIL_FROM must be set in env")
+                .parse()
+                .unwrap(),
+        )
         .to(to.parse().ok()?)
         .subject(subject)
         .body(body)
@@ -289,10 +293,11 @@ pub fn send_email(to: String, subject: String, body: String) -> Option<()> {
     let creds = Credentials::new(smtp_username, smtp_password);
 
     // Open a remote connection to gmail
-    let mailer = SmtpTransport::relay("smtp.gmail.com")
-        .unwrap()
-        .credentials(creds)
-        .build();
+    let mailer =
+        SmtpTransport::relay(&env::var("SMTP_RELAY").expect("SMTP_RELAY must be set in env"))
+            .unwrap()
+            .credentials(creds)
+            .build();
 
     mailer.send(&email).ok().map(|_| ())
 }
