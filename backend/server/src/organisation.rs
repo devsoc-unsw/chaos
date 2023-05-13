@@ -159,7 +159,7 @@ pub async fn set_logo(
     let old_logo_uuid = db
         .run(move |conn| Organisation::get_logo(&conn, org_id))
         .await;
-    let logo_uuid = Uuid::new_v4().as_hyphenated().to_string();
+    let logo_uuid = Uuid::new_v4().as_hyphenated().to_string() + ".webp";
 
     let image = try_decode_data(image).await.or_else(|_| {
         Err(JsonErr(
