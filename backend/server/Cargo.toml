@@ -33,6 +33,7 @@ diesel_migrations = "1.4.0"
 figment = { version = "0.10", features = ["env", "toml", "json"] }
 image = "0.24.4"
 strum = { version = "0.24", features = ["derive"] }
+webp = "0.2"
 
 [dependencies.uuid]
 version = "1.2.2"

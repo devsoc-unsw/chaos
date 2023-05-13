@@ -280,7 +280,7 @@ pub async fn set_cover_image(
     let old_logo_uuid = db
         .run(move |conn| Campaign::get_cover_image(&conn, campaign_id))
         .await;
-    let logo_uuid = Uuid::new_v4().as_hyphenated().to_string();
+    let logo_uuid = Uuid::new_v4().as_hyphenated().to_string() + ".webp";
 
     let image = try_decode_data(image).await.or_else(|_| {
         Err(JsonErr(
