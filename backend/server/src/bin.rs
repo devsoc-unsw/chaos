@@ -117,6 +117,7 @@ async fn main() {
                 backend::role::new_role,
                 backend::role::get_questions,
                 backend::role::get_applications,
+                backend::role::email_applicant,
             ],
         )
         .mount(

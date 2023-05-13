@@ -6,12 +6,18 @@ use crate::database::{
     schema::ApplicationStatus,
     Database,
 };
+use crate::error::JsonErr;
 use chrono::NaiveDateTime;
 use diesel::PgConnection;
+use lettre::transport::smtp::authentication::Credentials;
+use lettre::{Message, SmtpTransport, Transport};
 use rocket::{
-    delete, get, post, put,
-    serde::{json::Json, Serialize},
+    delete, get,
+    http::Status,
+    post, put,
+    serde::{json::Json, Deserialize, Serialize},
 };
+use std::env;
 
 #[derive(Serialize)]
 pub enum RoleError {
@@ -20,6 +26,7 @@ pub enum RoleError {
     CampaignNotFound,
     Unauthorized,
     RoleAlreadyExists,
+    DoobNotFound,
 }
 
 #[derive(Serialize)]
@@ -225,4 +232,72 @@ pub async fn get_applications(
         }))
     })
     .await
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct EmailApplicants {
+    pub dest_id: i32,
+    pub subject: String,
+    pub body: String,
+}
+
+#[post("/<role_id>/email", data = "<email>")]
+pub async fn email_applicant(
+    role_id: i32,
+    email: Json<EmailApplicants>,
+    user: User,
+    db: Database,
+) -> Result<(), JsonErr<RoleError>> {
+    use crate::database::schema::*;
+    use diesel::prelude::*;
+
+    db.run(move |conn| {
+        let email = email.into_inner();
+
+        OrganisationUser::role_admin_level(role_id, user.id, conn)
+            .is_at_least_director()
+            .check()
+            .map_err(|_| JsonErr(RoleError::Unauthorized, Status::Forbidden))?;
+
+        // check if user is applicant of role
+        let to = applications::table
+            .filter(applications::role_id.eq(role_id))
+            .inner_join(users::table)
+            .filter(users::id.eq(email.dest_id))
+            .select(users::email)
+            .first(conn)
+            .map_err(|_| JsonErr(RoleError::DoobNotFound, Status::BadRequest))?;
+
+        send_email(to, email.subject, email.body);
+
+        Ok(())
+    })
+    .await
+}
+
+pub fn send_email(to: String, subject: String, body: String) -> Option<()> {
+    let email = Message::builder()
+        .from(
+            env::var("EMAIL_FROM")
+                .expect("EMAIL_FROM must be set in env")
+                .parse()
+                .unwrap(),
+        )
+        .to(to.parse().ok()?)
+        .subject(subject)
+        .body(body)
+        .unwrap();
+
+    let smtp_username = env::var("SMTP_USERNAME").expect("SMTP_USERNAME must be set in env");
+    let smtp_password = env::var("SMTP_PASSWORD").expect("SMTP_PASSWORD must be set in env");
+    let creds = Credentials::new(smtp_username, smtp_password);
+
+    // Open a remote connection to gmail
+    let mailer =
+        SmtpTransport::relay(&env::var("SMTP_RELAY").expect("SMTP_RELAY must be set in env"))
+            .unwrap()
+            .credentials(creds)
+            .build();
+
+    mailer.send(&email).ok().map(|_| ())
 }
