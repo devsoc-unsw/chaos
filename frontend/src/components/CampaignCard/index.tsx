@@ -6,7 +6,7 @@ import Content from "./Content";
 import Popup from "./Popup";
 
 import type { Position } from "./types";
-import type { MouseEvent, PropsWithChildren } from "react";
+import type { MouseEvent } from "react";
 import type { CampaignWithRoles } from "types/api";
 
 type Props = {
@@ -18,6 +18,7 @@ type Props = {
   startDate: Date;
   endDate: Date;
   img: string;
+  isAdmin: boolean;
 };
 
 const CampaignCard = ({
@@ -29,8 +30,8 @@ const CampaignCard = ({
   startDate,
   endDate,
   img,
-  children,
-}: PropsWithChildren<Props>) => {
+  isAdmin,
+}: Props) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const openModal = (e: MouseEvent<HTMLButtonElement>) => {
@@ -48,9 +49,8 @@ const CampaignCard = ({
       endDate={endDate}
       img={img}
       openModal={openModal}
-    >
-      {children}
-    </Content>
+      isAdmin={isAdmin}
+    />
   );
 
   const popup = (

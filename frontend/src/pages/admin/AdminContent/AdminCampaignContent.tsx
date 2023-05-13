@@ -164,6 +164,7 @@ const AdminCampaignContent = ({
           positions={[]}
           startDate={c.startDate}
           endDate={c.endDate}
+          isAdmin={true}
         />
       ))}
     </div>

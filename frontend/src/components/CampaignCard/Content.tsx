@@ -6,7 +6,7 @@ import Card from "components/Card";
 import CampaignStatus from "./CampaignStatus";
 
 import type { VariantProps } from "@stitches/react";
-import type { MouseEventHandler, PropsWithChildren } from "react";
+import type { MouseEventHandler } from "react";
 import type { CampaignWithRoles } from "types/api";
 
 const dateToString = (date: Date) => moment(date).format("D MMM YYYY");
@@ -19,6 +19,7 @@ type Props = {
   endDate: Date;
   img: string;
   openModal: MouseEventHandler<HTMLButtonElement>;
+  isAdmin: boolean;
 };
 
 const Content = ({
@@ -29,8 +30,8 @@ const Content = ({
   endDate,
   img,
   openModal,
-  children,
-}: PropsWithChildren<Props>) => {
+  isAdmin,
+}: Props) => {
   const date = new Date();
 
   let status: VariantProps<typeof CampaignStatus>["status"];
@@ -60,7 +61,9 @@ const Content = ({
             {dateToString(startDate)} - {dateToString(endDate)}
           </p>
         </div>
-        {children || (
+        {isAdmin ? (
+          <p tw="ml-auto">popover</p>
+        ) : (
           <CampaignStatus status={status} onClick={openModal}>
             {status.toUpperCase()}
           </CampaignStatus>
