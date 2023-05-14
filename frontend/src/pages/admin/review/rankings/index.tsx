@@ -12,9 +12,9 @@ import {
 } from "api";
 import LoadingIndicator from "components/LoadingIndicator";
 import ReviewerStepper from "components/ReviewerStepper";
-import { MessagePopupContext } from "contexts/MessagePopupContext";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 import useFetch from "hooks/useFetch";
+import { pushToast } from "utils";
 
 import DragDropRankings from "./DragDropRankings";
 
@@ -55,7 +55,6 @@ const Rankings = () => {
   const [applications, setApplications] = useState<Applications>({});
   const [passIndex, setPassIndex] = useState(0);
 
-  const pushMessage = useContext(MessagePopupContext);
   const { put } = useFetch<void>("/application", {
     abortBehaviour: "sameUrl",
     jsonResp: false,
@@ -77,10 +76,11 @@ const Rankings = () => {
       );
 
       if (success.every(Boolean)) {
-        pushMessage({
-          type: "success",
-          message: "Updated internal application statuses for role",
-        });
+        pushToast(
+          "Update status",
+          "Updated internal application statuses for role",
+          "success"
+        );
       }
     };
 

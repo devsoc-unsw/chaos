@@ -15,9 +15,9 @@ import { LoadingIndicator, ReviewerStepper } from "components";
 import Button from "components/Button";
 import Tabs from "components/Tabs";
 import Textarea from "components/Textarea";
-import { MessagePopupContext } from "contexts/MessagePopupContext";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 import useFetch from "hooks/useFetch";
+import { pushToast } from "utils";
 
 import { useRoles } from "..";
 
@@ -44,7 +44,6 @@ const FinaliseCandidates = () => {
   const roleId = Number(useParams().roleId);
   const roles = useRoles();
   const [organisation, setOrganisation] = useState("ORGANISATION");
-  const pushMessage = useContext(MessagePopupContext);
 
   const [emails, setEmails] = useState<{ [id: number]: string }>({});
 
@@ -176,12 +175,13 @@ const FinaliseCandidates = () => {
     const success = await Promise.all(tabs.map((_, i) => sendEmail(i)));
 
     if (success.every(Boolean)) {
-      pushMessage({
-        type: "success",
-        message: "Updated all application statuses for role",
-      });
+      pushToast(
+        "Update Status",
+        "Updated all application statuses for role",
+        "success"
+      );
     }
-  }, [sendEmail, pushMessage]);
+  }, [sendEmail]);
 
   if (loading || orgLoading) {
     return <LoadingIndicator />;
