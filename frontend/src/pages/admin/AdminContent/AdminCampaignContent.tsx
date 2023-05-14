@@ -2,7 +2,7 @@ import { DeleteForeverRounded } from "@mui/icons-material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import { Divider, IconButton, ListItemIcon, ListItemText } from "@mui/material";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "twin.macro";
 
@@ -11,8 +11,7 @@ import { FetchError } from "api/api";
 import { Modal } from "components";
 import Button from "components/Button";
 import Dropzone from "components/Dropzone";
-import { MessagePopupContext } from "contexts/MessagePopupContext";
-import { dateToDateString } from "utils";
+import { dateToDateString, pushToast } from "utils";
 
 import {
   AdminContentList,
@@ -47,7 +46,6 @@ const AdminCampaignContent = ({ campaigns, setCampaigns, orgId }: Props) => {
     startDate: "",
     endDate: "",
   });
-  const pushMessage = useContext(MessagePopupContext);
 
   useEffect(() => {
     if (coverImage === undefined) {
@@ -81,10 +79,7 @@ const AdminCampaignContent = ({ campaigns, setCampaigns, orgId }: Props) => {
         message += "unknown error";
       }
 
-      pushMessage({
-        type: "error",
-        message,
-      });
+      pushToast("Delete Campaign", message, "error");
 
       throw e;
     }
@@ -94,10 +89,7 @@ const AdminCampaignContent = ({ campaigns, setCampaigns, orgId }: Props) => {
 
   const uploadCoverImage = async () => {
     if (coverImage === undefined) {
-      pushMessage({
-        message: "No organisation logo given.",
-        type: "error",
-      });
+      pushToast("Update Campaign Cover Image", "No image given", "error");
       return;
     }
 
@@ -112,25 +104,28 @@ const AdminCampaignContent = ({ campaigns, setCampaigns, orgId }: Props) => {
         try {
           const data = (await err.resp.json()) as string;
 
-          pushMessage({
-            message: `Internal Error: ${data}`,
-            type: "error",
-          });
+          pushToast(
+            "Update Campaign Cover Image",
+            `Internal Error: ${data}`,
+            "error"
+          );
         } catch {
-          pushMessage({
-            message: `Internal Error: Response Invalid`,
-            type: "error",
-          });
+          pushToast(
+            "Update Campaign Cover Image",
+            "Internal Error: Response Invalid",
+            "error"
+          );
         }
 
         return;
       }
 
       console.error("Something went wrong");
-      pushMessage({
-        message: "Something went wrong on backend!",
-        type: "error",
-      });
+      pushToast(
+        "Update Campaign Cover Image",
+        "Something went wrong on the backend!",
+        "error"
+      );
 
       return;
     }
@@ -141,10 +136,11 @@ const AdminCampaignContent = ({ campaigns, setCampaigns, orgId }: Props) => {
     ].image = newCoverImage;
     setCampaigns(newCampaigns);
 
-    pushMessage({
-      message: "Updated campaign cover image",
-      type: "success",
-    });
+    pushToast(
+      "Update Campaign Cover Image",
+      "Uploaded image succesfully",
+      "success"
+    );
   };
 
   return (
