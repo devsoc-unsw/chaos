@@ -2,12 +2,17 @@ import moment from "moment";
 import "twin.macro";
 
 import Card from "components/Card";
+import Dropdown from "components/Dropdown";
+import DropdownOption from "components/Dropdown/DropdownOption";
 
 import CampaignStatus from "./CampaignStatus";
 
 import type { VariantProps } from "@stitches/react";
 import type { MouseEventHandler } from "react";
 import type { CampaignWithRoles } from "types/api";
+
+import { PencilSquareIcon } from "@heroicons/react/24/outline";
+import { TrashIcon } from "@heroicons/react/24/outline";
 
 const dateToString = (date: Date) => moment(date).format("D MMM YYYY");
 
@@ -62,7 +67,18 @@ const Content = ({
           </p>
         </div>
         {isAdmin ? (
-          <p tw="ml-auto">popover</p>
+          <Dropdown>
+            <DropdownOption
+              name="edit"
+              icon={<PencilSquareIcon tw="h-5 w-5 inline mr-2" />}
+              onClick={null}
+            />
+            <DropdownOption
+              name="delete"
+              icon={<TrashIcon tw="h-5 w-5 inline mr-2" />}
+              onClick={null}
+            />
+          </Dropdown>
         ) : (
           <CampaignStatus status={status} onClick={openModal}>
             {status.toUpperCase()}
