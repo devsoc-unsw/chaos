@@ -1,4 +1,5 @@
 use crate::error::JsonErr;
+use crate::images::get_image_path;
 use crate::{
     database::{
         models::{
@@ -19,6 +20,7 @@ use rocket::{
     serde::{json::Json, Deserialize, Serialize},
 };
 use std::collections::HashMap;
+use std::fs::remove_file;
 use uuid::Uuid;
 
 #[derive(Serialize)]
@@ -154,7 +156,10 @@ pub async fn set_logo(
     })
     .await?;
 
-    let logo_uuid = Uuid::new_v4().as_hyphenated().to_string();
+    let old_logo_uuid = db
+        .run(move |conn| Organisation::get_logo(&conn, org_id))
+        .await;
+    let logo_uuid = Uuid::new_v4().as_hyphenated().to_string() + ".webp";
 
     let image = try_decode_data(image).await.or_else(|_| {
         Err(JsonErr(
@@ -170,6 +175,10 @@ pub async fn set_logo(
 
     db.run(move |conn| Organisation::set_logo(&conn, org_id, &logo_uuid_clone))
         .await;
+
+    if let Some(uuid) = old_logo_uuid {
+        remove_file(get_image_path(ImageLocation::ORGANISATIONS, &uuid)).ok();
+    }
 
     Ok(Json(get_http_image_path(
         ImageLocation::ORGANISATIONS,

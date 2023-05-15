@@ -2,8 +2,8 @@ import { DeleteForeverRounded } from "@mui/icons-material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import { Divider, IconButton, ListItemIcon, ListItemText } from "@mui/material";
-import { useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import "twin.macro";
 
 import { deleteCampaign, setCampaignCoverImage } from "api";
@@ -11,8 +11,7 @@ import { FetchError } from "api/api";
 import { CampaignCard, Modal } from "components";
 import Button from "components/Button";
 import Dropzone from "components/Dropzone";
-import { MessagePopupContext } from "contexts/MessagePopupContext";
-import { dateToDateString } from "utils";
+import { dateToDateString, pushToast } from "utils";
 
 import {
   AdminContentList,
@@ -53,12 +52,11 @@ const AdminCampaignContent = ({
     startDate: "",
     endDate: "",
   });
-  const pushMessage = useContext(MessagePopupContext);
 
   useEffect(() => {
     if (coverImage === undefined) {
       // have to be consistent in returning a function to make eslint happy
-      return () => {};
+      return () => { };
     }
 
     const reader = new FileReader();
@@ -87,10 +85,7 @@ const AdminCampaignContent = ({
         message += "unknown error";
       }
 
-      pushMessage({
-        type: "error",
-        message,
-      });
+      pushToast("Delete Campaign", message, "error");
 
       throw e;
     }
@@ -100,10 +95,7 @@ const AdminCampaignContent = ({
 
   const uploadCoverImage = async () => {
     if (coverImage === undefined) {
-      pushMessage({
-        message: "No organisation logo given.",
-        type: "error",
-      });
+      pushToast("Update Campaign Cover Image", "No image given", "error");
       return;
     }
 
@@ -118,25 +110,28 @@ const AdminCampaignContent = ({
         try {
           const data = (await err.resp.json()) as string;
 
-          pushMessage({
-            message: `Internal Error: ${data}`,
-            type: "error",
-          });
+          pushToast(
+            "Update Campaign Cover Image",
+            `Internal Error: ${data}`,
+            "error"
+          );
         } catch {
-          pushMessage({
-            message: `Internal Error: Response Invalid`,
-            type: "error",
-          });
+          pushToast(
+            "Update Campaign Cover Image",
+            "Internal Error: Response Invalid",
+            "error"
+          );
         }
 
         return;
       }
 
       console.error("Something went wrong");
-      pushMessage({
-        message: "Something went wrong on backend!",
-        type: "error",
-      });
+      pushToast(
+        "Update Campaign Cover Image",
+        "Something went wrong on the backend!",
+        "error"
+      );
 
       return;
     }
@@ -147,10 +142,11 @@ const AdminCampaignContent = ({
     ].image = newCoverImage;
     setCampaigns(newCampaigns);
 
-    pushMessage({
-      message: "Updated campaign cover image",
-      type: "success",
-    });
+    pushToast(
+      "Update Campaign Cover Image",
+      "Uploaded image succesfully",
+      "success"
+    );
   };
 
   return (
@@ -180,14 +176,14 @@ const AdminCampaignContent = ({
           <DummyIconForAlignment />
         </ListItemIcon>
         <ListItemIcon>
-          <IconButton>
-            <AddIcon onClick={() => navigate(`/campaign/create/${orgId}`)} />
-          </IconButton>
+          <Link tw="p-2" to={`/campaign/create/${orgId}`}>
+            <AddIcon />
+          </Link>
         </ListItemIcon>
       </ContentListHeader>
       <AdminDivider />
       {campaigns.map((c) => (
-        <div>
+        <div key={c.id}>
           <CampaignListItem>
             <AdminListItemButton onClick={(_) => navigate(`review/${c.id}`)}>
               <CampaignListItemImage src={c.image} />

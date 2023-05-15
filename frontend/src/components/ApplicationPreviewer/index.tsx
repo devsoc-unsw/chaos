@@ -1,4 +1,5 @@
 import { Container, Typography } from "@mui/material";
+import { Fragment } from "react";
 
 import { Answer, NoAnswer, Question } from "./applicationPreviewer.styled";
 
@@ -14,8 +15,9 @@ const ApplicationPreviewer = ({ application }: Props) => (
       {application.zId}
     </Typography>
 
-    {application.questions.map((question) => (
-      <>
+    {application.questions.map((question, idx) => (
+      // eslint-disable-next-line react/no-array-index-key
+      <Fragment key={idx}>
         <Question>{question.question}</Question>
 
         {question.answer ? (
@@ -23,7 +25,7 @@ const ApplicationPreviewer = ({ application }: Props) => (
         ) : (
           <NoAnswer>No answer provided.</NoAnswer>
         )}
-      </>
+      </Fragment>
     ))}
   </Container>
 );

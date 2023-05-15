@@ -15,6 +15,7 @@ const Dropzone = ({
       "image/jpg": [".jpg"],
       "image/png": [".png"],
       "image/gif": [".gif"],
+      "image/webp": [".webp"],
     }}
     minSize={1024}
     maxSize={3072000}

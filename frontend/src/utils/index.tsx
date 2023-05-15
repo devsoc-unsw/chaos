@@ -1,4 +1,7 @@
+import { ToastType } from "components/Toast";
 import moment from "moment";
+import { toast } from "react-hot-toast";
+import Toast from "components/Toast";
 
 export function isLogin(): boolean {
   return true;
@@ -45,3 +48,13 @@ export const getStore = (key: string) => localStorage.getItem(key);
 export const setStore = (key: string, val: string) =>
   localStorage.setItem(key, val);
 export const removeStore = (key: string) => localStorage.removeItem(key);
+
+export const pushToast = (
+  title: string,
+  description: string,
+  type?: ToastType
+) => {
+  toast.custom((t) => (
+    <Toast t={t} title={title} description={description} type={type} />
+  ));
+};

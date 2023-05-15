@@ -1,4 +1,5 @@
 use crate::error::JsonErr;
+use crate::images::get_image_path;
 use crate::{
     database::{
         models::{
@@ -11,6 +12,7 @@ use crate::{
 };
 use rocket::{data::Data, delete, get, http::Status, post, put, serde::json::Json};
 use serde::{Deserialize, Serialize};
+use std::fs::remove_file;
 
 use uuid::Uuid;
 
@@ -275,7 +277,10 @@ pub async fn set_cover_image(
     })
     .await?;
 
-    let logo_uuid = Uuid::new_v4().as_hyphenated().to_string();
+    let old_logo_uuid = db
+        .run(move |conn| Campaign::get_cover_image(&conn, campaign_id))
+        .await;
+    let logo_uuid = Uuid::new_v4().as_hyphenated().to_string() + ".webp";
 
     let image = try_decode_data(image).await.or_else(|_| {
         Err(JsonErr(
@@ -291,6 +296,10 @@ pub async fn set_cover_image(
 
     db.run(move |conn| Campaign::set_cover_image(&conn, campaign_id, &logo_uuid_clone))
         .await;
+
+    if let Some(uuid) = old_logo_uuid {
+        remove_file(get_image_path(ImageLocation::CAMPAIGNS, &uuid)).ok();
+    }
 
     Ok(Json(get_http_image_path(
         ImageLocation::CAMPAIGNS,
