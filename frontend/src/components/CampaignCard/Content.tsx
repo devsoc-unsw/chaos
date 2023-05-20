@@ -8,8 +8,9 @@ import DropdownOption from "components/Dropdown/DropdownOption";
 import CampaignStatus from "./CampaignStatus";
 
 import type { VariantProps } from "@stitches/react";
-import type { MouseEventHandler } from "react";
+import type { Dispatch, MouseEventHandler, SetStateAction } from "react";
 import type { CampaignWithRoles } from "types/api";
+import type { Campaign } from "types/api";
 
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { TrashIcon } from "@heroicons/react/24/outline";
@@ -24,6 +25,10 @@ type Props = {
   endDate: Date;
   img: string;
   openModal: MouseEventHandler<HTMLButtonElement>;
+  c: Campaign;
+  setSelectedCampaign: Dispatch<SetStateAction<Campaign>>;
+  setShowDeleteDialog: Dispatch<SetStateAction<boolean>>;
+  setShowEditDialog: Dispatch<SetStateAction<boolean>>;
   isAdmin: boolean;
 };
 
@@ -35,6 +40,10 @@ const Content = ({
   endDate,
   img,
   openModal,
+  c,
+  setSelectedCampaign,
+  setShowDeleteDialog,
+  setShowEditDialog,
   isAdmin,
 }: Props) => {
   const date = new Date();
@@ -52,6 +61,29 @@ const Content = ({
     status = "open";
   }
 
+  const dropdown = (
+    <Dropdown>
+      <DropdownOption
+        name="edit"
+        icon={<PencilSquareIcon tw="h-5 w-5 inline mr-2" />}
+        onClick={() => {
+          setSelectedCampaign(c);
+          setShowEditDialog(true);
+          console.log("edit");
+        }}
+      />
+      <DropdownOption
+        name="delete"
+        icon={<TrashIcon tw="h-5 w-5 inline mr-2" />}
+        onClick={() => {
+          setSelectedCampaign(c);
+          setShowDeleteDialog(true);
+          console.log("delete");
+        }}
+      />
+    </Dropdown>
+  );
+
   return (
     <Card tw="p-0 overflow-hidden text-sm w-96" hoverable>
       <header tw="flex items-center gap-1.5 p-3">
@@ -67,18 +99,7 @@ const Content = ({
           </p>
         </div>
         {isAdmin ? (
-          <Dropdown>
-            <DropdownOption
-              name="edit"
-              icon={<PencilSquareIcon tw="h-5 w-5 inline mr-2" />}
-              onClick={null}
-            />
-            <DropdownOption
-              name="delete"
-              icon={<TrashIcon tw="h-5 w-5 inline mr-2" />}
-              onClick={null}
-            />
-          </Dropdown>
+          dropdown
         ) : (
           <CampaignStatus status={status} onClick={openModal}>
             {status.toUpperCase()}

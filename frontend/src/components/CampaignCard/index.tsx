@@ -6,8 +6,8 @@ import Content from "./Content";
 import Popup from "./Popup";
 
 import type { Position } from "./types";
-import type { MouseEvent } from "react";
-import type { CampaignWithRoles } from "types/api";
+import type { Dispatch, MouseEvent, SetStateAction } from "react";
+import type { Campaign, CampaignWithRoles } from "types/api";
 
 type Props = {
   campaignId?: number;
@@ -18,6 +18,10 @@ type Props = {
   startDate: Date;
   endDate: Date;
   img: string;
+  c: Campaign;
+  setSelectedCampaign: Dispatch<SetStateAction<Campaign>>;
+  setShowDeleteDialog: Dispatch<SetStateAction<boolean>>;
+  setShowEditDialog: Dispatch<SetStateAction<boolean>>;
   isAdmin: boolean;
 };
 
@@ -30,6 +34,10 @@ const CampaignCard = ({
   startDate,
   endDate,
   img,
+  c,
+  setSelectedCampaign,
+  setShowDeleteDialog,
+  setShowEditDialog,
   isAdmin,
 }: Props) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,6 +57,10 @@ const CampaignCard = ({
       endDate={endDate}
       img={img}
       openModal={openModal}
+      c={c}
+      setSelectedCampaign={setSelectedCampaign}
+      setShowDeleteDialog={setShowDeleteDialog}
+      setShowEditDialog={setShowEditDialog}
       isAdmin={isAdmin}
     />
   );

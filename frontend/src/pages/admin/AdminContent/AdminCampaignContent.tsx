@@ -56,7 +56,7 @@ const AdminCampaignContent = ({
   useEffect(() => {
     if (coverImage === undefined) {
       // have to be consistent in returning a function to make eslint happy
-      return () => { };
+      return () => {};
     }
 
     const reader = new FileReader();
@@ -160,9 +160,53 @@ const AdminCampaignContent = ({
           positions={[]}
           startDate={c.startDate}
           endDate={c.endDate}
+          c={c}
+          setSelectedCampaign={setSelectedCampaign}
+          setShowDeleteDialog={setShowDeleteDialog}
+          setShowEditDialog={setShowEditDialog}
           isAdmin
         />
       ))}
+      <Modal
+        open={showEditDialog}
+        closeModal={() => setShowEditDialog(false)}
+        title="Edit Campaign"
+        description={selectedCampaign.title}
+        closeButton
+      >
+        <Dropzone onDrop={([file]) => setCoverImage(file)}>
+          {coverImage === undefined ? (
+            <p>
+              Drag and drop your campaign cover image, or click to select an
+              image
+            </p>
+          ) : (
+            <img
+              tw="max-w-full max-h-full"
+              src={coverImageSrc}
+              alt="campaign cover"
+            />
+          )}
+        </Dropzone>
+        <Button onClick={() => void uploadCoverImage()} tw="ml-auto">
+          Update campaign cover image
+        </Button>
+      </Modal>
+
+      <Modal
+        open={showDeleteDialog}
+        closeModal={() => setShowDeleteDialog(false)}
+        title="Delete Campaign"
+        description={selectedCampaign.title}
+      >
+        <p>
+          Are you sure you want to delete this campaign?{" "}
+          <strong>This action is permanent and irreversible.</strong>
+        </p>
+        <Button color="danger" onClick={() => void handleDelete()}>
+          Yes, delete this campaign
+        </Button>
+      </Modal>
     </div>
   );
 

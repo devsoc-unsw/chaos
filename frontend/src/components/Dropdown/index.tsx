@@ -11,12 +11,16 @@ type Props = {
 
 const Dropdown = ({ children }: Props) => (
   <Menu>
-    <Menu.Button tw="ml-auto">
-      <EllipsisVerticalIcon tw="h-8 w-8" aria-hidden="true" />
-    </Menu.Button>
-    <Menu.Items tw="absolute top-12 right-0 z-20">
-      <Card tw="gap-3"> {children} </Card>
-    </Menu.Items>
+    <div tw="relative ml-auto">
+      <Menu.Button>
+        <EllipsisVerticalIcon tw="h-6 w-6" aria-hidden="true" />
+      </Menu.Button>
+      <Menu.Items>
+        <Card tw="gap-1 mt-5 absolute right-0 z-20 text-left p-1">
+          {children}
+        </Card>
+      </Menu.Items>
+    </div>
   </Menu>
 );
 
