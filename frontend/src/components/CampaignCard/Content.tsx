@@ -69,7 +69,6 @@ const Content = ({
         onClick={() => {
           setSelectedCampaign(c);
           setShowEditDialog(true);
-          console.log("edit");
         }}
       />
       <DropdownOption
@@ -78,7 +77,6 @@ const Content = ({
         onClick={() => {
           setSelectedCampaign(c);
           setShowDeleteDialog(true);
-          console.log("delete");
         }}
       />
     </Dropdown>
