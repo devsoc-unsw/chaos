@@ -35,5 +35,6 @@ module.exports = {
       strategy: "class",
     }),
     require("@tailwindcss/aspect-ratio"),
+    require('@headlessui/tailwindcss')
   ],
 };
