@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+
 import "twin.macro";
 
 import Content from "./Content";
@@ -7,7 +8,8 @@ import Popup from "./Popup";
 
 import type { Position } from "./types";
 import type { Dispatch, MouseEvent, SetStateAction } from "react";
-import type { Campaign, CampaignWithRoles } from "types/api";
+import type { CampaignWithRoles } from "types/api";
+import type { Campaign } from "pages/admin/types";
 
 type Props = {
   campaignId?: number;
@@ -18,11 +20,9 @@ type Props = {
   startDate: Date;
   endDate: Date;
   img: string;
-  c: Campaign;
-  setSelectedCampaign: Dispatch<SetStateAction<Campaign>>;
-  setShowDeleteDialog: Dispatch<SetStateAction<boolean>>;
-  setShowEditDialog: Dispatch<SetStateAction<boolean>>;
   isAdmin: boolean;
+  campaigns: Campaign[];
+  setCampaigns: Dispatch<SetStateAction<Campaign[]>>;
 };
 
 const CampaignCard = ({
@@ -34,11 +34,9 @@ const CampaignCard = ({
   startDate,
   endDate,
   img,
-  c,
-  setSelectedCampaign,
-  setShowDeleteDialog,
-  setShowEditDialog,
   isAdmin,
+  campaigns,
+  setCampaigns,
 }: Props) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -50,6 +48,7 @@ const CampaignCard = ({
 
   const content = (
     <Content
+      campaignId={campaignId}
       organisationLogo={organisationLogo}
       title={title}
       appliedFor={appliedFor}
@@ -57,11 +56,9 @@ const CampaignCard = ({
       endDate={endDate}
       img={img}
       openModal={openModal}
-      c={c}
-      setSelectedCampaign={setSelectedCampaign}
-      setShowDeleteDialog={setShowDeleteDialog}
-      setShowEditDialog={setShowEditDialog}
       isAdmin={isAdmin}
+      campaigns={campaigns}
+      setCampaigns={setCampaigns}
     />
   );
 
