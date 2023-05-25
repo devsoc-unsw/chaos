@@ -7,12 +7,21 @@ import Content from "./Content";
 import Popup from "./Popup";
 
 import type { Position } from "./types";
+import type { Campaign } from "pages/admin/types";
 import type { Dispatch, MouseEvent, SetStateAction } from "react";
 import type { CampaignWithRoles } from "types/api";
-import type { Campaign } from "pages/admin/types";
 
-type Props = {
+type AdminProps = {
+  campaignId: number;
+  isAdmin: true;
+};
+
+type NonAdminProps = {
   campaignId?: number;
+  isAdmin?: false;
+};
+
+type BaseProps = {
   organisationLogo?: string;
   title: string;
   appliedFor: CampaignWithRoles["applied_for"];
@@ -20,10 +29,11 @@ type Props = {
   startDate: Date;
   endDate: Date;
   img: string;
-  isAdmin: boolean;
   campaigns: Campaign[];
   setCampaigns: Dispatch<SetStateAction<Campaign[]>>;
 };
+
+type Props = BaseProps & (AdminProps | NonAdminProps);
 
 const CampaignCard = ({
   campaignId,

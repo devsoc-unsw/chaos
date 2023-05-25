@@ -20,13 +20,19 @@ import type { Campaign } from "pages/admin/types";
 import type { Dispatch, MouseEventHandler, SetStateAction } from "react";
 import type { CampaignWithRoles } from "types/api";
 
-import { PencilSquareIcon } from "@heroicons/react/24/outline";
-import { TrashIcon } from "@heroicons/react/24/outline";
-
 const dateToString = (date: Date) => moment(date).format("D MMM YYYY");
 
-type Props = {
+type AdminProps = {
   campaignId: number;
+  isAdmin: true;
+};
+
+type NonAdminProps = {
+  campaignId?: number;
+  isAdmin?: false;
+};
+
+type BaseProps = {
   organisationLogo?: string;
   title: string;
   appliedFor: CampaignWithRoles["applied_for"];
@@ -34,10 +40,11 @@ type Props = {
   endDate: Date;
   img: string;
   openModal: MouseEventHandler<HTMLButtonElement>;
-  isAdmin: boolean;
   campaigns: Campaign[];
   setCampaigns: Dispatch<SetStateAction<Campaign[]>>;
 };
+
+type Props = BaseProps & (AdminProps | NonAdminProps);
 
 const Content = ({
   campaignId,
@@ -77,6 +84,8 @@ const Content = ({
   }, [coverImage]);
 
   const uploadCoverImage = async () => {
+    if (!isAdmin) return;
+
     if (coverImage === undefined) {
       pushToast("Update Campaign Cover Image", "No image given", "error");
       return;
@@ -130,6 +139,8 @@ const Content = ({
   };
 
   const handleDelete = async () => {
+    if (!isAdmin) return;
+
     try {
       await deleteCampaign(campaignId);
     } catch (e) {
