@@ -1,5 +1,5 @@
 # Grab the latest Node base image
-FROM node:18.11.0-alpine as builder
+FROM node:18.16.0-alpine as builder
 
 # Set the current working directory inside the container
 WORKDIR /app
@@ -17,7 +17,7 @@ COPY . .
 RUN yarn run build
 
 # nginx state for serving content
-FROM nginx:1.23.2-alpine
+FROM nginx:1.25.0-alpine
 COPY ./.nginx/nginx.conf /etc/nginx/nginx.conf
 # Set working directory to nginx asset directory
 WORKDIR /usr/share/nginx/html
