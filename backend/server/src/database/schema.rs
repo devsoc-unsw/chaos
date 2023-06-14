@@ -11,11 +11,17 @@ pub enum ApplicationStatus {
     Success,
 }
 
-#[derive(Debug, DbEnum, PartialEq, FromFormField, Serialize, Deserialize, Clone, Copy)]
-#[DbValueStyle = "PascalCase"]
-pub enum QuestionTypes {
-    ShortAnswer,
-    MultiSelect,
+// #[derive(Debug, DbEnum, PartialEq, FromFormField, Serialize, Deserialize, Clone, Copy)]
+// #[DbValueStyle = "PascalCase"]
+// pub enum QuestionTypes {
+//     ShortAnswer,
+//     MultiSelect,
+// }
+
+pub mod sql_types {
+    #[derive(diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "question_type"))]
+    pub struct QuestionType;
 }
 
 
@@ -35,7 +41,7 @@ impl AdminLevel {
 
 table! {
     use diesel::sql_types::*;
-    use super::QuestionTypesMapping;
+    use super::sql_types::QuestionType;
 
     answers (id) {
         id -> Int4,
@@ -44,7 +50,23 @@ table! {
         description -> Text,
         created_at -> Timestamp,
         updated_at -> Timestamp,
-        answer_type -> QuestionTypesMapping,
+        answer_type -> QuestionType,
+    }
+}
+
+table! {
+    multi_select_answers (id) {
+        id -> Int4,
+        option_id -> Int4,
+        answer_id -> Int4,
+    }
+}
+
+table! {
+    short_answer_answers (id) {
+        id -> Int4,
+        text -> Text,
+        answer_id -> Int4,
     }
 }
 
@@ -115,7 +137,6 @@ table! {
 
 table! {
     use diesel::sql_types::*;
-    use super::QuestionTypesMapping;
 
     questions (id) {
         id -> Int4,
@@ -126,7 +147,15 @@ table! {
         required -> Bool,
         created_at -> Timestamp,
         updated_at -> Timestamp,
-        question_type -> QuestionTypesMapping,
+        question_type -> QuestionType,
+    }
+}
+
+table! {
+    multi_select_options (id) {
+        id -> Int4,
+        text -> Text,
+        question_id -> Int4,
     }
 }
 
@@ -183,15 +212,22 @@ joinable!(organisation_users -> users (user_id));
 joinable!(ratings -> applications (application_id));
 joinable!(ratings -> users (rater_user_id));
 joinable!(roles -> campaigns (campaign_id));
+joinable!(multi_select_answers -> answers (answer_id));
+joinable!(multi_select_answers -> multi_select_options (option_id));
+joinable!(multi_select_options -> questions (question_id));
+joinable!(short_answer_answers -> answers (answer_id));
 
 allow_tables_to_appear_in_same_query!(
     answers,
+    multi_select_answers,
+    short_answer_answers,
     applications,
     campaigns,
     comments,
     organisation_users,
     organisations,
     questions,
+    multi_select_options,
     ratings,
     roles,
     users,
