@@ -1,9 +1,10 @@
 use diesel::PgConnection;
+use rocket::http::Status;
 use serde::{Deserialize, Serialize};
 
 use crate::database::{models::{Question, Answer}};
-use crate::database::models::{MultiSelectOption, NewQuestion};
-use crate::database::schema::sql_types::QuestionType;
+use crate::database::models::{MultiSelectOption, NewMultiSelectOption, NewQuestion};
+use crate::error::JsonErr;
 //  QUESTION TYPES
 //  In this file, add new question types that we need to implement
 //  e.g.
@@ -21,9 +22,17 @@ use crate::database::schema::sql_types::QuestionType;
 #[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
 pub enum QuestionData {
     ShortAnswer,
-    MultiSelect(MultiSelectQuestion),
+    MultiSelect(MultiSelectQuestion),   // Vector of option text
     MultiChoice(MultiSelectQuestion),
     DropDown(MultiSelectQuestion),
+}
+
+#[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
+pub enum QuestionDataInput {
+    ShortAnswer,
+    MultiSelect(MultiSelectQuestionInput),   // Vector of option text
+    MultiChoice(MultiSelectQuestionInput),
+    DropDown(MultiSelectQuestionInput),
 }
 
 /// An enum that represents all the types of questions answers that CHAOS can handle.
@@ -41,7 +50,7 @@ pub enum AnswerData {
     DropDown(MultiSelectAnswer),
 }
 
-impl QuestionData {
+impl QuestionDataInput {
     /**
      * Insert the inner struct into its corresponding table according to the type given by question_type
      */
@@ -51,28 +60,66 @@ impl QuestionData {
         question: &NewQuestion,
         question_id: i32,
     ) -> Option<Self> {
-        
+
         match self {
-            QuestionData::ShortAnswer => {
+            QuestionDataInput::ShortAnswer => {
                 // No need for any question data insertion, as short-answer
                 // questions only need a title (contained in parent table)
             },
-            QuestionData::MultiSelect(multi_select_data) => {
+            QuestionDataInput::MultiSelect(multi_select_data) => {
                 // Insert Multi Select Data into table
+                let new_data= multi_select_data.map(|x| {
+                    NewMultiSelectOption {
+                        text: x,
+                        question_id,
+                    }
+                }).collect();
 
-                // TODO: insert into db using question_id - I think nothing has to be done for this one!!!
+                for option in new_data {
+                    option.insert(conn).ok_or_else(|| {
+                        eprintln!("Failed to create question data for some reason");
+                        JsonErr(todo!(), Status::InternalServerError);
+                    })?;
+                }
             },
-            QuestionData::MultiChoice(multi_choice_data) => {
-                // Insert Multi Choice Data into table
+            QuestionDataInput::MultiChoice(multi_choice_data) => {
+                let new_data = multi_select_data.map(|x| {
+                    NewMultiSelectOption {
+                        text: x,
+                        question_id,
+                    }
+                }).collect();
+
+                for option in new_data {
+                    option.insert(conn).ok_or_else(|| {
+                        eprintln!("Failed to create question data for some reason");
+                        JsonErr(todo!(), Status::InternalServerError);
+                    })?;
+                }
             },
-            QuestionData::DropDown(drop_down_data) => {
-                // Insert Drop Down Data into table
+            QuestionDataInput::DropDown(drop_down_data) => {
+                let new_data = multi_select_data.map(|x| {
+                    NewMultiSelectOption {
+                        text: x,
+                        question_id,
+                    }
+                }).collect();
+
+                for option in new_data {
+                    option.insert(conn).ok_or_else(|| {
+                        eprintln!("Failed to create question data for some reason");
+                        JsonErr(todo!(), Status::InternalServerError);
+                    })?;
+                }
             },
         }
 
         None
 
     }
+}
+
+impl QuestionData {
 
     pub fn get_from_question_id(conn: &PgConnection, question_id: i32) -> Option<Self> {
 
@@ -156,6 +203,12 @@ impl AnswerData {
 pub struct MultiSelectQuestion {
     options: Vec<MultiSelectOption>
 }
+
+#[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
+pub struct MultiSelectQuestionInput {
+    options: Vec<MultiSelectOption>
+}
+
 
 #[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
 pub struct NewMultiSelectAnswer {
