@@ -1,9 +1,8 @@
-use crate::question_types::QuestionDataEnum;
+use crate::question_types::QuestionData;
 use crate::images::{get_http_image_path, ImageLocation};
 
 use super::schema::AdminLevel;
 use super::schema::ApplicationStatus;
-use super::schema::QuestionTypes;
 use super::schema::{
     answers, applications, campaigns, comments, organisation_users, organisations, questions,
     ratings, roles, users,
@@ -17,6 +16,10 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::fs::remove_file;
 use std::path::Path;
+use crate::database::schema::multi_select_answers::dsl::multi_select_answers;
+use crate::database::schema::multi_select_options::dsl::multi_select_options;
+use crate::database::schema::short_answer_answers::dsl::short_answer_answers;
+use crate::database::schema::sql_types::QuestionType;
 
 #[derive(Queryable)]
 pub struct User {
@@ -972,22 +975,22 @@ impl NewApplication {
 }
 
     /**
-     * 
-     * 
-     * 
-     * 
+     *
+     *
+     *
+     *
      * add New fields to Question sturct (also migration).
-     * 
+     *
      * New question_type which is a enum to identify which type it is
      * pub question_type: QuestionTypeEnum
-     * 
+     *
      * New question_data which will not be stored in db rather will provide info for separate specific
      * question type table. The table to insert/query determined by question_type field
      * pub question_data: QuestionDataEnum
-     * 
+     *
      * id of QuestionData
      * pub question_data_id: i32
-     * 
+     *
      */
 
 #[derive(Identifiable, Queryable, PartialEq, Serialize, Debug, QueryableByName)]
@@ -1001,20 +1004,20 @@ pub struct Question {
     pub required: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
-    pub question_type: QuestionTypes,
+    pub question_type: QuestionType,
 }
 
 /**
-     * 
-     * 
-     * 
+     *
+     *
+     *
      * Add enum field to NewQuestion
-     * 
-     * 
-     * 
-     * 
+     *
+     *
+     *
+     *
      * This means FE must pass in correctly formated JSON struct for our question data
-     * 
+     *
      * pub question_type: QuestionTypeEnum
      * pub question_data: QuestionDataEnum
      */
@@ -1027,7 +1030,7 @@ pub struct NewQuestion {
     #[serde(default)]
     pub max_bytes: i32,
     pub required: bool,
-    pub question_type: QuestionTypes,
+    pub question_type: QuestionType,
 }
 
 
@@ -1039,12 +1042,12 @@ pub struct QuestionResponse {
     pub description: Option<String>,
     pub max_bytes: i32,
     pub required: bool,
-    pub question_data: QuestionDataEnum,
-    pub question_type: QuestionTypes,
+    pub question_data: QuestionData,
+    pub question_type: QuestionType,
 }
 
-impl std::convert::From<(Question, QuestionDataEnum)> for QuestionResponse {
-    fn from(question_with_data: (Question, QuestionDataEnum)) -> Self {
+impl std::convert::From<(Question, QuestionData)> for QuestionResponse {
+    fn from(question_with_data: (Question, QuestionData)) -> Self {
         Self {
             id: question_with_data.0.id,
             role_id: question_with_data.0.role_id,
@@ -1073,6 +1076,29 @@ pub struct UpdateQuestionInput {
     pub description: Option<String>,
     pub max_bytes: i32,
     pub required: bool,
+}
+
+#[derive(Insertable, Queryable, Deserialize, Serialize, PartialEq, Debug, Clone)]
+#[table_name = "multi_select_options"]
+pub struct MultiSelectOption {
+    id: i32,
+    text: String,
+    question_id: i32,
+}
+
+#[derive(Insertable, Deserialize, Serialize, PartialEq, Debug, Clone)]
+#[table_name = "multi_select_options"]
+pub struct NewMultiSelectOption {
+    text: String,
+    question_id: i32,
+}
+
+impl NewMultiSelectOption {
+    pub fn insert(&self, conn: &PgConnection) -> Option<NewMultiSelectOption> {
+        use crate::database::schema::multi_select_options::dsl::*;
+
+        self.insert_into(multi_select_options).get_result(conn).ok()
+    }
 }
 
 impl Question {
@@ -1157,7 +1183,7 @@ pub struct Answer {
     pub description: String,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
-    pub answer_type: QuestionTypes,
+    pub answer_type: QuestionType,
 }
 
 #[derive(Insertable, Deserialize, Serialize)]
@@ -1166,7 +1192,60 @@ pub struct NewAnswer {
     pub application_id: i32,
     pub question_id: i32,
     pub description: String,
-    pub answer_type: QuestionTypes,
+    pub answer_type: QuestionType,
+}
+
+#[derive(Queryable, Deserialize, Serialize, PartialEq, Debug, Clone)]
+#[table_name = "short_answer_answers"]
+pub struct ShortAnswerAnswer {
+    id: i32,
+    text: String,
+    answer_id: i32,
+}
+
+#[derive(Insertable, Deserialize, Serialize, PartialEq, Debug, Clone)]
+#[table_name = "short_answer_answers"]
+pub struct NewShortAnswerAnswer {
+    text: String,
+    answer_id: i32,
+}
+
+impl NewShortAnswerAnswer {
+    pub fn insert(&self, conn: &PgConnection) -> Option<ShortAnswerAnswer> {
+        use crate::database::schema::short_answer_answers::dsl::*;
+
+        self.insert_into(short_answer_answers).get_result(conn).ok()
+    }
+}
+
+/// A struct to store answers for multi-choice, multi-select and drop-down
+/// question types, as these work the same way in the backend. The only
+/// difference is the restriction on number of answers for each type,
+/// with multi-choice only having one unique answer (vector length 1)
+///
+/// \
+/// The vector will store the id's of each option selected.
+#[derive(Queryable, Deserialize, Serialize, PartialEq, Debug, Clone)]
+#[table_name = "multi_select_answers"]
+pub struct MultiSelectAnswer {
+    id: i32,
+    option_id: i32,
+    answer_id: i32,
+}
+
+#[derive(Insertable, Deserialize, Serialize, PartialEq, Debug, Clone)]
+#[table_name = "multi_select_answers"]
+pub struct NewMultiSelectAnswer {
+    option_id: i32,
+    answer_id: i32,
+}
+
+impl NewMultiSelectAnswer {
+    pub fn insert(&self, conn: &PgConnection) -> Option<MultiSelectAnswer> {
+        use crate::database::schema::multi_select_answers::dsl::*;
+
+        self.insert_into(multi_select_answers).get_result(conn).ok()
+    }
 }
 
 impl Answer {

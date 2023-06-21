@@ -3,7 +3,7 @@ use crate::{database::{
         Campaign, OrganisationUser, Question, QuestionResponse, Role, UpdateQuestionInput, User,
     },
     Database,
-}, question_types::QuestionDataEnum};
+}, question_types::QuestionData};
 use crate::error::JsonErr;
 
 use rocket::{
@@ -36,7 +36,7 @@ pub async fn get_question(
             .ok_or(JsonErr(QuestionError::QuestionNotFound, Status::NotFound))?;
         let c = Campaign::get_from_id(&conn, r.campaign_id)
             .ok_or(JsonErr(QuestionError::QuestionNotFound, Status::NotFound))?;
-        let d: QuestionDataEnum = QuestionDataEnum::get_from_question(&conn, &q)
+        let d: QuestionData = QuestionData::get_from_question(&conn, &q)
             .ok_or(JsonErr(QuestionError::QuestionNotFound, Status::NotFound))?;
         OrganisationUser::role_admin_level(q.get_first_role(), user.id, conn)
             .is_at_least_director()

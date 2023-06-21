@@ -7,7 +7,7 @@ use crate::{database::{
     },
     schema::ApplicationStatus,
     Database,
-}, question_types::AnswerDataEnum};
+}, question_types::AnswerData};
 use crate::error::JsonErr;
 use rocket::{
     get,
@@ -123,7 +123,7 @@ pub async fn create_rating(
 #[derive(Serialize, Deserialize)]
 pub struct AnswerWithData {
     pub answer: NewAnswer,
-    pub data: AnswerDataEnum,
+    pub data: AnswerData,
 }
 
 
@@ -159,7 +159,7 @@ pub async fn submit_answer(
 
 
         // Insert the Answer Data UwU
-        AnswerDataEnum::insert_answer_data(data, conn, &inserted_answer).ok_or(JsonErr(
+        AnswerData::insert_answer_data(data, conn, &inserted_answer).ok_or(JsonErr(
             ApplicationError::UnableToCreate,
             Status::InternalServerError,
         ))?;
@@ -177,7 +177,7 @@ pub struct AnswersResponse {
 #[derive(Serialize)]
 pub struct AnswerResponse {
     answer: Answer,
-    data: AnswerDataEnum,
+    data: AnswerData,
 }
 
 #[get("/<application_id>/answers")]
@@ -198,7 +198,7 @@ pub async fn get_answers(
         let mut response: Vec<AnswerResponse> = Vec::new();
 
         for answer in Answer::get_all_from_application_id(conn, application_id) {
-            let data = AnswerDataEnum::get_from_answer(conn, &answer)
+            let data = AnswerData::get_from_answer(conn, &answer)
                 .ok_or(JsonErr(ApplicationError::AnswerDataNotFound, Status::NotFound))?;
             response.push(AnswerResponse { answer: answer, data: data });
         }

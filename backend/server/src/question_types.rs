@@ -1,42 +1,72 @@
 use diesel::PgConnection;
 use serde::{Deserialize, Serialize};
 
-use crate::database::{schema::QuestionTypes, models::{Question, Answer}};
-/**
- * In this file, add new question types that we need to implement
- * e.g.
- * MultiSelect
- */
+use crate::database::{models::{Question, Answer}};
+use crate::database::models::{MultiSelectOption, NewQuestion};
+use crate::database::schema::sql_types::QuestionType;
+//  QUESTION TYPES
+//  In this file, add new question types that we need to implement
+//  e.g.
+//  MultiSelect
+//  ShortAnswer
+//
 
-
+/// An enum that represents all the types of questions that CHAOS can handle.
+/// This stores all the data for each question type.
+///
+/// \
+/// Some question types are stored in-memory and JSON using the same struct, and only differ
+/// in their implementation when inserting to the database and in their restrictions
+/// (e.g. max answers allowed in single multi-choice)
 #[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
-pub enum QuestionDataEnum {
+pub enum QuestionData {
     ShortAnswer,
-    MultiSelect(MultiSelect),
+    MultiSelect(MultiSelectQuestion),
+    MultiChoice(MultiSelectQuestion),
+    DropDown(MultiSelectQuestion),
 }
 
+/// An enum that represents all the types of questions answers that CHAOS can handle.
+/// This stores all the data for each answer type.
+///
+/// \
+/// Some answers types are stored in-memory and JSON using the same struct, and only differ
+/// in their implementation when inserting to the database and in their restrictions
+/// (e.g. max answers allowed in single multi-choice)
 #[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
-pub enum AnswerDataEnum {
-    ShortAnswer,
+pub enum AnswerData {
+    ShortAnswer(String),
     MultiSelect(MultiSelectAnswer),
+    MultiChoice(MultiSelectAnswer), // TODO: Is there a better way to name these, without duplicating the structs? Traits?
+    DropDown(MultiSelectAnswer),
 }
 
-impl QuestionDataEnum {
+impl QuestionData {
     /**
      * Insert the inner struct into its corresponding table according to the type given by question_type
      */
     pub fn insert_question_data(
         self,
-        conn: &mut PgConnection,
-        question: &Question,
+        conn: &PgConnection,
+        question: &NewQuestion,
+        question_id: i32,
     ) -> Option<Self> {
         
         match self {
-            QuestionDataEnum::ShortAnswer => {
-                // do nothing, currently by default a question is of ShortAnswer Type
+            QuestionData::ShortAnswer => {
+                // No need for any question data insertion, as short-answer
+                // questions only need a title (contained in parent table)
             },
-            QuestionDataEnum::MultiSelect(multi_select_data) => {
+            QuestionData::MultiSelect(multi_select_data) => {
                 // Insert Multi Select Data into table
+
+                // TODO: insert into db using question_id - I think nothing has to be done for this one!!!
+            },
+            QuestionData::MultiChoice(multi_choice_data) => {
+                // Insert Multi Choice Data into table
+            },
+            QuestionData::DropDown(drop_down_data) => {
+                // Insert Drop Down Data into table
             },
         }
 
@@ -58,8 +88,10 @@ impl QuestionDataEnum {
         }
 
         match question.question_type {
-            QuestionTypes::ShortAnswer => {Some(AnswerDataEnum::ShortAnswer);},
-            QuestionTypes::MultiSelect => todo!(),
+            QuestionType::ShortAnswer => {Some(AnswerData::ShortAnswer);},
+            QuestionType::MultiSelect => todo!(),
+            QuestionType::MultiChoice => todo!(),
+            QuestionType::DropDown => todo!(),
         }
 
         None
@@ -69,8 +101,10 @@ impl QuestionDataEnum {
         let question_id = question.id;
 
         match question.question_type {
-            QuestionTypes::ShortAnswer => {Some(QuestionDataEnum::ShortAnswer);},
-            QuestionTypes::MultiSelect => todo!(),
+            QuestionType::ShortAnswer => {Some(QuestionData::ShortAnswer);},
+            QuestionType::MultiSelect => todo!(),
+            QuestionType::MultiChoice => todo!(),
+            QuestionType::DropDown => todo!(),
         }
 
         None
@@ -78,7 +112,7 @@ impl QuestionDataEnum {
 }
 
 
-impl AnswerDataEnum {
+impl AnswerData {
     pub fn insert_answer_data(
         self,
         conn: &mut PgConnection,
@@ -86,12 +120,18 @@ impl AnswerDataEnum {
     ) -> Option<Self> {
         
         match self {
-            AnswerDataEnum::ShortAnswer => {
+            AnswerData::ShortAnswer(short_answer_data) => {
                 // do nothing, currently by default a question is of ShortAnswer Type
             },
-            AnswerDataEnum::MultiSelect(multi_select_data) => {
+            AnswerData::MultiSelect(multi_select_data) => {
                 // Insert Multi Select Data into table
             },
+            AnswerData::MultiChoice(multi_choice_data) => {
+                // Insert Multi Choice Data into table
+            },
+            AnswerData::DropDown(drop_down_data) => {
+                // Insert Drop Down Data into table
+            }
         }
 
         None
@@ -101,20 +141,23 @@ impl AnswerDataEnum {
         let answer_id = answer.id;
 
         match answer.answer_type {
-            QuestionTypes::ShortAnswer => {Some(AnswerDataEnum::ShortAnswer);},
-            QuestionTypes::MultiSelect => todo!(),
+            QuestionType::ShortAnswer => {Some(AnswerData::ShortAnswer);},
+            QuestionType::MultiSelect => todo!(),
+            QuestionType::MultiChoice => todo!(),
+            QuestionType::DropDown => todo!(),
         }
 
         None
     }
 }
 
-#[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
-pub struct MultiSelect {
 
+#[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
+pub struct MultiSelectQuestion {
+    options: Vec<MultiSelectOption>
 }
 
 #[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
-pub struct MultiSelectAnswer {
-
+pub struct NewMultiSelectAnswer {
+    options_selected: Vec<i32>,
 }

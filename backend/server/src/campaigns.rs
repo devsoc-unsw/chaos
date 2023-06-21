@@ -5,10 +5,10 @@ use crate::{
             Campaign, CampaignWithRoles, NewCampaignInput, NewQuestion, OrganisationUser, Role,
             RoleUpdate, UpdateCampaignInput, User,
         },
-        Database, schema::QuestionTypes,
+        Database, schema::sql_types::QuestionType,
     },
     images::{get_http_image_path, save_image, try_decode_data, ImageLocation},
-    question_types::QuestionDataEnum
+    question_types::QuestionData
 };
 use rocket::{data::Data, delete, get, http::Status, post, put, serde::json::Json};
 use serde::{Deserialize, Serialize};
@@ -120,8 +120,8 @@ pub struct QuestionInput {
     pub max_bytes: i32,
     #[serde(default)]
     pub required: bool,
-    pub question_data: QuestionDataEnum,
-    pub question_type: QuestionTypes,
+    pub question_data: QuestionData,
+    pub question_type: QuestionType,
 }
 
 #[derive(Deserialize)]
@@ -143,13 +143,13 @@ pub async fn new(
         roles,
         mut questions,
     } = inner;
-
-    let mut question_data:Vec<QuestionDataEnum> = Vec::new();
-    questions
+    
+    let mut question_data: Vec<QuestionData> = questions
         .iter()
-        .for_each(|x| {
-            question_data.push(x.question_data.clone())
-        });
+        .map(|x| {
+           x.question_data.clone()
+        })
+        .collect();
 
     let mut new_questions: Vec<NewQuestion> = questions
         .iter_mut()
@@ -203,15 +203,19 @@ pub async fn new(
             }
         }
 
-        for question in new_questions {
-            question.insert(conn).ok_or_else(|| {
+        for (question, question_data) in new_questions.into_iter().zip(question_data.into_iter()) {
+
+            // Insert question (skeleton) into database, and then insert it's data into
+            // corresponding table in database.
+            let inserted_id = question.insert(conn).ok_or_else(|| {
                 eprintln!("Failed to create question for some reason");
                 JsonErr(CampaignError::UnableToCreate, Status::InternalServerError)
-            })?;
+            })?.id;
 
-            // Insert QuestionDataEnum into db here
-            // Use the method insert_question_data() of QuestionDataEnum
-            todo!();
+            question_data.insert_question_data(conn, &question, inserted_id).ok_or_else(|| {
+                eprintln!("Failed to create question data for some reason");
+                JsonErr(CampaignError::UnableToCreate, Status::InternalServerError)
+            })?;
         }
 
         Ok(Json(campaign))
