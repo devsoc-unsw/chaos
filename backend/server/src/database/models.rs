@@ -1078,19 +1078,24 @@ pub struct UpdateQuestionInput {
     pub required: bool,
 }
 
-#[derive(Insertable, Queryable, Deserialize, Serialize, PartialEq, Debug, Clone)]
+#[derive(Queryable, Deserialize, Serialize, PartialEq, Debug, Clone)]
 #[table_name = "multi_select_options"]
 pub struct MultiSelectOption {
-    id: i32,
-    text: String,
-    question_id: i32,
+    pub id: i32,
+    pub text: String,
+    pub question_id: i32,
+}
+
+#[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
+pub struct MultiSelectOptionInput {
+    pub text: String,
 }
 
 #[derive(Insertable, Deserialize, Serialize, PartialEq, Debug, Clone)]
 #[table_name = "multi_select_options"]
 pub struct NewMultiSelectOption {
-    text: String,
-    question_id: i32,
+    pub text: String,
+    pub question_id: i32,
 }
 
 impl NewMultiSelectOption {

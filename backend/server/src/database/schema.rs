@@ -11,26 +11,11 @@ pub enum ApplicationStatus {
     Success,
 }
 
-<<<<<<< Updated upstream
 #[derive(Debug, DbEnum, PartialEq, FromFormField, Serialize, Deserialize, Clone, Copy)]
 #[DbValueStyle = "PascalCase"]
 pub enum QuestionTypes {
     ShortAnswer,
     MultiSelect,
-=======
-// #[derive(Debug, DbEnum, PartialEq, FromFormField, Serialize, Deserialize, Clone, Copy)]
-// #[DbValueStyle = "PascalCase"]
-// pub enum QuestionTypes {
-//     ShortAnswer,
-//     MultiSelect,
-// }
-
-// TODO: Might have to change this to an enum (diesel auto-generated this struct, but enum is better? maybe for use within rust)
-pub mod sql_types {
-    #[derive(diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "question_type"))]
-    pub struct QuestionType;
->>>>>>> Stashed changes
 }
 
 
@@ -51,7 +36,11 @@ impl AdminLevel {
 table! {
     use diesel::sql_types::*;
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     use super::QuestionTypesMapping;
+=======
+    use crate::database::sql_types::QuestionType;
+>>>>>>> Stashed changes
 =======
     use crate::database::sql_types::QuestionType;
 >>>>>>> Stashed changes

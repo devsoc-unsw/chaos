@@ -14,6 +14,7 @@ use rocket::{data::Data, delete, get, http::Status, post, put, serde::json::Json
 use serde::{Deserialize, Serialize};
 
 use uuid::Uuid;
+use crate::question_types::QuestionDataInput;
 
 #[derive(Serialize)]
 pub enum CampaignError {
@@ -120,7 +121,7 @@ pub struct QuestionInput {
     pub max_bytes: i32,
     #[serde(default)]
     pub required: bool,
-    pub question_data: QuestionData,
+    pub question_data: QuestionDataInput,
     pub question_type: QuestionType,
 }
 
@@ -144,7 +145,7 @@ pub async fn new(
         mut questions,
     } = inner;
     
-    let mut question_data: Vec<QuestionData> = questions
+    let mut question_data: Vec<QuestionDataInput> = questions
         .iter()
         .map(|x| {
            x.question_data.clone()
