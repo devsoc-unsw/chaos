@@ -2,6 +2,7 @@ use crate::error::JsonErr;
 use crate::{
     database::{
         models::{NewUser, User},
+        schema::{UserGender},
         Database,
     },
     state::ApiState,
@@ -279,6 +280,7 @@ pub struct SignUpBody {
     display_name: String,
     degree_name: String,
     degree_starting_year: u32,
+    gender: UserGender,
 }
 
 #[derive(Serialize)]
@@ -347,6 +349,7 @@ pub async fn signup(
                 display_name: body.display_name.to_string(),
                 degree_name: body.degree_name.to_string(),
                 degree_starting_year: body.degree_starting_year as i32,
+                gender: body.gender,
                 superuser: User::get_number(conn) == 0,
             };
 

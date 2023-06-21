@@ -1,7 +1,8 @@
 use crate::images::{get_http_image_path, ImageLocation};
 
-use super::schema::AdminLevel;
-use super::schema::ApplicationStatus;
+use super::schema::{
+    AdminLevel, ApplicationStatus, UserGender
+};
 use super::schema::{
     answers, applications, campaigns, comments, organisation_users, organisations, questions,
     ratings, roles, users,
@@ -24,6 +25,7 @@ pub struct User {
     pub display_name: String,
     pub degree_name: String,
     pub degree_starting_year: i32,
+    pub gender: UserGender,
     pub superuser: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
@@ -50,6 +52,7 @@ pub struct NewUser {
     pub display_name: String,
     pub degree_name: String,
     pub degree_starting_year: i32,
+    pub gender: UserGender,
     pub superuser: bool,
 }
 
