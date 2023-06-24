@@ -13,7 +13,7 @@ pub enum ApplicationStatus {
 
 #[derive(Debug, DbEnum, PartialEq, FromFormField, Serialize, Deserialize, Clone, Copy)]
 #[DbValueStyle = "PascalCase"]
-pub enum QuestionTypes {
+pub enum QuestionType {
     ShortAnswer,
     MultiSelect,
 }
@@ -35,15 +35,7 @@ impl AdminLevel {
 
 table! {
     use diesel::sql_types::*;
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    use super::QuestionTypesMapping;
-=======
-    use crate::database::sql_types::QuestionType;
->>>>>>> Stashed changes
-=======
-    use crate::database::sql_types::QuestionType;
->>>>>>> Stashed changes
+    use super::QuestionTypeMapping;
 
     answers (id) {
         id -> Int4,
@@ -52,7 +44,7 @@ table! {
         description -> Text,
         created_at -> Timestamp,
         updated_at -> Timestamp,
-        answer_type -> QuestionTypesMapping,
+        answer_type -> QuestionTypeMapping,
     }
 }
 
@@ -98,6 +90,22 @@ table! {
 }
 
 table! {
+    multi_select_answers (id) {
+        id -> Int4,
+        option_id -> Int4,
+        answer_id -> Int4,
+    }
+}
+
+table! {
+    multi_select_options (id) {
+        id -> Int4,
+        text -> Text,
+        question_id -> Int4,
+    }
+}
+
+table! {
     use diesel::sql_types::*;
     use super::AdminLevelMapping;
 
@@ -123,7 +131,7 @@ table! {
 
 table! {
     use diesel::sql_types::*;
-    use super::QuestionTypesMapping;
+    use super::QuestionTypeMapping;
 
     questions (id) {
         id -> Int4,
@@ -134,7 +142,7 @@ table! {
         required -> Bool,
         created_at -> Timestamp,
         updated_at -> Timestamp,
-        question_type -> QuestionTypesMapping,
+        question_type -> QuestionTypeMapping,
     }
 }
 
@@ -160,6 +168,14 @@ table! {
         finalised -> Bool,
         created_at -> Timestamp,
         updated_at -> Timestamp,
+    }
+}
+
+table! {
+    short_answer_answers (id) {
+        id -> Int4,
+        text -> Text,
+        answer_id -> Int4,
     }
 }
 
@@ -197,10 +213,13 @@ allow_tables_to_appear_in_same_query!(
     applications,
     campaigns,
     comments,
+    multi_select_answers,
+    multi_select_options,
     organisation_users,
     organisations,
     questions,
     ratings,
     roles,
+    short_answer_answers,
     users,
 );
