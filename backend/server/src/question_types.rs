@@ -1,9 +1,11 @@
-use diesel::PgConnection;
+use diesel::{PgConnection, RunQueryDsl};
 use rocket::http::Status;
 use serde::{Deserialize, Serialize};
 
 use crate::database::{models::{Question, Answer}};
 use crate::database::models::{MultiSelectOption, NewMultiSelectOption, NewQuestion};
+use crate::database::schema::multi_select_options::dsl::multi_select_options;
+use crate::database::schema::QuestionType;
 use crate::error::JsonErr;
 //  QUESTION TYPES
 //  In this file, add new question types that we need to implement
@@ -121,24 +123,22 @@ impl QuestionDataInput {
 
 impl QuestionData {
 
-    pub fn get_from_question_id(conn: &PgConnection, question_id: i32) -> Option<Self> {
-
-        let question: Question;
-
-        match Question::get_from_id(conn, question_id) {
-            Some(q) => {
-                question = q;
-            }
-            None => {
-                return None
-            }
-        }
+    pub fn get_from_question_id(conn: &PgConnection, q_id: i32) -> Option<Self> {
 
         match question.question_type {
             QuestionType::ShortAnswer => {Some(AnswerData::ShortAnswer);},
-            QuestionType::MultiSelect => todo!(),
-            QuestionType::MultiChoice => todo!(),
-            QuestionType::DropDown => todo!(),
+            QuestionType::MultiSelect => {
+                use crate::database::schema::multi_select_options::dsl::*;
+                return multi_select_options.filter(question_id.eq(q_id)).first(conn).ok();
+            },
+            QuestionType::MultiChoice => {
+                use crate::database::schema::multi_select_options::dsl::*;
+                return multi_select_options.filter(question_id.eq(q_id)).first(conn).ok();
+            },
+            QuestionType::DropDown => {
+                use crate::database::schema::multi_select_options::dsl::*;
+                return multi_select_options.filter(question_id.eq(q_id)).first(conn).ok();
+            },
         }
 
         None
@@ -171,7 +171,7 @@ impl AnswerData {
                 // do nothing, currently by default a question is of ShortAnswer Type
             },
             AnswerData::MultiSelect(multi_select_data) => {
-                // Insert Multi Select Data into table
+                // TODO: Insert Multi Select Data into table
             },
             AnswerData::MultiChoice(multi_choice_data) => {
                 // Insert Multi Choice Data into table

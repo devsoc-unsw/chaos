@@ -18,6 +18,7 @@ use std::convert::From;
 #[derive(Serialize)]
 pub enum QuestionError {
     QuestionNotFound,
+    QuestionDataNotFound,
     UpdateFailed,
     InsufficientPermissions,
 }
@@ -37,7 +38,7 @@ pub async fn get_question(
         let c = Campaign::get_from_id(&conn, r.campaign_id)
             .ok_or(JsonErr(QuestionError::QuestionNotFound, Status::NotFound))?;
         let d: QuestionData = QuestionData::get_from_question(&conn, &q)
-            .ok_or(JsonErr(QuestionError::QuestionNotFound, Status::NotFound))?;
+            .ok_or(JsonErr(QuestionError::QuestionDataNotFound, Status::NotFound))?;
         OrganisationUser::role_admin_level(q.get_first_role(), user.id, conn)
             .is_at_least_director()
             .or(c.published)
