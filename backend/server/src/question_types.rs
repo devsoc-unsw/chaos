@@ -125,6 +125,17 @@ impl QuestionData {
 
     pub fn get_from_question_id(conn: &PgConnection, q_id: i32) -> Option<Self> {
 
+        let question: Question;
+
+        match Question::get_from_id(conn, q_id) {
+            Some(q) => {
+                question = q;
+            }
+            None => {
+                return None
+            }
+        }
+
         match question.question_type {
             QuestionType::ShortAnswer => {Some(AnswerData::ShortAnswer);},
             QuestionType::MultiSelect => {
@@ -148,10 +159,19 @@ impl QuestionData {
         let question_id = question.id;
 
         match question.question_type {
-            QuestionType::ShortAnswer => {Some(QuestionData::ShortAnswer);},
-            QuestionType::MultiSelect => todo!(),
-            QuestionType::MultiChoice => todo!(),
-            QuestionType::DropDown => todo!(),
+            QuestionType::ShortAnswer => { Some(AnswerData::ShortAnswer); },
+            QuestionType::MultiSelect => {
+                use crate::database::schema::multi_select_options::dsl::*;
+                return multi_select_options.filter(question_id.eq(question.id)).first(conn).ok();
+            },
+            QuestionType::MultiChoice => {
+                use crate::database::schema::multi_select_options::dsl::*;
+                return multi_select_options.filter(question_id.eq(question.id)).first(conn).ok();
+            },
+            QuestionType::DropDown => {
+                use crate::database::schema::multi_select_options::dsl::*;
+                return multi_select_options.filter(question_id.eq(question.id)).first(conn).ok();
+            },
         }
 
         None
