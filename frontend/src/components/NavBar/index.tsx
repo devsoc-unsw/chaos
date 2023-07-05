@@ -1,5 +1,5 @@
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
-import { useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import { NavLink, Link as RouterLink } from "react-router-dom";
 import tw, { styled } from "twin.macro";
 
@@ -7,6 +7,7 @@ import chaosImg from "assets/chaos.png";
 import Container from "components/Container";
 import Link from "components/Link";
 import Modal from "components/Modal";
+import { LoggedInContext } from "contexts/LoggedInContext";
 
 import { isLoggedIn } from "../../utils";
 
@@ -28,13 +29,17 @@ const NavButton = styled(NavLink, {
   `,
 });
 
-const NavBar = ({ campaign }: { campaign: string }) => {
-  const [loggedIn, setLoggedIn] = useState(false);
+const NavBar = ({
+  campaign,
+  loggedIn,
+}: {
+  campaign: string;
+  loggedIn: boolean;
+}) => {
   const [aboutOpen, setAboutOpen] = useState(false);
+  const setLoggedIn = useContext(LoggedInContext);
 
-  useEffect(() => {
-    setLoggedIn(isLoggedIn());
-  });
+  setLoggedIn(isLoggedIn());
 
   return (
     <header tw="fixed inset-x-0 z-10 bg-white shadow-md bg-gradient-to-r from-[#9dbbfb55] to-[#a78bfa55]">
