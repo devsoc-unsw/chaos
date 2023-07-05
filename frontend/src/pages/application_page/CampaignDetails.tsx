@@ -3,9 +3,8 @@ import moment from "moment";
 import "twin.macro";
 
 import Card from "components/Card";
-import { bytesToImage } from "utils";
 
-import type { CampaignWithRoles, Organisation } from "types/api";
+import type { CampaignWithRoles, Organisation, UserResponse } from "types/api";
 
 const dateToString = (date: string) =>
   moment(new Date(date)).format("D MMM YYYY");
@@ -16,12 +15,7 @@ interface Props {
   organisation: Organisation;
   campaign: CampaignWithRoles;
   description: string;
-  userInfo: {
-    display_name: string;
-    zid: string;
-    email: string;
-    degree_name: string;
-  };
+  userInfo: UserResponse;
 }
 const CampaignDetails = ({
   campaignName,
@@ -36,8 +30,7 @@ const CampaignDetails = ({
       <div tw="flex items-center gap-2">
         <img
           tw="h-20 rounded shadow-md"
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          src={bytesToImage(organisation.logo!)}
+          src={organisation.logo}
           alt={organisation.name}
         />
         <div tw="flex flex-col justify-center gap-2">
@@ -48,13 +41,15 @@ const CampaignDetails = ({
           </p>
         </div>
       </div>
-      <p tw="flex items-center leading-relaxed">{description}</p>
+      <p tw="flex items-center leading-relaxed whitespace-pre-wrap">
+        {description}
+      </p>
 
       <div>
         <h3 tw="text-xl leading-loose">You&apos;re applying as:</h3>
         <p tw="flex gap-1.5">
           <span>{userInfo.display_name}</span>
-          <span tw="italic font-light">({userInfo.zid})</span>
+          <span tw="italic font-extralight">({userInfo.zid})</span>
           <span>·</span>
           <span>{userInfo.degree_name}</span>
         </p>

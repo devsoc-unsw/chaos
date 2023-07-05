@@ -2,7 +2,7 @@ import { Card, Chip, Grid } from "@mui/material";
 import { green, red } from "@mui/material/colors";
 import { styled } from "@mui/material/styles";
 
-export const CandidateCard = styled(Card)<{ reject: boolean }>(
+export const CandidateCard = styled(Card, { shouldForwardProp: prop => prop !== 'reject' })<{ reject: boolean }>(
   ({ reject }) => ({
     margin: "0.5rem 0",
     // backgroundColor: reject ? red[50] : green[50],

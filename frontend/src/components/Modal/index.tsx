@@ -1,22 +1,32 @@
 import { Dialog } from "@headlessui/react";
-import { ComponentProps, Fragment } from "react";
+import { XMarkIcon } from "@heroicons/react/24/outline";
+import { Fragment } from "react";
 import tw from "twin.macro";
 
 import Transition from "components/Transition";
 
-import type { PropsWithChildren } from "react";
+import type { ComponentProps, PropsWithChildren } from "react";
 
 const Body = tw.div`mt-2 flex flex-col gap-2`;
 
 type Props = {
   open: boolean;
   closeModal: () => void;
+  /**
+   * Whether to show a close button in the top right of the modal popup.
+   * Set this to true if you're not providing your own button to close it.
+   */
+  closeButton?: boolean;
   title: string;
+  /**
+   * Will be displayed as a subtitle
+   */
   description?: string;
 } & ComponentProps<typeof Body>;
 const Modal = ({
   open,
   closeModal,
+  closeButton,
   title,
   description,
   children,
@@ -47,17 +57,30 @@ const Modal = ({
             leaveTo={tw`translate-y-2 scale-95 opacity-0`}
           >
             <Dialog.Panel tw="w-full max-w-lg transform overflow-hidden rounded bg-white p-4 shadow-xl transition-[opacity,transform]">
-              <Dialog.Title
-                as="h3"
-                tw="font-medium text-2xl text-gray-900 leading-8"
-              >
-                {title}
-              </Dialog.Title>
-              {description && (
-                <Dialog.Description tw="text-sm text-gray-600">
-                  {description}
-                </Dialog.Description>
-              )}
+              <header tw="flex items-start">
+                <div>
+                  <Dialog.Title
+                    as="h3"
+                    tw="font-medium text-2xl text-gray-900 leading-8"
+                  >
+                    {title}
+                  </Dialog.Title>
+                  {description && (
+                    <Dialog.Description tw="text-sm text-gray-600">
+                      {description}
+                    </Dialog.Description>
+                  )}
+                </div>
+                {closeButton && (
+                  <button
+                    type="button"
+                    tw="ml-auto p-2 rounded-full transition outline-none hover:bg-slate-50 focus-within:(ring ring-blue-600/50)"
+                    onClick={closeModal}
+                  >
+                    <XMarkIcon tw="h-7 w-7" />
+                  </button>
+                )}
+              </header>
               <Body {...props}>{children}</Body>
             </Dialog.Panel>
           </Transition.Child>

@@ -34,7 +34,7 @@ const ApplicationForm = ({
           <label key={id} tw="block mt-2">
             <span>{text}</span>
             <Textarea
-              tw="w-full max-w-xl"
+              tw="w-full max-w-xl mt-1"
               value={answers[id]}
               onChange={(e) => setAnswer(id, e.target.value)}
             />
@@ -44,7 +44,7 @@ const ApplicationForm = ({
     ))}
     <div tw="flex justify-end">
       <Button
-        tw="flex items-center"
+        tw="gap-0"
         onClick={onSubmit}
         disabled={rolesSelected.length === 0}
       >

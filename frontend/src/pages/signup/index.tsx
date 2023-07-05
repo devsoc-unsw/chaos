@@ -1,12 +1,15 @@
-import { Button, InputLabel, TextField } from "@mui/material";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import "twin.macro";
+
+import chaosImg from "assets/chaos.png";
+import Button from "components/Button";
+import Card from "components/Card";
+import Container from "components/Container";
+import Input from "components/Input";
 
 import { doSignup } from "../../api";
-import { BackgroundWrapper } from "../../components";
 import { getStore, setStore } from "../../utils";
-
-import { StyledForm } from "./signup.styled";
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -28,67 +31,81 @@ const Signup = () => {
   };
 
   return (
-    <BackgroundWrapper>
-      <StyledForm
+    <Container tw="flex-none justify-center gap-2 text-black">
+      <header tw="text-center">
+        <img tw="h-12 mx-auto filter drop-shadow" src={chaosImg} alt="Chaos" />
+        <div tw="my-4">
+          <h1 tw="text-4xl">Create an account</h1>
+          <p tw="text-gray-600">To start simplifying recruitment</p>
+        </div>
+      </header>
+
+      <Card
+        as="form"
+        tw="gap-4 px-8 py-6"
         onSubmit={(e) => {
           e.preventDefault();
           void signup();
         }}
       >
-        <div>
-          <h1>Signup</h1>
+        <div tw="flex flex-col gap-2">
+          <Input.Label>
+            <Input.LabelText required>Full Name</Input.LabelText>
+            <Input
+              required
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+            />
+          </Input.Label>
+
+          <Input.Label>
+            <Input.LabelText required>zID (zXXXXXXX)</Input.LabelText>
+            <Input
+              required
+              value={formData.zid}
+              onChange={(e) =>
+                setFormData({ ...formData, zid: e.target.value })
+              }
+              pattern="z\d{7}"
+            />
+          </Input.Label>
+
+          <Input.Label>
+            <Input.LabelText required>Degree Name</Input.LabelText>
+            <Input
+              required
+              value={formData.degree_name}
+              onChange={(e) =>
+                setFormData({ ...formData, degree_name: e.target.value })
+              }
+            />
+          </Input.Label>
+
+          <Input.Label>
+            <Input.LabelText required>Starting Year</Input.LabelText>
+            <Input
+              required
+              type="number"
+              value={formData.starting_year}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  starting_year: parseInt(e.target.value, 10),
+                })
+              }
+              min={new Date().getFullYear() - 100}
+              max={new Date().getFullYear() + 10}
+            />
+          </Input.Label>
         </div>
-        <InputLabel htmlFor="display_name">Full Name</InputLabel>
-        <TextField
-          required
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          id="display_name"
-          aria-describedby="Display Name"
-        />
 
-        <InputLabel htmlFor="zid">zID</InputLabel>
-        <TextField
-          required
-          id="zid"
-          aria-describedby="zid"
-          inputProps={{ pattern: "^z\\d{7}$" }}
-          value={formData.zid}
-          onChange={(e) =>
-            setFormData({ ...formData, zid: e.target.value.toLowerCase() })
-          }
-        />
-
-        <InputLabel htmlFor="degree_name">Degree Name</InputLabel>
-        <TextField
-          required
-          id="degree_name"
-          aria-describedby="Degree Name"
-          value={formData.degree_name}
-          onChange={(e) =>
-            setFormData({ ...formData, degree_name: e.target.value })
-          }
-        />
-
-        <InputLabel htmlFor="starting_year">Starting Year</InputLabel>
-        <TextField
-          required
-          type="number"
-          inputProps={{ pattern: "^\\d{4}$" }}
-          id="starting_year"
-          aria-describedby="Starting Year"
-          value={formData.starting_year}
-          onChange={(e) =>
-            setFormData({
-              ...formData,
-              starting_year: parseInt(e.target.value, 10),
-            })
-          }
-        />
-
-        <Button type="submit">Submit</Button>
-      </StyledForm>
-    </BackgroundWrapper>
+        <Button tw="justify-center font-medium" type="submit">
+          Sign Up
+        </Button>
+      </Card>
+    </Container>
   );
 };
 

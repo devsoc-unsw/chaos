@@ -46,6 +46,7 @@ const Campaign = ({ logo, active = false, transitionDelay = 0 }: Props) => {
   return (
     <Transition
       appear
+      show
       enter={tw`transition duration-500`}
       enterFrom={tw`translate-y-4 scale-90 opacity-0`}
       style={{ transitionDelay: `${transitionDelay}ms` }}

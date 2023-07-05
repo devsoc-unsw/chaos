@@ -38,6 +38,37 @@
         "argsIgnorePattern": "^_"
       }
     ],
+    "@typescript-eslint/naming-convention": [
+        "error",
+        {
+            "selector": "default",
+            "format": ["camelCase"],
+            "leadingUnderscore": "allow",
+            "trailingUnderscore": "allow"
+        },
+
+        {
+            "selector": "variable",
+            "format": ["camelCase", "UPPER_CASE", "PascalCase"],
+            "leadingUnderscore": "allow",
+            "trailingUnderscore": "allow"
+        },
+
+        {
+            "selector": "function",
+            "format": ["camelCase", "PascalCase"]
+        },
+
+        {
+            "selector": "typeLike",
+            "format": ["PascalCase"]
+        },
+
+        {
+            "selector": "objectLiteralProperty",
+            "format": null
+        }
+    ],
     "import/prefer-default-export": "off",
     "import/no-extraneous-dependencies": ["error", { "devDependencies": true }],
     "import/extensions": ["error", "never"],
@@ -76,7 +107,14 @@
     "react/require-default-props": "off",
     "@typescript-eslint/consistent-type-imports": "error",
     "no-void": "off",
-    "jsx-a11y/label-has-associated-control": ["error", { "assert": "either" }]
+    "jsx-a11y/label-has-associated-control": [
+      "error",
+      {
+        "assert": "either",
+        "labelComponents": ["Input.Label"],
+        "controlComponents": ["Input", "Textarea"]
+      }
+    ]
   },
   "settings": {
     "import/resolver": {

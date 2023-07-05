@@ -1,7 +1,7 @@
 import { Button, Container, Grid, Typography } from "@mui/material";
 import { green, red } from "@mui/material/colors";
 import { useContext, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 import {
   getApplicationAnswers,
@@ -9,18 +9,44 @@ import {
   getCampaign,
   getRoleApplications,
   getRoleQuestions,
-  setApplicationStatus,
 } from "api";
 import LoadingIndicator from "components/LoadingIndicator";
 import ReviewerStepper from "components/ReviewerStepper";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
+import useFetch from "hooks/useFetch";
+import { pushToast } from "utils";
 
 import DragDropRankings from "./DragDropRankings";
 
 import type { Applications, Ranking } from "./types";
+import type { ApplicationStatus } from "types/api";
+
+const statusCmp = (x: ApplicationStatus, y: ApplicationStatus) => {
+  switch (x) {
+    case "Success":
+      return y === "Success" ? 0 : -1;
+    case "Rejected":
+      return y === "Rejected" ? 0 : 1;
+    default:
+      switch (y) {
+        case "Success":
+          return 1;
+        case "Rejected":
+          return -1;
+        default:
+          return 0;
+      }
+  }
+};
+
+const ratingsMean = (ratings: Ranking["ratings"]) =>
+  ratings.reduce((x, y) => x + y.rating, 0) / ratings.length;
+
+const rankingCmp = (x: Ranking, y: Ranking) =>
+  statusCmp(x.status, y.status) ||
+  ratingsMean(y.ratings) - ratingsMean(x.ratings);
 
 const Rankings = () => {
-  const navigate = useNavigate();
   const campaignId = Number(useParams().campaignId);
   const setNavBarTitle = useContext(SetNavBarTitleContext);
   const roleId = Number(useParams().roleId);
@@ -29,8 +55,36 @@ const Rankings = () => {
   const [applications, setApplications] = useState<Applications>({});
   const [passIndex, setPassIndex] = useState(0);
 
+  const { put } = useFetch<void>("/application", {
+    abortBehaviour: "sameUrl",
+    jsonResp: false,
+  });
+
   useEffect(() => {
-    setPassIndex(Math.ceil((rankings.length || 0) / 2));
+    const updateRankings = async () => {
+      const success = await Promise.all(
+        rankings.map(async (ranking, index) => {
+          const { error, aborted } = await put(
+            `/${ranking.id}/private_status`,
+            {
+              body: index < passIndex ? "Success" : "Rejected",
+              errorSummary: `Failed to update status for ${ranking.name}`,
+            }
+          );
+          return !error && !aborted;
+        })
+      );
+
+      if (success.every(Boolean)) {
+        pushToast(
+          "Update status",
+          "Updated internal application statuses for role",
+          "success"
+        );
+      }
+    };
+
+    void updateRankings();
   }, [rankings]);
 
   useEffect(() => {
@@ -60,10 +114,14 @@ const Rankings = () => {
         applications.map(async (application) => ({
           name: application.user_display_name,
           id: application.id,
+          status: application.private_status,
           ratings: await getRatings(application.id),
         }))
       );
+      rankings.sort(rankingCmp);
       setRankings(rankings);
+      const passIndex = rankings.findIndex((r) => r.status !== "Success");
+      setPassIndex(passIndex === -1 ? rankings.length : passIndex);
 
       const { questions } = await getRoleQuestions(roleId);
 
@@ -94,25 +152,6 @@ const Rankings = () => {
 
     void fetchData();
   }, [roleId]);
-
-  const handleNext = () => {
-    console.log(
-      "Order:",
-      rankings.map((candidate) => candidate.name)
-    );
-    Promise.all(
-      rankings.map((ranking, index) =>
-        setApplicationStatus(
-          ranking.id,
-          index < passIndex ? "Success" : "Rejected"
-        )
-      )
-    )
-      .then(() => navigate("/finalise_candidates"))
-      .catch(() => {
-        // TODO: handle errors
-      });
-  };
 
   if (loading) {
     return <LoadingIndicator />;
@@ -146,7 +185,9 @@ const Rankings = () => {
       />
 
       <Grid container justifyContent="flex-end">
-        <Button onClick={handleNext}>Next</Button>
+        <Button component={Link} to="../finalise" relative="path">
+          Next
+        </Button>
       </Grid>
     </Container>
   );

@@ -35,7 +35,6 @@ const FinalRatingCandidateCard = ({
   application,
 }: Props) => {
   const [open, setOpen] = useState(false);
-  console.log(ratings);
 
   const handleOpen = () => {
     setOpen(true);

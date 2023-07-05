@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 type JsonPrimitive = string | number | boolean | null;
 type JsonMap = {
   // eslint-disable-next-line no-use-before-define
@@ -35,6 +36,10 @@ export type RoleInput = {
   min_available: number;
   max_available: number;
   questions_for_role: number[];
+};
+
+export type RoleApplications = {
+  applications: ApplicationResponse[];
 };
 
 export type Question = {
@@ -93,6 +98,7 @@ export type ApplicationResponse = {
   user_degree_starting_year: number;
   role_id: number;
   status: ApplicationStatus;
+  private_status: ApplicationStatus;
   created_at: string;
   updated_at: string;
 };
@@ -119,7 +125,7 @@ export type Campaign = {
   id: number;
   organisation_id: number;
   name: string;
-  cover_image: number[];
+  cover_image: string;
   description: string;
   starts_at: string;
   ends_at: string;
@@ -131,7 +137,7 @@ export type Campaign = {
 export type CampaignInfo = {
   id: number;
   name: string;
-  cover_image?: number[];
+  cover_image?: string;
   starts_at: string;
   ends_at: string;
 };
@@ -146,17 +152,21 @@ export type CampaignWithRoles = {
 export type NewCampaignInput = {
   organisation_id: number;
   name: string;
-  cover_image?: number[];
   description: string;
   starts_at: string;
   ends_at: string;
   published: boolean;
 };
 
+export type LogoError =
+  | "Unauthorized"
+  | "ImageDeletionFailure"
+  | "ImageStoreFailure";
+
 export type Organisation = {
   id: number;
   name: string;
-  logo?: number[];
+  logo?: string;
   created_at: string;
   updated_at: string;
 };
@@ -170,7 +180,7 @@ export type OrganisationUserInfo = {
 export type OrganisationInfo = {
   id: number;
   name: string;
-  logo?: number[];
+  logo?: string;
   members: OrganisationUserInfo[];
   campaigns: CampaignInfo[];
 };
@@ -181,4 +191,13 @@ export type UserResponse = {
   display_name: string;
   degree_name: string;
   degree_starting_year: number;
+};
+
+export type PostCommentRespone = {
+  id: number;
+  application_id: number;
+  commenter_user_id: number;
+  description: string;
+  created_at: string;
+  updated_at: string;
 };

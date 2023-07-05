@@ -3,15 +3,15 @@ extern crate diesel;
 #[macro_use]
 extern crate diesel_migrations;
 
-use backend::auth::Auth;
 use backend::cors::cors;
 use backend::database::Database;
+use backend::{auth::Auth, images::IMAGE_BASE_PATH};
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use diesel_migrations::*;
 use figment::{providers::Serialized, Figment};
 use rocket::{routes, serde::json::Value};
-use std::env;
+use std::{env, fs, path::Path};
 
 #[rocket::get("/foo")]
 fn authed_call(auth: Auth) -> String {
@@ -49,7 +49,10 @@ async fn main() {
 
     let figment = Figment::from(rocket::Config::default()).merge(Serialized::globals(config_map));
 
-    rocket::custom(figment)
+    // create images dir if not found
+    fs::create_dir_all(Path::new(IMAGE_BASE_PATH)).ok();
+
+    let _ = rocket::custom(figment)
         .manage(api_state)
         .attach(Database::fairing())
         .attach(cors)
@@ -66,6 +69,7 @@ async fn main() {
                 backend::organisation::get_from_ids,
                 backend::organisation::invite_uid,
                 backend::organisation::invite_email,
+                backend::organisation::set_logo,
             ],
         )
         .mount(
@@ -81,6 +85,7 @@ async fn main() {
                 backend::campaigns::new,
                 backend::campaigns::delete_campaign,
                 backend::campaigns::get_all_campaigns,
+                backend::campaigns::set_cover_image,
             ],
         )
         .mount(
@@ -100,6 +105,7 @@ async fn main() {
                 backend::application::get_answers,
                 backend::application::get_ratings,
                 backend::application::set_status,
+                backend::application::set_private_status,
                 backend::application::get_comments,
             ],
         )
@@ -132,6 +138,7 @@ async fn main() {
             "/admin",
             routes![backend::admin::get, backend::admin::make_superuser],
         )
+        .mount("/static", routes![backend::static_resources::files])
         .launch()
         .await
         .unwrap();

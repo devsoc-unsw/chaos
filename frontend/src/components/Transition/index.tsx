@@ -46,14 +46,9 @@ const getProps = (props: Props) => ({
   afterLeave: () => props.afterLeave?.(),
 });
 
-const Transition = (props: PropsWithChildren<Props>) => {
-  // headlessui 1.7 seems to have a race condition if we just set show=true
-  const [isShowing, setIsShowing] = useState(false);
-  useEffect(() => {
-    setIsShowing(true);
-  }, []);
-  return <HeadlessUiTransition {...getProps({ show: isShowing, ...props })} />;
-};
+const Transition = (props: PropsWithChildren<Props>) => (
+  <HeadlessUiTransition {...getProps(props)} />
+);
 
 Transition.Child = (props: PropsWithChildren<Props>) => (
   <HeadlessUiTransition.Child {...getProps(props)} />

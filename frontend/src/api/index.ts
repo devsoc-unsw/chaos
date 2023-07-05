@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable camelcase */
 import { getStore } from "../utils";
 
@@ -19,6 +20,7 @@ import type {
   QuestionInput,
   QuestionResponse,
   Role,
+  RoleApplications,
   RoleInput,
   UserResponse,
 } from "../types/api";
@@ -107,18 +109,26 @@ export const getOrganisation = (organisationId: number) =>
     path: `/organisation/${organisationId}`,
   });
 
-export const createOrganisation = (name: string, logo: number[]) =>
+export const createOrganisation = (name: string) =>
   authenticatedRequest<Organisation>({
     method: "POST",
     path: "/organisation/",
-    body: { name, logo },
+    body: { name },
+  });
+
+export const putOrgLogo = (orgId: number, logo: File) =>
+  authenticatedRequest<string>({
+    method: "PUT",
+    path: `/organisation/${orgId}/logo`,
+    body: logo,
+    jsonBody: false,
   });
 
 export const newApplication = (roleId: number) =>
   authenticatedRequest<Application>({
     method: "POST",
     path: "/application/",
-    body: { role_id: roleId, status: "Pending" },
+    body: { role_id: roleId },
   });
 
 export const doDeleteOrg = (orgId: number) =>
@@ -137,7 +147,7 @@ export const getCampaignRoles = (campaignId: number) =>
   });
 
 export const getRoleApplications = (roleId: number) =>
-  authenticatedRequest<{ applications: ApplicationResponse[] }>({
+  authenticatedRequest<RoleApplications>({
     path: `/role/${roleId}/applications`,
   });
 
@@ -194,6 +204,14 @@ export const createCampaign = (
     method: "POST",
     path: "/campaign",
     body: { campaign, roles, questions },
+  });
+
+export const setCampaignCoverImage = (campaignId: number, cover_image: File) =>
+  authenticatedRequest<string>({
+    method: "PUT",
+    path: `/campaign/${campaignId}/cover_image`,
+    body: cover_image,
+    jsonBody: false,
   });
 
 export const deleteCampaign = (id: number) =>

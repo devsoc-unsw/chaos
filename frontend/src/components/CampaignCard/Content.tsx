@@ -12,7 +12,7 @@ import type { CampaignWithRoles } from "types/api";
 const dateToString = (date: Date) => moment(date).format("D MMM YYYY");
 
 type Props = {
-  organisationLogo: string;
+  organisationLogo?: string;
   title: string;
   appliedFor: CampaignWithRoles["applied_for"];
   startDate: Date;

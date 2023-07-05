@@ -33,7 +33,6 @@ pub enum ApplicationError {
 #[derive(Deserialize)]
 pub struct ApplicationReq {
     pub role_id: i32,
-    pub status: ApplicationStatus,
 }
 
 #[post("/", data = "<app_req>")]
@@ -49,7 +48,8 @@ pub async fn create_application(
     let new_application = NewApplication {
         user_id: user.id,
         role_id: app_req.role_id,
-        status: app_req.status,
+        status: ApplicationStatus::Pending,
+        private_status: ApplicationStatus::Pending,
     };
 
     let application = db
@@ -221,6 +221,36 @@ pub async fn set_status(
 
         diesel::update(applications.filter(id.eq(application_id)))
             .set(status.eq(new_status.into_inner()))
+            .execute(conn)
+            .map_err(|_| {
+                JsonErr(
+                    ApplicationError::UnableToUpdate,
+                    Status::InternalServerError,
+                )
+            })?;
+
+        Ok(Json(()))
+    })
+    .await
+}
+
+#[put("/<application_id>/private_status", data = "<new_status>")]
+pub async fn set_private_status(
+    application_id: i32,
+    new_status: Json<ApplicationStatus>,
+    user: User,
+    db: Database,
+) -> Result<Json<()>, JsonErr<ApplicationError>> {
+    use crate::database::schema::applications::dsl::*;
+
+    db.run(move |conn| {
+        OrganisationUser::application_admin_level(application_id, user.id, &conn)
+            .is_at_least_director()
+            .check()
+            .map_err(|_| JsonErr(ApplicationError::Unauthorized, Status::Forbidden))?;
+
+        diesel::update(applications.filter(id.eq(application_id)))
+            .set(private_status.eq(new_status.into_inner()))
             .execute(conn)
             .map_err(|_| {
                 JsonErr(
