@@ -1,6 +1,6 @@
 import { useContext, useState } from "react";
 
-import { MessagePopupContext } from "contexts/MessagePopupContext";
+import { pushToast } from "utils";
 
 import { createOrganisation, putOrgLogo } from "../../api";
 import CreateOrganisationForm from "../CreateOrganisationForm";
@@ -51,8 +51,6 @@ const AdminSidebar = ({
   });
   const [inputText, setInputText] = useState("");
 
-  const pushMessage = useContext(MessagePopupContext);
-
   const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     setUploadedImage({
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -83,25 +81,29 @@ const AdminSidebar = ({
         setInputText("");
         setIsFormOpen(false);
 
-        pushMessage({
-          message: "New organisation created!",
-          type: "success",
-        });
+        pushToast(
+          "Organisation Creation Successful",
+          "Organisation successfully created",
+          "success"
+        );
       } else if (!inputText) {
-        pushMessage({
-          message: "An organisation name is required!",
-          type: "error",
-        });
+        pushToast(
+          "Organisation Creation Error",
+          "Organisation name is required!",
+          "error"
+        );
       } else if (!uploadedImage.image) {
-        pushMessage({
-          message: "An organisation logo image is required!",
-          type: "error",
-        });
+        pushToast(
+          "Organisation Creation Error",
+          "Organisation logo image is required!",
+          "error"
+        );
       } else {
-        pushMessage({
-          message: "Organisation unknown error occurred",
-          type: "error",
-        });
+        pushToast(
+          "Organisation Creation Error",
+          "Organisation unknown error occurred!",
+          "error"
+        );
       }
     };
 
