@@ -164,6 +164,7 @@ const RolesTab = ({ campaign }: Props) => {
           <RolesListContainer>
             {roles.map((r) => (
               <RoleListItem
+                key={r.id}
                 role={r}
                 roleSelected={roleSelected}
                 setRoleSelected={setRoleSelected}
@@ -201,6 +202,7 @@ const RolesTab = ({ campaign }: Props) => {
             .filter((q) => q.roles.has(roleSelected))
             .map((q, idx) => (
               <Question
+                key={q.id}
                 questionNumber={idx + 1}
                 question={q}
                 handleQuestionInput={handleQuestionInput}

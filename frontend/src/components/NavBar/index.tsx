@@ -45,7 +45,7 @@ const NavBar = ({
     <header tw="fixed inset-x-0 z-10 bg-white shadow-md bg-gradient-to-r from-[#9dbbfb55] to-[#a78bfa55]">
       <Container tw="flex-row items-center gap-4 text-[hsl(255.1,30%,22%)]">
         <RouterLink
-          to="/"
+          to={loggedIn ? "/dashboard" : "/"}
           tw="-my-2 rounded py-2 transition-shadow focus-visible:(outline-none ring ring-blue-400)"
         >
           <img tw="h-7 drop-shadow filter" src={chaosImg} alt="Chaos" />

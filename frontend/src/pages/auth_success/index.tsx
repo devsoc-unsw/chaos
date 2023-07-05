@@ -6,7 +6,7 @@ import { FetchError } from "api/api";
 import { authenticate } from "../../api";
 import { LoadingIndicator } from "../../components";
 import useQuery from "../../hooks/useQuery";
-import { setStore } from "../../utils";
+import { pushToast, setStore } from "../../utils";
 import { SIGNUP_REQUIRED } from "../../utils/constants";
 
 import type { AuthenticateErrResponse, AuthenticateResponse } from "types/api";
@@ -65,6 +65,7 @@ const AuthSuccess = () => {
     if (needsSignup) {
       navigate("/signup");
     } else if (isAuthenticated) {
+      pushToast("Authenticated", "Logged in successfully", "success");
       navigate("/dashboard");
     }
   }, [needsSignup, isAuthenticated]);

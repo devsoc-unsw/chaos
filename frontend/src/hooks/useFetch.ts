@@ -1,7 +1,6 @@
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { MessagePopupContext } from "contexts/MessagePopupContext";
-import { getStore } from "utils";
+import { getStore, pushToast } from "utils";
 
 import type { Json } from "types/api";
 
@@ -40,7 +39,7 @@ type FetchReturn<T> = {
   aborted: boolean;
 } & ({ error: true; errorMsg: string } | { error: false; errorMsg: undefined });
 
-type Options<T> = Parameters<typeof fetch>[1] & {
+type Options<T> = Omit<Parameters<typeof fetch>[1], "body"> & {
   headers?: { [k: string]: string };
   abortBehaviour?: AbortBehaviour;
   deps?: unknown[];
@@ -60,8 +59,6 @@ const useFetch = <T = void>(url: string, options?: Options<T>) => {
 
   const [abortBehaviour] = useState(options?.abortBehaviour ?? "all");
   const controllers = useRef<Controllers>({});
-
-  const pushMessage = useContext(MessagePopupContext);
 
   const refetch = useCallback(() => {
     setRetry({});
@@ -141,10 +138,7 @@ const useFetch = <T = void>(url: string, options?: Options<T>) => {
           if (options?.errorSummary) {
             message = `${options.errorSummary}: ${message}`;
           }
-          pushMessage({
-            type: "error",
-            message,
-          });
+          pushToast("Error in fetch", message, "error");
         }
       } finally {
         setLoading(false);

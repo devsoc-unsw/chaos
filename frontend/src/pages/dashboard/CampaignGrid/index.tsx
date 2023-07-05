@@ -1,7 +1,6 @@
 import tw from "twin.macro";
 
 import { CampaignCard, Transition } from "components";
-import { bytesToImage } from "utils";
 
 import CampaignLoading from "./CampaignLoading";
 
@@ -53,6 +52,7 @@ const CampaignGrid = ({
     <div tw="flex flex-wrap justify-around gap-4 pb-4 lg:justify-start">
       {campaigns.map((campaign, i) => (
         <Transition
+          key={campaign.campaign.id}
           appear
           show
           enter={{
@@ -62,7 +62,6 @@ const CampaignGrid = ({
           enterFrom={tw`translate-y-4 opacity-0`}
         >
           <CampaignCard
-            key={campaign.campaign.id}
             campaignId={campaign.campaign.id}
             title={campaign.campaign.name}
             appliedFor={campaign.applied_for}
@@ -73,14 +72,14 @@ const CampaignGrid = ({
             }))}
             startDate={new Date(campaign.campaign.starts_at)}
             endDate={new Date(campaign.campaign.ends_at)}
-            img={bytesToImage(campaign.campaign.cover_image)}
-            organisationLogo={bytesToImage(
-              organisations[campaign.campaign.organisation_id].logo!
-            )}
+            img={campaign.campaign.cover_image}
+            organisationLogo={
+              organisations[campaign.campaign.organisation_id].logo
+            }
           />
         </Transition>
       ))}
-    </div>
+    </div >
   );
 };
 
