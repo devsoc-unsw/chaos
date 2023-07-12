@@ -52,7 +52,7 @@ async fn main() {
     // create images dir if not found
     fs::create_dir_all(Path::new(IMAGE_BASE_PATH)).ok();
 
-    rocket::custom(figment)
+    let _ = rocket::custom(figment)
         .manage(api_state)
         .attach(Database::fairing())
         .attach(cors)
