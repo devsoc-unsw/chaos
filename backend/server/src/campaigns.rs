@@ -5,7 +5,7 @@ use crate::{
             Campaign, CampaignWithRoles, NewCampaignInput, NewQuestion, OrganisationUser, Role,
             RoleUpdate, UpdateCampaignInput, User,
         },
-        Database, schema::sql_types::QuestionType,
+        Database, schema::QuestionType,
     },
     images::{get_http_image_path, save_image, try_decode_data, ImageLocation},
     question_types::QuestionData

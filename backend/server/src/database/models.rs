@@ -1,4 +1,4 @@
-use crate::question_types::QuestionData;
+use crate::question_types::{AnswerData, QuestionData};
 use crate::images::{get_http_image_path, ImageLocation};
 
 use super::schema::AdminLevel;
@@ -19,7 +19,7 @@ use std::path::Path;
 use crate::database::schema::multi_select_answers::dsl::multi_select_answers;
 use crate::database::schema::multi_select_options::dsl::multi_select_options;
 use crate::database::schema::short_answer_answers::dsl::short_answer_answers;
-use crate::database::schema::sql_types::QuestionType;
+use crate::database::schema::QuestionType;
 
 #[derive(Queryable)]
 pub struct User {
@@ -1100,7 +1100,7 @@ pub struct NewMultiSelectOption {
 
 impl NewMultiSelectOption {
     pub fn insert(&self, conn: &PgConnection) -> Option<NewMultiSelectOption> {
-        use crate::database::schema::multi_select_options::dsl::*;
+        use crate::dabase::schema::multi_select_options::dsl::*;
 
         self.insert_into(multi_select_options).get_result(conn).ok()
     }
@@ -1189,6 +1189,7 @@ pub struct Answer {
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
     pub answer_type: QuestionType,
+    pub answer_data: AnswerData,
 }
 
 #[derive(Insertable, Deserialize, Serialize)]
@@ -1198,21 +1199,22 @@ pub struct NewAnswer {
     pub question_id: i32,
     pub description: String,
     pub answer_type: QuestionType,
+    pub answer_data: AnswerData,
 }
 
 #[derive(Queryable, Deserialize, Serialize, PartialEq, Debug, Clone)]
 #[table_name = "short_answer_answers"]
 pub struct ShortAnswerAnswer {
-    id: i32,
-    text: String,
-    answer_id: i32,
+    pub id: i32,
+    pub text: String,
+    pub answer_id: i32,
 }
 
 #[derive(Insertable, Deserialize, Serialize, PartialEq, Debug, Clone)]
 #[table_name = "short_answer_answers"]
 pub struct NewShortAnswerAnswer {
-    text: String,
-    answer_id: i32,
+    pub text: String,
+    pub answer_id: i32,
 }
 
 impl NewShortAnswerAnswer {
@@ -1233,16 +1235,16 @@ impl NewShortAnswerAnswer {
 #[derive(Queryable, Deserialize, Serialize, PartialEq, Debug, Clone)]
 #[table_name = "multi_select_answers"]
 pub struct MultiSelectAnswer {
-    id: i32,
-    option_id: i32,
-    answer_id: i32,
+    pub id: i32,
+    pub option_id: i32,
+    pub answer_id: i32,
 }
 
 #[derive(Insertable, Deserialize, Serialize, PartialEq, Debug, Clone)]
 #[table_name = "multi_select_answers"]
 pub struct NewMultiSelectAnswer {
-    option_id: i32,
-    answer_id: i32,
+    pub option_id: i32,
+    pub answer_id: i32,
 }
 
 impl NewMultiSelectAnswer {
