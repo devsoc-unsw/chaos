@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
+
+import { pushToast } from "utils";
 
 import { createOrganisation, putOrgLogo } from "../../api";
 import CreateOrganisationForm from "../CreateOrganisationForm";
@@ -78,9 +80,30 @@ const AdminSidebar = ({
         setUploadedImage({ image: null, url: null });
         setInputText("");
         setIsFormOpen(false);
-        console.log("New organisation created!");
+
+        pushToast(
+          "Organisation Creation Successful",
+          "Organisation successfully created",
+          "success"
+        );
+      } else if (!inputText) {
+        pushToast(
+          "Organisation Creation Error",
+          "Organisation name is required!",
+          "error"
+        );
+      } else if (!uploadedImage.image) {
+        pushToast(
+          "Organisation Creation Error",
+          "Organisation logo image is required!",
+          "error"
+        );
       } else {
-        console.error("Both image and text are required!");
+        pushToast(
+          "Organisation Creation Error",
+          "Organisation unknown error occurred!",
+          "error"
+        );
       }
     };
 
