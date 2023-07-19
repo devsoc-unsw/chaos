@@ -16,6 +16,8 @@ pub enum ApplicationStatus {
 pub enum QuestionType {
     ShortAnswer,
     MultiSelect,
+    MultiChoice,
+    DropDown,
 }
 
 
@@ -90,6 +92,8 @@ table! {
 }
 
 table! {
+    use diesel::sql_types::*;
+
     multi_select_answers (id) {
         id -> Int4,
         option_id -> Int4,
@@ -98,6 +102,8 @@ table! {
 }
 
 table! {
+    use diesel::sql_types::*;
+
     multi_select_options (id) {
         id -> Int4,
         text -> Text,
@@ -172,6 +178,8 @@ table! {
 }
 
 table! {
+    use diesel::sql_types::*;
+
     short_answer_answers (id) {
         id -> Int4,
         text -> Text,

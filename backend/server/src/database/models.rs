@@ -1,11 +1,11 @@
-use crate::question_types::{AnswerData, QuestionData};
+use crate::question_types::QuestionData;
 use crate::images::{get_http_image_path, ImageLocation};
 
 use super::schema::AdminLevel;
 use super::schema::ApplicationStatus;
 use super::schema::{
     answers, applications, campaigns, comments, organisation_users, organisations, questions,
-    ratings, roles, users,
+    ratings, roles, users, multi_select_answers, multi_select_options, short_answer_answers
 };
 use chrono::NaiveDateTime;
 use chrono::Utc;
@@ -16,9 +16,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::fs::remove_file;
 use std::path::Path;
-use crate::database::schema::multi_select_answers::dsl::multi_select_answers;
-use crate::database::schema::multi_select_options::dsl::multi_select_options;
-use crate::database::schema::short_answer_answers::dsl::short_answer_answers;
 use crate::database::schema::QuestionType;
 
 #[derive(Queryable)]
@@ -1079,7 +1076,7 @@ pub struct UpdateQuestionInput {
 }
 
 #[derive(Queryable, Deserialize, Serialize, PartialEq, Debug, Clone)]
-#[table_name = "multi_select_options"]
+// #[table_name = "multi_select_options"]
 pub struct MultiSelectOption {
     pub id: i32,
     pub text: String,
@@ -1099,8 +1096,8 @@ pub struct NewMultiSelectOption {
 }
 
 impl NewMultiSelectOption {
-    pub fn insert(&self, conn: &PgConnection) -> Option<NewMultiSelectOption> {
-        use crate::dabase::schema::multi_select_options::dsl::*;
+    pub fn insert(&self, conn: &PgConnection) -> Option<MultiSelectOption> {
+        use crate::database::schema::multi_select_options::dsl::*;
 
         self.insert_into(multi_select_options).get_result(conn).ok()
     }
@@ -1189,7 +1186,7 @@ pub struct Answer {
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
     pub answer_type: QuestionType,
-    pub answer_data: AnswerData,
+    // pub answer_data: AnswerData,
 }
 
 #[derive(Insertable, Deserialize, Serialize)]
@@ -1199,11 +1196,11 @@ pub struct NewAnswer {
     pub question_id: i32,
     pub description: String,
     pub answer_type: QuestionType,
-    pub answer_data: AnswerData,
+    // pub answer_data: AnswerData,
 }
 
 #[derive(Queryable, Deserialize, Serialize, PartialEq, Debug, Clone)]
-#[table_name = "short_answer_answers"]
+// #[table_name = "short_answer_answers"]
 pub struct ShortAnswerAnswer {
     pub id: i32,
     pub text: String,
@@ -1233,7 +1230,7 @@ impl NewShortAnswerAnswer {
 /// \
 /// The vector will store the id's of each option selected.
 #[derive(Queryable, Deserialize, Serialize, PartialEq, Debug, Clone)]
-#[table_name = "multi_select_answers"]
+// #[table_name = "multi_select_answers"]
 pub struct MultiSelectAnswer {
     pub id: i32,
     pub option_id: i32,

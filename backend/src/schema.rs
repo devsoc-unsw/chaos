@@ -123,7 +123,7 @@ diesel::table! {
         created_at -> Timestamp,
         updated_at -> Timestamp,
         role_id -> Nullable<Int4>,
-        question_type -> Nullable<QuestionType>,
+        question_type -> QuestionType,
     }
 }
 

@@ -8,7 +8,6 @@ use crate::{
         Database, schema::QuestionType,
     },
     images::{get_http_image_path, save_image, try_decode_data, ImageLocation},
-    question_types::QuestionData
 };
 use rocket::{data::Data, delete, get, http::Status, post, put, serde::json::Json};
 use serde::{Deserialize, Serialize};
@@ -145,7 +144,7 @@ pub async fn new(
         mut questions,
     } = inner;
     
-    let mut question_data: Vec<QuestionDataInput> = questions
+    let question_data: Vec<QuestionDataInput> = questions
         .iter()
         .map(|x| {
            x.question_data.clone()
