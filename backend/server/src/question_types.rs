@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::diesel::QueryDsl;
 use diesel::expression_methods::ExpressionMethods;
-use crate::database::{Database, models::{Question, Answer}};
-use crate::database::models::{MultiSelectAnswer, MultiSelectOption, MultiSelectOptionInput, NewMultiSelectAnswer, NewMultiSelectOption, NewQuestion, NewShortAnswerAnswer, ShortAnswerAnswer};
+use crate::database::models::{Question, Answer};
+use crate::database::models::{MultiSelectAnswer, MultiSelectOption, MultiSelectOptionInput, NewMultiSelectAnswer, NewMultiSelectOption, NewShortAnswerAnswer, ShortAnswerAnswer};
 use crate::database::schema::QuestionType;
 //  QUESTION TYPES
 //  In this file, add new question types that we need to implement
@@ -23,9 +23,9 @@ use crate::database::schema::QuestionType;
 #[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
 pub enum QuestionData {
     ShortAnswer,
-    MultiSelect(MultiSelectQuestion),   // Vector of option text
-    MultiChoice(MultiSelectQuestion),
-    DropDown(MultiSelectQuestion),
+    MultiSelect(Vec<String>),   // Vector of option text
+    MultiChoice(Vec<String>),
+    DropDown(Vec<String>),
 }
 
 #[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
@@ -47,7 +47,7 @@ pub enum QuestionDataInput {
 pub enum AnswerData {
     ShortAnswer(String),
     MultiSelect(Vec<i32>),
-    MultiChoice(i32), // TODO: START FROM HERE: change this to multichoice answer, which returns a single i32
+    MultiChoice(i32),
     DropDown(i32),
 }
 
@@ -66,7 +66,6 @@ impl QuestionDataInput {
     pub fn insert_question_data(
         self,
         conn: &PgConnection,
-        question: &NewQuestion,
         question_id: i32,
     ) -> Option<Self> {
 
@@ -87,7 +86,6 @@ impl QuestionDataInput {
                 for option in new_data {
                     option.insert(conn).ok_or_else(|| {
                         eprintln!("Failed to create question data for some reason");
-                        // JsonErr(todo!(), Status::InternalServerError);
                     }).ok();
                 }
             },
@@ -102,7 +100,6 @@ impl QuestionDataInput {
                 for option in new_data {
                     option.insert(conn).ok_or_else(|| {
                         eprintln!("Failed to create question data for some reason");
-                        // JsonErr(todo!(), Status::InternalServerError);
                     }).ok();
                 }
             },
@@ -117,7 +114,6 @@ impl QuestionDataInput {
                 for option in new_data {
                     option.insert(conn).ok_or_else(|| {
                         eprintln!("Failed to create question data for some reason");
-                        // JsonErr(todo!(), Status::InternalServerError);
                     }).ok();
                 }
             },
@@ -130,7 +126,7 @@ impl QuestionDataInput {
 
 impl QuestionData {
 
-    pub fn get_from_question_id(conn: &PgConnection, q_id: i32, db: Database) -> Option<Self> {
+    pub fn get_from_question_id(conn: &PgConnection, q_id: i32) -> Option<Self> {
 
         let question: Question;
 
@@ -147,41 +143,85 @@ impl QuestionData {
             QuestionType::ShortAnswer => { Some(QuestionData::ShortAnswer) },
             QuestionType::MultiSelect => {
                 use crate::database::schema::multi_select_options::dsl::*;
-                // TODO: Need to convert the options a questiondata struct and return them!
-                Some(QuestionData::MultiSelect(multi_select_options.filter(question_id.eq(q_id)).first(conn).ok().unwrap()));
+
+                let data: Vec<MultiSelectOption> = multi_select_options
+                    .filter(question_id.eq(q_id))
+                    .load(conn)
+                    .unwrap_or_else(|_| vec![]);
+
+                Some(QuestionData::MultiSelect(data.into_iter().map(|x| {
+                    x.text
+                }).collect()))
             },
             QuestionType::MultiChoice => {
                 use crate::database::schema::multi_select_options::dsl::*;
-                return multi_select_options.filter(question_id.eq(q_id)).first(conn).ok();
+
+                let data: Vec<MultiSelectOption> = multi_select_options
+                    .filter(question_id.eq(q_id))
+                    .load(conn)
+                    .unwrap_or_else(|_| vec![]);
+
+                Some(QuestionData::MultiChoice(data.into_iter().map(|x| {
+                    x.text
+                }).collect()))
             },
             QuestionType::DropDown => {
                 use crate::database::schema::multi_select_options::dsl::*;
-                return multi_select_options.filter(question_id.eq(q_id)).first(conn).ok();
+
+                let data: Vec<MultiSelectOption> = multi_select_options
+                    .filter(question_id.eq(q_id))
+                    .load(conn)
+                    .unwrap_or_else(|_| vec![]);
+
+                Some(QuestionData::DropDown(data.into_iter().map(|x| {
+                    x.text
+                }).collect()))
             },
         };
-        // None
     }
 
     pub fn get_from_question(conn: &PgConnection, question: &Question) -> Option<Self> {
-        let question_id = question.id;
+        let q_id = question.id;
 
-        match question.question_type {
-            QuestionType::ShortAnswer => { Some(AnswerData::ShortAnswer); },
+        return match question.question_type {
+            QuestionType::ShortAnswer => { Some(QuestionData::ShortAnswer) },
             QuestionType::MultiSelect => {
                 use crate::database::schema::multi_select_options::dsl::*;
-                return multi_select_options.filter(question_id.eq(question.id)).first(conn).ok();
+
+                let data: Vec<MultiSelectOption> = multi_select_options
+                    .filter(question_id.eq(q_id))
+                    .load(conn)
+                    .unwrap_or_else(|_| vec![]);
+
+                Some(QuestionData::MultiSelect(data.into_iter().map(|x| {
+                    x.text
+                }).collect()))
             },
             QuestionType::MultiChoice => {
                 use crate::database::schema::multi_select_options::dsl::*;
-                return multi_select_options.filter(question_id.eq(question.id)).first(conn).ok();
+
+                let data: Vec<MultiSelectOption> = multi_select_options
+                    .filter(question_id.eq(q_id))
+                    .load(conn)
+                    .unwrap_or_else(|_| vec![]);
+
+                Some(QuestionData::MultiChoice(data.into_iter().map(|x| {
+                    x.text
+                }).collect()))
             },
             QuestionType::DropDown => {
                 use crate::database::schema::multi_select_options::dsl::*;
-                return multi_select_options.filter(question_id.eq(question.id)).first(conn).ok();
-            },
-        }
 
-        None
+                let data: Vec<MultiSelectOption> = multi_select_options
+                    .filter(question_id.eq(q_id))
+                    .load(conn)
+                    .unwrap_or_else(|_| vec![]);
+
+                Some(QuestionData::DropDown(data.into_iter().map(|x| {
+                    x.text
+                }).collect()))
+            },
+        };
     }
 }
 
@@ -200,7 +240,6 @@ impl AnswerDataInput {
 
                 answer.insert(conn).ok_or_else(|| {
                     eprintln!("Failed to create answer data for some reason");
-                    // JsonErr(todo!(), Status::InternalServerError);
                 }).ok();
             },
             AnswerDataInput::MultiSelect(multi_select_data) => {
@@ -214,7 +253,6 @@ impl AnswerDataInput {
                 for answer in new_answers {
                     answer.insert(conn).ok_or_else(|| {
                         eprintln!("Failed to create answer data for some reason");
-                        // JsonErr(todo!(), Status::InternalServerError);
                     }).ok();
                 }
             },
@@ -224,7 +262,6 @@ impl AnswerDataInput {
                     answer_id: answer.id,
                 }.insert(conn).ok_or_else(|| {
                     eprintln!("Failed to create answer data for some reason");
-                    // JsonErr(todo!(), Status::InternalServerError);
                 }).ok();
             },
             AnswerDataInput::DropDown(option_id) => {
@@ -233,7 +270,6 @@ impl AnswerDataInput {
                     answer_id: answer.id,
                 }.insert(conn).ok_or_else(|| {
                     eprintln!("Failed to create answer data for some reason");
-                    // JsonErr(todo!(), Status::InternalServerError);
                 }).ok();
             }
         }
@@ -244,8 +280,6 @@ impl AnswerDataInput {
 
 impl AnswerData {
     pub fn get_from_answer(conn: &PgConnection, answer: &Answer) -> Option<Self> {
-        let answer_id = answer.id;
-
         return match answer.answer_type {
             QuestionType::ShortAnswer => {
                 use crate::database::schema::short_answer_answers::dsl::*;
@@ -281,7 +315,7 @@ impl AnswerData {
 
                 let answer_data: MultiSelectAnswer = multi_select_answers.filter(
                     answer_id.eq(answer.id)
-                ).first(conn).ok();
+                ).first(conn).ok().unwrap();
 
                 Some(AnswerData::DropDown(answer_data.option_id))
             },
