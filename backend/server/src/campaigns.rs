@@ -212,10 +212,7 @@ pub async fn new(
                 JsonErr(CampaignError::UnableToCreate, Status::InternalServerError)
             })?.id;
 
-            question_data.insert_question_data(conn, inserted_id).ok_or_else(|| {
-                eprintln!("Failed to create question data for some reason");
-                JsonErr(CampaignError::UnableToCreate, Status::InternalServerError)
-            })?;
+            question_data.insert_question_data(conn, inserted_id);
         }
 
         Ok(Json(campaign))

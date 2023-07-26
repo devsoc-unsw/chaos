@@ -1009,7 +1009,7 @@ pub struct QuestionResponse {
     pub question_type: QuestionType,
 }
 
-impl std::convert::From<(Question, QuestionData)> for QuestionResponse {
+impl From<(Question, QuestionData)> for QuestionResponse {
     fn from(question_with_data: (Question, QuestionData)) -> Self {
         Self {
             id: question_with_data.0.id,
@@ -1429,7 +1429,7 @@ pub struct CampaignInfo {
     pub ends_at: NaiveDateTime,
 }
 
-impl std::convert::From<Campaign> for CampaignInfo {
+impl From<Campaign> for CampaignInfo {
     fn from(campaign: Campaign) -> Self {
         Self {
             id: campaign.id,

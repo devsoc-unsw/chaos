@@ -160,10 +160,7 @@ pub async fn submit_answer(
 
 
         // Insert the Answer Data UwU
-        AnswerDataInput::insert_answer_data(data, conn, &inserted_answer).ok_or(JsonErr(
-            ApplicationError::UnableToCreate,
-            Status::InternalServerError,
-        ))?;
+        AnswerDataInput::insert_answer_data(data, conn, &inserted_answer);
 
         Ok(Json(()))
     })
