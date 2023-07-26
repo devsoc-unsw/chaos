@@ -6,6 +6,7 @@ use std::{
     path::{Path, PathBuf},
 };
 use strum::{EnumIter, IntoEnumIterator};
+use webp::Encoder;
 
 pub enum ImageDecodeError {
     ImageError(ImageError),
@@ -35,7 +36,7 @@ pub async fn try_decode_data(data: Data<'_>) -> Result<DynamicImage, ImageDecode
     data.open(5.mebibytes()).into_bytes().await.map(|bytes| try_decode_bytes(bytes.to_vec())).map_err(|e| e.into()).and_then(|v| v.map_err(|e| e.into()))
 }
 
-const HTTP_IMAGE_BASE_PATH: &str = "/images/";
+const HTTP_IMAGE_BASE_PATH: &str = "/api/static/images/";
 pub const IMAGE_BASE_PATH: &str = "./images/";
 
 #[derive(EnumIter)]
@@ -56,7 +57,7 @@ pub fn save_image(
     image: DynamicImage,
     location: ImageLocation,
     image_uuid: &str,
-) -> Result<PathBuf, ImageError> {
+) -> std::io::Result<PathBuf> {
     ImageLocation::iter().for_each(|location| {
         fs::create_dir_all(Path::new(IMAGE_BASE_PATH).join(image_location_to_string(location)))
             .ok();
@@ -64,10 +65,9 @@ pub fn save_image(
 
     let path = get_image_path(location, image_uuid);
 
-    match image.save_with_format(&path, image::ImageFormat::Png) {
-        Ok(_) => Ok(path),
-        Err(e) => Err(e),
-    }
+    let encoder = Encoder::from_image(&image).unwrap();
+    let webp = encoder.encode(80.0);
+    std::fs::write(&path, &*webp).map(|_| path)
 }
 
 pub fn get_image_path(location: ImageLocation, image_uuid: &str) -> PathBuf {

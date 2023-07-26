@@ -52,6 +52,7 @@ const CampaignGrid = ({
     <div tw="flex flex-wrap justify-around gap-4 pb-4 lg:justify-start">
       {campaigns.map((campaign, i) => (
         <Transition
+          key={campaign.campaign.id}
           appear
           show
           enter={{
@@ -61,7 +62,6 @@ const CampaignGrid = ({
           enterFrom={tw`translate-y-4 opacity-0`}
         >
           <CampaignCard
-            key={campaign.campaign.id}
             campaignId={campaign.campaign.id}
             title={campaign.campaign.name}
             appliedFor={campaign.applied_for}
@@ -79,7 +79,7 @@ const CampaignGrid = ({
           />
         </Transition>
       ))}
-    </div>
+    </div >
   );
 };
 
