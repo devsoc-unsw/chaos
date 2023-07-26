@@ -971,25 +971,6 @@ impl NewApplication {
     }
 }
 
-    /**
-     *
-     *
-     *
-     *
-     * add New fields to Question sturct (also migration).
-     *
-     * New question_type which is a enum to identify which type it is
-     * pub question_type: QuestionTypeEnum
-     *
-     * New question_data which will not be stored in db rather will provide info for separate specific
-     * question type table. The table to insert/query determined by question_type field
-     * pub question_data: QuestionDataEnum
-     *
-     * id of QuestionData
-     * pub question_data_id: i32
-     *
-     */
-
 #[derive(Identifiable, Queryable, PartialEq, Serialize, Debug, QueryableByName)]
 #[table_name = "questions"]
 pub struct Question {
@@ -1004,20 +985,6 @@ pub struct Question {
     pub question_type: QuestionType,
 }
 
-/**
-     *
-     *
-     *
-     * Add enum field to NewQuestion
-     *
-     *
-     *
-     *
-     * This means FE must pass in correctly formated JSON struct for our question data
-     *
-     * pub question_type: QuestionTypeEnum
-     * pub question_data: QuestionDataEnum
-     */
 #[derive(Insertable, Serialize, Deserialize)]
 #[table_name = "questions"]
 pub struct NewQuestion {
@@ -1029,7 +996,6 @@ pub struct NewQuestion {
     pub required: bool,
     pub question_type: QuestionType,
 }
-
 
 #[derive(Serialize)]
 pub struct QuestionResponse {
@@ -1058,14 +1024,6 @@ impl std::convert::From<(Question, QuestionData)> for QuestionResponse {
     }
 }
 
-// impl QuestionResponse {
-//     fn build_question_response() -> Self {
-//         Self {
-
-//         }
-//     }
-// }
-
 #[derive(FromForm, AsChangeset, Deserialize)]
 #[table_name = "questions"]
 pub struct UpdateQuestionInput {
@@ -1076,7 +1034,6 @@ pub struct UpdateQuestionInput {
 }
 
 #[derive(Queryable, Deserialize, Serialize, PartialEq, Debug, Clone)]
-// #[table_name = "multi_select_options"]
 pub struct MultiSelectOption {
     pub id: i32,
     pub text: String,
@@ -1200,7 +1157,6 @@ pub struct NewAnswer {
 }
 
 #[derive(Queryable, Deserialize, Serialize, PartialEq, Debug, Clone)]
-// #[table_name = "short_answer_answers"]
 pub struct ShortAnswerAnswer {
     pub id: i32,
     pub text: String,
@@ -1230,7 +1186,6 @@ impl NewShortAnswerAnswer {
 /// \
 /// The vector will store the id's of each option selected.
 #[derive(Queryable, Deserialize, Serialize, PartialEq, Debug, Clone)]
-// #[table_name = "multi_select_answers"]
 pub struct MultiSelectAnswer {
     pub id: i32,
     pub option_id: i32,
