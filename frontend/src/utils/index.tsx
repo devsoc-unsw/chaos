@@ -1,4 +1,7 @@
+import { ToastType } from "components/Toast";
 import moment from "moment";
+import { toast } from "react-hot-toast";
+import Toast from "components/Toast";
 
 export function isLogin(): boolean {
   return true;
@@ -18,8 +21,6 @@ export const dateToStringForCampaignGrid = (dateObject: Date): string =>
 
 export const dateToDateString = (date: Date | string): string =>
   moment.utc(date).format("DD MMM YYYY");
-
-export const fileToUrl = (filename: string): string => `/api/${filename}`;
 
 export const fileToDataUrl = (file: File): Promise<string> => {
   const validFileTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif"];
@@ -47,3 +48,13 @@ export const getStore = (key: string) => localStorage.getItem(key);
 export const setStore = (key: string, val: string) =>
   localStorage.setItem(key, val);
 export const removeStore = (key: string) => localStorage.removeItem(key);
+
+export const pushToast = (
+  title: string,
+  description: string,
+  type?: ToastType
+) => {
+  toast.custom((t) => (
+    <Toast t={t} title={title} description={description} type={type} />
+  ));
+};

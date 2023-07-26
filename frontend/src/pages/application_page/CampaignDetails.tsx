@@ -30,8 +30,7 @@ const CampaignDetails = ({
       <div tw="flex items-center gap-2">
         <img
           tw="h-20 rounded shadow-md"
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          src={organisation.logo && `/api/${organisation.logo}`}
+          src={organisation.logo}
           alt={organisation.name}
         />
         <div tw="flex flex-col justify-center gap-2">
@@ -64,7 +63,7 @@ const CampaignDetails = ({
       <aside tw="overflow-hidden rounded shadow-md bg-[#edeeef] aspect-w-16 aspect-h-9">
         <img
           tw="object-contain w-full h-full"
-          src={headerImage && `/api/${headerImage}`}
+          src={headerImage}
           alt={campaignName}
         />
       </aside>

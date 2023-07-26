@@ -19,9 +19,6 @@ export const SidebarContainer = styled("div")<{
 }));
 
 export const OrgButtonGroup = styled(ToggleButtonGroup)`
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
   padding: 0px;
   margin: 0px;
@@ -42,11 +39,10 @@ export const OrgButtonContent = styled("div")`
   padding: 4px;
 `;
 
-export const CreateOrgButton = styled(OrgButton)<{ isFormOpen: boolean }>(
-  ({ isFormOpen }) => ({
-    height: isFormOpen ? "180px" : "90px",
-  })
-);
+export const CreateOrgButton = styled(OrgButton)`
+  height: 90px;
+  border-bottom: 0;
+`;
 
 export const CreateOrgIcon = styled(AddIcon)`
   font-size: 30px;

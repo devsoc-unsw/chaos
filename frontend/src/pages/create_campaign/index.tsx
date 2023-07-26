@@ -1,12 +1,14 @@
 import { Container, Tab, Tabs } from "@mui/material";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
+import {
+  createCampaign,
+  isAdminInOrganisation,
+  setCampaignCoverImage,
+} from "api";
 import { FetchError } from "api/api";
-import { MessagePopupContext } from "contexts/MessagePopupContext";
-import { base64ToBytes, dateToStringForBackend } from "utils";
-
-import { createCampaign, isAdminInOrganisation, setCampaignCoverImage } from "../../api";
+import { dateToStringForBackend, pushToast } from "utils";
 
 import CampaignTab from "./Campaign";
 import ReviewTab from "./Preview";
@@ -14,7 +16,6 @@ import RolesTab from "./Roles";
 import { ArrowIcon, NextButton, NextWrapper } from "./createCampaign.styled";
 
 import type { Answers, Question, Role } from "./types";
-import useFetch from "hooks/useFetch";
 
 const CreateCampaign = () => {
   const orgId = Number(useParams().orgId);
@@ -77,38 +78,36 @@ const CreateCampaign = () => {
   const rolesTabIdx = 1;
   const reviewTabIdx = 2;
 
-  const pushMessage = useContext(MessagePopupContext);
-
   const onTabChange = (newTab: number) => {
     // only allow user to access review tab if all inputs are non-empty
     if (newTab === reviewTabIdx) {
       if (campaignName === "") {
-        pushMessage({
-          message: "Campaign name is required!",
-          type: "error",
-        });
+        pushToast("Create Campaign", "Campaign name is required!", "error");
         return;
       }
       if (description === "") {
-        pushMessage({
-          message: "Campaign description is required!",
-          type: "error",
-        });
+        pushToast(
+          "Create Campaign",
+          "Campaign description is required!",
+          "error"
+        );
         return;
       }
       if (cover === null) {
-        pushMessage({
-          message: "Campaign cover image is required!",
-          type: "error",
-        });
+        pushToast(
+          "Create Campaign",
+          "Campaign cover image is required!",
+          "error"
+        );
         return;
       }
 
       if (roles.length === 0) {
-        pushMessage({
-          message: "You need to create at least one role",
-          type: "error",
-        });
+        pushToast(
+          "Create Campaign",
+          "You need to create at least one role",
+          "error"
+        );
         return;
       }
 
@@ -130,10 +129,11 @@ const CreateCampaign = () => {
         });
 
         if (question.roles.size === 0) {
-          pushMessage({
-            message: `The question '${question.text}' is not assigned to a role`,
-            type: "error",
-          });
+          pushToast(
+            "Create Campaign",
+            `The question '${question.text}' is not assigned to a role`,
+            "error"
+          );
           flag = false;
         } else {
           question.roles.forEach((roleId) => {
@@ -150,10 +150,11 @@ const CreateCampaign = () => {
           const role = roleMap.get(roleID);
 
           if (role) {
-            pushMessage({
-              message: `The role '${role.title}' does not have any questions`,
-              type: "error",
-            });
+            pushToast(
+              "Create Campaign",
+              `The role '${role.title}' does not have any questions`,
+              "error"
+            );
           }
         });
       }
@@ -238,25 +239,24 @@ const CreateCampaign = () => {
         try {
           const data = (await err.resp.json()) as string;
 
-          pushMessage({
-            message: `Internal Error: ${data}`,
-            type: "error",
-          });
+          pushToast("Create Campaign", `Internal Error: ${data}`, "error");
         } catch {
-          pushMessage({
-            message: `Internal Error: Response Invalid`,
-            type: "error",
-          });
+          pushToast(
+            "Create Campaign",
+            "Internal Error: Response Invalid",
+            "error"
+          );
         }
 
         return;
       }
 
       console.error("Something went wrong");
-      pushMessage({
-        message: "Something went wrong on backend!",
-        type: "error",
-      });
+      pushToast(
+        "Create Campaign",
+        "Something went wrong on the backend!",
+        "error"
+      );
     }
   };
 
@@ -275,7 +275,10 @@ const CreateCampaign = () => {
       {tab === campaignTabIdx && <CampaignTab campaign={campaign} />}
       {tab === rolesTabIdx && <RolesTab campaign={campaign} />}
       {tab === reviewTabIdx && (
-        <ReviewTab campaign={campaign} onSubmit={submitHandler} />
+        <ReviewTab
+          campaign={campaign}
+          onSubmit={(e) => void submitHandler(e)}
+        />
       )}
       {(tab === campaignTabIdx || tab === rolesTabIdx) && (
         <NextWrapper>

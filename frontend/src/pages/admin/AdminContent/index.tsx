@@ -4,14 +4,13 @@ import { Button, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import "twin.macro";
 
+import { doDeleteOrg, putOrgLogo } from "api";
 import { FetchError } from "api/api";
 import { Modal } from "components";
 import TwButton from "components/Button";
 import Dropzone from "components/Dropzone";
-import { MessagePopupContext } from "contexts/MessagePopupContext";
-import { fileToUrl } from "utils";
+import { pushToast } from "utils";
 
-import { doDeleteOrg, putOrgLogo } from "../../../api";
 import { OrgContext } from "../OrgContext";
 
 import AdminCampaignContent from "./AdminCampaignContent";
@@ -62,12 +61,11 @@ const AdminContent = ({
   const [imageSrc, setImageSrc] = useState<string>();
   const { orgSelected, setOrgSelected, orgList, setOrgList } =
     useContext(OrgContext);
-  const pushMessage = useContext(MessagePopupContext);
 
   useEffect(() => {
     if (orgLogo === undefined) {
       // have to be consistent in returning a function to make eslint happy
-      return () => {};
+      return () => { };
     }
 
     const reader = new FileReader();
@@ -96,10 +94,7 @@ const AdminContent = ({
         message += "unknown error";
       }
 
-      pushMessage({
-        type: "error",
-        message,
-      });
+      pushToast("Delete Organisation", message, "error");
 
       throw e;
     }
@@ -122,10 +117,11 @@ const AdminContent = ({
 
   const uploadOrgLogo = async () => {
     if (orgLogo === undefined) {
-      pushMessage({
-        message: "No organisation logo given.",
-        type: "error",
-      });
+      pushToast(
+        "Update Organisation Logo",
+        "No organisation logo given",
+        "error"
+      );
       return;
     }
 
@@ -137,25 +133,28 @@ const AdminContent = ({
         try {
           const data = (await err.resp.json()) as string;
 
-          pushMessage({
-            message: `Internal Error: ${data}`,
-            type: "error",
-          });
+          pushToast(
+            "Update Organisation Logo",
+            `Internal Error: ${data}`,
+            "error"
+          );
         } catch {
-          pushMessage({
-            message: `Internal Error: Response Invalid`,
-            type: "error",
-          });
+          pushToast(
+            "Update Organisation Logo",
+            "Internal Error: Response Invalid",
+            "error"
+          );
         }
 
         return;
       }
 
-      console.error("Something went wrong");
-      pushMessage({
-        message: "Something went wrong on backend!",
-        type: "error",
-      });
+      console.error(err);
+      pushToast(
+        "Update Organisation Logo",
+        "Something went wrong on the backend!",
+        "error"
+      );
 
       return;
     }
@@ -164,17 +163,18 @@ const AdminContent = ({
     newOrgList[newOrgList.findIndex((org) => org.id === id)].icon = newOrgLogo;
     setOrgList(newOrgList);
 
-    pushMessage({
-      message: "Updated organisation logo",
-      type: "success",
-    });
+    pushToast(
+      "Update Organisation Logo",
+      "Image uploaded successfully",
+      "success"
+    );
   };
 
   return (
     <AdminContentContainer>
       <ContentHeader>
         <OrgInfo>
-          <OrgInfoImage src={fileToUrl(icon)} />
+          <OrgInfoImage src={icon} />
           <OrgInfoName>{orgName}</OrgInfoName>
         </OrgInfo>
         <div tw="flex gap-4 items-center">
