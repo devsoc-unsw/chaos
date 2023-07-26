@@ -67,7 +67,7 @@ impl QuestionDataInput {
         self,
         conn: &PgConnection,
         question_id: i32,
-    ) -> Option<Self> {
+    ) {
 
         match self {
             QuestionDataInput::ShortAnswer => {
@@ -118,14 +118,10 @@ impl QuestionDataInput {
                 }
             },
         }
-
-        None
-
     }
 }
 
 impl QuestionData {
-
     pub fn get_from_question_id(conn: &PgConnection, q_id: i32) -> Option<Self> {
 
         let question: Question;
@@ -179,50 +175,6 @@ impl QuestionData {
             },
         };
     }
-
-    pub fn get_from_question(conn: &PgConnection, question: &Question) -> Option<Self> {
-        let q_id = question.id;
-
-        return match question.question_type {
-            QuestionType::ShortAnswer => { Some(QuestionData::ShortAnswer) },
-            QuestionType::MultiSelect => {
-                use crate::database::schema::multi_select_options::dsl::*;
-
-                let data: Vec<MultiSelectOption> = multi_select_options
-                    .filter(question_id.eq(q_id))
-                    .load(conn)
-                    .unwrap_or_else(|_| vec![]);
-
-                Some(QuestionData::MultiSelect(data.into_iter().map(|x| {
-                    x.text
-                }).collect()))
-            },
-            QuestionType::MultiChoice => {
-                use crate::database::schema::multi_select_options::dsl::*;
-
-                let data: Vec<MultiSelectOption> = multi_select_options
-                    .filter(question_id.eq(q_id))
-                    .load(conn)
-                    .unwrap_or_else(|_| vec![]);
-
-                Some(QuestionData::MultiChoice(data.into_iter().map(|x| {
-                    x.text
-                }).collect()))
-            },
-            QuestionType::DropDown => {
-                use crate::database::schema::multi_select_options::dsl::*;
-
-                let data: Vec<MultiSelectOption> = multi_select_options
-                    .filter(question_id.eq(q_id))
-                    .load(conn)
-                    .unwrap_or_else(|_| vec![]);
-
-                Some(QuestionData::DropDown(data.into_iter().map(|x| {
-                    x.text
-                }).collect()))
-            },
-        };
-    }
 }
 
 impl AnswerDataInput {
@@ -230,7 +182,7 @@ impl AnswerDataInput {
         self,
         conn: &mut PgConnection,
         answer: &Answer,
-    ) -> Option<Self> {
+    ) {
         match self {
             AnswerDataInput::ShortAnswer(short_answer_data) => {
                 let answer = NewShortAnswerAnswer {
@@ -273,8 +225,6 @@ impl AnswerDataInput {
                 }).ok();
             }
         }
-
-        None
     }
 }
 
@@ -320,8 +270,6 @@ impl AnswerData {
                 Some(AnswerData::DropDown(answer_data.option_id))
             },
         };
-
-        // None
     }
 }
 
