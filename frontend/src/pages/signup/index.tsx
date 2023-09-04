@@ -11,12 +11,28 @@ import Input from "components/Input";
 import { doSignup } from "../../api";
 import { getStore, setStore } from "../../utils";
 
+import Select from "./SignupGenderSelection";
+
+import type { UserGender } from "types/api";
+
+// I had to do it
+/* eslint-disable @typescript-eslint/naming-convention */
+type TFormData = {
+  zid: string;
+  name: string;
+  degree_name: string;
+  starting_year: number;
+  gender: UserGender;
+};
+/* eslint-enable @typescript-eslint/naming-convention */
+
 const Signup = () => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<TFormData>({
     zid: "",
     name: getStore("name") || "",
     degree_name: "",
     starting_year: new Date().getFullYear(),
+    gender: "Unspecified",
   });
 
   const navigate = useNavigate();
@@ -99,6 +115,23 @@ const Signup = () => {
               max={new Date().getFullYear() + 10}
             />
           </Input.Label>
+
+          <Select.Label>
+            <Select.LabelText>Gender</Select.LabelText>
+            <Select
+              defaultValue={formData.gender}
+              onChange={(e) => {
+                setFormData({
+                  ...formData,
+                  gender: e.target.value as UserGender, // small hack
+                });
+              }}
+            >
+              <option value="Unspecified">Other / Prefer not to say</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </Select>
+          </Select.Label>
         </div>
 
         <Button tw="justify-center font-medium" type="submit">
