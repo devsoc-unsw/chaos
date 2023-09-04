@@ -1,12 +1,10 @@
 use crate::images::{get_http_image_path, ImageLocation};
 
 use super::schema::{
-    AdminLevel, ApplicationStatus, UserGender
-};
-use super::schema::{
     answers, applications, campaigns, comments, organisation_users, organisations, questions,
     ratings, roles, users,
 };
+use super::schema::{AdminLevel, ApplicationStatus, UserGender};
 use chrono::NaiveDateTime;
 use chrono::Utc;
 use diesel::prelude::*;

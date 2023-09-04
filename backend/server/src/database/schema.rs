@@ -26,6 +26,7 @@ impl AdminLevel {
 }
 
 #[derive(Debug, DbEnum, PartialEq, Serialize, Deserialize, Clone, Copy)]
+#[DbValueStyle = "PascalCase"]
 pub enum UserGender {
     Female,
     Male,
