@@ -25,6 +25,14 @@ impl AdminLevel {
     }
 }
 
+#[derive(Debug, DbEnum, PartialEq, Serialize, Deserialize, Clone, Copy)]
+#[DbValueStyle = "PascalCase"]
+pub enum UserGender {
+    Female,
+    Male,
+    Unspecified,
+}
+
 table! {
     answers (id) {
         id -> Int4,
@@ -142,6 +150,9 @@ table! {
 }
 
 table! {
+    use diesel::sql_types::*;
+    use super::UserGenderMapping;
+
     users (id) {
         id -> Int4,
         email -> Text,
@@ -149,6 +160,7 @@ table! {
         display_name -> Text,
         degree_name -> Text,
         degree_starting_year -> Int4,
+        gender -> UserGenderMapping,
         superuser -> Bool,
         created_at -> Timestamp,
         updated_at -> Timestamp,

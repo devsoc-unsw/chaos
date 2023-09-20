@@ -185,6 +185,10 @@ export type OrganisationInfo = {
   campaigns: CampaignInfo[];
 };
 
+// Based
+export type UserGender = "Male" | "Female" | "Unspecified";
+
+// Will add ticket to reflect new response
 export type UserResponse = {
   email: string;
   zid: string;

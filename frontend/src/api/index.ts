@@ -22,6 +22,7 @@ import type {
   Role,
   RoleApplications,
   RoleInput,
+  UserGender,
   UserResponse,
 } from "../types/api";
 
@@ -39,11 +40,13 @@ export const doSignup = async ({
   degree_name,
   zid,
   starting_year,
+  gender,
 }: {
   name: string;
   degree_name: string;
   zid: string;
   starting_year: number;
+  gender: UserGender;
 }) =>
   API.request<{ token: string }>({
     method: "POST",
@@ -54,6 +57,7 @@ export const doSignup = async ({
       display_name: name,
       degree_starting_year: starting_year,
       degree_name,
+      gender,
     },
   });
 

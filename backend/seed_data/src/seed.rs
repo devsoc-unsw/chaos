@@ -1,7 +1,7 @@
 #![allow(unused_variables)]
 
 use backend::database::models::*;
-use backend::database::schema::{AdminLevel, ApplicationStatus};
+use backend::database::schema::{AdminLevel, ApplicationStatus, UserGender};
 use backend::images::{save_image, try_decode_bytes};
 use chrono::naive::NaiveDate;
 use diesel::pg::PgConnection;
@@ -24,6 +24,7 @@ pub fn seed() {
             display_name: "Shrey Somaiya".to_string(),
             degree_name: "B. CompSci".to_string(),
             degree_starting_year: 2019,
+            gender: UserGender::Unspecified,
             superuser: true,
         },
         NewUser {
@@ -32,6 +33,7 @@ pub fn seed() {
             display_name: "Fake User".to_string(),
             degree_name: "B. CompSci".to_string(),
             degree_starting_year: 2019,
+            gender: UserGender::Unspecified,
             superuser: false,
         },
         NewUser {
@@ -40,6 +42,7 @@ pub fn seed() {
             display_name: "Michael Gribben".to_string(),
             degree_name: "B. Eng (Software)".to_string(),
             degree_starting_year: 2019,
+            gender: UserGender::Male,
             superuser: false,
         },
         NewUser {
@@ -48,6 +51,7 @@ pub fn seed() {
             display_name: "Giuliana Debellis".to_string(),
             degree_name: "B. CompSci".to_string(),
             degree_starting_year: 2020,
+            gender: UserGender::Female,
             superuser: false,
         },
         NewUser {
@@ -56,6 +60,7 @@ pub fn seed() {
             display_name: "Lachlan Ting".to_string(),
             degree_name: "B. CompSci".to_string(),
             degree_starting_year: 2019,
+            gender: UserGender::Male,
             superuser: false,
         },
         NewUser {
@@ -64,6 +69,7 @@ pub fn seed() {
             display_name: "Hayes Choi".to_string(),
             degree_name: "B. CompSci".to_string(),
             degree_starting_year: 2020,
+            gender: UserGender::Male,
             superuser: false,
         },
         NewUser {
@@ -72,6 +78,7 @@ pub fn seed() {
             display_name: "Clarence Feng".to_string(),
             degree_name: "B. CompSci".to_string(),
             degree_starting_year: 2020,
+            gender: UserGender::Male,
             superuser: false,
         },
     ];
