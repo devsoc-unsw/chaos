@@ -23,6 +23,7 @@ type TFormData = {
   degree_name: string;
   starting_year: number;
   gender: UserGender;
+  pronouns: string;
 };
 /* eslint-enable @typescript-eslint/naming-convention */
 
@@ -33,6 +34,7 @@ const Signup = () => {
     degree_name: "",
     starting_year: new Date().getFullYear(),
     gender: "Unspecified",
+    pronouns: "",
   });
 
   const navigate = useNavigate();
@@ -132,6 +134,16 @@ const Signup = () => {
               <option value="Unspecified">Other / Prefer not to say</option>
             </Select>
           </Select.Label>
+
+          <Input.Label>
+            <Input.LabelText>Pronouns</Input.LabelText>
+            <Input
+              value={formData.pronouns}
+              onChange={(e) =>
+                setFormData({ ...formData, pronouns: e.target.value })
+              }
+            />
+          </Input.Label>
         </div>
 
         <Button tw="justify-center font-medium" type="submit">

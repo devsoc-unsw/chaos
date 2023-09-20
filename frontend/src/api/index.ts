@@ -41,12 +41,14 @@ export const doSignup = async ({
   zid,
   starting_year,
   gender,
+  pronouns,
 }: {
   name: string;
   degree_name: string;
   zid: string;
   starting_year: number;
   gender: UserGender;
+  pronouns: string;
 }) =>
   API.request<{ token: string }>({
     method: "POST",
@@ -58,6 +60,7 @@ export const doSignup = async ({
       degree_starting_year: starting_year,
       degree_name,
       gender,
+      pronouns,
     },
   });
 

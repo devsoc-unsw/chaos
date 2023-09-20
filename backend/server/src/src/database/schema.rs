@@ -1,39 +1,20 @@
-use diesel_derive_enum::DbEnum;
-use rocket::FromFormField;
-use serde::{Deserialize, Serialize};
+// @generated automatically by Diesel CLI.
 
-#[derive(Debug, DbEnum, PartialEq, FromFormField, Serialize, Deserialize, Clone, Copy)]
-#[DbValueStyle = "PascalCase"]
-pub enum ApplicationStatus {
-    Draft,
-    Pending,
-    Rejected,
-    Success,
+pub mod sql_types {
+    #[derive(diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "admin_level"))]
+    pub struct AdminLevel;
+
+    #[derive(diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "application_status"))]
+    pub struct ApplicationStatus;
+
+    #[derive(diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "user_gender"))]
+    pub struct UserGender;
 }
 
-#[derive(Debug, DbEnum, PartialEq, Serialize, Deserialize, Clone, Copy)]
-#[DbValueStyle = "PascalCase"]
-pub enum AdminLevel {
-    ReadOnly = 1,
-    Director,
-    Admin,
-}
-
-impl AdminLevel {
-    pub fn geq(self, other: Self) -> bool {
-        self as i32 >= other as i32
-    }
-}
-
-#[derive(Debug, DbEnum, PartialEq, Serialize, Deserialize, Clone, Copy)]
-#[DbValueStyle = "PascalCase"]
-pub enum UserGender {
-    Female,
-    Male,
-    Unspecified,
-}
-
-table! {
+diesel::table! {
     answers (id) {
         id -> Int4,
         application_id -> Int4,
@@ -44,22 +25,22 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     use diesel::sql_types::*;
-    use super::ApplicationStatusMapping;
+    use super::sql_types::ApplicationStatus;
 
     applications (id) {
         id -> Int4,
         user_id -> Int4,
         role_id -> Int4,
-        status -> ApplicationStatusMapping,
-        private_status -> ApplicationStatusMapping,
+        status -> ApplicationStatus,
         created_at -> Timestamp,
         updated_at -> Timestamp,
+        private_status -> Nullable<ApplicationStatus>,
     }
 }
 
-table! {
+diesel::table! {
     campaigns (id) {
         id -> Int4,
         organisation_id -> Int4,
@@ -74,7 +55,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     comments (id) {
         id -> Int4,
         application_id -> Int4,
@@ -85,21 +66,21 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     use diesel::sql_types::*;
-    use super::AdminLevelMapping;
+    use super::sql_types::AdminLevel;
 
     organisation_users (id) {
         id -> Int4,
         user_id -> Int4,
         organisation_id -> Int4,
-        admin_level -> AdminLevelMapping,
+        admin_level -> AdminLevel,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }
 }
 
-table! {
+diesel::table! {
     organisations (id) {
         id -> Int4,
         name -> Text,
@@ -109,12 +90,10 @@ table! {
     }
 }
 
-table! {
-    use diesel::sql_types::*;
-
+diesel::table! {
     questions (id) {
         id -> Int4,
-        role_ids -> Array<Int4>,
+        role_ids -> Array<Nullable<Int4>>,
         title -> Text,
         description -> Nullable<Text>,
         max_bytes -> Int4,
@@ -124,7 +103,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     ratings (id) {
         id -> Int4,
         application_id -> Int4,
@@ -135,7 +114,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     roles (id) {
         id -> Int4,
         campaign_id -> Int4,
@@ -149,9 +128,9 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     use diesel::sql_types::*;
-    use super::UserGenderMapping;
+    use super::sql_types::UserGender;
 
     users (id) {
         id -> Int4,
@@ -160,30 +139,28 @@ table! {
         display_name -> Text,
         degree_name -> Text,
         degree_starting_year -> Int4,
-        gender -> UserGenderMapping,
-        pronouns -> Text,
         superuser -> Bool,
         created_at -> Timestamp,
         updated_at -> Timestamp,
+        gender -> UserGender,
+        pronouns -> Text,
     }
 }
 
-joinable!(answers -> applications (application_id));
-joinable!(answers -> questions (question_id));
-joinable!(applications -> roles (role_id));
-joinable!(applications -> users (user_id));
-joinable!(campaigns -> organisations (organisation_id));
-joinable!(comments -> applications (application_id));
-joinable!(comments -> users (commenter_user_id));
-joinable!(organisation_users -> organisations (organisation_id));
-joinable!(organisation_users -> users (user_id));
-// TODO: can probably make this work to auto join but idk how
-// joinable!(questions -> roles (role_id));
-joinable!(ratings -> applications (application_id));
-joinable!(ratings -> users (rater_user_id));
-joinable!(roles -> campaigns (campaign_id));
+diesel::joinable!(answers -> applications (application_id));
+diesel::joinable!(answers -> questions (question_id));
+diesel::joinable!(applications -> roles (role_id));
+diesel::joinable!(applications -> users (user_id));
+diesel::joinable!(campaigns -> organisations (organisation_id));
+diesel::joinable!(comments -> applications (application_id));
+diesel::joinable!(comments -> users (commenter_user_id));
+diesel::joinable!(organisation_users -> organisations (organisation_id));
+diesel::joinable!(organisation_users -> users (user_id));
+diesel::joinable!(ratings -> applications (application_id));
+diesel::joinable!(ratings -> users (rater_user_id));
+diesel::joinable!(roles -> campaigns (campaign_id));
 
-allow_tables_to_appear_in_same_query!(
+diesel::allow_tables_to_appear_in_same_query!(
     answers,
     applications,
     campaigns,
