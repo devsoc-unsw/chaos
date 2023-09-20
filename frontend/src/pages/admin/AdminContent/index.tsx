@@ -213,6 +213,7 @@ const AdminContent = ({
             campaigns={campaigns}
             setCampaigns={setCampaigns}
             orgId={id}
+            orgLogo={icon}
           />
         )}
         {windowSelected === "members" && (
