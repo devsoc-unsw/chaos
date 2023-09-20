@@ -161,6 +161,7 @@ table! {
         degree_name -> Text,
         degree_starting_year -> Int4,
         gender -> UserGenderMapping,
+        pronouns -> Text,
         superuser -> Bool,
         created_at -> Timestamp,
         updated_at -> Timestamp,

@@ -24,6 +24,7 @@ pub struct User {
     pub degree_name: String,
     pub degree_starting_year: i32,
     pub gender: UserGender,
+    pub pronouns: String,
     pub superuser: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
@@ -51,6 +52,7 @@ pub struct NewUser {
     pub degree_name: String,
     pub degree_starting_year: i32,
     pub gender: UserGender,
+    pub pronouns: String,
     pub superuser: bool,
 }
 
