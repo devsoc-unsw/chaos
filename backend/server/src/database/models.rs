@@ -152,7 +152,7 @@ impl NewUser {
     }
 }
 
-#[derive(Queryable, Serialize, Deserialize, Debug)]
+#[derive(Queryable, Serialize, Deserialize)]
 pub struct Organisation {
     pub id: i32,
     pub name: String,
