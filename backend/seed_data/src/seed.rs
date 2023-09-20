@@ -133,7 +133,9 @@ pub fn seed() {
             .expect(&format!("Failed to insert org {}.", org.name));
     }
 
-    assert!(Organisation::get_all(&connection).len() == 2);
+    let x = Organisation::get_all(&connection);
+    println!("{:?}", x);
+    assert!(x.len() == 2);
 
     println!("... Added {} organizations\n", orgs.len());
     // make giuliana the admin of csesoc
