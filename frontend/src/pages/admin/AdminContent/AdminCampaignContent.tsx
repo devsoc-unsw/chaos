@@ -13,7 +13,7 @@ type Props = {
 };
 
 const AdminCampaignContent = ({ campaigns, setCampaigns, orgLogo }: Props) => (
-  <div tw="flex flex-wrap gap-4">
+  <div tw="flex flex-wrap gap-4 ml-20">
     {campaigns.map((c) => (
       <CampaignCard
         key={c.id}
