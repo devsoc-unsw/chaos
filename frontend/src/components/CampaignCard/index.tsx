@@ -81,13 +81,15 @@ const CampaignCard = ({
     />
   );
 
+  const linkComponent = isAdmin ? (
+    <Link to={`/admin/review/${campaignId}`}>{content}</Link>
+  ) : (
+    <Link to={`/application/${campaignId}`}>{content}</Link>
+  );
+
   return (
     <>
-      {campaignId === undefined ? (
-        content
-      ) : (
-        <Link to={`/application/${campaignId}`}>{content}</Link>
-      )}
+      {campaignId === undefined ? content : linkComponent}
       {popup}
     </>
   );

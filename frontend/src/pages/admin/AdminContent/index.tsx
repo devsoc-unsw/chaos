@@ -1,8 +1,10 @@
-import { PencilIcon } from "@heroicons/react/24/solid";
+import { PencilIcon, PlusIcon } from "@heroicons/react/24/solid";
 import { DeleteForeverRounded } from "@mui/icons-material";
 import { Button, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import "twin.macro";
+
+import { useNavigate } from "react-router-dom";
 
 import { doDeleteOrg, putOrgLogo } from "api";
 import { FetchError } from "api/api";
@@ -54,6 +56,8 @@ const AdminContent = ({
     orgName = "...";
   }
 
+  const navigate = useNavigate();
+
   const [windowSelected, setWindowSelected] = useState("campaigns");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -65,7 +69,7 @@ const AdminContent = ({
   useEffect(() => {
     if (orgLogo === undefined) {
       // have to be consistent in returning a function to make eslint happy
-      return () => { };
+      return () => {};
     }
 
     const reader = new FileReader();
@@ -185,6 +189,15 @@ const AdminContent = ({
           >
             <PencilIcon tw="w-8 h-8" />
           </button>
+          <button
+            tw="text-gray-500 hover:text-gray-800 transition-colors"
+            type="button"
+            onClick={() => navigate(`/campaign/create/${id}`)}
+          >
+            <PlusIcon tw="w-12 h-12" />
+          </button>
+          {/* have to add addition button here to create campaigns,
+          or maybe it should go in a more obvious spot? */}
           <ToggleButtonContainer>
             <ToggleButtonGroup
               color="primary"
@@ -207,23 +220,23 @@ const AdminContent = ({
           </ToggleButtonContainer>
         </div>
       </ContentHeader>
-      <ContentBody>
-        {windowSelected === "campaigns" && (
-          <AdminCampaignContent
-            campaigns={campaigns}
-            setCampaigns={setCampaigns}
-            orgId={id}
-            orgLogo={icon}
-          />
-        )}
-        {windowSelected === "members" && (
+      {windowSelected === "campaigns" && (
+        <AdminCampaignContent
+          campaigns={campaigns}
+          setCampaigns={setCampaigns}
+          orgId={id}
+          orgLogo={icon}
+        />
+      )}
+      {windowSelected === "members" && (
+        <ContentBody>
           <AdminMembersContent
             orgId={id}
             members={members}
             setMembers={setMembers}
           />
-        )}
-      </ContentBody>
+        </ContentBody>
+      )}
 
       <Modal
         open={showEditDialog}
