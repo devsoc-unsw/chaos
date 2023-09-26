@@ -4,6 +4,8 @@ import { Button, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import "twin.macro";
 
+import { useNavigate } from "react-router-dom";
+
 import { doDeleteOrg, putOrgLogo } from "api";
 import { FetchError } from "api/api";
 import { Modal } from "components";
@@ -53,6 +55,8 @@ const AdminContent = ({
     icon = "";
     orgName = "...";
   }
+
+  const navigate = useNavigate();
 
   const [windowSelected, setWindowSelected] = useState("campaigns");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -188,7 +192,7 @@ const AdminContent = ({
           <button
             tw="text-gray-500 hover:text-gray-800 transition-colors"
             type="button"
-            onClick={() => console.log("addition modal goes here")}
+            onClick={() => navigate(`/campaign/create/${id}`)}
           >
             <PlusIcon tw="w-12 h-12" />
           </button>
