@@ -1,7 +1,7 @@
 #![allow(unused_variables)]
 
 use backend::database::models::*;
-use backend::database::schema::{AdminLevel, ApplicationStatus};
+use backend::database::schema::{AdminLevel, ApplicationStatus, UserGender};
 use backend::images::{save_image, try_decode_bytes};
 use chrono::naive::NaiveDate;
 use diesel::pg::PgConnection;
@@ -24,6 +24,8 @@ pub fn seed() {
             display_name: "Shrey Somaiya".to_string(),
             degree_name: "B. CompSci".to_string(),
             degree_starting_year: 2019,
+            gender: UserGender::Unspecified,
+            pronouns: "they/them".to_string(),
             superuser: true,
         },
         NewUser {
@@ -32,6 +34,8 @@ pub fn seed() {
             display_name: "Fake User".to_string(),
             degree_name: "B. CompSci".to_string(),
             degree_starting_year: 2019,
+            gender: UserGender::Unspecified,
+            pronouns: "".to_string(),
             superuser: false,
         },
         NewUser {
@@ -40,6 +44,8 @@ pub fn seed() {
             display_name: "Michael Gribben".to_string(),
             degree_name: "B. Eng (Software)".to_string(),
             degree_starting_year: 2019,
+            gender: UserGender::Male,
+            pronouns: "he/him".to_string(),
             superuser: false,
         },
         NewUser {
@@ -48,6 +54,8 @@ pub fn seed() {
             display_name: "Giuliana Debellis".to_string(),
             degree_name: "B. CompSci".to_string(),
             degree_starting_year: 2020,
+            gender: UserGender::Female,
+            pronouns: "she/her".to_string(),
             superuser: false,
         },
         NewUser {
@@ -56,6 +64,8 @@ pub fn seed() {
             display_name: "Lachlan Ting".to_string(),
             degree_name: "B. CompSci".to_string(),
             degree_starting_year: 2019,
+            gender: UserGender::Male,
+            pronouns: "he/him".to_string(),
             superuser: false,
         },
         NewUser {
@@ -64,6 +74,8 @@ pub fn seed() {
             display_name: "Hayes Choi".to_string(),
             degree_name: "B. CompSci".to_string(),
             degree_starting_year: 2020,
+            gender: UserGender::Male,
+            pronouns: "he/him".to_string(),
             superuser: false,
         },
         NewUser {
@@ -72,6 +84,8 @@ pub fn seed() {
             display_name: "Clarence Feng".to_string(),
             degree_name: "B. CompSci".to_string(),
             degree_starting_year: 2020,
+            gender: UserGender::Male,
+            pronouns: "he/him".to_string(),
             superuser: false,
         },
     ];
@@ -86,10 +100,22 @@ pub fn seed() {
     // create two organisations
     let csesoc_org_logo_id = "d6b7b23d-064b-40f2-9b73-9a4cd32ee9c6";
     let degrees_org_logo_id = "adebf7f3-aa1e-4712-b5ca-051430bfaf8e";
-    let csesoc_org_logo = try_decode_bytes(std::fs::read("./assets/csesoc_logo.png").unwrap()).expect("./assets/csesoc_logo.png missing!");
-    let degrees_org_logo = try_decode_bytes(std::fs::read("./assets/180DC.png").unwrap()).expect("./assets/180DC.png missing!");
-    save_image(csesoc_org_logo, backend::images::ImageLocation::ORGANISATIONS, csesoc_org_logo_id).expect("Failed saving CSESoc Logo");
-    save_image(degrees_org_logo, backend::images::ImageLocation::ORGANISATIONS, degrees_org_logo_id).expect("Failed saving 180DC Logo");
+    let csesoc_org_logo = try_decode_bytes(std::fs::read("./assets/csesoc_logo.png").unwrap())
+        .expect("./assets/csesoc_logo.png missing!");
+    let degrees_org_logo = try_decode_bytes(std::fs::read("./assets/180DC.png").unwrap())
+        .expect("./assets/180DC.png missing!");
+    save_image(
+        csesoc_org_logo,
+        backend::images::ImageLocation::ORGANISATIONS,
+        csesoc_org_logo_id,
+    )
+    .expect("Failed saving CSESoc Logo");
+    save_image(
+        degrees_org_logo,
+        backend::images::ImageLocation::ORGANISATIONS,
+        degrees_org_logo_id,
+    )
+    .expect("Failed saving 180DC Logo");
 
     let orgs = vec![
         NewOrganisation {
@@ -107,7 +133,9 @@ pub fn seed() {
             .expect(&format!("Failed to insert org {}.", org.name));
     }
 
-    assert!(Organisation::get_all(&connection).len() == 2);
+    let x = Organisation::get_all(&connection);
+    println!("{:?}", x);
+    assert!(x.len() == 2);
 
     println!("... Added {} organizations\n", orgs.len());
     // make giuliana the admin of csesoc
@@ -144,8 +172,15 @@ pub fn seed() {
     // create peer mentoring campaign for csesoc
 
     let peer_mentoring_logo_id = "523fde49-027a-4fc8-b296-aaefe9e215d6";
-    let peer_mentoring_logo = try_decode_bytes(std::fs::read("./assets/csesoc_peer_mentoring.jpg").unwrap()).expect("./assets/csesoc_peer_mentoring.jpg missing!");
-    save_image(peer_mentoring_logo, backend::images::ImageLocation::CAMPAIGNS, peer_mentoring_logo_id).expect("Failed saving Peer Mentoring Logo");
+    let peer_mentoring_logo =
+        try_decode_bytes(std::fs::read("./assets/csesoc_peer_mentoring.jpg").unwrap())
+            .expect("./assets/csesoc_peer_mentoring.jpg missing!");
+    save_image(
+        peer_mentoring_logo,
+        backend::images::ImageLocation::CAMPAIGNS,
+        peer_mentoring_logo_id,
+    )
+    .expect("Failed saving Peer Mentoring Logo");
 
     let new_campaign = NewCampaign {
         name: "2022 Peer Mentor Recruitment".to_string(),
