@@ -1,7 +1,7 @@
 #![allow(unused_variables)]
 
 use backend::database::models::*;
-use backend::database::schema::{AdminLevel, ApplicationStatus};
+use backend::database::schema::{AdminLevel, ApplicationStatus, QuestionType};
 use backend::images::{save_image, try_decode_bytes};
 use chrono::naive::NaiveDate;
 use diesel::pg::PgConnection;
@@ -190,6 +190,7 @@ pub fn seed() {
         // role_ids: vec![senior_mentor_role.id],
         required: false,
         description: Some("Please ensure to go into great detail!".to_string()),
+        question_type: QuestionType::ShortAnswer,
     }
     .insert(&connection)
     .expect("Failed to insert question");
@@ -200,6 +201,7 @@ pub fn seed() {
         role_id: None,
         required: true,
         description: Some("Please explain why you would like to be a peer mentor!".to_string()),
+        question_type: QuestionType::ShortAnswer,
     }
     .insert(&connection)
     .expect("Failed to insert question");
@@ -236,6 +238,7 @@ pub fn seed() {
         question_id: question_one.id,
         application_id: application.id,
         description: "42".to_string(),
+        answer_type: QuestionType::ShortAnswer,
     }
     .insert(&connection)
     .expect("Failed to insert answer");
