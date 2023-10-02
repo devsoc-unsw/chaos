@@ -16,5 +16,6 @@ pub mod permissions;
 pub mod question;
 pub mod role;
 pub mod state;
-pub mod static_resources;
+pub mod question_types;
 pub mod user;
+pub mod static_resources;
