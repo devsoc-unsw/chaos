@@ -196,6 +196,7 @@ table! {
 }
 
 table! {
+    use diesel::sql_types::*;
     use super::UserGenderMapping;
 
     users (id) {
