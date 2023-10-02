@@ -1,12 +1,11 @@
 use crate::question_types::QuestionData;
 use crate::images::{get_http_image_path, ImageLocation};
 
-use super::schema::AdminLevel;
-use super::schema::ApplicationStatus;
 use super::schema::{
     answers, applications, campaigns, comments, organisation_users, organisations, questions,
     ratings, roles, users, multi_select_answers, multi_select_options, short_answer_answers
 };
+use super::schema::{AdminLevel, ApplicationStatus, UserGender};
 use chrono::NaiveDateTime;
 use chrono::Utc;
 use diesel::prelude::*;
@@ -26,6 +25,8 @@ pub struct User {
     pub display_name: String,
     pub degree_name: String,
     pub degree_starting_year: i32,
+    pub gender: UserGender,
+    pub pronouns: String,
     pub superuser: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
@@ -52,6 +53,8 @@ pub struct NewUser {
     pub display_name: String,
     pub degree_name: String,
     pub degree_starting_year: i32,
+    pub gender: UserGender,
+    pub pronouns: String,
     pub superuser: bool,
 }
 

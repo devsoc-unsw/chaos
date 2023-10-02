@@ -234,6 +234,7 @@ const CreateCampaign = () => {
         questionsSend
       );
       await setCampaignCoverImage(campaignId, cover);
+      navigate("/admin");
     } catch (err) {
       if (err instanceof FetchError) {
         try {

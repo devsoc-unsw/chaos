@@ -79,7 +79,7 @@ const CampaignGrid = ({
           />
         </Transition>
       ))}
-    </div >
+    </div>
   );
 };
 
