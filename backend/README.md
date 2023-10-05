@@ -1,25 +1,44 @@
-# Setup guide
+# CHAOS Backend
 
-* Install the latest (stable) Rust toolchain with [rustup](https://rustup.rs/)
-* Install postgres with associated dev tools, eg. `sudo apt install postgresql-all` (something like `brew install postgresql` for osx)
-* Download and save the backend `.env` file from vault to the root of the backend folder.
-* Setup postgres accordingly
-   * Make sure the user is named `postgres` and the password is the same as the one in vault `.env` file
-   * the password is in the `DATABSE_URL` field, which will look very similar to `postgres://postgres:<password>@localhost/chaos`
-* Install diesel-cli with `cargo install diesel_cli --no-default-features --features postgres`
-* Run `diesel setup && diesel migration run`
-  * If you get a server connection error, check out [this stackoverflow thread](https://stackoverflow.com/questions/32439167/psql-could-not-connect-to-server-connection-refused-error-when-connecting-to)
-  * this might delete code in the backend, make sure to restore any deletions.
-* Run the server with `cargo run --bin server`
-  * If you want to run the server and get it to restart upon changes, you can install `cargo watch` with `cargo install cargo-watch`
-  * Then, run `cargo watch -x 'run --bin server'` instead
-  * It will watch files and continually re-compile upon changes
-* If there are errrors, ask on discord.
+CHAOS' backend is implemented in Rust and for data persistence, we use PostgreSQL.
+
+## Code Structure
+### Service
+The service module contains all functions that conduct business logic, and also interact with the database. This
+separation from the request handling makes it easy to swap out any new form of requests, but reuse the same business
+logic.
+
+### Handler
+The handler module takes care of request handling. It implements the framework or library we are using, invokes the
+service functions and responds via HTTP  with their return values.
+
+### Middleware
+The middleware module contains middlewares, functions that run before or after the function handlers. A common use case
+is authorization, where middleware is used to find the userId from the user's token.
+
+### Models
+Models are Rust structs that represent the data. There must be a struct for each table in the database, as well as a
+struct to describe the fully joined data. E.g. A campaign struct with a array of questions, even though questions are
+stored as rows in a separate table. These models are used by the service functions when interacting with the database,
+and also when conducting business logic.
+
+#### Request Path
+Request -> Middleware (optional) -> Handler -> Service -> Middleware (Optional) -> Response
 
 
-# Scripts
+## Tech Stack
+### Web Server
+[Axum](https://github.com/tokio-rs/axum)
 
-Scripts should be run from the `chaos/backend` directory:
- * `scripts/become_super_user`-  will prompt for the email address to turn into a GLOBAL super user
- * `scripts/seed.sh` - will wipe your database and add some dummy data
-   * If you are getting a `bad variable nameread answer` error, ensure the file has LF-style newlines
+### Persistence
+- [SQLx](https://github.com/launchbadge/sqlx) - Queries
+- [Prisma](https://www.prisma.io/) - Migrations and Schema
+
+### AuthN
+- OAuth 2 (Google)
+
+### AuthZ
+- JWT
+
+### Storage
+- Local file system
