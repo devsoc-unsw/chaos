@@ -28,11 +28,12 @@ Request -> Middleware (optional) -> Handler -> Service -> Middleware (Optional) 
 
 ## Tech Stack
 ### Web Server
-[Axum](https://github.com/tokio-rs/axum)
+- [Axum](https://github.com/tokio-rs/axum)
 
 ### Persistence
 - [SQLx](https://github.com/launchbadge/sqlx) - Queries
 - [Prisma](https://www.prisma.io/) - Migrations and Schema
+- PostgreSQL
 
 ### AuthN
 - OAuth 2 (Google)
