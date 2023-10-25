@@ -1,0 +1,156 @@
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id                   BigInt               @id
+    email                String               @unique
+    zid                  String?
+    name                 String
+    degree_name          String?
+    degree_starting_year Int?
+    created_at           DateTime             @default(now())
+    updated_at           DateTime
+    role                 UserRole             @default(USER)
+    applications         Application[]
+    OrganisationAdmins   OrganisationAdmins[]
+    Ratings              Ratings[]
+}
+
+enum UserRole {
+    USER
+    SUPERUSER
+}
+
+model Organisation {
+    id                 BigInt               @id
+    name               String
+    logo               String?
+    created_at         DateTime             @default(now())
+    updated_at         DateTime             @default(now())
+    campaigns          Campaign[]
+    OrganisationAdmins OrganisationAdmins[]
+}
+
+model OrganisationAdmins {
+    Organisation    Organisation @relation(fields: [organisation_id], references: [id])
+    organisation_id BigInt
+    User            User         @relation(fields: [user_id], references: [id])
+    user_id         BigInt
+
+    @@id([organisation_id, user_id])
+}
+
+model Campaign {
+    id              BigInt         @id
+    name            String
+    cover_image     String?
+    description     String
+    starts_at       DateTime
+    ends_at         DateTime
+    published       Boolean
+    created_at      DateTime       @default(now())
+    updated_at      DateTime       @default(now())
+    Organisation    Organisation   @relation(fields: [organisation_id], references: [id])
+    organisation_id BigInt
+    roles           CampaignRole[]
+    questions       Question[]
+}
+
+model CampaignRole {
+    id            BigInt        @id @default(autoincrement())
+    Campaign      Campaign      @relation(fields: [campaign_id], references: [id])
+    campaign_id   BigInt
+    name          String
+    description   String?
+    min_available Int
+    max_available Int
+    finalised     Boolean
+    created_at    DateTime      @default(now())
+    updated_at    DateTime      @default(now())
+    Application   Application[]
+}
+
+model Question {
+    id                  BigInt                @id @default(autoincrement())
+    title               String
+    description         String
+    required            Boolean
+    created_at          DateTime              @default(now())
+    updated_at          DateTime              @default(now())
+    question_type       QuestionType
+    Campaign            Campaign?             @relation(fields: [campaignId], references: [id])
+    campaignId          BigInt?
+    MultiOptionQuestion MultiOptionQuestion[]
+    Answer              Answer[]
+}
+
+enum QuestionType {
+    ShortAnswer
+    MultiChoice
+    MultiSelect
+    DropDown
+}
+
+model MultiOptionQuestion {
+    id          BigInt   @id @default(autoincrement())
+    text        String
+    question    Question @relation(fields: [question_id], references: [id])
+    question_id BigInt
+}
+
+model Application {
+    id             BigInt            @id
+    Role           CampaignRole      @relation(fields: [role_id], references: [id])
+    role_id        BigInt
+    User           User              @relation(fields: [user_id], references: [id])
+    user_id        BigInt
+    status         ApplicationStatus
+    private_status ApplicationStatus
+    answers        Answer[]
+    created_at     DateTime          @default(now())
+    updated_at     DateTime          @default(now())
+    ratings        Ratings[]
+}
+
+enum ApplicationStatus {
+    Pending
+    Rejected
+    Success
+}
+
+model Answer {
+    id                 BigInt              @id @default(autoincrement())
+    Application        Application         @relation(fields: [application_id], references: [id])
+    application_id     BigInt
+    Question           Question            @relation(fields: [question_id], references: [id])
+    question_id        BigInt
+    shortAnswerAnswers ShortAnswerAnswer[]
+    multiOptionAnswers MultiOptionAnswer[]
+}
+
+model ShortAnswerAnswer {
+    id        BigInt @id @default(autoincrement())
+    text      String
+    Answer    Answer @relation(fields: [answer_id], references: [id])
+    answer_id BigInt
+}
+
+model MultiOptionAnswer {
+    id        BigInt @id @default(autoincrement())
+    option    Int
+    Answer    Answer @relation(fields: [answer_id], references: [id])
+    answer_id BigInt
+}
+
+model Ratings {
+    id             BigInt      @id @default(autoincrement())
+    Application    Application @relation(fields: [application_id], references: [id])
+    application_id BigInt
+    Rater          User        @relation(fields: [rater_id], references: [id])
+    rater_id       BigInt
+    rating         Int
+    created_at     DateTime    @default(now())
+    updated_at     DateTime    @default(now())
+}
