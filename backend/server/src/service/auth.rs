@@ -1,4 +1,5 @@
 use anyhow::Result;
+use jsonwebtoken::{DecodingKey, EncodingKey};
 use sqlx::{Pool, Postgres};
 
 /// Checks if a user exists in DB based on given email address. If so, their user_id is returned.
@@ -12,3 +13,4 @@ pub async fn create_or_get_user_id(email: String, pool: Pool<Postgres>) -> Resul
     let user_id = 1;
     return Ok(user_id);
 }
+
