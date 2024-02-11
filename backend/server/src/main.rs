@@ -1,6 +1,7 @@
 use std::env;
 use axum::{routing::get, Router};
 use jsonwebtoken::{DecodingKey, EncodingKey};
+use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::PgPoolOptions;
 use models::app::AppState;
 mod handler;
@@ -28,12 +29,16 @@ async fn main() {
     // Initialise reqwest client
     let ctx = reqwest::Client::new();
 
+    // Initialise Snowflake Generator
+    let snowflake_generator = SnowflakeIdGenerator::new(1, 1);
+
     // Add all data to AppState
     let state = AppState {
         db: pool,
         ctx,
         encoding_key,
         decoding_key,
+        snowflake_generator,
     };
 
     let app = Router::new()
