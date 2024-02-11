@@ -12,15 +12,15 @@ model User {
     degree_starting_year Int?
     created_at           DateTime             @default(now())
     updated_at           DateTime
-    role                 UserRole             @default(USER)
+    role                 UserRole             @default(User)
     applications         Application[]
     OrganisationAdmins   OrganisationAdmins[]
     Ratings              Ratings[]
 }
 
 enum UserRole {
-    USER
-    SUPERUSER
+    User
+    SuperUser
 }
 
 model Organisation {
