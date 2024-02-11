@@ -1,5 +1,5 @@
 use axum::extract::State;
-use jsonwebtoken::Algorithm;
+use jsonwebtoken::{Algorithm, DecodingKey};
 use jsonwebtoken::{decode, Validation};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -9,7 +9,7 @@ use crate::AppState;
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AuthorizationJwtPayload {
     pub iss: String,      // issuer
-    pub sub: String,      // subject (user's id)
+    pub sub: i64,      // subject (user's id)
     pub jti: Uuid,        // id
     pub aud: Vec<String>, // audience (uri the JWT is meant for)
 
@@ -23,11 +23,11 @@ pub struct AuthorizationJwtPayload {
 
 pub fn decode_auth_token(
     token: String,
-    State(state): State<AppState>,
+    decoding_key: &DecodingKey,
 ) -> Option<AuthorizationJwtPayload> {
     let decode_token = decode::<AuthorizationJwtPayload>(
         token.as_str(),
-        &state.decoding_key,
+        decoding_key,
         &Validation::new(Algorithm::HS256),
     );
 
