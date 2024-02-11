@@ -13,7 +13,8 @@ pub struct AuthRequest {
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct UserProfile {
+pub struct GoogleUserProfile {
+    pub name: String,
     pub email: String,
 }
 

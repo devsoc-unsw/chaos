@@ -1,5 +1,5 @@
 use crate::models::app::AppState;
-use crate::models::auth::{AuthRequest, UserProfile};
+use crate::models::auth::{AuthRequest, GoogleUserProfile};
 use crate::service::auth::create_or_get_user_id;
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
@@ -41,9 +41,9 @@ pub async fn google_callback(
         Err(e) => return Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     };
 
-    // let profile = profile.json::<UserProfile>().await?;
+    let profile = profile.json::<GoogleUserProfile>().await?;
 
-    // let user_id = create_or_get_user_id(profile.email, state.db).await?;
+    let user_id = create_or_get_user_id(profile.email, profile.name, state.db).await?;
 
     // TODO: Create a JWT from this user_id and return to the user.
     Ok("woohoo")
