@@ -14,3 +14,10 @@ pub async fn create_or_get_user_id(email: String, pool: Pool<Postgres>) -> Resul
     return Ok(user_id);
 }
 
+pub async fn is_super_user(user_id: i64, pool: &Pool<Postgres>) -> Result<bool> {
+    let is_super_user = sqlx::query!("SELECT EXISTS(SELECT 1 FROM users WHERE id = $1 AND role = $2)", user_id, UserRole::SuperUser)
+        .fetch_one(pool)
+        .await?;
+
+    Ok(is_super_user.exists.unwrap())
+}
