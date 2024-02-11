@@ -11,11 +11,13 @@ model User {
     degree_name          String?
     degree_starting_year Int?
     created_at           DateTime             @default(now())
-    updated_at           DateTime
+    updated_at           DateTime             @default(now())
     role                 UserRole             @default(User)
     applications         Application[]
     OrganisationAdmins   OrganisationAdmins[]
-    Ratings              Ratings[]
+    Ratings              Rating[]
+
+    @@map("users")
 }
 
 enum UserRole {
@@ -31,6 +33,8 @@ model Organisation {
     updated_at         DateTime             @default(now())
     campaigns          Campaign[]
     OrganisationAdmins OrganisationAdmins[]
+
+    @@map("organisations")
 }
 
 model OrganisationAdmins {
@@ -40,6 +44,8 @@ model OrganisationAdmins {
     user_id         BigInt
 
     @@id([organisation_id, user_id])
+
+    @@map("organisation_admins")
 }
 
 model Campaign {
@@ -56,6 +62,8 @@ model Campaign {
     organisation_id BigInt
     roles           CampaignRole[]
     questions       Question[]
+
+    @@map("campaigns")
 }
 
 model CampaignRole {
@@ -70,6 +78,8 @@ model CampaignRole {
     created_at    DateTime      @default(now())
     updated_at    DateTime      @default(now())
     Application   Application[]
+
+    @@map("campaign_roles")
 }
 
 model Question {
@@ -84,6 +94,8 @@ model Question {
     campaignId          BigInt?
     MultiOptionQuestion MultiOptionQuestion[]
     Answer              Answer[]
+
+    @@map("questions")
 }
 
 enum QuestionType {
@@ -98,6 +110,8 @@ model MultiOptionQuestion {
     text        String
     question    Question @relation(fields: [question_id], references: [id])
     question_id BigInt
+
+    @@map("multi_option_questions")
 }
 
 model Application {
@@ -111,7 +125,9 @@ model Application {
     answers        Answer[]
     created_at     DateTime          @default(now())
     updated_at     DateTime          @default(now())
-    ratings        Ratings[]
+    ratings        Rating[]
+
+    @@map("applications")
 }
 
 enum ApplicationStatus {
@@ -128,6 +144,8 @@ model Answer {
     question_id        BigInt
     shortAnswerAnswers ShortAnswerAnswer[]
     multiOptionAnswers MultiOptionAnswer[]
+
+    @@map("answers")
 }
 
 model ShortAnswerAnswer {
@@ -135,6 +153,8 @@ model ShortAnswerAnswer {
     text      String
     Answer    Answer @relation(fields: [answer_id], references: [id])
     answer_id BigInt
+
+    @@map("short_answer_answers")
 }
 
 model MultiOptionAnswer {
@@ -142,9 +162,11 @@ model MultiOptionAnswer {
     option    Int
     Answer    Answer @relation(fields: [answer_id], references: [id])
     answer_id BigInt
+
+    @@map("multi_option_answers")
 }
 
-model Ratings {
+model Rating {
     id             BigInt      @id @default(autoincrement())
     Application    Application @relation(fields: [application_id], references: [id])
     application_id BigInt
@@ -153,4 +175,6 @@ model Ratings {
     rating         Int
     created_at     DateTime    @default(now())
     updated_at     DateTime    @default(now())
+
+    @@map("ratings")
 }
