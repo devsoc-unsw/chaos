@@ -53,4 +53,4 @@ jobs:
         run: cargo clippy
       - name: RustFmt
         working-directory: backend/server
-        run: cargo fmt --manifest-path backend/server/Cargo.toml
+        run: cargo fmt
