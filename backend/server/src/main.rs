@@ -1,10 +1,10 @@
-use std::env;
 use anyhow::Result;
 use axum::{routing::get, Router};
 use jsonwebtoken::{DecodingKey, EncodingKey};
+use models::app::AppState;
 use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::PgPoolOptions;
-use models::app::AppState;
+use std::env;
 mod handler;
 mod models;
 mod service;
@@ -19,7 +19,9 @@ async fn main() -> Result<()> {
         .to_string();
     let pool = PgPoolOptions::new()
         .max_connections(5)
-        .connect(db_url.as_str()).await.expect("Cannot connect to database");
+        .connect(db_url.as_str())
+        .await
+        .expect("Cannot connect to database");
 
     // Initialise JWT settings
     let jwt_secret = env::var("JWT_SECRET")
