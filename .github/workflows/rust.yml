@@ -38,8 +38,6 @@ jobs:
           profile: minimal
           toolchain: stable
       - uses: Swatinem/rust-cache@v2
-        with:
-          working-directory: backend/
       - name: Migrate DB
         working-directory: backend/prisma-cli
         run: cargo run db push
