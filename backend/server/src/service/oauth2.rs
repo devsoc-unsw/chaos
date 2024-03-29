@@ -1,11 +1,5 @@
-use oauth2::{
-    AuthUrl,
-    ClientId,
-    ClientSecret,
-    RedirectUrl,
-    TokenUrl
-};
 use oauth2::basic::BasicClient;
+use oauth2::{AuthUrl, ClientId, ClientSecret, RedirectUrl, TokenUrl};
 use std::env;
 
 /// Returns a oauth2::BasicClient, setup with settings for CHAOS Google OAuth.
@@ -26,5 +20,6 @@ pub fn build_oauth_client(client_id: String, client_secret: String) -> BasicClie
         Some(ClientSecret::new(client_secret)),
         auth_url,
         Some(token_url),
-    ).set_redirect_uri(RedirectUrl::new(redirect_url).unwrap())
+    )
+    .set_redirect_uri(RedirectUrl::new(redirect_url).unwrap())
 }
