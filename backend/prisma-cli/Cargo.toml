@@ -9,6 +9,7 @@ edition = "2021"
 prisma-client-rust-cli = { git = "https://github.com/Brendonovich/prisma-client-rust", tag = "0.6.10", features = [
     "postgresql",
 ] }
+dotenvy = "0.15.7"
 
 [alias]
 prisma = "run --bin prisma-cli --"
