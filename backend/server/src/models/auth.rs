@@ -4,6 +4,7 @@ use crate::service::jwt::decode_auth_token;
 use axum::extract::{FromRef, FromRequestParts, TypedHeader};
 use axum::http::request::Parts;
 use axum::response::{IntoResponse, Redirect, Response};
+
 use axum::{
     async_trait, headers,
     http::{self, Request},
@@ -11,6 +12,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 
+// tells the web framework how to take the url query params they will have
 #[derive(Deserialize, Serialize)]
 pub struct AuthRequest {
     pub code: String,
@@ -36,6 +38,8 @@ pub struct AuthUser {
     pub user_id: i64,
 }
 
+// extractor - takes a request, and we define what we do to it, 
+// returns the struct of the type defined
 #[async_trait]
 impl<S> FromRequestParts<S> for AuthUser
 where

@@ -48,6 +48,7 @@ async fn main() -> Result<()> {
 
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
+        .route("api/v1/user/:user_id", get(handler::user::get_username)); 
         .with_state(state);
 
     axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
