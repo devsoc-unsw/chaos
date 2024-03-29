@@ -41,13 +41,13 @@ jobs:
         with:
           working-directory: backend/
       - name: Migrate DB
-        working-directory: ./prisma-cli
+        working-directory: backend/prisma-cli
         run: cargo run db push
       - name: Build
-        working-directory: ./server
+        working-directory: backend/server
         run: cargo build
       - name: Cargo Clippy
-        working-directory: ./server
+        working-directory: backend/server
         run: cargo clippy
       - name: RustFmt
         working-directory: ./server
