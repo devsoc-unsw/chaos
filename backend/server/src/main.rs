@@ -1,4 +1,5 @@
 use std::env;
+use anyhow::Result;
 use axum::{routing::get, Router};
 use jsonwebtoken::{DecodingKey, EncodingKey};
 use snowflake::SnowflakeIdGenerator;
@@ -9,7 +10,9 @@ mod models;
 mod service;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
+    dotenvy::dotenv()?;
+
     // Initialise DB connection
     let db_url = env::var("DATABASE_URL")
         .expect("Error getting DATABASE_URL")
@@ -49,4 +52,6 @@ async fn main() {
         .serve(app.into_make_service())
         .await
         .unwrap();
+
+    Ok(())
 }
