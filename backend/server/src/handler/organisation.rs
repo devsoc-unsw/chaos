@@ -1,11 +1,11 @@
 use crate::models::app::AppState;
 use crate::models::auth::AuthUser;
 use axum::http::StatusCode;
+use crate::models;
 use crate::service;
 use axum::extract::{Path, State};
 use axum::Json;
 use axum::response::IntoResponse;
-use crate::models;
 
 pub async fn get_organisation_name(
     State(state): State<AppState>,
