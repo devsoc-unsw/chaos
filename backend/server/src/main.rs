@@ -48,6 +48,20 @@ async fn main() -> Result<()> {
 
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
+        .route("/api/v1/organisations",
+            get(handler::organisation::get_organisations)
+            .post(handler::organisation::create_organisation)
+        )
+        .route("/api/v1/organisations/:organisation_id",
+            get(handler::organisation::get_organisation)
+            .patch(handler::organisation::update_organisation)
+            .delete(handler::organisation::delete_organisation)
+        )
+        .route("/api/v1/organisations/admin/:organisation_id",
+            get(handler::organisation::get_organisation_admins)
+            .post(handler::organisation::add_admin_to_organisation)
+            .delete(handler::organisation::remove_admin_from_organisation)
+        )
         .with_state(state);
 
     axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
