@@ -1,0 +1,408 @@
+openapi: "3.0.0"
+info:
+  title: Chaos API
+  version: 1.0.0
+servers:
+  - url: https://chaos.csesoc.app/api
+    description: Production server
+  - url: http://localhost:3000/api
+    description: Local server
+
+paths:
+  /user:
+    get:
+      description: Returns info about currently logged in user.
+      tags:
+        - User
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  id:
+                    type: integer
+                    format: int64
+                    example: 1541815603606036480
+                  email:
+                    type: string
+                    example: me@example.com
+                  zid:
+                    type: string
+                    example: z5555555
+                  name:
+                    type: string
+                    example: Clancy Lion
+                  degree_name:
+                    type: string
+                    example: Computer Science
+                  degree_starting_year:
+                    type: integer
+                    example: 2024
+                  role:
+                    type: string
+                    example: User
+        '401':
+          description: Not logged in.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Not logged in.
+    delete:
+      description: Deletes currently logged in user.
+      tags:
+        - User
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully deleted user.
+        '403':
+          description: User is only admin of an organisation.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: "Cannot delete sole admin of an organisation."
+        '401':
+          description: Not logged.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Not logged in.
+  /user/{id}:
+    get:
+      parameters:
+        - name: id
+          in: path
+          description: User ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns info about specified user.
+      tags:
+        - User
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  id:
+                    type: integer
+                    format: int64
+                    example: 1541815603606036480
+                  email:
+                    type: string
+                    example: me@example.com
+                  zid:
+                    type: string
+                    example: z5555555
+                  name:
+                    type: string
+                    example: Clancy Lion
+                  degree_name:
+                    type: string
+                    example: Computer Science
+                  degree_starting_year:
+                    type: integer
+                    example: 2024
+        '403':
+          description: Requested user has not applied to one of authorized user's campaign.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: "Insufficient permissions"
+  /user/name:
+    patch:
+      description: Updates currently logged in user's name.
+      tags:
+        - User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+                  example: "Clancy Tiger"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully updated name.
+        '401':
+          description: Not logged in.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Not logged in.
+  /user/zid:
+    patch:
+      description: Updates currently logged in user's zID.
+      tags:
+        - User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                zid:
+                  type: string
+                  example: "z5123456"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully updated zID.
+        '401':
+          description: Not logged in.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Not logged in.
+  /user/degree:
+    patch:
+      description: Updates currently logged in user's degree.
+      tags:
+        - User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                degree_name:
+                  type: string
+                  example: "Electrical Engineering"
+                degree_starting_year:
+                  type: integer
+                  example: 2024
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully updated email.
+        '401':
+          description: Not logged in.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Not logged in.
+  /organisation/{id}:
+    get:
+      parameters:
+        - name: id
+          in: path
+          description: Organisation ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns info about specified organisation.
+      tags:
+        - Organisation
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  id:
+                    type: integer
+                    format: int64
+                    example: 6996987893965262849
+                  name:
+                    type: string
+                    example: UNSW Software Development Society
+                  logo:
+                    type: string
+                    example: "76718252-2a13-4de2-bc07-f977c75dc52b"
+                  created_at:
+                    type: string
+                    example: 2024-02-10T18:25:43.511Z
+  /organisation/{id}/campaigns:
+    get:
+      parameters:
+        - name: id
+          in: path
+          description: Organisation ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns active campaigns for specified organisation.
+      tags:
+        - Organisation
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  campaigns:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          format: int64
+                          example: 6996987893965262849
+                        name:
+                          type: string
+                          example: 2024 Subcommittee Recruitment
+                        cover_image:
+                          type: string
+                          example: 2d19617b-46fd-4927-9f53-77d69232ba5d
+                        description:
+                          type: string
+                          example: Are you excited to make a difference?
+                        starts_at:
+                          type: string
+                          example: 2024-03-15T18:25:43.511Z
+                        ends_at:
+                          type: string
+                          example: 2024-04-15T18:25:43.511Z
+  /organisation/{id}/logo:
+    patch:
+      parameters:
+        - name: id
+          in: path
+          description: Organisation ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Updates logo for specified organistion.
+      tags:
+        - Organisation
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully updated logo.
+        '401':
+          description: Not logged in.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Not logged in.
+        '403':
+          description: User is not an organisation admin.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorised.
+  /organisation/{id}/members:
+    put:
+      parameters:
+        - name: id
+          in: path
+          description: Organisation ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                members:
+                  type: array
+                  items:
+                    uniqueItems: true
+                    type: integer
+                    format: int64
+                  example: [1541815603606036480, 1541815603606036827, 1541815287306036429]
+      description: Specifies members for specified organistion.
+      tags:
+        - Organisation
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully updated members.
+        '401':
+          description: Not logged in.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Not logged in.
+        '403':
+          description: User is not an organisation admin.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorised.
