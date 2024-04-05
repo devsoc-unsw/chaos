@@ -2,7 +2,7 @@ name: Rust
 
 on:
   pull_request:
-    branches: [main, "renovate/*"]
+    branches: [main, "renovate/*", "CHAOS-224-KHAOS-rewrite"]
   push:
     branches: ["renovate/*"]
 
