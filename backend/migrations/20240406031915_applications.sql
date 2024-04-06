@@ -3,7 +3,7 @@ CREATE TYPE application_status AS ENUM ('Pending', 'Rejected', 'Successful');
 CREATE TABLE applications (
     id BIGINT PRIMARY KEY,
     campaign_id BIGINT NOT NULL,
-    user_id BIGINT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
     status application_status NOT NULL,
     private_status application_status NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
