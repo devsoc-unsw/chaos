@@ -3,6 +3,9 @@ name: Rust
 on:
   pull_request:
     branches: [main, "renovate/*", "CHAOS-224-KHAOS-rewrite"]
+    paths:
+      - backend/server/**
+      - backend/prisma-cli/**
   push:
     branches: ["renovate/*"]
 
@@ -37,11 +40,18 @@ jobs:
         with:
           profile: minimal
           toolchain: stable
-      - uses: Swatinem/rust-cache@v2
+      - name: Setup cargo cache
+        uses: actions/cache@v3
         with:
-          workspaces: |
-            prisma-cli
-            server
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            backend/prisma-cli/target/
+            backend/server/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
       - name: Migrate DB
         working-directory: backend/prisma-cli
         run: cargo run db push
