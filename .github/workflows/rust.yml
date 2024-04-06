@@ -48,13 +48,15 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            backend/prisma-cli/target/
             backend/server/target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
       - name: Migrate DB
-        working-directory: backend/prisma-cli
-        run: cargo run db push
+        working-directory: backend
+        run: |
+          cargo install sqlx-cli
+          sqlx database create
+          sqlx migrate run
       - name: Build
         working-directory: backend/server
         run: cargo build
