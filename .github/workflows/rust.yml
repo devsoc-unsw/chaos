@@ -54,7 +54,7 @@ jobs:
       - name: Migrate DB
         working-directory: backend
         run: |
-          cargo install sqlx-cli --no-default-features --features native-tls,postgres
+          which sqlx || cargo install sqlx-cli --no-default-features --features native-tls,postgres
           sqlx database create
           sqlx migrate run
       - name: Build
