@@ -1,8 +1,10 @@
-use anyhow::Error;
-use axum::extract::rejection::JsonRejection;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Redirect, Response};
 
+/// Custom error enum for Chaos.
+///
+/// Handles all anyhow errors (when `?` is used) alongside
+/// specific errors for business logic.
 pub enum ChaosError {
     NotLoggedIn,
     Unauthorized,

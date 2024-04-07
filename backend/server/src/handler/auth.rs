@@ -1,13 +1,11 @@
 use crate::models::app::AppState;
-use crate::models::auth::{AuthRequest, AuthUser, GoogleUserProfile};
+use crate::models::auth::{AuthRequest, GoogleUserProfile};
 use crate::models::error::ChaosError;
 use crate::service::auth::create_or_get_user_id;
 use crate::service::jwt::encode_auth_token;
 use axum::extract::{Query, State};
-use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use axum::{Extension, Json};
-use log::error;
+use axum::Extension;
 use oauth2::basic::BasicClient;
 use oauth2::reqwest::async_http_client;
 use oauth2::{AuthorizationCode, TokenResponse};

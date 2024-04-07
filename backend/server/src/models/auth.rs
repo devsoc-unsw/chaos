@@ -7,7 +7,6 @@ use axum::http::request::Parts;
 use axum::response::{IntoResponse, Redirect, Response};
 use axum::{
     async_trait,
-    http::{self, Request},
     RequestPartsExt,
 };
 use axum_extra::{headers::Cookie, TypedHeader};

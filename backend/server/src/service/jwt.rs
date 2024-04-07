@@ -1,11 +1,8 @@
-use axum::extract::State;
 use jsonwebtoken::{decode, encode, EncodingKey, Header, Validation};
-use jsonwebtoken::{Algorithm, DecodingKey};
+use jsonwebtoken::DecodingKey;
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
-
-use crate::AppState;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AuthorizationJwtPayload {

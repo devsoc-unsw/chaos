@@ -1,11 +1,11 @@
 use anyhow::Result;
-use axum::response::IntoResponse;
 use axum::{routing::get, Router};
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use models::app::AppState;
 use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::PgPoolOptions;
 use std::env;
+use crate::handler::auth::google_callback;
 
 mod handler;
 mod models;
@@ -32,7 +32,7 @@ async fn main() -> Result<()> {
     // let jwt_secret = "I want to cry";
     let encoding_key = EncodingKey::from_secret(jwt_secret.as_bytes());
     let decoding_key = DecodingKey::from_secret(jwt_secret.as_bytes());
-    let mut jwt_header = Header::new(Algorithm::HS512);
+    let jwt_header = Header::new(Algorithm::HS512);
     let mut jwt_validator = Validation::new(Algorithm::HS512);
     jwt_validator.set_issuer(&["Chaos"]);
     jwt_validator.set_audience(&["chaos.devsoc.app"]);
@@ -56,6 +56,7 @@ async fn main() -> Result<()> {
 
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
+        .route("/api/auth/callback/google", get(google_callback))
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
