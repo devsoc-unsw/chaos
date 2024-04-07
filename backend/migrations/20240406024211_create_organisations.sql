@@ -15,4 +15,6 @@ CREATE TABLE organisation_admins (
             REFERENCES organisations(id)
                 ON DELETE CASCADE
                 ON UPDATE CASCADE
-)
+);
+
+CREATE INDEX IDX_organisation_admins_organisation on organisation_admins (organisation_id);

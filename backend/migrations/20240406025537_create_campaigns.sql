@@ -30,4 +30,6 @@ CREATE TABLE campaign_roles (
             REFERENCES campaigns(id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
-)
+);
+
+CREATE INDEX IDX_campaign_roles_campaign on campaign_roles (campaign_id);

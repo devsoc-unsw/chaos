@@ -1,8 +1,7 @@
-use crate::models::user::UserRole;
 use anyhow::Result;
-use jsonwebtoken::{DecodingKey, EncodingKey};
 use snowflake::SnowflakeIdGenerator;
 use sqlx::{Pool, Postgres};
+use crate::models::user::UserRole;
 
 /// Checks if a user exists in DB based on given email address. If so, their user_id is returned.
 /// Otherwise, a new user is created in the DB, and the new id is returned.
@@ -15,9 +14,12 @@ pub async fn create_or_get_user_id(
     pool: Pool<Postgres>,
     mut snowflake_generator: SnowflakeIdGenerator,
 ) -> Result<i64> {
-    let possible_user_id = sqlx::query!("SELECT id FROM users WHERE lower(email) = $1", email.to_lowercase())
-        .fetch_optional(&pool)
-        .await?;
+    let possible_user_id = sqlx::query!(
+        "SELECT id FROM users WHERE lower(email) = $1",
+        email.to_lowercase()
+    )
+    .fetch_optional(&pool)
+    .await?;
 
     if let Some(result) = possible_user_id {
         return Ok(result.id);
@@ -25,7 +27,7 @@ pub async fn create_or_get_user_id(
 
     let user_id = snowflake_generator.real_time_generate();
 
-    let response = sqlx::query!(
+    sqlx::query!(
         "INSERT INTO users (id, email, name) VALUES ($1, $2, $3)",
         user_id,
         email.to_lowercase(),
