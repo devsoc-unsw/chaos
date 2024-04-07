@@ -11,3 +11,5 @@ CREATE TABLE users (
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE UNIQUE INDEX IDX_users_email_lower on users ((lower(email)));
