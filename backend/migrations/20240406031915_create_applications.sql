@@ -62,14 +62,14 @@ CREATE TABLE short_answer_answers (
     id SERIAL PRIMARY KEY,
     text TEXT NOT NULL,
     answer_id INTEGER NOT NULL,
-    CONSTRAINT FK_multi_option_answer_options_answers
+    CONSTRAINT FK_short_answer_answers_answers
         FOREIGN KEY(answer_id)
             REFERENCES answers(id)
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
 
-CREATE INDEX IDX_multi_option_answer_options_answers on short_answer_answers (answer_id);
+CREATE INDEX IDX_short_answer_answers_answers on short_answer_answers (answer_id);
 
 CREATE TABLE multi_option_answer_options (
     id SERIAL PRIMARY KEY,
