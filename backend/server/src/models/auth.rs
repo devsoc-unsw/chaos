@@ -14,6 +14,7 @@ use axum_extra::{
     TypedHeader,
 };
 use serde::{Deserialize, Serialize};
+use crate::models::error::ChaosError;
 
 #[derive(Deserialize, Serialize)]
 pub struct AuthRequest {
@@ -46,7 +47,7 @@ where
     AppState: FromRef<S>,
     S: Send + Sync,
 {
-    type Rejection = AuthRedirect;
+    type Rejection = ChaosError;
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
@@ -55,12 +56,12 @@ where
         let TypedHeader(cookies) = parts
             .extract::<TypedHeader<Cookie>>()
             .await
-            .map_err(|_| AuthRedirect)?;
+            .map_err(|_| ChaosError::NotLoggedIn)?;
 
-        let token = cookies.get("auth_token").unwrap();
+        let token = cookies.get("auth_token").ok_or(ChaosError::NotLoggedIn)?;
 
         let claims =
-            decode_auth_token(token, decoding_key, jwt_validator).ok_or(AuthRedirect)?;
+            decode_auth_token(token, decoding_key, jwt_validator).ok_or(ChaosError::NotLoggedIn)?;
 
         Ok(AuthUser {
             user_id: claims.sub,
@@ -79,7 +80,7 @@ where
     AppState: FromRef<S>,
     S: Send + Sync,
 {
-    type Rejection = AuthRedirect;
+    type Rejection = ChaosError;
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
@@ -88,11 +89,11 @@ where
         let TypedHeader(cookies) = parts
             .extract::<TypedHeader<Cookie>>()
             .await
-            .map_err(|_| AuthRedirect)?;
+            .map_err(|_| ChaosError::NotLoggedIn)?;
 
-        let token = cookies.get("auth_token").unwrap();
+        let token = cookies.get("auth_token").ok_or(ChaosError::NotLoggedIn)?;
 
-        let claims = decode_auth_token(token, decoding_key, jwt_validator).ok_or(AuthRedirect)?;
+        let claims = decode_auth_token(token, decoding_key, jwt_validator).ok_or(ChaosError::NotLoggedIn)?;
         let pool = &app_state.db;
         let possible_user = is_super_user(claims.sub, pool).await;
 
@@ -104,6 +105,6 @@ where
             }
         }
 
-        Err(AuthRedirect)
+        Err(ChaosError::NotLoggedIn)
     }
 }
