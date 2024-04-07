@@ -5,10 +5,7 @@ use models::app::AppState;
 use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::PgPoolOptions;
 use std::env;
-use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use crate::handler::auth::{jwt_create, jwt_test};
-use crate::models::auth::AuthUser;
 
 mod handler;
 mod models;
@@ -59,8 +56,6 @@ async fn main() -> Result<()> {
 
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
-        .route("/jwt", get(jwt_test))
-        .route("/jwt_create", get(jwt_create))
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
