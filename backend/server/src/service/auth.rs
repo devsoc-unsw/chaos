@@ -15,9 +15,12 @@ pub async fn create_or_get_user_id(
     pool: Pool<Postgres>,
     mut snowflake_generator: SnowflakeIdGenerator,
 ) -> Result<i64> {
-    let possible_user_id = sqlx::query!("SELECT id FROM users WHERE lower(email) = $1", email.to_lowercase())
-        .fetch_optional(&pool)
-        .await?;
+    let possible_user_id = sqlx::query!(
+        "SELECT id FROM users WHERE lower(email) = $1",
+        email.to_lowercase()
+    )
+    .fetch_optional(&pool)
+    .await?;
 
     if let Some(result) = possible_user_id {
         return Ok(result.id);
