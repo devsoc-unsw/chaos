@@ -1,11 +1,11 @@
 use anyhow::Result;
+use axum::response::IntoResponse;
 use axum::{routing::get, Router};
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use models::app::AppState;
 use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::PgPoolOptions;
 use std::env;
-use axum::response::IntoResponse;
 
 mod handler;
 mod models;

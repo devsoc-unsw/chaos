@@ -1,8 +1,8 @@
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use axum::extract::State;
 use jsonwebtoken::{decode, encode, EncodingKey, Header, Validation};
 use jsonwebtoken::{Algorithm, DecodingKey};
 use serde::{Deserialize, Serialize};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
 use crate::AppState;
@@ -38,7 +38,7 @@ pub fn encode_auth_token(
         exp: expiry,
         nbf: i64::try_from(current_time.as_secs()).unwrap(),
         iat: i64::try_from(current_time.as_secs()).unwrap(),
-        username
+        username,
     };
 
     encode(jwt_header, &claims, encoding_key).unwrap()
@@ -49,11 +49,7 @@ pub fn decode_auth_token(
     decoding_key: &DecodingKey,
     jwt_validator: &Validation,
 ) -> Option<AuthorizationJwtPayload> {
-    let decode_token = decode::<AuthorizationJwtPayload>(
-        token,
-        decoding_key,
-        jwt_validator,
-    );
+    let decode_token = decode::<AuthorizationJwtPayload>(token, decoding_key, jwt_validator);
 
     match decode_token {
         Ok(token) => Option::from(token.claims),

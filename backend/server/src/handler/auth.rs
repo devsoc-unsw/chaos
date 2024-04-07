@@ -1,6 +1,8 @@
 use crate::models::app::AppState;
 use crate::models::auth::{AuthRequest, AuthUser, GoogleUserProfile};
+use crate::models::error::ChaosError;
 use crate::service::auth::create_or_get_user_id;
+use crate::service::jwt::encode_auth_token;
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -9,8 +11,6 @@ use log::error;
 use oauth2::basic::BasicClient;
 use oauth2::reqwest::async_http_client;
 use oauth2::{AuthorizationCode, TokenResponse};
-use crate::models::error::ChaosError;
-use crate::service::jwt::encode_auth_token;
 
 /// This function handles the passing in of the Google OAuth code. After allowing our app the
 /// requested permissions, the user is redirected to this url on our server, where we use the
@@ -44,6 +44,11 @@ pub async fn google_callback(
     .unwrap();
 
     // TODO: Return JWT as set-cookie header.
-    let token = encode_auth_token(profile.email, user_id, &state.encoding_key, &state.jwt_header);
+    let token = encode_auth_token(
+        profile.email,
+        user_id,
+        &state.encoding_key,
+        &state.jwt_header,
+    );
     Ok(token)
 }

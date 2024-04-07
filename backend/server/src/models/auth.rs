@@ -1,4 +1,5 @@
 use crate::models::app::AppState;
+use crate::models::error::ChaosError;
 use crate::service::auth::is_super_user;
 use crate::service::jwt::decode_auth_token;
 use axum::extract::{FromRef, FromRequestParts};
@@ -9,12 +10,8 @@ use axum::{
     http::{self, Request},
     RequestPartsExt,
 };
-use axum_extra::{
-    headers::Cookie,
-    TypedHeader,
-};
+use axum_extra::{headers::Cookie, TypedHeader};
 use serde::{Deserialize, Serialize};
-use crate::models::error::ChaosError;
 
 #[derive(Deserialize, Serialize)]
 pub struct AuthRequest {
@@ -93,7 +90,8 @@ where
 
         let token = cookies.get("auth_token").ok_or(ChaosError::NotLoggedIn)?;
 
-        let claims = decode_auth_token(token, decoding_key, jwt_validator).ok_or(ChaosError::NotLoggedIn)?;
+        let claims =
+            decode_auth_token(token, decoding_key, jwt_validator).ok_or(ChaosError::NotLoggedIn)?;
         let pool = &app_state.db;
         let possible_user = is_super_user(claims.sub, pool).await;
 
