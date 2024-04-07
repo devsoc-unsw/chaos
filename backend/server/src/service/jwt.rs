@@ -1,5 +1,6 @@
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use axum::extract::State;
-use jsonwebtoken::{decode, Validation};
+use jsonwebtoken::{decode, encode, EncodingKey, Header, Validation};
 use jsonwebtoken::{Algorithm, DecodingKey};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -21,14 +22,37 @@ pub struct AuthorizationJwtPayload {
     pub username: String, // username
 }
 
+pub fn encode_auth_token(
+    username: String,
+    user_id: i64,
+    encoding_key: &EncodingKey,
+    jwt_header: &Header,
+) -> String {
+    let current_time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+    let expiry = i64::try_from((current_time + Duration::from_secs(604800)).as_secs()).unwrap();
+    let claims = AuthorizationJwtPayload {
+        iss: "Chaos".to_string(),
+        sub: user_id,
+        jti: Uuid::new_v4(),
+        aud: vec!["chaos.devsoc.app".to_string()],
+        exp: expiry,
+        nbf: i64::try_from(current_time.as_secs()).unwrap(),
+        iat: i64::try_from(current_time.as_secs()).unwrap(),
+        username
+    };
+
+    encode(jwt_header, &claims, encoding_key).unwrap()
+}
+
 pub fn decode_auth_token(
-    token: String,
+    token: &str,
     decoding_key: &DecodingKey,
+    jwt_validator: &Validation,
 ) -> Option<AuthorizationJwtPayload> {
     let decode_token = decode::<AuthorizationJwtPayload>(
-        token.as_str(),
+        token,
         decoding_key,
-        &Validation::new(Algorithm::HS256),
+        jwt_validator,
     );
 
     match decode_token {
