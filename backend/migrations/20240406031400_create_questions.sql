@@ -26,3 +26,5 @@ CREATE TABLE multi_option_question_options (
             ON DELETE CASCADE
             ON UPDATE CASCADE
 )
+
+CREATE INDEX IDX_multi_option_question_options_questions on multi_option_question_options (question_id);

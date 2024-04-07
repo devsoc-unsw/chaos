@@ -36,6 +36,9 @@ CREATE TABLE application_roles (
             ON UPDATE CASCADE
 );
 
+CREATE INDEX IDX_application_roles_applications on application_roles (application_id);
+CREATE INDEX IDX_application_roles_campaign_roles on application_roles (campaign_role_id);
+
 CREATE TABLE answers (
   id SERIAL PRIMARY KEY,
   application_id BIGINT NOT NULL,
@@ -52,6 +55,9 @@ CREATE TABLE answers (
           ON UPDATE CASCADE
 );
 
+CREATE INDEX IDX_answers_applications on answers (application_id);
+CREATE INDEX IDX_answers_questions on answers (question_id);
+
 CREATE TABLE short_answer_answers (
     id SERIAL PRIMARY KEY,
     text TEXT NOT NULL,
@@ -62,6 +68,8 @@ CREATE TABLE short_answer_answers (
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
+
+CREATE INDEX IDX_multi_option_answer_options_answers on short_answer_answers (answer_id);
 
 CREATE TABLE multi_option_answer_options (
     id SERIAL PRIMARY KEY,
@@ -78,6 +86,9 @@ CREATE TABLE multi_option_answer_options (
            ON DELETE CASCADE
            ON UPDATE CASCADE
 );
+
+CREATE INDEX IDX_multi_option_answer_options_question_options on multi_option_answer_options (option_id);
+CREATE INDEX IDX_multi_option_answer_options_answers on multi_option_answer_options (answer_id);
 
 CREATE TABLE application_ratings (
     id SERIAL PRIMARY KEY,
@@ -97,3 +108,6 @@ CREATE TABLE application_ratings (
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
+
+CREATE INDEX IDX_application_ratings_applications on application_ratings (application_id);
+CREATE INDEX IDX_application_ratings_users on application_ratings (rater_id);
