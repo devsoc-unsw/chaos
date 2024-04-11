@@ -9,7 +9,7 @@ pub struct Organisation {
     pub logo: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-    // pub campaigns: Vec<Campaign>,                       // Awaiting Campaign to be complete - remove comment once done
+    pub campaigns: Vec<Campaign>,                       // Awaiting Campaign to be complete - remove comment once done
     pub organisation_admins: Vec<OrganisationAdmins>
 }
 

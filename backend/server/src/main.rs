@@ -1,5 +1,5 @@
 use anyhow::Result;
-use axum::{routing::get, Router};
+use axum::{routing::get, Router, routing::post};
 use jsonwebtoken::{DecodingKey, EncodingKey};
 use models::app::AppState;
 use snowflake::SnowflakeIdGenerator;
@@ -49,18 +49,24 @@ async fn main() -> Result<()> {
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
         .route("/api/v1/organisations",
-            get(handler::organisation::get_organisations)
-            .post(handler::organisation::create_organisation)
+            post(handler::organisation::create_organisation)
         )
         .route("/api/v1/organisations/:organisation_id",
             get(handler::organisation::get_organisation)
-            .patch(handler::organisation::update_organisation)
             .delete(handler::organisation::delete_organisation)
         )
-        .route("/api/v1/organisations/admin/:organisation_id",
+        .route("/api/v1/organisations/:organisation_id/campaigns",
+            get(handler::organisation::get_organisation_campaigns)
+        )
+        .route("/api/v1/organisations/:organisation_id/logo",
+            post(handler::organisation::update_organisation_logo)
+        )
+        .route("/api/v1/organisations/:organisation_id/members",
             get(handler::organisation::get_organisation_admins)
-            .post(handler::organisation::add_admin_to_organisation)
-            .delete(handler::organisation::remove_admin_from_organisation)
+            .put(handler::organisation::update_organisation_admins)
+        )
+        .route("/api/v1/organisations/:organisation_id/campaign",
+            post(handler::organisation::create_campaign_for_organisation)
         )
         .with_state(state);
 

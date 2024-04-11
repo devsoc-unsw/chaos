@@ -10,7 +10,7 @@ edition = "2021"
 tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread"] }
 axum = { version = "0.6.20", features = ["macros", "headers"] }
 axum-extra = "0.8.0"
-sqlx = { version = "0.7.1", features = ["runtime-tokio-rustls", "postgres", "time", "uuid"] }
+sqlx = { version = "0.7.1", features = ["runtime-tokio-rustls", "postgres", "time", "uuid", "chrono"] }
 
 # Important secondary crates
 anyhow = "1.0.75"
