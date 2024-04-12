@@ -1,11 +1,16 @@
-use axum::{async_trait, headers, http::{self, Request}, RequestPartsExt};
-use axum::extract::{FromRef, FromRequestParts, TypedHeader};
-use axum::http::request::Parts;
-use axum::response::{IntoResponse, Redirect, Response};
-use serde::{Deserialize, Serialize};
 use crate::models::app::AppState;
+use crate::models::error::ChaosError;
 use crate::service::auth::is_super_user;
 use crate::service::jwt::decode_auth_token;
+use axum::extract::{FromRef, FromRequestParts};
+use axum::http::request::Parts;
+use axum::response::{IntoResponse, Redirect, Response};
+use axum::{
+    async_trait,
+    RequestPartsExt,
+};
+use axum_extra::{headers::Cookie, TypedHeader};
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 pub struct AuthRequest {
@@ -38,23 +43,25 @@ where
     AppState: FromRef<S>,
     S: Send + Sync,
 {
-    type Rejection = AuthRedirect;
+    type Rejection = ChaosError;
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
         let decoding_key = &app_state.decoding_key;
-        let extracted_cookies = parts
-            .extract::<TypedHeader<headers::Cookie>>()
-            .await;
+        let jwt_validator = &app_state.jwt_validator;
+        let TypedHeader(cookies) = parts
+            .extract::<TypedHeader<Cookie>>()
+            .await
+            .map_err(|_| ChaosError::NotLoggedIn)?;
 
-        if let Ok(cookies) = extracted_cookies {
-            let token = cookies.get("auth_token").ok_or(AuthRedirect)?;
-            let claims = decode_auth_token(token.to_string(), decoding_key).ok_or(AuthRedirect)?;
+        let token = cookies.get("auth_token").ok_or(ChaosError::NotLoggedIn)?;
 
-            Ok(AuthUser { user_id: claims.sub })
-        } else {
-            Err(AuthRedirect)
-        }
+        let claims =
+            decode_auth_token(token, decoding_key, jwt_validator).ok_or(ChaosError::NotLoggedIn)?;
+
+        Ok(AuthUser {
+            user_id: claims.sub,
+        })
     }
 }
 
@@ -65,33 +72,36 @@ pub struct SuperUser {
 
 #[async_trait]
 impl<S> FromRequestParts<S> for SuperUser
-    where
-        AppState: FromRef<S>,
-        S: Send + Sync,
+where
+    AppState: FromRef<S>,
+    S: Send + Sync,
 {
-    type Rejection = AuthRedirect;
+    type Rejection = ChaosError;
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
         let decoding_key = &app_state.decoding_key;
-        let extracted_cookies = parts
-            .extract::<TypedHeader<headers::Cookie>>()
-            .await;
+        let jwt_validator = &app_state.jwt_validator;
+        let TypedHeader(cookies) = parts
+            .extract::<TypedHeader<Cookie>>()
+            .await
+            .map_err(|_| ChaosError::NotLoggedIn)?;
 
-        if let Ok(cookies) = extracted_cookies {
-            let token = cookies.get("auth_token").ok_or(AuthRedirect)?;
-            let claims = decode_auth_token(token.to_string(), decoding_key).ok_or(AuthRedirect)?;
+        let token = cookies.get("auth_token").ok_or(ChaosError::NotLoggedIn)?;
 
-            let pool = &app_state.db;
-            let possible_user = is_super_user(claims.sub, pool).await;
+        let claims =
+            decode_auth_token(token, decoding_key, jwt_validator).ok_or(ChaosError::NotLoggedIn)?;
+        let pool = &app_state.db;
+        let possible_user = is_super_user(claims.sub, pool).await;
 
-            if let Ok(is_auth_user) = possible_user {
-                if is_auth_user {
-                    return Ok(SuperUser { user_id: claims.sub });
-                }
+        if let Ok(is_auth_user) = possible_user {
+            if is_auth_user {
+                return Ok(SuperUser {
+                    user_id: claims.sub,
+                });
             }
         }
 
-        Err(AuthRedirect)
+        Err(ChaosError::NotLoggedIn)
     }
 }
