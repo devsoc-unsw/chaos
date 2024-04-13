@@ -5,35 +5,23 @@ use sqlx::FromRow;
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Campaign {
     pub id: i64,
+    pub organisation_id: i64, 
     pub name: String,
     pub cover_image: Option<String>,
+    pub description: Option<String>,
+    pub starts_at: DateTime<Utc>,
+    pub ends_at: DateTime<Utc>,            
+}
+
+#[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
+pub struct CampaignUpdate {
+    pub name: String,
     pub description: String,
     pub starts_at: DateTime<Utc>,
-    pub ends_at: DateTime<Utc>,      
-    pub published: bool,      
-    pub created_at: DateTime<Utc>, 
-    pub updated_at: DateTime<Utc>,    
-    // pub organisation: Organisation,
-    pub organisation_id: i64, 
-    // pub roles: Vec<CampaignRole>,          
-    // pub questions: Vec<Questions>,       
+    pub ends_at: DateTime<Utc>,
 }
 
-pub struct CampaignUpdate {
-    pub id: i64,
-    pub name: Option<String>,
-    pub cover_image: Option<String>,
-    pub description: Option<String>,
-    pub starts_at: Option<DateTime<Utc>>,
-    pub ends_at: Option<DateTime<Utc>>,
-    pub published: Option<bool>,
-    pub updated_at: DateTime<Utc>,
-    // pub organisation: Option<Organisation>,
-    pub organisation_id: i64, 
-    // pub roles: Option<Vec<CampaignRole>>,
-    // pub questions: Option<Vec<Questions>>,
-}
-
+// TODO UPDATE
 pub struct CampaignRole {
     pub id: i64,
     pub campaign: Campaign,
@@ -47,6 +35,7 @@ pub struct CampaignRole {
     pub updated_at: DateTime<Utc>,    
     // pub application: Vec<Application>,
 }
+// TODO UPDATE
 pub struct CampaignRoleUpdate {
     pub id: i64,
     pub name: Option<String>,
@@ -58,7 +47,7 @@ pub struct CampaignRoleUpdate {
     // pub application: Option<Vec<Application>>,
 }
 
-pub struct CampaignList {
-    pub published_campaigns: Vec<Campaign>,
-    pub unpublished_campaigns: Vec<Campaign>,
-}
+// pub struct CampaignList {
+//     pub published_campaigns: Vec<Campaign>,
+//     pub unpublished_campaigns: Vec<Campaign>,
+// }
