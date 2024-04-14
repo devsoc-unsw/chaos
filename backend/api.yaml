@@ -11,6 +11,7 @@ servers:
 paths:
   /auth/logout:
     post:
+      operationId: logout
       description: Invalidates current token.
       tags:
         - Auth
@@ -26,6 +27,7 @@ paths:
                     example: Successfully logged out.
   /user:
     get:
+      operationId: getLoggedInUser
       description: Returns info about currently logged in user.
       tags:
         - User
@@ -68,6 +70,7 @@ paths:
                     type: string
                     example: Not logged in.
     delete:
+      operationId: deleteUserById
       description: Deletes currently logged in user.
       tags:
         - User
@@ -101,6 +104,7 @@ paths:
                     example: Not logged in.
   /user/{id}:
     get:
+      operationId: getUserById
       parameters:
         - name: id
           in: path
@@ -149,6 +153,7 @@ paths:
                     example: "Insufficient permissions"
   /user/name:
     patch:
+      operationId: updateUserName
       description: Updates currently logged in user's name.
       tags:
         - User
@@ -182,6 +187,7 @@ paths:
                     example: Not logged in.
   /user/zid:
     patch:
+      operationId: updateUserZid
       description: Updates currently logged in user's zID.
       tags:
         - User
@@ -215,6 +221,7 @@ paths:
                     example: Not logged in.
   /user/degree:
     patch:
+      operationId: updateUserDegree
       description: Updates currently logged in user's degree.
       tags:
         - User
@@ -251,6 +258,7 @@ paths:
                     example: Not logged in.
   /organisation:
     post:
+      operationId: createOrganisation
       description: Creates a new organisation.
       tags:
         - Organisation
@@ -289,6 +297,7 @@ paths:
                     example: Unauthorized
   /organisation/{id}:
     get:
+      operationId: getOrganisationById
       parameters:
         - name: id
           in: path
@@ -321,6 +330,7 @@ paths:
                     type: string
                     example: 2024-02-10T18:25:43.511Z
     delete:
+      operationId: deleteOrganisationById
       parameters:
         - name: id
           in: path
@@ -353,6 +363,7 @@ paths:
                     example: Unauthorized
   /organisation/{id}/campaigns:
     get:
+      operationId: getOrganisationCampaignsById
       parameters:
         - name: id
           in: path
@@ -397,6 +408,7 @@ paths:
                           example: 2024-04-15T18:25:43.511Z
   /organisation/{id}/logo:
     patch:
+      operationId: updateOrganisationLogoById
       parameters:
         - name: id
           in: path
@@ -439,6 +451,7 @@ paths:
                     example: Unauthorized
   /organisation/{id}/members:
     get:
+      operationId: getOrganisationMembersById
       parameters:
         - name: id
           in: path
@@ -479,6 +492,7 @@ paths:
                     type: string
                     example: Unauthorized
     put:
+      operationId: updateOrganisationMembersById
       parameters:
         - name: id
           in: path
@@ -533,6 +547,7 @@ paths:
                     example: Unauthorized
   /organisation/{id}/campaign:
     post:
+      operationId: createCampaign
       parameters:
         - name: id
           in: path
@@ -583,6 +598,7 @@ paths:
                     example: Unauthorized
   /campaign:
     get:
+      operationId: getAllCampaigns
       description: Returns all active campaigns.
       tags:
         - Campaign
@@ -626,6 +642,7 @@ paths:
                           example: 2024-04-15T18:25:43.511Z
   /campaign/{id}:
     get:
+      operationId: getCampaignById
       parameters:
         - name: id
           in: path
@@ -671,6 +688,7 @@ paths:
                     type: string
                     example: 2024-04-15T18:25:43.511Z
     put:
+      operationId: updateCampaignById
       parameters:
         - name: id
           in: path
@@ -729,6 +747,7 @@ paths:
                     type: string
                     example: Unauthorized
     delete:
+      operationId: deleteCampaignById
       parameters:
         - name: id
           in: path
@@ -761,6 +780,7 @@ paths:
                     example: Unauthorized
   /campaign/{id}/banner:
     patch:
+      operationId: updateCampaignBannerById
       parameters:
         - name: id
           in: path
