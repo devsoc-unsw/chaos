@@ -92,7 +92,7 @@ CREATE TABLE questions (
 CREATE TABLE multi_option_question_options (
     id SERIAL PRIMARY KEY,
     text TEXT NOT NULL,
-    question_id INTEGER NOT NULL,
+    question_id BIGINT NOT NULL,
     CONSTRAINT FK_multi_option_question_options_questions
        FOREIGN KEY(question_id)
            REFERENCES questions(id)
