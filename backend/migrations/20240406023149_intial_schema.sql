@@ -8,8 +8,8 @@ CREATE TABLE users (
     degree_name TEXT,
     degree_starting_year INTEGER,
     role user_role NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE UNIQUE INDEX IDX_users_email_lower on users ((lower(email)));
@@ -18,8 +18,8 @@ CREATE TABLE organisations (
     id BIGINT PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
     logo TEXT,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE TABLE organisation_admins (
@@ -43,8 +43,8 @@ CREATE TABLE campaigns (
     description TEXT,
     starts_at TIMESTAMPTZ NOT NULL,
     ends_at TIMESTAMPTZ NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT FK_campaigns_organisations
        FOREIGN KEY(organisation_id)
            REFERENCES organisations(id)
@@ -60,8 +60,8 @@ CREATE TABLE campaign_roles (
     min_available INTEGER,
     max_available INTEGER,
     finalised BOOLEAN,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT FK_campaign_roles_campaign
         FOREIGN KEY(campaign_id)
             REFERENCES campaigns(id)
@@ -77,11 +77,11 @@ CREATE TABLE questions (
     id BIGINT PRIMARY KEY,
     title TEXT NOT NULL,
     description TEXT,
-    required BOOLEAN,
+    required BOOLEAN NOT NULL,
     question_type question_type NOT NULL,
     campaign_id BIGINT NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT FK_questions_campaigns
        FOREIGN KEY(campaign_id)
            REFERENCES campaigns(id)
@@ -110,8 +110,8 @@ CREATE TABLE applications (
     user_id BIGINT NOT NULL,
     status application_status NOT NULL,
     private_status application_status NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT FK_applications_campaigns
       FOREIGN KEY(campaign_id)
           REFERENCES campaigns(id)
@@ -199,8 +199,8 @@ CREATE TABLE application_ratings (
     application_id BIGINT NOT NULL,
     rater_id BIGINT NOT NULL,
     rating INTEGER NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT FK_application_ratings_applications
         FOREIGN KEY(application_id)
             REFERENCES applications(id)
