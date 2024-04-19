@@ -50,6 +50,7 @@ pub async fn get_campaign(campaign_id: i64, pool: Pool<Postgres>) -> Result<Camp
 
 /// Creates a new campaign if there isn't already a campaign with the same name
 /// Returns the newly created campaign's id
+/// TODO double check if this has been moved to organisation instead? 
 pub async fn new_campaign(campaign: Campaign, pool: Pool<Postgres>) -> Result<i64> {
     // Check if campaign name is in use
     

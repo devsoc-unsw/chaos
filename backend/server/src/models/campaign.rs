@@ -21,6 +21,10 @@ pub struct CampaignUpdate {
     pub ends_at: DateTime<Utc>,
 }
 
+pub struct CampaignBannerUpdate {
+    pub upload_url: String,
+}
+
 // TODO UPDATE
 pub struct CampaignRole {
     pub id: i64,

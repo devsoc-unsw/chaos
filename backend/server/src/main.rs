@@ -1,7 +1,9 @@
 use anyhow::Result;
-use axum::{routing::get, Router};
+use axum::{routing::{delete, get, patch, put}, Router};
+use handler::campaign;
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
-use models::app::AppState;
+use models::{app::AppState, campaign};
+use service::campaign;
 use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::PgPoolOptions;
 use std::env;
@@ -57,6 +59,11 @@ async fn main() -> Result<()> {
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
         .route("/api/auth/callback/google", get(google_callback))
+        .route("/api/v1/campaign", get(handler::campaign::get_campaigns))
+        .route("/api/v1/campaign/:campaign_id", get(handler::campaign::get_campaign))
+        .route("/api/v1/campaign/:campaign_id", put(handler::campaign::update_campaign))
+        .route("/api/v1/campaign/:campaign_id", delete(handler::campaign::delete_campaign))
+        .route("/api/v1/campaign/:campaign_id", put(handler::campaign::update_campaign_banner))
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
