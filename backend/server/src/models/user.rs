@@ -8,11 +8,11 @@ pub enum UserRole {
 }
 
 pub struct User {
-    id: i64,
-    email: String,
-    zid: String,
-    name: String,
-    degree_name: String,
-    degree_starting_year: i64,
-    role: String
+    pub id: i64,
+    pub email: String,
+    pub zid: String,
+    pub name: String,
+    pub degree_name: String,
+    pub degree_starting_year: i64,
+    pub role: String
 }
