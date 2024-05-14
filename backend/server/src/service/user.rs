@@ -1,31 +1,34 @@
 use anyhow::{bail, Result};
 use sqlx::{Pool, Postgres};
+use crate::models::user::User;
 
-// security 
-// 1. function to read just the username
-// Used when other users try to read the name of a user
-pub async fn get_username(id: i64, pool: Pool<Postgres>) -> Result<String> {
+// 1. function to read all data of the user
+pub async fn get_user(id: i64, pool: Pool<Postgres>) -> Result<User> {
     // fetch username from database 
-    let possible_username = sqlx::query!("SELECT name FROM users WHERE id = $1", id)
+    let possible_username = sqlx::query!("SELECT * FROM users WHERE id = $1", id)
         .fetch_optional(&pool)
         .await?;
 
     if let Some(result) = possible_username {
-        return Ok(result.name);
+        return Ok({
+            id: i64::from(result.id),
+            email: String::from(result.email),
+            zid: String::from(result.zid),
+            name: String::from(result.name),
+            degree_name: String::from(result.degree_name),
+            degree_starting_year: i64::from(result.degree_starting_year),
+            role: String::from(result.role)
+        });
     }
 
     // error handling - NEED TO UPDATE
     bail!("error");
 }
 
-// 2. function to read all data of the user
-pub async fn get_user(id: i64, email: String) -> Result<i64> {
-    Ok(1)
-}
 
+// 2. Update the user with new details
 
-// 3. Update - 
-pub async fn update_user(id: i64, email: String) -> Result<i64> {
+pub async fn update_user(id: i64, zid?: String, degree_name?: String, degree_starting_year?: i64) -> Result<i64> {
     
     Ok(1)
 
