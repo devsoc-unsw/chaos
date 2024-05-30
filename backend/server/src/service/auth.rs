@@ -1,7 +1,7 @@
+use crate::models::user::UserRole;
 use anyhow::Result;
 use snowflake::SnowflakeIdGenerator;
 use sqlx::{Pool, Postgres};
-use crate::models::user::UserRole;
 
 /// Checks if a user exists in DB based on given email address. If so, their user_id is returned.
 /// Otherwise, a new user is created in the DB, and the new id is returned.
