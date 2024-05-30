@@ -5,10 +5,7 @@ use crate::service::jwt::decode_auth_token;
 use axum::extract::{FromRef, FromRequestParts};
 use axum::http::request::Parts;
 use axum::response::{IntoResponse, Redirect, Response};
-use axum::{
-    async_trait,
-    RequestPartsExt,
-};
+use axum::{async_trait, RequestPartsExt};
 use axum_extra::{headers::Cookie, TypedHeader};
 use serde::{Deserialize, Serialize};
 
