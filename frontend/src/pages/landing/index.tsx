@@ -11,6 +11,7 @@ import { getStore } from "../../utils";
 
 import Campaigns from "./components/Campaigns";
 import DashboardButton from "./components/DashboardButton";
+import SponsorLogos from "./components/SponsorLogos";
 import Waves from "./components/Waves";
 
 import type { PointerEvent } from "react";
@@ -39,7 +40,7 @@ const Landing = () => {
   };
 
   return (
-    <div tw="flex flex-1 justify-center" onPointerMove={onPointerMove}>
+    <div tw="flex flex-row flex-1 justify-center" onPointerMove={onPointerMove}>
       <Container tw="my-auto p-12 translate-y-[-100px]">
         <main tw="font-light w-fit pointer-events-none [& > *]:(w-fit pointer-events-auto)">
           <Transition
@@ -83,10 +84,17 @@ const Landing = () => {
               </DashboardButton>
             )}
           </Transition>
+          <Transition
+            show
+            appear
+            enter={tw`transition delay-[750ms] duration-[800ms]`}
+            enterFrom={tw`translate-y-4 opacity-0`}
+          >
+            <SponsorLogos />
+          </Transition>
         </main>
         <Campaigns ref={campaignsRef} offsetX={offsetX} offsetY={offsetY} />
       </Container>
-
       <Waves />
     </div>
   );
