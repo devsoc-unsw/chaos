@@ -46,8 +46,8 @@ const DragDropRankings = ({
         destIdx,
         0,
         rankings.filter(
-          (candidate: { name: string }) => candidate.name === draggableId
-        )[0]
+          (candidate: { name: string }) => candidate.name === draggableId,
+        )[0],
       );
       setRankings(newRankings);
 

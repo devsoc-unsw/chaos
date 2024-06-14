@@ -5,7 +5,10 @@ export class FetchError extends Error {
 
   public statusText: string;
 
-  constructor(public resp: Response, public data?: unknown) {
+  constructor(
+    public resp: Response,
+    public data?: unknown,
+  ) {
     super(resp.statusText);
 
     this.name = "FetchError";

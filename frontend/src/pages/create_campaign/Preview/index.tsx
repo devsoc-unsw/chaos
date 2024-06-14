@@ -36,7 +36,7 @@ const ReviewTab = ({ campaign, onSubmit }: Props) => {
   const [displayForm, setDisplayForm] = useState(false);
   useEffect(() => {
     const newAnswers = Object.fromEntries(
-      questions.map((q) => [q.id, answers[q.id] ?? ""])
+      questions.map((q) => [q.id, answers[q.id] ?? ""]),
     );
     setAnswers(newAnswers);
   }, [questions]);

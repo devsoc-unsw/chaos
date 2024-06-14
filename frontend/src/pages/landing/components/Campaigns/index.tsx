@@ -89,7 +89,7 @@ const Campaigns = forwardRef<HTMLDivElement, Props>(
     return (
       <Container ref={ref}>
         <aside
-          tw="flex flex-col gap-3 text-xs mt-[-50px]"
+          tw="mt-[-50px] flex flex-col gap-3 text-xs"
           css={!withinRange ? tw`transition-transform duration-100` : undefined}
           style={{
             transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(1deg)`,
@@ -126,7 +126,7 @@ const Campaigns = forwardRef<HTMLDivElement, Props>(
         </aside>
       </Container>
     );
-  }
+  },
 );
 
 export default Campaigns;

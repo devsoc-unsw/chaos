@@ -8,5 +8,5 @@ export type Message = {
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export const MessagePopupContext = createContext(
-  (_message: Omit<Message, "id">) => {}
+  (_message: Omit<Message, "id">) => {},
 );

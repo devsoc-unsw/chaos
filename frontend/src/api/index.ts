@@ -79,7 +79,7 @@ export const doSignup = async ({
 // };
 
 const authenticatedRequest = <T = void>(
-  payload: Parameters<typeof API.request<T>>[0]
+  payload: Parameters<typeof API.request<T>>[0],
 ) => {
   const token = getStore("AUTH_TOKEN");
   if (!token) {
@@ -189,7 +189,7 @@ export const getApplicationRatings = (applicationId: number) =>
 export const submitAnswer = (
   applicationId: number,
   questionId: number,
-  description: string
+  description: string,
 ) =>
   authenticatedRequest({
     method: "POST",
@@ -205,7 +205,7 @@ export const submitAnswer = (
 export const createCampaign = (
   campaign: NewCampaignInput,
   roles: RoleInput[],
-  questions: QuestionInput[]
+  questions: QuestionInput[],
 ) =>
   authenticatedRequest<Campaign>({
     method: "POST",
@@ -230,7 +230,7 @@ export const deleteCampaign = (id: number) =>
 
 export const setApplicationStatus = (
   applicationId: number,
-  status: ApplicationStatus
+  status: ApplicationStatus,
 ) =>
   authenticatedRequest({
     method: "PUT",
@@ -242,7 +242,7 @@ export const setApplicationStatus = (
 export const inviteUserToOrg = (
   email: string,
   organisationId: number,
-  adminLevel: AdminLevel = "ReadOnly"
+  adminLevel: AdminLevel = "ReadOnly",
 ) =>
   authenticatedRequest({
     method: "POST",

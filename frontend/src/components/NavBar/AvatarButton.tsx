@@ -50,13 +50,13 @@ const AvatarButton = () => {
           leave={tw`transition ease-in duration-150`}
           leaveTo={tw`opacity-0 translate-y-0.5`}
         >
-          <Popover.Panel tw="absolute top-11 right-0 w-max flex flex-col bg-white shadow-md rounded overflow-hidden">
-            <div tw="px-4 py-2 text-gray-500 bg-gray-50">
+          <Popover.Panel tw="absolute right-0 top-11 flex w-max flex-col overflow-hidden rounded bg-white shadow-md">
+            <div tw="bg-gray-50 px-4 py-2 text-gray-500">
               Logged in as <span tw="text-indigo-600">{name}</span>
             </div>
-            <div tw="px-2 py-2 flex flex-col gap-1 text-gray-600">
+            <div tw="flex flex-col gap-1 px-2 py-2 text-gray-600">
               <ItemButton onClick={logout}>
-                Logout <ArrowRightOnRectangleIcon tw="inline w-4 h-4" />
+                Logout <ArrowRightOnRectangleIcon tw="inline h-4 w-4" />
               </ItemButton>
             </div>
           </Popover.Panel>

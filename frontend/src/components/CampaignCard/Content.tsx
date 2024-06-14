@@ -102,13 +102,13 @@ const Content = ({
           pushToast(
             "Update Campaign Cover Image",
             `Internal Error: ${data}`,
-            "error"
+            "error",
           );
         } catch {
           pushToast(
             "Update Campaign Cover Image",
             "Internal Error: Response Invalid",
-            "error"
+            "error",
           );
         }
 
@@ -119,7 +119,7 @@ const Content = ({
       pushToast(
         "Update Campaign Cover Image",
         "Something went wrong on the backend!",
-        "error"
+        "error",
       );
 
       return;
@@ -134,7 +134,7 @@ const Content = ({
     pushToast(
       "Update Campaign Cover Image",
       "Uploaded image succesfully",
-      "success"
+      "success",
     );
   };
 
@@ -180,12 +180,12 @@ const Content = ({
     <Dropdown>
       <DropdownOption
         name="edit"
-        icon={<PencilSquareIcon tw="h-5 w-5 inline mr-2" />}
+        icon={<PencilSquareIcon tw="mr-2 inline h-5 w-5" />}
         onClick={() => setShowEditDialog(true)}
       />
       <DropdownOption
         name="delete"
-        icon={<TrashIcon tw="h-5 w-5 inline mr-2" />}
+        icon={<TrashIcon tw="mr-2 inline h-5 w-5" />}
         onClick={() => setShowDeleteDialog(true)}
       />
     </Dropdown>
@@ -193,10 +193,10 @@ const Content = ({
 
   return (
     <>
-      <Card tw="p-0 overflow-hidden text-sm w-96" hoverable>
+      <Card tw="w-96 overflow-hidden p-0 text-sm" hoverable>
         <header tw="flex items-center gap-1.5 p-3">
           <img
-            tw="w-10 h-10 rounded-sm"
+            tw="h-10 w-10 rounded-sm"
             src={organisationLogo}
             alt="Organisation"
           />
@@ -214,9 +214,9 @@ const Content = ({
             </CampaignStatus>
           )}
         </header>
-        <div tw="flex items-center justify-center overflow-hidden bg-[#edeeef] aspect-w-16 aspect-h-9">
+        <div tw="aspect-h-9 aspect-w-16 flex items-center justify-center overflow-hidden bg-[#edeeef]">
           <img
-            tw="object-contain w-full max-h-full"
+            tw="max-h-full w-full object-contain"
             src={img}
             alt="Campaign Cover"
           />
@@ -238,7 +238,7 @@ const Content = ({
             </p>
           ) : (
             <img
-              tw="max-w-full max-h-full"
+              tw="max-h-full max-w-full"
               src={coverImageSrc}
               alt="campaign cover"
             />

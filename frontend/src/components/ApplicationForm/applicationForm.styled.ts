@@ -66,7 +66,7 @@ export const Section = styled("div")<{ isHidden?: boolean }>(
     marginTop: "0px",
     marginBottom: "50px",
     display: isHidden ? "none" : "",
-  })
+  }),
 );
 
 export const SectionHeader = styled("h1")`

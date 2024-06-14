@@ -24,7 +24,7 @@ const Marking = () => {
   const campaignId = Number(useParams().campaignId);
   const [loading, setLoading] = useState(true);
   const [applications, setApplications] = useState<ApplicationWithQuestions[]>(
-    []
+    [],
   );
   const roleId = Number(useParams().roleId);
   const [selectedApplication, setSelectedApplication] = useState(0);
@@ -43,13 +43,13 @@ const Marking = () => {
         applications.map(async (application) => {
           const { answers } = await getApplicationAnswers(application.id);
           return answers;
-        })
+        }),
       );
       const ratings = await Promise.all(
         applications.map(async (application) => {
           const { ratings } = await getApplicationRatings(application.id);
           return ratings[ratings.length - 1];
-        })
+        }),
       );
 
       setApplications(
@@ -61,7 +61,7 @@ const Marking = () => {
             question: question.title,
             answer: answers[applicationIdx][questionIdx]?.description,
           })),
-        }))
+        })),
       );
       setLoading(false);
     };
@@ -75,7 +75,7 @@ const Marking = () => {
     setApplications(newApplications);
     void setApplicationRating(
       applications[selectedApplication].applicationId,
-      newMark
+      newMark,
     );
   };
 

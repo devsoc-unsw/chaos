@@ -59,7 +59,7 @@ const ApplicationForm = ({
   //        (currently gets printed under each rolename and all are overwritten)
   const handleAnswerInput = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    qID: number
+    qID: number,
   ) => {
     setAnswers({ ...answers, ...{ [qID]: e.target.value } });
   };
@@ -160,7 +160,7 @@ const ApplicationForm = ({
                         onChange={(e) => handleAnswerInput(e, q.id)}
                       />
                     </>
-                  )
+                  ),
               )}
             </Section>
           ))}

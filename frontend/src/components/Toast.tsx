@@ -51,20 +51,14 @@ const Toast = ({ t, title, description, type = "notification" }: Props) => (
     leaveTo={tw`opacity-0 scale-95`}
   >
     <ToastContainer type={type}>
-      <div tw="flex-1 flex flex-col px-4 py-3">
+      <div tw="flex flex-1 flex-col px-4 py-3">
         <h1 tw="font-semibold">{title}</h1>
         <p tw="text-sm">{description}</p>
       </div>
       <ButtonContainer>
         <button
           type="button"
-          tw="
-            w-12 h-full py-3 px-8
-            flex items-center justify-center
-            text-blue-600 text-sm font-medium rounded-r
-            hover:(text-blue-700 bg-slate-50)
-            focus-visible:(outline-none ring-2 ring-blue-600)
-          "
+          tw="hover:(text-blue-700 bg-slate-50) focus-visible:(outline-none ring-blue-600) flex h-full w-12 items-center justify-center rounded-r px-8 py-3 text-sm font-medium text-blue-600 ring-2"
           onClick={() => toast.dismiss(t.id)}
         >
           Close

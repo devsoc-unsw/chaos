@@ -105,14 +105,14 @@ const AdminContent = ({
     // FIXME: when array is empty we die???
     setOrgList(orgList.filter((_, index) => index !== orgSelected));
     setOrgSelected(
-      orgSelected === orgList.length - 1 ? orgList.length - 2 : orgSelected
+      orgSelected === orgList.length - 1 ? orgList.length - 2 : orgSelected,
     );
     setShowDeleteDialog(false);
   };
 
   const handleWindowChange = (
     _: MouseEvent<HTMLElement>,
-    newWindow: string
+    newWindow: string,
   ) => {
     if (newWindow) {
       setWindowSelected(newWindow);
@@ -124,7 +124,7 @@ const AdminContent = ({
       pushToast(
         "Update Organisation Logo",
         "No organisation logo given",
-        "error"
+        "error",
       );
       return;
     }
@@ -140,13 +140,13 @@ const AdminContent = ({
           pushToast(
             "Update Organisation Logo",
             `Internal Error: ${data}`,
-            "error"
+            "error",
           );
         } catch {
           pushToast(
             "Update Organisation Logo",
             "Internal Error: Response Invalid",
-            "error"
+            "error",
           );
         }
 
@@ -157,7 +157,7 @@ const AdminContent = ({
       pushToast(
         "Update Organisation Logo",
         "Something went wrong on the backend!",
-        "error"
+        "error",
       );
 
       return;
@@ -170,7 +170,7 @@ const AdminContent = ({
     pushToast(
       "Update Organisation Logo",
       "Image uploaded successfully",
-      "success"
+      "success",
     );
   };
 
@@ -181,20 +181,20 @@ const AdminContent = ({
           <OrgInfoImage src={icon} />
           <OrgInfoName>{orgName}</OrgInfoName>
         </OrgInfo>
-        <div tw="flex gap-4 items-center">
+        <div tw="flex items-center gap-4">
           <button
-            tw="text-gray-500 hover:text-gray-800 transition-colors"
+            tw="text-gray-500 transition-colors hover:text-gray-800"
             type="button"
             onClick={() => setShowEditDialog(true)}
           >
-            <PencilIcon tw="w-8 h-8" />
+            <PencilIcon tw="h-8 w-8" />
           </button>
           <button
-            tw="text-gray-500 hover:text-gray-800 transition-colors"
+            tw="text-gray-500 transition-colors hover:text-gray-800"
             type="button"
             onClick={() => navigate(`/campaign/create/${id}`)}
           >
-            <PlusIcon tw="w-12 h-12" />
+            <PlusIcon tw="h-12 w-12" />
           </button>
           {/* have to add addition button here to create campaigns,
           or maybe it should go in a more obvious spot? */}
@@ -253,7 +253,7 @@ const AdminContent = ({
             </p>
           ) : (
             <img
-              tw="max-w-full max-h-full"
+              tw="max-h-full max-w-full"
               src={imageSrc}
               alt="campaign cover"
             />

@@ -21,7 +21,7 @@ const ApplicationsList = ({
 }: Props) => {
   const handleChange = (
     _event: SyntheticEvent<Element, Event>,
-    newValue: number
+    newValue: number,
   ) => {
     setSelectedApplication(newValue);
   };

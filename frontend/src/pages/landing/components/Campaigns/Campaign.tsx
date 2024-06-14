@@ -51,7 +51,7 @@ const Campaign = ({ logo, active = false, transitionDelay = 0 }: Props) => {
       enterFrom={tw`translate-y-4 scale-90 opacity-0`}
       style={{ transitionDelay: `${transitionDelay}ms` }}
     >
-      <div tw="w-72 rounded bg-white shadow-md transition hover:(-translate-y-1 shadow-lg)">
+      <div tw="hover:(-translate-y-1 shadow-lg) w-72 rounded bg-white shadow-md transition">
         <header tw="flex items-center gap-1.5 p-3">
           <img tw="w-7 rounded-sm" src={logo} alt="logo" />
           <Bars>

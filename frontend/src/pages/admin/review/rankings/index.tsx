@@ -69,17 +69,17 @@ const Rankings = () => {
             {
               body: index < passIndex ? "Success" : "Rejected",
               errorSummary: `Failed to update status for ${ranking.name}`,
-            }
+            },
           );
           return !error && !aborted;
-        })
+        }),
       );
 
       if (success.every(Boolean)) {
         pushToast(
           "Update status",
           "Updated internal application statuses for role",
-          "success"
+          "success",
         );
       }
     };
@@ -116,7 +116,7 @@ const Rankings = () => {
           id: application.id,
           status: application.private_status,
           ratings: await getRatings(application.id),
-        }))
+        })),
       );
       rankings.sort(rankingCmp);
       setRankings(rankings);
@@ -129,7 +129,7 @@ const Rankings = () => {
         applications.map(async (application) => {
           const { answers } = await getApplicationAnswers(application.id);
           return answers;
-        })
+        }),
       );
 
       setApplications(
@@ -144,8 +144,8 @@ const Rankings = () => {
                 answer: answers[applicationIdx][questionIdx]?.description,
               })),
             },
-          ])
-        )
+          ]),
+        ),
       );
       setLoading(false);
     };

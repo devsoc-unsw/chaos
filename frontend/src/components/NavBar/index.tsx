@@ -33,11 +33,11 @@ const NavBar = ({ campaign }: { campaign: string }) => {
   const [aboutOpen, setAboutOpen] = useState(false);
 
   return (
-    <header tw="fixed inset-x-0 z-10 bg-white shadow-md bg-gradient-to-r from-[#9dbbfb55] to-[#a78bfa55]">
+    <header tw="fixed inset-x-0 z-10 bg-white bg-gradient-to-r from-[#9dbbfb55] to-[#a78bfa55] shadow-md">
       <Container tw="flex-row items-center gap-4 text-[hsl(255.1,30%,22%)]">
         <RouterLink
           to={loggedIn ? "/dashboard" : "/"}
-          tw="-my-2 rounded py-2 transition-shadow focus-visible:(outline-none ring ring-blue-400)"
+          tw="focus-visible:(outline-none ring-blue-400) -my-2 rounded py-2 ring transition-shadow"
         >
           <img tw="h-7 drop-shadow filter" src={chaosImg} alt="Chaos" />
         </RouterLink>
@@ -51,7 +51,7 @@ const NavBar = ({ campaign }: { campaign: string }) => {
               </>
             )}
             <button
-              tw="p-1 text-slate-800 rounded-full transition hover:(bg-slate-500/10 text-slate-900)"
+              tw="hover:(bg-slate-500/10 text-slate-900) rounded-full p-1 text-slate-800 transition"
               type="button"
               onClick={() => setAboutOpen(true)}
             >
@@ -60,7 +60,7 @@ const NavBar = ({ campaign }: { campaign: string }) => {
             </button>
           </div>
           <div tw="flex items-center gap-4">
-            <span tw="border-slate-500 border-l">&#x200b;</span>
+            <span tw="border-l border-slate-500">&#x200b;</span>
             {loggedIn ? (
               <AvatarButton />
             ) : (

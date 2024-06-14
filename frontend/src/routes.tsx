@@ -7,7 +7,7 @@ const AuthSuccess = lazy(() => import("./pages/auth_success"));
 const CampaignCreate = lazy(() => import("./pages/create_campaign"));
 const DashboardPage = lazy(() => import("./pages/dashboard"));
 const FinaliseCandidates = lazy(
-  () => import("./pages/admin/review/finalise_candidates")
+  () => import("./pages/admin/review/finalise_candidates"),
 );
 const LandingPage = lazy(() => import("./pages/landing"));
 const Marking = lazy(() => import("./pages/admin/review/marking"));

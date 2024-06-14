@@ -35,7 +35,7 @@ const CreateCampaign = () => {
   const [campaignName, setCampaignName] = useState("");
   const [startDate, setStartDate] = useState(() => new Date());
   const [endDate, setEndDate] = useState(
-    () => new Date(Date.now() + 14 * 3600 * 1000 * 24)
+    () => new Date(Date.now() + 14 * 3600 * 1000 * 24),
   );
   const [description, setDescription] = useState("");
   const [interviewStage, setInterviewStage] = useState(false);
@@ -89,7 +89,7 @@ const CreateCampaign = () => {
         pushToast(
           "Create Campaign",
           "Campaign description is required!",
-          "error"
+          "error",
         );
         return;
       }
@@ -97,7 +97,7 @@ const CreateCampaign = () => {
         pushToast(
           "Create Campaign",
           "Campaign cover image is required!",
-          "error"
+          "error",
         );
         return;
       }
@@ -106,7 +106,7 @@ const CreateCampaign = () => {
         pushToast(
           "Create Campaign",
           "You need to create at least one role",
-          "error"
+          "error",
         );
         return;
       }
@@ -132,7 +132,7 @@ const CreateCampaign = () => {
           pushToast(
             "Create Campaign",
             `The question '${question.text}' is not assigned to a role`,
-            "error"
+            "error",
           );
           flag = false;
         } else {
@@ -153,7 +153,7 @@ const CreateCampaign = () => {
             pushToast(
               "Create Campaign",
               `The role '${role.title}' does not have any questions`,
-              "error"
+              "error",
             );
           }
         });
@@ -231,7 +231,7 @@ const CreateCampaign = () => {
       const { id: campaignId } = await createCampaign(
         campaignSend,
         rolesSend,
-        questionsSend
+        questionsSend,
       );
       await setCampaignCoverImage(campaignId, cover);
       navigate("/admin");
@@ -245,7 +245,7 @@ const CreateCampaign = () => {
           pushToast(
             "Create Campaign",
             "Internal Error: Response Invalid",
-            "error"
+            "error",
           );
         }
 
@@ -256,7 +256,7 @@ const CreateCampaign = () => {
       pushToast(
         "Create Campaign",
         "Something went wrong on the backend!",
-        "error"
+        "error",
       );
     }
   };

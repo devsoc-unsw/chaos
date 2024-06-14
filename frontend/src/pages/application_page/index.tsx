@@ -73,7 +73,7 @@ const ApplicationPage = () => {
         } = await getAllCampaigns();
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const campaign = [...pastCampaigns, ...currentCampaigns].find(
-          (x) => x.campaign.id === campaignId
+          (x) => x.campaign.id === campaignId,
         )!;
         setCampaign(campaign);
 
@@ -99,14 +99,14 @@ const ApplicationPage = () => {
         setRolesSelected([...rolesSelected, roleId]);
       }
     },
-    [rolesSelected]
+    [rolesSelected],
   );
 
   const setAnswer = useCallback(
     (question: number, answer: string) => {
       setAnswers({ ...answers, [question]: answer });
     },
-    [answers]
+    [answers],
   );
 
   if (loading) return <ApplicationPageLoading />;
@@ -123,10 +123,10 @@ const ApplicationPage = () => {
   });
 
   const roleQuestions: RoleQuestions = Object.fromEntries(
-    campaign.roles.map((role) => [role.id, []])
+    campaign.roles.map((role) => [role.id, []]),
   );
   questions.forEach(({ roles, ...question }) =>
-    roles.forEach((role) => roleQuestions[role].push(question))
+    roles.forEach((role) => roleQuestions[role].push(question)),
   );
 
   const onSubmit = () => {
@@ -134,7 +134,7 @@ const ApplicationPage = () => {
     if (!rolesSelected.length) {
       // eslint-disable-next-line no-alert
       alert(
-        "Submission failed, you must select at least one role to apply for!"
+        "Submission failed, you must select at least one role to apply for!",
       );
       return;
     }
@@ -148,11 +148,11 @@ const ApplicationPage = () => {
             .filter((qId) =>
               questions
                 .find((q) => q.id === qId)
-                ?.roles.has(application.role_id)
+                ?.roles.has(application.role_id),
             )
-            .map((qId) => submitAnswer(application.id, qId, answers[qId]))
+            .map((qId) => submitAnswer(application.id, qId, answers[qId])),
         );
-      })
+      }),
     )
       .then(() => navigate("/dashboard"))
       // eslint-disable-next-line no-alert

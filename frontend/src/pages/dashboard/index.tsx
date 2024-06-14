@@ -19,7 +19,7 @@ const Dashboard = () => {
   const setNavBarTitle = useContext(SetNavBarTitleContext);
   const [myCampaigns, setMyCampaigns] = useState<CampaignWithRoles[]>([]);
   const [currentCampaigns, setCurrentCampaigns] = useState<CampaignWithRoles[]>(
-    []
+    [],
   );
   const [pastCampaigns, setPastCampaigns] = useState<CampaignWithRoles[]>([]);
   const [organisations, setOrganisations] = useState<{
@@ -42,7 +42,7 @@ const Dashboard = () => {
             removeStore("AUTH_TOKEN");
           } else {
             console.error(
-              `an error occurred while fetching campaigns (${e.status})`
+              `an error occurred while fetching campaigns (${e.status})`,
             );
           }
           navigate("/");
@@ -54,11 +54,11 @@ const Dashboard = () => {
 
       const organisations = await Promise.all(
         [...campaigns.current_campaigns, ...campaigns.past_campaigns].map((c) =>
-          getOrganisation(c.campaign.organisation_id)
-        )
+          getOrganisation(c.campaign.organisation_id),
+        ),
       );
       setOrganisations(
-        Object.fromEntries(organisations.map((org) => [org.id, org]))
+        Object.fromEntries(organisations.map((org) => [org.id, org])),
       );
 
       const current = campaigns.current_campaigns;
