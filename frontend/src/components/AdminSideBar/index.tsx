@@ -1,4 +1,5 @@
 import { useState } from "react";
+import tw from "twin.macro";
 
 import { pushToast } from "utils";
 
@@ -107,20 +108,23 @@ const AdminSidebar = ({
   };
 
   return (
-    <SidebarContainer css={{ width: isFormOpen ? "280px" : "80px" }}>
+    <SidebarContainer
+      css={{
+        ...(isFormOpen ? tw`w-[280px]` : tw`w-[80px]`),
+      }}
+    >
       <CreateOrgButton value={-1}>
         <OrgButtonContent onClick={() => setIsFormOpen(!isFormOpen)}>
           <OrgIcon>
             {isFormOpen ? <RemoveOrgIcon /> : <CreateOrgIcon />}
           </OrgIcon>
-          <OrgName style={{ paddingLeft: "10px" }}>New Organisation</OrgName>
+          <OrgName css={{ ...tw`pl-[25px]` }}>New Organisation</OrgName>
         </OrgButtonContent>
       </CreateOrgButton>
       <OrgButtonGroup
+        type="single"
+        value={orgSelected.toString()}
         orientation="vertical"
-        value={orgSelected}
-        exclusive
-        size="large"
       >
         {isFormOpen && (
           <CreateOrganisationForm
@@ -134,7 +138,7 @@ const AdminSidebar = ({
         {orgList.map((it, idx) => (
           <OrgButton
             key={it.id}
-            value={idx}
+            value={idx.toString()}
             onClick={() => setOrgSelected(idx)}
           >
             <OrgButtonContent>
