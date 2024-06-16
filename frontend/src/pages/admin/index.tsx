@@ -41,11 +41,11 @@ const Admin = () => {
       orgList,
       setOrgList,
     }),
-    [orgSelected, setOrgSelected, orgList, setOrgList],
+    [orgSelected, setOrgSelected, orgList, setOrgList]
   );
   const isFormOpenContextValue = useMemo(
     () => ({ isFormOpen, setIsFormOpen }),
-    [isFormOpen, setIsFormOpen],
+    [isFormOpen, setIsFormOpen]
   );
 
   useEffect(() => {
@@ -60,7 +60,7 @@ const Admin = () => {
           orgName: item.name,
           campaigns: item.campaigns,
           members: item.members,
-        })),
+        }))
       );
       if (organisations.length > 0) {
         setOrgSelected(0);
@@ -74,7 +74,7 @@ const Admin = () => {
             title: item.name,
             startDate: item.starts_at,
             endDate: item.ends_at,
-          })),
+          }))
         );
 
         setMembers(
@@ -82,7 +82,7 @@ const Admin = () => {
             id: item.id,
             name: item.display_name,
             role: item.role,
-          })),
+          }))
         );
       }
 
@@ -101,14 +101,14 @@ const Admin = () => {
         title: item.name,
         startDate: item.starts_at,
         endDate: item.ends_at,
-      })) ?? [],
+      })) ?? []
     );
     setMembers(
       orgList[orgSelected]?.members.map((item) => ({
         id: item.id,
         name: item.display_name,
         role: item.role,
-      })) ?? [],
+      })) ?? []
     );
   }, [orgSelected, orgList]);
 

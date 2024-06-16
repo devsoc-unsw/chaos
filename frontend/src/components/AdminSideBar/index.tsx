@@ -84,25 +84,25 @@ const AdminSidebar = ({
         pushToast(
           "Organisation Creation Successful",
           "Organisation successfully created",
-          "success",
+          "success"
         );
       } else if (!inputText) {
         pushToast(
           "Organisation Creation Error",
           "Organisation name is required!",
-          "error",
+          "error"
         );
       } else if (!uploadedImage.image) {
         pushToast(
           "Organisation Creation Error",
           "Organisation logo image is required!",
-          "error",
+          "error"
         );
       } else {
         pushToast(
           "Organisation Creation Error",
           "Organisation unknown error occurred!",
-          "error",
+          "error"
         );
       }
     };
