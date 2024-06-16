@@ -11,7 +11,7 @@ const Bar = ({
 }: HTMLAttributes<HTMLDivElement> & { transitionDelay: number }) => (
   <Transition.Child
     as={Fragment}
-    enter={tw`duration-500 transition-[width]`}
+    enter={tw`transition-[width] duration-500`}
     enterFrom={tw`w-0!`}
   >
     <div
@@ -24,12 +24,12 @@ const Bar = ({
 );
 
 const Button = styled.div({
-  ...tw`ml-auto px-2 py-1.5 rounded-[0.2rem]`,
+  ...tw`ml-auto rounded-[0.2rem] px-2 py-1.5`,
 
   variants: {
     status: {
       pending: tw`bg-[hsl(220, 60%, 90%)] text-[hsl(220, 60%, 25%)]`,
-      open: tw`text-white bg-[hsl(220, 93%, 60%)]`,
+      open: tw`bg-[hsl(220, 93%, 60%)] text-white`,
     },
   },
 });

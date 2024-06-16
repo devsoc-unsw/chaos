@@ -7,20 +7,10 @@ import tw, { styled } from "twin.macro";
 import Transition from "components/Transition";
 
 const ToggleButton = styled(Popover.Button, {
-  ...tw`
-    w-8 h-8 text-xs flex items-center justify-center
-    bg-slate-500/10 text-violet-700 font-semibold
-    rounded-full transition
-    hover:bg-slate-500/20 focus:(outline-none ring ring-indigo-600/50)
-  `,
+  ...tw`flex h-8 w-8 items-center justify-center rounded-full bg-slate-500/10 text-xs font-semibold text-violet-700 transition hover:bg-slate-500/20 focus:outline-none focus:ring focus:ring-indigo-600/50`,
 });
 
-const ItemButton = tw.button`
-  px-2 py-1 flex items-center justify-end gap-1
-  rounded-md
-  hover:(bg-gray-50 text-indigo-700)
-  focus-within:(outline-none ring ring-indigo-600/50)
-`;
+const ItemButton = tw.button`flex items-center justify-end gap-1 rounded-md px-2 py-1 focus-within:outline-none focus-within:ring focus-within:ring-indigo-600/50 hover:bg-gray-50 hover:text-indigo-700`;
 
 const AvatarButton = () => {
   const name = localStorage.getItem("name") ?? "";
@@ -45,10 +35,10 @@ const AvatarButton = () => {
         <ToggleButton>{initials}</ToggleButton>
         <Transition
           as={Fragment}
-          enter={tw`transition ease-out duration-200`}
-          enterFrom={tw`opacity-0 -translate-y-1`}
-          leave={tw`transition ease-in duration-150`}
-          leaveTo={tw`opacity-0 translate-y-0.5`}
+          enter={tw`transition duration-200 ease-out`}
+          enterFrom={tw`-translate-y-1 opacity-0`}
+          leave={tw`transition duration-150 ease-in`}
+          leaveTo={tw`translate-y-0.5 opacity-0`}
         >
           <Popover.Panel tw="absolute right-0 top-11 flex w-max flex-col overflow-hidden rounded bg-white shadow-md">
             <div tw="bg-gray-50 px-4 py-2 text-gray-500">

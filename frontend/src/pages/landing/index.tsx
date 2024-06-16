@@ -62,7 +62,7 @@ const Landing = () => {
             as={Fragment}
             appear
             show
-            enter={tw`transition duration-[600ms] delay-[250ms]`}
+            enter={tw`transition delay-[250ms] duration-[600ms]`}
             enterFrom={tw`translate-y-4 opacity-0`}
             enterTo={tw`text-2xl`}
           >
