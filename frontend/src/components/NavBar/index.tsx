@@ -14,18 +14,11 @@ import AvatarButton from "./AvatarButton";
 
 const NavButton = styled(NavLink, {
   ...tw`relative rounded px-2 py-1 text-slate-800`,
-  ...tw`ring-blue-400 transition-shadow focus-visible:(outline-none ring)`,
+  ...tw`ring-blue-400 transition-shadow focus-visible:outline-none focus-visible:ring`,
 
-  "&.active": tw`rounded from-blue-700/20 to-indigo-700/20 shadow bg-gradient-to-r`,
+  "&.active": tw`rounded bg-gradient-to-r from-blue-700/20 to-indigo-700/20 shadow`,
 
-  "&:not(.active)": tw`
-    before:(
-      absolute inset-0
-      from-blue-700 to-indigo-700 bg-gradient-to-r
-      rounded opacity-0 transition-opacity duration-100
-    )
-    hover:before:opacity-[0.075]
-  `,
+  "&:not(.active)": tw`before:absolute before:inset-0 before:rounded before:bg-gradient-to-r before:from-blue-700 before:to-indigo-700 before:opacity-0 before:transition-opacity before:duration-100 hover:before:opacity-[0.075]`,
 });
 
 const NavBar = ({ campaign }: { campaign: string }) => {

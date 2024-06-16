@@ -11,7 +11,7 @@ import type { Toast as ToastObject } from "react-hot-toast";
 const ButtonContainer = styled("div", tw`border-l border-gray-200`);
 
 const ToastContainer = styled("div", {
-  ...tw`flex w-full max-w-md bg-white rounded border shadow`,
+  ...tw`flex w-full max-w-md rounded border bg-white shadow`,
 
   variants: {
     type: {
@@ -46,9 +46,9 @@ const Toast = ({ t, title, description, type = "notification" }: Props) => (
     show={t.visible}
     appear
     enter={tw`duration-200 ease-out`}
-    enterFrom={tw`opacity-0 scale-95`}
+    enterFrom={tw`scale-95 opacity-0`}
     leave={tw`duration-150 ease-in`}
-    leaveTo={tw`opacity-0 scale-95`}
+    leaveTo={tw`scale-95 opacity-0`}
   >
     <ToastContainer type={type}>
       <div tw="flex flex-1 flex-col px-4 py-3">

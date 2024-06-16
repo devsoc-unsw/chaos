@@ -4,7 +4,7 @@ import PulsingBar from "components/PulsingBar";
 import { Pulse, pulseCss } from "styles/animations";
 
 const Button = styled(Pulse, {
-  ...tw`ml-auto px-2 py-1.5 text-transparent rounded-[0.2rem]`,
+  ...tw`ml-auto rounded-[0.2rem] px-2 py-1.5 text-transparent`,
   ...pulseCss,
 
   variants: {
