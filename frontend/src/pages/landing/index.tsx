@@ -42,7 +42,7 @@ const Landing = () => {
   return (
     <div tw="flex flex-1 flex-row justify-center" onPointerMove={onPointerMove}>
       <Container tw="my-auto translate-y-[-100px] p-12">
-        <main tw="[& > *]:(w-fit pointer-events-auto) pointer-events-none w-fit font-light">
+        <main tw="[& > *]:w-fit [& > *]:pointer-events-auto pointer-events-none w-fit font-light">
           <Transition
             appear
             show
