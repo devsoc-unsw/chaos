@@ -58,7 +58,7 @@ const Toast = ({ t, title, description, type = "notification" }: Props) => (
       <ButtonContainer>
         <button
           type="button"
-          tw="hover:(text-blue-700 bg-slate-50) focus-visible:(outline-none ring-blue-600) flex h-full w-12 items-center justify-center rounded-r px-8 py-3 text-sm font-medium text-blue-600 ring-2"
+          tw="flex h-full w-12 items-center justify-center rounded-r px-8 py-3 text-sm font-medium text-blue-600 ring-2 hover:bg-slate-50 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-blue-600"
           onClick={() => toast.dismiss(t.id)}
         >
           Close

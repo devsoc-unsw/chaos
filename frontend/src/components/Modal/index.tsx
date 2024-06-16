@@ -74,7 +74,7 @@ const Modal = ({
                 {closeButton && (
                   <button
                     type="button"
-                    tw="focus-within:(ring ring-blue-600/50) ml-auto rounded-full p-2 outline-none transition hover:bg-slate-50"
+                    tw="ml-auto rounded-full p-2 outline-none transition focus-within:ring focus-within:ring-blue-600/50 hover:bg-slate-50"
                     onClick={closeModal}
                   >
                     <XMarkIcon tw="h-7 w-7" />

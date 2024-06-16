@@ -37,7 +37,7 @@ const NavBar = ({ campaign }: { campaign: string }) => {
       <Container tw="flex-row items-center gap-4 text-[hsl(255.1,30%,22%)]">
         <RouterLink
           to={loggedIn ? "/dashboard" : "/"}
-          tw="focus-visible:(outline-none ring-blue-400) -my-2 rounded py-2 ring transition-shadow"
+          tw="-my-2 rounded py-2 transition-shadow focus-visible:outline-none focus-visible:ring focus-visible:ring-blue-400"
         >
           <img tw="h-7 drop-shadow filter" src={chaosImg} alt="Chaos" />
         </RouterLink>

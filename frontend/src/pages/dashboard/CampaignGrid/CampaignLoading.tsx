@@ -27,7 +27,7 @@ type Props = {
   animationDelay?: number;
 };
 const CampaignLoading = ({ status, animationDelay = 0 }: Props) => (
-  <div tw="hover:(-translate-y-1 shadow-lg) w-96 rounded bg-white text-xs shadow-md transition">
+  <div tw="w-96 rounded bg-white text-xs shadow-md transition hover:-translate-y-1 hover:shadow-lg">
     <header tw="flex items-center gap-1.5 p-3">
       <PulsingBar tw="h-10 w-10" animationDelay={animationDelay} standalone />
       <Bars>
