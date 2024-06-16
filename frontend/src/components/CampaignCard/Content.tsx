@@ -102,13 +102,13 @@ const Content = ({
           pushToast(
             "Update Campaign Cover Image",
             `Internal Error: ${data}`,
-            "error",
+            "error"
           );
         } catch {
           pushToast(
             "Update Campaign Cover Image",
             "Internal Error: Response Invalid",
-            "error",
+            "error"
           );
         }
 
@@ -119,7 +119,7 @@ const Content = ({
       pushToast(
         "Update Campaign Cover Image",
         "Something went wrong on the backend!",
-        "error",
+        "error"
       );
 
       return;
@@ -134,7 +134,7 @@ const Content = ({
     pushToast(
       "Update Campaign Cover Image",
       "Uploaded image succesfully",
-      "success",
+      "success"
     );
   };
 

@@ -27,13 +27,13 @@ type Props = {
 };
 const Popup = ({ appliedFor, positions, open, closeModal }: Props) => {
   const positionsMap = Object.fromEntries(
-    positions.map(({ id, ...position }) => [id, position]),
+    positions.map(({ id, ...position }) => [id, position])
   );
   const positionStatuses = Object.fromEntries(
     appliedFor.map(([id, status]) => [
       id,
       { position: positionsMap[id].name, status },
-    ]),
+    ])
   );
 
   return (

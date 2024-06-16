@@ -54,7 +54,7 @@ export const removeStore = (key: string) => localStorage.removeItem(key);
 export const pushToast = (
   title: string,
   description: string,
-  type?: ToastType,
+  type?: ToastType
 ) => {
   toast.custom((t) => (
     <Toast t={t} title={title} description={description} type={type} />

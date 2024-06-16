@@ -38,7 +38,7 @@ const RolesTab = ({ campaign }: Props) => {
   const open = Boolean(anchorEl);
 
   const handleSelectFromExistingClick = (
-    event: MouseEvent<HTMLButtonElement>,
+    event: MouseEvent<HTMLButtonElement>
   ) => {
     setAnchorEl(event.currentTarget);
   };
@@ -51,7 +51,7 @@ const RolesTab = ({ campaign }: Props) => {
     const updatedQuestions = questions.map((q) =>
       q.id === id
         ? { id: q.id, text: q.text, roles: q.roles.add(roleSelected) }
-        : q,
+        : q
     );
     setQuestions(updatedQuestions);
     handleCloseSelectFromExisting();
@@ -59,7 +59,7 @@ const RolesTab = ({ campaign }: Props) => {
 
   // filter for questions pertaining to currently selected role
   const filteredQuestions = questions.filter(
-    (q) => !q.roles.has(roleSelected) && q.text !== "",
+    (q) => !q.roles.has(roleSelected) && q.text !== ""
   );
 
   const onRoleDelete = (e: MouseEvent<HTMLButtonElement>) => {
@@ -94,33 +94,33 @@ const RolesTab = ({ campaign }: Props) => {
                 id: q.id,
                 text: q.text,
                 roles: new Set([...q.roles].filter((r) => r !== roleSelected)),
-              },
+              }
         )
-        .filter((q) => q.roles.size > 0),
+        .filter((q) => q.roles.size > 0)
     );
   };
 
   const handleQuestionInput = (
     e: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>,
-    targetQID: number,
+    targetQID: number
   ) => {
     setQuestions(
       questions.map((q) =>
         q.id !== targetQID
           ? q
-          : { id: q.id, text: e.currentTarget.value, roles: q.roles },
-      ),
+          : { id: q.id, text: e.currentTarget.value, roles: q.roles }
+      )
     );
   };
 
   const addQuestion = () => {
     if (questions.some((q) => q.text === "")) {
       console.error(
-        "Please add text to existing questions before creating a new question!",
+        "Please add text to existing questions before creating a new question!"
       );
     } else if (roleSelected === -1) {
       console.error(
-        "Please create and select one or more roles before adding questions!",
+        "Please create and select one or more roles before adding questions!"
       );
     } else {
       setQuestions([

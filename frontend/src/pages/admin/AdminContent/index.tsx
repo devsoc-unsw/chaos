@@ -105,14 +105,14 @@ const AdminContent = ({
     // FIXME: when array is empty we die???
     setOrgList(orgList.filter((_, index) => index !== orgSelected));
     setOrgSelected(
-      orgSelected === orgList.length - 1 ? orgList.length - 2 : orgSelected,
+      orgSelected === orgList.length - 1 ? orgList.length - 2 : orgSelected
     );
     setShowDeleteDialog(false);
   };
 
   const handleWindowChange = (
     _: MouseEvent<HTMLElement>,
-    newWindow: string,
+    newWindow: string
   ) => {
     if (newWindow) {
       setWindowSelected(newWindow);
@@ -124,7 +124,7 @@ const AdminContent = ({
       pushToast(
         "Update Organisation Logo",
         "No organisation logo given",
-        "error",
+        "error"
       );
       return;
     }
@@ -140,13 +140,13 @@ const AdminContent = ({
           pushToast(
             "Update Organisation Logo",
             `Internal Error: ${data}`,
-            "error",
+            "error"
           );
         } catch {
           pushToast(
             "Update Organisation Logo",
             "Internal Error: Response Invalid",
-            "error",
+            "error"
           );
         }
 
@@ -157,7 +157,7 @@ const AdminContent = ({
       pushToast(
         "Update Organisation Logo",
         "Something went wrong on the backend!",
-        "error",
+        "error"
       );
 
       return;
@@ -170,7 +170,7 @@ const AdminContent = ({
     pushToast(
       "Update Organisation Logo",
       "Image uploaded successfully",
-      "success",
+      "success"
     );
   };
 

@@ -7,7 +7,7 @@ export class FetchError extends Error {
 
   constructor(
     public resp: Response,
-    public data?: unknown,
+    public data?: unknown
   ) {
     super(resp.statusText);
 

@@ -10,7 +10,7 @@ type Controllers = { [url: string]: AbortController };
 const getController = (
   url: string,
   controllers: Controllers,
-  abortBehaviour: AbortBehaviour,
+  abortBehaviour: AbortBehaviour
 ) => {
   let controllerName;
   switch (abortBehaviour) {
@@ -72,7 +72,7 @@ const useFetch = <T = void>(url: string, options?: Options<T>) => {
       const controller = getController(
         url,
         controllers.current,
-        abortBehaviour,
+        abortBehaviour
       );
 
       let data;
@@ -152,7 +152,7 @@ const useFetch = <T = void>(url: string, options?: Options<T>) => {
         aborted: false,
       } as FetchReturn<T>;
     },
-    [],
+    []
   );
 
   useEffect(() => {
@@ -168,10 +168,10 @@ const useFetch = <T = void>(url: string, options?: Options<T>) => {
     (method: string) =>
       (
         url: string,
-        options?: Omit<Options<T>, "jsonResp" | "abortBehaviour" | "deps">,
+        options?: Omit<Options<T>, "jsonResp" | "abortBehaviour" | "deps">
       ) =>
         doFetch(url, { ...outerOptions, ...options, method } as Options<T>),
-    [url, options?.body],
+    [url, options?.body]
   );
 
   return {

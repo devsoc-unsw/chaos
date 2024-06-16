@@ -126,7 +126,7 @@ const Campaigns = forwardRef<HTMLDivElement, Props>(
         </aside>
       </Container>
     );
-  },
+  }
 );
 
 export default Campaigns;

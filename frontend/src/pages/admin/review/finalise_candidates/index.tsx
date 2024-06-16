@@ -52,7 +52,7 @@ const FinaliseCandidates = () => {
     {
       errorSummary: "Error getting organisation",
       onSuccess: ({ name }) => setOrganisation(name),
-    },
+    }
   );
 
   useFetch<Campaign>(`/campaign/${campaignId}`, {
@@ -76,11 +76,11 @@ const FinaliseCandidates = () => {
             .map(({ id, private_status: status }) => [
               id,
               emailTemplates[status] ?? "",
-            ]),
+            ])
         );
         setEmails({ ...emails, ...newEmails });
       },
-    },
+    }
   );
 
   const tabs = useMemo(
@@ -96,7 +96,7 @@ const FinaliseCandidates = () => {
         ),
         status: a.private_status,
       })) ?? [],
-    [data],
+    [data]
   );
   const applications = Object.fromEntries(tabs.map(({ id, ...t }) => [id, t]));
   const [selectedTab, setSelectedTab] = useState(0);
@@ -107,7 +107,7 @@ const FinaliseCandidates = () => {
       role: roles[roleId]?.name,
       organisation,
     }),
-    [roles, organisation],
+    [roles, organisation]
   );
 
   const renderEmail = useCallback(
@@ -120,13 +120,13 @@ const FinaliseCandidates = () => {
           Object.keys(emailParams)
             .map((p) => `{${p}}`)
             .join("|"),
-          "g",
+          "g"
         ),
         (p) =>
-          emailParams[p.substring(1, p.length - 1) as keyof typeof emailParams],
+          emailParams[p.substring(1, p.length - 1) as keyof typeof emailParams]
       );
     },
-    [emails, params],
+    [emails, params]
   );
 
   const useForAll = useCallback(() => {
@@ -134,7 +134,7 @@ const FinaliseCandidates = () => {
     const newEmails = Object.fromEntries(
       tabs
         .filter(({ status }) => status === tab.status)
-        .map(({ id }) => [id, emails[tab.id]]),
+        .map(({ id }) => [id, emails[tab.id]])
     );
     setEmails({
       ...emails,
@@ -153,7 +153,7 @@ const FinaliseCandidates = () => {
         applicationId: number,
         ...args: DropFirst<Parameters<typeof putApplication>>
       ) => putApplication(`/${applicationId}/status`, ...args),
-      [putApplication],
+      [putApplication]
     );
   })();
 
@@ -167,7 +167,7 @@ const FinaliseCandidates = () => {
       });
       return !error && !aborted;
     },
-    [putStatus],
+    [putStatus]
   );
 
   const sendAll = useCallback(async () => {
@@ -178,7 +178,7 @@ const FinaliseCandidates = () => {
       pushToast(
         "Update Status",
         "Updated all application statuses for role",
-        "success",
+        "success"
       );
     }
   }, [sendEmail]);
