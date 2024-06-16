@@ -2,21 +2,9 @@ import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import { ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { styled } from "@mui/material/styles";
+import tw, { styled as s } from "twin.macro";
 
-export const SidebarContainer = styled("div")<{
-  isFormOpen: boolean;
-  sidebarWidth: string;
-}>(({ isFormOpen, sidebarWidth }) => ({
-  position: "relative",
-  width: isFormOpen ? "280px" : sidebarWidth,
-  height: "100%",
-  backgroundColor: "#f0f4fc",
-  transition: "0.2s",
-  borderRightWidth: "1px",
-  borderRightStyle: "solid",
-  borderColor: "grey",
-  overflow: "hidden",
-}));
+export const SidebarContainer = tw.div`relative h-full w-[80px] overflow-hidden border-r border-solid border-gray-300 bg-[#f0f4fc] transition-all duration-200 hover:w-[280px]`;
 
 export const OrgButtonGroup = styled(ToggleButtonGroup)`
   width: 100%;

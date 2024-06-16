@@ -22,7 +22,6 @@ const Admin = () => {
   useEffect(() => {
     setNavBarTitle("Admin");
   }, []);
-  const [sidebarWidth, setSidebarWidth] = useState("80px");
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   const [orgList, setOrgList] = useState<Organisation[]>([]);
@@ -127,8 +126,6 @@ const Admin = () => {
             setOrgSelected={setOrgSelected}
             isFormOpen={isFormOpen}
             setIsFormOpen={setIsFormOpen}
-            sidebarWidth={sidebarWidth}
-            setSidebarWidth={setSidebarWidth}
           />
           <AdminContent
             org={orgList[orgSelected]}

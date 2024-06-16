@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useState } from "react";
 
 import { pushToast } from "utils";
 
@@ -28,8 +28,6 @@ type Props = {
   setOrgSelected: (orgSelected: number) => void;
   isFormOpen: boolean;
   setIsFormOpen: (isFormOpen: boolean) => void;
-  sidebarWidth: string;
-  setSidebarWidth: (sidebarWidth: string) => void;
 };
 
 const AdminSidebar = ({
@@ -39,8 +37,6 @@ const AdminSidebar = ({
   setOrgSelected,
   isFormOpen,
   setIsFormOpen,
-  sidebarWidth,
-  setSidebarWidth,
 }: Props) => {
   const [uploadedImage, setUploadedImage] = useState<{
     image: File | null;
@@ -111,12 +107,7 @@ const AdminSidebar = ({
   };
 
   return (
-    <SidebarContainer
-      isFormOpen={isFormOpen}
-      sidebarWidth={sidebarWidth}
-      onMouseOver={() => setSidebarWidth("280px")}
-      onMouseOut={() => setSidebarWidth("80px")}
-    >
+    <SidebarContainer css={{ width: isFormOpen ? "280px" : "80px" }}>
       <CreateOrgButton value={-1}>
         <OrgButtonContent onClick={() => setIsFormOpen(!isFormOpen)}>
           <OrgIcon>
