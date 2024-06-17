@@ -6,7 +6,7 @@ import tw, { styled } from "twin.macro";
 export const SidebarContainer = tw.div`relative h-full w-[80px] overflow-hidden border-r border-solid border-gray-300 bg-[#f0f4fc] transition-all duration-200 hover:w-[280px]`;
 
 export const OrgButtonGroup = styled(ToggleGroup.Root, {
-  ...tw`m-0 w-full p-0`,
+  ...tw`m-0 w-full divide-y divide-gray-300 border-b border-t border-gray-300 p-0`,
 });
 
 export const OrgButton = styled(ToggleGroup.Item, {
