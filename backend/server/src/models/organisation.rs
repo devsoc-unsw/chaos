@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use crate::models::campaign::Campaign;
 
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Organisation {
@@ -25,6 +26,13 @@ pub struct OrganisationDetails {
     pub name: String,
     pub logo: Option<String>,
     pub created_at: DateTime<Utc>,
+}
+
+#[derive(Deserialize, Serialize, sqlx::Type, Clone)]
+#[sqlx(type_name = "OrganisationRole", rename_all = "PascalCase")]
+pub enum OrganisationRole {
+    User,
+    Admin,
 }
 
 #[derive(Deserialize, Serialize, FromRow)]

@@ -7,15 +7,14 @@ use crate::service;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
+use crate::models::error::ChaosError;
 
 pub async fn get_organisation(
     State(state): State<AppState>,
     Path(organisation_id): Path<i64>,
-) -> Result<impl IntoResponse, impl IntoResponse> {
-    match service::organisation::get_organisation(organisation_id, &state.db).await {
-        Ok(organisation_details) => Ok((StatusCode::OK, Json(organisation_details))),
-        Err(e) => return Err((StatusCode::NOT_FOUND, e.to_string())),
-    }
+) -> Result<impl IntoResponse, ChaosError> {
+    let org = service::organisation::get_organisation(organisation_id, &state.db).await?;
+    Ok((StatusCode::OK, Json(org)))
 }
 
 pub async fn update_organisation_logo(
@@ -65,7 +64,7 @@ pub async fn get_organisation_admins(
     Path(organisation_id): Path<i64>,
     user: AuthUser,
 ) -> Result<impl IntoResponse, impl IntoResponse> {
-    match service::organisation::get_organisation_members(organisation_id, state.db).await {
+    match service::organisation::get_organisation_members(organisation_id, user.user_id, &state.db).await {
         Ok(organisation_admins) => Ok((StatusCode::OK, Json(organisation_admins))),
         Err(e) => return Err((StatusCode::NOT_FOUND, e.to_string())),
     }
@@ -113,9 +112,11 @@ pub async fn get_organisation_campaigns(
     State(state): State<AppState>,
     Path(organisation_id): Path<i64>,
 ) -> Result<impl IntoResponse, impl IntoResponse> {
-    match service::organisation::get_organisation_campaigns(organisation_id, state.db).await {
+    match service::organisation::get_organisation_campaigns(organisation_id, &state.db).await {
         Ok(organisation_admins) => Ok((StatusCode::OK, Json(organisation_admins))),
-        Err(e) => return Err((StatusCode::NOT_FOUND, e.to_string())),
+        Err(e) => {
+            return Err((StatusCode::NOT_FOUND, e.to_string()))
+        },
     }
 }
 
@@ -133,7 +134,7 @@ pub async fn create_campaign_for_organisation(
         request_body.description,
         request_body.starts_at,
         request_body.ends_at,
-        state.db,
+        &state.db,
     )
     .await
     {

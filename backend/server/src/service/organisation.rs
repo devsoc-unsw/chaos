@@ -1,30 +1,30 @@
-use anyhow::{bail, Error, Result};
 use chrono::{DateTime, Local, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
+use crate::models::organisation::{Member, MemberList, OrganisationDetails, OrganisationRole};
+use crate::models::campaign::Campaign;
+use crate::models::error::ChaosError;
 
-use crate::models::organisation::{Member, MemberList, OrganisationDetails};
-
-pub async fn is_admin(user_id: i64, organisation_id: i64, pool: &Pool<Postgres>) -> Result<()> {
+pub async fn is_admin(user_id: i64, organisation_id: i64, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
     let is_admin = sqlx::query!(
-        "SELECT EXISTS(SELECT 1 FROM organisation_admins WHERE organisation_id = $1 AND user_id = $2)",
+        "SELECT EXISTS(SELECT 1 FROM organisation_members WHERE organisation_id = $1 AND user_id = $2 AND role = 'Admin')",
         organisation_id,
         user_id
     )
-        .fetch_one(&pool)
+        .fetch_one(pool)
         .await?.exists.unwrap();
 
     if !is_admin {
-        bail!("User is not an admin of organisation");
+        return Err(ChaosError::UnauthorizedError)
     }
 
     Ok(())
 }
 
-pub async fn get_organisation(id: i64, pool: &Pool<Postgres>) -> Result<OrganisationDetails> {
-    let response = sqlx::query_as!(
+pub async fn get_organisation(id: i64, pool: &Pool<Postgres>) -> Result<OrganisationDetails, ChaosError> {
+    Ok(sqlx::query_as!(
         OrganisationDetails,
         "
             SELECT id, name, logo, created_at
@@ -33,21 +33,15 @@ pub async fn get_organisation(id: i64, pool: &Pool<Postgres>) -> Result<Organisa
         ",
         id
     )
-    .fetch_optional(&pool)
-    .await?;
-
-    if let Some(details) = response {
-        return Ok(details);
-    }
-
-    bail!("error: failed to get organisation");
+    .fetch_one(pool)
+    .await?)
 }
 
 pub async fn update_organisation_logo(
     id: i64,
     user_id: i64,
     pool: &Pool<Postgres>,
-) -> Result<String> {
+) -> Result<String, ChaosError> {
     is_admin(user_id, id, pool).await?;
 
     let dt = Utc::now();
@@ -64,7 +58,7 @@ pub async fn update_organisation_logo(
         logo_id,
         current_time
     )
-    .execute(&pool)
+    .execute(pool)
     .await?;
 
     // TODO: Generate a s3 url
@@ -73,15 +67,14 @@ pub async fn update_organisation_logo(
     Ok(upload_url)
 }
 
-pub async fn delete_organisation(organisation_id: i64, pool: &Pool<Postgres>) -> Result<()> {
-    // Delete organisation
+pub async fn delete_organisation(organisation_id: i64, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
     sqlx::query!(
         "
             DELETE FROM organisations WHERE id = $1
         ",
         organisation_id
     )
-    .execute(&pool)
+    .execute(pool)
     .await?;
 
     Ok(())
@@ -92,7 +85,7 @@ pub async fn create_organisation(
     name: String,
     mut snowflake_generator: SnowflakeIdGenerator,
     pool: &Pool<Postgres>,
-) -> Result<()> {
+) -> Result<(), ChaosError> {
     let id = snowflake_generator.generate();
 
     sqlx::query!(
@@ -103,18 +96,19 @@ pub async fn create_organisation(
         id,
         name
     )
-    .execute(&pool)
+    .execute(pool)
     .await?;
 
     sqlx::query!(
         "
-            INSERT INTO organisation_admins (organisation_id, user_id)
-                VALUES ($1, $2)
+            INSERT INTO organisation_members (organisation_id, user_id, role)
+                VALUES ($1, $2, $3)
         ",
         id,
-        admin_id
+        admin_id,
+        OrganisationRole::Admin as OrganisationRole
     )
-    .execute(&pool)
+    .execute(pool)
     .await?;
 
     Ok(())
@@ -124,24 +118,26 @@ pub async fn get_organisation_members(
     organisation_id: i64,
     user_id: i64,
     pool: &Pool<Postgres>,
-) -> Result<MemberList> {
+) -> Result<MemberList, ChaosError> {
     is_admin(user_id, organisation_id, pool).await?;
 
     let admin_list = sqlx::query_as!(
         Member,
         "
-            SELECT organisation_admins.user_id as id, users.name from organisation_admins
-                LEFT JOIN users on users.id = organisation_admins.user_id
+            SELECT organisation_members.user_id as id, users.name from organisation_members
+                LEFT JOIN users on users.id = organisation_members.user_id
                 WHERE organisation_id = $1
         ",
         organisation_id
     )
-    .fetch_all(&pool)
+    .fetch_all(pool)
     .await?;
 
-    Ok(MemberList {
-        members: admin_list,
-    })
+    Ok(
+        MemberList {
+            members: admin_list,
+        }
+    )
 }
 
 pub async fn update_organisation_admins(
@@ -149,26 +145,28 @@ pub async fn update_organisation_admins(
     user_id: i64,
     admin_id_list: Vec<i64>,
     pool: &Pool<Postgres>,
-) -> Result<()> {
+) -> Result<(), ChaosError> {
     is_admin(user_id, organisation_id, pool).await?;
 
     sqlx::query!(
-        "DELETE FROM organisation_admins WHERE organisation_id = $1",
-        organisation_id
+        "DELETE FROM organisation_members WHERE organisation_id = $1 AND role = $2",
+        organisation_id,
+        OrganisationRole::Admin as OrganisationRole
     )
-    .execute(&pool)
+    .execute(pool)
     .await?;
 
     for admin_id in admin_id_list {
         sqlx::query!(
             "
-            INSERT INTO organisation_admins (organisation_id, user_id)
-                VALUES ($1, $2)
-        ",
+                INSERT INTO organisation_members (organisation_id, user_id, role)
+                    VALUES ($1, $2, $3)
+            ",
             organisation_id,
-            admin_id
+            admin_id,
+            OrganisationRole::Admin as OrganisationRole
         )
-        .execute(&pool)
+        .execute(pool)
         .await?;
     }
 
@@ -180,47 +178,24 @@ pub async fn remove_admin_from_organisation(
     user_id: i64,
     admin_to_remove: i64,
     pool: &Pool<Postgres>,
-) -> Result<()> {
+) -> Result<(), ChaosError> {
     is_admin(user_id, organisation_id, pool).await?;
 
     sqlx::query!(
         "
-            DELETE FROM organisation_admins WHERE user_id = $1 AND organisation_id = $2
+            DELETE FROM organisation_members WHERE user_id = $1 AND organisation_id = $2
         ",
         admin_to_remove,
         organisation_id
     )
-    .execute(&pool)
+    .execute(pool)
     .await?;
 
     Ok(())
 }
 
-// This is only here as a placeholder - replace when campaign is done
-#[derive(Deserialize, Serialize)]
-pub struct Campaign {
-    // Define your struct fields based on the Campaign model
-    // For example:
-    pub id: i64,
-    pub name: String,
-    pub cover_image: Option<String>,
-    pub description: String,
-    pub starts_at: NaiveDateTime,
-    pub ends_at: NaiveDateTime,
-}
-
-impl Campaign {
-    fn into_utc(self) -> Self {
-        Self {
-            starts_at: DateTime::from_utc(self.starts_at, Utc),
-            ends_at: DateTime::from_utc(self.ends_at, Utc),
-            ..self
-        }
-    }
-}
-
-pub async fn get_organisation_campaigns(id: i64, pool: Pool<Postgres>) -> Result<Vec<Campaign>> {
-    let campaigns = sqlx::query_as!(
+pub async fn get_organisation_campaigns(id: i64, pool: &Pool<Postgres>) -> Result<Vec<Campaign>, ChaosError> {
+    Ok(sqlx::query_as!(
         Campaign,
         "
             SELECT id, name, cover_image, description, starts_at, ends_at
@@ -229,25 +204,22 @@ pub async fn get_organisation_campaigns(id: i64, pool: Pool<Postgres>) -> Result
         ",
         id
     )
-    .fetch_all(&pool)
-    .await?;
-
-    Ok(campaigns)
+    .fetch_all(pool)
+    .await?)
 }
 
 pub async fn create_campaign_for_organisation(
     id: i64,
     name: String,
-    description: String,
-    starts_at: NaiveDateTime,
-    ends_at: NaiveDateTime,
-    pool: Pool<Postgres>,
-) -> Result<(), Error> {
+    description: Option<String>,
+    starts_at: DateTime<Utc>,
+    ends_at: DateTime<Utc>,
+    pool: &Pool<Postgres>,
+) -> Result<(), ChaosError> {
     sqlx::query!(
         "
             INSERT INTO campaigns (id, name, description, starts_at, ends_at)
                 VALUES ($1, $2, $3, $4, $5)
-                RETURNING *
         ",
         id,
         name,
@@ -255,7 +227,7 @@ pub async fn create_campaign_for_organisation(
         starts_at,
         ends_at
     )
-    .fetch_one(&pool)
+    .execute(pool)
     .await?;
 
     Ok(())
