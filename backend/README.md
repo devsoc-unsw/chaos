@@ -31,8 +31,7 @@ Request -> Middleware (optional) -> Handler -> Service -> Middleware (Optional) 
 - [Axum](https://github.com/tokio-rs/axum)
 
 ### Persistence
-- [SQLx](https://github.com/launchbadge/sqlx) - Queries
-- [Prisma](https://www.prisma.io/) - Migrations and Schema
+- [SQLx](https://github.com/launchbadge/sqlx) - Queries and Migrations
 - PostgreSQL
 
 ### AuthN
@@ -42,4 +41,4 @@ Request -> Middleware (optional) -> Handler -> Service -> Middleware (Optional) 
 - JWT
 
 ### Storage
-- Local file system
+- Object storage
