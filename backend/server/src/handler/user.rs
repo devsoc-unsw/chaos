@@ -1,26 +1,30 @@
-use crate::models::app::AppState; // custom struct
-use crate::models::auth::AuthUser; // manually built extractors
+use crate::models::app::AppState;
+use crate::models::auth::AuthUser;
 use axum::http::StatusCode;
-use crate::service;
-// use crate::service::user::{get_username, get_user};
-use axum::extract::{Path, State}; // built-in extractors
-use axum::Json;
-use axum::response::IntoResponse; // defined traits to turn everything into a response for axum
+use crate::{models, service};
+use axum::extract::{Path, State, Json};
+use axum::response::IntoResponse;
 
-
-// let everyone get a username
-pub async fn get_username(
-    State(state): State<AppState>, // struct that contains all the database connections / also contains random number gen -> need for all
-    Path(user_id): Path<i64>, // extracts the path from the url
-    _user: AuthUser // checks if people are logged in but do not need to use its value 
+pub async fn get_user(
+    State(state): State<AppState>,
+    Path(user_id): Path<i64>,
+    _user: AuthUser,
 ) -> Result<impl IntoResponse, impl IntoResponse> {
-    
-    // or MATCH
-    match service::user::get_username(user_id, state.db).await {
-        Ok(username) => Ok((StatusCode::OK, Json(username))), // returning in the form of intoresponse -> this allows the code to return it as a http response
-        Err(e) => return Err((StatusCode::NOT_FOUND, e.to_string())), // otherwise return error
+    match service::user::get_user(user_id, state.db).await {
+        Ok(user) => Ok((StatusCode::OK, Json(user))),
+        Err(e) => return Err((StatusCode::NOT_FOUND, e.to_string())),
     }
 }
 
+pub async fn update_user_name(
+    State(state): State<AppState>,
+    Path(user_id): Path<i64>,
+    _user: AuthUser,
+    Json(request_body): Json<models::user::UserName>
+) -> Result<impl IntoResponse, impl IntoResponse> {
 
-
+    match service::user::update_user_name(user_id, request_body.name, state.db).await {
+        Ok(message) => Ok((StatusCode::OK, Json(message))),
+        Err(e) => return Err((StatusCode::NOT_FOUND, e.to_string())),
+    }
+}

@@ -16,3 +16,16 @@ pub struct User {
     pub degree_starting_year: i64,
     pub role: String
 }
+
+pub struct UserName {
+    pub name: String
+}
+
+pub struct UserZid {
+    pub zid: String
+}
+
+pub struct UserDegree {
+    pub degree_name: String,
+    pub degree_starting_year: i64
+}
