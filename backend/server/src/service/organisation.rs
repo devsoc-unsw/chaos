@@ -124,7 +124,7 @@ pub async fn get_organisation_members(
     let admin_list = sqlx::query_as!(
         Member,
         "
-            SELECT organisation_members.user_id as id, users.name from organisation_members
+            SELECT organisation_members.user_id as id, organisation_members.role AS \"role: OrganisationRole\", users.name from organisation_members
                 LEFT JOIN users on users.id = organisation_members.user_id
                 WHERE organisation_id = $1
         ",

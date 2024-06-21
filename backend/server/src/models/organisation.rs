@@ -29,7 +29,7 @@ pub struct OrganisationDetails {
 }
 
 #[derive(Deserialize, Serialize, sqlx::Type, Clone)]
-#[sqlx(type_name = "OrganisationRole", rename_all = "PascalCase")]
+#[sqlx(type_name = "organisation_role", rename_all = "PascalCase")]
 pub enum OrganisationRole {
     User,
     Admin,
@@ -39,6 +39,7 @@ pub enum OrganisationRole {
 pub struct Member {
     pub id: i64,
     pub name: String,
+    pub role: OrganisationRole,
 }
 
 #[derive(Deserialize, Serialize)]

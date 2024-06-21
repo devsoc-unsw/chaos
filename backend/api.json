@@ -746,6 +746,10 @@
                             "name": {
                               "type": "string",
                               "example": "Clancy Lion"
+                            },
+                            "role": {
+                              "type": "string",
+                              "example": "Admin"
                             }
                           }
                         }
