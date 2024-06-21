@@ -1,152 +1,198 @@
 use anyhow::{bail, Error, Result};
-use sqlx::{Pool, Postgres};
 use chrono::{DateTime, Local, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
+use snowflake::SnowflakeIdGenerator;
+use sqlx::{Pool, Postgres};
+use uuid::Uuid;
 
-use crate::models::organisation::OrganisationDetails;
+use crate::models::organisation::{Member, MemberList, OrganisationDetails};
 
-pub async fn get_organisation(id: i64, pool: Pool<Postgres>) -> Result<OrganisationDetails> {
-    let organisation_details = sqlx::query!
-    (
+pub async fn is_admin(user_id: i64, organisation_id: i64, pool: &Pool<Postgres>) -> Result<()> {
+    let is_admin = sqlx::query!(
+        "SELECT EXISTS(SELECT 1 FROM organisation_admins WHERE organisation_id = $1 AND user_id = $2)",
+        organisation_id,
+        user_id
+    )
+        .fetch_one(&pool)
+        .await?.exists.unwrap();
+
+    if !is_admin {
+        bail!("User is not an admin of organisation");
+    }
+
+    Ok(())
+}
+
+pub async fn get_organisation(id: i64, pool: &Pool<Postgres>) -> Result<OrganisationDetails> {
+    let response = sqlx::query_as!(
+        OrganisationDetails,
         "
-            SELECT *
+            SELECT id, name, logo, created_at
                 FROM organisations
                 WHERE id = $1
         ",
-        id).fetch_optional(&pool)
-        .await?;
+        id
+    )
+    .fetch_optional(&pool)
+    .await?;
 
-    if let Some(result) = organisation_details {
-        let details = OrganisationDetails {
-            id: result.id,
-            name: result.name,
-            logo: result.logo,
-            created_at: result.created_at.and_utc()
-        };
+    if let Some(details) = response {
         return Ok(details);
     }
 
     bail!("error: failed to get organisation");
 }
 
+pub async fn update_organisation_logo(
+    id: i64,
+    user_id: i64,
+    pool: &Pool<Postgres>,
+) -> Result<String> {
+    is_admin(user_id, id, pool).await?;
 
-pub async fn update_organisation_logo(id: i64, logo: String, pool: Pool<Postgres>) -> Result<()> {
-    let dt = Local::now();
-    let current_time = dt.naive_utc();
-    sqlx::query!
-    (
+    let dt = Utc::now();
+
+    let logo_id = Uuid::new_v4().to_string(); // TODO: Change db type to UUID
+    let current_time = dt;
+    sqlx::query!(
         "
             UPDATE organisations
                 SET logo = $2, updated_at = $3
                 WHERE id = $1
         ",
         id,
-        logo,
+        logo_id,
         current_time
-    ).fetch_one(&pool)
+    )
+    .execute(&pool)
     .await?;
 
-    Ok(())
+    // TODO: Generate a s3 url
+    let upload_url = "GENERATE AN S3 PRESIGNED URL".to_string();
+
+    Ok(upload_url)
 }
 
-pub async fn delete_organisation(organisation_id: i64, admin_id: i64, pool: Pool<Postgres>) -> Result<()> {
-   // Delete organisation
-   sqlx::query!
-   (
+pub async fn delete_organisation(organisation_id: i64, pool: &Pool<Postgres>) -> Result<()> {
+    // Delete organisation
+    sqlx::query!(
         "
-            CASCADE DELETE FROM organisations WHERE id = $1
-                RETURNING *
+            DELETE FROM organisations WHERE id = $1
         ",
         organisation_id
-    ).fetch_one(&pool)
+    )
+    .execute(&pool)
     .await?;
 
     Ok(())
 }
 
-pub async fn create_organisation(id: i64, name: String, pool: Pool<Postgres>) -> Result<(), Error> {
-    sqlx::query!
-    (
+pub async fn create_organisation(
+    admin_id: i64,
+    name: String,
+    mut snowflake_generator: SnowflakeIdGenerator,
+    pool: &Pool<Postgres>,
+) -> Result<()> {
+    let id = snowflake_generator.generate();
+
+    sqlx::query!(
         "
             INSERT INTO organisations (id, name)
                 VALUES ($1, $2)
         ",
         id,
         name
-    ).fetch_one(&pool)
+    )
+    .execute(&pool)
     .await?;
-    
+
+    sqlx::query!(
+        "
+            INSERT INTO organisation_admins (organisation_id, user_id)
+                VALUES ($1, $2)
+        ",
+        id,
+        admin_id
+    )
+    .execute(&pool)
+    .await?;
+
     Ok(())
 }
 
-// Below returns subset of user - not completed yet - remove comment when done
-pub async fn get_organisation_admins(organisation_id: i64, pool: Pool<Postgres>) -> Result<Vec<Member>> {
-    let admin_list = sqlx::query!
-    (
+pub async fn get_organisation_members(
+    organisation_id: i64,
+    user_id: i64,
+    pool: &Pool<Postgres>,
+) -> Result<MemberList> {
+    is_admin(user_id, organisation_id, pool).await?;
+
+    let admin_list = sqlx::query_as!(
+        Member,
         "
-            SELECT organisation_admins
-                FROM organisations
-                WHERE id = $1
-        "
-        , organisation_id
-    ).fetch_all(&pool).await?;
+            SELECT organisation_admins.user_id as id, users.name from organisation_admins
+                LEFT JOIN users on users.id = organisation_admins.user_id
+                WHERE organisation_id = $1
+        ",
+        organisation_id
+    )
+    .fetch_all(&pool)
+    .await?;
 
-    let admin_id_list: Vec<i64> = admin_list.into_iter().map(|row| row.user_id).collect();
+    Ok(MemberList {
+        members: admin_list,
+    })
+}
 
-    if admin_id_list.is_empty() {
-        return Ok(Vec::new());
-    }
+pub async fn update_organisation_admins(
+    organisation_id: i64,
+    user_id: i64,
+    admin_id_list: Vec<i64>,
+    pool: &Pool<Postgres>,
+) -> Result<()> {
+    is_admin(user_id, organisation_id, pool).await?;
 
-    let mut users = Vec::new();
+    sqlx::query!(
+        "DELETE FROM organisation_admins WHERE organisation_id = $1",
+        organisation_id
+    )
+    .execute(&pool)
+    .await?;
 
-    for id in admin_id_list {
-        users.push(
-            sqlx::query_as!(
-                Member,
-                "
-                    SELECT id, name
-                    FROM users
-                    WHERE id = $1
-                "
-                , id
-            )
-            .fetch_one(&pool)
-            .await?
+    for admin_id in admin_id_list {
+        sqlx::query!(
+            "
+            INSERT INTO organisation_admins (organisation_id, user_id)
+                VALUES ($1, $2)
+        ",
+            organisation_id,
+            admin_id
         )
+        .execute(&pool)
+        .await?;
     }
 
-    Ok(users)
-}
-
-pub async fn update_organisation_admins(organisation_id: i64, admin_id_list: Vec<i64>, pool: Pool<Postgres>) -> Result<(), Error> {
-    sqlx::query!(
-        "
-            UPDATE organisations
-            SET organisation_admins = $1
-            WHERE id = $2
-        ",
-        &admin_ids,
-        organisation_id
-    )
-    .execute(pool)
-    .await?;
-    
     Ok(())
 }
 
-pub async fn remove_admin_from_organisation(organisation_id: i64, admin_id: i64, pool: Pool<Postgres>) -> Result<(), Error> {
+pub async fn remove_admin_from_organisation(
+    organisation_id: i64,
+    user_id: i64,
+    admin_to_remove: i64,
+    pool: &Pool<Postgres>,
+) -> Result<()> {
+    is_admin(user_id, organisation_id, pool).await?;
+
     sqlx::query!(
         "
-            UPDATE organisations
-            SET organisation_admins = array_remove(organisation_admins, $1)
-            WHERE id = $2
+            DELETE FROM organisation_admins WHERE user_id = $1 AND organisation_id = $2
         ",
-        admin_id,
+        admin_to_remove,
         organisation_id
     )
-    .execute(pool)
+    .execute(&pool)
     .await?;
-    
+
     Ok(())
 }
 
@@ -160,7 +206,7 @@ pub struct Campaign {
     pub cover_image: Option<String>,
     pub description: String,
     pub starts_at: NaiveDateTime,
-    pub ends_at: NaiveDateTime
+    pub ends_at: NaiveDateTime,
 }
 
 impl Campaign {
@@ -189,9 +235,15 @@ pub async fn get_organisation_campaigns(id: i64, pool: Pool<Postgres>) -> Result
     Ok(campaigns)
 }
 
-pub async fn create_campaign_for_organisation(id: i64, name: String, description: String, starts_at: NaiveDateTime, ends_at: NaiveDateTime, pool: Pool<Postgres>) -> Result<(), Error> {
-    sqlx::query!
-    (
+pub async fn create_campaign_for_organisation(
+    id: i64,
+    name: String,
+    description: String,
+    starts_at: NaiveDateTime,
+    ends_at: NaiveDateTime,
+    pool: Pool<Postgres>,
+) -> Result<(), Error> {
+    sqlx::query!(
         "
             INSERT INTO campaigns (id, name, description, starts_at, ends_at)
                 VALUES ($1, $2, $3, $4, $5)
@@ -202,7 +254,9 @@ pub async fn create_campaign_for_organisation(id: i64, name: String, description
         description,
         starts_at,
         ends_at
-    ).fetch_one(&pool).await?;
+    )
+    .fetch_one(&pool)
+    .await?;
 
     Ok(())
 }

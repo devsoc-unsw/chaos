@@ -1,10 +1,12 @@
 use anyhow::Result;
-use axum::{routing::get, Router, routing::post};
+use axum::routing::patch;
+use axum::{routing::get, routing::post, Router};
 use jsonwebtoken::{DecodingKey, EncodingKey};
 use models::app::AppState;
 use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::PgPoolOptions;
 use std::env;
+
 mod handler;
 mod models;
 mod service;
@@ -48,25 +50,31 @@ async fn main() -> Result<()> {
 
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
-        .route("/api/v1/organisations",
-            post(handler::organisation::create_organisation)
+        .route(
+            "/api/v1/organisation",
+            post(handler::organisation::create_organisation),
         )
-        .route("/api/v1/organisations/:organisation_id",
+        .route(
+            "/api/v1/organisation/:organisation_id",
             get(handler::organisation::get_organisation)
-            .delete(handler::organisation::delete_organisation)
+                .delete(handler::organisation::delete_organisation),
         )
-        .route("/api/v1/organisations/:organisation_id/campaigns",
-            get(handler::organisation::get_organisation_campaigns)
+        .route(
+            "/api/v1/organisation/:organisation_id/campaigns",
+            get(handler::organisation::get_organisation_campaigns),
         )
-        .route("/api/v1/organisations/:organisation_id/logo",
-            post(handler::organisation::update_organisation_logo)
+        .route(
+            "/api/v1/organisation/:organisation_id/logo",
+            patch(handler::organisation::update_organisation_logo),
         )
-        .route("/api/v1/organisations/:organisation_id/members",
+        .route(
+            "/api/v1/organisation/:organisation_id/members",
             get(handler::organisation::get_organisation_admins)
-            .put(handler::organisation::update_organisation_admins)
+                .put(handler::organisation::update_organisation_admins),
         )
-        .route("/api/v1/organisations/:organisation_id/campaign",
-            post(handler::organisation::create_campaign_for_organisation)
+        .route(
+            "/api/v1/organisation/:organisation_id/campaign",
+            post(handler::organisation::create_campaign_for_organisation),
         )
         .with_state(state);
 
