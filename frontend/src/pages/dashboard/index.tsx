@@ -12,7 +12,7 @@ import CampaignGrid from "./CampaignGrid";
 
 import type { CampaignWithRoles, Organisation } from "types/api";
 
-const Heading = tw.h2`my-3 font-semibold text-2xl`;
+const Heading = tw.h2`my-3 text-2xl font-semibold`;
 
 const Dashboard = () => {
   const navigate = useNavigate();

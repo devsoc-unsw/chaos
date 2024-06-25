@@ -155,7 +155,6 @@ const ApplicationPage = () => {
       })
     )
       .then(() => navigate("/dashboard"))
-      // eslint-disable-next-line no-alert
       .catch(() => alert("Error during submission"));
   };
 

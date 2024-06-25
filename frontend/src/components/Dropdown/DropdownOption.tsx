@@ -1,8 +1,7 @@
 import { Menu } from "@headlessui/react";
+import tw from "twin.macro";
 
 import type { ComponentProps, MouseEvent, ReactElement } from "react";
-
-import tw from "twin.macro";
 
 type Props = {
   name: string;
@@ -14,7 +13,7 @@ const DropdownOption = ({ name, onClick, icon, ...props }: Props) => (
   <Menu.Item tw="w-24 border-slate-400" {...props}>
     {({ close }) => (
       <button
-        tw="text-left p-2 rounded ui-active:bg-blue-500 ui-active:text-white ui-not-active:bg-white ui-not-active:text-black"
+        tw="rounded p-2 text-left ui-active:bg-blue-500 ui-active:text-white ui-not-active:bg-white ui-not-active:text-black"
         onClick={(e: MouseEvent<HTMLButtonElement>) => {
           e.stopPropagation();
           e.preventDefault();

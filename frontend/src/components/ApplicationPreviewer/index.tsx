@@ -1,9 +1,12 @@
-import { Container, Typography } from "@mui/material";
 import { Fragment } from "react";
 
-import { Answer, NoAnswer, Question } from "./applicationPreviewer.styled";
+import Container from "components/Container";
+
+import { Answer, NoAnswer, Question, Zid } from "./applicationPreviewer.styled";
 
 import type { ApplicationWithQuestions } from "pages/admin/types";
+
+import "twin.macro";
 
 type Props = {
   application: ApplicationWithQuestions;
@@ -11,9 +14,7 @@ type Props = {
 
 const ApplicationPreviewer = ({ application }: Props) => (
   <Container>
-    <Typography variant="h5" gutterBottom>
-      {application.zId}
-    </Typography>
+    <Zid>{application.zId}</Zid>
 
     {application.questions.map((question, idx) => (
       // eslint-disable-next-line react/no-array-index-key

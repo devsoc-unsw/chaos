@@ -31,10 +31,10 @@ const ApplicationForm = ({
       <section key={role} tw="my-2">
         <h3 tw="text-xl">{roles.find((r) => r.id === role)?.name}</h3>
         {roleQuestions[role].map(({ id, text }) => (
-          <label key={id} tw="block mt-2">
+          <label key={id} tw="mt-2 block">
             <span>{text}</span>
             <Textarea
-              tw="w-full max-w-xl mt-1"
+              tw="mt-1 w-full max-w-xl"
               value={answers[id]}
               onChange={(e) => setAnswer(id, e.target.value)}
             />
@@ -48,7 +48,7 @@ const ApplicationForm = ({
         onClick={onSubmit}
         disabled={rolesSelected.length === 0}
       >
-        Submit <ChevronRightIcon tw="w-6 h-6 -mr-2" />
+        Submit <ChevronRightIcon tw="-mr-2 h-6 w-6" />
       </Button>
     </div>
   </Card>
