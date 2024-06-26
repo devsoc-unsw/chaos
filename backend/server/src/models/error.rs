@@ -8,13 +8,13 @@ use axum::response::{IntoResponse, Redirect, Response};
 #[derive(thiserror::Error, Debug)]
 pub enum ChaosError {
     #[error("Not logged in")]
-    NotLoggedInError,
+    NotLoggedIn,
 
     #[error("Not authorized")]
-    UnauthorizedError,
+    Unauthorized,
 
     #[error("Forbidden operation")]
-    ForbiddenOperationError,
+    ForbiddenOperation,
 
     #[error("SQLx error")]
     DatabaseError(#[from] sqlx::Error),
@@ -30,9 +30,9 @@ pub enum ChaosError {
 impl IntoResponse for ChaosError {
     fn into_response(self) -> Response {
         match self {
-            ChaosError::NotLoggedInError => Redirect::temporary("/auth/google").into_response(),
-            ChaosError::UnauthorizedError => (StatusCode::UNAUTHORIZED, "Unauthorized").into_response(),
-            ChaosError::ForbiddenOperationError => (StatusCode::FORBIDDEN, "Forbidden operation").into_response(),
+            ChaosError::NotLoggedIn => Redirect::temporary("/auth/google").into_response(),
+            ChaosError::Unauthorized => (StatusCode::UNAUTHORIZED, "Unauthorized").into_response(),
+            ChaosError::ForbiddenOperation => (StatusCode::FORBIDDEN, "Forbidden operation").into_response(),
             ChaosError::DatabaseError(db_error) => match db_error {
                 // We only care about the RowNotFound error, as others are miscellaneous DB errors.
                 sqlx::Error::RowNotFound => (StatusCode::NOT_FOUND, "Not found").into_response(),
