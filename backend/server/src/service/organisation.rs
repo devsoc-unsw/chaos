@@ -1,6 +1,7 @@
+use std::ops::DerefMut;
 use chrono::{DateTime, Utc};
 use snowflake::SnowflakeIdGenerator;
-use sqlx::{Pool, Postgres};
+use sqlx::{Pool, Postgres, Transaction};
 use uuid::Uuid;
 use crate::models::organisation::{Member, MemberList, OrganisationDetails, OrganisationRole};
 use crate::models::campaign::Campaign;
@@ -13,7 +14,7 @@ pub async fn is_admin(user_id: i64, organisation_id: i64, pool: &Pool<Postgres>)
         user_id
     )
         .fetch_one(pool)
-        .await?.exists.unwrap();
+        .await?.exists.expect("`exists` should always exist in this query result");
 
     if !is_admin {
         return Err(ChaosError::UnauthorizedError)
@@ -41,8 +42,6 @@ pub async fn update_organisation_logo(
     user_id: i64,
     pool: &Pool<Postgres>,
 ) -> Result<String, ChaosError> {
-    is_admin(user_id, id, pool).await?;
-
     let dt = Utc::now();
 
     let logo_id = Uuid::new_v4().to_string(); // TODO: Change db type to UUID
@@ -83,7 +82,7 @@ pub async fn create_organisation(
     admin_id: i64,
     name: String,
     mut snowflake_generator: SnowflakeIdGenerator,
-    pool: &Pool<Postgres>,
+    transaction: &mut Transaction<'_, Postgres>,
 ) -> Result<(), ChaosError> {
     let id = snowflake_generator.generate();
 
@@ -95,7 +94,7 @@ pub async fn create_organisation(
         id,
         name
     )
-    .execute(pool)
+    .execute(transaction.deref_mut())
     .await?;
 
     sqlx::query!(
@@ -107,7 +106,7 @@ pub async fn create_organisation(
         admin_id,
         OrganisationRole::Admin as OrganisationRole
     )
-    .execute(pool)
+    .execute(transaction.deref_mut())
     .await?;
 
     Ok(())
@@ -118,8 +117,6 @@ pub async fn get_organisation_members(
     user_id: i64,
     pool: &Pool<Postgres>,
 ) -> Result<MemberList, ChaosError> {
-    is_admin(user_id, organisation_id, pool).await?;
-
     let admin_list = sqlx::query_as!(
         Member,
         "
@@ -145,8 +142,6 @@ pub async fn update_organisation_admins(
     admin_id_list: Vec<i64>,
     pool: &Pool<Postgres>,
 ) -> Result<(), ChaosError> {
-    is_admin(user_id, organisation_id, pool).await?;
-
     sqlx::query!(
         "DELETE FROM organisation_members WHERE organisation_id = $1 AND role = $2",
         organisation_id,
@@ -178,8 +173,6 @@ pub async fn remove_admin_from_organisation(
     admin_to_remove: i64,
     pool: &Pool<Postgres>,
 ) -> Result<(), ChaosError> {
-    is_admin(user_id, organisation_id, pool).await?;
-
     sqlx::query!(
         "
             DELETE FROM organisation_members WHERE user_id = $1 AND organisation_id = $2

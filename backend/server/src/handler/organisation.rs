@@ -1,6 +1,6 @@
 use crate::models;
 use crate::models::app::AppState;
-use crate::models::auth::AuthUser;
+use crate::models::auth::{AuthUser, OrganisationAdmin};
 use crate::models::auth::SuperUser;
 use crate::models::organisation::{AdminToRemove, AdminUpdateList, NewOrganisation};
 use crate::service;
@@ -20,9 +20,9 @@ pub async fn get_organisation(
 pub async fn update_organisation_logo(
     State(state): State<AppState>,
     Path(organisation_id): Path<i64>,
-    user: AuthUser,
+    admin: OrganisationAdmin,
 ) -> Result<impl IntoResponse, ChaosError> {
-    let logo_url = service::organisation::update_organisation_logo(organisation_id, user.user_id, &state.db).await?;
+    let logo_url = service::organisation::update_organisation_logo(organisation_id, admin.user_id, &state.db).await?;
     Ok((StatusCode::OK, Json(logo_url)))
 }
 
@@ -40,22 +40,32 @@ pub async fn create_organisation(
     _user: SuperUser,
     Json(data): Json<NewOrganisation>,
 ) -> Result<impl IntoResponse, ChaosError> {
-    service::organisation::create_organisation(
+    let mut transaction = state.db.begin().await?;
+
+    match service::organisation::create_organisation(
         data.admin,
         data.name,
         state.snowflake_generator,
-        &state.db,
+        &mut transaction,
     )
-    .await?;
-    Ok((StatusCode::OK, "Successfully created organisation"))
+    .await {
+        Ok(..) => {
+            transaction.commit().await?;
+            Ok((StatusCode::OK, "Successfully created organisation"))
+        },
+        Err(err) => {
+            transaction.rollback().await?;
+            Err(err)
+        }
+    }
 }
 
 pub async fn get_organisation_members(
     State(state): State<AppState>,
     Path(organisation_id): Path<i64>,
-    user: AuthUser,
+    admin: OrganisationAdmin,
 ) -> Result<impl IntoResponse, ChaosError> {
-    let members = service::organisation::get_organisation_members(organisation_id, user.user_id, &state.db).await?;
+    let members = service::organisation::get_organisation_members(organisation_id, admin.user_id, &state.db).await?;
     Ok((StatusCode::OK, Json(members)))
 }
 
@@ -63,11 +73,11 @@ pub async fn update_organisation_admins(
     State(state): State<AppState>,
     Path(organisation_id): Path<i64>,
     Json(request_body): Json<AdminUpdateList>,
-    user: SuperUser,
+    admin: OrganisationAdmin,
 ) -> Result<impl IntoResponse, ChaosError> {
     service::organisation::update_organisation_admins(
         organisation_id,
-        user.user_id,
+        admin.user_id,
         request_body.members,
         &state.db,
     )
@@ -79,12 +89,12 @@ pub async fn update_organisation_admins(
 pub async fn remove_admin_from_organisation(
     State(state): State<AppState>,
     Path(organisation_id): Path<i64>,
-    user: AuthUser,
+    admin: OrganisationAdmin,
     Json(request_body): Json<AdminToRemove>,
 ) -> Result<impl IntoResponse, ChaosError> {
     service::organisation::remove_admin_from_organisation(
         organisation_id,
-        user.user_id,
+        admin.user_id,
         request_body.user_id,
         &state.db,
     )
