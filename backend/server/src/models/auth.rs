@@ -2,7 +2,7 @@ use crate::models::app::AppState;
 use crate::models::error::ChaosError;
 use crate::service::auth::is_super_user;
 use crate::service::jwt::decode_auth_token;
-use crate::service::organisation::is_admin;
+use crate::service::organisation::user_is_admin;
 use axum::extract::{FromRef, FromRequestParts, Path};
 use axum::http::request::Parts;
 use axum::response::{IntoResponse, Redirect, Response};
@@ -145,7 +145,7 @@ where
             .await
             .map_err(|_| ChaosError::BadRequest)?;
 
-        is_admin(user_id, organisation_id, pool).await?;
+        user_is_admin(user_id, organisation_id, pool).await?;
 
         Ok(OrganisationAdmin { user_id })
     }
