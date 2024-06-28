@@ -21,7 +21,7 @@ pub async fn user_is_admin(
         .await?.exists.expect("`exists` should always exist in this query result");
 
     if !is_admin {
-        return Err(ChaosError::UnauthorizedError);
+        return Err(ChaosError::Unauthorized);
     }
 
     Ok(())
