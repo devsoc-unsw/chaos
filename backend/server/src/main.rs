@@ -2,8 +2,8 @@ use crate::handler::auth::google_callback;
 use crate::handler::organisation::OrganisationHandler;
 use crate::models::storage::Storage;
 use anyhow::Result;
-use axum::routing::post;
-use axum::{routing::get, Router};
+use axum::routing::{get, patch, post, put};
+use axum::{Router};
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use models::app::AppState;
 use snowflake::SnowflakeIdGenerator;
@@ -65,6 +65,11 @@ async fn main() -> Result<()> {
         .route("/", get(|| async { "Hello, World!" }))
         .route("/api/auth/callback/google", get(google_callback))
         .route("/api/v1/organisation", post(OrganisationHandler::create))
+        .route("/api/v1/organisation/:id", get(OrganisationHandler::get).delete(OrganisationHandler::delete))
+        .route("/api/v1/organisation/:id/campaign", get(OrganisationHandler::get_campaigns).post(OrganisationHandler::create_campaign))
+        .route("/api/v1/organisation/:id/logo", patch(OrganisationHandler::update_logo))
+        .route("/api/v1/organisation/:id/member", get(OrganisationHandler::get_members).put(OrganisationHandler::update_members).delete(OrganisationHandler::remove_member))
+        .route("/api/v1/organisation/:id/admin", get(OrganisationHandler::get_admins).put(OrganisationHandler::update_admins).delete(OrganisationHandler::remove_admin))
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();

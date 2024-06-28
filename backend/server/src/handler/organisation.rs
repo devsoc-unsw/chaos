@@ -33,38 +33,48 @@ impl OrganisationHandler {
 
     pub async fn get(
         State(state): State<AppState>,
-        Path(organisation_id): Path<i64>,
+        Path(id): Path<i64>,
         _user: AuthUser,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let org = Organisation::get(organisation_id, &state.db).await?;
+        let org = Organisation::get(id, &state.db).await?;
         Ok((StatusCode::OK, Json(org)))
     }
 
     pub async fn delete(
         State(state): State<AppState>,
-        Path(organisation_id): Path<i64>,
+        Path(id): Path<i64>,
         _user: SuperUser,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Organisation::delete(organisation_id, &state.db).await?;
+        Organisation::delete(id, &state.db).await?;
         Ok((StatusCode::OK, "Successfully deleted organisation"))
+    }
+
+    pub async fn get_admins(
+        State(state): State<AppState>,
+        Path(id): Path<i64>,
+        _user: SuperUser
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let members = Organisation::get_admins(id, &state.db).await?;
+        Ok((StatusCode::OK, Json(members)))
     }
 
     pub async fn get_members(
         State(state): State<AppState>,
-        Path(organisation_id): Path<i64>,
+        Path(id): Path<i64>,
         _admin: OrganisationAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let members = Organisation::get_members(organisation_id, &state.db).await?;
+        let members = Organisation::get_members(id, &state.db).await?;
         Ok((StatusCode::OK, Json(members)))
     }
 
     pub async fn update_admins(
-        mut transaction: DBTransaction<'_>,
-        Path(organisation_id): Path<i64>,
-        Json(request_body): Json<AdminUpdateList>,
+        State(state): State<AppState>,
+        Path(id): Path<i64>,
         _super_user: SuperUser,
+        mut transaction: DBTransaction<'_>,
+        Json(request_body): Json<AdminUpdateList>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Organisation::update_admins(organisation_id, request_body.members, &mut transaction.tx)
+        Organisation::update_admins(id, request_body.members, &mut transaction.tx)
             .await?;
 
         transaction.tx.commit().await?;
@@ -72,12 +82,13 @@ impl OrganisationHandler {
     }
 
     pub async fn update_members(
+        State(state): State<AppState>,
         mut transaction: DBTransaction<'_>,
-        Path(organisation_id): Path<i64>,
-        Json(request_body): Json<AdminUpdateList>,
+        Path(id): Path<i64>,
         _admin: OrganisationAdmin,
+        Json(request_body): Json<AdminUpdateList>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Organisation::update_members(organisation_id, request_body.members, &mut transaction.tx)
+        Organisation::update_members(id, request_body.members, &mut transaction.tx)
             .await?;
 
         transaction.tx.commit().await?;
@@ -86,11 +97,11 @@ impl OrganisationHandler {
 
     pub async fn remove_admin(
         State(state): State<AppState>,
-        Path(organisation_id): Path<i64>,
+        Path(id): Path<i64>,
         _super_user: SuperUser,
         Json(request_body): Json<AdminToRemove>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Organisation::remove_admin(organisation_id, request_body.user_id, &state.db).await?;
+        Organisation::remove_admin(id, request_body.user_id, &state.db).await?;
 
         Ok((
             StatusCode::OK,
@@ -100,11 +111,11 @@ impl OrganisationHandler {
 
     pub async fn remove_member(
         State(state): State<AppState>,
-        Path(organisation_id): Path<i64>,
+        Path(id): Path<i64>,
         _admin: OrganisationAdmin,
         Json(request_body): Json<AdminToRemove>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Organisation::remove_member(organisation_id, request_body.user_id, &state.db).await?;
+        Organisation::remove_member(id, request_body.user_id, &state.db).await?;
 
         Ok((
             StatusCode::OK,
@@ -114,20 +125,20 @@ impl OrganisationHandler {
 
     pub async fn update_logo(
         State(state): State<AppState>,
-        Path(organisation_id): Path<i64>,
+        Path(id): Path<i64>,
         _admin: OrganisationAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
         let logo_url =
-            Organisation::update_logo(organisation_id, &state.db, &state.storage_bucket).await?;
+            Organisation::update_logo(id, &state.db, &state.storage_bucket).await?;
         Ok((StatusCode::OK, Json(logo_url)))
     }
 
     pub async fn get_campaigns(
         State(state): State<AppState>,
-        Path(organisation_id): Path<i64>,
+        Path(id): Path<i64>,
         _user: AuthUser,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let campaigns = Organisation::get_campaigns(organisation_id, &state.db).await?;
+        let campaigns = Organisation::get_campaigns(id, &state.db).await?;
 
         Ok((StatusCode::OK, Json(campaigns)))
     }
