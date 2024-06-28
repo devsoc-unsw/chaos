@@ -292,7 +292,7 @@ impl Organisation {
         starts_at: DateTime<Utc>,
         ends_at: DateTime<Utc>,
         pool: &Pool<Postgres>,
-        snowflake_id_generator: &mut SnowflakeIdGenerator
+        snowflake_id_generator: &mut SnowflakeIdGenerator,
     ) -> Result<(), ChaosError> {
         let new_campaign_id = snowflake_id_generator.real_time_generate();
 

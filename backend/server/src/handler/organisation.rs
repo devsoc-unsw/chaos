@@ -1,7 +1,7 @@
 use crate::models;
 use crate::models::app::AppState;
-use crate::models::auth::{AuthUser, OrganisationAdmin};
 use crate::models::auth::SuperUser;
+use crate::models::auth::{AuthUser, OrganisationAdmin};
 use crate::models::error::ChaosError;
 use crate::models::organisation::{AdminToRemove, AdminUpdateList, NewOrganisation, Organisation};
 use crate::models::transaction::DBTransaction;
@@ -25,7 +25,7 @@ impl OrganisationHandler {
             state.snowflake_generator,
             &mut transaction.tx,
         )
-            .await?;
+        .await?;
 
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, "Successfully created organisation"))
@@ -54,9 +54,7 @@ impl OrganisationHandler {
         Path(organisation_id): Path<i64>,
         _admin: OrganisationAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let members =
-            Organisation::get_members(organisation_id, &state.db)
-                .await?;
+        let members = Organisation::get_members(organisation_id, &state.db).await?;
         Ok((StatusCode::OK, Json(members)))
     }
 
@@ -66,11 +64,7 @@ impl OrganisationHandler {
         Json(request_body): Json<AdminUpdateList>,
         _super_user: SuperUser,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Organisation::update_admins(
-            organisation_id,
-            request_body.members,
-            &mut transaction.tx,
-        )
+        Organisation::update_admins(organisation_id, request_body.members, &mut transaction.tx)
             .await?;
 
         transaction.tx.commit().await?;
@@ -83,11 +77,7 @@ impl OrganisationHandler {
         Json(request_body): Json<AdminUpdateList>,
         _admin: OrganisationAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Organisation::update_members(
-            organisation_id,
-            request_body.members,
-            &mut transaction.tx,
-        )
+        Organisation::update_members(organisation_id, request_body.members, &mut transaction.tx)
             .await?;
 
         transaction.tx.commit().await?;
@@ -100,12 +90,7 @@ impl OrganisationHandler {
         _super_user: SuperUser,
         Json(request_body): Json<AdminToRemove>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Organisation::remove_admin(
-            organisation_id,
-            request_body.user_id,
-            &state.db,
-        )
-            .await?;
+        Organisation::remove_admin(organisation_id, request_body.user_id, &state.db).await?;
 
         Ok((
             StatusCode::OK,
@@ -119,12 +104,7 @@ impl OrganisationHandler {
         _admin: OrganisationAdmin,
         Json(request_body): Json<AdminToRemove>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Organisation::remove_member(
-            organisation_id,
-            request_body.user_id,
-            &state.db,
-        )
-            .await?;
+        Organisation::remove_member(organisation_id, request_body.user_id, &state.db).await?;
 
         Ok((
             StatusCode::OK,
@@ -137,9 +117,7 @@ impl OrganisationHandler {
         Path(organisation_id): Path<i64>,
         _admin: OrganisationAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let logo_url =
-            Organisation::update_logo(organisation_id, &state.db)
-                .await?;
+        let logo_url = Organisation::update_logo(organisation_id, &state.db).await?;
         Ok((StatusCode::OK, Json(logo_url)))
     }
 
@@ -148,8 +126,7 @@ impl OrganisationHandler {
         Path(organisation_id): Path<i64>,
         _user: AuthUser,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let campaigns =
-            Organisation::get_campaigns(organisation_id, &state.db).await?;
+        let campaigns = Organisation::get_campaigns(organisation_id, &state.db).await?;
 
         Ok((StatusCode::OK, Json(campaigns)))
     }
@@ -165,9 +142,9 @@ impl OrganisationHandler {
             request_body.starts_at,
             request_body.ends_at,
             &state.db,
-            &mut state.snowflake_generator
+            &mut state.snowflake_generator,
         )
-            .await?;
+        .await?;
 
         Ok((StatusCode::OK, "Successfully created campaign"))
     }
