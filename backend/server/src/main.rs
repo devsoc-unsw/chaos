@@ -1,11 +1,13 @@
+use crate::handler::auth::google_callback;
+use crate::handler::organisation::create_organisation;
 use anyhow::Result;
+use axum::routing::post;
 use axum::{routing::get, Router};
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use models::app::AppState;
 use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::PgPoolOptions;
 use std::env;
-use crate::handler::auth::google_callback;
 
 mod handler;
 mod models;
@@ -57,6 +59,7 @@ async fn main() -> Result<()> {
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
         .route("/api/auth/callback/google", get(google_callback))
+        .route("/api/v1/organisation", post(create_organisation))
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
