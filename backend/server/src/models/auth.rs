@@ -2,16 +2,13 @@ use crate::models::app::AppState;
 use crate::models::error::ChaosError;
 use crate::service::auth::is_super_user;
 use crate::service::jwt::decode_auth_token;
+use crate::service::organisation::is_admin;
 use axum::extract::{FromRef, FromRequestParts, Path};
 use axum::http::request::Parts;
 use axum::response::{IntoResponse, Redirect, Response};
-use axum::{
-    async_trait,
-    RequestPartsExt,
-};
+use axum::{async_trait, RequestPartsExt};
 use axum_extra::{headers::Cookie, TypedHeader};
 use serde::{Deserialize, Serialize};
-use crate::service::organisation::is_admin;
 
 #[derive(Deserialize, Serialize)]
 pub struct AuthRequest {
@@ -55,10 +52,12 @@ where
             .await
             .map_err(|_| ChaosError::NotLoggedInError)?;
 
-        let token = cookies.get("auth_token").ok_or(ChaosError::NotLoggedInError)?;
+        let token = cookies
+            .get("auth_token")
+            .ok_or(ChaosError::NotLoggedInError)?;
 
-        let claims =
-            decode_auth_token(token, decoding_key, jwt_validator).ok_or(ChaosError::NotLoggedInError)?;
+        let claims = decode_auth_token(token, decoding_key, jwt_validator)
+            .ok_or(ChaosError::NotLoggedInError)?;
 
         Ok(AuthUser {
             user_id: claims.sub,
@@ -88,10 +87,12 @@ where
             .await
             .map_err(|_| ChaosError::NotLoggedInError)?;
 
-        let token = cookies.get("auth_token").ok_or(ChaosError::NotLoggedInError)?;
+        let token = cookies
+            .get("auth_token")
+            .ok_or(ChaosError::NotLoggedInError)?;
 
-        let claims =
-            decode_auth_token(token, decoding_key, jwt_validator).ok_or(ChaosError::NotLoggedInError)?;
+        let claims = decode_auth_token(token, decoding_key, jwt_validator)
+            .ok_or(ChaosError::NotLoggedInError)?;
 
         let pool = &app_state.db;
         let possible_user = is_super_user(claims.sub, pool).await;
@@ -114,9 +115,9 @@ pub struct OrganisationAdmin {
 
 #[async_trait]
 impl<S> FromRequestParts<S> for OrganisationAdmin
-    where
-        AppState: FromRef<S>,
-        S: Send + Sync,
+where
+    AppState: FromRef<S>,
+    S: Send + Sync,
 {
     type Rejection = ChaosError;
 
@@ -129,10 +130,12 @@ impl<S> FromRequestParts<S> for OrganisationAdmin
             .await
             .map_err(|_| ChaosError::NotLoggedInError)?;
 
-        let token = cookies.get("auth_token").ok_or(ChaosError::NotLoggedInError)?;
+        let token = cookies
+            .get("auth_token")
+            .ok_or(ChaosError::NotLoggedInError)?;
 
-        let claims =
-            decode_auth_token(token, decoding_key, jwt_validator).ok_or(ChaosError::NotLoggedInError)?;
+        let claims = decode_auth_token(token, decoding_key, jwt_validator)
+            .ok_or(ChaosError::NotLoggedInError)?;
 
         let pool = &app_state.db;
         let user_id = claims.sub;
@@ -144,10 +147,6 @@ impl<S> FromRequestParts<S> for OrganisationAdmin
 
         is_admin(user_id, organisation_id, pool).await?;
 
-        Ok(
-            OrganisationAdmin {
-                user_id
-            }
-        )
+        Ok(OrganisationAdmin { user_id })
     }
 }
