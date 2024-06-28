@@ -52,7 +52,7 @@ impl OrganisationHandler {
     pub async fn get_admins(
         State(state): State<AppState>,
         Path(id): Path<i64>,
-        _user: SuperUser
+        _user: SuperUser,
     ) -> Result<impl IntoResponse, ChaosError> {
         let members = Organisation::get_admins(id, &state.db).await?;
         Ok((StatusCode::OK, Json(members)))
@@ -74,8 +74,7 @@ impl OrganisationHandler {
         mut transaction: DBTransaction<'_>,
         Json(request_body): Json<AdminUpdateList>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Organisation::update_admins(id, request_body.members, &mut transaction.tx)
-            .await?;
+        Organisation::update_admins(id, request_body.members, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, "Successfully updated organisation members"))
@@ -88,8 +87,7 @@ impl OrganisationHandler {
         _admin: OrganisationAdmin,
         Json(request_body): Json<AdminUpdateList>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Organisation::update_members(id, request_body.members, &mut transaction.tx)
-            .await?;
+        Organisation::update_members(id, request_body.members, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, "Successfully updated organisation members"))
@@ -128,8 +126,7 @@ impl OrganisationHandler {
         Path(id): Path<i64>,
         _admin: OrganisationAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let logo_url =
-            Organisation::update_logo(id, &state.db, &state.storage_bucket).await?;
+        let logo_url = Organisation::update_logo(id, &state.db, &state.storage_bucket).await?;
         Ok((StatusCode::OK, Json(logo_url)))
     }
 

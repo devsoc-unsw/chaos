@@ -52,12 +52,10 @@ where
             .await
             .map_err(|_| ChaosError::NotLoggedIn)?;
 
-        let token = cookies
-            .get("auth_token")
-            .ok_or(ChaosError::NotLoggedIn)?;
+        let token = cookies.get("auth_token").ok_or(ChaosError::NotLoggedIn)?;
 
-        let claims = decode_auth_token(token, decoding_key, jwt_validator)
-            .ok_or(ChaosError::NotLoggedIn)?;
+        let claims =
+            decode_auth_token(token, decoding_key, jwt_validator).ok_or(ChaosError::NotLoggedIn)?;
 
         Ok(AuthUser {
             user_id: claims.sub,
@@ -87,9 +85,7 @@ where
             .await
             .map_err(|_| ChaosError::NotLoggedIn)?;
 
-        let token = cookies
-            .get("auth_token")
-            .ok_or(ChaosError::NotLoggedIn)?;
+        let token = cookies.get("auth_token").ok_or(ChaosError::NotLoggedIn)?;
 
         let claims =
             decode_auth_token(token, decoding_key, jwt_validator).ok_or(ChaosError::NotLoggedIn)?;
@@ -104,7 +100,7 @@ where
                 });
             }
         }
-      
+
         Err(ChaosError::Unauthorized)
     }
 }
@@ -130,12 +126,10 @@ where
             .await
             .map_err(|_| ChaosError::NotLoggedIn)?;
 
-        let token = cookies
-            .get("auth_token")
-            .ok_or(ChaosError::NotLoggedIn)?;
+        let token = cookies.get("auth_token").ok_or(ChaosError::NotLoggedIn)?;
 
-        let claims = decode_auth_token(token, decoding_key, jwt_validator)
-            .ok_or(ChaosError::NotLoggedIn)?;
+        let claims =
+            decode_auth_token(token, decoding_key, jwt_validator).ok_or(ChaosError::NotLoggedIn)?;
 
         let pool = &app_state.db;
         let user_id = claims.sub;

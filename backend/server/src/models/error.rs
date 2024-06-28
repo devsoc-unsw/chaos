@@ -15,7 +15,7 @@ pub enum ChaosError {
 
     #[error("Forbidden operation")]
     ForbiddenOperation,
-  
+
     #[error("Bad request")]
     BadRequest,
 
@@ -44,14 +44,16 @@ impl IntoResponse for ChaosError {
         match self {
             ChaosError::NotLoggedIn => Redirect::temporary("/auth/google").into_response(),
             ChaosError::Unauthorized => (StatusCode::UNAUTHORIZED, "Unauthorized").into_response(),
-            ChaosError::ForbiddenOperation => (StatusCode::FORBIDDEN, "Forbidden operation").into_response(),
+            ChaosError::ForbiddenOperation => {
+                (StatusCode::FORBIDDEN, "Forbidden operation").into_response()
+            }
             ChaosError::BadRequest => (StatusCode::BAD_REQUEST, "Bad request").into_response(),
             ChaosError::DatabaseError(db_error) => match db_error {
                 // We only care about the RowNotFound error, as others are miscellaneous DB errors.
                 sqlx::Error::RowNotFound => (StatusCode::NOT_FOUND, "Not found").into_response(),
                 _ => (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response(),
             },
-            _ => (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response()
+            _ => (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response(),
         }
     }
 }
