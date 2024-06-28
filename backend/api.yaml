@@ -482,6 +482,9 @@ paths:
                         name:
                           type: string
                           example: Clancy Lion
+                        role:
+                          type: string
+                          example: Admin
         '403':
           description: User is not an organisation admin or member.
           content:

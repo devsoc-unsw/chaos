@@ -6,8 +6,8 @@ CREATE TABLE campaigns (
     description TEXT,
     starts_at TIMESTAMPTZ NOT NULL,
     ends_at TIMESTAMPTZ NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT FK_campaigns_organisations
         FOREIGN KEY(organisation_id)
             REFERENCES organisations(id)
@@ -23,8 +23,8 @@ CREATE TABLE campaign_roles (
     min_available INTEGER,
     max_available INTEGER,
     finalised BOOLEAN,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT FK_campaign_roles_campaign
         FOREIGN KEY(campaign_id)
             REFERENCES campaigns(id)

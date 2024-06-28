@@ -1,11 +1,14 @@
+use crate::handler::auth::google_callback;
+use crate::handler::organisation::OrganisationHandler;
+use crate::models::storage::Storage;
 use anyhow::Result;
-use axum::{routing::get, Router};
+use axum::routing::{get, patch, post, put};
+use axum::Router;
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use models::app::AppState;
 use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::PgPoolOptions;
 use std::env;
-use crate::handler::auth::google_callback;
 
 mod handler;
 mod models;
@@ -43,6 +46,9 @@ async fn main() -> Result<()> {
     // Initialise Snowflake Generator
     let snowflake_generator = SnowflakeIdGenerator::new(1, 1);
 
+    // Initialise S3 bucket
+    let storage_bucket = Storage::init_bucket();
+
     // Add all data to AppState
     let state = AppState {
         db: pool,
@@ -52,11 +58,37 @@ async fn main() -> Result<()> {
         jwt_header,
         jwt_validator,
         snowflake_generator,
+        storage_bucket,
     };
 
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
         .route("/api/auth/callback/google", get(google_callback))
+        .route("/api/v1/organisation", post(OrganisationHandler::create))
+        .route(
+            "/api/v1/organisation/:id",
+            get(OrganisationHandler::get).delete(OrganisationHandler::delete),
+        )
+        .route(
+            "/api/v1/organisation/:id/campaign",
+            get(OrganisationHandler::get_campaigns).post(OrganisationHandler::create_campaign),
+        )
+        .route(
+            "/api/v1/organisation/:id/logo",
+            patch(OrganisationHandler::update_logo),
+        )
+        .route(
+            "/api/v1/organisation/:id/member",
+            get(OrganisationHandler::get_members)
+                .put(OrganisationHandler::update_members)
+                .delete(OrganisationHandler::remove_member),
+        )
+        .route(
+            "/api/v1/organisation/:id/admin",
+            get(OrganisationHandler::get_admins)
+                .put(OrganisationHandler::update_admins)
+                .delete(OrganisationHandler::remove_admin),
+        )
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
