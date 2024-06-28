@@ -1,7 +1,7 @@
+use crate::models::campaign::Campaign;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use crate::models::campaign::Campaign;
 
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Organisation {
