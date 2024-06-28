@@ -33,6 +33,9 @@ pub enum ChaosError {
             oauth2::StandardErrorResponse<oauth2::basic::BasicErrorResponseType>,
         >,
     ),
+
+    #[error("S3 error")]
+    StorageError(#[from] s3::error::S3Error),
 }
 
 /// Implementation for converting errors into responses. Manages error code and message returned.

@@ -117,7 +117,8 @@ impl OrganisationHandler {
         Path(organisation_id): Path<i64>,
         _admin: OrganisationAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let logo_url = Organisation::update_logo(organisation_id, &state.db).await?;
+        let logo_url =
+            Organisation::update_logo(organisation_id, &state.db, &state.storage_bucket).await?;
         Ok((StatusCode::OK, Json(logo_url)))
     }
 

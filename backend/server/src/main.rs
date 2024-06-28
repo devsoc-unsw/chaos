@@ -1,5 +1,6 @@
 use crate::handler::auth::google_callback;
 use crate::handler::organisation::OrganisationHandler;
+use crate::models::storage::Storage;
 use anyhow::Result;
 use axum::routing::post;
 use axum::{routing::get, Router};
@@ -45,6 +46,9 @@ async fn main() -> Result<()> {
     // Initialise Snowflake Generator
     let snowflake_generator = SnowflakeIdGenerator::new(1, 1);
 
+    // Initialise S3 bucket
+    let storage_bucket = Storage::init_bucket();
+
     // Add all data to AppState
     let state = AppState {
         db: pool,
@@ -54,6 +58,7 @@ async fn main() -> Result<()> {
         jwt_header,
         jwt_validator,
         snowflake_generator,
+        storage_bucket,
     };
 
     let app = Router::new()

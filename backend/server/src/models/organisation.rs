@@ -1,6 +1,8 @@
 use crate::models::campaign::Campaign;
 use crate::models::error::ChaosError;
+use crate::models::storage::Storage;
 use chrono::{DateTime, Utc};
+use s3::Bucket;
 use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
 use sqlx::{FromRow, Pool, Postgres, Transaction};
@@ -243,7 +245,11 @@ impl Organisation {
         Ok(())
     }
 
-    pub async fn update_logo(id: i64, pool: &Pool<Postgres>) -> Result<String, ChaosError> {
+    pub async fn update_logo(
+        id: i64,
+        pool: &Pool<Postgres>,
+        storage_bucket: &Bucket,
+    ) -> Result<String, ChaosError> {
         let dt = Utc::now();
 
         let logo_id = Uuid::new_v4().to_string(); // TODO: Change db type to UUID
@@ -261,8 +267,10 @@ impl Organisation {
         .execute(pool)
         .await?;
 
-        // TODO: Generate a s3 url
-        let upload_url = "GENERATE AN S3 PRESIGNED URL".to_string();
+        // TODO: Handle MIME type on FE and BE and handle in S3 upload
+        let image_id = Uuid::new_v4();
+        let upload_url =
+            Storage::generate_put_url(format!("/{id}/{image_id}"), storage_bucket).await?;
 
         Ok(upload_url)
     }
