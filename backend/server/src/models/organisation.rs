@@ -127,7 +127,6 @@ impl Organisation {
 
     pub async fn get_members(
         organisation_id: i64,
-        user_id: i64,
         pool: &Pool<Postgres>,
     ) -> Result<MemberList, ChaosError> {
         let admin_list = sqlx::query_as!(
@@ -288,19 +287,21 @@ impl Organisation {
     }
 
     pub async fn create_campaign(
-        id: i64,
         name: String,
         description: Option<String>,
         starts_at: DateTime<Utc>,
         ends_at: DateTime<Utc>,
         pool: &Pool<Postgres>,
+        snowflake_id_generator: &mut SnowflakeIdGenerator
     ) -> Result<(), ChaosError> {
+        let new_campaign_id = snowflake_id_generator.real_time_generate();
+
         sqlx::query!(
             "
             INSERT INTO campaigns (id, name, description, starts_at, ends_at)
                 VALUES ($1, $2, $3, $4, $5)
         ",
-            id,
+            new_campaign_id,
             name,
             description,
             starts_at,

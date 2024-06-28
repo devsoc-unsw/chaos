@@ -1,5 +1,5 @@
 use crate::handler::auth::google_callback;
-use crate::handler::organisation::create_organisation;
+use crate::handler::organisation::OrganisationHandler;
 use anyhow::Result;
 use axum::routing::post;
 use axum::{routing::get, Router};
@@ -59,7 +59,7 @@ async fn main() -> Result<()> {
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
         .route("/api/auth/callback/google", get(google_callback))
-        .route("/api/v1/organisation", post(create_organisation))
+        .route("/api/v1/organisation", post(OrganisationHandler::create))
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
