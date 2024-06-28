@@ -91,8 +91,8 @@ where
             .get("auth_token")
             .ok_or(ChaosError::NotLoggedInError)?;
 
-        let claims = decode_auth_token(token, decoding_key, jwt_validator)
-            .ok_or(ChaosError::NotLoggedInError)?;
+        let claims =
+            decode_auth_token(token, decoding_key, jwt_validator).ok_or(ChaosError::NotLoggedIn)?;
 
         let pool = &app_state.db;
         let possible_user = is_super_user(claims.sub, pool).await;
@@ -104,8 +104,8 @@ where
                 });
             }
         }
-
-        Err(ChaosError::UnauthorizedError)
+      
+        Err(ChaosError::Unauthorized)
     }
 }
 
