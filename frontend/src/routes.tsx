@@ -14,6 +14,7 @@ const Marking = lazy(() => import("./pages/admin/review/marking"));
 const Rankings = lazy(() => import("./pages/admin/review/rankings"));
 const Review = lazy(() => import("./pages/admin/review"));
 const SignupPage = lazy(() => import("./pages/signup"));
+const SwaggerDocs = lazy(() => import("./pages/docs"))
 
 const routes = [
   <Route key="dashboard" path="/dashboard" element={<DashboardPage />} />,
@@ -41,6 +42,7 @@ const routes = [
     path="/application/:campaignId"
     element={<ApplicationPage />}
   />,
+  <Route key="docs" path="/docs" element={<SwaggerDocs />} />
 ];
 
 export default routes;

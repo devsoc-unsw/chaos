@@ -1,0 +1,17 @@
+openapi: 3.0.0
+info:
+  title: Chaos APIs
+  description: APIs that Chaos uses to provide information to this application
+  version: 1.0.0
+paths:
+  /hello:
+    get:
+      summary: Prints Hello world
+      responses:
+        '200':
+          description: A nice greeting.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Hello World
