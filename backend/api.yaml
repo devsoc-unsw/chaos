@@ -824,3 +824,105 @@ paths:
                   error:
                     type: string
                     example: Unauthorized
+
+  /campaign/{id}/role:
+    post:
+      operationId: createRole
+      parameters:
+        - name: id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Creates a new role in a campaign.
+      tags:
+        - Campaign
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+                  example: Chief Mouser
+                description:
+                  type: string
+                  example: Larry the cat is dead, now we need someone else to handle the rat issues at 10th Downing st.
+                min_available:
+                  type: int32
+                  example: 1
+                max_available:
+                  type: int32
+                  example: 3
+                finalised:
+                  type: boolean
+                  description: Whether this role has been finalised (e.g. max avaliable number)
+                  example: False
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully created organisation.
+        '403':
+          description: User is not a Campaign Admin.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorized
+  /role/{id}:
+    get:
+      operationId: getRoleById
+      parameters:
+        - name: id
+          in: path
+          description: Role ID
+          required: true
+          schema:
+            type: integer
+            format: int32
+      description: Returns info about specified role.
+      tags:
+        - Role
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                name:
+                  type: string
+                  example: Chief Mouser
+                description:
+                  type: string
+                  example: Larry the cat is dead, now we need someone else to handle the rat issues at 10th Downing st.
+                min_available:
+                  type: int32
+                  example: 1
+                max_available:
+                  type: int32
+                  example: 3
+                finalised:
+                  type: boolean
+                  description: Whether this role has been finalised (e.g. max avaliable number)
+                  example: False
+        '401':
+          description: Not logged in.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Not logged in.
