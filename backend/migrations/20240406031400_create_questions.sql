@@ -7,8 +7,8 @@ CREATE TABLE questions (
     required BOOLEAN,
     question_type question_type NOT NULL,
     campaign_id BIGINT NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT FK_questions_campaigns
        FOREIGN KEY(campaign_id)
            REFERENCES campaigns(id)

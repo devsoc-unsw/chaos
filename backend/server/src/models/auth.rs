@@ -2,7 +2,8 @@ use crate::models::app::AppState;
 use crate::models::error::ChaosError;
 use crate::service::auth::is_super_user;
 use crate::service::jwt::decode_auth_token;
-use axum::extract::{FromRef, FromRequestParts};
+use crate::service::organisation::user_is_admin;
+use axum::extract::{FromRef, FromRequestParts, Path};
 use axum::http::request::Parts;
 use axum::response::{IntoResponse, Redirect, Response};
 use axum::{async_trait, RequestPartsExt};
@@ -88,6 +89,7 @@ where
 
         let claims =
             decode_auth_token(token, decoding_key, jwt_validator).ok_or(ChaosError::NotLoggedIn)?;
+
         let pool = &app_state.db;
         let possible_user = is_super_user(claims.sub, pool).await;
 
@@ -99,6 +101,46 @@ where
             }
         }
 
-        Err(ChaosError::NotLoggedIn)
+        Err(ChaosError::Unauthorized)
+    }
+}
+
+pub struct OrganisationAdmin {
+    pub user_id: i64,
+}
+
+#[async_trait]
+impl<S> FromRequestParts<S> for OrganisationAdmin
+where
+    AppState: FromRef<S>,
+    S: Send + Sync,
+{
+    type Rejection = ChaosError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let app_state = AppState::from_ref(state);
+        let decoding_key = &app_state.decoding_key;
+        let jwt_validator = &app_state.jwt_validator;
+        let TypedHeader(cookies) = parts
+            .extract::<TypedHeader<Cookie>>()
+            .await
+            .map_err(|_| ChaosError::NotLoggedIn)?;
+
+        let token = cookies.get("auth_token").ok_or(ChaosError::NotLoggedIn)?;
+
+        let claims =
+            decode_auth_token(token, decoding_key, jwt_validator).ok_or(ChaosError::NotLoggedIn)?;
+
+        let pool = &app_state.db;
+        let user_id = claims.sub;
+
+        let Path(organisation_id) = parts
+            .extract::<Path<i64>>()
+            .await
+            .map_err(|_| ChaosError::BadRequest)?;
+
+        user_is_admin(user_id, organisation_id, pool).await?;
+
+        Ok(OrganisationAdmin { user_id })
     }
 }
