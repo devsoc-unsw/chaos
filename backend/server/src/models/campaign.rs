@@ -114,7 +114,6 @@ pub async fn get_campaigns(pool: &Pool<Postgres>) -> Result<Vec<Campaign>, Chaos
     /// Returns the updated campaign
     pub async fn update_banner(
         id: i64,
-        banner: String,
         pool: &Pool<Postgres>,
         storage_bucket: &Bucket,
     ) -> Result<String, ChaosError> {

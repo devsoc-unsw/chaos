@@ -30,13 +30,13 @@ impl CampaignHandler {
         Ok((StatusCode::OK, "Successfully updated campaign"))
     }
 
+
     pub async fn update_banner(
         State(state): State<AppState>,
         Path(id): Path<i64>,
         _admin: OrganisationAdmin,
-        Json(request_body): Json<models::campaign::CampaignBannerUpdate>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let banner_url = Campaign::update_banner(id, request_body.upload_url, &state.db, &state.storage_bucket).await?;
+        let banner_url = Campaign::update_banner(id, &state.db, &state.storage_bucket).await?;
         Ok((StatusCode::OK, Json(banner_url)))
     }
 
