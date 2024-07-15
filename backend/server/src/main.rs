@@ -91,20 +91,22 @@ async fn main() -> Result<()> {
                 .delete(OrganisationHandler::remove_admin),
         )
         .route(
-            "/api/v1/campaign/:campaign_id",
-            get(CampaigHandler::get),
+            "/api/v1/campaign/:id",
+            get(CampaignHandler::get),
         )
         .route(
-            "/api/v1/campaign/:campaign_id",
-            put(CampaigHandler::update),
+            "/api/v1/campaign/:id",
+            put(CampaignHandler::update),
         )
         .route(
-            "/api/v1/campaign/:campaign_id",
-            delete(CampaignHandler::delete),
+            "/api/v1/campaign/:id",
+            get(CampaignHandler::get).delete(CampaignHandler::delete),
+            
         )
         .route(
-            "/api/v1/campaign/:campaign_id",
-            put(CampaignHandler::update_banner))
+            "/api/v1/campaign/:id/banner",
+            patch(CampaignHandler::update_banner),
+        )
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();

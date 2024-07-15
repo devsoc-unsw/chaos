@@ -1,4 +1,4 @@
-use crate::models::campaign::Campaign;
+use crate::models::campaign::OrganisationCampaign;
 use crate::models::error::ChaosError;
 use crate::models::storage::Storage;
 use chrono::{DateTime, Utc};
@@ -16,7 +16,7 @@ pub struct Organisation {
     pub logo: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-    pub campaigns: Vec<Campaign>, // Awaiting Campaign to be complete - remove comment once done
+    pub campaigns: Vec<OrganisationCampaign>, // Awaiting Campaign to be complete - remove comment once done
     pub organisation_admins: Vec<i64>,
 }
 
@@ -300,9 +300,9 @@ impl Organisation {
     pub async fn get_campaigns(
         organisation_id: i64,
         pool: &Pool<Postgres>,
-    ) -> Result<Vec<Campaign>, ChaosError> {
+    ) -> Result<Vec<OrganisationCampaign>, ChaosError> {
         let campaigns = sqlx::query_as!(
-            Campaign,
+            OrganisationCampaign,
             "
             SELECT id, name, cover_image, description, starts_at, ends_at
             FROM campaigns

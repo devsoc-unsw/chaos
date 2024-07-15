@@ -1,76 +1,55 @@
-use axum::{
-    extract::{Json, Path, State},
-    http::StatusCode,
-    response::IntoResponse,
-};
+use crate::models;
+use crate::models::app::AppState;
+use crate::models::auth::SuperUser;
+use crate::models::auth::{AuthUser, OrganisationAdmin};
+use crate::models::error::ChaosError;
+use crate::models::campaign::{Campaign, CampaignBannerUpdate, CampaignUpdate};
+use crate::models::transaction::DBTransaction;
+use axum::extract::{Json, Path, State};
+use axum::http::StatusCode;
+use axum::response::IntoResponse;
 
-use crate::{
-    models::{
-        self,
-        app::AppState,
-        auth::{AuthUser, SuperUser},
-    },
-    service,
-};
-
-pub async fn get_campaigns(
-    State(state): State<AppState>,
-    _user: AuthUser,
-) -> Result<impl IntoResponse, impl IntoResponse> {
-    match service::campaign::get_campaigns(state.db).await {
-        Ok(campaigns) => Ok((StatusCode::OK, Json(campaigns))),
-        Err(e) => return Err((StatusCode::NOT_FOUND, e.to_string())),
+pub struct CampaignHandler;
+impl CampaignHandler {
+    pub async fn get(
+        State(state): State<AppState>,
+        Path(id): Path<i64>,
+        _user: AuthUser,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let campaign = Campaign::get(id, &state.db).await?;
+        Ok((StatusCode::OK, Json(campaign)))
     }
-}
-
-pub async fn get_campaign(
-    State(state): State<AppState>,
-    Path(campaign_id): Path<i64>,
-    _user: AuthUser,
-) -> Result<impl IntoResponse, impl IntoResponse> {
-    match service::campaign::get_campaign(campaign_id, state.db).await {
-        Ok(campaigns) => Ok((StatusCode::OK, Json(campaigns))),
-        Err(e) => return Err((StatusCode::NOT_FOUND, e.to_string())),
+    // TODO
+    pub async fn update(
+        State(state): State<AppState>,
+        Path(id): Path<i64>,
+        _admin: OrganisationAdmin,
+        Json(request_body): Json<models::campaign::CampaignUpdate>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        Campaign::update(id, request_body, &state.db).await?;
+        Ok((StatusCode::OK, "Successfully updated campaign"))
     }
-}
 
-// TODO
-pub async fn update_campaign(
-    State(state): State<AppState>,
-    Path(campaign_id): Path<i64>,
-    _user: AuthUser,
-    Json(request_body): Json<models::campaign::CampaignUpdate>,
-) -> Result<impl IntoResponse, impl IntoResponse> {
-    // todo!("check if user is organisation admin");
-    match service::campaign::update_campaign(campaign_id, request_body, state.db).await {
-        Ok(campaign) => Ok((StatusCode::OK, Json(campaign))),
-        Err(e) => return Err((StatusCode::UNAUTHORIZED, e.to_string())),
+    pub async fn update_banner(
+        State(state): State<AppState>,
+        Path(id): Path<i64>,
+        _admin: OrganisationAdmin,
+        Json(request_body): Json<models::campaign::CampaignBannerUpdate>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let banner_url = Campaign::update_banner(id, request_body.upload_url, &state.db, &state.storage_bucket).await?;
+        Ok((StatusCode::OK, Json(banner_url)))
     }
-}
 
-pub async fn update_campaign_banner(
-    State(state): State<AppState>,
-    Path(campaign_id): Path<i64>,
-    _user: AuthUser,
-    Json(request_body): Json<models::campaign::CampaignBannerUpdate>,
-) -> Result<impl IntoResponse, impl IntoResponse> {
-    // todo!("check if user is organisation admin")?
-    match service::campaign::update_campaign_banner(campaign_id, request_body.upload_url, state.db)
-        .await
-    {
-        Ok(campaign) => Ok((StatusCode::OK, Json(campaign))),
-        Err(e) => return Err((StatusCode::UNAUTHORIZED, e.to_string())),
-    }
-}
+    pub async fn delete(
+        State(state): State<AppState>,
+        Path(id): Path<i64>,
+        _user: SuperUser,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        // todo!("check if user is organisation admin")?
+        Campaign::delete(id, &state.db).await?;
+        Ok((StatusCode::OK, "Successfully deleted campaign"))
 
-pub async fn delete_campaign(
-    State(state): State<AppState>,
-    Path(campaign_id): Path<i64>,
-    _user: SuperUser,
-) -> Result<impl IntoResponse, impl IntoResponse> {
-    // todo!("check if user is organisation admin")?
-    match service::campaign::delete_campaign(campaign_id, state.db).await {
-        Ok(msg) => Ok((StatusCode::OK, Json(msg))),
-        Err(e) => return Err((StatusCode::UNAUTHORIZED, e.to_string())),
     }
+
+
 }
