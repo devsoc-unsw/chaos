@@ -77,4 +77,43 @@ impl Role {
 
         Ok(role)
     }
+
+    pub async fn delete(id: i32, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
+        sqlx::query!(
+            "
+            DELETE FROM campaign_roles WHERE id = $1
+        ",
+            id
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn update(
+        id: i32,
+        role_data: RoleUpdate,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
+        sqlx::query!(
+            "
+            UPDATE campaign_roles
+            SET (name, description, min_available, max_available, finalised) = ($2, $3, $4, $5, $6)
+            WHERE id = $1;
+        ",
+            id,
+            role_data.name,
+            role_data.description,
+            role_data.min_available,
+            role_data.max_avaliable,
+            role_data.finalised
+        )
+        .execute(transaction.deref_mut())
+        .await?;
+
+        Ok(())
+    }
+
+
 }
