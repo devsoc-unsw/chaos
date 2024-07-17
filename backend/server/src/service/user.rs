@@ -1,53 +1,51 @@
-use crate::models::user::User;
+use crate::models::user::{User, UserRole};
 use anyhow::{bail, Result};
 use sqlx::{Pool, Postgres};
 
-// 1. function to read all data of the user
 pub async fn get_user(id: i64, pool: Pool<Postgres>) -> Result<User> {
-    // fetch username from database
-    Ok(
-        sqlx::query_as!(User, "SELECT * FROM users WHERE id = $1", id)
-            .fetch_one(&pool)
-            .await?,
-    )
-}
-
-// 2. Update the user with new details
-
-pub async fn update_user_zid(id: i64, zid: String, pool: Pool<Postgres>) -> Result<i64> {
-    let possible_user = sqlx::query!("SELECT * FROM users WHERE id = $1", id)
+    let user = sqlx::query_as!(
+            User,
+            r#"
+                SELECT id, email, zid, name, degree_name,
+                degree_starting_year, role AS "role!: UserRole"
+                FROM users WHERE id = $1
+            "#,
+            id
+        )
         .fetch_one(&pool)
         .await?;
 
-    if possible_user.is_none() {
-        bail!("User with id {} does not exist", id);
-    }
+    Ok(user)
+}
 
-    if let zid = zid {
-        sqlx::query!("UPDATE users SET zid = $1 WHERE id = $2", zid, id)
-            .execute(&pool)
-            .await;
-    }
+pub async fn update_user_name(id: i64, name: String, pool: Pool<Postgres>) -> Result<()> {
+    let _ = sqlx::query!("UPDATE users SET name = $1 WHERE id = $2 RETURNING id", name, id)
+        .fetch_one(&pool)
+        .await?;
 
-    if let Some(degree_name) = degree_name {
-        sqlx::query!(
-            "UPDATE users SET degree_name = $1 WHERE id = $2",
-            degree_name,
-            id
-        )
-        .execute(&pool)
-        .await;
-    }
+    Ok(())
+}
 
-    if let Some(degree_starting_year) = degree_starting_year {
-        sqlx::query!(
-            "UPDATE users SET degree_name = $1 WHERE id = $2",
-            degree_starting_year,
-            id
-        )
-        .execute(&pool)
-        .await;
-    }
+pub async fn update_user_zid(id: i64, zid: String, pool: Pool<Postgres>) -> Result<()> {
+    let _ = sqlx::query!("UPDATE users SET zid = $1 WHERE id = $2 RETURNING id", zid, id)
+        .fetch_one(&pool)
+        .await?;
 
-    Ok(possible_user)
+    Ok(())
+}
+
+pub async fn update_user_degree_name(id: i64, degree_name: String, pool: Pool<Postgres>) -> Result<()> {
+    let _ = sqlx::query!("UPDATE users SET degree_name = $1 WHERE id = $2 RETURNING id", degree_name, id)
+        .fetch_one(&pool)
+        .await?;
+
+    Ok(())
+}
+
+pub async fn update_user_degree_starting_year(id: i64, degree_starting_year: i32, pool: Pool<Postgres>) -> Result<()> {
+    let _ = sqlx::query!("UPDATE users SET degree_starting_year = $1 WHERE id = $2 RETURNING id", degree_starting_year, id)
+        .fetch_one(&pool)
+        .await?;
+
+    Ok(())
 }
