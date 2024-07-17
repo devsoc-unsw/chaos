@@ -3,7 +3,7 @@
 services:
   database:
     # Official Postgres image from DockerHub.
-    image: 'postgres:16'
+    image: "postgres:16"
 
     # By default, a Postgres database is running on port 5432, so make that port accessible from outside of the container.
     ports:
