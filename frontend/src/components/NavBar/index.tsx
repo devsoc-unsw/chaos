@@ -64,12 +64,15 @@ const NavBar = ({ campaign }: { campaign: string }) => {
             {loggedIn ? (
               <AvatarButton />
             ) : (
-              <a
-                tw="rounded bg-indigo-400/30 px-3 py-1.5 text-black shadow transition-colors hover:bg-indigo-400/[0.42]"
-                href={import.meta.env.VITE_OAUTH_CALLBACK_URL as string}
-              >
-                Get Started
-              </a>
+              // <a
+              //   tw="rounded bg-indigo-400/30 px-3 py-1.5 text-black shadow transition-colors hover:bg-indigo-400/[0.42]"
+              //   href={import.meta.env.VITE_OAUTH_CALLBACK_URL as string}
+              // >
+              //   Get Started
+              // </a>
+              <p tw="rounded bg-indigo-400/30 px-3 py-1.5 text-black shadow transition-colors hover:bg-indigo-400/[0.42]">
+                Coming Soon!
+              </p>
             )}
           </div>
         </div>

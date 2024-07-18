@@ -79,8 +79,11 @@ const Landing = () => {
                 Your Dashboard
               </DashboardButton>
             ) : (
-              <DashboardButton as="a" href={OAUTH_CALLBACK_URL}>
-                Get Started
+              // <DashboardButton as="a" href={OAUTH_CALLBACK_URL}>
+              //   Get Started
+              // </DashboardButton>
+              <DashboardButton as="a" disabled>
+                Coming Soon!
               </DashboardButton>
             )}
           </Transition>
