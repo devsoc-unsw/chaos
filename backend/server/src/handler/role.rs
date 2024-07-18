@@ -1,11 +1,7 @@
-use crate::models;
 use crate::models::app::AppState;
-use crate::models::auth::SuperUser;
 use crate::models::auth::{AuthUser, OrganisationAdmin};
 use crate::models::error::ChaosError;
 use crate::models::role::{Role, RoleUpdate};
-use crate::models::transaction::DBTransaction;
-use crate::service;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -13,6 +9,15 @@ use axum::response::IntoResponse;
 pub struct RoleHandler;
 
 impl RoleHandler {
+    pub async fn create(
+        State(state): State<AppState>,
+        Path(id): Path<i64>,
+        _admin: OrganisationAdmin,
+        Json(data): Json<RoleUpdate>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        Role::create(id, data, &state.db).await?;
+        Ok((StatusCode::OK, "Successfully created role"))
+    }
     pub async fn get(
         State(state): State<AppState>,
         Path(id): Path<i32>,
@@ -35,11 +40,19 @@ impl RoleHandler {
         State(state): State<AppState>,
         Path(id): Path<i32>,
         _admin: OrganisationAdmin,
-        mut transaction: DBTransaction<'_>,
         Json(data): Json<RoleUpdate>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Role::update(id, data, &mut transaction.tx,).await?;
-        transaction.tx.commit().await?;
+        Role::update(id, data, &state.db).await?;
         Ok((StatusCode::OK, "Successfully updated role"))
+    }
+
+    pub async fn get_roles(
+        State(state): State<AppState>,
+        Path(id): Path<i64>,
+        _user: AuthUser,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let roles = Role::get_all_in_campaign(id, &state.db).await?;
+
+        Ok((StatusCode::OK, Json(roles)))
     }
 }

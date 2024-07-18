@@ -850,6 +850,7 @@ paths:
                   example: Chief Mouser
                 description:
                   type: string
+                  required: False
                   example: Larry the cat is dead, now we need someone else to handle the rat issues at 10th Downing st.
                 min_available:
                   type: int32
@@ -880,6 +881,49 @@ paths:
                   error:
                     type: string
                     example: Unauthorized
+
+  /campaign/{id}/roles:
+    get:
+      operationId: getRolesByCampaignId
+      parameters:
+        - name: id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns info about all roles in a campaign
+      tags:
+        - Campaign
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  campaigns:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          example: Chief Mouser
+                        description:
+                          type: string
+                          example: Larry the cat gone missing! now we need someone else to handle the rat issues at 10th Downing st.
+                        min_available:
+                          type: int32
+                          example: 1
+                        max_available:
+                          type: int32
+                          example: 3
+                        finalised:
+                          type: boolean
+                          description: Whether this role has been finalised (e.g. max avaliable number)
+                          example: False
   /role/{id}:
     get:
       operationId: getRoleById
@@ -901,22 +945,22 @@ paths:
             application/json:
               schema:
                 properties:
-                name:
-                  type: string
-                  example: Chief Mouser
-                description:
-                  type: string
-                  example: Larry the cat is dead, now we need someone else to handle the rat issues at 10th Downing st.
-                min_available:
-                  type: int32
-                  example: 1
-                max_available:
-                  type: int32
-                  example: 3
-                finalised:
-                  type: boolean
-                  description: Whether this role has been finalised (e.g. max avaliable number)
-                  example: False
+                  name:
+                    type: string
+                    example: Chief Mouser
+                  description:
+                    type: string
+                    example: Larry the cat gone missing! now we need someone else to handle the rat issues at 10th Downing st.
+                  min_available:
+                    type: int32
+                    example: 1
+                  max_available:
+                    type: int32
+                    example: 3
+                  finalised:
+                    type: boolean
+                    description: Whether this role has been finalised (e.g. max avaliable number)
+                    example: False
         '401':
           description: Not logged in.
           content:
@@ -926,3 +970,92 @@ paths:
                   error:
                     type: string
                     example: Not logged in.
+
+    put:
+      operationId: updateRoleById
+        parameters:
+        - name: id
+          in: path
+          description: Role ID
+          required: true
+          schema:
+            type: integer
+            format: int32
+      description: Update a role given the role id.
+      tags:
+        - Role
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+                  example: Chief Whip
+                description:
+                  type: string
+                  required: False
+                  example: Put a bit of stick about!
+                min_available:
+                  type: int32
+                  example: 1
+                max_available:
+                  type: int32
+                  example: 3
+                finalised:
+                  type: boolean
+                  description: Whether this role has been finalised (e.g. max avaliable number)
+                  example: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully update organisation.
+        '403':
+          description: User is not a Campaign Admin.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorized
+
+    delete:
+      operationId: deleteRoleById
+      parameters:
+        - name: id
+          in: path
+          description: Role ID
+          required: true
+          schema:
+            type: integer
+            format: int32
+      description: Deletes specified role.
+      tags:
+        - Role
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully deleted role.
+        '403':
+          description: User is not an admin of role's Campaign.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorized

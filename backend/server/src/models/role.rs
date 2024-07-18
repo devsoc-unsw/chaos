@@ -1,16 +1,13 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use crate::models::error::ChaosError;
-use sqlx::{FromRow, Pool, Postgres, Transaction};
-use std::ops::DerefMut;
-
-use super::campaign;
+use sqlx::{FromRow, Pool, Postgres};
 
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Role {
     pub id: i32,
     pub campaign_id: i64,
-    pub name: String,
+    pub name: Option<String>,
     pub description: String,
     pub min_available: i32,
     pub max_avaliable: i32,
@@ -37,11 +34,12 @@ pub struct RoleDetails {
     pub finalised: bool,
 }
 
+
 impl Role {
     pub async fn create(
         campaign_id: i64,
         role_data: RoleUpdate,
-        transaction: &mut Transaction<'_, Postgres>,
+        pool: &Pool<Postgres>
     ) -> Result<(), ChaosError> {
         
         sqlx::query!(
@@ -56,7 +54,7 @@ impl Role {
             role_data.max_avaliable,
             role_data.finalised
         )
-        .execute(transaction.deref_mut())
+        .fetch_one(pool)
         .await?;
 
         Ok(())
@@ -94,7 +92,7 @@ impl Role {
     pub async fn update(
         id: i32,
         role_data: RoleUpdate,
-        transaction: &mut Transaction<'_, Postgres>,
+        pool: &Pool<Postgres>
     ) -> Result<(), ChaosError> {
         sqlx::query!(
             "
@@ -109,10 +107,32 @@ impl Role {
             role_data.max_avaliable,
             role_data.finalised
         )
-        .execute(transaction.deref_mut())
+        .fetch_one(pool)
         .await?;
 
         Ok(())
+    }
+
+    /*
+    Given a campaign id, return all existing roles in this campaign
+     */
+    pub async fn get_all_in_campaign(
+        campaign_id: i64,
+        pool: &Pool<Postgres>
+    ) -> Result<Vec<RoleDetails>, ChaosError> {
+        let roles = sqlx::query_as!(
+            RoleDetails,
+            "
+            SELECT name, description, min_available, max_available, finalised
+                FROM campaign_roles
+                WHERE campaign_id = $1
+        ",
+            campaign_id
+        )
+        .fetch_all(pool)
+        .await?;
+
+        Ok(roles)
     }
 
 
