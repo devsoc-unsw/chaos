@@ -1,0 +1,2543 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "",
+    "description": "an example API",
+    "version": ""
+  },
+  "paths": {
+    "/api/v1/organisation": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewOrganisation"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/v1/organisation/{id}": {
+      "get": {
+
+      },
+      "delete": {
+
+      }
+    },
+    "/api/v1/organisation/{id}/campaign": {
+      "get": {
+
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Campaign"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/v1/organisation/{id}/logo": {
+      "patch": {
+
+      }
+    },
+    "/api/v1/organisation/{id}/member": {
+      "get": {
+
+      },
+      "put": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminUpdateList"
+              }
+            }
+          },
+          "required": true
+        }
+      },
+      "delete": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminToRemove"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/v1/organisation/{id}/admin": {
+      "get": {
+
+      },
+      "put": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminUpdateList"
+              }
+            }
+          },
+          "required": true
+        }
+      },
+      "delete": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminToRemove"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AdminToRemove": {
+        "type": "object",
+        "required": [
+          "user_id"
+        ],
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AdminUpdateList": {
+        "type": "object",
+        "required": [
+          "members"
+        ],
+        "properties": {
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        }
+      },
+      "ApiKeyLocation": {
+        "type": "string",
+        "enum": [
+          "query",
+          "header",
+          "cookie"
+        ]
+      },
+      "Campaign": {
+        "type": "object",
+        "required": [
+          "ends_at",
+          "id",
+          "name",
+          "starts_at"
+        ],
+        "properties": {
+          "cover_image": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Components": {
+        "description": "Holds a set of reusable objects for different aspects of the OAS. All objects defined within the components object will have no effect on the API unless they are explicitly referenced from properties outside the components object.",
+        "type": "object",
+        "properties": {
+          "callbacks": {
+            "description": "An object to hold reusable Callback Objects.",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ReferenceOr_for_Map_of_ReferenceOr_for_PathItem"
+            }
+          },
+          "examples": {
+            "description": "An object to hold reusable Example Objects.",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ReferenceOr_for_Example"
+            }
+          },
+          "headers": {
+            "description": "An object to hold reusable Header Objects.",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ReferenceOr_for_Header"
+            }
+          },
+          "links": {
+            "description": "An object to hold reusable Link Objects.",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ReferenceOr_for_Link"
+            }
+          },
+          "parameters": {
+            "description": "An object to hold reusable Parameter Objects.",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ReferenceOr_for_Parameter"
+            }
+          },
+          "pathItems": {
+            "description": "An object to hold reusable Path Item Objects.",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ReferenceOr_for_PathItem"
+            }
+          },
+          "requestBodies": {
+            "description": "An object to hold reusable Request Body Objects.",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ReferenceOr_for_RequestBody"
+            }
+          },
+          "responses": {
+            "description": "An object to hold reusable Response Objects.",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ReferenceOr_for_Response"
+            }
+          },
+          "schemas": {
+            "description": "An object to hold reusable Schema Objects.",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SchemaObject"
+            }
+          },
+          "securitySchemes": {
+            "description": "An object to hold reusable Security Scheme Objects.",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ReferenceOr_for_SecurityScheme"
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "Contact": {
+        "description": "Contact information for the exposed API.",
+        "type": "object",
+        "properties": {
+          "email": {
+            "description": "The email address of the contact person/organization. This MUST be in the format of an email address.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "description": "The identifying name of the contact person/organization.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "url": {
+            "description": "The URL pointing to the contact information. This MUST be in the format of a URL.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": true
+      },
+      "CookieStyle": {
+        "type": "string",
+        "enum": [
+          "form"
+        ]
+      },
+      "Encoding": {
+        "description": "A single encoding definition applied to a single schema property.",
+        "type": "object",
+        "properties": {
+          "allowReserved": {
+            "description": "Determines whether the parameter value SHOULD allow reserved characters, as defined by RFC3986 :/?#[]@!$&'()*+,;= to be included without percent-encoding. The default value is false. This property SHALL be ignored if the request body media type is not application/x-www-form-urlencoded or multipart/form-data. If a value is explicitly defined, then the value of `contentType` (implicit or explicit) SHALL be ignored.",
+            "type": "boolean"
+          },
+          "contentType": {
+            "description": "The Content-Type for encoding a specific property. Default value depends on the property type: for object - application/json; for array – the default is defined based on the inner type. for all other cases the default is `application/octet-stream`. The value can be a specific media type (e.g. application/json), a wildcard media type (e.g. image/*), or a comma-separated list of the two types.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "explode": {
+            "description": "When this is true, property values of type array or object generate separate parameters for each value of the array, or key-value-pair of the map. For other types of properties this property has no effect. When style is form, the default value is true. For all other styles, the default value is false. This property SHALL be ignored if the request body media type is not application/x-www-form-urlencoded or multipart/form-data. If a value is explicitly defined, then the value of `contentType` (implicit or explicit) SHALL be ignored.\n\nIn this Library this value defaults to false always despite the specification.",
+            "type": "boolean"
+          },
+          "headers": {
+            "description": "A map allowing additional information to be provided as headers, for example Content-Disposition. Content-Type is described separately and SHALL be ignored in this section. This property SHALL be ignored if the request body media type is not a multipart.",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ReferenceOr_for_Header"
+            }
+          },
+          "style": {
+            "description": "Describes how a specific property value will be serialized depending on its type. See Parameter Object for details on the style property. The behavior follows the same values as query parameters, including default values. This property SHALL be ignored if the request body media type is not application/x-www-form-urlencoded  or multipart/form-data. If a value is explicitly defined, then the value of `contentType` (implicit or explicit) SHALL be ignored.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QueryStyle"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": true
+      },
+      "Example": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "description": "Long description for the example. CommonMark syntax MAY be used for rich text representation.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "externalValue": {
+            "description": "A URI that points to the literal example. This provides the capability to reference examples that cannot easily be included in JSON or YAML documents. The `value` field and `externalValue` field are mutually exclusive. See the rules for resolving Relative References.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "summary": {
+            "description": "Short description for the example.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "value": {
+            "description": "Embedded literal example. The `value` field and `externalValue` field are mutually exclusive. To represent examples of media types that cannot naturally represented in JSON or YAML, use a string value to contain the example, escaping where necessary."
+          }
+        },
+        "additionalProperties": true
+      },
+      "ExternalDocumentation": {
+        "description": "Allows referencing an external resource for extended documentation.",
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "description": {
+            "description": "A description of the target documentation. CommonMark syntax MAY be used for rich text representation.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "url": {
+            "description": "REQUIRED. The URL for the target documentation. This MUST be in the format of a URL.",
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "Header": {
+        "description": "The Header Object follows the structure of the Parameter Object with the following changes:\n\n1) name MUST NOT be specified, it is given in the corresponding headers map. 2) in MUST NOT be specified, it is implicitly in header. 3) All traits that are affected by the location MUST be applicable to a location of header (for example, style).",
+        "type": "object",
+        "oneOf": [
+          {
+            "description": "The schema defining the type used for the parameter.",
+            "type": "object",
+            "required": [
+              "schema"
+            ],
+            "properties": {
+              "schema": {
+                "$ref": "#/components/schemas/SchemaObject"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "A map containing the representations for the parameter. The key is the media type and the value describes it. The map MUST only contain one entry.",
+            "type": "object",
+            "required": [
+              "content"
+            ],
+            "properties": {
+              "content": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/MediaType"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        ],
+        "properties": {
+          "deprecated": {
+            "description": "Specifies that a parameter is deprecated and SHOULD be transitioned out of usage.",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "description": {
+            "description": "A brief description of the parameter. This could contain examples of use. CommonMark syntax MAY be used for rich text representation.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "example": true,
+          "examples": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ReferenceOr_for_Example"
+            }
+          },
+          "required": {
+            "description": "Determines whether this parameter is mandatory. If the parameter location is \"path\", this property is REQUIRED and its value MUST be true. Otherwise, the property MAY be included and its default value is false.",
+            "type": "boolean"
+          },
+          "style": {
+            "default": "simple",
+            "$ref": "#/components/schemas/HeaderStyle"
+          }
+        },
+        "additionalProperties": true
+      },
+      "HeaderStyle": {
+        "type": "string",
+        "enum": [
+          "simple"
+        ]
+      },
+      "Info": {
+        "description": "The object provides metadata about the API. The metadata MAY be used by the clients if needed, and MAY be presented in editing or documentation generation tools for convenience.",
+        "type": "object",
+        "required": [
+          "title",
+          "version"
+        ],
+        "properties": {
+          "contact": {
+            "description": "The contact information for the exposed API.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Contact"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": {
+            "description": "A description of the API. CommonMark syntax MAY be used for rich text representation.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "license": {
+            "description": "The license information for the exposed API.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/License"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "summary": {
+            "description": "A short summary of the API.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "termsOfService": {
+            "description": "A URL to the Terms of Service for the API. This MUST be in the format of a URL.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "description": "REQUIRED. The title of the application.",
+            "type": "string"
+          },
+          "version": {
+            "description": "REQUIRED. The version of the OpenAPI document (which is distinct from the OpenAPI Specification version or the API implementation version).",
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "InstanceType": {
+        "description": "The possible types of values in JSON Schema documents.\n\nSee [JSON Schema 4.2.1. Instance Data Model](https://tools.ietf.org/html/draft-handrews-json-schema-02#section-4.2.1).",
+        "type": "string",
+        "enum": [
+          "null",
+          "boolean",
+          "object",
+          "array",
+          "number",
+          "string",
+          "integer"
+        ]
+      },
+      "License": {
+        "description": "License information for the exposed API.",
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "identifier": {
+            "description": "An [SPDX](https://spdx.org/spdx-specification-21-web-version#h.jxpfx0ykyb60) license expression for the API. The `identifier` field is mutually exclusive of the `url` field.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "description": "REQUIRED. The license name used for the API.",
+            "type": "string"
+          },
+          "url": {
+            "description": "A URL to the license used for the API. This MUST be in the form of a URL. The `url` field is mutually exclusive of the `identifier` field.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": true
+      },
+      "Link": {
+        "description": "The Link object represents a possible design-time link for a response. The presence of a link does not guarantee the caller's ability to successfully invoke it, rather it provides a known relationship and traversal mechanism between responses and other operations.\n\nUnlike dynamic links (i.e. links provided in the response payload), the OAS linking mechanism does not require link information in the runtime response.\n\nFor computing links, and providing instructions to execute them, a runtime expression is used for accessing values in an operation and using them as parameters while invoking the linked operation.",
+        "type": "object",
+        "oneOf": [
+          {
+            "description": "A relative or absolute reference to an OAS operation. This field is mutually exclusive of the operationId field, and MUST point to an Operation Object. Relative operationRef values MAY be used to locate an existing Operation Object in the OpenAPI definition. See the rules for resolving Relative References.",
+            "type": "object",
+            "required": [
+              "operationRef"
+            ],
+            "properties": {
+              "operationRef": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "The name of an existing, resolvable OAS operation, as defined with a unique operationId. This field is mutually exclusive of the operationRef field.",
+            "type": "object",
+            "required": [
+              "operationId"
+            ],
+            "properties": {
+              "operationId": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        ],
+        "properties": {
+          "description": {
+            "description": "A description of the link. CommonMark syntax MAY be used for rich text representation.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "parameters": {
+            "description": "A map representing parameters to pass to an operation as specified with operationId or identified via operationRef. The key is the parameter name to be used, whereas the value can be a constant or an expression to be evaluated and passed to the linked operation. The parameter name can be qualified using the parameter location [{in}.]{name} for operations that use the same parameter name in different locations (e.g. path.id).",
+            "type": "object",
+            "additionalProperties": true
+          },
+          "requestBody": {
+            "description": "A literal value or {expression} to use as a request body when calling the target operation."
+          },
+          "server": {
+            "description": "A server object to be used by the target operation.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Server"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": true
+      },
+      "MediaType": {
+        "type": "object",
+        "properties": {
+          "encoding": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Encoding"
+            }
+          },
+          "example": true,
+          "examples": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ReferenceOr_for_Example"
+            }
+          },
+          "schema": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SchemaObject"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": true
+      },
+      "NewOrganisation": {
+        "type": "object",
+        "required": [
+          "admin",
+          "name"
+        ],
+        "properties": {
+          "admin": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "OAuth2Flows": {
+        "type": "object",
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "implicit"
+            ],
+            "properties": {
+              "implicit": {
+                "type": "object",
+                "required": [
+                  "authorizationUrl"
+                ],
+                "properties": {
+                  "authorizationUrl": {
+                    "type": "string"
+                  },
+                  "refreshUrl": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "scopes": {
+                    "default": {
+
+                    },
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "password"
+            ],
+            "properties": {
+              "password": {
+                "type": "object",
+                "required": [
+                  "tokenUrl"
+                ],
+                "properties": {
+                  "refreshUrl": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "scopes": {
+                    "default": {
+
+                    },
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "tokenUrl": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "clientCredentials"
+            ],
+            "properties": {
+              "clientCredentials": {
+                "type": "object",
+                "required": [
+                  "tokenUrl"
+                ],
+                "properties": {
+                  "refreshUrl": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "scopes": {
+                    "default": {
+
+                    },
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "tokenUrl": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "authorizationCode"
+            ],
+            "properties": {
+              "authorizationCode": {
+                "type": "object",
+                "required": [
+                  "authorizationUrl",
+                  "tokenUrl"
+                ],
+                "properties": {
+                  "authorizationUrl": {
+                    "type": "string"
+                  },
+                  "refreshUrl": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "scopes": {
+                    "default": {
+
+                    },
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "tokenUrl": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "OpenApi": {
+        "type": "object",
+        "required": [
+          "info",
+          "openapi"
+        ],
+        "properties": {
+          "components": {
+            "description": "An element to hold various schemas for the document.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Components"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "externalDocs": {
+            "description": "Additional external documentation.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExternalDocumentation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "info": {
+            "description": "REQUIRED. Provides metadata about the API. The metadata MAY be used by tooling as required.",
+            "$ref": "#/components/schemas/Info"
+          },
+          "jsonSchemaDialect": {
+            "description": "The default value for the `$schema` keyword within Schema Objects contained within this OAS document. This MUST be in the form of a URI.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "openapi": {
+            "type": "string"
+          },
+          "paths": {
+            "description": "The available paths and operations for the API.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Paths"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "security": {
+            "description": "A declaration of which security mechanisms can be used across the API. The list of values includes alternative security requirement objects that can be used. Only one of the security requirement objects need to be satisfied to authorize a request. Individual operations can override this definition. Global security settings may be overridden on a per-path basis.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "servers": {
+            "description": "An array of Server Objects, which provide connectivity information to a target server. If the servers property is not provided, or is an empty array, the default value would be a Server Object with a url value of /.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Server"
+            }
+          },
+          "tags": {
+            "description": "A list of tags used by the document with additional metadata. The order of the tags can be used to reflect on their order by the parsing tools. Not all tags that are used by the Operation Object must be declared. The tags that are not declared MAY be organized randomly or based on the tool's logic. Each tag name in the list MUST be unique.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tag"
+            }
+          },
+          "webhooks": {
+            "description": "The incoming webhooks that MAY be received as part of this API and that the API consumer MAY choose to implement. Closely related to the `callbacks` feature, this section describes requests initiated other than by an API call, for example by an out of band registration. The key name is a unique string to refer to each webhook, while the (optionally referenced) Path Item Object describes a request that may be initiated by the API provider and the expected responses.",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ReferenceOr_for_PathItem"
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "Operation": {
+        "description": "Describes a single API operation on a path.",
+        "type": "object",
+        "properties": {
+          "callbacks": {
+            "description": "Callbacks for the operation.",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ReferenceOr_for_Map_of_ReferenceOr_for_PathItem"
+            }
+          },
+          "deprecated": {
+            "description": "Declares this operation to be deprecated.Default value is false.",
+            "type": "boolean"
+          },
+          "description": {
+            "description": "A verbose explanation of the operation behavior. CommonMark syntax MAY be used for rich text representation.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "externalDocs": {
+            "description": "Additional external documentation for this operation.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExternalDocumentation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "operationId": {
+            "description": "Unique string used to identify the operation. The id MUST be unique among all operations described in the API. Tools and libraries MAY use the operationId to uniquely identify an operation, therefore, it is RECOMMENDED to follow common programming naming conventions.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "parameters": {
+            "description": "A list of parameters that are applicable for this operation. If a parameter is already defined at the Path Item, the new definition will override it but can never remove it. The list MUST NOT include duplicated parameters. A unique parameter is defined by a combination of a name and location. The list can use the Reference Object to link to parameters that are defined at the OpenAPI Object's components/parameters.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReferenceOr_for_Parameter"
+            }
+          },
+          "requestBody": {
+            "description": "The request body applicable for this operation. The requestBody is fully supported in HTTP methods where the HTTP 1.1 specification RFC7231 has explicitly defined semantics for request bodies. In other cases where the HTTP spec is vague (such as [GET](https://tools.ietf.org/html/rfc7231#section-4.3.1), [HEAD](https://tools.ietf.org/html/rfc7231#section-4.3.2) and [DELETE](https://tools.ietf.org/html/rfc7231#section-4.3.5)), requestBody is permitted but does not have well-defined semantics and SHOULD be avoided if possible.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReferenceOr_for_RequestBody"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "responses": {
+            "description": "The list of possible responses as they are returned from executing this operation.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Responses"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "security": {
+            "description": "A declaration of which security mechanisms can be used for this operation. The list of values includes alternative security requirement objects that can be used. Only one of the security requirement objects need to be satisfied to authorize a request. This definition overrides any declared top-level security. To remove a top-level security declaration, an empty array can be used.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "servers": {
+            "description": "An alternative server array to service this operation. If an alternative server object is specified at the Path Item Object or Root level, it will be overridden by this value.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Server"
+            }
+          },
+          "summary": {
+            "description": "A short summary of what the operation does.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tags": {
+            "description": "A list of tags for API documentation control. Tags can be used for logical grouping of operations by resources or any other qualifier.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "Parameter": {
+        "oneOf": [
+          {
+            "description": "Describes a single operation parameter.\n\nA unique parameter is defined by a combination of a name and location.",
+            "type": "object",
+            "oneOf": [
+              {
+                "description": "The schema defining the type used for the parameter.",
+                "type": "object",
+                "required": [
+                  "schema"
+                ],
+                "properties": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SchemaObject"
+                  }
+                },
+                "additionalProperties": false
+              },
+              {
+                "description": "A map containing the representations for the parameter. The key is the media type and the value describes it. The map MUST only contain one entry.",
+                "type": "object",
+                "required": [
+                  "content"
+                ],
+                "properties": {
+                  "content": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "$ref": "#/components/schemas/MediaType"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            ],
+            "required": [
+              "in",
+              "name"
+            ],
+            "properties": {
+              "allow_empty_value": {
+                "description": "Sets the ability to pass empty-valued parameters. This is valid only for query parameters and allows sending a parameter with an empty value. Default value is false. If style is used, and if behavior is n/a (cannot be serialized), the value of allowEmptyValue SHALL be ignored.",
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "allow_reserved": {
+                "description": "Determines whether the parameter value SHOULD allow reserved characters, as defined by RFC3986 :/?#[]@!$&'()*+,;= to be included without percent-encoding. This property only applies to parameters with an in value of query. The default value is false.",
+                "type": "boolean"
+              },
+              "deprecated": {
+                "description": "Specifies that a parameter is deprecated and SHOULD be transitioned out of usage.",
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "description": {
+                "description": "A brief description of the parameter. This could contain examples of use. CommonMark syntax MAY be used for rich text representation.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "example": true,
+              "examples": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/ReferenceOr_for_Example"
+                }
+              },
+              "explode": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "in": {
+                "type": "string",
+                "enum": [
+                  "query"
+                ]
+              },
+              "name": {
+                "description": "REQUIRED. The name of the parameter. Parameter names are case sensitive. If in is \"path\", the name field MUST correspond to the associated path segment from the path field in the Paths Object. See Path Templating for further information.\n\nIf in is \"header\" and the name field is \"Accept\", \"Content-Type\" or \"Authorization\", the parameter definition SHALL be ignored.\n\nFor all other cases, the name corresponds to the parameter name used by the in property.",
+                "type": "string"
+              },
+              "required": {
+                "description": "Determines whether this parameter is mandatory. If the parameter location is \"path\", this property is REQUIRED and its value MUST be true. Otherwise, the property MAY be included and its default value is false.",
+                "type": "boolean"
+              },
+              "style": {
+                "description": "Describes how the parameter value will be serialized depending on the type of the parameter value. Default values (based on value of in): for query - form; for path - simple; for header - simple; for cookie - form.",
+                "default": "form",
+                "$ref": "#/components/schemas/QueryStyle"
+              }
+            },
+            "additionalProperties": true
+          },
+          {
+            "description": "Describes a single operation parameter.\n\nA unique parameter is defined by a combination of a name and location.",
+            "type": "object",
+            "oneOf": [
+              {
+                "description": "The schema defining the type used for the parameter.",
+                "type": "object",
+                "required": [
+                  "schema"
+                ],
+                "properties": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SchemaObject"
+                  }
+                },
+                "additionalProperties": false
+              },
+              {
+                "description": "A map containing the representations for the parameter. The key is the media type and the value describes it. The map MUST only contain one entry.",
+                "type": "object",
+                "required": [
+                  "content"
+                ],
+                "properties": {
+                  "content": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "$ref": "#/components/schemas/MediaType"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            ],
+            "required": [
+              "in",
+              "name"
+            ],
+            "properties": {
+              "deprecated": {
+                "description": "Specifies that a parameter is deprecated and SHOULD be transitioned out of usage.",
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "description": {
+                "description": "A brief description of the parameter. This could contain examples of use. CommonMark syntax MAY be used for rich text representation.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "example": true,
+              "examples": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/ReferenceOr_for_Example"
+                }
+              },
+              "explode": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "in": {
+                "type": "string",
+                "enum": [
+                  "header"
+                ]
+              },
+              "name": {
+                "description": "REQUIRED. The name of the parameter. Parameter names are case sensitive. If in is \"path\", the name field MUST correspond to the associated path segment from the path field in the Paths Object. See Path Templating for further information.\n\nIf in is \"header\" and the name field is \"Accept\", \"Content-Type\" or \"Authorization\", the parameter definition SHALL be ignored.\n\nFor all other cases, the name corresponds to the parameter name used by the in property.",
+                "type": "string"
+              },
+              "required": {
+                "description": "Determines whether this parameter is mandatory. If the parameter location is \"path\", this property is REQUIRED and its value MUST be true. Otherwise, the property MAY be included and its default value is false.",
+                "type": "boolean"
+              },
+              "style": {
+                "description": "Describes how the parameter value will be serialized depending on the type of the parameter value. Default values (based on value of in): for query - form; for path - simple; for header - simple; for cookie - form.",
+                "default": "simple",
+                "$ref": "#/components/schemas/HeaderStyle"
+              }
+            },
+            "additionalProperties": true
+          },
+          {
+            "description": "Describes a single operation parameter.\n\nA unique parameter is defined by a combination of a name and location.",
+            "type": "object",
+            "oneOf": [
+              {
+                "description": "The schema defining the type used for the parameter.",
+                "type": "object",
+                "required": [
+                  "schema"
+                ],
+                "properties": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SchemaObject"
+                  }
+                },
+                "additionalProperties": false
+              },
+              {
+                "description": "A map containing the representations for the parameter. The key is the media type and the value describes it. The map MUST only contain one entry.",
+                "type": "object",
+                "required": [
+                  "content"
+                ],
+                "properties": {
+                  "content": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "$ref": "#/components/schemas/MediaType"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            ],
+            "required": [
+              "in",
+              "name"
+            ],
+            "properties": {
+              "deprecated": {
+                "description": "Specifies that a parameter is deprecated and SHOULD be transitioned out of usage.",
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "description": {
+                "description": "A brief description of the parameter. This could contain examples of use. CommonMark syntax MAY be used for rich text representation.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "example": true,
+              "examples": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/ReferenceOr_for_Example"
+                }
+              },
+              "explode": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "in": {
+                "type": "string",
+                "enum": [
+                  "path"
+                ]
+              },
+              "name": {
+                "description": "REQUIRED. The name of the parameter. Parameter names are case sensitive. If in is \"path\", the name field MUST correspond to the associated path segment from the path field in the Paths Object. See Path Templating for further information.\n\nIf in is \"header\" and the name field is \"Accept\", \"Content-Type\" or \"Authorization\", the parameter definition SHALL be ignored.\n\nFor all other cases, the name corresponds to the parameter name used by the in property.",
+                "type": "string"
+              },
+              "required": {
+                "description": "Determines whether this parameter is mandatory. If the parameter location is \"path\", this property is REQUIRED and its value MUST be true. Otherwise, the property MAY be included and its default value is false.",
+                "type": "boolean"
+              },
+              "style": {
+                "description": "Describes how the parameter value will be serialized depending on the type of the parameter value. Default values (based on value of in): for query - form; for path - simple; for header - simple; for cookie - form.",
+                "default": "simple",
+                "$ref": "#/components/schemas/PathStyle"
+              }
+            },
+            "additionalProperties": true
+          },
+          {
+            "description": "Describes a single operation parameter.\n\nA unique parameter is defined by a combination of a name and location.",
+            "type": "object",
+            "oneOf": [
+              {
+                "description": "The schema defining the type used for the parameter.",
+                "type": "object",
+                "required": [
+                  "schema"
+                ],
+                "properties": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SchemaObject"
+                  }
+                },
+                "additionalProperties": false
+              },
+              {
+                "description": "A map containing the representations for the parameter. The key is the media type and the value describes it. The map MUST only contain one entry.",
+                "type": "object",
+                "required": [
+                  "content"
+                ],
+                "properties": {
+                  "content": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "$ref": "#/components/schemas/MediaType"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            ],
+            "required": [
+              "in",
+              "name"
+            ],
+            "properties": {
+              "deprecated": {
+                "description": "Specifies that a parameter is deprecated and SHOULD be transitioned out of usage.",
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "description": {
+                "description": "A brief description of the parameter. This could contain examples of use. CommonMark syntax MAY be used for rich text representation.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "example": true,
+              "examples": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/ReferenceOr_for_Example"
+                }
+              },
+              "explode": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "in": {
+                "type": "string",
+                "enum": [
+                  "cookie"
+                ]
+              },
+              "name": {
+                "description": "REQUIRED. The name of the parameter. Parameter names are case sensitive. If in is \"path\", the name field MUST correspond to the associated path segment from the path field in the Paths Object. See Path Templating for further information.\n\nIf in is \"header\" and the name field is \"Accept\", \"Content-Type\" or \"Authorization\", the parameter definition SHALL be ignored.\n\nFor all other cases, the name corresponds to the parameter name used by the in property.",
+                "type": "string"
+              },
+              "required": {
+                "description": "Determines whether this parameter is mandatory. If the parameter location is \"path\", this property is REQUIRED and its value MUST be true. Otherwise, the property MAY be included and its default value is false.",
+                "type": "boolean"
+              },
+              "style": {
+                "description": "Describes how the parameter value will be serialized depending on the type of the parameter value. Default values (based on value of in): for query - form; for path - simple; for header - simple; for cookie - form.",
+                "default": "form",
+                "$ref": "#/components/schemas/CookieStyle"
+              }
+            },
+            "additionalProperties": true
+          }
+        ]
+      },
+      "PathItem": {
+        "description": "Describes the operations available on a single path. A Path Item MAY be empty, due to ACL constraints. The path itself is still exposed to the documentation viewer but they will not know which operations and parameters are available.",
+        "type": "object",
+        "properties": {
+          "$ref": {
+            "description": "Allows for a referenced definition of this path item. The referenced structure MUST be in the form of a Path Item Object.  In case a Path Item Object field appears both in the defined object and the referenced object, the behavior is undefined. See the rules for resolving Relative References.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "delete": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Operation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": {
+            "description": "An optional, string description, intended to apply to all operations in this path. CommonMark syntax MAY be used for rich text representation.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "get": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Operation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "head": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Operation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "options": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Operation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "parameters": {
+            "description": "A list of parameters that are applicable for all the operations described under this path. These parameters can be overridden at the operation level, but cannot be removed there. The list MUST NOT include duplicated parameters. A unique parameter is defined by a combination of a name and location. The list can use the Reference Object to link to parameters that are defined at the OpenAPI Object's components/parameters.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReferenceOr_for_Parameter"
+            }
+          },
+          "patch": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Operation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "post": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Operation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "put": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Operation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "servers": {
+            "description": "An alternative server array to service all operations in this path.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Server"
+            }
+          },
+          "summary": {
+            "description": "An optional, string summary, intended to apply to all operations in this path.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "trace": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Operation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": true
+      },
+      "PathStyle": {
+        "type": "string",
+        "enum": [
+          "matrix",
+          "label",
+          "simple"
+        ]
+      },
+      "Paths": {
+        "description": "Holds the relative paths to the individual endpoints and their operations. The path is appended to the URL from the Server Object in order to construct the full URL. The Paths MAY be empty, due to Access Control List (ACL) constraints.",
+        "type": "object",
+        "additionalProperties": true
+      },
+      "QueryStyle": {
+        "type": "string",
+        "enum": [
+          "form",
+          "spaceDelimited",
+          "pipeDelimited",
+          "deepObject"
+        ]
+      },
+      "ReferenceOr_for_Example": {
+        "anyOf": [
+          {
+            "type": "object",
+            "required": [
+              "$ref"
+            ],
+            "properties": {
+              "$ref": {
+                "description": "REQUIRED. The reference identifier. This MUST be in the form of a URI.",
+                "type": "string"
+              },
+              "description": {
+                "description": "A description which by default SHOULD override that of the referenced component. CommonMark syntax MAY be used for rich text representation. If the referenced object-type does not allow a `description` field, then this field has no effect.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "summary": {
+                "description": "A short summary which by default SHOULD override that of the referenced component. If the referenced object-type does not allow a `summary` field, then this field has no effect.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/Example"
+          }
+        ]
+      },
+      "ReferenceOr_for_Header": {
+        "anyOf": [
+          {
+            "type": "object",
+            "required": [
+              "$ref"
+            ],
+            "properties": {
+              "$ref": {
+                "description": "REQUIRED. The reference identifier. This MUST be in the form of a URI.",
+                "type": "string"
+              },
+              "description": {
+                "description": "A description which by default SHOULD override that of the referenced component. CommonMark syntax MAY be used for rich text representation. If the referenced object-type does not allow a `description` field, then this field has no effect.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "summary": {
+                "description": "A short summary which by default SHOULD override that of the referenced component. If the referenced object-type does not allow a `summary` field, then this field has no effect.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/Header"
+          }
+        ]
+      },
+      "ReferenceOr_for_Link": {
+        "anyOf": [
+          {
+            "type": "object",
+            "required": [
+              "$ref"
+            ],
+            "properties": {
+              "$ref": {
+                "description": "REQUIRED. The reference identifier. This MUST be in the form of a URI.",
+                "type": "string"
+              },
+              "description": {
+                "description": "A description which by default SHOULD override that of the referenced component. CommonMark syntax MAY be used for rich text representation. If the referenced object-type does not allow a `description` field, then this field has no effect.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "summary": {
+                "description": "A short summary which by default SHOULD override that of the referenced component. If the referenced object-type does not allow a `summary` field, then this field has no effect.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/Link"
+          }
+        ]
+      },
+      "ReferenceOr_for_Map_of_ReferenceOr_for_PathItem": {
+        "anyOf": [
+          {
+            "type": "object",
+            "required": [
+              "$ref"
+            ],
+            "properties": {
+              "$ref": {
+                "description": "REQUIRED. The reference identifier. This MUST be in the form of a URI.",
+                "type": "string"
+              },
+              "description": {
+                "description": "A description which by default SHOULD override that of the referenced component. CommonMark syntax MAY be used for rich text representation. If the referenced object-type does not allow a `description` field, then this field has no effect.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "summary": {
+                "description": "A short summary which by default SHOULD override that of the referenced component. If the referenced object-type does not allow a `summary` field, then this field has no effect.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ReferenceOr_for_PathItem"
+            }
+          }
+        ]
+      },
+      "ReferenceOr_for_Parameter": {
+        "anyOf": [
+          {
+            "type": "object",
+            "required": [
+              "$ref"
+            ],
+            "properties": {
+              "$ref": {
+                "description": "REQUIRED. The reference identifier. This MUST be in the form of a URI.",
+                "type": "string"
+              },
+              "description": {
+                "description": "A description which by default SHOULD override that of the referenced component. CommonMark syntax MAY be used for rich text representation. If the referenced object-type does not allow a `description` field, then this field has no effect.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "summary": {
+                "description": "A short summary which by default SHOULD override that of the referenced component. If the referenced object-type does not allow a `summary` field, then this field has no effect.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/Parameter"
+          }
+        ]
+      },
+      "ReferenceOr_for_PathItem": {
+        "anyOf": [
+          {
+            "type": "object",
+            "required": [
+              "$ref"
+            ],
+            "properties": {
+              "$ref": {
+                "description": "REQUIRED. The reference identifier. This MUST be in the form of a URI.",
+                "type": "string"
+              },
+              "description": {
+                "description": "A description which by default SHOULD override that of the referenced component. CommonMark syntax MAY be used for rich text representation. If the referenced object-type does not allow a `description` field, then this field has no effect.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "summary": {
+                "description": "A short summary which by default SHOULD override that of the referenced component. If the referenced object-type does not allow a `summary` field, then this field has no effect.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/PathItem"
+          }
+        ]
+      },
+      "ReferenceOr_for_RequestBody": {
+        "anyOf": [
+          {
+            "type": "object",
+            "required": [
+              "$ref"
+            ],
+            "properties": {
+              "$ref": {
+                "description": "REQUIRED. The reference identifier. This MUST be in the form of a URI.",
+                "type": "string"
+              },
+              "description": {
+                "description": "A description which by default SHOULD override that of the referenced component. CommonMark syntax MAY be used for rich text representation. If the referenced object-type does not allow a `description` field, then this field has no effect.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "summary": {
+                "description": "A short summary which by default SHOULD override that of the referenced component. If the referenced object-type does not allow a `summary` field, then this field has no effect.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/RequestBody"
+          }
+        ]
+      },
+      "ReferenceOr_for_Response": {
+        "anyOf": [
+          {
+            "type": "object",
+            "required": [
+              "$ref"
+            ],
+            "properties": {
+              "$ref": {
+                "description": "REQUIRED. The reference identifier. This MUST be in the form of a URI.",
+                "type": "string"
+              },
+              "description": {
+                "description": "A description which by default SHOULD override that of the referenced component. CommonMark syntax MAY be used for rich text representation. If the referenced object-type does not allow a `description` field, then this field has no effect.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "summary": {
+                "description": "A short summary which by default SHOULD override that of the referenced component. If the referenced object-type does not allow a `summary` field, then this field has no effect.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/Response"
+          }
+        ]
+      },
+      "ReferenceOr_for_SecurityScheme": {
+        "anyOf": [
+          {
+            "type": "object",
+            "required": [
+              "$ref"
+            ],
+            "properties": {
+              "$ref": {
+                "description": "REQUIRED. The reference identifier. This MUST be in the form of a URI.",
+                "type": "string"
+              },
+              "description": {
+                "description": "A description which by default SHOULD override that of the referenced component. CommonMark syntax MAY be used for rich text representation. If the referenced object-type does not allow a `description` field, then this field has no effect.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "summary": {
+                "description": "A short summary which by default SHOULD override that of the referenced component. If the referenced object-type does not allow a `summary` field, then this field has no effect.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/SecurityScheme"
+          }
+        ]
+      },
+      "RequestBody": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "description": "REQUIRED. The content of the request body. The key is a media type or media type range and the value describes it. For requests that match multiple keys, only the most specific key is applicable. e.g. text/plain overrides text/*",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/MediaType"
+            }
+          },
+          "description": {
+            "description": "A brief description of the request body. This could contain examples of use. CommonMark syntax MAY be used for rich text representation.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "required": {
+            "description": "Determines if the request body is required in the request. Defaults to false.",
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": true
+      },
+      "Response": {
+        "type": "object",
+        "required": [
+          "description"
+        ],
+        "properties": {
+          "content": {
+            "description": "A map containing descriptions of potential response payloads. The key is a media type or media type range and the value describes it. For responses that match multiple keys, only the most specific key is applicable. e.g. text/plain overrides text/*",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/MediaType"
+            }
+          },
+          "description": {
+            "description": "REQUIRED. A description of the response. CommonMark syntax MAY be used for rich text representation.",
+            "type": "string"
+          },
+          "headers": {
+            "description": "Maps a header name to its definition. RFC7230 states header names are case insensitive. If a response header is defined with the name \"Content-Type\", it SHALL be ignored.",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ReferenceOr_for_Header"
+            }
+          },
+          "links": {
+            "description": "A map of operations links that can be followed from the response. The key of the map is a short name for the link, following the naming constraints of the names for Component Objects.",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ReferenceOr_for_Link"
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "Responses": {
+        "type": "object",
+        "properties": {
+          "default": {
+            "description": "The documentation of responses other than the ones declared for specific HTTP response codes. Use this field to cover undeclared responses.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReferenceOr_for_Response"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": true
+      },
+      "Schema": {
+        "description": "A JSON Schema.",
+        "anyOf": [
+          {
+            "description": "A trivial boolean JSON Schema.\n\nThe schema `true` matches everything (always passes validation), whereas the schema `false` matches nothing (always fails validation).",
+            "type": "boolean"
+          },
+          {
+            "description": "A JSON Schema object.",
+            "$ref": "#/components/schemas/SchemaObject2"
+          }
+        ]
+      },
+      "SchemaObject": {
+        "description": "A JSON Schema.",
+        "type": "object",
+        "anyOf": [
+          {
+            "description": "A trivial boolean JSON Schema.\n\nThe schema `true` matches everything (always passes validation), whereas the schema `false` matches nothing (always fails validation).",
+            "type": "boolean"
+          },
+          {
+            "description": "A JSON Schema object.",
+            "$ref": "#/components/schemas/SchemaObject2"
+          }
+        ],
+        "properties": {
+          "example": {
+            "description": "A free-form property to include an example of an instance for this schema. To represent examples that cannot be naturally represented in JSON or YAML, a string value can be used to contain the example with escaping where necessary. **Deprecated:** The `example` property has been deprecated in favor of the JSON Schema `examples` keyword. Use of `example` is discouraged, and later versions of this specification may remove it."
+          },
+          "externalDocs": {
+            "description": "Additional external documentation for this schema.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExternalDocumentation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "SchemaObject2": {
+        "description": "A JSON Schema object.",
+        "type": "object",
+        "properties": {
+          "$id": {
+            "description": "The `$id` keyword.\n\nSee [JSON Schema 8.2.2. The \"$id\" Keyword](https://tools.ietf.org/html/draft-handrews-json-schema-02#section-8.2.2).",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "$ref": {
+            "description": "The `$ref` keyword.\n\nSee [JSON Schema 8.2.4.1. Direct References with \"$ref\"](https://tools.ietf.org/html/draft-handrews-json-schema-02#section-8.2.4.1).",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "additionalItems": {
+            "description": "The `additionalItems` keyword.\n\nSee [JSON Schema 9.3.1.2. \"additionalItems\"](https://tools.ietf.org/html/draft-handrews-json-schema-02#section-9.3.1.2).",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Schema"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "additionalProperties": {
+            "description": "The `additionalProperties` keyword.\n\nSee [JSON Schema 9.3.2.3. \"additionalProperties\"](https://tools.ietf.org/html/draft-handrews-json-schema-02#section-9.3.2.3).",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Schema"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "allOf": {
+            "description": "The `allOf` keyword.\n\nSee [JSON Schema 9.2.1.1. \"allOf\"](https://tools.ietf.org/html/draft-handrews-json-schema-02#section-9.2.1.1).",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Schema"
+            }
+          },
+          "anyOf": {
+            "description": "The `anyOf` keyword.\n\nSee [JSON Schema 9.2.1.2. \"anyOf\"](https://tools.ietf.org/html/draft-handrews-json-schema-02#section-9.2.1.2).",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Schema"
+            }
+          },
+          "const": {
+            "description": "The `const` keyword.\n\nSee [JSON Schema Validation 6.1.3. \"const\"](https://tools.ietf.org/html/draft-handrews-json-schema-validation-02#section-6.1.3)"
+          },
+          "contains": {
+            "description": "The `contains` keyword.\n\nSee [JSON Schema 9.3.1.4. \"contains\"](https://tools.ietf.org/html/draft-handrews-json-schema-02#section-9.3.1.4).",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Schema"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "default": {
+            "description": "The `default` keyword.\n\nSee [JSON Schema Validation 9.2. \"default\"](https://tools.ietf.org/html/draft-handrews-json-schema-validation-02#section-9.2)."
+          },
+          "deprecated": {
+            "description": "The `deprecated` keyword.\n\nSee [JSON Schema Validation 9.3. \"deprecated\"](https://tools.ietf.org/html/draft-handrews-json-schema-validation-02#section-9.3).",
+            "type": "boolean"
+          },
+          "description": {
+            "description": "The `description` keyword.\n\nSee [JSON Schema Validation 9.1. \"title\" and \"description\"](https://tools.ietf.org/html/draft-handrews-json-schema-validation-02#section-9.1).",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "else": {
+            "description": "The `else` keyword.\n\nSee [JSON Schema 9.2.2.3. \"else\"](https://tools.ietf.org/html/draft-handrews-json-schema-02#section-9.2.2.3).",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Schema"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "enum": {
+            "description": "The `enum` keyword.\n\nSee [JSON Schema Validation 6.1.2. \"enum\"](https://tools.ietf.org/html/draft-handrews-json-schema-validation-02#section-6.1.2)",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": true
+          },
+          "examples": {
+            "description": "The `examples` keyword.\n\nSee [JSON Schema Validation 9.5. \"examples\"](https://tools.ietf.org/html/draft-handrews-json-schema-validation-02#section-9.5).",
+            "type": "array",
+            "items": true
+          },
+          "exclusiveMaximum": {
+            "description": "The `exclusiveMaximum` keyword.\n\nSee [JSON Schema Validation 6.2.3. \"exclusiveMaximum\"](https://tools.ietf.org/html/draft-handrews-json-schema-validation-02#section-6.2.3).",
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "exclusiveMinimum": {
+            "description": "The `exclusiveMinimum` keyword.\n\nSee [JSON Schema Validation 6.2.5. \"exclusiveMinimum\"](https://tools.ietf.org/html/draft-handrews-json-schema-validation-02#section-6.2.5).",
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "format": {
+            "description": "The `format` keyword.\n\nSee [JSON Schema Validation 7. A Vocabulary for Semantic Content With \"format\"](https://tools.ietf.org/html/draft-handrews-json-schema-validation-02#section-7).",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "if": {
+            "description": "The `if` keyword.\n\nSee [JSON Schema 9.2.2.1. \"if\"](https://tools.ietf.org/html/draft-handrews-json-schema-02#section-9.2.2.1).",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Schema"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "items": {
+            "description": "The `items` keyword.\n\nSee [JSON Schema 9.3.1.1. \"items\"](https://tools.ietf.org/html/draft-handrews-json-schema-02#section-9.3.1.1).",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SingleOrVec_for_Schema"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "maxItems": {
+            "description": "The `maxItems` keyword.\n\nSee [JSON Schema Validation 6.4.1. \"maxItems\"](https://tools.ietf.org/html/draft-handrews-json-schema-validation-02#section-6.4.1).",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0
+          },
+          "maxLength": {
+            "description": "The `maxLength` keyword.\n\nSee [JSON Schema Validation 6.3.1. \"maxLength\"](https://tools.ietf.org/html/draft-handrews-json-schema-validation-02#section-6.3.1).",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0
+          },
+          "maxProperties": {
+            "description": "The `maxProperties` keyword.\n\nSee [JSON Schema Validation 6.5.1. \"maxProperties\"](https://tools.ietf.org/html/draft-handrews-json-schema-validation-02#section-6.5.1).",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0
+          },
+          "maximum": {
+            "description": "The `maximum` keyword.\n\nSee [JSON Schema Validation 6.2.2. \"maximum\"](https://tools.ietf.org/html/draft-handrews-json-schema-validation-02#section-6.2.2).",
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "minItems": {
+            "description": "The `minItems` keyword.\n\nSee [JSON Schema Validation 6.4.2. \"minItems\"](https://tools.ietf.org/html/draft-handrews-json-schema-validation-02#section-6.4.2).",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0
+          },
+          "minLength": {
+            "description": "The `minLength` keyword.\n\nSee [JSON Schema Validation 6.3.2. \"minLength\"](https://tools.ietf.org/html/draft-handrews-json-schema-validation-02#section-6.3.2).",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0
+          },
+          "minProperties": {
+            "description": "The `minProperties` keyword.\n\nSee [JSON Schema Validation 6.5.2. \"minProperties\"](https://tools.ietf.org/html/draft-handrews-json-schema-validation-02#section-6.5.2).",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0
+          },
+          "minimum": {
+            "description": "The `minimum` keyword.\n\nSee [JSON Schema Validation 6.2.4. \"minimum\"](https://tools.ietf.org/html/draft-handrews-json-schema-validation-02#section-6.2.4).",
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "multipleOf": {
+            "description": "The `multipleOf` keyword.\n\nSee [JSON Schema Validation 6.2.1. \"multipleOf\"](https://tools.ietf.org/html/draft-handrews-json-schema-validation-02#section-6.2.1).",
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "not": {
+            "description": "The `not` keyword.\n\nSee [JSON Schema 9.2.1.4. \"not\"](https://tools.ietf.org/html/draft-handrews-json-schema-02#section-9.2.1.4).",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Schema"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "oneOf": {
+            "description": "The `oneOf` keyword.\n\nSee [JSON Schema 9.2.1.3. \"oneOf\"](https://tools.ietf.org/html/draft-handrews-json-schema-02#section-9.2.1.3).",
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Schema"
+            }
+          },
+          "pattern": {
+            "description": "The `pattern` keyword.\n\nSee [JSON Schema Validation 6.3.3. \"pattern\"](https://tools.ietf.org/html/draft-handrews-json-schema-validation-02#section-6.3.3).",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "patternProperties": {
+            "description": "The `patternProperties` keyword.\n\nSee [JSON Schema 9.3.2.2. \"patternProperties\"](https://tools.ietf.org/html/draft-handrews-json-schema-02#section-9.3.2.2).",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Schema"
+            }
+          },
+          "properties": {
+            "description": "The `properties` keyword.\n\nSee [JSON Schema 9.3.2.1. \"properties\"](https://tools.ietf.org/html/draft-handrews-json-schema-02#section-9.3.2.1).",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Schema"
+            }
+          },
+          "propertyNames": {
+            "description": "The `propertyNames` keyword.\n\nSee [JSON Schema 9.3.2.5. \"propertyNames\"](https://tools.ietf.org/html/draft-handrews-json-schema-02#section-9.3.2.5).",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Schema"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "readOnly": {
+            "description": "The `readOnly` keyword.\n\nSee [JSON Schema Validation 9.4. \"readOnly\" and \"writeOnly\"](https://tools.ietf.org/html/draft-handrews-json-schema-validation-02#section-9.4).",
+            "type": "boolean"
+          },
+          "required": {
+            "description": "The `required` keyword.\n\nSee [JSON Schema Validation 6.5.3. \"required\"](https://tools.ietf.org/html/draft-handrews-json-schema-validation-02#section-6.5.3).",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "then": {
+            "description": "The `then` keyword.\n\nSee [JSON Schema 9.2.2.2. \"then\"](https://tools.ietf.org/html/draft-handrews-json-schema-02#section-9.2.2.2).",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Schema"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": {
+            "description": "The `title` keyword.\n\nSee [JSON Schema Validation 9.1. \"title\" and \"description\"](https://tools.ietf.org/html/draft-handrews-json-schema-validation-02#section-9.1).",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": {
+            "description": "The `type` keyword.\n\nSee [JSON Schema Validation 6.1.1. \"type\"](https://tools.ietf.org/html/draft-handrews-json-schema-validation-02#section-6.1.1) and [JSON Schema 4.2.1. Instance Data Model](https://tools.ietf.org/html/draft-handrews-json-schema-02#section-4.2.1).",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SingleOrVec_for_InstanceType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "uniqueItems": {
+            "description": "The `uniqueItems` keyword.\n\nSee [JSON Schema Validation 6.4.3. \"uniqueItems\"](https://tools.ietf.org/html/draft-handrews-json-schema-validation-02#section-6.4.3).",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "writeOnly": {
+            "description": "The `writeOnly` keyword.\n\nSee [JSON Schema Validation 9.4. \"readOnly\" and \"writeOnly\"](https://tools.ietf.org/html/draft-handrews-json-schema-validation-02#section-9.4).",
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": true
+      },
+      "SecurityScheme": {
+        "description": "Defines a security scheme that can be used by the operations. Supported schemes are HTTP authentication, an API key (either as a header or as a query parameter), OAuth2's common flows (implicit, password, application and access code) as defined in RFC6749, and OpenID Connect Discovery.",
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "in",
+              "name",
+              "type"
+            ],
+            "properties": {
+              "description": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "in": {
+                "$ref": "#/components/schemas/ApiKeyLocation"
+              },
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "apiKey"
+                ]
+              }
+            },
+            "additionalProperties": true
+          },
+          {
+            "type": "object",
+            "required": [
+              "scheme",
+              "type"
+            ],
+            "properties": {
+              "bearerFormat": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "description": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "scheme": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "http"
+                ]
+              }
+            },
+            "additionalProperties": true
+          },
+          {
+            "type": "object",
+            "required": [
+              "flows",
+              "type"
+            ],
+            "properties": {
+              "description": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "flows": {
+                "$ref": "#/components/schemas/OAuth2Flows"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "oauth2"
+                ]
+              }
+            },
+            "additionalProperties": true
+          },
+          {
+            "type": "object",
+            "required": [
+              "openIdConnectUrl",
+              "type"
+            ],
+            "properties": {
+              "description": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "openIdConnectUrl": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "openIdConnect"
+                ]
+              }
+            },
+            "additionalProperties": true
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "description": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "mutualTLS"
+                ]
+              }
+            },
+            "additionalProperties": true
+          }
+        ]
+      },
+      "Server": {
+        "description": "An object representing a Server.",
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "description": {
+            "description": "An optional string describing the host designated by the URL. CommonMark syntax MAY be used for rich text representation.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "url": {
+            "description": "REQUIRED. A URL to the target host. This URL supports Server Variables and MAY be relative, to indicate that the host location is relative to the location where the OpenAPI document is being served. Variable substitutions will be made when a variable is named in {brackets}.",
+            "type": "string"
+          },
+          "variables": {
+            "description": "A map between a variable name and its value. The value is used for substitution in the server's URL template.",
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ServerVariable"
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "ServerVariable": {
+        "description": "An object representing a Server Variable for server URL template substitution.",
+        "type": "object",
+        "required": [
+          "default"
+        ],
+        "properties": {
+          "default": {
+            "description": "REQUIRED. The default value to use for substitution, and to send, if an alternate value is not supplied. Unlike the Schema Object's default, this value MUST be provided by the consumer.",
+            "type": "string"
+          },
+          "description": {
+            "description": "An optional description for the server variable. CommonMark syntax MAY be used for rich text representation.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "enum": {
+            "description": "An enumeration of string values to be used if the substitution options are from a limited set.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "SingleOrVec_for_InstanceType": {
+        "description": "A type which can be serialized as a single item, or multiple items.\n\nIn some contexts, a `Single` may be semantically distinct from a `Vec` containing only item.",
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/InstanceType"
+          },
+          {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InstanceType"
+            }
+          }
+        ]
+      },
+      "SingleOrVec_for_Schema": {
+        "description": "A type which can be serialized as a single item, or multiple items.\n\nIn some contexts, a `Single` may be semantically distinct from a `Vec` containing only item.",
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schema"
+          },
+          {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Schema"
+            }
+          }
+        ]
+      },
+      "Tag": {
+        "description": "Adds metadata to a single tag that is used by the Operation Object. It is not mandatory to have a Tag Object per tag defined in the Operation Object instances.",
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "description": {
+            "description": "A description for the tag. CommonMark syntax MAY be used for rich text representation.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "externalDocs": {
+            "description": "Additional external documentation for this tag.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExternalDocumentation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "description": "REQUIRED. The name of the tag.",
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  }
+}
