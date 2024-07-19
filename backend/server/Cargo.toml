@@ -26,6 +26,8 @@ rust-s3 = "0.34.0"
 rs-snowflake = "0.6"
 jsonwebtoken = "9.1"
 dotenvy = "0.15"
-aide = { version = "0.13.4", features = ["axum", "macros"]}
+#aide = { version = "0.13.4", features = ["axum", "macros", "http"]}
+aide = { path="../aide/crates/aide", features = ["axum", "macros", "http"]}
+aide-macros = { path="../aide/crates/aide-macros"}
+axum-jsonschema = { path="../aide/crates/axum-jsonschema"}
 schemars = {version = "0.8.21", features = ["chrono"]}
-

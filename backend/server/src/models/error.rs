@@ -1,13 +1,18 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Redirect, Response};
-use aide::OperationIo;
+use aide::{OperationIo, OperationOutput,
+	gen,
+	openapi::Operation,
+};
+use schemars::JsonSchema;
 
 /// Custom error enum for Chaos.
 ///
 /// Handles all errors thrown by libraries (when `?` is used) alongside
 /// specific errors for business logic.
-#[derive(thiserror::Error, Debug, OperationIo)]
-#[aide(output)]
+//#[derive(thiserror::Error, Debug, OperationIo)]
+//#[aide(output)]
+#[derive(thiserror::Error, Debug)]
 pub enum ChaosError {
     #[error("Not logged in")]
     NotLoggedIn,
@@ -57,5 +62,21 @@ impl IntoResponse for ChaosError {
             },
             _ => (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response(),
         }
+    }
+}
+
+impl OperationOutput for ChaosError {
+	type Inner = Self;
+
+    fn inferred_responses(
+        ctx: &mut gen::GenContext,
+        operation: &mut Operation,
+    ) -> Vec<(Option<u16>, aide::openapi::Response)> {
+		Vec::from([
+			(Some(400), Default::default()), // Bad request
+			(Some(401), Default::default()), // Unauthorized
+			(Some(403), Default::default()), // Forbidden
+			(Some(500), Default::default()), // Internal Server Error
+		])
     }
 }

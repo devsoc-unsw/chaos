@@ -29,7 +29,7 @@ pub struct NewOrganisation {
 }
 
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, JsonSchema)]
 pub struct OrganisationDetails {
     pub id: i64,
     pub name: String,
@@ -37,21 +37,21 @@ pub struct OrganisationDetails {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Deserialize, Serialize, sqlx::Type, Clone)]
+#[derive(Deserialize, Serialize, sqlx::Type, Clone, JsonSchema)]
 #[sqlx(type_name = "organisation_role", rename_all = "PascalCase")]
 pub enum OrganisationRole {
     User,
     Admin,
 }
 
-#[derive(Deserialize, Serialize, FromRow)]
+#[derive(Deserialize, Serialize, FromRow, JsonSchema)]
 pub struct Member {
     pub id: i64,
     pub name: String,
     pub role: OrganisationRole,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, OperationIo, JsonSchema)]
 pub struct MemberList {
     pub members: Vec<Member>,
 }

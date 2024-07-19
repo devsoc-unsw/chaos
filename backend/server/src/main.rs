@@ -10,6 +10,7 @@ use sqlx::postgres::PgPoolOptions;
 use std::env;
 
 use axum::Json;
+use aide::OperationOutput;
 use aide::{
     axum::{
         routing::{get, post, patch, put},
