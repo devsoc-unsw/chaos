@@ -16,18 +16,19 @@ pub struct User {
     pub name: String,
     pub degree_name: Option<String>,
     pub degree_starting_year: Option<i32>,
-    pub role: UserRole
+    pub role: UserRole,
 }
 
+#[derive(Deserialize, Serialize)]
 pub struct UserName {
-    pub name: String
+    pub name: String,
 }
-
+#[derive(Deserialize, Serialize)]
 pub struct UserZid {
-    pub zid: String
+    pub zid: String,
 }
-
+#[derive(Deserialize, Serialize)]
 pub struct UserDegree {
     pub degree_name: String,
-    pub degree_starting_year: i64
+    pub degree_starting_year: i32,
 }
