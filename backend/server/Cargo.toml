@@ -26,4 +26,6 @@ rust-s3 = "0.34.0"
 rs-snowflake = "0.6"
 jsonwebtoken = "9.1"
 dotenvy = "0.15"
+aide = { version = "0.13.4", features = ["axum", "macros"]}
+schemars = {version = "0.8.21", features = ["chrono"]}
 

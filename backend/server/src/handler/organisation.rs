@@ -9,6 +9,8 @@ use crate::service;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
+use aide::OperationOutput;
+use aide::axum::IntoApiResponse;
 
 pub struct OrganisationHandler;
 
@@ -18,7 +20,7 @@ impl OrganisationHandler {
         _user: SuperUser,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewOrganisation>,
-    ) -> Result<impl IntoResponse, ChaosError> {
+    ) -> Result<impl IntoApiResponse, ChaosError> {
         Organisation::create(
             data.admin,
             data.name,
@@ -35,7 +37,7 @@ impl OrganisationHandler {
         State(state): State<AppState>,
         Path(id): Path<i64>,
         _user: AuthUser,
-    ) -> Result<impl IntoResponse, ChaosError> {
+    ) -> Result<impl IntoApiResponse, ChaosError> {
         let org = Organisation::get(id, &state.db).await?;
         Ok((StatusCode::OK, Json(org)))
     }
@@ -44,7 +46,7 @@ impl OrganisationHandler {
         State(state): State<AppState>,
         Path(id): Path<i64>,
         _user: SuperUser,
-    ) -> Result<impl IntoResponse, ChaosError> {
+    ) -> Result<impl IntoApiResponse, ChaosError> {
         Organisation::delete(id, &state.db).await?;
         Ok((StatusCode::OK, "Successfully deleted organisation"))
     }
@@ -53,7 +55,7 @@ impl OrganisationHandler {
         State(state): State<AppState>,
         Path(id): Path<i64>,
         _user: SuperUser,
-    ) -> Result<impl IntoResponse, ChaosError> {
+    ) -> Result<impl IntoApiResponse, ChaosError> {
         let members = Organisation::get_admins(id, &state.db).await?;
         Ok((StatusCode::OK, Json(members)))
     }
@@ -62,7 +64,7 @@ impl OrganisationHandler {
         State(state): State<AppState>,
         Path(id): Path<i64>,
         _admin: OrganisationAdmin,
-    ) -> Result<impl IntoResponse, ChaosError> {
+    ) -> Result<impl IntoApiResponse, ChaosError> {
         let members = Organisation::get_members(id, &state.db).await?;
         Ok((StatusCode::OK, Json(members)))
     }
@@ -73,7 +75,7 @@ impl OrganisationHandler {
         _super_user: SuperUser,
         mut transaction: DBTransaction<'_>,
         Json(request_body): Json<AdminUpdateList>,
-    ) -> Result<impl IntoResponse, ChaosError> {
+    ) -> Result<impl IntoApiResponse, ChaosError> {
         Organisation::update_admins(id, request_body.members, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
@@ -86,7 +88,7 @@ impl OrganisationHandler {
         Path(id): Path<i64>,
         _admin: OrganisationAdmin,
         Json(request_body): Json<AdminUpdateList>,
-    ) -> Result<impl IntoResponse, ChaosError> {
+    ) -> Result<impl IntoApiResponse, ChaosError> {
         Organisation::update_members(id, request_body.members, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
@@ -98,7 +100,7 @@ impl OrganisationHandler {
         Path(id): Path<i64>,
         _super_user: SuperUser,
         Json(request_body): Json<AdminToRemove>,
-    ) -> Result<impl IntoResponse, ChaosError> {
+    ) -> Result<impl IntoApiResponse, ChaosError> {
         Organisation::remove_admin(id, request_body.user_id, &state.db).await?;
 
         Ok((
@@ -112,7 +114,7 @@ impl OrganisationHandler {
         Path(id): Path<i64>,
         _admin: OrganisationAdmin,
         Json(request_body): Json<AdminToRemove>,
-    ) -> Result<impl IntoResponse, ChaosError> {
+    ) -> Result<impl IntoApiResponse, ChaosError> {
         Organisation::remove_member(id, request_body.user_id, &state.db).await?;
 
         Ok((
@@ -125,7 +127,7 @@ impl OrganisationHandler {
         State(state): State<AppState>,
         Path(id): Path<i64>,
         _admin: OrganisationAdmin,
-    ) -> Result<impl IntoResponse, ChaosError> {
+    ) -> Result<impl IntoApiResponse, ChaosError> {
         let logo_url = Organisation::update_logo(id, &state.db, &state.storage_bucket).await?;
         Ok((StatusCode::OK, Json(logo_url)))
     }
@@ -134,7 +136,7 @@ impl OrganisationHandler {
         State(state): State<AppState>,
         Path(id): Path<i64>,
         _user: AuthUser,
-    ) -> Result<impl IntoResponse, ChaosError> {
+    ) -> Result<impl IntoApiResponse, ChaosError> {
         let campaigns = Organisation::get_campaigns(id, &state.db).await?;
 
         Ok((StatusCode::OK, Json(campaigns)))
@@ -144,7 +146,7 @@ impl OrganisationHandler {
         State(mut state): State<AppState>,
         _admin: OrganisationAdmin,
         Json(request_body): Json<models::campaign::Campaign>,
-    ) -> Result<impl IntoResponse, ChaosError> {
+    ) -> Result<impl IntoApiResponse, ChaosError> {
         Organisation::create_campaign(
             request_body.name,
             request_body.description,

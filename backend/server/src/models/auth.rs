@@ -9,6 +9,7 @@ use axum::response::{IntoResponse, Redirect, Response};
 use axum::{async_trait, RequestPartsExt};
 use axum_extra::{headers::Cookie, TypedHeader};
 use serde::{Deserialize, Serialize};
+use aide::{OperationInput, OperationIo};
 
 #[derive(Deserialize, Serialize)]
 pub struct AuthRequest {
@@ -30,10 +31,12 @@ impl IntoResponse for AuthRedirect {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, OperationIo)]
+#[aide(input)]
 pub struct AuthUser {
     pub user_id: i64,
 }
+
 
 #[async_trait]
 impl<S> FromRequestParts<S> for AuthUser
@@ -63,7 +66,9 @@ where
     }
 }
 
-#[derive(Deserialize, Serialize)]
+
+#[derive(Deserialize, Serialize, OperationIo)]
+#[aide(input)]
 pub struct SuperUser {
     pub user_id: i64,
 }
@@ -105,6 +110,8 @@ where
     }
 }
 
+#[derive(OperationIo)]
+#[aide(input)]
 pub struct OrganisationAdmin {
     pub user_id: i64,
 }

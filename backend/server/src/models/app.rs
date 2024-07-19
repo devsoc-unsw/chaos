@@ -3,6 +3,7 @@ use reqwest::Client as ReqwestClient;
 use s3::Bucket;
 use snowflake::SnowflakeIdGenerator;
 use sqlx::{Pool, Postgres};
+use aide::{OperationInput, OperationIo};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -15,3 +16,5 @@ pub struct AppState {
     pub snowflake_generator: SnowflakeIdGenerator,
     pub storage_bucket: Bucket,
 }
+
+impl OperationInput for AppState {}

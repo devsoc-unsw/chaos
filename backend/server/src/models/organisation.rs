@@ -8,6 +8,8 @@ use snowflake::SnowflakeIdGenerator;
 use sqlx::{FromRow, Pool, Postgres, Transaction};
 use std::ops::DerefMut;
 use uuid::Uuid;
+use aide::{OperationInput, OperationIo};
+use schemars::JsonSchema;
 
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Organisation {
@@ -20,11 +22,12 @@ pub struct Organisation {
     pub organisation_admins: Vec<i64>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, JsonSchema)]
 pub struct NewOrganisation {
     pub name: String,
     pub admin: i64,
 }
+
 
 #[derive(Deserialize, Serialize)]
 pub struct OrganisationDetails {
@@ -53,12 +56,12 @@ pub struct MemberList {
     pub members: Vec<Member>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, JsonSchema)]
 pub struct AdminUpdateList {
     pub members: Vec<i64>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, JsonSchema)]
 pub struct AdminToRemove {
     pub user_id: i64,
 }

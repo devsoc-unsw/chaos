@@ -2,17 +2,29 @@ use crate::handler::auth::google_callback;
 use crate::handler::organisation::OrganisationHandler;
 use crate::models::storage::Storage;
 use anyhow::Result;
-use axum::routing::{get, patch, post, put};
-use axum::Router;
+use axum::{Router, Extension};
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use models::app::AppState;
 use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::PgPoolOptions;
 use std::env;
 
+use axum::Json;
+use aide::{
+    axum::{
+        routing::{get, post, patch, put},
+        ApiRouter, IntoApiResponse,
+    },
+    openapi::{Info, OpenApi},
+};
+
 mod handler;
 mod models;
 mod service;
+
+async fn serve_api(Extension(api): Extension<OpenApi>) -> impl IntoApiResponse {
+    Json(api)
+}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -61,29 +73,38 @@ async fn main() -> Result<()> {
         storage_bucket,
     };
 
-    let app = Router::new()
+	let mut api = OpenApi {
+		info: Info {
+			description: Some("an example API".to_string()),
+			..Info::default()
+		},
+		..OpenApi::default()
+    };
+
+    let app = ApiRouter::new()
         .route("/", get(|| async { "Hello, World!" }))
-        .route("/api/auth/callback/google", get(google_callback))
-        .route("/api/v1/organisation", post(OrganisationHandler::create))
-        .route(
+		.route("/api.json", get(serve_api))
+        //.route("/api/auth/callback/google", get(google_callback))
+        .api_route("/api/v1/organisation", post(OrganisationHandler::create))
+        .api_route(
             "/api/v1/organisation/:id",
             get(OrganisationHandler::get).delete(OrganisationHandler::delete),
         )
-        .route(
+        .api_route(
             "/api/v1/organisation/:id/campaign",
             get(OrganisationHandler::get_campaigns).post(OrganisationHandler::create_campaign),
         )
-        .route(
+        .api_route(
             "/api/v1/organisation/:id/logo",
             patch(OrganisationHandler::update_logo),
         )
-        .route(
+        .api_route(
             "/api/v1/organisation/:id/member",
             get(OrganisationHandler::get_members)
                 .put(OrganisationHandler::update_members)
                 .delete(OrganisationHandler::remove_member),
         )
-        .route(
+        .api_route(
             "/api/v1/organisation/:id/admin",
             get(OrganisationHandler::get_admins)
                 .put(OrganisationHandler::update_admins)
@@ -92,7 +113,10 @@ async fn main() -> Result<()> {
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, 
+		app.finish_api(&mut api)
+		.layer(Extension(api))
+		.into_make_service()).await.unwrap();
 
     Ok(())
 }

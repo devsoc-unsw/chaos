@@ -4,7 +4,10 @@ use axum::async_trait;
 use axum::extract::{FromRef, FromRequestParts};
 use axum::http::request::Parts;
 use sqlx::{Postgres, Transaction};
+use aide::{OperationInput, OperationIo};
 
+#[derive(OperationIo)]
+#[aide(input)]
 pub struct DBTransaction<'a> {
     pub tx: Transaction<'a, Postgres>,
 }

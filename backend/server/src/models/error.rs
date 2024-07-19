@@ -1,11 +1,13 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Redirect, Response};
+use aide::OperationIo;
 
 /// Custom error enum for Chaos.
 ///
 /// Handles all errors thrown by libraries (when `?` is used) alongside
 /// specific errors for business logic.
-#[derive(thiserror::Error, Debug)]
+#[derive(thiserror::Error, Debug, OperationIo)]
+#[aide(output)]
 pub enum ChaosError {
     #[error("Not logged in")]
     NotLoggedIn,
