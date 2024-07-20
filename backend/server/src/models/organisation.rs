@@ -304,10 +304,10 @@ impl Organisation {
         let campaigns = sqlx::query_as!(
             OrganisationCampaign,
             "
-            SELECT id, name, cover_image, description, starts_at, ends_at
-            FROM campaigns
-            WHERE organisation_id = $1
-        ",
+                SELECT id, name, cover_image, description, starts_at, ends_at
+                FROM campaigns
+                WHERE organisation_id = $1
+            ",
             organisation_id
         )
         .fetch_all(pool)
