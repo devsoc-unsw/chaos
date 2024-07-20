@@ -1,13 +1,11 @@
 use chrono::{DateTime, Utc};
+use s3::Bucket;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use s3::Bucket;
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
-
 use super::{error::ChaosError, storage::Storage};
-
 
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Campaign {
@@ -20,7 +18,7 @@ pub struct Campaign {
     pub starts_at: DateTime<Utc>,
     pub ends_at: DateTime<Utc>,
     pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
@@ -44,8 +42,6 @@ pub struct OrganisationCampaign {
     pub ends_at: DateTime<Utc>,
 }
 
-
-
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct CampaignUpdate {
     pub name: String,
@@ -61,7 +57,7 @@ pub struct CampaignBannerUpdate {
 
 impl Campaign {
     /// Get a list of all campaigns, both published and unpublished
-pub async fn get_all(pool: &Pool<Postgres>) -> Result<Vec<Campaign>, ChaosError> {
+    pub async fn get_all(pool: &Pool<Postgres>) -> Result<Vec<Campaign>, ChaosError> {
         let campaigns = sqlx::query_as!(
             Campaign,
             "
@@ -71,22 +67,21 @@ pub async fn get_all(pool: &Pool<Postgres>) -> Result<Vec<Campaign>, ChaosError>
         )
         .fetch_all(pool)
         .await?;
-          
+
         Ok(campaigns)
     }
-
 
     /// Get a campaign based on it's id
     pub async fn get(id: i64, pool: &Pool<Postgres>) -> Result<CampaignDetails, ChaosError> {
         let campaign = sqlx::query_as!(
             CampaignDetails,
-        "
-            SELECT c.id, c.name, c.organisation_id, o.name as organisation_name,
-            c.cover_image, c.description, c.starts_at, c.ends_at
-            FROM campaigns c
-            JOIN organisations o on c.organisation_id = o.id
-            WHERE c.id = $1
-        ",
+            "
+                SELECT c.id, c.name, c.organisation_id, o.name as organisation_name,
+                c.cover_image, c.description, c.starts_at, c.ends_at
+                FROM campaigns c
+                JOIN organisations o on c.organisation_id = o.id
+                WHERE c.id = $1
+            ",
             id
         )
         .fetch_one(pool)
@@ -102,11 +97,11 @@ pub async fn get_all(pool: &Pool<Postgres>) -> Result<Vec<Campaign>, ChaosError>
         pool: &Pool<Postgres>,
     ) -> Result<(), ChaosError> {
         sqlx::query!(
-        "
-            UPDATE campaigns
-            SET name = $1, description = $2, starts_at = $3, ends_at = $4
-            WHERE id = $5
-        ",
+            "
+                UPDATE campaigns
+                SET name = $1, description = $2, starts_at = $3, ends_at = $4
+                WHERE id = $5
+            ",
             update.name,
             update.description,
             update.starts_at,
@@ -116,7 +111,7 @@ pub async fn get_all(pool: &Pool<Postgres>) -> Result<Vec<Campaign>, ChaosError>
         .execute(pool)
         .await?;
 
-       Ok(())
+        Ok(())
     }
 
     /// Update a campaign banner
@@ -131,11 +126,11 @@ pub async fn get_all(pool: &Pool<Postgres>) -> Result<Vec<Campaign>, ChaosError>
         let current_time = dt;
 
         sqlx::query!(
-        "
-            UPDATE campaigns
-            SET cover_image = $1, updated_at = $2
-            WHERE id = $3
-        ",
+            "
+                UPDATE campaigns
+                SET cover_image = $1, updated_at = $2
+                WHERE id = $3
+            ",
             image_id,
             current_time,
             id
@@ -143,13 +138,10 @@ pub async fn get_all(pool: &Pool<Postgres>) -> Result<Vec<Campaign>, ChaosError>
         .execute(pool)
         .await?;
 
-        let upload_url = Storage::generate_put_url(format!("/banner/{id}/{image_id}"), storage_bucket).await?;
-        
-        Ok(
-            CampaignBannerUpdate {
-                upload_url
-            }
-        )
+        let upload_url =
+            Storage::generate_put_url(format!("/banner/{id}/{image_id}"), storage_bucket).await?;
+
+        Ok(CampaignBannerUpdate { upload_url })
     }
 
     /// Delete a campaign from the database
@@ -165,5 +157,4 @@ pub async fn get_all(pool: &Pool<Postgres>) -> Result<Vec<Campaign>, ChaosError>
 
         Ok(())
     }
-
 }

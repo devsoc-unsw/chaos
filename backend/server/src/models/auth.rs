@@ -1,6 +1,7 @@
 use crate::models::app::AppState;
 use crate::models::error::ChaosError;
 use crate::service::auth::is_super_user;
+use crate::service::campaign::user_is_campaign_admin;
 use crate::service::jwt::decode_auth_token;
 use crate::service::organisation::user_is_organisation_admin;
 use axum::extract::{FromRef, FromRequestParts, Path};
@@ -9,7 +10,6 @@ use axum::response::{IntoResponse, Redirect, Response};
 use axum::{async_trait, RequestPartsExt};
 use axum_extra::{headers::Cookie, TypedHeader};
 use serde::{Deserialize, Serialize};
-use crate::service::campaign::user_is_campaign_admin;
 
 #[derive(Deserialize, Serialize)]
 pub struct AuthRequest {

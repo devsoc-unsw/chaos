@@ -1,12 +1,12 @@
 use crate::handler::auth::google_callback;
-use crate::handler::organisation::OrganisationHandler;
 use crate::handler::campaign::CampaignHandler;
+use crate::handler::organisation::OrganisationHandler;
 use crate::models::storage::Storage;
 use anyhow::Result;
 use axum::routing::{get, patch, post};
 use axum::Router;
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
-use models::{app::AppState};
+use models::app::AppState;
 use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::PgPoolOptions;
 use std::env;
@@ -96,10 +96,7 @@ async fn main() -> Result<()> {
                 .put(CampaignHandler::update)
                 .delete(CampaignHandler::delete),
         )
-        .route(
-            "/api/v1/campaign",
-            get(CampaignHandler::get_all),
-        )
+        .route("/api/v1/campaign", get(CampaignHandler::get_all))
         .route(
             "/api/v1/campaign/:id/banner",
             patch(CampaignHandler::update_banner),
@@ -111,4 +108,3 @@ async fn main() -> Result<()> {
 
     Ok(())
 }
-

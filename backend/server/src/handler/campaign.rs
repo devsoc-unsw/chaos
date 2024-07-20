@@ -1,9 +1,9 @@
 use crate::models;
 use crate::models::app::AppState;
-use crate::models::auth::{CampaignAdmin};
-use crate::models::auth::{AuthUser};
+use crate::models::auth::AuthUser;
+use crate::models::auth::CampaignAdmin;
+use crate::models::campaign::Campaign;
 use crate::models::error::ChaosError;
-use crate::models::campaign::{Campaign};
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -37,7 +37,6 @@ impl CampaignHandler {
         Ok((StatusCode::OK, "Successfully updated campaign"))
     }
 
-
     pub async fn update_banner(
         State(state): State<AppState>,
         Path(id): Path<i64>,
@@ -54,8 +53,5 @@ impl CampaignHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Campaign::delete(id, &state.db).await?;
         Ok((StatusCode::OK, "Successfully deleted campaign"))
-
     }
-
-
 }
