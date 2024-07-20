@@ -45,14 +45,4 @@ impl RoleHandler {
         Role::update(id, data, &state.db).await?;
         Ok((StatusCode::OK, "Successfully updated role"))
     }
-
-    pub async fn get_roles(
-        State(state): State<AppState>,
-        Path(id): Path<i64>,
-        _user: AuthUser,
-    ) -> Result<impl IntoResponse, ChaosError> {
-        let roles = Role::get_all_in_campaign(id, &state.db).await?;
-
-        Ok((StatusCode::OK, Json(roles)))
-    }
 }

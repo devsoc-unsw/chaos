@@ -97,7 +97,7 @@ async fn main() -> Result<()> {
         )
         .route(
             "/api/v1/campaign/:id/roles",
-            get(RoleHandler::get_roles)
+            get(CampaignHandler::get_roles)
         )
         .route(
             "/api/v1/role/:id", 
