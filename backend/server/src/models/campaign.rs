@@ -15,7 +15,7 @@ pub struct Campaign {
     pub name: String,
     pub organisation_id: i64,
     pub organisation_name: String,
-    pub cover_image: Option<String>,
+    pub cover_image: Option<Uuid>,
     pub description: Option<String>,
     pub starts_at: DateTime<Utc>,
     pub ends_at: DateTime<Utc>,
@@ -29,7 +29,7 @@ pub struct CampaignDetails {
     pub name: String,
     pub organisation_id: i64,
     pub organisation_name: String,
-    pub cover_image: Option<String>,
+    pub cover_image: Option<Uuid>,
     pub description: Option<String>,
     pub starts_at: DateTime<Utc>,
     pub ends_at: DateTime<Utc>,
@@ -38,7 +38,7 @@ pub struct CampaignDetails {
 pub struct OrganisationCampaign {
     pub id: i64,
     pub name: String,
-    pub cover_image: Option<String>,
+    pub cover_image: Option<Uuid>,
     pub description: Option<String>,
     pub starts_at: DateTime<Utc>,
     pub ends_at: DateTime<Utc>,
@@ -54,6 +54,7 @@ pub struct CampaignUpdate {
     pub ends_at: DateTime<Utc>,
 }
 
+#[derive(Serialize)]
 pub struct CampaignBannerUpdate {
     pub upload_url: String,
 }
@@ -65,7 +66,7 @@ pub async fn get_all(pool: &Pool<Postgres>) -> Result<Vec<Campaign>, ChaosError>
             Campaign,
             "
                 SELECT c.*, o.name as organisation_name FROM campaigns c
-                LEFT JOIN organisations o on c.organisation_id = o.id
+                JOIN organisations o on c.organisation_id = o.id
             "
         )
         .fetch_all(pool)
@@ -80,8 +81,10 @@ pub async fn get_all(pool: &Pool<Postgres>) -> Result<Vec<Campaign>, ChaosError>
         let campaign = sqlx::query_as!(
             CampaignDetails,
         "
-            SELECT c.*, o.name as organisation_name FROM campaigns c
-            LEFT JOIN organisations o on c.organisation_id = o.id
+            SELECT c.id, c.name, c.organisation_id, o.name as organisation_name,
+            c.cover_image, c.description, c.starts_at, c.ends_at
+            FROM campaigns c
+            JOIN organisations o on c.organisation_id = o.id
             WHERE c.id = $1
         ",
             id
@@ -122,9 +125,9 @@ pub async fn get_all(pool: &Pool<Postgres>) -> Result<Vec<Campaign>, ChaosError>
         id: i64,
         pool: &Pool<Postgres>,
         storage_bucket: &Bucket,
-    ) -> Result<String, ChaosError> {
+    ) -> Result<CampaignBannerUpdate, ChaosError> {
         let dt = Utc::now();
-        let image_id = Uuid::new_v4().to_string();
+        let image_id = Uuid::new_v4();
         let current_time = dt;
 
         sqlx::query!(
@@ -142,7 +145,11 @@ pub async fn get_all(pool: &Pool<Postgres>) -> Result<Vec<Campaign>, ChaosError>
 
         let upload_url = Storage::generate_put_url(format!("/banner/{id}/{image_id}"), storage_bucket).await?;
         
-        Ok(upload_url)
+        Ok(
+            CampaignBannerUpdate {
+                upload_url
+            }
+        )
     }
 
     /// Delete a campaign from the database

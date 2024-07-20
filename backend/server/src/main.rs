@@ -3,7 +3,7 @@ use crate::handler::organisation::OrganisationHandler;
 use crate::handler::campaign::CampaignHandler;
 use crate::models::storage::Storage;
 use anyhow::Result;
-use axum::routing::{get, patch, post, put};
+use axum::routing::{get, patch, post};
 use axum::Router;
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use models::{app::AppState};
@@ -92,16 +92,13 @@ async fn main() -> Result<()> {
         )
         .route(
             "/api/v1/campaign/:id",
-            get(CampaignHandler::get),
+            get(CampaignHandler::get)
+                .put(CampaignHandler::update)
+                .delete(CampaignHandler::delete),
         )
         .route(
-            "/api/v1/campaign/:id",
-            put(CampaignHandler::update),
-        )
-        .route(
-            "/api/v1/campaign/:id",
-            get(CampaignHandler::get).delete(CampaignHandler::delete),
-            
+            "/api/v1/campaign",
+            get(CampaignHandler::get_all),
         )
         .route(
             "/api/v1/campaign/:id/banner",

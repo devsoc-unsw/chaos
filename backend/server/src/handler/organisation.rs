@@ -5,7 +5,6 @@ use crate::models::auth::{AuthUser, OrganisationAdmin};
 use crate::models::error::ChaosError;
 use crate::models::organisation::{AdminToRemove, AdminUpdateList, NewOrganisation, Organisation};
 use crate::models::transaction::DBTransaction;
-use crate::service;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
