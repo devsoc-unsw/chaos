@@ -1,4 +1,4 @@
-use crate::models::campaign::Campaign;
+use crate::models::campaign::OrganisationCampaign;
 use crate::models::error::ChaosError;
 use crate::models::storage::Storage;
 use chrono::{DateTime, Utc};
@@ -13,10 +13,10 @@ use uuid::Uuid;
 pub struct Organisation {
     pub id: i64,
     pub name: String,
-    pub logo: Option<String>,
+    pub logo: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-    pub campaigns: Vec<Campaign>, // Awaiting Campaign to be complete - remove comment once done
+    pub campaigns: Vec<OrganisationCampaign>, // Awaiting Campaign to be complete - remove comment once done
     pub organisation_admins: Vec<i64>,
 }
 
@@ -30,7 +30,7 @@ pub struct NewOrganisation {
 pub struct OrganisationDetails {
     pub id: i64,
     pub name: String,
-    pub logo: Option<String>,
+    pub logo: Option<Uuid>,
     pub created_at: DateTime<Utc>,
 }
 
@@ -274,7 +274,7 @@ impl Organisation {
     ) -> Result<String, ChaosError> {
         let dt = Utc::now();
 
-        let logo_id = Uuid::new_v4().to_string(); // TODO: Change db type to UUID
+        let logo_id = Uuid::new_v4();
         let current_time = dt;
         sqlx::query!(
             "
@@ -289,10 +289,8 @@ impl Organisation {
         .execute(pool)
         .await?;
 
-        // TODO: Handle MIME type on FE and BE and handle in S3 upload
-        let image_id = Uuid::new_v4();
         let upload_url =
-            Storage::generate_put_url(format!("/{id}/{image_id}"), storage_bucket).await?;
+            Storage::generate_put_url(format!("/logo/{id}/{logo_id}"), storage_bucket).await?;
 
         Ok(upload_url)
     }
@@ -300,14 +298,14 @@ impl Organisation {
     pub async fn get_campaigns(
         organisation_id: i64,
         pool: &Pool<Postgres>,
-    ) -> Result<Vec<Campaign>, ChaosError> {
+    ) -> Result<Vec<OrganisationCampaign>, ChaosError> {
         let campaigns = sqlx::query_as!(
-            Campaign,
+            OrganisationCampaign,
             "
-            SELECT id, name, cover_image, description, starts_at, ends_at
-            FROM campaigns
-            WHERE organisation_id = $1
-        ",
+                SELECT id, name, cover_image, description, starts_at, ends_at
+                FROM campaigns
+                WHERE organisation_id = $1
+            ",
             organisation_id
         )
         .fetch_all(pool)
@@ -317,6 +315,7 @@ impl Organisation {
     }
 
     pub async fn create_campaign(
+        organisation_id: i64,
         name: String,
         description: Option<String>,
         starts_at: DateTime<Utc>,
@@ -328,10 +327,11 @@ impl Organisation {
 
         sqlx::query!(
             "
-            INSERT INTO campaigns (id, name, description, starts_at, ends_at)
-                VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO campaigns (id, organisation_id, name, description, starts_at, ends_at)
+                VALUES ($1, $2, $3, $4, $5, $6)
         ",
             new_campaign_id,
+            organisation_id,
             name,
             description,
             starts_at,
