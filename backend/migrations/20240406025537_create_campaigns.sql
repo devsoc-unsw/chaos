@@ -2,7 +2,7 @@ CREATE TABLE campaigns (
     id BIGINT PRIMARY KEY,
     organisation_id BIGINT NOT NULL,
     name TEXT NOT NULL,
-    cover_image TEXT,
+    cover_image UUID,
     description TEXT,
     starts_at TIMESTAMPTZ NOT NULL,
     ends_at TIMESTAMPTZ NOT NULL,
