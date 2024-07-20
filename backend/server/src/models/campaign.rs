@@ -14,6 +14,7 @@ pub struct Campaign {
     pub id: i64,
     pub name: String,
     pub organisation_id: i64,
+    pub organisation_name: String,
     pub cover_image: Option<String>,
     pub description: Option<String>,
     pub starts_at: DateTime<Utc>,
@@ -27,6 +28,7 @@ pub struct CampaignDetails {
     pub id: i64,
     pub name: String,
     pub organisation_id: i64,
+    pub organisation_name: String,
     pub cover_image: Option<String>,
     pub description: Option<String>,
     pub starts_at: DateTime<Utc>,
@@ -58,10 +60,13 @@ pub struct CampaignBannerUpdate {
 
 impl Campaign {
     /// Get a list of all campaigns, both published and unpublished
-pub async fn get_campaigns(pool: &Pool<Postgres>) -> Result<Vec<Campaign>, ChaosError> {
+pub async fn get_all(pool: &Pool<Postgres>) -> Result<Vec<Campaign>, ChaosError> {
         let campaigns = sqlx::query_as!(
             Campaign,
-            "SELECT * FROM CAMPAIGNS"
+            "
+                SELECT c.*, o.name as organisation_name FROM campaigns c
+                LEFT JOIN organisations o on c.organisation_id = o.id
+            "
         )
         .fetch_all(pool)
         .await?;
@@ -75,8 +80,9 @@ pub async fn get_campaigns(pool: &Pool<Postgres>) -> Result<Vec<Campaign>, Chaos
         let campaign = sqlx::query_as!(
             CampaignDetails,
         "
-            SELECT id, name, organisation_id, cover_image, description, starts_at, ends_at FROM CAMPAIGNS
-            WHERE id = $1
+            SELECT c.*, o.name as organisation_name FROM campaigns c
+            LEFT JOIN organisations o on c.organisation_id = o.id
+            WHERE c.id = $1
         ",
             id
         )
@@ -118,7 +124,7 @@ pub async fn get_campaigns(pool: &Pool<Postgres>) -> Result<Vec<Campaign>, Chaos
         storage_bucket: &Bucket,
     ) -> Result<String, ChaosError> {
         let dt = Utc::now();
-        let banner_id = Uuid::new_v4().to_string();
+        let image_id = Uuid::new_v4().to_string();
         let current_time = dt;
 
         sqlx::query!(
@@ -127,15 +133,14 @@ pub async fn get_campaigns(pool: &Pool<Postgres>) -> Result<Vec<Campaign>, Chaos
             SET cover_image = $1, updated_at = $2
             WHERE id = $3
         ",
-            banner_id,
+            image_id,
             current_time,
             id
         )
         .execute(pool)
         .await?;
 
-        let image_id = Uuid::new_v4();
-        let upload_url = Storage::generate_put_url(format!("/{id}/{image_id}"), storage_bucket).await?;
+        let upload_url = Storage::generate_put_url(format!("/banner/{id}/{image_id}"), storage_bucket).await?;
         
         Ok(upload_url)
     }
@@ -143,8 +148,9 @@ pub async fn get_campaigns(pool: &Pool<Postgres>) -> Result<Vec<Campaign>, Chaos
     /// Delete a campaign from the database
     pub async fn delete(id: i64, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
         sqlx::query!(
-            "DELETE FROM campaigns
-            WHERE id = $1",
+            "
+                DELETE FROM campaigns WHERE id = $1
+            ",
             id
         )
         .execute(pool)
