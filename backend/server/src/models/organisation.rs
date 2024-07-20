@@ -317,6 +317,7 @@ impl Organisation {
     }
 
     pub async fn create_campaign(
+        organisation_id: i64,
         name: String,
         description: Option<String>,
         starts_at: DateTime<Utc>,
@@ -328,10 +329,11 @@ impl Organisation {
 
         sqlx::query!(
             "
-            INSERT INTO campaigns (id, name, description, starts_at, ends_at)
-                VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO campaigns (id, organisation_id, name, description, starts_at, ends_at)
+                VALUES ($1, $2, $3, $4, $5, $6)
         ",
             new_campaign_id,
+            organisation_id,
             name,
             description,
             starts_at,
