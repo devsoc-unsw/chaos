@@ -1,6 +1,6 @@
 use crate::models;
 use crate::models::app::AppState;
-use crate::models::auth::{AuthUser, OrganisationAdmin};
+use crate::models::auth::AuthUser;
 use crate::models::auth::CampaignAdmin;
 use crate::models::campaign::Campaign;
 use crate::models::error::ChaosError;
@@ -62,7 +62,7 @@ impl CampaignHandler {
         _admin: CampaignAdmin,
         Json(data): Json<RoleUpdate>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Role::create(id, data, &state.db).await?;
+        Role::create(id, data, &state.db, state.snowflake_generator).await?;
         Ok((StatusCode::OK, "Successfully created role"))
     }
 

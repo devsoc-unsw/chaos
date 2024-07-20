@@ -92,18 +92,18 @@ async fn main() -> Result<()> {
                 .delete(OrganisationHandler::remove_admin),
         )
         .route(
-            "/api/v1/campaign/:id/role", 
-            post(CampaignHandler::create_role)
+            "/api/v1/campaign/:id/role",
+            post(CampaignHandler::create_role),
         )
         .route(
             "/api/v1/campaign/:id/roles",
-            get(CampaignHandler::get_roles)
+            get(CampaignHandler::get_roles),
         )
         .route(
-            "/api/v1/role/:id", 
+            "/api/v1/role/:id",
             get(RoleHandler::get)
                 .put(RoleHandler::update)
-                .delete(RoleHandler::delete)
+                .delete(RoleHandler::delete),
         )
         .route(
             "/api/v1/campaign/:id",

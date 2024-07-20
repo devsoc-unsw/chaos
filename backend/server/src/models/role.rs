@@ -1,7 +1,7 @@
+use crate::models::error::ChaosError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
-use crate::models::error::ChaosError;
 use sqlx::{FromRow, Pool, Postgres};
 
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
@@ -35,7 +35,6 @@ pub struct RoleDetails {
     pub finalised: bool,
 }
 
-
 impl Role {
     pub async fn create(
         campaign_id: i64,
@@ -47,9 +46,9 @@ impl Role {
 
         sqlx::query!(
             "
-            INSERT INTO campaign_roles (id, campaign_id, name, description, min_available, max_available, finalised)
+                INSERT INTO campaign_roles (id, campaign_id, name, description, min_available, max_available, finalised)
                 VALUES ($1, $2, $3, $4, $5, $6, $7)
-        ",
+            ",
             id,
             campaign_id,
             role_data.name,
@@ -64,14 +63,14 @@ impl Role {
         Ok(())
     }
 
-    pub async fn get(id: i32, pool: &Pool<Postgres>) -> Result<RoleDetails, ChaosError> {
+    pub async fn get(id: i64, pool: &Pool<Postgres>) -> Result<RoleDetails, ChaosError> {
         let role = sqlx::query_as!(
             RoleDetails,
             "
-            SELECT name, description, min_available, max_available, finalised
+                SELECT name, description, min_available, max_available, finalised
                 FROM campaign_roles
                 WHERE id = $1
-        ",
+            ",
             id
         )
         .fetch_one(pool)
@@ -80,11 +79,11 @@ impl Role {
         Ok(role)
     }
 
-    pub async fn delete(id: i32, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
+    pub async fn delete(id: i64, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
         sqlx::query!(
             "
-            DELETE FROM campaign_roles WHERE id = $1
-        ",
+                DELETE FROM campaign_roles WHERE id = $1
+            ",
             id
         )
         .execute(pool)
@@ -94,16 +93,16 @@ impl Role {
     }
 
     pub async fn update(
-        id: i32,
+        id: i64,
         role_data: RoleUpdate,
-        pool: &Pool<Postgres>
+        pool: &Pool<Postgres>,
     ) -> Result<(), ChaosError> {
         sqlx::query!(
             "
-            UPDATE campaign_roles
-            SET (name, description, min_available, max_available, finalised) = ($2, $3, $4, $5, $6)
-            WHERE id = $1;
-        ",
+                UPDATE campaign_roles
+                SET (name, description, min_available, max_available, finalised) = ($2, $3, $4, $5, $6)
+                WHERE id = $1;
+            ",
             id,
             role_data.name,
             role_data.description,
@@ -122,15 +121,15 @@ impl Role {
      */
     pub async fn get_all_in_campaign(
         campaign_id: i64,
-        pool: &Pool<Postgres>
+        pool: &Pool<Postgres>,
     ) -> Result<Vec<RoleDetails>, ChaosError> {
         let roles = sqlx::query_as!(
             RoleDetails,
             "
-            SELECT name, description, min_available, max_available, finalised
+                SELECT name, description, min_available, max_available, finalised
                 FROM campaign_roles
                 WHERE campaign_id = $1
-        ",
+            ",
             campaign_id
         )
         .fetch_all(pool)
@@ -138,6 +137,4 @@ impl Role {
 
         Ok(roles)
     }
-
-
 }

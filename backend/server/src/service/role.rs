@@ -21,10 +21,10 @@ pub async fn user_is_role_admin(
         role_id,
         user_id
     )
-        .fetch_one(pool)
-        .await?
-        .exists
-        .expect("`exists` should always exist in this query result");
+    .fetch_one(pool)
+    .await?
+    .exists
+    .expect("`exists` should always exist in this query result");
 
     if !is_admin {
         return Err(ChaosError::Unauthorized);
