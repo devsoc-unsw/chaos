@@ -8,5 +8,5 @@ edition = "2021"
 [dependencies]
 server = { path="../server" }
 diesel = "1.4.8"
-chrono = "0.4.23"
+chrono = "0.4.31"
 dotenv = "0.15.0"
