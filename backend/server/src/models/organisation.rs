@@ -13,7 +13,7 @@ use uuid::Uuid;
 pub struct Organisation {
     pub id: i64,
     pub name: String,
-    pub logo: Option<String>,
+    pub logo: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub campaigns: Vec<OrganisationCampaign>, // Awaiting Campaign to be complete - remove comment once done
@@ -30,7 +30,7 @@ pub struct NewOrganisation {
 pub struct OrganisationDetails {
     pub id: i64,
     pub name: String,
-    pub logo: Option<String>,
+    pub logo: Option<Uuid>,
     pub created_at: DateTime<Utc>,
 }
 
@@ -274,7 +274,7 @@ impl Organisation {
     ) -> Result<String, ChaosError> {
         let dt = Utc::now();
 
-        let logo_id = Uuid::new_v4().to_string(); // TODO: Change db type to UUID
+        let logo_id = Uuid::new_v4();
         let current_time = dt;
         sqlx::query!(
             "
@@ -289,10 +289,8 @@ impl Organisation {
         .execute(pool)
         .await?;
 
-        // TODO: Handle MIME type on FE and BE and handle in S3 upload
-        let image_id = Uuid::new_v4();
         let upload_url =
-            Storage::generate_put_url(format!("/{id}/{image_id}"), storage_bucket).await?;
+            Storage::generate_put_url(format!("/logo/{id}/{logo_id}"), storage_bucket).await?;
 
         Ok(upload_url)
     }
