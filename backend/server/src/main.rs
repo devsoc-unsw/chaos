@@ -5,6 +5,7 @@ use crate::models::storage::Storage;
 use anyhow::Result;
 use axum::routing::{get, patch, post};
 use axum::Router;
+use handler::role::RoleHandler;
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use models::app::AppState;
 use snowflake::SnowflakeIdGenerator;
@@ -89,6 +90,20 @@ async fn main() -> Result<()> {
             get(OrganisationHandler::get_admins)
                 .put(OrganisationHandler::update_admins)
                 .delete(OrganisationHandler::remove_admin),
+        )
+        .route(
+            "/api/v1/campaign/:id/role",
+            post(CampaignHandler::create_role),
+        )
+        .route(
+            "/api/v1/campaign/:id/roles",
+            get(CampaignHandler::get_roles),
+        )
+        .route(
+            "/api/v1/role/:id",
+            get(RoleHandler::get)
+                .put(RoleHandler::update)
+                .delete(RoleHandler::delete),
         )
         .route(
             "/api/v1/campaign/:id",

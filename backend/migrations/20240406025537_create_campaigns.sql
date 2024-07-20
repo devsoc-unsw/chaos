@@ -16,13 +16,13 @@ CREATE TABLE campaigns (
 );
 
 CREATE TABLE campaign_roles (
-    id SERIAL PRIMARY KEY,
+    id BIGINT PRIMARY KEY,
     campaign_id BIGINT NOT NULL,
     name TEXT NOT NULL,
     description TEXT,
-    min_available INTEGER,
-    max_available INTEGER,
-    finalised BOOLEAN,
+    min_available INTEGER NOT NULL,
+    max_available INTEGER NOT NULL,
+    finalised BOOLEAN NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT FK_campaign_roles_campaign

@@ -4,6 +4,7 @@ use crate::models::auth::AuthUser;
 use crate::models::auth::CampaignAdmin;
 use crate::models::campaign::Campaign;
 use crate::models::error::ChaosError;
+use crate::models::role::{Role, RoleUpdate};
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -53,5 +54,25 @@ impl CampaignHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Campaign::delete(id, &state.db).await?;
         Ok((StatusCode::OK, "Successfully deleted campaign"))
+    }
+
+    pub async fn create_role(
+        State(state): State<AppState>,
+        Path(id): Path<i64>,
+        _admin: CampaignAdmin,
+        Json(data): Json<RoleUpdate>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        Role::create(id, data, &state.db, state.snowflake_generator).await?;
+        Ok((StatusCode::OK, "Successfully created role"))
+    }
+
+    pub async fn get_roles(
+        State(state): State<AppState>,
+        Path(id): Path<i64>,
+        _user: AuthUser,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let roles = Role::get_all_in_campaign(id, &state.db).await?;
+
+        Ok((StatusCode::OK, Json(roles)))
     }
 }
