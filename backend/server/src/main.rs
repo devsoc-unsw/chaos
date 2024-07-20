@@ -1,8 +1,9 @@
 use crate::handler::auth::google_callback;
+use crate::handler::campaign::CampaignHandler;
 use crate::handler::organisation::OrganisationHandler;
 use crate::models::storage::Storage;
 use anyhow::Result;
-use axum::routing::{get, patch, post, put};
+use axum::routing::{get, patch, post};
 use axum::Router;
 use handler::role::RoleHandler;
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
@@ -103,6 +104,17 @@ async fn main() -> Result<()> {
             get(RoleHandler::get)
                 .put(RoleHandler::update)
                 .delete(RoleHandler::delete)
+        )
+        .route(
+            "/api/v1/campaign/:id",
+            get(CampaignHandler::get)
+                .put(CampaignHandler::update)
+                .delete(CampaignHandler::delete),
+        )
+        .route("/api/v1/campaign", get(CampaignHandler::get_all))
+        .route(
+            "/api/v1/campaign/:id/banner",
+            patch(CampaignHandler::update_banner),
         )
         .with_state(state);
 
