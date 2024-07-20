@@ -93,7 +93,7 @@ async fn main() -> Result<()> {
         )
         .route(
             "/api/v1/campaign/:id/role", 
-            post(RoleHandler::create)
+            post(CampaignHandler::create_role)
         )
         .route(
             "/api/v1/campaign/:id/roles",
