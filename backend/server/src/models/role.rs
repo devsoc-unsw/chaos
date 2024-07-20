@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use snowflake::SnowflakeIdGenerator;
 use crate::models::error::ChaosError;
 use sqlx::{FromRow, Pool, Postgres};
 
@@ -39,14 +40,17 @@ impl Role {
     pub async fn create(
         campaign_id: i64,
         role_data: RoleUpdate,
-        pool: &Pool<Postgres>
+        pool: &Pool<Postgres>,
+        mut snowflake_generator: SnowflakeIdGenerator,
     ) -> Result<(), ChaosError> {
-        
+        let id = snowflake_generator.generate();
+
         sqlx::query!(
             "
-            INSERT INTO campaign_roles (campaign_id, name, description, min_available, max_available, finalised)
-                VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO campaign_roles (id, campaign_id, name, description, min_available, max_available, finalised)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
         ",
+            id,
             campaign_id,
             role_data.name,
             role_data.description,

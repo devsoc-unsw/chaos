@@ -9,7 +9,7 @@ CREATE TABLE organisations (
 CREATE TYPE organisation_role AS ENUM ('User', 'Admin');
 
 CREATE TABLE organisation_members (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     organisation_id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
     role organisation_role DEFAULT 'User' NOT NULL,

@@ -16,7 +16,7 @@ CREATE TABLE campaigns (
 );
 
 CREATE TABLE campaign_roles (
-    id SERIAL PRIMARY KEY,
+    id BIGINT PRIMARY KEY,
     campaign_id BIGINT NOT NULL,
     name TEXT NOT NULL,
     description TEXT,

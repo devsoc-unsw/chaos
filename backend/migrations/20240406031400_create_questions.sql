@@ -17,7 +17,7 @@ CREATE TABLE questions (
 );
 
 CREATE TABLE multi_option_question_options (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     text TEXT NOT NULL,
     question_id INTEGER NOT NULL,
     CONSTRAINT FK_multi_option_question_options_questions
