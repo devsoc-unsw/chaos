@@ -67,7 +67,6 @@ impl OrganisationHandler {
     }
 
     pub async fn update_admins(
-        State(state): State<AppState>,
         Path(id): Path<i64>,
         _super_user: SuperUser,
         mut transaction: DBTransaction<'_>,
@@ -80,7 +79,6 @@ impl OrganisationHandler {
     }
 
     pub async fn update_members(
-        State(state): State<AppState>,
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
         _admin: OrganisationAdmin,
