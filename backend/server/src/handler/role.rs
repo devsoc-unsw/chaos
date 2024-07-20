@@ -1,5 +1,5 @@
 use crate::models::app::AppState;
-use crate::models::auth::{AuthUser, OrganisationAdmin};
+use crate::models::auth::{AuthUser, OrganisationAdmin, RoleAdmin};
 use crate::models::error::ChaosError;
 use crate::models::role::{Role, RoleUpdate};
 use axum::extract::{Json, Path, State};
@@ -9,15 +9,6 @@ use axum::response::IntoResponse;
 pub struct RoleHandler;
 
 impl RoleHandler {
-    pub async fn create(
-        State(state): State<AppState>,
-        Path(id): Path<i64>,
-        _admin: OrganisationAdmin,
-        Json(data): Json<RoleUpdate>,
-    ) -> Result<impl IntoResponse, ChaosError> {
-        Role::create(id, data, &state.db).await?;
-        Ok((StatusCode::OK, "Successfully created role"))
-    }
     pub async fn get(
         State(state): State<AppState>,
         Path(id): Path<i32>,
@@ -30,7 +21,7 @@ impl RoleHandler {
     pub async fn delete(
         State(state): State<AppState>,
         Path(id): Path<i32>,
-        _admin: OrganisationAdmin,
+        _admin: RoleAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
         Role::delete(id, &state.db).await?;
         Ok((StatusCode::OK, "Successfully deleted role"))
@@ -39,7 +30,7 @@ impl RoleHandler {
     pub async fn update(
         State(state): State<AppState>,
         Path(id): Path<i32>,
-        _admin: OrganisationAdmin,
+        _admin: RoleAdmin,
         Json(data): Json<RoleUpdate>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Role::update(id, data, &state.db).await?;
