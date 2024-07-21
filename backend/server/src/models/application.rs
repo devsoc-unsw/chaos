@@ -28,11 +28,28 @@ pub struct ApplicationRole {
     pub campaign_role_id: i64,
 }
 
+#[derive(Deserialize, Serialize)]
 pub struct NewApplication {
     pub user_id: i64,
     pub status: ApplicationStatus,
     pub private_status: ApplicationStatus,
     pub applied_roles: Vec<ApplicationRole>,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct ApplicationDetails {
+    pub id: i64,
+    pub campaign_id: i64,
+    pub user_id: i64,
+    pub status: ApplicationStatus,
+    pub private_status: ApplicationStatus,
+    pub applied_roles: Vec<ApplicationAppliedRoleDetails>
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct ApplicationAppliedRoleDetails {
+    pub campaign_role_id: i64,
+    
 }
 
 
@@ -84,4 +101,38 @@ impl Application {
 
         Ok(())
     }
+
+
+    pub async fn get(id: i64, pool: &Pool<Postgres>) -> Result<ApplicationDetails, ChaosError> {
+        let application = sqlx::query_as!(
+            ApplicationDetails,
+            "
+                SELECT id, campaign_id, user_id, status AS \"status: ApplicationStatus\",
+                    private_status AS \"private_status: ApplicationStatus\",
+                    (SELECT campaign_role_id
+                        FROM application_roles
+                        WHERE application_id = $1) AS applied_roles
+                FROM applications
+                WHERE id = $1
+            ",
+            id
+        )
+        .fetch_one(pool)
+        .await?;
+
+        let applied_roles = sqlx::query_as!(
+            ApplicationAppliedRoleDetails,
+            "
+                SELECT campaign_role_id
+                        FROM application_roles
+                        WHERE application_id = $1
+            ",
+            id
+        )
+        .fetch_all(pool)
+        .await?;
+
+        Ok(application)
+    }
+
 }
