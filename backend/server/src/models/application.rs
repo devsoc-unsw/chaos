@@ -49,7 +49,7 @@ pub struct ApplicationDetails {
 #[derive(Deserialize, Serialize)]
 pub struct ApplicationAppliedRoleDetails {
     pub campaign_role_id: i64,
-    
+    pub role_name: String,
 }
 
 
