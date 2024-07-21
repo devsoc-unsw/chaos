@@ -6,7 +6,7 @@ use sqlx::{FromRow, Pool, Postgres};
 
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Role {
-    pub id: i32,
+    pub id: i64,
     pub campaign_id: i64,
     pub name: Option<String>,
     pub description: String,

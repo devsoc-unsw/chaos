@@ -22,8 +22,8 @@ CREATE TABLE applications (
 
 CREATE TABLE application_roles (
     id BIGSERIAL PRIMARY KEY,
-    application_id INTEGER NOT NULL,
-    campaign_role_id INTEGER NOT NULL,
+    application_id BIGINT NOT NULL,
+    campaign_role_id BIGINT NOT NULL,
     CONSTRAINT FK_application_roles_applications
         FOREIGN KEY(application_id)
             REFERENCES applications(id)
