@@ -245,4 +245,36 @@ impl Application {
         Ok(application_details_list)
     }
 
+    pub async fn set_status(id: i64, new_status: ApplicationStatus, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
+        sqlx::query!(
+            "
+                UPDATE applications
+                SET status = $2
+                WHERE id = $1;
+            ",
+            id,
+            new_status as ApplicationStatus
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn set_private_status(id: i64, new_status: ApplicationStatus, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
+        sqlx::query!(
+            "
+                UPDATE applications
+                SET private_status = $2
+                WHERE id = $1;
+            ",
+            id,
+            new_status as ApplicationStatus
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
+
 }

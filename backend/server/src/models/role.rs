@@ -59,7 +59,7 @@ impl Role {
             role_data.max_avaliable,
             role_data.finalised
         )
-        .fetch_one(pool)
+        .execute(pool)
         .await?;
 
         Ok(())
@@ -112,7 +112,7 @@ impl Role {
             role_data.max_avaliable,
             role_data.finalised
         )
-        .fetch_one(pool)
+        .execute(pool)
         .await?;
 
         Ok(())

@@ -73,7 +73,11 @@ async fn main() -> Result<()> {
         )
         .route(
             "/api/v1/organisation/:id/campaign",
-            get(OrganisationHandler::get_campaigns).post(OrganisationHandler::create_campaign),
+            post(OrganisationHandler::create_campaign),
+        )
+        .route(
+            "/api/v1/organisation/:id/campaigns",
+            get(OrganisationHandler::get_campaigns),
         )
         .route(
             "/api/v1/organisation/:id/logo",
