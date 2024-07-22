@@ -1,5 +1,6 @@
 use crate::models::app::AppState;
 use crate::models::error::ChaosError;
+use crate::service::application::user_is_application_admin;
 use crate::service::auth::is_super_user;
 use crate::service::campaign::user_is_campaign_admin;
 use crate::service::jwt::decode_auth_token;
@@ -224,5 +225,45 @@ where
         user_is_role_admin(user_id, campaign_id, pool).await?;
 
         Ok(RoleAdmin { user_id })
+    }
+}
+
+pub struct ApplicationAdmin {
+    pub user_id: i64,
+}
+
+#[async_trait]
+impl<S> FromRequestParts<S> for ApplicationAdmin
+where
+    AppState: FromRef<S>,
+    S: Send + Sync,
+{
+    type Rejection = ChaosError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let app_state = AppState::from_ref(state);
+        let decoding_key = &app_state.decoding_key;
+        let jwt_validator = &app_state.jwt_validator;
+        let TypedHeader(cookies) = parts
+            .extract::<TypedHeader<Cookie>>()
+            .await
+            .map_err(|_| ChaosError::NotLoggedIn)?;
+
+        let token = cookies.get("auth_token").ok_or(ChaosError::NotLoggedIn)?;
+
+        let claims =
+            decode_auth_token(token, decoding_key, jwt_validator).ok_or(ChaosError::NotLoggedIn)?;
+
+        let pool = &app_state.db;
+        let user_id = claims.sub;
+
+        let Path(application_id) = parts
+            .extract::<Path<i64>>()
+            .await
+            .map_err(|_| ChaosError::BadRequest)?;
+
+        user_is_application_admin(user_id, application_id, pool).await?;
+
+        Ok(ApplicationAdmin { user_id })
     }
 }
