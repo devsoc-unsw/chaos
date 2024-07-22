@@ -90,4 +90,14 @@ impl CampaignHandler {
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, "Successfully created application"))
     }
+
+    pub async fn get_applications(
+        Path(id): Path<i64>,
+        _admin: CampaignAdmin,
+        mut transaction: DBTransaction<'_>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let applications = Application::get_from_campaign_id(id, &mut transaction.tx).await?;
+        transaction.tx.commit().await?;
+        Ok((StatusCode::OK, Json(applications)))
+    }
 }

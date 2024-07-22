@@ -1,6 +1,7 @@
 use crate::handler::auth::google_callback;
 use crate::handler::campaign::CampaignHandler;
 use crate::handler::organisation::OrganisationHandler;
+use crate::handler::application::ApplicationHandler;
 use crate::models::storage::Storage;
 use anyhow::Result;
 use axum::routing::{get, patch, post};
@@ -66,6 +67,10 @@ async fn main() -> Result<()> {
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
         .route("/api/auth/callback/google", get(google_callback))
+        .route(
+            "/api/v1/user/applications",
+            get(ApplicationHandler::get_from_curr_user),
+        )
         .route("/api/v1/organisation", post(OrganisationHandler::create))
         .route(
             "/api/v1/organisation/:id",
@@ -104,10 +109,18 @@ async fn main() -> Result<()> {
             get(CampaignHandler::get_roles),
         )
         .route(
+            "/api/v1/campaign/:id/applications",
+            get(CampaignHandler::get_applications),
+        )
+        .route(
             "/api/v1/role/:id",
             get(RoleHandler::get)
                 .put(RoleHandler::update)
                 .delete(RoleHandler::delete),
+        )
+        .route(
+            "/api/v1/role/:id/applications",
+            get(RoleHandler::get_applications)
         )
         .route(
             "/api/v1/campaign/:id",
@@ -120,6 +133,12 @@ async fn main() -> Result<()> {
             "/api/v1/campaign/:id/banner",
             patch(CampaignHandler::update_banner),
         )
+        .route("api/v1/campaign/:id/application",
+            post(CampaignHandler::create_application)
+        )
+        .route("api/v1/application/:id", get(ApplicationHandler::get))
+        .route("api/v1/application/:id/status", patch(ApplicationHandler::set_status))
+        .route("api/v1/application/:id/private", patch(ApplicationHandler::set_private_status))
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
