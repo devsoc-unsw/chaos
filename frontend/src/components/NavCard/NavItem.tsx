@@ -6,16 +6,12 @@ const NavItem = styled.div({
   ...tw`relative z-0 hover:before:opacity-20`,
   "&::before": {
     content: "",
-    ...tw`
-      absolute inset-0 z-[-1]
-      bg-gradient-to-r from-blue-300 to-violet-300
-      rounded opacity-0 transition-opacity
-    `,
+    ...tw`absolute inset-0 z-[-1] rounded bg-gradient-to-r from-blue-300 to-violet-300 opacity-0 transition-opacity`,
   },
 
   variants: {
     active: {
-      true: tw`shadow-sm before:opacity-30!`,
+      true: tw`before:opacity-30! shadow-sm`,
     },
   },
 });

@@ -9,15 +9,11 @@ import Campaign from "./Campaign";
 import compclub from "./compclub.png";
 
 const Container = styled.div({
-  ...tw`
-    absolute top-1/2 right-[50px] w-[650px] h-[600px]
-    flex items-center justify-center
-    -translate-y-1/2 z-[-1]
-  `,
+  ...tw`absolute right-[50px] top-1/2 z-[-1] flex h-[600px] w-[650px] -translate-y-1/2 items-center justify-center`,
   perspective: 700,
 });
 
-const Heading = tw.h1`my-3 rounded bg-black/[0.15] font-bold text-xl h-[1em]`;
+const Heading = tw.h1`my-3 h-[1em] rounded bg-black/[0.15] text-xl font-bold`;
 const Row = tw.div`flex gap-4`;
 
 const DEFAULT_ROTATE_X = 7.5;
@@ -89,7 +85,7 @@ const Campaigns = forwardRef<HTMLDivElement, Props>(
     return (
       <Container ref={ref}>
         <aside
-          tw="flex flex-col gap-3 text-xs mt-[-50px]"
+          tw="mt-[-50px] flex flex-col gap-3 text-xs"
           css={!withinRange ? tw`transition-transform duration-100` : undefined}
           style={{
             transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(1deg)`,
@@ -114,7 +110,7 @@ const Campaigns = forwardRef<HTMLDivElement, Props>(
               as={Heading}
               appear
               show
-              enter={tw`transition-[width] duration-[600ms] delay-[400ms]`}
+              enter={tw`transition-[width] delay-[400ms] duration-[600ms]`}
               enterFrom={tw`w-0`}
               enterTo={tw`w-56`}
             />

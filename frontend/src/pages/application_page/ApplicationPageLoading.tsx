@@ -47,9 +47,9 @@ const Bars = ({
 const ApplicationPageLoading = () => (
   <Container tw="gap-4">
     <Card tw="items-center gap-6 md:flex-row">
-      <article tw="flex flex-col w-full gap-4">
+      <article tw="flex w-full flex-col gap-4">
         <div tw="flex items-center gap-2">
-          <PulsingBar tw="w-20 h-20 rounded shadow-md" standalone />
+          <PulsingBar tw="h-20 w-20 rounded shadow-md" standalone />
           <div tw="flex flex-col justify-center gap-2">
             <PulsingBar tw="h-6! w-32" />
             <PulsingBar tw="h-4! w-48" animationDelay={100} />
@@ -61,7 +61,7 @@ const ApplicationPageLoading = () => (
       </article>
 
       <div tw="w-full max-w-lg">
-        <PulsingBar tw="shadow-md aspect-w-16 aspect-h-9 bg-[#edeeef]!" />
+        <PulsingBar tw="bg-[#edeeef]! aspect-h-9 aspect-w-16 shadow-md" />
       </div>
     </Card>
 
@@ -79,7 +79,7 @@ const ApplicationPageLoading = () => (
       </NavCard>
 
       <Card tw="flex-1">
-        <PulsingBar tw="h-6 w-32 mb-2" />
+        <PulsingBar tw="mb-2 h-6 w-32" />
         {Array.from(Array(NUM_SECTIONS)).map((_, i) => (
           // eslint-disable-next-line react/no-array-index-key
           <section key={i} tw="my-4 flex flex-col gap-4">

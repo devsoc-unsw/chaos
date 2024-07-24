@@ -1,7 +1,9 @@
-import { ToastType } from "components/Toast";
 import moment from "moment";
 import { toast } from "react-hot-toast";
+
 import Toast from "components/Toast";
+
+import type { ToastType } from "components/Toast";
 
 export function isLogin(): boolean {
   return true;

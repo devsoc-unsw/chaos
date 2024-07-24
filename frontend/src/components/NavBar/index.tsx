@@ -14,18 +14,11 @@ import AvatarButton from "./AvatarButton";
 
 const NavButton = styled(NavLink, {
   ...tw`relative rounded px-2 py-1 text-slate-800`,
-  ...tw`ring-blue-400 transition-shadow focus-visible:(outline-none ring)`,
+  ...tw`ring-blue-400 transition-shadow focus-visible:outline-none focus-visible:ring`,
 
-  "&.active": tw`rounded from-blue-700/20 to-indigo-700/20 shadow bg-gradient-to-r`,
+  "&.active": tw`rounded bg-gradient-to-r from-blue-700/20 to-indigo-700/20 shadow`,
 
-  "&:not(.active)": tw`
-    before:(
-      absolute inset-0
-      from-blue-700 to-indigo-700 bg-gradient-to-r
-      rounded opacity-0 transition-opacity duration-100
-    )
-    hover:before:opacity-[0.075]
-  `,
+  "&:not(.active)": tw`before:absolute before:inset-0 before:rounded before:bg-gradient-to-r before:from-blue-700 before:to-indigo-700 before:opacity-0 before:transition-opacity before:duration-100 hover:before:opacity-[0.075]`,
 });
 
 const NavBar = ({ campaign }: { campaign: string }) => {
@@ -33,11 +26,11 @@ const NavBar = ({ campaign }: { campaign: string }) => {
   const [aboutOpen, setAboutOpen] = useState(false);
 
   return (
-    <header tw="fixed inset-x-0 z-10 bg-white shadow-md bg-gradient-to-r from-[#9dbbfb55] to-[#a78bfa55]">
+    <header tw="fixed inset-x-0 z-10 bg-white bg-gradient-to-r from-[#9dbbfb55] to-[#a78bfa55] shadow-md">
       <Container tw="flex-row items-center gap-4 text-[hsl(255.1,30%,22%)]">
         <RouterLink
           to={loggedIn ? "/dashboard" : "/"}
-          tw="-my-2 rounded py-2 transition-shadow focus-visible:(outline-none ring ring-blue-400)"
+          tw="-my-2 rounded py-2 transition-shadow focus-visible:outline-none focus-visible:ring focus-visible:ring-blue-400"
         >
           <img tw="h-7 drop-shadow filter" src={chaosImg} alt="Chaos" />
         </RouterLink>
@@ -51,7 +44,7 @@ const NavBar = ({ campaign }: { campaign: string }) => {
               </>
             )}
             <button
-              tw="p-1 text-slate-800 rounded-full transition hover:(bg-slate-500/10 text-slate-900)"
+              tw="hover:(bg-slate-500/10 text-slate-900) rounded-full p-1 text-slate-800 transition"
               type="button"
               onClick={() => setAboutOpen(true)}
             >
@@ -60,7 +53,7 @@ const NavBar = ({ campaign }: { campaign: string }) => {
             </button>
           </div>
           <div tw="flex items-center gap-4">
-            <span tw="border-slate-500 border-l">&#x200b;</span>
+            <span tw="border-l border-slate-500">&#x200b;</span>
             {loggedIn ? (
               <AvatarButton />
             ) : (
