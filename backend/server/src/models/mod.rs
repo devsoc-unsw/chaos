@@ -6,3 +6,4 @@ pub mod organisation;
 pub mod storage;
 pub mod transaction;
 pub mod user;
+pub mod response;

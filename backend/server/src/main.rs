@@ -1,3 +1,5 @@
+#![feature(adt_const_params)]
+
 use crate::handler::auth::google_callback;
 use crate::handler::organisation::OrganisationHandler;
 use crate::models::storage::Storage;

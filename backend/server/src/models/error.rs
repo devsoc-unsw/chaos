@@ -73,10 +73,22 @@ impl OperationOutput for ChaosError {
         operation: &mut Operation,
     ) -> Vec<(Option<u16>, aide::openapi::Response)> {
 		Vec::from([
-			(Some(400), Default::default()), // Bad request
-			(Some(401), Default::default()), // Unauthorized
-			(Some(403), Default::default()), // Forbidden
-			(Some(500), Default::default()), // Internal Server Error
+			(Some(400), aide::openapi::Response { // bad request
+				description: String::from("Bad request"),
+				..Default::default()
+			}),
+			(Some(401), aide::openapi::Response { // Unauthorized
+				description: String::from("Unauthorized"),
+				..Default::default()
+			}),
+			(Some(403), aide::openapi::Response { // Forbidden operation
+				description: String::from("Forbidden operation"),
+				..Default::default()
+			}),
+			(Some(500), aide::openapi::Response { // Internal server error
+				description: String::from("Internal server error"),
+				..Default::default()
+			}),
 		])
     }
 }

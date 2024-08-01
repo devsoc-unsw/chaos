@@ -5,11 +5,12 @@ use crate::models::auth::{AuthUser, OrganisationAdmin};
 use crate::models::error::ChaosError;
 use crate::models::organisation::{AdminToRemove, AdminUpdateList, NewOrganisation, Organisation};
 use crate::models::transaction::DBTransaction;
+use crate::models::response::Response200;
 use crate::service;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
-//use http::status::StatusCode;
 use aide::axum::IntoApiResponse;
+
 
 pub struct OrganisationHandler;
 
@@ -29,7 +30,7 @@ impl OrganisationHandler {
         .await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully created organisation"))
+		Ok(Response200::<"Succesfully created organisation"> {})
     }
 
     pub async fn get(
@@ -47,7 +48,7 @@ impl OrganisationHandler {
         _user: SuperUser,
     ) -> Result<impl IntoApiResponse, ChaosError> {
         Organisation::delete(id, &state.db).await?;
-        Ok((StatusCode::OK, "Successfully deleted organisation"))
+		Ok(Response200::<"Succesfully deleted organisation"> {})
     }
 
     pub async fn get_admins(
@@ -78,7 +79,7 @@ impl OrganisationHandler {
         Organisation::update_admins(id, request_body.members, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully updated organisation members"))
+		Ok(Response200::<"Successfully updated organisation members"> {})
     }
 
     pub async fn update_members(
@@ -91,7 +92,7 @@ impl OrganisationHandler {
         Organisation::update_members(id, request_body.members, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully updated organisation members"))
+		Ok(Response200::<"Successfully updated organisation members"> {})
     }
 
     pub async fn remove_admin(
@@ -102,10 +103,7 @@ impl OrganisationHandler {
     ) -> Result<impl IntoApiResponse, ChaosError> {
         Organisation::remove_admin(id, request_body.user_id, &state.db).await?;
 
-        Ok((
-            StatusCode::OK,
-            "Successfully removed member from organisation",
-        ))
+		Ok(Response200::<"Successfully removed member from organisation"> {})
     }
 
     pub async fn remove_member(
@@ -116,10 +114,7 @@ impl OrganisationHandler {
     ) -> Result<impl IntoApiResponse, ChaosError> {
         Organisation::remove_member(id, request_body.user_id, &state.db).await?;
 
-        Ok((
-            StatusCode::OK,
-            "Successfully removed member from organisation",
-        ))
+		Ok(Response200::<"Successfully removed member from organisation"> {})
     }
 
     pub async fn update_logo(
@@ -156,6 +151,6 @@ impl OrganisationHandler {
         )
         .await?;
 
-        Ok((StatusCode::OK, "Successfully created campaign"))
+		Ok(Response200::<"Successfully created campaign"> {})
     }
 }
