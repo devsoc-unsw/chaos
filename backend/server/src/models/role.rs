@@ -6,7 +6,7 @@ use sqlx::{FromRow, Pool, Postgres};
 
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Role {
-    pub id: i32,
+    pub id: i64,
     pub campaign_id: i64,
     pub name: Option<String>,
     pub description: String,
@@ -28,6 +28,8 @@ pub struct RoleUpdate {
 
 #[derive(Deserialize, Serialize)]
 pub struct RoleDetails {
+    pub id: i64,
+    pub campaign_id: i64,
     pub name: String,
     pub description: Option<String>,
     pub min_available: i32,
@@ -57,7 +59,7 @@ impl Role {
             role_data.max_avaliable,
             role_data.finalised
         )
-        .fetch_one(pool)
+        .execute(pool)
         .await?;
 
         Ok(())
@@ -67,7 +69,7 @@ impl Role {
         let role = sqlx::query_as!(
             RoleDetails,
             "
-                SELECT name, description, min_available, max_available, finalised
+                SELECT id, campaign_id, name, description, min_available, max_available, finalised
                 FROM campaign_roles
                 WHERE id = $1
             ",
@@ -110,7 +112,7 @@ impl Role {
             role_data.max_avaliable,
             role_data.finalised
         )
-        .fetch_one(pool)
+        .execute(pool)
         .await?;
 
         Ok(())
@@ -126,7 +128,7 @@ impl Role {
         let roles = sqlx::query_as!(
             RoleDetails,
             "
-                SELECT name, description, min_available, max_available, finalised
+                SELECT id, campaign_id, name, description, min_available, max_available, finalised
                 FROM campaign_roles
                 WHERE campaign_id = $1
             ",

@@ -1,6 +1,7 @@
 use crate::handler::auth::google_callback;
 use crate::handler::campaign::CampaignHandler;
 use crate::handler::organisation::OrganisationHandler;
+use crate::handler::application::ApplicationHandler;
 use crate::models::storage::Storage;
 use anyhow::Result;
 use axum::routing::{get, patch, post};
@@ -66,56 +67,78 @@ async fn main() -> Result<()> {
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
         .route("/api/auth/callback/google", get(google_callback))
+        .route(
+            "/api/v1/user/applications",
+            get(ApplicationHandler::get_from_curr_user),
+        )
         .route("/api/v1/organisation", post(OrganisationHandler::create))
         .route(
-            "/api/v1/organisation/:id",
+            "/api/v1/organisation/:organisation_id",
             get(OrganisationHandler::get).delete(OrganisationHandler::delete),
         )
         .route(
-            "/api/v1/organisation/:id/campaign",
-            get(OrganisationHandler::get_campaigns).post(OrganisationHandler::create_campaign),
+            "/api/v1/organisation/:organisation_id/campaign",
+            post(OrganisationHandler::create_campaign),
         )
         .route(
-            "/api/v1/organisation/:id/logo",
+            "/api/v1/organisation/:organisation_id/campaigns",
+            get(OrganisationHandler::get_campaigns),
+        )
+        .route(
+            "/api/v1/organisation/:organisation_id/logo",
             patch(OrganisationHandler::update_logo),
         )
         .route(
-            "/api/v1/organisation/:id/member",
+            "/api/v1/organisation/:organisation_id/member",
             get(OrganisationHandler::get_members)
                 .put(OrganisationHandler::update_members)
                 .delete(OrganisationHandler::remove_member),
         )
         .route(
-            "/api/v1/organisation/:id/admin",
+            "/api/v1/organisation/:organisation_id/admin",
             get(OrganisationHandler::get_admins)
                 .put(OrganisationHandler::update_admins)
                 .delete(OrganisationHandler::remove_admin),
         )
         .route(
-            "/api/v1/campaign/:id/role",
+            "/api/v1/campaign/:campaign_id/role",
             post(CampaignHandler::create_role),
         )
         .route(
-            "/api/v1/campaign/:id/roles",
+            "/api/v1/campaign/:campaign_id/roles",
             get(CampaignHandler::get_roles),
         )
         .route(
-            "/api/v1/role/:id",
+            "/api/v1/campaign/:campaign_id/applications",
+            get(CampaignHandler::get_applications),
+        )
+        .route(
+            "/api/v1/role/:role_id",
             get(RoleHandler::get)
                 .put(RoleHandler::update)
                 .delete(RoleHandler::delete),
         )
         .route(
-            "/api/v1/campaign/:id",
+            "/api/v1/role/:role_id/applications",
+            get(RoleHandler::get_applications)
+        )
+        .route(
+            "/api/v1/campaign/:campaign_id",
             get(CampaignHandler::get)
                 .put(CampaignHandler::update)
                 .delete(CampaignHandler::delete),
         )
         .route("/api/v1/campaign", get(CampaignHandler::get_all))
         .route(
-            "/api/v1/campaign/:id/banner",
+            "/api/v1/campaign/:campaign_id/banner",
             patch(CampaignHandler::update_banner),
         )
+        .route("api/v1/campaign/:campaign_id/application",
+            post(CampaignHandler::create_application)
+        )
+        .route("api/v1/application/:application_id", get(ApplicationHandler::get))
+        .route("api/v1/application/:application_id/status", patch(ApplicationHandler::set_status))
+        .route("api/v1/application/:application_id/private", patch(ApplicationHandler::set_private_status))
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();

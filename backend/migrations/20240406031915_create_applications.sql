@@ -4,8 +4,8 @@ CREATE TABLE applications (
     id BIGINT PRIMARY KEY,
     campaign_id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
-    status application_status NOT NULL,
-    private_status application_status NOT NULL,
+    status application_status NOT NULL DEFAULT 'Pending',
+    private_status application_status NOT NULL DEFAULT 'Pending',
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT FK_applications_campaigns
@@ -22,8 +22,8 @@ CREATE TABLE applications (
 
 CREATE TABLE application_roles (
     id BIGSERIAL PRIMARY KEY,
-    application_id INTEGER NOT NULL,
-    campaign_role_id INTEGER NOT NULL,
+    application_id BIGINT NOT NULL,
+    campaign_role_id BIGINT NOT NULL,
     CONSTRAINT FK_application_roles_applications
         FOREIGN KEY(application_id)
             REFERENCES applications(id)
