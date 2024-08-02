@@ -1,5 +1,5 @@
-use jsonwebtoken::{decode, encode, EncodingKey, Header, Validation};
 use jsonwebtoken::DecodingKey;
+use jsonwebtoken::{decode, encode, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
