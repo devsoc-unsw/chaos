@@ -61,10 +61,12 @@ async fn main() -> Result<()> {
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
         .route("/api/auth/callback/google", get(google_callback))
-        .route("/api/v1/user/:user_id", get(UserHandler::get_user))
-        .route("/api/v1/user/:user_id/name", patch(UserHandler::update_user_name))
-        .route("/api/v1/user/:user_id/zid", patch(UserHandler::update_user_zid))
-        .route("/api/v1/user/:user_id/zid", patch(UserHandler::update_user_degree))
+        .route("/api/v1/user", get(UserHandler::get))
+        .route("/api/v1/user/name", patch(UserHandler::update_name))
+        .route("/api/v1/user/pronouns", patch(UserHandler::update_pronouns))
+        .route("/api/v1/user/gender", patch(UserHandler::update_gender))
+        .route("/api/v1/user/zid", patch(UserHandler::update_zid))
+        .route("/api/v1/user/degree", patch(UserHandler::update_degree))
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
