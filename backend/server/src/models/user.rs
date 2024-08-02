@@ -10,6 +10,18 @@ pub enum UserRole {
 }
 
 #[derive(Deserialize, Serialize, FromRow)]
+pub struct UserDetails {
+    pub id: i64,
+    pub email: String,
+    pub zid: Option<String>,
+    pub name: String,
+    pub pronouns: String,
+    pub gender: String,
+    pub degree_name: Option<String>,
+    pub degree_starting_year: Option<i32>,
+}
+
+#[derive(Deserialize, Serialize, FromRow)]
 pub struct User {
     pub id: i64,
     pub email: String,
