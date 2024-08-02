@@ -4,8 +4,8 @@ CREATE TABLE applications (
     id BIGINT PRIMARY KEY,
     campaign_id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
-    status application_status NOT NULL,
-    private_status application_status NOT NULL,
+    status application_status NOT NULL DEFAULT 'Pending',
+    private_status application_status NOT NULL DEFAULT 'Pending',
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT FK_applications_campaigns
