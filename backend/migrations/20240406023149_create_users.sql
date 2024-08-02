@@ -5,6 +5,8 @@ CREATE TABLE users (
     email TEXT NOT NULL UNIQUE,
     zid TEXT,
     name TEXT NOT NULL,
+    pronouns TEXT NOT NULL,
+    gender TEXT NOT NULL,
     degree_name TEXT,
     degree_starting_year INTEGER,
     role user_role NOT NULL,

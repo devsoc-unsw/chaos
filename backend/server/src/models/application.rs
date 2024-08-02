@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
 use sqlx::{FromRow, Pool, Postgres, Transaction};
 use std::ops::DerefMut;
-use crate::models::user::User;
+use crate::models::user::UserDetails;
 
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Application {
@@ -38,7 +38,7 @@ pub struct NewApplication {
 pub struct ApplicationDetails {
     pub id: i64,
     pub campaign_id: i64,
-    pub user: User,
+    pub user: UserDetails,
     pub status: ApplicationStatus,
     pub private_status: ApplicationStatus,
     pub applied_roles: Vec<ApplicationAppliedRoleDetails>
@@ -52,6 +52,8 @@ pub struct ApplicationData {
     pub user_email: String,
     pub user_zid: Option<String>,
     pub user_name: String,
+    pub user_pronouns: String,
+    pub user_gender: String,
     pub user_degree_name: Option<String>,
     pub user_degree_starting_year: Option<i32>,
     pub status: ApplicationStatus,
@@ -122,7 +124,8 @@ impl Application {
             "
                 SELECT a.id AS id, campaign_id, user_id, status AS \"status: ApplicationStatus\",
                 private_status AS \"private_status: ApplicationStatus\", u.email AS user_email,
-                u.zid AS user_zid, u.name AS user_name, u.degree_name AS user_degree_name,
+                u.zid AS user_zid, u.name AS user_name, u.gender AS user_gender,
+                u.pronouns AS user_pronouns, u.degree_name AS user_degree_name,
                 u.degree_starting_year AS user_degree_starting_year
                 FROM applications a LEFT JOIN users u ON u.id = a.user_id
                 WHERE a.id = $1
@@ -153,11 +156,13 @@ impl Application {
                 status: application_data.status,
                 private_status: application_data.private_status,
                 applied_roles,
-                user: User {
+                user: UserDetails {
                     id: application_data.user_id,
                     email: application_data.user_email,
                     zid: application_data.user_zid,
                     name: application_data.user_name,
+                    pronouns: application_data.user_pronouns,
+                    gender: application_data.user_gender,
                     degree_name: application_data.user_degree_name,
                     degree_starting_year: application_data.user_degree_starting_year,
                 },
@@ -176,7 +181,8 @@ impl Application {
             "
                 SELECT a.id AS id, campaign_id, user_id, status AS \"status: ApplicationStatus\",
                 private_status AS \"private_status: ApplicationStatus\", u.email AS user_email,
-                u.zid AS user_zid, u.name AS user_name, u.degree_name AS user_degree_name,
+                u.zid AS user_zid, u.name AS user_name, u.gender AS user_gender,
+                u.pronouns AS user_pronouns, u.degree_name AS user_degree_name,
                 u.degree_starting_year AS user_degree_starting_year
                 FROM applications a LEFT JOIN users u ON u.id = a.user_id LEFT JOIN application_roles ar on ar.application_id = a.id
                 WHERE ar.id = $1
@@ -208,11 +214,13 @@ impl Application {
                 status: application_data.status,
                 private_status: application_data.private_status,
                 applied_roles,
-                user: User {
+                user: UserDetails {
                     id: application_data.user_id,
                     email: application_data.user_email,
                     zid: application_data.user_zid,
                     name: application_data.user_name,
+                    pronouns: application_data.user_pronouns,
+                    gender: application_data.user_gender,
                     degree_name: application_data.user_degree_name,
                     degree_starting_year: application_data.user_degree_starting_year,
                 },
@@ -234,7 +242,8 @@ impl Application {
             "
                 SELECT a.id AS id, campaign_id, user_id, status AS \"status: ApplicationStatus\",
                 private_status AS \"private_status: ApplicationStatus\", u.email AS user_email,
-                u.zid AS user_zid, u.name AS user_name, u.degree_name AS user_degree_name,
+                u.zid AS user_zid, u.name AS user_name, u.gender AS user_gender,
+                u.pronouns AS user_pronouns, u.degree_name AS user_degree_name,
                 u.degree_starting_year AS user_degree_starting_year
                 FROM applications a LEFT JOIN users u ON u.id = a.user_id
                 WHERE a.campaign_id = $1
@@ -266,11 +275,13 @@ impl Application {
                 status: application_data.status,
                 private_status: application_data.private_status,
                 applied_roles,
-                user: User {
+                user: UserDetails {
                     id: application_data.user_id,
                     email: application_data.user_email,
                     zid: application_data.user_zid,
                     name: application_data.user_name,
+                    pronouns: application_data.user_pronouns,
+                    gender: application_data.user_gender,
                     degree_name: application_data.user_degree_name,
                     degree_starting_year: application_data.user_degree_starting_year,
                 },
@@ -292,7 +303,8 @@ impl Application {
             "
                 SELECT a.id AS id, campaign_id, user_id, status AS \"status: ApplicationStatus\",
                 private_status AS \"private_status: ApplicationStatus\", u.email AS user_email,
-                u.zid AS user_zid, u.name AS user_name, u.degree_name AS user_degree_name,
+                u.zid AS user_zid, u.name AS user_name, u.gender AS user_gender,
+                u.pronouns AS user_pronouns, u.degree_name AS user_degree_name,
                 u.degree_starting_year AS user_degree_starting_year
                 FROM applications a LEFT JOIN users u ON u.id = a.user_id
                 WHERE a.user_id = $1
@@ -324,11 +336,13 @@ impl Application {
                 status: application_data.status,
                 private_status: application_data.private_status,
                 applied_roles,
-                user: User {
+                user: UserDetails {
                     id: application_data.user_id,
                     email: application_data.user_email,
                     zid: application_data.user_zid,
                     name: application_data.user_name,
+                    pronouns: application_data.user_pronouns,
+                    gender: application_data.user_gender,
                     degree_name: application_data.user_degree_name,
                     degree_starting_year: application_data.user_degree_starting_year,
                 },

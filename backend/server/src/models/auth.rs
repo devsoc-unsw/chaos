@@ -14,6 +14,7 @@ use axum::{async_trait, RequestPartsExt};
 use axum_extra::{headers::Cookie, TypedHeader};
 use serde::{Deserialize, Serialize};
 
+// tells the web framework how to take the url query params they will have
 #[derive(Deserialize, Serialize)]
 pub struct AuthRequest {
     pub code: String,
@@ -39,6 +40,8 @@ pub struct AuthUser {
     pub user_id: i64,
 }
 
+// extractor - takes a request, and we define what we do to it, 
+// returns the struct of the type defined
 #[async_trait]
 impl<S> FromRequestParts<S> for AuthUser
 where

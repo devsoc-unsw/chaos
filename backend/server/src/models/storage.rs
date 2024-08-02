@@ -1,6 +1,6 @@
 use crate::models::error::ChaosError;
 use s3::creds::Credentials;
-use s3::{Bucket, BucketConfiguration, Region};
+use s3::{Bucket, Region};
 use std::env;
 
 pub struct Storage;
