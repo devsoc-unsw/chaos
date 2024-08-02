@@ -82,11 +82,11 @@ impl CampaignHandler {
     pub async fn create_application(
         State(state): State<AppState>,
         Path(id): Path<i64>,
-        _user: AuthUser,
+        user: AuthUser,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewApplication>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Application::create(id, data, state.snowflake_generator, &mut transaction.tx).await?;
+        Application::create(id, user.user_id, data, state.snowflake_generator, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, "Successfully created application"))
     }

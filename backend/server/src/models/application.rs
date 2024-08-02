@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
 use sqlx::{FromRow, Pool, Postgres, Transaction};
 use std::ops::DerefMut;
+use crate::models::user::User;
 
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Application {
@@ -30,15 +31,16 @@ pub struct ApplicationRole {
 
 #[derive(Deserialize, Serialize)]
 pub struct NewApplication {
-    pub user_id: i64,
-    pub status: ApplicationStatus,
-    pub private_status: ApplicationStatus,
     pub applied_roles: Vec<ApplicationRole>,
 }
 
 #[derive(Deserialize, Serialize)]
 pub struct ApplicationDetails {
-    pub application_data: ApplicationData,
+    pub id: i64,
+    pub campaign_id: i64,
+    pub user: User,
+    pub status: ApplicationStatus,
+    pub private_status: ApplicationStatus,
     pub applied_roles: Vec<ApplicationAppliedRoleDetails>
 }
 
@@ -47,6 +49,11 @@ pub struct ApplicationData {
     pub id: i64,
     pub campaign_id: i64,
     pub user_id: i64,
+    pub user_email: String,
+    pub user_zid: Option<String>,
+    pub user_name: String,
+    pub user_degree_name: Option<String>,
+    pub user_degree_starting_year: Option<i32>,
     pub status: ApplicationStatus,
     pub private_status: ApplicationStatus,
 }
@@ -69,6 +76,7 @@ pub enum ApplicationStatus {
 impl Application {
     pub async fn create(
         campaign_id: i64,
+        user_id: i64,
         application_data: NewApplication,
         mut snowflake_generator: SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
@@ -78,14 +86,12 @@ impl Application {
         // Insert into table applications
         sqlx::query!(
             "
-                INSERT INTO applications (id, campaign_id, user_id, status, private_status)
-                VALUES ($1, $2, $3, $4, $5)
+                INSERT INTO applications (id, campaign_id, user_id)
+                VALUES ($1, $2, $3)
             ",
             id,
             campaign_id,
-            application_data.user_id,
-            application_data.status as ApplicationStatus,
-            application_data.private_status as ApplicationStatus,
+            user_id
         )
         .execute(transaction.deref_mut())
         .await?;
@@ -114,10 +120,12 @@ impl Application {
         let application_data = sqlx::query_as!(
             ApplicationData,
             "
-                SELECT id, campaign_id, user_id, status AS \"status: ApplicationStatus\",
-                private_status AS \"private_status: ApplicationStatus\"
-                FROM applications
-                WHERE id = $1
+                SELECT a.id AS id, campaign_id, user_id, status AS \"status: ApplicationStatus\",
+                private_status AS \"private_status: ApplicationStatus\", u.email AS user_email,
+                u.zid AS user_zid, u.name AS user_name, u.degree_name AS user_degree_name,
+                u.degree_starting_year AS user_degree_starting_year
+                FROM applications a LEFT JOIN users u ON u.id = a.user_id
+                WHERE a.id = $1
             ",
             id
         )
@@ -138,7 +146,23 @@ impl Application {
         .fetch_all(transaction.deref_mut())
         .await?;
 
-        Ok(ApplicationDetails {application_data, applied_roles})
+        Ok(
+            ApplicationDetails {
+                id: application_data.id,
+                campaign_id: application_data.campaign_id,
+                status: application_data.status,
+                private_status: application_data.private_status,
+                applied_roles,
+                user: User {
+                    id: application_data.user_id,
+                    email: application_data.user_email,
+                    zid: application_data.user_zid,
+                    name: application_data.user_name,
+                    degree_name: application_data.user_degree_name,
+                    degree_starting_year: application_data.user_degree_starting_year,
+                },
+            }
+        )
     }
 
 
@@ -146,23 +170,58 @@ impl Application {
         Get All applications that apply for a given role
      */
     pub async fn get_from_role_id(role_id: i64, transaction: &mut Transaction<'_, Postgres>,)
-    -> Result<Vec<ApplicationData>, ChaosError> {
-        let applications = sqlx::query_as!(
+    -> Result<Vec<ApplicationDetails>, ChaosError> {
+        let application_data_list = sqlx::query_as!(
             ApplicationData,
             "
-                SELECT applications.id, campaign_id, user_id, status AS \"status: ApplicationStatus\",
-                private_status AS \"private_status: ApplicationStatus\"
-                FROM applications
-                    JOIN application_roles
-                    ON application_roles.application_id = applications.id
-                WHERE application_roles.campaign_role_id = $1
+                SELECT a.id AS id, campaign_id, user_id, status AS \"status: ApplicationStatus\",
+                private_status AS \"private_status: ApplicationStatus\", u.email AS user_email,
+                u.zid AS user_zid, u.name AS user_name, u.degree_name AS user_degree_name,
+                u.degree_starting_year AS user_degree_starting_year
+                FROM applications a LEFT JOIN users u ON u.id = a.user_id LEFT JOIN application_roles ar on ar.application_id = a.id
+                WHERE ar.id = $1
             ",
             role_id
         )
-        .fetch_all(transaction.deref_mut())
-        .await?;
+            .fetch_all(transaction.deref_mut())
+            .await?;
 
-        Ok(applications)
+        let mut application_details_list = Vec::new();
+        for application_data in application_data_list {
+            let applied_roles = sqlx::query_as!(
+                ApplicationAppliedRoleDetails,
+                "
+                    SELECT application_roles.campaign_role_id, campaign_roles.name AS role_name
+                    FROM application_roles
+                        LEFT JOIN campaign_roles
+                        ON application_roles.campaign_role_id = campaign_roles.id
+                    WHERE application_id = $1
+                ",
+                application_data.id
+            )
+                .fetch_all(transaction.deref_mut())
+                .await?;
+
+            let details = ApplicationDetails {
+                id: application_data.id,
+                campaign_id: application_data.campaign_id,
+                status: application_data.status,
+                private_status: application_data.private_status,
+                applied_roles,
+                user: User {
+                    id: application_data.user_id,
+                    email: application_data.user_email,
+                    zid: application_data.user_zid,
+                    name: application_data.user_name,
+                    degree_name: application_data.user_degree_name,
+                    degree_starting_year: application_data.user_degree_starting_year,
+                },
+            };
+
+            application_details_list.push(details);
+        }
+
+        Ok(application_details_list)
     }
 
     /*
@@ -170,20 +229,22 @@ impl Application {
      */
     pub async fn get_from_campaign_id(campaign_id: i64, transaction: &mut Transaction<'_, Postgres>,)
     -> Result<Vec<ApplicationDetails>, ChaosError> {
-        let mut application_details_list = Vec::new();
         let application_data_list = sqlx::query_as!(
             ApplicationData,
             "
-                SELECT id, campaign_id, user_id, status AS \"status: ApplicationStatus\",
-                private_status AS \"private_status: ApplicationStatus\"
-                FROM applications
-                WHERE campaign_id = $1
+                SELECT a.id AS id, campaign_id, user_id, status AS \"status: ApplicationStatus\",
+                private_status AS \"private_status: ApplicationStatus\", u.email AS user_email,
+                u.zid AS user_zid, u.name AS user_name, u.degree_name AS user_degree_name,
+                u.degree_starting_year AS user_degree_starting_year
+                FROM applications a LEFT JOIN users u ON u.id = a.user_id
+                WHERE a.campaign_id = $1
             ",
             campaign_id
         )
-        .fetch_all(transaction.deref_mut())
-        .await?;
+            .fetch_all(transaction.deref_mut())
+            .await?;
 
+        let mut application_details_list = Vec::new();
         for application_data in application_data_list {
             let applied_roles = sqlx::query_as!(
                 ApplicationAppliedRoleDetails,
@@ -198,8 +259,24 @@ impl Application {
             )
             .fetch_all(transaction.deref_mut())
             .await?;
+
+            let details = ApplicationDetails {
+                id: application_data.id,
+                campaign_id: application_data.campaign_id,
+                status: application_data.status,
+                private_status: application_data.private_status,
+                applied_roles,
+                user: User {
+                    id: application_data.user_id,
+                    email: application_data.user_email,
+                    zid: application_data.user_zid,
+                    name: application_data.user_name,
+                    degree_name: application_data.user_degree_name,
+                    degree_starting_year: application_data.user_degree_starting_year,
+                },
+            };
             
-            application_details_list.push(ApplicationDetails{application_data, applied_roles})
+            application_details_list.push(details)
         }
 
         Ok(application_details_list)
@@ -210,20 +287,22 @@ impl Application {
      */
     pub async fn get_from_user_id(user_id: i64, transaction: &mut Transaction<'_, Postgres>,)
     -> Result<Vec<ApplicationDetails>, ChaosError> {
-        let mut application_details_list = Vec::new();
         let application_data_list = sqlx::query_as!(
             ApplicationData,
             "
-                SELECT id, campaign_id, user_id, status AS \"status: ApplicationStatus\",
-                private_status AS \"private_status: ApplicationStatus\"
-                FROM applications
-                WHERE user_id = $1
+                SELECT a.id AS id, campaign_id, user_id, status AS \"status: ApplicationStatus\",
+                private_status AS \"private_status: ApplicationStatus\", u.email AS user_email,
+                u.zid AS user_zid, u.name AS user_name, u.degree_name AS user_degree_name,
+                u.degree_starting_year AS user_degree_starting_year
+                FROM applications a LEFT JOIN users u ON u.id = a.user_id
+                WHERE a.user_id = $1
             ",
             user_id
         )
-        .fetch_all(transaction.deref_mut())
-        .await?;
+            .fetch_all(transaction.deref_mut())
+            .await?;
 
+        let mut application_details_list = Vec::new();
         for application_data in application_data_list {
             let applied_roles = sqlx::query_as!(
                 ApplicationAppliedRoleDetails,
@@ -236,10 +315,26 @@ impl Application {
                 ",
                 application_data.id
             )
-            .fetch_all(transaction.deref_mut())
-            .await?;
-            
-            application_details_list.push(ApplicationDetails{application_data, applied_roles})
+                .fetch_all(transaction.deref_mut())
+                .await?;
+
+            let details = ApplicationDetails {
+                id: application_data.id,
+                campaign_id: application_data.campaign_id,
+                status: application_data.status,
+                private_status: application_data.private_status,
+                applied_roles,
+                user: User {
+                    id: application_data.user_id,
+                    email: application_data.user_email,
+                    zid: application_data.user_zid,
+                    name: application_data.user_name,
+                    degree_name: application_data.user_degree_name,
+                    degree_starting_year: application_data.user_degree_starting_year,
+                },
+            };
+
+            application_details_list.push(details)
         }
 
         Ok(application_details_list)
