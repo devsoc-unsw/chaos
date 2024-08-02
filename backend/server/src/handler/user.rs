@@ -64,7 +64,6 @@ impl UserHandler {
         user: AuthUser,
         Json(request_body): Json<models::user::UserDegree>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        //TODO: WHy is this separate?
         User::update_degree(
             user.user_id,
             request_body.degree_name,
