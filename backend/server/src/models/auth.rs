@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use crate::models::app::AppState;
 use crate::models::error::ChaosError;
 use crate::service::application::user_is_application_admin;
@@ -137,10 +138,12 @@ where
         let pool = &app_state.db;
         let user_id = claims.sub;
 
-        let Path(organisation_id) = parts
-            .extract::<Path<i64>>()
+        let organisation_id = *parts
+            .extract::<Path<HashMap<String ,i64>>>()
             .await
-            .map_err(|_| ChaosError::BadRequest)?;
+            .map_err(|_| ChaosError::BadRequest)?
+            .get("organisation_id")
+            .ok_or(ChaosError::BadRequest)?;
 
         user_is_organisation_admin(user_id, organisation_id, pool).await?;
 
@@ -177,10 +180,12 @@ where
         let pool = &app_state.db;
         let user_id = claims.sub;
 
-        let Path(campaign_id) = parts
-            .extract::<Path<i64>>()
+        let campaign_id = *parts
+            .extract::<Path<HashMap<String, i64>>>()
             .await
-            .map_err(|_| ChaosError::BadRequest)?;
+            .map_err(|_| ChaosError::BadRequest)?
+            .get("campaign_id")
+            .ok_or(ChaosError::BadRequest)?;
 
         user_is_campaign_admin(user_id, campaign_id, pool).await?;
 
@@ -217,12 +222,14 @@ where
         let pool = &app_state.db;
         let user_id = claims.sub;
 
-        let Path(campaign_id) = parts
-            .extract::<Path<i64>>()
+        let role_id = *parts
+            .extract::<Path<HashMap<String, i64>>>()
             .await
-            .map_err(|_| ChaosError::BadRequest)?;
+            .map_err(|_| ChaosError::BadRequest)?
+            .get("role_id")
+            .ok_or(ChaosError::BadRequest)?;
 
-        user_is_role_admin(user_id, campaign_id, pool).await?;
+        user_is_role_admin(user_id, role_id, pool).await?;
 
         Ok(RoleAdmin { user_id })
     }

@@ -11,32 +11,32 @@ pub struct ApplicationHandler;
 
 impl ApplicationHandler {
     pub async fn get(
-        Path(id): Path<i64>,
+        Path(application_id): Path<i64>,
         _admin: ApplicationAdmin,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let application = Application::get(id, &mut transaction.tx).await?;
+        let application = Application::get(application_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(application)))
     }
 
     pub async fn set_status(
         State(state): State<AppState>,
-        Path(id): Path<i64>,
+        Path(application_id): Path<i64>,
         _admin: ApplicationAdmin,
         Json(data): Json<ApplicationStatus>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Application::set_status(id, data, &state.db).await?;
+        Application::set_status(application_id, data, &state.db).await?;
         Ok((StatusCode::OK, "Status successfully updated"))
     }
 
     pub async fn set_private_status(
         State(state): State<AppState>,
-        Path(id): Path<i64>,
+        Path(application_id): Path<i64>,
         _admin: ApplicationAdmin,
         Json(data): Json<ApplicationStatus>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Application::set_private_status(id, data, &state.db).await?;
+        Application::set_private_status(application_id, data, &state.db).await?;
         Ok((StatusCode::OK, "Private Status successfully updated"))
     }
 
