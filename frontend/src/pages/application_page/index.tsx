@@ -48,6 +48,7 @@ const ApplicationPage = () => {
     updated_at: "",
   });
 
+  // TODO: change this to use the slug instead.
   const campaignId = Number(useParams().campaignId);
   const { state } = useLocation() as { state: CampaignWithRoles };
 

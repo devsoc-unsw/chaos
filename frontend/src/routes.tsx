@@ -38,7 +38,7 @@ const routes = [
   />,
   <Route
     key="ApplicationPage"
-    path="/application/:campaignId"
+    path="/application/:campaignId" // TODO: change this to use the slug instead.
     element={<ApplicationPage />}
   />,
 ];
