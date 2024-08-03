@@ -1,13 +1,13 @@
 ---
-id: get-role-by-id
-title: "getRoleById"
-description: "Returns info about specified role."
-sidebar_label: "getRoleById"
+id: update-user-degree
+title: "updateUserDegree"
+description: "Updates currently logged in user's degree."
+sidebar_label: "updateUserDegree"
 hide_title: true
 hide_table_of_contents: true
-api: eJydVEtv1EgQ/iu1dQKpZTsJJ99gQShadkEIxCEaoRq7xu7ddnfTXU4ysvzfUdmTYcigCK0vtuvx1VfPCUPkRGKDv26xxo7lY3D8an/dosFIiQYWThnrmwk9DYw1WlVZjzVGkh4NtpybZKOCYI3qD9ev0WDib6NN3GItaWSDuel5IKwnlH1ckLxwxwkN7kIaSFbR1SXO8+YMlmVMPoP1uwC0DaNAjtzYneUWUnBcoEGhTqkuHHCjDHIMPnPWoJdVpa+fYd//hQab4IW9qJZidLZZClL+m9VkOuEdk5ZL7Aq41uOYTZZkfYcG+Z6G6FT0Z295B3+HMXPC+VFKTzm+o5T2ID1DQwJd8AyDzdn67g/w4Q7uGDxzCzkMrEp2mUEC9ORbx4tjIgGb88gZSOCikh5ehztvfQdZCmUzWP+Vbsk62jr+uS1Xl6d0LtSY7n/P+Go2uLOenM3a+qPhNgTH5M/m5UvP0nMC6W1eGgk9ZdgyezjCwDMuugIGuge6JWeVA/hx2HJ6fhp7Ry7zvDwGX1QX5/3+Jwi40HXcgvXF/+89pxTS0z18FGp+4DWw9OGwbMuSSY81lpp6Odl2RoOZ0+3D1o3JYY29SMx1WTY9hVw0mXNoCoqxpGjPSvohhXZs9AdWJJzNKVBdli405PqQpb6qquqXKO/U5Aiw0Z3fhSVlK4fpppDh5YdrNKh0V7eLoioqHa8Ysgzkf2yKJgzLeXi1h+XAPNqHYy9+c9vX0gvfSxkdWa9RlyynQ1VvUG3RYG1bvQeasEqnaUuZPyc3zyr+NnLaY32zMXhLya4TfjNha7N+t4fBeoLvs4+HW/ccfty/X/I7CMnvtWrkRv1Dg//xfr2t82Y22DO1nBYSq+Jl03CUE5ezYdUOHUfr7ZtPOM/fAUoF/ls=
-sidebar_class_name: "get api-method"
-info_path: docs/Chaos Backend APIs/chaos-api
+api: eJydVE1P3DAQ/SvRXHpxk7Dl5BulSEWt2lULp9UKGWdI3Dq2GTuUKMp/r8ZhYcVXVXJIYnv85s2bZ0/gA5JKxrvTBiQMoVEJzyPSJ2wJEQQ0GDWZwCEg4TwHxEIPROiSHQvr2xabwrhiiEjvYtHknSUISKqNIDfAeLAVQHg9YEwffTOCnPLQEDYgEw0oQHuX0CVeUiFYozOv6lfkzBNE3WGv+C8Qs04GI4+WfBdO9cjDNAYECTGRcS0IwFvVB8tTJxZ1IqOVLU5caxxiDpnFDiImRcm49mJERXtYxiVskfbBVvXqcM4PlxWDd3Fhs6rrhdS+at+/wJvL6zFG1f6jtJ+D1hjj1WDtWCxNbArslbEl7Gge1gdPmX3z6aGD5dtZIpGn1zk+SjXvePWYOs/mCyrpDgR/O5BQsZ+qZufDiHSDxH6aYCALErqUQpRVpTvlY6kjRq9LFUKlgnli3DX5ZtA8KBYkmMU+kKwq67WynY9Jfqjr+lmUrxxyD7AVwLr8eLD1ya7aR7Z8yXsvWS/bS4BxVz6LalKW8JgrLY7WpyCAxVhIHZR1WbONg4+pV7lPd2kXKxR8AIvnT/T00PH/PNxLoxPepipYZRwzyHpOdx3cAG+6r5FvAFaXF6bpUkU8JzvPPH09II0gN1sBN4qMuuRqN9tZQIeqQcpN/40jS7CwfX/G6TncDkzjiVe5u8uOI60xpFdjt3suXB+dHX8GAZd3t1TvG95E6g+I/JYAAnyWL1s/z01glWuHfFBhAeXnL7en3QI=
+sidebar_class_name: "patch api-method"
+info_path: docs/chaos-api
 custom_edit_url: null
 ---
 
@@ -28,20 +28,20 @@ import TabItem from "@theme/TabItem";
 <Heading
   as={"h1"}
   className={"openapi__heading"}
-  children={"getRoleById"}
+  children={"updateUserDegree"}
 >
 </Heading>
 
 <MethodEndpoint
-  method={"get"}
-  path={"/role/{id}"}
+  method={"patch"}
+  path={"/user/degree"}
 >
   
 </MethodEndpoint>
 
 
 
-Returns info about specified role.
+Updates currently logged in user's degree.
 
 <Heading
   id={"request"}
@@ -51,31 +51,62 @@ Returns info about specified role.
 >
 </Heading>
 
-<details
-  style={{"marginBottom":"1rem"}}
-  className={"openapi-markdown__details"}
-  data-collapsed={false}
-  open={true}
+<MimeTabs
+  className={"openapi-tabs__mime"}
 >
-  <summary
-    style={{}}
+  <TabItem
+    label={"application/json"}
+    value={"application/json-schema"}
   >
-    <h3
-      className={"openapi-markdown__details-summary-header-params"}
+    <details
+      style={{}}
+      className={"openapi-markdown__details mime"}
+      data-collapsed={false}
+      open={true}
     >
-      Path Parameters
-    </h3>
-  </summary><div>
-    <ul>
-      <ParamsItem
-        className={"paramsItem"}
-        param={{"name":"id","in":"path","description":"Role ID","required":true,"schema":{"type":"integer","format":"int32"}}}
+      <summary
+        style={{}}
+        className={"openapi-markdown__details-summary-mime"}
+      >
+        <h3
+          className={"openapi-markdown__details-summary-header-body"}
+        >
+          Body
+        </h3><strong
+          className={"openapi-schema__required"}
+        >
+          required
+        </strong>
+      </summary><div
+        style={{"textAlign":"left","marginLeft":"1rem"}}
       >
         
-      </ParamsItem>
-    </ul>
-  </div>
-</details><div>
+      </div><ul
+        style={{"marginLeft":"1rem"}}
+      >
+        <SchemaItem
+          collapsible={false}
+          name={"degree_name"}
+          required={false}
+          schemaName={"string"}
+          qualifierMessage={undefined}
+          schema={{"type":"string","example":"Electrical Engineering"}}
+        >
+          
+        </SchemaItem><SchemaItem
+          collapsible={false}
+          name={"degree_starting_year"}
+          required={false}
+          schemaName={"integer"}
+          qualifierMessage={undefined}
+          schema={{"type":"integer","example":2024}}
+        >
+          
+        </SchemaItem>
+      </ul>
+    </details>
+  </TabItem>
+</MimeTabs><div>
   <div>
     <ApiTabs
       label={undefined}
@@ -129,47 +160,11 @@ Returns info about specified role.
                     >
                       <SchemaItem
                         collapsible={false}
-                        name={"name"}
+                        name={"message"}
                         required={false}
                         schemaName={"string"}
                         qualifierMessage={undefined}
-                        schema={{"type":"string","example":"Chief Mouser"}}
-                      >
-                        
-                      </SchemaItem><SchemaItem
-                        collapsible={false}
-                        name={"description"}
-                        required={false}
-                        schemaName={"string"}
-                        qualifierMessage={undefined}
-                        schema={{"type":"string","example":"Larry the cat gone missing! now we need someone else to handle the rat issues at 10th Downing st."}}
-                      >
-                        
-                      </SchemaItem><SchemaItem
-                        collapsible={false}
-                        name={"min_available"}
-                        required={false}
-                        schemaName={"int32"}
-                        qualifierMessage={undefined}
-                        schema={{"type":"int32","example":1}}
-                      >
-                        
-                      </SchemaItem><SchemaItem
-                        collapsible={false}
-                        name={"max_available"}
-                        required={false}
-                        schemaName={"int32"}
-                        qualifierMessage={undefined}
-                        schema={{"type":"int32","example":3}}
-                      >
-                        
-                      </SchemaItem><SchemaItem
-                        collapsible={false}
-                        name={"finalised"}
-                        required={false}
-                        schemaName={"boolean"}
-                        qualifierMessage={undefined}
-                        schema={{"type":"boolean","description":"Whether this role has been finalised (e.g. max avaliable number)","example":false}}
+                        schema={{"type":"string","example":"Successfully updated email."}}
                       >
                         
                       </SchemaItem>
@@ -180,7 +175,7 @@ Returns info about specified role.
                   value={"Example (from schema)"}
                 >
                   <ResponseSamples
-                    responseExample={"{\n  \"name\": \"Chief Mouser\",\n  \"description\": \"Larry the cat gone missing! now we need someone else to handle the rat issues at 10th Downing st.\",\n  \"min_available\": 1,\n  \"max_available\": 3,\n  \"finalised\": false\n}"}
+                    responseExample={"{\n  \"message\": \"Successfully updated email.\"\n}"}
                     language={"json"}
                   >
                     

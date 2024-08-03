@@ -1,13 +1,13 @@
 ---
-id: update-user-degree
-title: "updateUserDegree"
-description: "Updates currently logged in user's degree."
-sidebar_label: "updateUserDegree"
+id: create-organisation
+title: "createOrganisation"
+description: "Creates a new organisation."
+sidebar_label: "createOrganisation"
 hide_title: true
 hide_table_of_contents: true
-api: eJydVE1P3DAQ/SvRXHpxk7Dl5BulSEWt2lULp9UKGWdI3Dq2GTuUKMp/r8ZhYcVXVXJIYnv85s2bZ0/gA5JKxrvTBiQMoVEJzyPSJ2wJEQQ0GDWZwCEg4TwHxEIPROiSHQvr2xabwrhiiEjvYtHknSUISKqNIDfAeLAVQHg9YEwffTOCnPLQEDYgEw0oQHuX0CVeUiFYozOv6lfkzBNE3WGv+C8Qs04GI4+WfBdO9cjDNAYECTGRcS0IwFvVB8tTJxZ1IqOVLU5caxxiDpnFDiImRcm49mJERXtYxiVskfbBVvXqcM4PlxWDd3Fhs6rrhdS+at+/wJvL6zFG1f6jtJ+D1hjj1WDtWCxNbArslbEl7Gge1gdPmX3z6aGD5dtZIpGn1zk+SjXvePWYOs/mCyrpDgR/O5BQsZ+qZufDiHSDxH6aYCALErqUQpRVpTvlY6kjRq9LFUKlgnli3DX5ZtA8KBYkmMU+kKwq67WynY9Jfqjr+lmUrxxyD7AVwLr8eLD1ya7aR7Z8yXsvWS/bS4BxVz6LalKW8JgrLY7WpyCAxVhIHZR1WbONg4+pV7lPd2kXKxR8AIvnT/T00PH/PNxLoxPepipYZRwzyHpOdx3cAG+6r5FvAFaXF6bpUkU8JzvPPH09II0gN1sBN4qMuuRqN9tZQIeqQcpN/40jS7CwfX/G6TncDkzjiVe5u8uOI60xpFdjt3suXB+dHX8GAZd3t1TvG95E6g+I/JYAAnyWL1s/z01glWuHfFBhAeXnL7en3QI=
-sidebar_class_name: "patch api-method"
-info_path: docs/Chaos Backend APIs/chaos-api
+api: eJydVMlu3DAM/RWBZ3XsNAsK39Kkh6BFE3Qa9DCYAyNzxmptSaHkJFPD/15QzjJZkBTRQbJoinp8fNQAPhBjst6d1FCBYcJEp7xGZ2M2g4aaomEb8q6Co+wSFSpH18pvuc5AQ8J1hGoBj0IsNTBd9hTTZ19voBry1jLVUCXuSYPxLpFL8gtDaK3JB4vfUa4cIJqGOpSvwAI4WYqyc9iRrGkTCCqIia1bgwa6wS60Yjr/Pv+l5n6VrpFJHdMVtT505JKae2MpbWDUgHVn3VYc6xKtiUHDynOHaTId7G1H3tnf2/m0s39Q7h6UMu2X5VOmziOxOjlWfqWmG8Y8hIwYvItTDh/LUpbHR0+/wrtJ6ShGXL/By7w3hmJc9W27UVPV6yfFvEO7V+4+B5hzs1E5nxSq2Adi1Ufi2ftxE7PnN6rpsE+NZ/uX6lt8o4aOUuNFvcHHBBoCpgYqKPxjGUfiK2JR5wA9t1BBk1KIVVGYBn2cmUjRmxmGUGCwz3R/xr7ujWzUFAlGvR2oKorWG2wbH1O1W5bli1G+ict9gKUGYeXHQ3N8ucv1Ttz/oeB7Ab+gyVGDdSufabUpk3gk2arDsxPQIIRMwHZm5ayUZhASO3RbCCZ5qNdeheGh6G89EFNxE92kIrQoXaEnFofbwi3AP3k8hFKxD8MFRjrndhzFfNkTb6BaLDVcIVu8kPQWy1FDQ1gT50r/oY1gmtB9+Cm3i3vbC4pn8pSSTicOjaGQXvVdbknv7HT+EzRc3L5vna/lDOM16DxXABp8ZiuLPdsGaNGt+9ysMMWU8Q8WFeqW
+sidebar_class_name: "post api-method"
+info_path: docs/chaos-api
 custom_edit_url: null
 ---
 
@@ -28,20 +28,20 @@ import TabItem from "@theme/TabItem";
 <Heading
   as={"h1"}
   className={"openapi__heading"}
-  children={"updateUserDegree"}
+  children={"createOrganisation"}
 >
 </Heading>
 
 <MethodEndpoint
-  method={"patch"}
-  path={"/user/degree"}
+  method={"post"}
+  path={"/organisation"}
 >
   
 </MethodEndpoint>
 
 
 
-Updates currently logged in user's degree.
+Creates a new organisation.
 
 <Heading
   id={"request"}
@@ -86,20 +86,20 @@ Updates currently logged in user's degree.
       >
         <SchemaItem
           collapsible={false}
-          name={"degree_name"}
+          name={"name"}
           required={false}
           schemaName={"string"}
           qualifierMessage={undefined}
-          schema={{"type":"string","example":"Electrical Engineering"}}
+          schema={{"type":"string","example":"UNSW Software Development Society"}}
         >
           
         </SchemaItem><SchemaItem
           collapsible={false}
-          name={"degree_starting_year"}
+          name={"admin"}
           required={false}
-          schemaName={"integer"}
+          schemaName={"int64"}
           qualifierMessage={undefined}
-          schema={{"type":"integer","example":2024}}
+          schema={{"type":"integer","format":"int64","example":1541815603606036500,"description":"User ID of admin"}}
         >
           
         </SchemaItem>
@@ -164,7 +164,7 @@ Updates currently logged in user's degree.
                         required={false}
                         schemaName={"string"}
                         qualifierMessage={undefined}
-                        schema={{"type":"string","example":"Successfully updated email."}}
+                        schema={{"type":"string","example":"Successfully created organisation."}}
                       >
                         
                       </SchemaItem>
@@ -175,7 +175,7 @@ Updates currently logged in user's degree.
                   value={"Example (from schema)"}
                 >
                   <ResponseSamples
-                    responseExample={"{\n  \"message\": \"Successfully updated email.\"\n}"}
+                    responseExample={"{\n  \"message\": \"Successfully created organisation.\"\n}"}
                     language={"json"}
                   >
                     
@@ -186,13 +186,13 @@ Updates currently logged in user's degree.
           </MimeTabs>
         </div>
       </TabItem><TabItem
-        label={"401"}
-        value={"401"}
+        label={"403"}
+        value={"403"}
       >
         <div>
           
           
-          Not logged in.
+          User is not a super user.
           
           
         </div><div>
@@ -237,7 +237,7 @@ Updates currently logged in user's degree.
                         required={false}
                         schemaName={"string"}
                         qualifierMessage={undefined}
-                        schema={{"type":"string","example":"Not logged in."}}
+                        schema={{"type":"string","example":"Unauthorized"}}
                       >
                         
                       </SchemaItem>
@@ -248,7 +248,7 @@ Updates currently logged in user's degree.
                   value={"Example (from schema)"}
                 >
                   <ResponseSamples
-                    responseExample={"{\n  \"error\": \"Not logged in.\"\n}"}
+                    responseExample={"{\n  \"error\": \"Unauthorized\"\n}"}
                     language={"json"}
                   >
                     

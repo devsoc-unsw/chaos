@@ -1,13 +1,13 @@
 ---
-id: create-organisation
-title: "createOrganisation"
-description: "Creates a new organisation."
-sidebar_label: "createOrganisation"
+id: get-role-by-id
+title: "getRoleById"
+description: "Returns info about specified role."
+sidebar_label: "getRoleById"
 hide_title: true
 hide_table_of_contents: true
-api: eJydVMlu3DAM/RWBZ3XsNAsK39Kkh6BFE3Qa9DCYAyNzxmptSaHkJFPD/15QzjJZkBTRQbJoinp8fNQAPhBjst6d1FCBYcJEp7xGZ2M2g4aaomEb8q6Co+wSFSpH18pvuc5AQ8J1hGoBj0IsNTBd9hTTZ19voBry1jLVUCXuSYPxLpFL8gtDaK3JB4vfUa4cIJqGOpSvwAI4WYqyc9iRrGkTCCqIia1bgwa6wS60Yjr/Pv+l5n6VrpFJHdMVtT505JKae2MpbWDUgHVn3VYc6xKtiUHDynOHaTId7G1H3tnf2/m0s39Q7h6UMu2X5VOmziOxOjlWfqWmG8Y8hIwYvItTDh/LUpbHR0+/wrtJ6ShGXL/By7w3hmJc9W27UVPV6yfFvEO7V+4+B5hzs1E5nxSq2Adi1Ufi2ftxE7PnN6rpsE+NZ/uX6lt8o4aOUuNFvcHHBBoCpgYqKPxjGUfiK2JR5wA9t1BBk1KIVVGYBn2cmUjRmxmGUGCwz3R/xr7ujWzUFAlGvR2oKorWG2wbH1O1W5bli1G+ict9gKUGYeXHQ3N8ucv1Ttz/oeB7Ab+gyVGDdSufabUpk3gk2arDsxPQIIRMwHZm5ayUZhASO3RbCCZ5qNdeheGh6G89EFNxE92kIrQoXaEnFofbwi3AP3k8hFKxD8MFRjrndhzFfNkTb6BaLDVcIVu8kPQWy1FDQ1gT50r/oY1gmtB9+Cm3i3vbC4pn8pSSTicOjaGQXvVdbknv7HT+EzRc3L5vna/lDOM16DxXABp8ZiuLPdsGaNGt+9ysMMWU8Q8WFeqW
-sidebar_class_name: "post api-method"
-info_path: docs/Chaos Backend APIs/chaos-api
+api: eJydVEtv1EgQ/iu1dQKpZTsJJ99gQShadkEIxCEaoRq7xu7ddnfTXU4ysvzfUdmTYcigCK0vtuvx1VfPCUPkRGKDv26xxo7lY3D8an/dosFIiQYWThnrmwk9DYw1WlVZjzVGkh4NtpybZKOCYI3qD9ev0WDib6NN3GItaWSDuel5IKwnlH1ckLxwxwkN7kIaSFbR1SXO8+YMlmVMPoP1uwC0DaNAjtzYneUWUnBcoEGhTqkuHHCjDHIMPnPWoJdVpa+fYd//hQab4IW9qJZidLZZClL+m9VkOuEdk5ZL7Aq41uOYTZZkfYcG+Z6G6FT0Z295B3+HMXPC+VFKTzm+o5T2ID1DQwJd8AyDzdn67g/w4Q7uGDxzCzkMrEp2mUEC9ORbx4tjIgGb88gZSOCikh5ehztvfQdZCmUzWP+Vbsk62jr+uS1Xl6d0LtSY7n/P+Go2uLOenM3a+qPhNgTH5M/m5UvP0nMC6W1eGgk9ZdgyezjCwDMuugIGuge6JWeVA/hx2HJ6fhp7Ry7zvDwGX1QX5/3+Jwi40HXcgvXF/+89pxTS0z18FGp+4DWw9OGwbMuSSY81lpp6Odl2RoOZ0+3D1o3JYY29SMx1WTY9hVw0mXNoCoqxpGjPSvohhXZs9AdWJJzNKVBdli405PqQpb6qquqXKO/U5Aiw0Z3fhSVlK4fpppDh5YdrNKh0V7eLoioqHa8Ysgzkf2yKJgzLeXi1h+XAPNqHYy9+c9vX0gvfSxkdWa9RlyynQ1VvUG3RYG1bvQeasEqnaUuZPyc3zyr+NnLaY32zMXhLya4TfjNha7N+t4fBeoLvs4+HW/ccfty/X/I7CMnvtWrkRv1Dg//xfr2t82Y22DO1nBYSq+Jl03CUE5ezYdUOHUfr7ZtPOM/fAUoF/ls=
+sidebar_class_name: "get api-method"
+info_path: docs/chaos-api
 custom_edit_url: null
 ---
 
@@ -28,20 +28,20 @@ import TabItem from "@theme/TabItem";
 <Heading
   as={"h1"}
   className={"openapi__heading"}
-  children={"createOrganisation"}
+  children={"getRoleById"}
 >
 </Heading>
 
 <MethodEndpoint
-  method={"post"}
-  path={"/organisation"}
+  method={"get"}
+  path={"/role/{id}"}
 >
   
 </MethodEndpoint>
 
 
 
-Creates a new organisation.
+Returns info about specified role.
 
 <Heading
   id={"request"}
@@ -51,62 +51,31 @@ Creates a new organisation.
 >
 </Heading>
 
-<MimeTabs
-  className={"openapi-tabs__mime"}
+<details
+  style={{"marginBottom":"1rem"}}
+  className={"openapi-markdown__details"}
+  data-collapsed={false}
+  open={true}
 >
-  <TabItem
-    label={"application/json"}
-    value={"application/json-schema"}
+  <summary
+    style={{}}
   >
-    <details
-      style={{}}
-      className={"openapi-markdown__details mime"}
-      data-collapsed={false}
-      open={true}
+    <h3
+      className={"openapi-markdown__details-summary-header-params"}
     >
-      <summary
-        style={{}}
-        className={"openapi-markdown__details-summary-mime"}
-      >
-        <h3
-          className={"openapi-markdown__details-summary-header-body"}
-        >
-          Body
-        </h3><strong
-          className={"openapi-schema__required"}
-        >
-          required
-        </strong>
-      </summary><div
-        style={{"textAlign":"left","marginLeft":"1rem"}}
+      Path Parameters
+    </h3>
+  </summary><div>
+    <ul>
+      <ParamsItem
+        className={"paramsItem"}
+        param={{"name":"id","in":"path","description":"Role ID","required":true,"schema":{"type":"integer","format":"int32"}}}
       >
         
-      </div><ul
-        style={{"marginLeft":"1rem"}}
-      >
-        <SchemaItem
-          collapsible={false}
-          name={"name"}
-          required={false}
-          schemaName={"string"}
-          qualifierMessage={undefined}
-          schema={{"type":"string","example":"UNSW Software Development Society"}}
-        >
-          
-        </SchemaItem><SchemaItem
-          collapsible={false}
-          name={"admin"}
-          required={false}
-          schemaName={"int64"}
-          qualifierMessage={undefined}
-          schema={{"type":"integer","format":"int64","example":1541815603606036500,"description":"User ID of admin"}}
-        >
-          
-        </SchemaItem>
-      </ul>
-    </details>
-  </TabItem>
-</MimeTabs><div>
+      </ParamsItem>
+    </ul>
+  </div>
+</details><div>
   <div>
     <ApiTabs
       label={undefined}
@@ -160,11 +129,47 @@ Creates a new organisation.
                     >
                       <SchemaItem
                         collapsible={false}
-                        name={"message"}
+                        name={"name"}
                         required={false}
                         schemaName={"string"}
                         qualifierMessage={undefined}
-                        schema={{"type":"string","example":"Successfully created organisation."}}
+                        schema={{"type":"string","example":"Chief Mouser"}}
+                      >
+                        
+                      </SchemaItem><SchemaItem
+                        collapsible={false}
+                        name={"description"}
+                        required={false}
+                        schemaName={"string"}
+                        qualifierMessage={undefined}
+                        schema={{"type":"string","example":"Larry the cat gone missing! now we need someone else to handle the rat issues at 10th Downing st."}}
+                      >
+                        
+                      </SchemaItem><SchemaItem
+                        collapsible={false}
+                        name={"min_available"}
+                        required={false}
+                        schemaName={"int32"}
+                        qualifierMessage={undefined}
+                        schema={{"type":"int32","example":1}}
+                      >
+                        
+                      </SchemaItem><SchemaItem
+                        collapsible={false}
+                        name={"max_available"}
+                        required={false}
+                        schemaName={"int32"}
+                        qualifierMessage={undefined}
+                        schema={{"type":"int32","example":3}}
+                      >
+                        
+                      </SchemaItem><SchemaItem
+                        collapsible={false}
+                        name={"finalised"}
+                        required={false}
+                        schemaName={"boolean"}
+                        qualifierMessage={undefined}
+                        schema={{"type":"boolean","description":"Whether this role has been finalised (e.g. max avaliable number)","example":false}}
                       >
                         
                       </SchemaItem>
@@ -175,7 +180,7 @@ Creates a new organisation.
                   value={"Example (from schema)"}
                 >
                   <ResponseSamples
-                    responseExample={"{\n  \"message\": \"Successfully created organisation.\"\n}"}
+                    responseExample={"{\n  \"name\": \"Chief Mouser\",\n  \"description\": \"Larry the cat gone missing! now we need someone else to handle the rat issues at 10th Downing st.\",\n  \"min_available\": 1,\n  \"max_available\": 3,\n  \"finalised\": false\n}"}
                     language={"json"}
                   >
                     
@@ -186,13 +191,13 @@ Creates a new organisation.
           </MimeTabs>
         </div>
       </TabItem><TabItem
-        label={"403"}
-        value={"403"}
+        label={"401"}
+        value={"401"}
       >
         <div>
           
           
-          User is not a super user.
+          Not logged in.
           
           
         </div><div>
@@ -237,7 +242,7 @@ Creates a new organisation.
                         required={false}
                         schemaName={"string"}
                         qualifierMessage={undefined}
-                        schema={{"type":"string","example":"Unauthorized"}}
+                        schema={{"type":"string","example":"Not logged in."}}
                       >
                         
                       </SchemaItem>
@@ -248,7 +253,7 @@ Creates a new organisation.
                   value={"Example (from schema)"}
                 >
                   <ResponseSamples
-                    responseExample={"{\n  \"error\": \"Unauthorized\"\n}"}
+                    responseExample={"{\n  \"error\": \"Not logged in.\"\n}"}
                     language={"json"}
                   >
                     

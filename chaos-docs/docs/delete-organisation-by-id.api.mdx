@@ -1,13 +1,13 @@
 ---
-id: get-logged-in-user
-title: "getLoggedInUser"
-description: "Returns info about currently logged in user."
-sidebar_label: "getLoggedInUser"
+id: delete-organisation-by-id
+title: "deleteOrganisationById"
+description: "Deletes specified organisation."
+sidebar_label: "deleteOrganisationById"
 hide_title: true
 hide_table_of_contents: true
-api: eJydU9tu2zAM/RWBz4LttEkx6GnFMAzBiq3Y1qcgKBSFtbXJkkbJRVPD/z7QTtt0DbqLHmRJJg8v57CHEJF0tsEvt6CgxnwR6hq3S3+VkEDCFpMhG9kCFHzB3JFPwvqbIPQmdFmYjgh9djvhRk9hvegSUgESsq4TqBWMWGsJhCkGnzCB6uGkqvjzPMDnjyDBBJ/RZ/6rY3TWjAmW3xOb9JBMg63mUyROP9sJ0G55z7uIoMD6jPVYwU2gVufp6WwOEvBOt9EhqNliPnszW5xVp2cVb4uqGiRgq607QEqZrK8P/aDFt/tLYUILg4T7Z8GPuNwvpsXGXrf4uvU7p73ZiQtuysAk1IR4/Rd+oY1dRhJfjUVv8MA5ZU3Z+vp6h5qONuoR5qQ6mQ8SKLg/hBt5HcYlYV7NXvL5KeQnXRT/zy0SBXo9md9CDQ95tZibsBc3SIg6N6Cg7CZ9J6RbJFZpDx05UNDkHJMqS9PokAqTMAVT6BhLHe2LgbiksO0MX8SEBIM8BFJl6YLRrgkpq9Oqqo6iXLDJI8BaAs/XWK3NE6+cizi/XIIETndymxVVUTHFMaTc6rGBk0a4VjFNslh6cWyW+ycq/nmsJw4y3uUyOm1HjY419/v2rqDbjzwXzve+3+iEV+SGgZ9/dkg7UKu1hFtNVm+4zNV6kNCg3iKNfPzAHSg4NwYjM3erXcdxX+iGO/bI8of332AYfgFMl6O8
-sidebar_class_name: "get api-method"
-info_path: docs/Chaos Backend APIs/chaos-api
+api: eJydlEFvnDAQhf8KeqdWshbaRD34ljQ5rBqpUducVnuYmNnFLWDHY6JQxH+vDNuEZKOoKhdghnn+ZvzMAOc5ULSuXZfQKLnmyF/DnlorU/i8X5dQ8BSo4chBoDcDWmoYGjalbAsNT7GCQsligvWpEBpLnWx9AYXAd50NXELH0LGCmIobgh4Qez8ptpH3HKCwc6GhOIc+nWIcty/lLyZYycSzsTvLZeYWC66gEGmfeJ+BYJswxLtWWNLKH4si3V6gf4GCcW3kNqYseV9bMwnkPyV9MizgfUhjjHYWbFiE9rzoSmKw7R4K/ECNr1Poe2cMi+y6uu6zeewv+cfpUjgtTo4Bb4RDZiVrXcwok85zyDrhsPp/bg7Bhbepb1rqYuWC/c3lgW9UaDhW7sk+k11iBY182VA+2HKEgnC4/+ujLtTQqGL0ovPcVORkZYTFmRV5n5O3R6a6Dq7szGSpWQmjWgrpPK+dobpyEvVJURSvqlylTx4FtsnFOzf1buPU6efEkp1dr6GQcOeyD6tiVWBU8E5iQ9M4D2dh7j175vnzPptOz7O1h6f9+RcLz3sR+SHmvibbptWnbofDlDdY1kBB2zKZPA0gZYfhloRvQj2OKXzXceihN1uFewqWblO7mwGllfRcQu+oFn4D+t23wyl+nx2f8Fd5D0Fq+zRNqrv0BoVf3M9/kXE7KlRMJYcJZk6cGcM+LkqO3Jx27tF9F5dXlz8uMY5/ABnoqsU=
+sidebar_class_name: "delete api-method"
+info_path: docs/chaos-api
 custom_edit_url: null
 ---
 
@@ -28,22 +28,54 @@ import TabItem from "@theme/TabItem";
 <Heading
   as={"h1"}
   className={"openapi__heading"}
-  children={"getLoggedInUser"}
+  children={"deleteOrganisationById"}
 >
 </Heading>
 
 <MethodEndpoint
-  method={"get"}
-  path={"/user"}
+  method={"delete"}
+  path={"/organisation/{id}"}
 >
   
 </MethodEndpoint>
 
 
 
-Returns info about currently logged in user.
+Deletes specified organisation.
 
-<div>
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<details
+  style={{"marginBottom":"1rem"}}
+  className={"openapi-markdown__details"}
+  data-collapsed={false}
+  open={true}
+>
+  <summary
+    style={{}}
+  >
+    <h3
+      className={"openapi-markdown__details-summary-header-params"}
+    >
+      Path Parameters
+    </h3>
+  </summary><div>
+    <ul>
+      <ParamsItem
+        className={"paramsItem"}
+        param={{"name":"id","in":"path","description":"Organisation ID","required":true,"schema":{"type":"integer","format":"int64"}}}
+      >
+        
+      </ParamsItem>
+    </ul>
+  </div>
+</details><div>
   <div>
     <ApiTabs
       label={undefined}
@@ -97,65 +129,11 @@ Returns info about currently logged in user.
                     >
                       <SchemaItem
                         collapsible={false}
-                        name={"id"}
-                        required={false}
-                        schemaName={"int64"}
-                        qualifierMessage={undefined}
-                        schema={{"type":"integer","format":"int64","example":1541815603606036500}}
-                      >
-                        
-                      </SchemaItem><SchemaItem
-                        collapsible={false}
-                        name={"email"}
+                        name={"message"}
                         required={false}
                         schemaName={"string"}
                         qualifierMessage={undefined}
-                        schema={{"type":"string","example":"me@example.com"}}
-                      >
-                        
-                      </SchemaItem><SchemaItem
-                        collapsible={false}
-                        name={"zid"}
-                        required={false}
-                        schemaName={"string"}
-                        qualifierMessage={undefined}
-                        schema={{"type":"string","example":"z5555555"}}
-                      >
-                        
-                      </SchemaItem><SchemaItem
-                        collapsible={false}
-                        name={"name"}
-                        required={false}
-                        schemaName={"string"}
-                        qualifierMessage={undefined}
-                        schema={{"type":"string","example":"Clancy Lion"}}
-                      >
-                        
-                      </SchemaItem><SchemaItem
-                        collapsible={false}
-                        name={"degree_name"}
-                        required={false}
-                        schemaName={"string"}
-                        qualifierMessage={undefined}
-                        schema={{"type":"string","example":"Computer Science"}}
-                      >
-                        
-                      </SchemaItem><SchemaItem
-                        collapsible={false}
-                        name={"degree_starting_year"}
-                        required={false}
-                        schemaName={"integer"}
-                        qualifierMessage={undefined}
-                        schema={{"type":"integer","example":2024}}
-                      >
-                        
-                      </SchemaItem><SchemaItem
-                        collapsible={false}
-                        name={"role"}
-                        required={false}
-                        schemaName={"string"}
-                        qualifierMessage={undefined}
-                        schema={{"type":"string","example":"User"}}
+                        schema={{"type":"string","example":"Successfully deleted organisation."}}
                       >
                         
                       </SchemaItem>
@@ -166,7 +144,7 @@ Returns info about currently logged in user.
                   value={"Example (from schema)"}
                 >
                   <ResponseSamples
-                    responseExample={"{\n  \"id\": 1541815603606036500,\n  \"email\": \"me@example.com\",\n  \"zid\": \"z5555555\",\n  \"name\": \"Clancy Lion\",\n  \"degree_name\": \"Computer Science\",\n  \"degree_starting_year\": 2024,\n  \"role\": \"User\"\n}"}
+                    responseExample={"{\n  \"message\": \"Successfully deleted organisation.\"\n}"}
                     language={"json"}
                   >
                     
@@ -177,13 +155,13 @@ Returns info about currently logged in user.
           </MimeTabs>
         </div>
       </TabItem><TabItem
-        label={"401"}
-        value={"401"}
+        label={"403"}
+        value={"403"}
       >
         <div>
           
           
-          Not logged in.
+          User is not a super user.
           
           
         </div><div>
@@ -228,7 +206,7 @@ Returns info about currently logged in user.
                         required={false}
                         schemaName={"string"}
                         qualifierMessage={undefined}
-                        schema={{"type":"string","example":"Not logged in."}}
+                        schema={{"type":"string","example":"Unauthorized"}}
                       >
                         
                       </SchemaItem>
@@ -239,7 +217,7 @@ Returns info about currently logged in user.
                   value={"Example (from schema)"}
                 >
                   <ResponseSamples
-                    responseExample={"{\n  \"error\": \"Not logged in.\"\n}"}
+                    responseExample={"{\n  \"error\": \"Unauthorized\"\n}"}
                     language={"json"}
                   >
                     

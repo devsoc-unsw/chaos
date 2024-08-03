@@ -1,13 +1,13 @@
 ---
-id: update-organisation-members-by-id
-title: "updateOrganisationMembersById"
-description: "Specifies members for specified organistion."
-sidebar_label: "updateOrganisationMembersById"
+id: get-organisation-members-by-id
+title: "getOrganisationMembersById"
+description: "Returns list of members of specified organisation."
+sidebar_label: "getOrganisationMembersById"
 hide_title: true
 hide_table_of_contents: true
-api: eJy1Vctu2zAQ/BVhTy3AWnKcF3RL0h6MvoImPhk+rMW1xFYSGZJK4gr694KkVCt2ELQN6oNtrbjL2VnOsAWpSKMVsp5zSKFRHC191TnWwvjwZ6rWpM3lds6BgUKNFVnSBtJlCzVWBCkI90rUkIJCWwADTibTQrl8SGFcLpq/Bwaa7hqhiUNqdUMMTFZQhZC2YLfKV6wt5aSBwUbqCm0InR5D161COhl7KfnW5exXy2RtqbbuFSpViszvHH83Dk072kxp170VZNxTFTodoUCtcQsMmlrcNTS3VJlhDxEe/gAwA3rESpUE6XJ6cjw9n56cJrPTxH2dJAnbj53tYkfnZ7Nh3arzn31ubxRlYiPIRD38aCN1ZPooj2Tg3q2eAAOLuZvck5GAZ9QoWZtAxFGSuJ+9IX6EVzBrDOY0ostYLeocRtzATZNlZMymKcttFM4hH5qawND9cTI9xPZF2qiUeU48Er7Nf8RJWkv9Msq9rXawZoewFoZ0JExUSxthPYwiyAB59b+hLmpsbCG1+Em8B9oxqMgW0kldNdYL2haQQjwGF7eCd/EgBwaG9P2g+EaXkEJhrTJpHGcFSjPJDBmZTVCpGJU4kP+1lrzJfNehEnRsXCiN41JmWBbS2HSWJMmzVT65Jb8LrBg4hr7tjODD0PdIyK/Tm7O0jfQcC+sZvXLtRhfXc2DgGAnIppNkkjidK2lshX5svTGGYxw9McDeUKPLbeQt9Umb7e48/LW0w0Gw9GhjVaKoHSTPcttPeQnjKQOD1Bv3QNeKgRuBW9e2azS00GXXufBdQ3oL6XLF4B61wLU3sxa4MO4/h3SDpaEXennzrffot9HhbfAs8sGCa2fA91g27gkY/KBtuHE6N6GCkJP2YMKLq7Dlu1uXvks8kJY7giHjIstI2RfXrkayuV7cAoN1f/VUkrsUjQ/uVsOHgFF6BrxOfayFEuu88RYIoaT7/AIhU4eu
-sidebar_class_name: "put api-method"
-info_path: docs/Chaos Backend APIs/chaos-api
+api: eJydVMtu2zAQ/BViTy1AWHLzQMGb0xaF0RQNguZk+EBLa4upRDLLVRBV0L8XlGRXjoO0iA6WTHIHszOcbcF5JM3G2WUOCnbIP2inrQn92nesNkjhqlnmIMFr0hUyUgC1asHqCkGBiVvGggKvuQAJOYaMjI/1oGAKJ5afQQLhQ20Ic1BMNUoIWYGVBtUCN75HtIw7JJCwdVRpHpYuz6Hr1s/hb5FrskGUJrBwW1ENjONn8JiZrcFcuAmHGUhgvYstHHGDdWQWvLMBQyTzIU3j61k330BC5iyj5birvS9N1gMk9yEeaSf9eIrqshkAR2qTRjWRbqJ6jNV03W3uMeOo+BGAyf9HJAn4pCtfIqj5xfn84/ziMj27TOPPRZp2cvTtABSYjN1Ny+BTqW3WiOvYcyeBXPmPgkVeGQvd/pFwnp6dincXkIQJwjoW2h65InREEI5GA2dvlxmJHL1O987qmgtH5jfmcOBcIRduDEF/27kABcmUZtKavEv2RkoISI/7ONRUgoKC2QeVJFmhXZhlAYPLZtr7RHtzko0bcnmd9f0PSNDJKZBKktJluixcYHWWpumLKNfxyAFgHcO4db0Ahgc7IxexuFmChEh3KJvP0lka7fUucKV7TcdI75DFUW7HOSCuGtFPgiMC7V+n3hjHwSjGJ058qU1/6XoV2tGFFUxrQILqp87eiLWEKFE817YbHfCOyq6Lyw81UgNqtZbwqMnoTRRk1UJuQvzOQW11GfCVjt7djuPqvTgdZS8y34fbxmg/6rKO/0DCL2yGcdmtOwkF6hypJzNsLLIMPU9KTi599PZwSb9++Qld9wfH7fdz
+sidebar_class_name: "get api-method"
+info_path: docs/chaos-api
 custom_edit_url: null
 ---
 
@@ -28,12 +28,12 @@ import TabItem from "@theme/TabItem";
 <Heading
   as={"h1"}
   className={"openapi__heading"}
-  children={"updateOrganisationMembersById"}
+  children={"getOrganisationMembersById"}
 >
 </Heading>
 
 <MethodEndpoint
-  method={"put"}
+  method={"get"}
   path={"/organisation/{id}/members"}
 >
   
@@ -41,7 +41,7 @@ import TabItem from "@theme/TabItem";
 
 
 
-Specifies members for specified organistion.
+Returns list of members of specified organisation.
 
 <Heading
   id={"request"}
@@ -75,53 +75,7 @@ Specifies members for specified organistion.
       </ParamsItem>
     </ul>
   </div>
-</details><MimeTabs
-  className={"openapi-tabs__mime"}
->
-  <TabItem
-    label={"application/json"}
-    value={"application/json-schema"}
-  >
-    <details
-      style={{}}
-      className={"openapi-markdown__details mime"}
-      data-collapsed={false}
-      open={true}
-    >
-      <summary
-        style={{}}
-        className={"openapi-markdown__details-summary-mime"}
-      >
-        <h3
-          className={"openapi-markdown__details-summary-header-body"}
-        >
-          Body
-        </h3><strong
-          className={"openapi-schema__required"}
-        >
-          required
-        </strong>
-      </summary><div
-        style={{"textAlign":"left","marginLeft":"1rem"}}
-      >
-        
-      </div><ul
-        style={{"marginLeft":"1rem"}}
-      >
-        <SchemaItem
-          collapsible={false}
-          name={"members"}
-          required={false}
-          schemaName={"int64[]"}
-          qualifierMessage={undefined}
-          schema={{"type":"array","uniqueItems":true,"items":{"type":"integer","format":"int64"},"example":[1541815603606036500,1541815603606036700,1541815287306036500]}}
-        >
-          
-        </SchemaItem>
-      </ul>
-    </details>
-  </TabItem>
-</MimeTabs><div>
+</details><div>
   <div>
     <ApiTabs
       label={undefined}
@@ -174,14 +128,74 @@ Specifies members for specified organistion.
                       style={{"marginLeft":"1rem"}}
                     >
                       <SchemaItem
-                        collapsible={false}
-                        name={"message"}
-                        required={false}
-                        schemaName={"string"}
-                        qualifierMessage={undefined}
-                        schema={{"type":"string","example":"Successfully updated members."}}
+                        collapsible={true}
+                        className={"schemaItem"}
                       >
-                        
+                        <details
+                          style={{}}
+                          className={"openapi-markdown__details"}
+                        >
+                          <summary
+                            style={{}}
+                          >
+                            <span
+                              className={"openapi-schema__container"}
+                            >
+                              <strong
+                                className={"openapi-schema__property"}
+                              >
+                                members
+                              </strong><span
+                                className={"openapi-schema__name"}
+                              >
+                                 object[]
+                              </span>
+                            </span>
+                          </summary><div
+                            style={{"marginLeft":"1rem"}}
+                          >
+                            <li>
+                              <div
+                                style={{"fontSize":"var(--ifm-code-font-size)","opacity":"0.6","marginLeft":"-.5rem","paddingBottom":".5rem"}}
+                              >
+                                Array [
+                              </div>
+                            </li><SchemaItem
+                              collapsible={false}
+                              name={"id"}
+                              required={false}
+                              schemaName={"int64"}
+                              qualifierMessage={undefined}
+                              schema={{"type":"integer","format":"int64","example":1541815603606036500}}
+                            >
+                              
+                            </SchemaItem><SchemaItem
+                              collapsible={false}
+                              name={"name"}
+                              required={false}
+                              schemaName={"string"}
+                              qualifierMessage={undefined}
+                              schema={{"type":"string","example":"Clancy Lion"}}
+                            >
+                              
+                            </SchemaItem><SchemaItem
+                              collapsible={false}
+                              name={"role"}
+                              required={false}
+                              schemaName={"string"}
+                              qualifierMessage={undefined}
+                              schema={{"type":"string","example":"Admin"}}
+                            >
+                              
+                            </SchemaItem><li>
+                              <div
+                                style={{"fontSize":"var(--ifm-code-font-size)","opacity":"0.6","marginLeft":"-.5rem"}}
+                              >
+                                ]
+                              </div>
+                            </li>
+                          </div>
+                        </details>
                       </SchemaItem>
                     </ul>
                   </details>
@@ -190,80 +204,7 @@ Specifies members for specified organistion.
                   value={"Example (from schema)"}
                 >
                   <ResponseSamples
-                    responseExample={"{\n  \"message\": \"Successfully updated members.\"\n}"}
-                    language={"json"}
-                  >
-                    
-                  </ResponseSamples>
-                </TabItem>
-              </SchemaTabs>
-            </TabItem>
-          </MimeTabs>
-        </div>
-      </TabItem><TabItem
-        label={"401"}
-        value={"401"}
-      >
-        <div>
-          
-          
-          Not logged in.
-          
-          
-        </div><div>
-          <MimeTabs
-            className={"openapi-tabs__mime"}
-            schemaType={"response"}
-          >
-            <TabItem
-              label={"application/json"}
-              value={"application/json"}
-            >
-              <SchemaTabs
-                className={"openapi-tabs__schema"}
-              >
-                <TabItem
-                  label={"Schema"}
-                  value={"Schema"}
-                >
-                  <details
-                    style={{}}
-                    className={"openapi-markdown__details response"}
-                    data-collapsed={false}
-                    open={true}
-                  >
-                    <summary
-                      style={{}}
-                      className={"openapi-markdown__details-summary-response"}
-                    >
-                      <strong>
-                        Schema
-                      </strong>
-                    </summary><div
-                      style={{"textAlign":"left","marginLeft":"1rem"}}
-                    >
-                      
-                    </div><ul
-                      style={{"marginLeft":"1rem"}}
-                    >
-                      <SchemaItem
-                        collapsible={false}
-                        name={"error"}
-                        required={false}
-                        schemaName={"string"}
-                        qualifierMessage={undefined}
-                        schema={{"type":"string","example":"Not logged in."}}
-                      >
-                        
-                      </SchemaItem>
-                    </ul>
-                  </details>
-                </TabItem><TabItem
-                  label={"Example (from schema)"}
-                  value={"Example (from schema)"}
-                >
-                  <ResponseSamples
-                    responseExample={"{\n  \"error\": \"Not logged in.\"\n}"}
+                    responseExample={"{\n  \"members\": [\n    {\n      \"id\": 1541815603606036500,\n      \"name\": \"Clancy Lion\",\n      \"role\": \"Admin\"\n    }\n  ]\n}"}
                     language={"json"}
                   >
                     
@@ -280,7 +221,7 @@ Specifies members for specified organistion.
         <div>
           
           
-          User is not an organisation admin.
+          User is not an organisation admin or member.
           
           
         </div><div>

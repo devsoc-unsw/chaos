@@ -1,13 +1,13 @@
 ---
-id: delete-organisation-by-id
-title: "deleteOrganisationById"
-description: "Deletes specified organisation."
-sidebar_label: "deleteOrganisationById"
+id: delete-role-by-id
+title: "deleteRoleById"
+description: "Deletes specified role."
+sidebar_label: "deleteRoleById"
 hide_title: true
 hide_table_of_contents: true
-api: eJydlEFvnDAQhf8KeqdWshbaRD34ljQ5rBqpUducVnuYmNnFLWDHY6JQxH+vDNuEZKOoKhdghnn+ZvzMAOc5ULSuXZfQKLnmyF/DnlorU/i8X5dQ8BSo4chBoDcDWmoYGjalbAsNT7GCQsligvWpEBpLnWx9AYXAd50NXELH0LGCmIobgh4Qez8ptpH3HKCwc6GhOIc+nWIcty/lLyZYycSzsTvLZeYWC66gEGmfeJ+BYJswxLtWWNLKH4si3V6gf4GCcW3kNqYseV9bMwnkPyV9MizgfUhjjHYWbFiE9rzoSmKw7R4K/ECNr1Poe2cMi+y6uu6zeewv+cfpUjgtTo4Bb4RDZiVrXcwok85zyDrhsPp/bg7Bhbepb1rqYuWC/c3lgW9UaDhW7sk+k11iBY182VA+2HKEgnC4/+ujLtTQqGL0ovPcVORkZYTFmRV5n5O3R6a6Dq7szGSpWQmjWgrpPK+dobpyEvVJURSvqlylTx4FtsnFOzf1buPU6efEkp1dr6GQcOeyD6tiVWBU8E5iQ9M4D2dh7j175vnzPptOz7O1h6f9+RcLz3sR+SHmvibbptWnbofDlDdY1kBB2zKZPA0gZYfhloRvQj2OKXzXceihN1uFewqWblO7mwGllfRcQu+oFn4D+t23wyl+nx2f8Fd5D0Fq+zRNqrv0BoVf3M9/kXE7KlRMJYcJZk6cGcM+LkqO3Jx27tF9F5dXlz8uMY5/ABnoqsU=
+api: eJydVE1v2zAM/SsCL9sAIfbanXTr1yFYgRXdegpyYCUm1iZLqiQXzQz/94Fy2qYf6GG+2KLEx/eoR48QIiUsNvilAQWGHBW6Do5Od0sDEiIm7KlQyqBWI3jsCRRY3rIeFEQsHUgwlHWykXFAAeeL5TlISHQ32EQGVEkDSci6ox5BjVB2sSL5QltKIGETUo9lDh0fwTStX8OeV3JZ5EjabiwZkYKjBUgouGV+tTCsuWyOwWfKXOmobfn1EuvHd5Cggy/kC+9ijM7q2ojmd+Yj4wHZmLhNxc6APeWMWzpQkUuyfgsS6AH76Dj0c9Cact4Mzu3E3NZHvlN9JHxrj98Su8mUhM3ChyLQCzS99SJsauqnLM6wj2i3fvH/9CmlkD4mf+NxKF1I9i+ZPd1JQk+lC88uqe4oHShomFwzWjOBhEzp/tEuQ3KgoCslZtU0usOQFzpTDnqBMTYY7RvvXKVgBs0LMSPBJA+BVNO4oNF1IRd13LbtuyiXfOQJYM1m3YSq2Zaq8Iy5iJOrJUhgunPa10W7aGGSEEMuPdY27i0/axbV2qc7UYfjRc3x+T4+curc80IPpYkOredqVd247+YK+CxIUNawl1koR8fxFjPdJDdNHL4bKO1ArdYS7jFZvGVZqxGMzfxtQG3QZfqA5Ofr/XB+Ec8D+y6/fRD9jruFbuAVSPhDu/lnMK0nCR2hoVRJzBsnWlMsBylvXMo38+Sq84vLi18XME3/AA32jjI=
 sidebar_class_name: "delete api-method"
-info_path: docs/Chaos Backend APIs/chaos-api
+info_path: docs/chaos-api
 custom_edit_url: null
 ---
 
@@ -28,20 +28,20 @@ import TabItem from "@theme/TabItem";
 <Heading
   as={"h1"}
   className={"openapi__heading"}
-  children={"deleteOrganisationById"}
+  children={"deleteRoleById"}
 >
 </Heading>
 
 <MethodEndpoint
   method={"delete"}
-  path={"/organisation/{id}"}
+  path={"/role/{id}"}
 >
   
 </MethodEndpoint>
 
 
 
-Deletes specified organisation.
+Deletes specified role.
 
 <Heading
   id={"request"}
@@ -69,7 +69,7 @@ Deletes specified organisation.
     <ul>
       <ParamsItem
         className={"paramsItem"}
-        param={{"name":"id","in":"path","description":"Organisation ID","required":true,"schema":{"type":"integer","format":"int64"}}}
+        param={{"name":"id","in":"path","description":"Role ID","required":true,"schema":{"type":"integer","format":"int32"}}}
       >
         
       </ParamsItem>
@@ -133,7 +133,7 @@ Deletes specified organisation.
                         required={false}
                         schemaName={"string"}
                         qualifierMessage={undefined}
-                        schema={{"type":"string","example":"Successfully deleted organisation."}}
+                        schema={{"type":"string","example":"Successfully deleted role."}}
                       >
                         
                       </SchemaItem>
@@ -144,7 +144,7 @@ Deletes specified organisation.
                   value={"Example (from schema)"}
                 >
                   <ResponseSamples
-                    responseExample={"{\n  \"message\": \"Successfully deleted organisation.\"\n}"}
+                    responseExample={"{\n  \"message\": \"Successfully deleted role.\"\n}"}
                     language={"json"}
                   >
                     
@@ -161,7 +161,7 @@ Deletes specified organisation.
         <div>
           
           
-          User is not a super user.
+          User is not an admin of role's Campaign.
           
           
         </div><div>

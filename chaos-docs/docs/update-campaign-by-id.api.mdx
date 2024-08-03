@@ -1,13 +1,13 @@
 ---
-id: update-user-name
-title: "updateUserName"
-description: "Updates currently logged in user's name."
-sidebar_label: "updateUserName"
+id: update-campaign-by-id
+title: "updateCampaignById"
+description: "Updates details of specified campaign."
+sidebar_label: "updateCampaignById"
 hide_title: true
 hide_table_of_contents: true
-api: eJydVMFu2zAM/RWDl10029120i0rBqzY0AVbcgp8UGTW1iZLqih3NQz/+0C7abKm6LDqYFk0RT4+PnoEHzCqZLy7qkFCH2qVcEsYr1WHIKBG0tEEdgAJ2/kzZbqPEV2yQ2Z902CdGZf1hPENZU51mIOApBoCuQOOBZWAiLc9Uvro6wHkOB9NxBpkij0K0N4ldIk/qRCs0TOm4idx3hFIt9gpfguRESeDxCfOxnsaAoIEStG4BgTgveqCZdOlVU4P2cY0GGGaF4Oh4B0tMd6VJW9/V/rtC7waVIdEqvkHrh+91kh001s7ZAvt9QN5B5QfyotzYNc+HUnPXw8SY/TxZYhPUk0HXB2m1rNagkq6BcF7CxIKlkDhFuEQxjuMLIER+mhBQptSIFkUulWeck1IXucqhEIFc6a0dfR1r/mQLZFgEqeBZFFYr5VtPSX5vizLZ6N8ZZfHAJUAZuX7UYmfDrUelPRELgKMu/EzSyYtcmLw2Wp9BQK4viXPRV7mJbsHT6lT7iTg0tqMxyB7bqbGYwP/a7yWriW8T0WwyjjOPtMzPrRjB3wFxAKkEsBUsXkc94pwG+00sfm2xziA3FUC7lQ0as917qpJQIuqxjh38BcOXPyC9O2Gk7O77RnEmey4VcuNldYY0ou+1Ymg1qvN5WcQsH/4S3S+5ktR/QYxPyWAAD9TN6t4to1glWv6eeRgCcrrD1pPrLU=
-sidebar_class_name: "patch api-method"
-info_path: docs/Chaos Backend APIs/chaos-api
+api: eJy1Vd9v2zYQ/leIe9oAxZITZyj0MiRZH4IOW5DGLw2M4UKeJa4SyZKnNpqg/70gZTuOk7ldgelFEsn7+N2v7wawjjyytuZaQQmdU8h0ha1DXZnL/lpBBg49tsTkA5T3AxhsCUrQcUsbKMEh15CBoiC9dhELSthiiOvfIANPnzrtSUHJvqMMgqypRSgH4N4lNMNUkYcM1ta3yNPSLwsYx9VkToEvreqjzSGatIbJcNxC5xotk0P53yEyGfYucz66y5pC/Jsc2VEI7LWpIAN6xNY1cem0OF2I992DtG2rmYnELUnfaW7jdeOBz8eQLjyJ3naCHqVmUoKtaPEjCRRKr9fkyUj6NSIGRs/hL+RvMzspzk7m53fzN+Xpebk4m53P5x8iBBn1vQCLVwDSc5jOZSqMIBQx6iYIuxbBkdRrTUrITa5nkAFjFctkl39I6QvOmjBF/bQo4us5/J/v4IfT2FIIWH0jk+87KSmEddc0vZiqfJ/31ulFMX9J7g/LorFVRUro5OMPEiXvrT9O8+CqJ1pnL2ktA3mhgzCWBRphfYVGh0RFoGr/b6pLgx3X1ut/SG2Ijhm0xLWNSuI6TtLBNZSQbyOdD1qNkEEg/3mrJ51voISa2YUyz2WNNsxkoGDlDJ3L0ekX4nLjrepk8nRCgjHbByrzvLESm9oGLs+KongV5fd4ZAewyiBG5fZJat5ufd1p3nE9OMT/vp5/1vL/3td7bX2kd6Mir21KnOaUpqsYT3Fxcw0ZxJBP1OazYlbE484GbtHs+Tg1h9jp92Uv0hQ4kLpdYf0HaZhqiemRc9egNpFAStqwKZR72J6HDEqtonjEHMadYXjAQEvfjGNc/tSR76G8X2XwGb3Gh+jt/QBKh/itoFxjE+gI759uN2PkZ/F8WL3Kc7OIpo+BxKaLf5DBR+qnYTiuxgxqQkU+EZk2rqbrTu6i+ZPhi16M9TtZXEhJjo+eXe312c3yDjJ42EzG1qpo4vFLHLr4ZeJok/epsdPaAA2aqkuiCRNkfL4CX8C2/A==
+sidebar_class_name: "put api-method"
+info_path: docs/chaos-api
 custom_edit_url: null
 ---
 
@@ -28,20 +28,20 @@ import TabItem from "@theme/TabItem";
 <Heading
   as={"h1"}
   className={"openapi__heading"}
-  children={"updateUserName"}
+  children={"updateCampaignById"}
 >
 </Heading>
 
 <MethodEndpoint
-  method={"patch"}
-  path={"/user/name"}
+  method={"put"}
+  path={"/campaign/{id}"}
 >
   
 </MethodEndpoint>
 
 
 
-Updates currently logged in user's name.
+Updates details of specified campaign.
 
 <Heading
   id={"request"}
@@ -51,7 +51,31 @@ Updates currently logged in user's name.
 >
 </Heading>
 
-<MimeTabs
+<details
+  style={{"marginBottom":"1rem"}}
+  className={"openapi-markdown__details"}
+  data-collapsed={false}
+  open={true}
+>
+  <summary
+    style={{}}
+  >
+    <h3
+      className={"openapi-markdown__details-summary-header-params"}
+    >
+      Path Parameters
+    </h3>
+  </summary><div>
+    <ul>
+      <ParamsItem
+        className={"paramsItem"}
+        param={{"name":"id","in":"path","description":"Campaign ID","required":true,"schema":{"type":"integer","format":"int64"}}}
+      >
+        
+      </ParamsItem>
+    </ul>
+  </div>
+</details><MimeTabs
   className={"openapi-tabs__mime"}
 >
   <TabItem
@@ -90,7 +114,34 @@ Updates currently logged in user's name.
           required={false}
           schemaName={"string"}
           qualifierMessage={undefined}
-          schema={{"type":"string","example":"Clancy Tiger"}}
+          schema={{"type":"string","example":"2024 Subcommittee Recruitment"}}
+        >
+          
+        </SchemaItem><SchemaItem
+          collapsible={false}
+          name={"description"}
+          required={false}
+          schemaName={"string"}
+          qualifierMessage={undefined}
+          schema={{"type":"string","example":"Are you excited to make a difference?"}}
+        >
+          
+        </SchemaItem><SchemaItem
+          collapsible={false}
+          name={"starts_at"}
+          required={false}
+          schemaName={"string"}
+          qualifierMessage={undefined}
+          schema={{"type":"string","example":"2024-03-15T18:25:43.511Z"}}
+        >
+          
+        </SchemaItem><SchemaItem
+          collapsible={false}
+          name={"ends_at"}
+          required={false}
+          schemaName={"string"}
+          qualifierMessage={undefined}
+          schema={{"type":"string","example":"2024-04-15T18:25:43.511Z"}}
         >
           
         </SchemaItem>
@@ -155,7 +206,7 @@ Updates currently logged in user's name.
                         required={false}
                         schemaName={"string"}
                         qualifierMessage={undefined}
-                        schema={{"type":"string","example":"Successfully updated name."}}
+                        schema={{"type":"string","example":"Successfully updated campaign."}}
                       >
                         
                       </SchemaItem>
@@ -166,7 +217,7 @@ Updates currently logged in user's name.
                   value={"Example (from schema)"}
                 >
                   <ResponseSamples
-                    responseExample={"{\n  \"message\": \"Successfully updated name.\"\n}"}
+                    responseExample={"{\n  \"message\": \"Successfully updated campaign.\"\n}"}
                     language={"json"}
                   >
                     
@@ -240,6 +291,79 @@ Updates currently logged in user's name.
                 >
                   <ResponseSamples
                     responseExample={"{\n  \"error\": \"Not logged in.\"\n}"}
+                    language={"json"}
+                  >
+                    
+                  </ResponseSamples>
+                </TabItem>
+              </SchemaTabs>
+            </TabItem>
+          </MimeTabs>
+        </div>
+      </TabItem><TabItem
+        label={"403"}
+        value={"403"}
+      >
+        <div>
+          
+          
+          User is not an organisation admin.
+          
+          
+        </div><div>
+          <MimeTabs
+            className={"openapi-tabs__mime"}
+            schemaType={"response"}
+          >
+            <TabItem
+              label={"application/json"}
+              value={"application/json"}
+            >
+              <SchemaTabs
+                className={"openapi-tabs__schema"}
+              >
+                <TabItem
+                  label={"Schema"}
+                  value={"Schema"}
+                >
+                  <details
+                    style={{}}
+                    className={"openapi-markdown__details response"}
+                    data-collapsed={false}
+                    open={true}
+                  >
+                    <summary
+                      style={{}}
+                      className={"openapi-markdown__details-summary-response"}
+                    >
+                      <strong>
+                        Schema
+                      </strong>
+                    </summary><div
+                      style={{"textAlign":"left","marginLeft":"1rem"}}
+                    >
+                      
+                    </div><ul
+                      style={{"marginLeft":"1rem"}}
+                    >
+                      <SchemaItem
+                        collapsible={false}
+                        name={"error"}
+                        required={false}
+                        schemaName={"string"}
+                        qualifierMessage={undefined}
+                        schema={{"type":"string","example":"Unauthorized"}}
+                      >
+                        
+                      </SchemaItem>
+                    </ul>
+                  </details>
+                </TabItem><TabItem
+                  label={"Example (from schema)"}
+                  value={"Example (from schema)"}
+                >
+                  <ResponseSamples
+                    responseExample={"{\n  \"error\": \"Unauthorized\"\n}"}
                     language={"json"}
                   >
                     

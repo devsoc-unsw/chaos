@@ -1,13 +1,13 @@
 ---
-id: get-organisation-members-by-id
-title: "getOrganisationMembersById"
-description: "Returns list of members of specified organisation."
-sidebar_label: "getOrganisationMembersById"
+id: get-organisation-campaigns-by-id
+title: "getOrganisationCampaignsById"
+description: "Returns active campaigns for specified organisation."
+sidebar_label: "getOrganisationCampaignsById"
 hide_title: true
 hide_table_of_contents: true
-api: eJydVMtu2zAQ/BViTy1AWHLzQMGb0xaF0RQNguZk+EBLa4upRDLLVRBV0L8XlGRXjoO0iA6WTHIHszOcbcF5JM3G2WUOCnbIP2inrQn92nesNkjhqlnmIMFr0hUyUgC1asHqCkGBiVvGggKvuQAJOYaMjI/1oGAKJ5afQQLhQ20Ic1BMNUoIWYGVBtUCN75HtIw7JJCwdVRpHpYuz6Hr1s/hb5FrskGUJrBwW1ENjONn8JiZrcFcuAmHGUhgvYstHHGDdWQWvLMBQyTzIU3j61k330BC5iyj5birvS9N1gMk9yEeaSf9eIrqshkAR2qTRjWRbqJ6jNV03W3uMeOo+BGAyf9HJAn4pCtfIqj5xfn84/ziMj27TOPPRZp2cvTtABSYjN1Ny+BTqW3WiOvYcyeBXPmPgkVeGQvd/pFwnp6dincXkIQJwjoW2h65InREEI5GA2dvlxmJHL1O987qmgtH5jfmcOBcIRduDEF/27kABcmUZtKavEv2RkoISI/7ONRUgoKC2QeVJFmhXZhlAYPLZtr7RHtzko0bcnmd9f0PSNDJKZBKktJluixcYHWWpumLKNfxyAFgHcO4db0Ahgc7IxexuFmChEh3KJvP0lka7fUucKV7TcdI75DFUW7HOSCuGtFPgiMC7V+n3hjHwSjGJ058qU1/6XoV2tGFFUxrQILqp87eiLWEKFE817YbHfCOyq6Lyw81UgNqtZbwqMnoTRRk1UJuQvzOQW11GfCVjt7djuPqvTgdZS8y34fbxmg/6rKO/0DCL2yGcdmtOwkF6hypJzNsLLIMPU9KTi599PZwSb9++Qld9wfH7fdz
+api: eJydlFuLGzkQhf+KqKcNyO72fVovyyQbwpDAhtnsyw4mlKVqW4m7pUjVZkzT/31R2+P0XEhC/GJbl49Tp1SnBecpIFtX3xhQsCX+O2yxtrFfe4OVR7ut4+vjjQEJHgNWxBQiqLsWaqwIFNi0ZWtQ4JF3IMFQ1MH6RAAFQ6C4+QskBPrW2EAGFIeGJES9owpBtcBH3xNrpi0FkFC6UCGflpZz6Lr1U/wtcRPqKFCzPZDQD5JF6YKInrQtLRnhBirGIIFxm4p4pA7WSVv0ro4Uk5xpnqevJ/W8Bwna1Uw1p130fm91D8i+xHSkHVTkQ3KY7Ql4UTcoFkPAY3KQqRquu80X0pxcf4Sw5leMkkD3WPk9gVoWxbK4Wl0Vs2K5mC5neZ538ty7CyhysPV2eA2m+XQu/mk22lWVZSYSt6RDY7lKhXfJgwOFz7bC7c9IZlIsJ6vNaL4szWheTFejolzMRquVWRbT2XSDC5OAj3z+EfA6kDi6RtC9tkxGsBMVfiWBwtiypEC1pj8TMTIGjp+Rf17qKJ+NJotPkys1Xaj5bLyYTP5LCKrNrwLmLwAuHwkV8c6dp6wfJt6Bgmz4MrPWmi77/kokRAqHh3lrwh4U7Jh9VFmmd+jiWEeKTo/R+wy9fTZ8H4Mzje5H70SCTg5BKsv2TuN+5yKr9DRepHxIRy6AdZr20vWOWO7rf5O0iOuPNyAhyT1dm4zzcZ489C5yhX1Tz5mxJRaPguESNeL1UfRh8+Q1XCbutyf+1D2me878Hm2dlPVOtOde3MHwDkhQfbR9b8daQjIqnWzbDUb6N+y7Li1/aygcQd2tJRwwWNwkW+5aMDam3wZUiftIP6jqj9tzKr4SzxPzRe0P+VGn9Djgvkn/QMJXOp5SuVt3EnaEhkIv5rRxrTV5Hlx5FmCpw5fH+u7tJ+i6/wFHdBDs
 sidebar_class_name: "get api-method"
-info_path: docs/Chaos Backend APIs/chaos-api
+info_path: docs/chaos-api
 custom_edit_url: null
 ---
 
@@ -28,20 +28,20 @@ import TabItem from "@theme/TabItem";
 <Heading
   as={"h1"}
   className={"openapi__heading"}
-  children={"getOrganisationMembersById"}
+  children={"getOrganisationCampaignsById"}
 >
 </Heading>
 
 <MethodEndpoint
   method={"get"}
-  path={"/organisation/{id}/members"}
+  path={"/organisation/{id}/campaigns"}
 >
   
 </MethodEndpoint>
 
 
 
-Returns list of members of specified organisation.
+Returns active campaigns for specified organisation.
 
 <Heading
   id={"request"}
@@ -144,7 +144,7 @@ Returns list of members of specified organisation.
                               <strong
                                 className={"openapi-schema__property"}
                               >
-                                members
+                                campaigns
                               </strong><span
                                 className={"openapi-schema__name"}
                               >
@@ -166,7 +166,7 @@ Returns list of members of specified organisation.
                               required={false}
                               schemaName={"int64"}
                               qualifierMessage={undefined}
-                              schema={{"type":"integer","format":"int64","example":1541815603606036500}}
+                              schema={{"type":"integer","format":"int64","example":6996987893965263000}}
                             >
                               
                             </SchemaItem><SchemaItem
@@ -175,16 +175,43 @@ Returns list of members of specified organisation.
                               required={false}
                               schemaName={"string"}
                               qualifierMessage={undefined}
-                              schema={{"type":"string","example":"Clancy Lion"}}
+                              schema={{"type":"string","example":"2024 Subcommittee Recruitment"}}
                             >
                               
                             </SchemaItem><SchemaItem
                               collapsible={false}
-                              name={"role"}
+                              name={"cover_image"}
                               required={false}
                               schemaName={"string"}
                               qualifierMessage={undefined}
-                              schema={{"type":"string","example":"Admin"}}
+                              schema={{"type":"string","example":"2d19617b-46fd-4927-9f53-77d69232ba5d"}}
+                            >
+                              
+                            </SchemaItem><SchemaItem
+                              collapsible={false}
+                              name={"description"}
+                              required={false}
+                              schemaName={"string"}
+                              qualifierMessage={undefined}
+                              schema={{"type":"string","example":"Are you excited to make a difference?"}}
+                            >
+                              
+                            </SchemaItem><SchemaItem
+                              collapsible={false}
+                              name={"starts_at"}
+                              required={false}
+                              schemaName={"string"}
+                              qualifierMessage={undefined}
+                              schema={{"type":"string","example":"2024-03-15T18:25:43.511Z"}}
+                            >
+                              
+                            </SchemaItem><SchemaItem
+                              collapsible={false}
+                              name={"ends_at"}
+                              required={false}
+                              schemaName={"string"}
+                              qualifierMessage={undefined}
+                              schema={{"type":"string","example":"2024-04-15T18:25:43.511Z"}}
                             >
                               
                             </SchemaItem><li>
@@ -204,80 +231,7 @@ Returns list of members of specified organisation.
                   value={"Example (from schema)"}
                 >
                   <ResponseSamples
-                    responseExample={"{\n  \"members\": [\n    {\n      \"id\": 1541815603606036500,\n      \"name\": \"Clancy Lion\",\n      \"role\": \"Admin\"\n    }\n  ]\n}"}
-                    language={"json"}
-                  >
-                    
-                  </ResponseSamples>
-                </TabItem>
-              </SchemaTabs>
-            </TabItem>
-          </MimeTabs>
-        </div>
-      </TabItem><TabItem
-        label={"403"}
-        value={"403"}
-      >
-        <div>
-          
-          
-          User is not an organisation admin or member.
-          
-          
-        </div><div>
-          <MimeTabs
-            className={"openapi-tabs__mime"}
-            schemaType={"response"}
-          >
-            <TabItem
-              label={"application/json"}
-              value={"application/json"}
-            >
-              <SchemaTabs
-                className={"openapi-tabs__schema"}
-              >
-                <TabItem
-                  label={"Schema"}
-                  value={"Schema"}
-                >
-                  <details
-                    style={{}}
-                    className={"openapi-markdown__details response"}
-                    data-collapsed={false}
-                    open={true}
-                  >
-                    <summary
-                      style={{}}
-                      className={"openapi-markdown__details-summary-response"}
-                    >
-                      <strong>
-                        Schema
-                      </strong>
-                    </summary><div
-                      style={{"textAlign":"left","marginLeft":"1rem"}}
-                    >
-                      
-                    </div><ul
-                      style={{"marginLeft":"1rem"}}
-                    >
-                      <SchemaItem
-                        collapsible={false}
-                        name={"error"}
-                        required={false}
-                        schemaName={"string"}
-                        qualifierMessage={undefined}
-                        schema={{"type":"string","example":"Unauthorized"}}
-                      >
-                        
-                      </SchemaItem>
-                    </ul>
-                  </details>
-                </TabItem><TabItem
-                  label={"Example (from schema)"}
-                  value={"Example (from schema)"}
-                >
-                  <ResponseSamples
-                    responseExample={"{\n  \"error\": \"Unauthorized\"\n}"}
+                    responseExample={"{\n  \"campaigns\": [\n    {\n      \"id\": 6996987893965263000,\n      \"name\": \"2024 Subcommittee Recruitment\",\n      \"cover_image\": \"2d19617b-46fd-4927-9f53-77d69232ba5d\",\n      \"description\": \"Are you excited to make a difference?\",\n      \"starts_at\": \"2024-03-15T18:25:43.511Z\",\n      \"ends_at\": \"2024-04-15T18:25:43.511Z\"\n    }\n  ]\n}"}
                     language={"json"}
                   >
                     

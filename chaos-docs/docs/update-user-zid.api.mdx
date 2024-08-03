@@ -1,13 +1,13 @@
 ---
-id: update-campaign-banner-by-id
-title: "updateCampaignBannerById"
-description: "Updates banner image for specified campaign."
-sidebar_label: "updateCampaignBannerById"
+id: update-user-zid
+title: "updateUserZid"
+description: "Updates currently logged in user's zID."
+sidebar_label: "updateUserZid"
 hide_title: true
 hide_table_of_contents: true
-api: eJy1VW1v2zYQ/ivCARk2QLbebMkSYAyOuzRu2i1rGmRoYBRn8WRzk0SWpJo4hv77QMl2kiYYsAHTF0kk77nn3h7uQEhSaLioFwwyaCRDQ3OsJPJ1fYp1Tep0u2DggkSFFRlSGrLbHdRYEWTA7RavIQOJZgMuMNK54tIiQgYHJGfxBlxQ9LXhihhkRjXkgs43VCFkOzBb2aHVhtakwIVCqApNvxSPoG2X30Nfd1S1s+pIOrzCNTmFUI6WlPOCE3PyvfchuGBwbYkfGcHS8tFS1Jq0pRD6vn09d/LbBbiQi9pQbewuSlnyvMuX96e2R3ZPopDKZtPwHrCRpUD2pVHlkwi1Ubxev8jTpSLN1zUx5ypyGlU6Rji9vVPwkmwAdI+VLC3GxhipM8+TB6NGlYwqMdTRkJrBHWkzCIdY4YOo8U4Pc1F5cZrG6SSZpFEaj8M4nIxSL2RBGgfJajCKCzYYpWEySItxNEgSFqdhFK5wzH7+YzCrHgazci0UN5tqOru5Gg3OP8zmg6vzWTiOf+gPzBUxqg3Hcjq7WMzevbv5nJzGN/OPbz9cnL39/SQ8C/1g4oeBfxKeHUmehGc6OgnP8E6PvtjuIG32gG/Q0PRg8ylIgigYf97v/XIvuSI9DSa+v1+64usaTaNoGoSrZLTyk8kE0Y/iVZ7kEfOjVVSEfh4HRVCkQZ6nyCaTJKIoCkbheMzyUZJiOI7GwRNAYueEjJSeboQ20HaPCyM/eNkpvwrjlGK9JubwruH+Y9eQUkK91jCP9f/O1SOt6CWta21nQzu1MA7WjlBrrLnuqDjIqv+b6nWNjdkIxR+I7Ym2LlRkNoL1mpFvOm0xG8jAOwyst+Os9frJBhc0qW8H3enG6TgC+QaFHuaatMiHKKWHkr8yXII1eRdyjwSt+xQo87xS5FjaImeR7/uvory3R44AS6t6heii56aLdW65OLPLBbhg6fZmwdAf+tC6IIU2FXYJ3WtnL7bOUSN7uXVOt04nuM/c7x6L9K+Vr6+OoXvjyRJ5bdnsValP/C0czoMLWSfp+9wvXehaP7uF3W6Fmq5V2bZ2+WtDagvZ7dKFb6g4rmwObnfAuLbfDLICS03/EMaPH/fXwU/O82viVcL7Ray3Nr1YNvYPXPiLtv011C5bFzbdvHZE+o1ZnpM0T0xeNLgt5bEhL2ef5ufQtn8DqaJdkA==
+api: eJydVE2P0zAQ/SvRXLiYJt0PDr6VBYkKBBVsL1vl4DqzjcGJvR5n2Tbqf0fjtNtCV5XYHOLYno83b96kB+cxqGhcO61AQucrFXFOGO5MBQIqJB2M53uQME+3lOkuBGyjXWfWrVZYZabNOsLwhrLN9MMIBES1IpAL4EhQCgj40CHF965ag+zT1gSsQMbQoQDt2oht5CvlvTU6Icp/EqftgXSNjeIvHxhvNEi825iKl7j2CBIoBtOuQAA+qcZbPtpcjy8ur67fwTY9jIO8a2lwvygKXv6u8dtneDWeBonUCs9j+tFpjUT3nbXrbOC7Gmjbg7wqxqe4vrp4YHv0eowYggvnEf6TarvH1WCsHavEq6hrELzWICHn3uebJBjC8IiBe99DFyxIqGP0JPNc18rRSBOS0yPlfa68OVHYLLiq07zJhkiwFceBZJ5bp5WtHUV5WRTFi1G+sMlzgFIAk/L9IMGP+1J3EjrSiQDT3rvEj4mJjRvGnU1mUxDApQ0pxqNiVLC5dxQblShvVYPPM5Sx9LMXpqg/dO5/BmroVsSnmHurTMu5Ey/9rg0LYA8QqaRSAFPEp32/VITzYLdbPn7oMKxBLkoBjyoYteQiF+VWQI2qwpA69wvXXPmA8+0t52Zz2zGGE7VxiwaPidbo41nb8khHs8ntzScQsNz9FhpXsVNQv0GktwQQ4BJxSbzprAer2lWXBg2GoPz8AcHNo6k=
 sidebar_class_name: "patch api-method"
-info_path: docs/Chaos Backend APIs/chaos-api
+info_path: docs/chaos-api
 custom_edit_url: null
 ---
 
@@ -28,20 +28,20 @@ import TabItem from "@theme/TabItem";
 <Heading
   as={"h1"}
   className={"openapi__heading"}
-  children={"updateCampaignBannerById"}
+  children={"updateUserZid"}
 >
 </Heading>
 
 <MethodEndpoint
   method={"patch"}
-  path={"/campaign/{id}/banner"}
+  path={"/user/zid"}
 >
   
 </MethodEndpoint>
 
 
 
-Updates banner image for specified campaign.
+Updates currently logged in user's zID.
 
 <Heading
   id={"request"}
@@ -51,31 +51,53 @@ Updates banner image for specified campaign.
 >
 </Heading>
 
-<details
-  style={{"marginBottom":"1rem"}}
-  className={"openapi-markdown__details"}
-  data-collapsed={false}
-  open={true}
+<MimeTabs
+  className={"openapi-tabs__mime"}
 >
-  <summary
-    style={{}}
+  <TabItem
+    label={"application/json"}
+    value={"application/json-schema"}
   >
-    <h3
-      className={"openapi-markdown__details-summary-header-params"}
+    <details
+      style={{}}
+      className={"openapi-markdown__details mime"}
+      data-collapsed={false}
+      open={true}
     >
-      Path Parameters
-    </h3>
-  </summary><div>
-    <ul>
-      <ParamsItem
-        className={"paramsItem"}
-        param={{"name":"id","in":"path","description":"Campaign ID","required":true,"schema":{"type":"integer","format":"int64"}}}
+      <summary
+        style={{}}
+        className={"openapi-markdown__details-summary-mime"}
+      >
+        <h3
+          className={"openapi-markdown__details-summary-header-body"}
+        >
+          Body
+        </h3><strong
+          className={"openapi-schema__required"}
+        >
+          required
+        </strong>
+      </summary><div
+        style={{"textAlign":"left","marginLeft":"1rem"}}
       >
         
-      </ParamsItem>
-    </ul>
-  </div>
-</details><div>
+      </div><ul
+        style={{"marginLeft":"1rem"}}
+      >
+        <SchemaItem
+          collapsible={false}
+          name={"zid"}
+          required={false}
+          schemaName={"string"}
+          qualifierMessage={undefined}
+          schema={{"type":"string","example":"z5123456"}}
+        >
+          
+        </SchemaItem>
+      </ul>
+    </details>
+  </TabItem>
+</MimeTabs><div>
   <div>
     <ApiTabs
       label={undefined}
@@ -129,11 +151,11 @@ Updates banner image for specified campaign.
                     >
                       <SchemaItem
                         collapsible={false}
-                        name={"upload_url"}
+                        name={"message"}
                         required={false}
                         schemaName={"string"}
                         qualifierMessage={undefined}
-                        schema={{"type":"string","description":"Presigned S3 url to upload file.","example":"https://presignedurldemo.s3.eu-west-2.amazonaws.com/6996987893965262849/2d19617b-46fd-4927-9f53-77d69232ba5d?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAJJWZ7B6WCRGMKFGQ%2F20180210%2Feu-west-2%2Fs3%2Faws4_request&X-Amz-Date=20180210T171315Z&X-Amz-Expires=1800&X-Amz-Signature=12b74b0788aa036bc7c3d03b3f20c61f1f91cc9ad8873e3314255dc479a25351&X-Amz-SignedHeaders=host"}}
+                        schema={{"type":"string","example":"Successfully updated zID."}}
                       >
                         
                       </SchemaItem>
@@ -144,7 +166,7 @@ Updates banner image for specified campaign.
                   value={"Example (from schema)"}
                 >
                   <ResponseSamples
-                    responseExample={"{\n  \"upload_url\": \"https://presignedurldemo.s3.eu-west-2.amazonaws.com/6996987893965262849/2d19617b-46fd-4927-9f53-77d69232ba5d?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAJJWZ7B6WCRGMKFGQ%2F20180210%2Feu-west-2%2Fs3%2Faws4_request&X-Amz-Date=20180210T171315Z&X-Amz-Expires=1800&X-Amz-Signature=12b74b0788aa036bc7c3d03b3f20c61f1f91cc9ad8873e3314255dc479a25351&X-Amz-SignedHeaders=host\"\n}"}
+                    responseExample={"{\n  \"message\": \"Successfully updated zID.\"\n}"}
                     language={"json"}
                   >
                     
@@ -218,79 +240,6 @@ Updates banner image for specified campaign.
                 >
                   <ResponseSamples
                     responseExample={"{\n  \"error\": \"Not logged in.\"\n}"}
-                    language={"json"}
-                  >
-                    
-                  </ResponseSamples>
-                </TabItem>
-              </SchemaTabs>
-            </TabItem>
-          </MimeTabs>
-        </div>
-      </TabItem><TabItem
-        label={"403"}
-        value={"403"}
-      >
-        <div>
-          
-          
-          User is not an organisation admin.
-          
-          
-        </div><div>
-          <MimeTabs
-            className={"openapi-tabs__mime"}
-            schemaType={"response"}
-          >
-            <TabItem
-              label={"application/json"}
-              value={"application/json"}
-            >
-              <SchemaTabs
-                className={"openapi-tabs__schema"}
-              >
-                <TabItem
-                  label={"Schema"}
-                  value={"Schema"}
-                >
-                  <details
-                    style={{}}
-                    className={"openapi-markdown__details response"}
-                    data-collapsed={false}
-                    open={true}
-                  >
-                    <summary
-                      style={{}}
-                      className={"openapi-markdown__details-summary-response"}
-                    >
-                      <strong>
-                        Schema
-                      </strong>
-                    </summary><div
-                      style={{"textAlign":"left","marginLeft":"1rem"}}
-                    >
-                      
-                    </div><ul
-                      style={{"marginLeft":"1rem"}}
-                    >
-                      <SchemaItem
-                        collapsible={false}
-                        name={"error"}
-                        required={false}
-                        schemaName={"string"}
-                        qualifierMessage={undefined}
-                        schema={{"type":"string","example":"Unauthorized"}}
-                      >
-                        
-                      </SchemaItem>
-                    </ul>
-                  </details>
-                </TabItem><TabItem
-                  label={"Example (from schema)"}
-                  value={"Example (from schema)"}
-                >
-                  <ResponseSamples
-                    responseExample={"{\n  \"error\": \"Unauthorized\"\n}"}
                     language={"json"}
                   >
                     

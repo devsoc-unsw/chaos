@@ -13,7 +13,7 @@ const config: Config = {
   url: 'https://chaos.csesoc.app/',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/',
+  baseUrl: '/docs',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
@@ -64,7 +64,7 @@ const config: Config = {
         config: {
           petstore: {
             specPath: "docs/api.yml",
-            outputDir: "docs/Chaos Backend APIs",
+            outputDir: "docs",
             sidebarOptions: {
               groupPathsBy: "tag",
             },
@@ -86,9 +86,9 @@ const config: Config = {
       items: [
         {
           type: 'docSidebar',
-          sidebarId: 'tutorialSidebar',
+          sidebarId: 'apiSidebar',
           position: 'left',
-          label: 'Tutorial',
+          label: 'Chaos APIs',
         },
         {to: '/blog', label: 'Blog', position: 'left'},
         {
@@ -105,8 +105,8 @@ const config: Config = {
           title: 'Docs',
           items: [
             {
-              label: 'Tutorial',
-              to: '/docs/intro',
+              label: 'API Documentation',
+              to: 'docs/chaos-api',
             },
           ],
         },

@@ -1,13 +1,13 @@
 ---
-id: get-roles-by-campaign-id
-title: "getRolesByCampaignId"
-description: "Returns info about all roles in a campaign"
-sidebar_label: "getRolesByCampaignId"
+id: get-all-campaigns
+title: "getAllCampaigns"
+description: "Returns all active campaigns."
+sidebar_label: "getAllCampaigns"
 hide_title: true
 hide_table_of_contents: true
-api: eJyVVE1v00AQ/SvDnEBaxSlFHHwrH0IVIFAF4lBFaGJP7IX17rIzThtZ/u9o7SRNW4TAF9uzs2/evPkYMEROpDb4yxpLbFivgmN5tXtNXSTbZLPBSIk6Vk6C5fWAnjrGEm0+sh5LjKQtGqxZqmRjRsMSDwhw+QYNJv7V28Q1lpp6NihVyx1hOaDu4oTmlRtOaHATUkc6m16+wHFcPYS+Yu2TF7B+E4DWoVcg5yBl6mA9EFT74GhQqcm0j3xwldlIDF5YMoHny2V+3Q/x6T0arIJX9ppPKUZnq0mp4odkl+Ekh5iyjmpnwENwOUmPUqJd1ku5O7WH9Q+uNGt8D2KW+Oglmqxv0CDfUhddNr1uLW/gY+iFE44PFPrbxQ+U0g60ZahIoQmeobMi1jdPwIcbuGHwzDVI6DgfshMGDdCSrx1PFxMpWJGeBUjhbKktvAk33voGRBeZTWf9d9qSdbR2fL/K589P6ZxlZ7r9N+fz0eDGenJWcicdHdchOCb/qAW/tawtJ9DWytQd0JLAmtnDEQae8qJZQEe3QFtyNnMA33drTs9OY2/ICY/Hx2DH2ob90Ewzoi2WWByKXwy2HoupJdGgcNoexqdPDktsVaOURVG1FGRRCUuoFhRjQdE+SuRzCnVf5R+YkXA0p0BlUbhQkWuDaHm+XC7/iPIhuxwBVnl4N2GS0eq+pygIXHy+RIOZ7nztbLFcLHNRYxDtyN/1Z04dpoUBr3ZwN/D1w9DD3Sj95/DOBVa+1SI6sj7zmPIe9opf44l7Oe2kWfSVwSxH9hiGNQl/TW4cs/lXz2mH5fXK4JaSnbvuesDaSv6u98X+Sw5Pr/br7BncX3N/5HtYAT4vgC25Pv+hwZ+8m9fouBoNtkw1p4nIfHBRVRz15MqjHZRreGzDd2+/4Dj+BtSJ++c=
+api: eJyVlG1v2jAQx7+Kda8NJEACyZsJddNUbdqqPmjSEKoO5wC3SezZByuK+O6TQ8vow8aWF0l8ufx8f99DA8aSQ9amPi8ghyXxpCzPsLKol7UHCQV55bQNHpDDJfHa1V5gWQpUrDck1JNzFyQwLj3kU3giwEyCI29N7clD3kA/isLjOfXrJ5CgTM1Uc/iK1pZatVH17nxwacCrFVUY3qwLMbPeAw/bhwVvLUEO6BxuQYJmqo7tZn5HikG+QOjiyEfXTEtyIGFhXIW8N6VDkEAPWNmSIE+zLM3Go3E2yNKknw6iKNpJMG6JtfZt2Lf/zYyTYTyOkzQapFG4jV4za6zoiOrZ6Xp5zICbL1ffxJVZ8E90JN7ThkpjK6pZXBmlibewk3Aa04/6Q3G1nitTVZqZSFyScmvNARUQymzI3eoKl6dIRZyl8WjeGaaLojPM+qNOtkgGndGoSLP+oD/HpAjAZ/XwN+DEkdiataAHpZkKwUZUeE8CRaEXC3JUK3oXiJ7Rsb9FPi21Ew06cXIdj/N+kg8H3SSOvwcE1cW/AoZvAA6XhIp4ZR77K5Qf8gpy6D3VLkjw5DbkQu80sHYl5LBitj7v9dQKje8qT96oLlrbQ6tf9eWFM8VahYXYk2Anj0F5r1caheXKeM5Dvb5J+RxcDoCZBF0vTCtfcyv2LMQiJhfnICGEu/8t7kbdKByYNZ4rbDO4L7KgV0zKUvxxojS/+/70cNkngemBe7ZEXYc9W43N45FOD+MgDJ4gNtiaZo6ebly52wXzjzW5LeTTmYQNOo3zIG0620lYERbk2hzc0zZUm1JkQ8Y2WK7byfJyMoVTOmT344dr2O1+AYLrw3Y=
 sidebar_class_name: "get api-method"
-info_path: docs/Chaos Backend APIs/chaos-api
+info_path: docs/chaos-api
 custom_edit_url: null
 ---
 
@@ -28,54 +28,22 @@ import TabItem from "@theme/TabItem";
 <Heading
   as={"h1"}
   className={"openapi__heading"}
-  children={"getRolesByCampaignId"}
+  children={"getAllCampaigns"}
 >
 </Heading>
 
 <MethodEndpoint
   method={"get"}
-  path={"/campaign/{id}/roles"}
+  path={"/campaign"}
 >
   
 </MethodEndpoint>
 
 
 
-Returns info about all roles in a campaign
+Returns all active campaigns.
 
-<Heading
-  id={"request"}
-  as={"h2"}
-  className={"openapi-tabs__heading"}
-  children={"Request"}
->
-</Heading>
-
-<details
-  style={{"marginBottom":"1rem"}}
-  className={"openapi-markdown__details"}
-  data-collapsed={false}
-  open={true}
->
-  <summary
-    style={{}}
-  >
-    <h3
-      className={"openapi-markdown__details-summary-header-params"}
-    >
-      Path Parameters
-    </h3>
-  </summary><div>
-    <ul>
-      <ParamsItem
-        className={"paramsItem"}
-        param={{"name":"id","in":"path","description":"Campaign ID","required":true,"schema":{"type":"integer","format":"int64"}}}
-      >
-        
-      </ParamsItem>
-    </ul>
-  </div>
-</details><div>
+<div>
   <div>
     <ApiTabs
       label={undefined}
@@ -162,11 +130,47 @@ Returns info about all roles in a campaign
                               </div>
                             </li><SchemaItem
                               collapsible={false}
+                              name={"id"}
+                              required={false}
+                              schemaName={"int64"}
+                              qualifierMessage={undefined}
+                              schema={{"type":"integer","format":"int64","example":6996987893965263000}}
+                            >
+                              
+                            </SchemaItem><SchemaItem
+                              collapsible={false}
+                              name={"organisation_id"}
+                              required={false}
+                              schemaName={"int64"}
+                              qualifierMessage={undefined}
+                              schema={{"type":"integer","format":"int64","example":1541815603606036700}}
+                            >
+                              
+                            </SchemaItem><SchemaItem
+                              collapsible={false}
+                              name={"organisation_name"}
+                              required={false}
+                              schemaName={"string"}
+                              qualifierMessage={undefined}
+                              schema={{"type":"string","example":"UNSW Software Development Society"}}
+                            >
+                              
+                            </SchemaItem><SchemaItem
+                              collapsible={false}
                               name={"name"}
                               required={false}
                               schemaName={"string"}
                               qualifierMessage={undefined}
-                              schema={{"type":"string","example":"Chief Mouser"}}
+                              schema={{"type":"string","example":"2024 Subcommittee Recruitment"}}
+                            >
+                              
+                            </SchemaItem><SchemaItem
+                              collapsible={false}
+                              name={"cover_image"}
+                              required={false}
+                              schemaName={"string"}
+                              qualifierMessage={undefined}
+                              schema={{"type":"string","example":"2d19617b-46fd-4927-9f53-77d69232ba5d"}}
                             >
                               
                             </SchemaItem><SchemaItem
@@ -175,34 +179,25 @@ Returns info about all roles in a campaign
                               required={false}
                               schemaName={"string"}
                               qualifierMessage={undefined}
-                              schema={{"type":"string","example":"Larry the cat gone missing! now we need someone else to handle the rat issues at 10th Downing st."}}
+                              schema={{"type":"string","example":"Are you excited to make a difference?"}}
                             >
                               
                             </SchemaItem><SchemaItem
                               collapsible={false}
-                              name={"min_available"}
+                              name={"starts_at"}
                               required={false}
-                              schemaName={"int32"}
+                              schemaName={"string"}
                               qualifierMessage={undefined}
-                              schema={{"type":"int32","example":1}}
+                              schema={{"type":"string","example":"2024-03-15T18:25:43.511Z"}}
                             >
                               
                             </SchemaItem><SchemaItem
                               collapsible={false}
-                              name={"max_available"}
+                              name={"ends_at"}
                               required={false}
-                              schemaName={"int32"}
+                              schemaName={"string"}
                               qualifierMessage={undefined}
-                              schema={{"type":"int32","example":3}}
-                            >
-                              
-                            </SchemaItem><SchemaItem
-                              collapsible={false}
-                              name={"finalised"}
-                              required={false}
-                              schemaName={"boolean"}
-                              qualifierMessage={undefined}
-                              schema={{"type":"boolean","description":"Whether this role has been finalised (e.g. max avaliable number)","example":false}}
+                              schema={{"type":"string","example":"2024-04-15T18:25:43.511Z"}}
                             >
                               
                             </SchemaItem><li>
@@ -222,7 +217,7 @@ Returns info about all roles in a campaign
                   value={"Example (from schema)"}
                 >
                   <ResponseSamples
-                    responseExample={"{\n  \"campaigns\": [\n    {\n      \"name\": \"Chief Mouser\",\n      \"description\": \"Larry the cat gone missing! now we need someone else to handle the rat issues at 10th Downing st.\",\n      \"min_available\": 1,\n      \"max_available\": 3,\n      \"finalised\": false\n    }\n  ]\n}"}
+                    responseExample={"{\n  \"campaigns\": [\n    {\n      \"id\": 6996987893965263000,\n      \"organisation_id\": 1541815603606036700,\n      \"organisation_name\": \"UNSW Software Development Society\",\n      \"name\": \"2024 Subcommittee Recruitment\",\n      \"cover_image\": \"2d19617b-46fd-4927-9f53-77d69232ba5d\",\n      \"description\": \"Are you excited to make a difference?\",\n      \"starts_at\": \"2024-03-15T18:25:43.511Z\",\n      \"ends_at\": \"2024-04-15T18:25:43.511Z\"\n    }\n  ]\n}"}
                     language={"json"}
                   >
                     

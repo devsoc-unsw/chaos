@@ -1,13 +1,13 @@
 ---
-id: delete-campaign-by-id
-title: "deleteCampaignById"
-description: "Deletes specified campaign."
-sidebar_label: "deleteCampaignById"
+id: create-role
+title: "createRole"
+description: "Creates a new role in a campaign."
+sidebar_label: "createRole"
 hide_title: true
 hide_table_of_contents: true
-api: eJydVE1v2zAM/SsCL9sAIfbWYgfd+nUIVmDFtp6CHFiJibXZkirKRT1D/32QnaTpWnTAfLFFSo/vUY8ewQeKmKx3SwMKDLWU6AK7gHbrzoelAQkBI3aUKDKo1QgOOwIFtqSsAwUBUwMSDLGONhQsULDHEMtLkBDpvreRDKgUe5LAuqEOQY2QhjChuURbiiBh42OHaQ59PoWc139DX04kWXAgbTeWjNC7YguQkHBbeB4IwLqU5+AdE5eKn+q6vJ5jfv0CErR3iVwqWQyhtXpqTPWTy5bxiHSIpW3JzoAdMeOWjtRwitZtQQI9YhfaEvrea03Mm75tBzG3+Zh3nh4Jp/XJS3K3TFFYFs4ngU6g6awTfnM4/o6Fj1t0lifCi/+XQjH6+LaQW4d9any0v8nsaGcJHaXGPzlock1qQEG1J1mN1mSQwBQf9lbqYwsKmpQCq6rSDXpeaCb2eoEhVBjsC1/dRG96XRZiRoIsj4FUVbVeY9t4TuqkrutXUa7LlgPAuhh54yfdNk0qLwoXcXazBAmF7nzs46Je1JAlBM+pw6mVu3GYdYuD7c8HMQ3Ps7rj0738y8Vz/xM9piq0aF2pOqkcd51dwX4/SFDWFJ8X0SUzjnfIdBvbnEv4vqc4gFqtJTxgtHhXJK5GMJbLtwG1wZbpDbLvv+0G+IN4Ptiv8twF0Q2le9j2ZQUSftEw/zjyOktoCA3FicicONOaQjo68sK55aYOTru8ur76cQU5/wEtlKE/
-sidebar_class_name: "delete api-method"
-info_path: docs/Chaos Backend APIs/chaos-api
+api: eJy1VU1v2zgQ/SuDObUAazl1sQfdsukegrZokDbYQ2AUY2kscUuRKknF8Qr674shbceOu92iwOpii5qPNzNvHkd0PXuK2tnrGkusPFPkW2cYFfbkqePIPmB5P6KljrFEXaNCbbHEnmKLCmsOlde9xMASr6jrSTcWrt+iQs/fBu25xjL6gRWGquWOsBwxbvsUzUZu2KPCtfMdxXz02xucpuVZ6AQuAIHlDXhnGLQFgmqXcoYKIzWC9gADlxkEh/i7q7eS+TmmytnINson6nujq9SO4q8gSccjyL2XZkXNQd5yOw6FhOi1bVAhP1LXGzm6ajWv4YMbAnucnlVz7viEa00m8HGk9+T9FmLLUFEEHaBmqhVYt4ENg2WuIbiOnWVgExiig5ZsbTj5+OQTBmldhIt5bOGt21htGwhxJsg6bb/QA2lDK8On01m8Pq7pQozp8eeMF5PCtbZkdJCqDoYr5wyTPaPOny3Hlj3EVoc83pYCrJgtHMLAC541M+joEeiBjBYMYIduxf7lce7Uwik90tnQOxvy3F7P5/JzmvrjO/xlInQcAjX/wYVPQ1VxCOvBmC3kLavB+YasDinNDPdo38wX5wDvAnsZvHURCA5Ldll3OvH+F7Gz987/GPmdpSG2zuu/ud5hFBJwbJ0oRu9CTFoRWyyx2O9iMep6KnwWksD+Ya8igzdYYhtjH8qiqFpyYVYFDq6aUd8X1OszXtx4Vw+VvECOhJM6DlQWhXEVmdaFWC7m8/l3o7wXk0OApULpze2TNPyxr/igdCf7exbu/1zJs428OFu7xcluZbqLLq9dGqeOOwkiF+Dy5hoVyggy9ovZfDaXvZfhdWSPas7UhN0N8EyxDiT7OSnOlIr8GIvekLaSMU1t3NHlHvf2qLBMF0tizFKhzFIMxnFFge+8mSY5/jaw32J5v1T4QF7nVtyPWOsg/5+081+Rv7jdyexLOL2qvgt3d0h2Kw0kM8gbKvzK23wVTstJYctUs09A8oernO7VZ3F/cjzbTOFx9risKu7jD22XR1t38/HTZ1S42l1pnavFx9NGWkibDNKl8tOep7MRDdlmSFqFOaY8/wBToL+P
+sidebar_class_name: "post api-method"
+info_path: docs/chaos-api
 custom_edit_url: null
 ---
 
@@ -28,20 +28,20 @@ import TabItem from "@theme/TabItem";
 <Heading
   as={"h1"}
   className={"openapi__heading"}
-  children={"deleteCampaignById"}
+  children={"createRole"}
 >
 </Heading>
 
 <MethodEndpoint
-  method={"delete"}
-  path={"/campaign/{id}"}
+  method={"post"}
+  path={"/campaign/{id}/role"}
 >
   
 </MethodEndpoint>
 
 
 
-Deletes specified campaign.
+Creates a new role in a campaign.
 
 <Heading
   id={"request"}
@@ -75,7 +75,89 @@ Deletes specified campaign.
       </ParamsItem>
     </ul>
   </div>
-</details><div>
+</details><MimeTabs
+  className={"openapi-tabs__mime"}
+>
+  <TabItem
+    label={"application/json"}
+    value={"application/json-schema"}
+  >
+    <details
+      style={{}}
+      className={"openapi-markdown__details mime"}
+      data-collapsed={false}
+      open={true}
+    >
+      <summary
+        style={{}}
+        className={"openapi-markdown__details-summary-mime"}
+      >
+        <h3
+          className={"openapi-markdown__details-summary-header-body"}
+        >
+          Body
+        </h3><strong
+          className={"openapi-schema__required"}
+        >
+          required
+        </strong>
+      </summary><div
+        style={{"textAlign":"left","marginLeft":"1rem"}}
+      >
+        
+      </div><ul
+        style={{"marginLeft":"1rem"}}
+      >
+        <SchemaItem
+          collapsible={false}
+          name={"name"}
+          required={false}
+          schemaName={"string"}
+          qualifierMessage={undefined}
+          schema={{"type":"string","example":"Chief Mouser"}}
+        >
+          
+        </SchemaItem><SchemaItem
+          collapsible={false}
+          name={"description"}
+          required={false}
+          schemaName={"string"}
+          qualifierMessage={undefined}
+          schema={{"type":"string","required":false,"example":"Larry the cat is dead, now we need someone else to handle the rat issues at 10th Downing st."}}
+        >
+          
+        </SchemaItem><SchemaItem
+          collapsible={false}
+          name={"min_available"}
+          required={false}
+          schemaName={"int32"}
+          qualifierMessage={undefined}
+          schema={{"type":"int32","example":1}}
+        >
+          
+        </SchemaItem><SchemaItem
+          collapsible={false}
+          name={"max_available"}
+          required={false}
+          schemaName={"int32"}
+          qualifierMessage={undefined}
+          schema={{"type":"int32","example":3}}
+        >
+          
+        </SchemaItem><SchemaItem
+          collapsible={false}
+          name={"finalised"}
+          required={false}
+          schemaName={"boolean"}
+          qualifierMessage={undefined}
+          schema={{"type":"boolean","description":"Whether this role has been finalised (e.g. max avaliable number)","example":false}}
+        >
+          
+        </SchemaItem>
+      </ul>
+    </details>
+  </TabItem>
+</MimeTabs><div>
   <div>
     <ApiTabs
       label={undefined}
@@ -133,7 +215,7 @@ Deletes specified campaign.
                         required={false}
                         schemaName={"string"}
                         qualifierMessage={undefined}
-                        schema={{"type":"string","example":"Successfully deleted campaign."}}
+                        schema={{"type":"string","example":"Successfully created organisation."}}
                       >
                         
                       </SchemaItem>
@@ -144,7 +226,7 @@ Deletes specified campaign.
                   value={"Example (from schema)"}
                 >
                   <ResponseSamples
-                    responseExample={"{\n  \"message\": \"Successfully deleted campaign.\"\n}"}
+                    responseExample={"{\n  \"message\": \"Successfully created organisation.\"\n}"}
                     language={"json"}
                   >
                     
@@ -161,7 +243,7 @@ Deletes specified campaign.
         <div>
           
           
-          User is not an admin of campaign's organisation.
+          User is not a Campaign Admin.
           
           
         </div><div>
