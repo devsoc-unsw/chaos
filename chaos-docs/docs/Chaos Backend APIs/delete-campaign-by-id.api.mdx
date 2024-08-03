@@ -1,0 +1,234 @@
+---
+id: delete-campaign-by-id
+title: "deleteCampaignById"
+description: "Deletes specified campaign."
+sidebar_label: "deleteCampaignById"
+hide_title: true
+hide_table_of_contents: true
+api: eJydVE1v2zAM/SsCL9sAIfbWYgfd+nUIVmDFtp6CHFiJibXZkirKRT1D/32QnaTpWnTAfLFFSo/vUY8ewQeKmKx3SwMKDLWU6AK7gHbrzoelAQkBI3aUKDKo1QgOOwIFtqSsAwUBUwMSDLGONhQsULDHEMtLkBDpvreRDKgUe5LAuqEOQY2QhjChuURbiiBh42OHaQ59PoWc139DX04kWXAgbTeWjNC7YguQkHBbeB4IwLqU5+AdE5eKn+q6vJ5jfv0CErR3iVwqWQyhtXpqTPWTy5bxiHSIpW3JzoAdMeOWjtRwitZtQQI9YhfaEvrea03Mm75tBzG3+Zh3nh4Jp/XJS3K3TFFYFs4ngU6g6awTfnM4/o6Fj1t0lifCi/+XQjH6+LaQW4d9any0v8nsaGcJHaXGPzlock1qQEG1J1mN1mSQwBQf9lbqYwsKmpQCq6rSDXpeaCb2eoEhVBjsC1/dRG96XRZiRoIsj4FUVbVeY9t4TuqkrutXUa7LlgPAuhh54yfdNk0qLwoXcXazBAmF7nzs46Je1JAlBM+pw6mVu3GYdYuD7c8HMQ3Ps7rj0738y8Vz/xM9piq0aF2pOqkcd51dwX4/SFDWFJ8X0SUzjnfIdBvbnEv4vqc4gFqtJTxgtHhXJK5GMJbLtwG1wZbpDbLvv+0G+IN4Ptiv8twF0Q2le9j2ZQUSftEw/zjyOktoCA3FicicONOaQjo68sK55aYOTru8ur76cQU5/wEtlKE/
+sidebar_class_name: "delete api-method"
+info_path: docs/Chaos Backend APIs/chaos-api
+custom_edit_url: null
+---
+
+import ApiTabs from "@theme/ApiTabs";
+import DiscriminatorTabs from "@theme/DiscriminatorTabs";
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import SecuritySchemes from "@theme/ApiExplorer/SecuritySchemes";
+import MimeTabs from "@theme/MimeTabs";
+import ParamsItem from "@theme/ParamsItem";
+import ResponseSamples from "@theme/ResponseSamples";
+import SchemaItem from "@theme/SchemaItem";
+import SchemaTabs from "@theme/SchemaTabs";
+import Markdown from "@theme/Markdown";
+import Heading from "@theme/Heading";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"deleteCampaignById"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"delete"}
+  path={"/campaign/{id}"}
+>
+  
+</MethodEndpoint>
+
+
+
+Deletes specified campaign.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<details
+  style={{"marginBottom":"1rem"}}
+  className={"openapi-markdown__details"}
+  data-collapsed={false}
+  open={true}
+>
+  <summary
+    style={{}}
+  >
+    <h3
+      className={"openapi-markdown__details-summary-header-params"}
+    >
+      Path Parameters
+    </h3>
+  </summary><div>
+    <ul>
+      <ParamsItem
+        className={"paramsItem"}
+        param={{"name":"id","in":"path","description":"Campaign ID","required":true,"schema":{"type":"integer","format":"int64"}}}
+      >
+        
+      </ParamsItem>
+    </ul>
+  </div>
+</details><div>
+  <div>
+    <ApiTabs
+      label={undefined}
+      id={undefined}
+    >
+      <TabItem
+        label={"200"}
+        value={"200"}
+      >
+        <div>
+          
+          
+          OK
+          
+          
+        </div><div>
+          <MimeTabs
+            className={"openapi-tabs__mime"}
+            schemaType={"response"}
+          >
+            <TabItem
+              label={"application/json"}
+              value={"application/json"}
+            >
+              <SchemaTabs
+                className={"openapi-tabs__schema"}
+              >
+                <TabItem
+                  label={"Schema"}
+                  value={"Schema"}
+                >
+                  <details
+                    style={{}}
+                    className={"openapi-markdown__details response"}
+                    data-collapsed={false}
+                    open={true}
+                  >
+                    <summary
+                      style={{}}
+                      className={"openapi-markdown__details-summary-response"}
+                    >
+                      <strong>
+                        Schema
+                      </strong>
+                    </summary><div
+                      style={{"textAlign":"left","marginLeft":"1rem"}}
+                    >
+                      
+                    </div><ul
+                      style={{"marginLeft":"1rem"}}
+                    >
+                      <SchemaItem
+                        collapsible={false}
+                        name={"message"}
+                        required={false}
+                        schemaName={"string"}
+                        qualifierMessage={undefined}
+                        schema={{"type":"string","example":"Successfully deleted campaign."}}
+                      >
+                        
+                      </SchemaItem>
+                    </ul>
+                  </details>
+                </TabItem><TabItem
+                  label={"Example (from schema)"}
+                  value={"Example (from schema)"}
+                >
+                  <ResponseSamples
+                    responseExample={"{\n  \"message\": \"Successfully deleted campaign.\"\n}"}
+                    language={"json"}
+                  >
+                    
+                  </ResponseSamples>
+                </TabItem>
+              </SchemaTabs>
+            </TabItem>
+          </MimeTabs>
+        </div>
+      </TabItem><TabItem
+        label={"403"}
+        value={"403"}
+      >
+        <div>
+          
+          
+          User is not an admin of campaign's organisation.
+          
+          
+        </div><div>
+          <MimeTabs
+            className={"openapi-tabs__mime"}
+            schemaType={"response"}
+          >
+            <TabItem
+              label={"application/json"}
+              value={"application/json"}
+            >
+              <SchemaTabs
+                className={"openapi-tabs__schema"}
+              >
+                <TabItem
+                  label={"Schema"}
+                  value={"Schema"}
+                >
+                  <details
+                    style={{}}
+                    className={"openapi-markdown__details response"}
+                    data-collapsed={false}
+                    open={true}
+                  >
+                    <summary
+                      style={{}}
+                      className={"openapi-markdown__details-summary-response"}
+                    >
+                      <strong>
+                        Schema
+                      </strong>
+                    </summary><div
+                      style={{"textAlign":"left","marginLeft":"1rem"}}
+                    >
+                      
+                    </div><ul
+                      style={{"marginLeft":"1rem"}}
+                    >
+                      <SchemaItem
+                        collapsible={false}
+                        name={"error"}
+                        required={false}
+                        schemaName={"string"}
+                        qualifierMessage={undefined}
+                        schema={{"type":"string","example":"Unauthorized"}}
+                      >
+                        
+                      </SchemaItem>
+                    </ul>
+                  </details>
+                </TabItem><TabItem
+                  label={"Example (from schema)"}
+                  value={"Example (from schema)"}
+                >
+                  <ResponseSamples
+                    responseExample={"{\n  \"error\": \"Unauthorized\"\n}"}
+                    language={"json"}
+                  >
+                    
+                  </ResponseSamples>
+                </TabItem>
+              </SchemaTabs>
+            </TabItem>
+          </MimeTabs>
+        </div>
+      </TabItem>
+    </ApiTabs>
+  </div>
+</div>
+      

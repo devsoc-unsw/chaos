@@ -63,8 +63,8 @@ const config: Config = {
         docsPluginId: "classic",
         config: {
           petstore: {
-            specPath: "docs/petstore.yaml",
-            outputDir: "docs/petstore",
+            specPath: "docs/api.yml",
+            outputDir: "docs/Chaos Backend APIs",
             sidebarOptions: {
               groupPathsBy: "tag",
             },

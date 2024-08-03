@@ -1,0 +1,239 @@
+---
+id: get-roles-by-campaign-id
+title: "getRolesByCampaignId"
+description: "Returns info about all roles in a campaign"
+sidebar_label: "getRolesByCampaignId"
+hide_title: true
+hide_table_of_contents: true
+api: eJyVVE1v00AQ/SvDnEBaxSlFHHwrH0IVIFAF4lBFaGJP7IX17rIzThtZ/u9o7SRNW4TAF9uzs2/evPkYMEROpDb4yxpLbFivgmN5tXtNXSTbZLPBSIk6Vk6C5fWAnjrGEm0+sh5LjKQtGqxZqmRjRsMSDwhw+QYNJv7V28Q1lpp6NihVyx1hOaDu4oTmlRtOaHATUkc6m16+wHFcPYS+Yu2TF7B+E4DWoVcg5yBl6mA9EFT74GhQqcm0j3xwldlIDF5YMoHny2V+3Q/x6T0arIJX9ppPKUZnq0mp4odkl+Ekh5iyjmpnwENwOUmPUqJd1ku5O7WH9Q+uNGt8D2KW+Oglmqxv0CDfUhddNr1uLW/gY+iFE44PFPrbxQ+U0g60ZahIoQmeobMi1jdPwIcbuGHwzDVI6DgfshMGDdCSrx1PFxMpWJGeBUjhbKktvAk33voGRBeZTWf9d9qSdbR2fL/K589P6ZxlZ7r9N+fz0eDGenJWcicdHdchOCb/qAW/tawtJ9DWytQd0JLAmtnDEQae8qJZQEe3QFtyNnMA33drTs9OY2/ICY/Hx2DH2ob90Ewzoi2WWByKXwy2HoupJdGgcNoexqdPDktsVaOURVG1FGRRCUuoFhRjQdE+SuRzCnVf5R+YkXA0p0BlUbhQkWuDaHm+XC7/iPIhuxwBVnl4N2GS0eq+pygIXHy+RIOZ7nztbLFcLHNRYxDtyN/1Z04dpoUBr3ZwN/D1w9DD3Sj95/DOBVa+1SI6sj7zmPIe9opf44l7Oe2kWfSVwSxH9hiGNQl/TW4cs/lXz2mH5fXK4JaSnbvuesDaSv6u98X+Sw5Pr/br7BncX3N/5HtYAT4vgC25Pv+hwZ+8m9fouBoNtkw1p4nIfHBRVRz15MqjHZRreGzDd2+/4Dj+BtSJ++c=
+sidebar_class_name: "get api-method"
+info_path: docs/Chaos Backend APIs/chaos-api
+custom_edit_url: null
+---
+
+import ApiTabs from "@theme/ApiTabs";
+import DiscriminatorTabs from "@theme/DiscriminatorTabs";
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import SecuritySchemes from "@theme/ApiExplorer/SecuritySchemes";
+import MimeTabs from "@theme/MimeTabs";
+import ParamsItem from "@theme/ParamsItem";
+import ResponseSamples from "@theme/ResponseSamples";
+import SchemaItem from "@theme/SchemaItem";
+import SchemaTabs from "@theme/SchemaTabs";
+import Markdown from "@theme/Markdown";
+import Heading from "@theme/Heading";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"getRolesByCampaignId"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/campaign/{id}/roles"}
+>
+  
+</MethodEndpoint>
+
+
+
+Returns info about all roles in a campaign
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<details
+  style={{"marginBottom":"1rem"}}
+  className={"openapi-markdown__details"}
+  data-collapsed={false}
+  open={true}
+>
+  <summary
+    style={{}}
+  >
+    <h3
+      className={"openapi-markdown__details-summary-header-params"}
+    >
+      Path Parameters
+    </h3>
+  </summary><div>
+    <ul>
+      <ParamsItem
+        className={"paramsItem"}
+        param={{"name":"id","in":"path","description":"Campaign ID","required":true,"schema":{"type":"integer","format":"int64"}}}
+      >
+        
+      </ParamsItem>
+    </ul>
+  </div>
+</details><div>
+  <div>
+    <ApiTabs
+      label={undefined}
+      id={undefined}
+    >
+      <TabItem
+        label={"200"}
+        value={"200"}
+      >
+        <div>
+          
+          
+          OK
+          
+          
+        </div><div>
+          <MimeTabs
+            className={"openapi-tabs__mime"}
+            schemaType={"response"}
+          >
+            <TabItem
+              label={"application/json"}
+              value={"application/json"}
+            >
+              <SchemaTabs
+                className={"openapi-tabs__schema"}
+              >
+                <TabItem
+                  label={"Schema"}
+                  value={"Schema"}
+                >
+                  <details
+                    style={{}}
+                    className={"openapi-markdown__details response"}
+                    data-collapsed={false}
+                    open={true}
+                  >
+                    <summary
+                      style={{}}
+                      className={"openapi-markdown__details-summary-response"}
+                    >
+                      <strong>
+                        Schema
+                      </strong>
+                    </summary><div
+                      style={{"textAlign":"left","marginLeft":"1rem"}}
+                    >
+                      
+                    </div><ul
+                      style={{"marginLeft":"1rem"}}
+                    >
+                      <SchemaItem
+                        collapsible={true}
+                        className={"schemaItem"}
+                      >
+                        <details
+                          style={{}}
+                          className={"openapi-markdown__details"}
+                        >
+                          <summary
+                            style={{}}
+                          >
+                            <span
+                              className={"openapi-schema__container"}
+                            >
+                              <strong
+                                className={"openapi-schema__property"}
+                              >
+                                campaigns
+                              </strong><span
+                                className={"openapi-schema__name"}
+                              >
+                                 object[]
+                              </span>
+                            </span>
+                          </summary><div
+                            style={{"marginLeft":"1rem"}}
+                          >
+                            <li>
+                              <div
+                                style={{"fontSize":"var(--ifm-code-font-size)","opacity":"0.6","marginLeft":"-.5rem","paddingBottom":".5rem"}}
+                              >
+                                Array [
+                              </div>
+                            </li><SchemaItem
+                              collapsible={false}
+                              name={"name"}
+                              required={false}
+                              schemaName={"string"}
+                              qualifierMessage={undefined}
+                              schema={{"type":"string","example":"Chief Mouser"}}
+                            >
+                              
+                            </SchemaItem><SchemaItem
+                              collapsible={false}
+                              name={"description"}
+                              required={false}
+                              schemaName={"string"}
+                              qualifierMessage={undefined}
+                              schema={{"type":"string","example":"Larry the cat gone missing! now we need someone else to handle the rat issues at 10th Downing st."}}
+                            >
+                              
+                            </SchemaItem><SchemaItem
+                              collapsible={false}
+                              name={"min_available"}
+                              required={false}
+                              schemaName={"int32"}
+                              qualifierMessage={undefined}
+                              schema={{"type":"int32","example":1}}
+                            >
+                              
+                            </SchemaItem><SchemaItem
+                              collapsible={false}
+                              name={"max_available"}
+                              required={false}
+                              schemaName={"int32"}
+                              qualifierMessage={undefined}
+                              schema={{"type":"int32","example":3}}
+                            >
+                              
+                            </SchemaItem><SchemaItem
+                              collapsible={false}
+                              name={"finalised"}
+                              required={false}
+                              schemaName={"boolean"}
+                              qualifierMessage={undefined}
+                              schema={{"type":"boolean","description":"Whether this role has been finalised (e.g. max avaliable number)","example":false}}
+                            >
+                              
+                            </SchemaItem><li>
+                              <div
+                                style={{"fontSize":"var(--ifm-code-font-size)","opacity":"0.6","marginLeft":"-.5rem"}}
+                              >
+                                ]
+                              </div>
+                            </li>
+                          </div>
+                        </details>
+                      </SchemaItem>
+                    </ul>
+                  </details>
+                </TabItem><TabItem
+                  label={"Example (from schema)"}
+                  value={"Example (from schema)"}
+                >
+                  <ResponseSamples
+                    responseExample={"{\n  \"campaigns\": [\n    {\n      \"name\": \"Chief Mouser\",\n      \"description\": \"Larry the cat gone missing! now we need someone else to handle the rat issues at 10th Downing st.\",\n      \"min_available\": 1,\n      \"max_available\": 3,\n      \"finalised\": false\n    }\n  ]\n}"}
+                    language={"json"}
+                  >
+                    
+                  </ResponseSamples>
+                </TabItem>
+              </SchemaTabs>
+            </TabItem>
+          </MimeTabs>
+        </div>
+      </TabItem>
+    </ApiTabs>
+  </div>
+</div>
+      
