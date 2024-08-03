@@ -25,8 +25,8 @@ const CampaignDetails = ({
   description,
   userInfo,
 }: Props) => (
-  <Card as="header" tw="items-center gap-6 md:(flex-row items-center)">
-    <article tw="flex flex-col w-full gap-2">
+  <Card as="header" tw="md:(flex-row items-center) items-center gap-6">
+    <article tw="flex w-full flex-col gap-2">
       <div tw="flex items-center gap-2">
         <img
           tw="h-20 rounded shadow-md"
@@ -41,7 +41,7 @@ const CampaignDetails = ({
           </p>
         </div>
       </div>
-      <p tw="flex items-center leading-relaxed whitespace-pre-wrap">
+      <p tw="flex items-center whitespace-pre-wrap leading-relaxed">
         {description}
       </p>
 
@@ -49,20 +49,20 @@ const CampaignDetails = ({
         <h3 tw="text-xl leading-loose">You&apos;re applying as:</h3>
         <p tw="flex gap-1.5">
           <span>{userInfo.display_name}</span>
-          <span tw="italic font-extralight">({userInfo.zid})</span>
+          <span tw="font-extralight italic">({userInfo.zid})</span>
           <span>·</span>
           <span>{userInfo.degree_name}</span>
         </p>
-        <p tw="flex items-center text-sm text-gray-800 gap-1">
-          <EnvelopeIcon tw="w-4 h-4" /> {userInfo.email}
+        <p tw="flex items-center gap-1 text-sm text-gray-800">
+          <EnvelopeIcon tw="h-4 w-4" /> {userInfo.email}
         </p>
       </div>
     </article>
 
     <div tw="w-full max-w-lg">
-      <aside tw="overflow-hidden rounded shadow-md bg-[#edeeef] aspect-w-16 aspect-h-9">
+      <aside tw="aspect-h-9 aspect-w-16 overflow-hidden rounded bg-[#edeeef] shadow-md">
         <img
-          tw="object-contain w-full h-full"
+          tw="h-full w-full object-contain"
           src={headerImage}
           alt={campaignName}
         />

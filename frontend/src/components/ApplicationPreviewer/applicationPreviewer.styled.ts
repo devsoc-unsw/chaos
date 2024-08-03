@@ -1,16 +1,11 @@
-import { Typography } from "@mui/material/";
-import { styled } from "@mui/material/styles";
+import tw, { styled } from "twin.macro";
 
-export const Question = styled(Typography)`
-  font-weight: bold;
-`;
+import { TypographyH5 } from "components/Typography";
 
-export const Answer = styled(Typography)`
-  margin-bottom: 1rem;
-`;
+export const Question = tw.p`font-bold`;
 
-export const NoAnswer = styled(Typography)`
-  font-style: italic;
-  margin-bottom: 1rem;
-  color: ${(props) => props.theme.palette.grey[600]};
-`;
+export const Answer = tw.p`mb-4`;
+
+export const NoAnswer = tw.p`mb-4 italic text-gray-600`;
+
+export const Zid = styled(TypographyH5, tw`mb-2`);
