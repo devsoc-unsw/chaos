@@ -29,7 +29,6 @@ COPY docs ./
 RUN yarn run generate-docs
 RUN yarn run build
 
-
 # nginx state for serving content
 FROM nginx:1.25.0-alpine
 COPY ./frontend/.nginx/nginx.conf /etc/nginx/nginx.conf
