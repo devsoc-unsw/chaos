@@ -32,7 +32,7 @@ RUN yarn run build
 
 # nginx state for serving content
 FROM nginx:1.25.0-alpine
-COPY ./.nginx/nginx.conf /etc/nginx/nginx.conf
+COPY ./frontend/.nginx/nginx.conf /etc/nginx/nginx.conf
 # Set working directory to nginx asset directory
 WORKDIR /usr/share/nginx/html
 # Remove default nginx static assets
