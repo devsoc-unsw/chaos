@@ -16,6 +16,19 @@ COPY . .
 
 RUN yarn run build
 
+FROM node:18.16.0-alpine as chaos-docs-builder
+
+WORKDIR /chaos-docs
+
+# Copy chaos-docs package.json and yarn.lock
+COPY ../chaos-docs/package.json ../chaos-docs/yarn.lock ./
+RUN yarn install --frozen-lockfile
+
+# Copy the rest of the chaos-docs files and build
+COPY ../chaos-docs ./
+RUN npm run generate-docs
+RUN npm run build
+
 # nginx state for serving content
 FROM nginx:1.25.0-alpine
 COPY ./.nginx/nginx.conf /etc/nginx/nginx.conf
