@@ -79,7 +79,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: frontend
-          push: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+          push: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' || github.ref == 'refs/heads/docusaurusIntegration' }}
           platforms: linux/amd64
           file: frontend/Dockerfile
           build-args: |
