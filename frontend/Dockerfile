@@ -39,7 +39,7 @@ WORKDIR /usr/share/nginx/html
 RUN rm -rf ./*
 # Copy static assets from builder stage
 COPY --from=builder /app/dist .
-COPY --from=chaos-docs-builder /docs/dist ./docs
+COPY --from=chaos-docs-builder /docs/build ./docs
 
 EXPOSE 80
 
