@@ -175,12 +175,14 @@ impl Organisation {
         admin_id_list: Vec<i64>,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        sqlx::query!(
-            "DELETE FROM organisation_members WHERE organisation_id = $1 AND role = $2",
+        let _ = sqlx::query!(
+            "DELETE FROM organisation_members 
+            WHERE organisation_id = $1 AND role = $2
+            RETURNING organisation_id;",
             organisation_id,
             OrganisationRole::Admin as OrganisationRole
         )
-        .execute(transaction.deref_mut())
+        .fetch_one(transaction.deref_mut())
         .await?;
 
         for admin_id in admin_id_list {
@@ -205,12 +207,14 @@ impl Organisation {
         member_id_list: Vec<i64>,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        sqlx::query!(
-            "DELETE FROM organisation_members WHERE organisation_id = $1 AND role = $2",
+        let _ = sqlx::query!(
+            "DELETE FROM organisation_members
+            WHERE organisation_id = $1 AND role = $2
+            RETURNING organisation_id;",
             organisation_id,
             OrganisationRole::User as OrganisationRole
         )
-        .execute(transaction.deref_mut())
+        .fetch_one(transaction.deref_mut())
         .await?;
 
         for member_id in member_id_list {
@@ -235,15 +239,17 @@ impl Organisation {
         admin_to_remove: i64,
         pool: &Pool<Postgres>,
     ) -> Result<(), ChaosError> {
-        sqlx::query!(
+        let _ = sqlx::query!(
             "
-            UPDATE organisation_members SET role = $3 WHERE user_id = $1 AND organisation_id = $2
+            UPDATE organisation_members SET role = $3
+            WHERE user_id = $1 AND organisation_id = $2
+            RETURNING (user_id, organisation_id)
         ",
             admin_to_remove,
             organisation_id,
             OrganisationRole::User as OrganisationRole
         )
-        .execute(pool)
+        .fetch_one(pool)
         .await?;
 
         Ok(())
@@ -254,14 +260,16 @@ impl Organisation {
         user_id: i64,
         pool: &Pool<Postgres>,
     ) -> Result<(), ChaosError> {
-        sqlx::query!(
+        let _ = sqlx::query!(
             "
-            DELETE FROM organisation_members WHERE user_id = $1 AND organisation_id = $2
+            DELETE FROM organisation_members
+            WHERE user_id = $1 AND organisation_id = $2
+            RETURNING (user_id, organisation_id)
         ",
             user_id,
             organisation_id
         )
-        .execute(pool)
+        .fetch_one(pool)
         .await?;
 
         Ok(())
@@ -276,17 +284,18 @@ impl Organisation {
 
         let logo_id = Uuid::new_v4();
         let current_time = dt;
-        sqlx::query!(
+        let _ = sqlx::query!(
             "
             UPDATE organisations
                 SET logo = $2, updated_at = $3
                 WHERE id = $1
+                RETURNING id;
         ",
             id,
             logo_id,
             current_time
         )
-        .execute(pool)
+        .fetch_one(pool)
         .await?;
 
         let upload_url =
