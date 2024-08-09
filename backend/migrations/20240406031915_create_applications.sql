@@ -91,7 +91,7 @@ CREATE INDEX IDX_multi_option_answer_options_question_options on multi_option_an
 CREATE INDEX IDX_multi_option_answer_options_answers on multi_option_answer_options (answer_id);
 
 CREATE TABLE application_ratings (
-    id SERIAL PRIMARY KEY,
+    id BIGINT PRIMARY KEY,
     application_id BIGINT NOT NULL,
     rater_id BIGINT NOT NULL,
     rating INTEGER NOT NULL,
