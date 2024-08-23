@@ -14,6 +14,14 @@ jobs:
         working-directory: frontend
         run: yarn install
 
+      - name: Run Prettier
+        working-directory: frontend
+        run: prettier . --check
+
       - name: Run EsLint
         working-directory: frontend
         run: yarn lint
+
+      - name: Run tsc
+        working-directory: frontend
+        run: tsc src/*.ts
