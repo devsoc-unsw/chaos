@@ -16,7 +16,7 @@ jobs:
 
       - name: Run Prettier
         working-directory: frontend
-        run: prettier . --check
+        run: yarn prettier . --check
 
       - name: Run EsLint
         working-directory: frontend
