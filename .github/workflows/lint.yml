@@ -1,0 +1,19 @@
+name: Lint
+
+on: [push]
+
+jobs:
+  eslint:
+    name: linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Install packages
+        working-directory: frontend
+        run: yarn install
+
+      - name: Run EsLint
+        working-directory: frontend
+        run: yarn lint
