@@ -5,7 +5,7 @@ const Card = styled.div({
 
   variants: {
     hoverable: {
-      true: tw`transition hover:(-translate-y-1 shadow-lg)`,
+      true: tw`transition hover:-translate-y-1 hover:shadow-lg`,
     },
   },
 });
