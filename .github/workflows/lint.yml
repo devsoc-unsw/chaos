@@ -12,8 +12,8 @@ jobs:
 
       - name: Install packages
       - working-directory: frontend
-      - uses: npm i
+      - run: npm i
 
       - name: Run EsLint
       - working-directory: frontend
-      - uses: npm run lint
+      - run: npm run lint
