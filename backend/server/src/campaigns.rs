@@ -6,7 +6,7 @@ use crate::{
             Campaign, CampaignWithRoles, NewCampaignInput, NewQuestion, OrganisationUser, Role,
             RoleUpdate, UpdateCampaignInput, User,
         },
-        Database,
+        Database, schema::QuestionType,
     },
     images::{get_http_image_path, save_image, try_decode_data, ImageLocation},
 };
@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 use std::fs::remove_file;
 
 use uuid::Uuid;
+use crate::question_types::QuestionDataInput;
 
 #[derive(Serialize)]
 pub enum CampaignError {
@@ -115,11 +116,14 @@ fn default_max_bytes() -> i32 {
 #[derive(Serialize, Deserialize)]
 pub struct QuestionInput {
     pub title: String,
+    pub common_question: bool,
     pub description: Option<String>,
     #[serde(default = "default_max_bytes")]
     pub max_bytes: i32,
     #[serde(default)]
     pub required: bool,
+    pub question_data: QuestionDataInput,
+    pub question_type: QuestionType,
 }
 
 #[derive(Deserialize)]
@@ -139,17 +143,25 @@ pub async fn new(
     let NewCampaignWithData {
         campaign,
         roles,
-        questions,
+        mut questions,
     } = inner;
+    
+    let question_data: Vec<QuestionDataInput> = questions
+        .iter()
+        .map(|x| {
+           x.question_data.clone()
+        })
+        .collect();
 
     let mut new_questions: Vec<NewQuestion> = questions
-        .into_iter()
+        .iter_mut()
         .map(|x| NewQuestion {
-            role_ids: vec![],
-            title: x.title,
-            description: x.description,
+            role_id: None,
+            title: x.title.clone(),
+            description: x.description.clone(),
             max_bytes: x.max_bytes,
             required: x.required,
+            question_type: x.question_type,
         })
         .collect();
 
@@ -179,20 +191,30 @@ pub async fn new(
             })?;
 
             for question in role.questions_for_role {
-                if question < new_questions.len() {
-                    new_questions[question].role_ids.push(inserted_role.id);
+                if questions[question].common_question {
+                    // If question is common
+                    new_questions[question].role_id = None;
+                } else if let None = new_questions[question].role_id {
+                    // If question is unique and no role_id assigned to it
+                    new_questions[question].role_id = Option::from(inserted_role.id);
+                } else {
+                    // If question is meant to be unique, but already has a role_id assigned to it
+                    eprintln!("Question is not common, yet has multiple roles asking for it");
+                    return Err(JsonErr(CampaignError::UnableToCreate, Status::BadRequest));
                 }
             }
         }
 
-        for question in new_questions {
-            if question.role_ids.len() == 0 {
-                return Err(JsonErr(CampaignError::InvalidInput, Status::BadRequest));
-            }
-            question.insert(conn).ok_or_else(|| {
+        for (question, question_data) in new_questions.into_iter().zip(question_data.into_iter()) {
+
+            // Insert question (skeleton) into database, and then insert it's data into
+            // corresponding table in database.
+            let inserted_id = question.insert(conn).ok_or_else(|| {
                 eprintln!("Failed to create question for some reason");
                 JsonErr(CampaignError::UnableToCreate, Status::InternalServerError)
-            })?;
+            })?.id;
+
+            question_data.insert_question_data(conn, inserted_id);
         }
 
         Ok(Json(campaign))
