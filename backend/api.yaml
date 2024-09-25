@@ -505,7 +505,7 @@ paths:
                   upload_url:
                     type: string
                     description: Presigned S3 url to upload file.
-                    example: https://presignedurldemo.s3.eu-west-2.amazonaws.com/6996987893965262849/2d19617b-46fd-4927-9f53-77d69232ba5d?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAJJWZ7B6WCRGMKFGQ%2F20180210%2Feu-west-2%2Fs3%2Faws4_request&X-Amz-Date=20180210T171315Z&X-Amz-Expires=1800&X-Amz-Signature=12b74b0788aa036bc7c3d03b3f20c61f1f91cc9ad8873e3314255dc479a25351&X-Amz-SignedHeaders=host
+                    example: https://www.youtube.com/watch?v=dQw4w9WgXcQ
         '401':
           description: Not logged in.
           content:
@@ -1085,7 +1085,7 @@ paths:
                   upload_url:
                     type: string
                     description: Presigned S3 url to upload file.
-                    example: https://presignedurldemo.s3.eu-west-2.amazonaws.com/6996987893965262849/2d19617b-46fd-4927-9f53-77d69232ba5d?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAJJWZ7B6WCRGMKFGQ%2F20180210%2Feu-west-2%2Fs3%2Faws4_request&X-Amz-Date=20180210T171315Z&X-Amz-Expires=1800&X-Amz-Signature=12b74b0788aa036bc7c3d03b3f20c61f1f91cc9ad8873e3314255dc479a25351&X-Amz-SignedHeaders=host
+                    example: https://www.youtube.com/watch?v=dQw4w9WgXcQ
         '401':
           description: Not logged in.
           content:
