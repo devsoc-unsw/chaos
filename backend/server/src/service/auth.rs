@@ -1,6 +1,5 @@
 use crate::models::user::UserRole;
 use anyhow::Result;
-use jsonwebtoken::{DecodingKey, EncodingKey};
 use snowflake::SnowflakeIdGenerator;
 use sqlx::{Pool, Postgres};
 
@@ -15,9 +14,12 @@ pub async fn create_or_get_user_id(
     pool: Pool<Postgres>,
     mut snowflake_generator: SnowflakeIdGenerator,
 ) -> Result<i64> {
-    let possible_user_id = sqlx::query!("SELECT id FROM users WHERE email = $1", email)
-        .fetch_optional(&pool)
-        .await?;
+    let possible_user_id = sqlx::query!(
+        "SELECT id FROM users WHERE lower(email) = $1",
+        email.to_lowercase()
+    )
+    .fetch_optional(&pool)
+    .await?;
 
     if let Some(result) = possible_user_id {
         return Ok(result.id);
@@ -25,10 +27,10 @@ pub async fn create_or_get_user_id(
 
     let user_id = snowflake_generator.real_time_generate();
 
-    let response = sqlx::query!(
+    sqlx::query!(
         "INSERT INTO users (id, email, name) VALUES ($1, $2, $3)",
         user_id,
-        email,
+        email.to_lowercase(),
         name
     )
     .execute(&pool)
