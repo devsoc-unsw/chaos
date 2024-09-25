@@ -136,6 +136,12 @@ paths:
                   name:
                     type: string
                     example: Clancy Lion
+                  pronouns:
+                    type: string
+                    example: They/Them
+                  gender:
+                    type: string
+                    example: Male
                   degree_name:
                     type: string
                     example: Computer Science
@@ -176,6 +182,75 @@ paths:
                   message:
                     type: string
                     example: Successfully updated name.
+        '401':
+          description: Not logged in.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Not logged in.
+
+  /user/pronouns:
+    patch:
+      operationId: updateUserPronouns
+      description: Updates currently logged in user's pronouns.
+      tags:
+        - User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                zid:
+                  type: string
+                  example: "z5123456"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully updated pronouns.
+        '401':
+          description: Not logged in.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Not logged in.
+  /user/gender:
+    patch:
+      operationId: updateUserGender
+      description: Updates currently logged in user's gender.
+      tags:
+        - User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                zid:
+                  type: string
+                  example: "z5123456"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully updated gender.
         '401':
           description: Not logged in.
           content:
@@ -256,6 +331,26 @@ paths:
                   error:
                     type: string
                     example: Not logged in.
+  /user/applications:
+    get:
+      operationId: getUserApplications
+      description: Returns info about applications made by currently logged in user.
+      tags:
+        - User
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  campaigns:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ApplicationDetails'
+
+
+
   /organisation:
     post:
       operationId: createOrganisation
@@ -385,27 +480,7 @@ paths:
                   campaigns:
                     type: array
                     items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                          format: int64
-                          example: 6996987893965262849
-                        name:
-                          type: string
-                          example: 2024 Subcommittee Recruitment
-                        cover_image:
-                          type: string
-                          example: 2d19617b-46fd-4927-9f53-77d69232ba5d
-                        description:
-                          type: string
-                          example: Are you excited to make a difference?
-                        starts_at:
-                          type: string
-                          example: 2024-03-15T18:25:43.511Z
-                        ends_at:
-                          type: string
-                          example: 2024-04-15T18:25:43.511Z
+                      $ref: '#/components/schemas/OrganisationCampaign'
   /organisation/{id}/logo:
     patch:
       operationId: updateOrganisationLogoById
@@ -449,7 +524,8 @@ paths:
                   error:
                     type: string
                     example: Unauthorized
-  /organisation/{id}/members:
+
+  /organisation/{id}/member:
     get:
       operationId: getOrganisationMembersById
       parameters:
@@ -548,6 +624,210 @@ paths:
                   error:
                     type: string
                     example: Unauthorized
+    delete:
+      operationId: deleteOrganisationMemberById
+      parameters:
+        - name: id
+          in: path
+          description: Organisation ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                user_id:
+                  type: integer
+                  format: int64
+      description: Specifies member for deletion in organistion.
+      tags:
+        - Organisation
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully updated members.
+        '401':
+          description: Not logged in.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Not logged in.
+        '403':
+          description: User is not an organisation admin.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorized
+
+  /organisation/{id}/admin:
+    get:
+      operationId: getOrganisationAdminsById
+      parameters:
+        - name: id
+          in: path
+          description: Organisation ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns list of admins of specified organisation.
+      tags:
+        - Organisation
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  members:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          format: int64
+                          example: 1541815603606036480
+                        name:
+                          type: string
+                          example: Clancy Lion
+                        role:
+                          type: string
+                          example: Admin
+        '403':
+          description: User is not a SuperUser.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorized
+    put:
+      operationId: updateOrganisationAdminsById
+      parameters:
+        - name: id
+          in: path
+          description: Organisation ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                members:
+                  type: array
+                  uniqueItems: true
+                  items:
+                    type: integer
+                    format: int64
+                  example: [1541815603606036480, 1541815603606036827, 1541815287306036429]
+      description: Specifies Admins for specified organistion.
+      tags:
+        - Organisation
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully updated members.
+        '401':
+          description: Not logged in.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Not logged in.
+        '403':
+          description: User is not a SuperUser.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorized
+    delete:
+      operationId: deleteOrganisationAdminById
+      parameters:
+        - name: id
+          in: path
+          description: Organisation ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                user_id:
+                  type: integer
+                  format: int64
+      description: Specifies Admin for deletion in organistion.
+      tags:
+        - Organisation
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully deleted Admin.
+        '401':
+          description: Not logged in.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Not logged in.
+        '403':
+          description: User is not a SuperUser.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorized
+
+
+
+
   /organisation/{id}/campaign:
     post:
       operationId: createCampaign
@@ -906,24 +1186,47 @@ paths:
                   campaigns:
                     type: array
                     items:
+                      $ref: '#components/schemas/RoleDetails'
+
+  /campaign/{id}/applications:
+    get:
+      operationId: getApplicationsById
+      parameters:
+        - name: id
+          in: path
+          description: campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns info about all Applications in given Campaign.
+      tags:
+        - Campaign
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  applications:
+                    type: array
+                    items:
                       type: object
                       properties:
-                        name:
-                          type: string
-                          example: Chief Mouser
-                        description:
-                          type: string
-                          example: Larry the cat gone missing! now we need someone else to handle the rat issues at 10th Downing st.
-                        min_available:
-                          type: int32
-                          example: 1
-                        max_available:
-                          type: int32
-                          example: 3
-                        finalised:
-                          type: boolean
-                          description: Whether this role has been finalised (e.g. max avaliable number)
-                          example: False
+                        id:
+                          type: int64
+                          example: 6996987893965262849
+                        campaign_id:
+                          type: int64
+                          example: 6956987893465262847
+                        user:
+                          $ref: '#/components/schemas/UserDetails'
+                        status:
+                        private_status:
+                        applied_roles:
+
+
   /role/{id}:
     get:
       operationId: getRoleById
@@ -934,7 +1237,7 @@ paths:
           required: true
           schema:
             type: integer
-            format: int32
+            format: int64
       description: Returns info about specified role.
       tags:
         - Role
@@ -973,14 +1276,14 @@ paths:
 
     put:
       operationId: updateRoleById
-        parameters:
+      parameters:
         - name: id
           in: path
           description: Role ID
           required: true
           schema:
             type: integer
-            format: int32
+            format: int64
       description: Update a role given the role id.
       tags:
         - Role
@@ -1036,7 +1339,7 @@ paths:
           required: true
           schema:
             type: integer
-            format: int32
+            format: int64
       description: Deletes specified role.
       tags:
         - Role
@@ -1059,3 +1362,128 @@ paths:
                   error:
                     type: string
                     example: Unauthorized
+
+
+
+
+components:
+  schemas:
+    ApplicationStatus:
+      type: string
+      enum:
+        - Pending
+        - Rejected
+        - Successful
+
+    OrganisationCampaign:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 6996987893965262849
+        name:
+          type: string
+          example: 2024 Subcommittee Recruitment
+        cover_image:
+          type: string
+          example: 2d19617b-46fd-4927-9f53-77d69232ba5d
+        description:
+          type: string
+          example: Are you excited to make a difference?
+        starts_at:
+          type: string
+          example: 2024-03-15T18:25:43.511Z
+        ends_at:
+          type: string
+          example: 2024-04-15T18:25:43.511Z
+
+    RoleDetails:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 7036987893965262849
+        campaign_id:
+          type: integer
+          format: int64
+          example: 1116987453965262849
+        name:
+          type: string
+          example: Chief Mouser
+        description:
+          type: string
+          example: Larry the cat gone missing! now we need someone else to handle the rat issues at 10th Downing st.
+        min_available:
+          type: int32
+          example: 1
+        max_available:
+          type: int32
+          example: 3
+        finalised:
+          type: boolean
+          description: Whether this role has been finalised (e.g. max avaliable number)
+          example: False
+
+    UserDetails:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1541815603606036480
+        email:
+          type: string
+          example: me@example.com
+        zid:
+          type: string
+          example: z5555555
+        name:
+          type: string
+          example: Clancy Lion
+        pronouns:
+          type: string
+          example: They/Them
+        gender:
+          type: string
+          example: Male
+        degree_name:
+          type: string
+          example: Computer Science
+        degree_starting_year:
+          type: integer
+          example: 2024
+
+    ApplicationDetails:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1541815603606036480
+        campaign_id:
+          type: integer
+          format: int64
+          example: 5141815603606036480
+        user:
+          $ref: '#/components/schemas/UserDetails'
+        status:
+          $ref: '#/components/schemas/ApplicationStatus'
+        private_status:
+          $ref: '#/components/schemas/ApplicationStatus'
+        applied_roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationAppliedRoleDetails'
+
+    ApplicationAppliedRoleDetails:
+      type: object
+      properties:
+        campaign_role_id:
+          type: integer
+          format: int64
+          example: 1541815603606036480
+        role_name:
+          type: String
+          example: UI/UX subcom
