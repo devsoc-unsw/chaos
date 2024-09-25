@@ -142,6 +142,12 @@ paths:
                   gender:
                     type: string
                     example: Male
+                  pronouns:
+                    type: string
+                    example: They/Them
+                  gender:
+                    type: string
+                    example: Male
                   degree_name:
                     type: string
                     example: Computer Science
@@ -182,6 +188,75 @@ paths:
                   message:
                     type: string
                     example: Successfully updated name.
+        '401':
+          description: Not logged in.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Not logged in.
+
+  /user/pronouns:
+    patch:
+      operationId: updateUserPronouns
+      description: Updates currently logged in user's pronouns.
+      tags:
+        - User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                zid:
+                  type: string
+                  example: "z5123456"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully updated pronouns.
+        '401':
+          description: Not logged in.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Not logged in.
+  /user/gender:
+    patch:
+      operationId: updateUserGender
+      description: Updates currently logged in user's gender.
+      tags:
+        - User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                zid:
+                  type: string
+                  example: "z5123456"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully updated gender.
         '401':
           description: Not logged in.
           content:
@@ -351,6 +426,26 @@ paths:
 
 
 
+  /user/applications:
+    get:
+      operationId: getUserApplications
+      description: Returns info about applications made by currently logged in user.
+      tags:
+        - User
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  campaigns:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ApplicationDetails'
+
+
+
   /organisation:
     post:
       operationId: createOrganisation
@@ -481,6 +576,7 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/OrganisationCampaign'
+                      $ref: '#/components/schemas/OrganisationCampaign'
   /organisation/{id}/logo:
     patch:
       operationId: updateOrganisationLogoById
@@ -506,6 +602,7 @@ paths:
                     type: string
                     description: Presigned S3 url to upload file.
                     example: https://www.youtube.com/watch?v=dQw4w9WgXcQ
+                    example: https://www.youtube.com/watch?v=dQw4w9WgXcQ
         '401':
           description: Not logged in.
           content:
@@ -524,6 +621,8 @@ paths:
                   error:
                     type: string
                     example: Unauthorized
+
+  /organisation/{id}/member:
 
   /organisation/{id}/member:
     get:
@@ -624,6 +723,210 @@ paths:
                   error:
                     type: string
                     example: Unauthorized
+    delete:
+      operationId: deleteOrganisationMemberById
+      parameters:
+        - name: id
+          in: path
+          description: Organisation ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                user_id:
+                  type: integer
+                  format: int64
+      description: Specifies member for deletion in organistion.
+      tags:
+        - Organisation
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully updated members.
+        '401':
+          description: Not logged in.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Not logged in.
+        '403':
+          description: User is not an organisation admin.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorized
+
+  /organisation/{id}/admin:
+    get:
+      operationId: getOrganisationAdminsById
+      parameters:
+        - name: id
+          in: path
+          description: Organisation ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns list of admins of specified organisation.
+      tags:
+        - Organisation
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  members:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          format: int64
+                          example: 1541815603606036480
+                        name:
+                          type: string
+                          example: Clancy Lion
+                        role:
+                          type: string
+                          example: Admin
+        '403':
+          description: User is not a SuperUser.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorized
+    put:
+      operationId: updateOrganisationAdminsById
+      parameters:
+        - name: id
+          in: path
+          description: Organisation ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                members:
+                  type: array
+                  uniqueItems: true
+                  items:
+                    type: integer
+                    format: int64
+                  example: [1541815603606036480, 1541815603606036827, 1541815287306036429]
+      description: Specifies Admins for specified organistion.
+      tags:
+        - Organisation
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully updated members.
+        '401':
+          description: Not logged in.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Not logged in.
+        '403':
+          description: User is not a SuperUser.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorized
+    delete:
+      operationId: deleteOrganisationAdminById
+      parameters:
+        - name: id
+          in: path
+          description: Organisation ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                user_id:
+                  type: integer
+                  format: int64
+      description: Specifies Admin for deletion in organistion.
+      tags:
+        - Organisation
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully deleted Admin.
+        '401':
+          description: Not logged in.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Not logged in.
+        '403':
+          description: User is not a SuperUser.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorized
+
+
+
+
     delete:
       operationId: deleteOrganisationMemberById
       parameters:
@@ -1086,6 +1389,7 @@ paths:
                     type: string
                     description: Presigned S3 url to upload file.
                     example: https://www.youtube.com/watch?v=dQw4w9WgXcQ
+                    example: https://www.youtube.com/watch?v=dQw4w9WgXcQ
         '401':
           description: Not logged in.
           content:
@@ -1212,8 +1516,47 @@ paths:
                   applications:
                     type: array
                     items:
+                      $ref: '#components/schemas/RoleDetails'
+
+  /campaign/{id}/applications:
+    get:
+      operationId: getApplicationsById
+      parameters:
+        - name: id
+          in: path
+          description: campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns info about all Applications in given Campaign.
+      tags:
+        - Campaign
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  applications:
+                    type: array
+                    items:
                       type: object
                       properties:
+                        id:
+                          type: int64
+                          example: 6996987893965262849
+                        campaign_id:
+                          type: int64
+                          example: 6956987893465262847
+                        user:
+                          $ref: '#/components/schemas/UserDetails'
+                        status:
+                        private_status:
+                        applied_roles:
+
+
                         id:
                           type: int64
                           example: 6996987893965262849
@@ -1237,6 +1580,7 @@ paths:
           required: true
           schema:
             type: integer
+            format: int64
             format: int64
       description: Returns info about specified role.
       tags:
@@ -1277,12 +1621,14 @@ paths:
     put:
       operationId: updateRoleById
       parameters:
+      parameters:
         - name: id
           in: path
           description: Role ID
           required: true
           schema:
             type: integer
+            format: int64
             format: int64
       description: Update a role given the role id.
       tags:
@@ -1339,6 +1685,7 @@ paths:
           required: true
           schema:
             type: integer
+            format: int64
             format: int64
       description: Deletes specified role.
       tags:
