@@ -7,7 +7,7 @@ use sqlx::{Pool, Postgres, Transaction};
 use std::ops::DerefMut;
 use uuid::Uuid;
 
-pub async fn user_is_admin(
+pub async fn assert_user_is_admin(
     user_id: i64,
     organisation_id: i64,
     pool: &Pool<Postgres>,

@@ -108,6 +108,7 @@ impl Rating {
         rating_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
+        // TODO: fix sth kavika wanted fixed.
         sqlx::query!(
             "
             DELETE FROM application_ratings WHERE id = $1

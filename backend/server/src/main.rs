@@ -2,7 +2,7 @@ use crate::handler::auth::google_callback;
 use crate::handler::organisation::OrganisationHandler;
 use crate::models::storage::Storage;
 use anyhow::Result;
-use axum::routing::{get, patch, post, put};
+use axum::routing::{delete, get, patch, post, put};
 use axum::Router;
 use handler::ratings::RatingsHandler;
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
@@ -90,7 +90,10 @@ async fn main() -> Result<()> {
                 .put(OrganisationHandler::update_admins)
                 .delete(OrganisationHandler::remove_admin),
         )
-        .route("/api/v1/ratings/:rating_id", get(RatingsHandler::get))
+        .route(
+            "/api/v1/ratings/:rating_id",
+            get(RatingsHandler::get).delete(RatingsHandler::delete),
+        )
         .route(
             "/api/v1/:application_id/rating",
             put(RatingsHandler::create_rating),
@@ -99,7 +102,6 @@ async fn main() -> Result<()> {
             "/api/v1/:application_id/ratings",
             get(RatingsHandler::get_ratings_for_application),
         )
-        // TODO: should ratings also have a delete endpoint? I think old backend didn't
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
