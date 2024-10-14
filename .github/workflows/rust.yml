@@ -3,9 +3,6 @@ name: Rust
 on:
   pull_request:
     branches: [main, "renovate/*", "CHAOS-224-KHAOS-rewrite"]
-    paths:
-      - backend/server/**
-      - backend/prisma-cli/**
   push:
     branches: ["renovate/*"]
 
