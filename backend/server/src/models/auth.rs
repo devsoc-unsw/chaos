@@ -3,7 +3,9 @@ use crate::models::error::ChaosError;
 use crate::service::auth::is_super_user;
 use crate::service::jwt::decode_auth_token;
 use crate::service::organisation::assert_user_is_admin;
-use crate::service::ratings::assert_user_is_application_reviewer_admin;
+use crate::service::ratings::{
+    assert_user_is_application_reviewer_admin, assert_user_is_rating_creator,
+};
 use axum::extract::{FromRef, FromRequestParts, Path};
 use axum::http::request::Parts;
 use axum::response::{IntoResponse, Redirect, Response};
@@ -176,6 +178,7 @@ where
         let pool = &app_state.db;
         let user_id = claims.sub;
 
+        // TODO: check if application_id or rating_id was passed.
         // TODO: How am I guaranteeing this rating id is in the endpoint? Would it be a bad request if the rating id was left out?
         let Path(rating_id) = parts
             .extract::<Path<i64>>()
@@ -185,5 +188,47 @@ where
         assert_user_is_application_reviewer_admin(user_id, rating_id, pool).await?;
 
         Ok(ApplicationReviewerAdmin { user_id })
+    }
+}
+
+pub struct RatingCreatorAdmin {
+    pub user_id: i64,
+}
+
+#[async_trait]
+impl<S> FromRequestParts<S> for RatingCreatorAdmin
+where
+    AppState: FromRef<S>,
+    S: Send + Sync,
+{
+    type Rejection = ChaosError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        // TODO: put into separate function, since this is just getting the id through jwt, and duplicated here.
+        let app_state = AppState::from_ref(state);
+        let decoding_key = &app_state.decoding_key;
+        let jwt_validator = &app_state.jwt_validator;
+        let TypedHeader(cookies) = parts
+            .extract::<TypedHeader<Cookie>>()
+            .await
+            .map_err(|_| ChaosError::NotLoggedIn)?;
+
+        let token = cookies.get("auth_token").ok_or(ChaosError::NotLoggedIn)?;
+
+        let claims =
+            decode_auth_token(token, decoding_key, jwt_validator).ok_or(ChaosError::NotLoggedIn)?;
+
+        let pool = &app_state.db;
+        let user_id = claims.sub;
+
+        // TODO
+        // let Path(rating_id) = parts
+        //     .extract::<Path<i64>>()
+        //     .await
+        //     .map_err(|_| ChaosError::BadRequest)?;
+
+        // assert_user_is_rating_creator(user_id, rating_id, pool).await?;
+
+        Ok(RatingCreatorAdmin { user_id })
     }
 }

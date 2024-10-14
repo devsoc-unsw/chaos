@@ -11,15 +11,12 @@ pub struct Rating {
     pub application_id: i64,
     pub rater_user_id: i64,
     pub rating: i32,
-    // TODO: what's the point of storing created_at and updated_at if they are not accessible to users through endpoints?
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
 
-// TODO: Does the user have to provide rater user id in their JSON? How do they get that? can't we get that in the RatingsHandler::create_rating method?
 #[derive(Deserialize, Serialize)]
 pub struct NewRating {
-    pub application_id: i64,
     pub rater_user_id: i64,
     pub rating: i32,
 }
@@ -27,13 +24,14 @@ pub struct NewRating {
 #[derive(Deserialize, Serialize)]
 pub struct RatingDetails {
     pub id: i64,
+    pub rater_id: i64,
+    pub rater_name: String,
     pub rating: i32,
-    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct RatingsDetails {
-    // TODO: should this be: Vec<Rating> instead?
+pub struct ApplicationRatings {
     pub ratings: Vec<RatingDetails>,
 }
 
@@ -41,11 +39,11 @@ impl Rating {
     /// Create a new rating.
     pub async fn create(
         new_rating: NewRating,
+        application_id: i64,
         mut snowflake_generator: SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         let rating_id = snowflake_generator.generate();
-        let application_id = new_rating.application_id;
         let rater_user_id = new_rating.rater_user_id;
         let rating = new_rating.rating;
 
@@ -65,6 +63,32 @@ impl Rating {
         Ok(())
     }
 
+    /// Create a new rating.
+    pub async fn update(
+        rating_id: i64,
+        updated_rating: NewRating,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
+        let rating = updated_rating.rating;
+        let current_time = Utc::now();
+
+        let _ = sqlx::query!(
+            "
+            UPDATE application_ratings
+            SET rating = $2, updated_at = $3
+            WHERE id = $1
+            RETURNING id;
+        ",
+            rating_id,
+            rating,
+            current_time
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
+        Ok(())
+    }
+
     pub async fn get_rating(
         rating_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
@@ -72,9 +96,10 @@ impl Rating {
         let rating = sqlx::query_as!(
             RatingDetails,
             "
-            SELECT id, rating, created_at
-                FROM application_ratings
-                WHERE id = $1
+            SELECT r.id, rater_id, u.name as rater_name, r.rating, r.updated_at
+                FROM application_ratings r
+                JOIN users u ON u.id = r.id
+                WHERE r.id = $1
         ",
             rating_id
         )
@@ -88,34 +113,36 @@ impl Rating {
     pub async fn get_all_ratings_from_application_id(
         application_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<RatingsDetails, ChaosError> {
+    ) -> Result<ApplicationRatings, ChaosError> {
         let ratings = sqlx::query_as!(
             RatingDetails,
             "
-            SELECT id, rating, created_at
-                FROM application_ratings
-                WHERE application_id = $1
+            SELECT r.id, rater_id, u.name as rater_name, r.rating, r.updated_at
+                FROM application_ratings r
+                JOIN users u ON u.id = r.id
+                WHERE r.application_id = $1
         ",
             application_id
         )
         .fetch_all(transaction.deref_mut())
         .await?;
 
-        Ok(RatingsDetails { ratings })
+        Ok(ApplicationRatings { ratings })
     }
 
     pub async fn delete(
         rating_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        // TODO: fix sth kavika wanted fixed.
-        sqlx::query!(
+        // Throws error if rating id doesn't exist.
+        let _ = sqlx::query!(
             "
             DELETE FROM application_ratings WHERE id = $1
+            RETURNING id;
         ",
             rating_id
         )
-        .execute(transaction.deref_mut())
+        .fetch_one(transaction.deref_mut())
         .await?;
 
         Ok(())

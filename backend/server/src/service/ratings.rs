@@ -7,14 +7,14 @@ use sqlx::{Pool, Postgres, Transaction};
 use std::ops::DerefMut;
 use uuid::Uuid;
 
+/// Any member of the organisation that owns the campaign is an application
+/// viewer, because all members are either directors or execs (TODO: might be
+/// changed in the future).
 pub async fn assert_user_is_application_reviewer_admin(
     user_id: i64,
     rating_id: i64,
     pool: &Pool<Postgres>,
 ) -> Result<(), ChaosError> {
-    // Any member of the organisation that owns the campaign is an application
-    // viewer, because all members are either directors or execs (TODO: might be
-    // changed in the future).
     let is_admin = sqlx::query!(
         r#"
         SELECT EXISTS (
@@ -29,7 +29,7 @@ pub async fn assert_user_is_application_reviewer_admin(
             -- Assert user is member of the organisation that owns the campaign
             -- this application belongs to.
             AND om.user_id = $2
-        );
+        )
         "#,
         rating_id,
         user_id
@@ -44,4 +44,12 @@ pub async fn assert_user_is_application_reviewer_admin(
     }
 
     Ok(())
+}
+
+pub async fn assert_user_is_rating_creator(
+    user_id: i64,
+    rating_id: i64,
+    pool: &Pool<Postgres>,
+) -> Result<(), ChaosError> {
+    todo!()
 }

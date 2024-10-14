@@ -13,13 +13,33 @@ impl RatingsHandler {
     // TODO: are all the user permissions as required? Who should be able to do what with ratings?
     pub async fn create_rating(
         State(state): State<AppState>,
+        Path(application_id): Path<i64>,
         _admin: ApplicationReviewerAdmin,
         mut transaction: DBTransaction<'_>,
         Json(new_rating): Json<NewRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Rating::create(new_rating, state.snowflake_generator, &mut transaction.tx).await?;
+        Rating::create(
+            new_rating,
+            application_id,
+            state.snowflake_generator,
+            &mut transaction.tx,
+        )
+        .await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, "Successfully created rating"))
+    }
+
+    pub async fn update(
+        State(_state): State<AppState>,
+        Path(rating_id): Path<i64>,
+        // TODO: authorization: needs to be user that created the rating and is a current member of organisation.
+        _admin: ApplicationReviewerAdmin,
+        mut transaction: DBTransaction<'_>,
+        Json(updated_rating): Json<NewRating>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        Rating::update(rating_id, updated_rating, &mut transaction.tx).await?;
+        transaction.tx.commit().await?;
+        Ok((StatusCode::OK, "Successfully updated rating"))
     }
 
     pub async fn get_ratings_for_application(

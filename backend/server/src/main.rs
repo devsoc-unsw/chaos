@@ -92,11 +92,13 @@ async fn main() -> Result<()> {
         )
         .route(
             "/api/v1/ratings/:rating_id",
-            get(RatingsHandler::get).delete(RatingsHandler::delete),
+            get(RatingsHandler::get)
+                .delete(RatingsHandler::delete)
+                .put(RatingsHandler::update),
         )
         .route(
             "/api/v1/:application_id/rating",
-            put(RatingsHandler::create_rating),
+            post(RatingsHandler::create_rating),
         )
         .route(
             "/api/v1/:application_id/ratings",
