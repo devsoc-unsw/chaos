@@ -1,5 +1,8 @@
 use crate::models::app::AppState;
-use crate::models::auth::{ApplicationReviewerAdmin, SuperUser};
+use crate::models::auth::{
+    ApplicationReviewerAdminGivenApplicationId, ApplicationReviewerAdminGivenRatingId,
+    RatingCreatorAdmin, SuperUser,
+};
 use crate::models::error::ChaosError;
 use crate::models::ratings::{NewRating, Rating};
 use crate::models::transaction::DBTransaction;
@@ -14,7 +17,8 @@ impl RatingsHandler {
     pub async fn create_rating(
         State(state): State<AppState>,
         Path(application_id): Path<i64>,
-        _admin: ApplicationReviewerAdmin,
+        // TODO: Potential bug: the check whether user is allowed to access rating doesn't make sense here, because no rating exists yet
+        _admin: ApplicationReviewerAdminGivenApplicationId,
         mut transaction: DBTransaction<'_>,
         Json(new_rating): Json<NewRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
@@ -32,8 +36,7 @@ impl RatingsHandler {
     pub async fn update(
         State(_state): State<AppState>,
         Path(rating_id): Path<i64>,
-        // TODO: authorization: needs to be user that created the rating and is a current member of organisation.
-        _admin: ApplicationReviewerAdmin,
+        _admin: RatingCreatorAdmin,
         mut transaction: DBTransaction<'_>,
         Json(updated_rating): Json<NewRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
@@ -45,7 +48,7 @@ impl RatingsHandler {
     pub async fn get_ratings_for_application(
         State(_state): State<AppState>,
         Path(application_id): Path<i64>,
-        _admin: ApplicationReviewerAdmin,
+        _admin: ApplicationReviewerAdminGivenApplicationId,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let ratings =
@@ -58,7 +61,7 @@ impl RatingsHandler {
     pub async fn get(
         State(_state): State<AppState>,
         Path(rating_id): Path<i64>,
-        _admin: ApplicationReviewerAdmin,
+        _admin: ApplicationReviewerAdminGivenRatingId,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let org = Rating::get_rating(rating_id, &mut transaction.tx).await?;
@@ -68,11 +71,11 @@ impl RatingsHandler {
 
     pub async fn delete(
         State(_state): State<AppState>,
-        Path(id): Path<i64>,
-        _admin: ApplicationReviewerAdmin,
+        Path(rating_id): Path<i64>,
+        _admin: ApplicationReviewerAdminGivenRatingId,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Rating::delete(id, &mut transaction.tx).await?;
+        Rating::delete(rating_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, "Successfully deleted rating"))
     }
