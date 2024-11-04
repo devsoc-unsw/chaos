@@ -77,6 +77,7 @@ CREATE TABLE questions (
     id BIGINT PRIMARY KEY,
     title TEXT NOT NULL,
     description TEXT,
+    common BOOLEAN NOT NULL,
     required BOOLEAN NOT NULL,
     question_type question_type NOT NULL,
     campaign_id BIGINT NOT NULL,
@@ -93,11 +94,13 @@ CREATE TABLE multi_option_question_options (
     id SERIAL PRIMARY KEY,
     text TEXT NOT NULL,
     question_id BIGINT NOT NULL,
+    rank INTEGER NOT NULL,
     CONSTRAINT FK_multi_option_question_options_questions
        FOREIGN KEY(question_id)
            REFERENCES questions(id)
            ON DELETE CASCADE
-           ON UPDATE CASCADE
+           ON UPDATE CASCADE,
+    UNIQUE (text, question_id)
 );
 
 CREATE INDEX IDX_multi_option_question_options_questions on multi_option_question_options (question_id);

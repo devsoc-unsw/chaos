@@ -11,7 +11,7 @@ use sqlx::{Pool, Postgres, QueryBuilder, Row};
 /// `Question` will look like this:
 /// ```json
 /// {
-///   "id": "7233828375289139200",
+///   "id": 7233828375289139200,
 ///   "title": "What is your favourite language?",
 ///   "required": true,
 ///   "question_type": "MultiChoice",
@@ -23,17 +23,17 @@ use sqlx::{Pool, Postgres, QueryBuilder, Row};
 ///   "updated_at": "2024-06-30T12:14:12.458390190Z"
 /// }
 /// ```
-#[derive(Deserialize, Serialize)]
+#[derive(Serialize)]
 pub struct Question {
-    id: String,
+    id: i64,
     title: String,
     description: Option<String>,
+    common: bool, // Common question are shown at the start
     required: bool,
 
     #[serde(flatten)]
-    question_type: QuestionType,
+    question_data: QuestionData,
 
-    campaign_id: String,
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
 }
@@ -47,53 +47,16 @@ pub struct Question {
 /// (e.g. max 1 answer allowed in multi-choice vs. many in multi-select)
 #[derive(Deserialize, Serialize)]
 #[serde(tag = "question_type", content = "data")]
-pub enum QuestionType {
+pub enum QuestionData {
     ShortAnswer,
     MultiChoice(MultiOptionData),
     MultiSelect(MultiOptionData),
     DropDown(MultiOptionData),
 }
 
-pub trait QuestionData {
-    async fn insert_into_db(self, question_id: i64, pool: &Pool<Postgres>) -> Result<i64>;
-    async fn get_from_db(self, question_id: i64, pool: &Pool<Postgres>) -> Result<QuestionType>;
-}
-
 #[derive(Deserialize, Serialize)]
 pub struct MultiOptionData {
-    options: Vec<String>,
-}
-
-impl QuestionData for MultiOptionData {
-    async fn insert_into_db(self, question_id: i64, pool: &Pool<Postgres>) -> Result<i64> {
-        let mut query_builder =
-            QueryBuilder::new("INSERT INTO multi_option_question_options (text, question_id) ");
-
-        query_builder.push_values(self.options, |mut b, option| {
-            b.push_bind(option).push_bind(question_id);
-        });
-
-        query_builder.push("RETURNING id");
-
-        let query = query_builder.build();
-        let result = query.fetch_one(pool).await?;
-
-        Ok(result.get("id"))
-    }
-
-    async fn get_from_db(self, question_id: i64, pool: &Pool<Postgres>) -> Result<QuestionType> {
-        let result = sqlx::query!(
-            "SELECT text FROM multi_option_question_options
-             WHERE question_id = $1",
-            question_id
-        )
-        .fetch_all(pool)
-        .await?;
-
-        let options = result.into_iter().map(|r| r.text).collect();
-
-        Ok(QuestionType::MultiChoice(MultiOptionData { options }))
-    }
+    options: Vec<MultiOptionQuestionOption>,
 }
 
 /// Each of these structs represent a row in the `multi_option_question_options`
@@ -102,11 +65,11 @@ impl QuestionData for MultiOptionData {
 #[derive(Deserialize, Serialize)]
 pub struct MultiOptionQuestionOption {
     id: i32,
+    rank: i32,
     text: String,
-    question_id: i64,
 }
 
-impl QuestionType {
+impl QuestionData {
     pub async fn validate(self) -> Result<()> {
         match self {
             Self::ShortAnswer => Ok(()),
@@ -121,13 +84,26 @@ impl QuestionType {
             }
         }
     }
-    pub async fn insert_into_db(self, question_id: i64, pool: &Pool<Postgres>) -> Result<i64> {
+
+    pub async fn insert_into_db(self, question_id: i64, pool: &Pool<Postgres>) -> Result<()> {
         match self {
-            Self::ShortAnswer => Ok(question_id),
+            Self::ShortAnswer => Ok(()),
             Self::MultiChoice(data)
             | Self::MultiSelect(data)
             | Self::DropDown(data) => {
-                data.insert_into_db(question_id, pool).await
+                let mut query_builder =
+                    QueryBuilder::new("INSERT INTO multi_option_question_options (text, question_id, rank) ");
+
+                let mut rank = 1;
+                query_builder.push_values(self.options, |mut b, option| {
+                    b.push_bind(option).push_bind(question_id).push_bind(rank);
+                    rank += 1;
+                });
+
+                let query = query_builder.build();
+                let result = query.execute(pool).await?;
+
+                Ok(())
             }
         }
     }
