@@ -4,89 +4,92 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres, QueryBuilder, Row};
 
+/// The `Answer` type that will be sent in API responses.
+///
+///
+/// With the chosen `serde` representation and the use of `#[serde(flatten)]`, the JSON for a
+/// `Answer` will look like this:
+/// ```json
+/// {
+///   "id": 7233828375289773948,
+///   "application_id": 7233828375289125398,
+///   "question_id": 7233828375289139200,
+///   "answer_type": "MultiChoice",
+///   "data": 7233828393325384908,
+///   "created_at": "2024-06-28T16:29:04.644008111Z",
+///   "updated_at": "2024-06-30T12:14:12.458390190Z"
+/// }
+/// ```
 #[derive(Deserialize, Serialize)]
 pub struct Answer {
     id: i64,
     application_id: i64,
     question_id: i64,
+
+    #[serde(flatten)]
+    answer_data: AnswerData,
+
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
 }
 
 #[derive(Deserialize, Serialize)]
-pub enum AnswerType {
-    ShortAnswerData(ShortAnswerData),
-    MultiOptionAnswerData(MultiOptionAnswerData),
+#[serde( tag = "answer_type", content = "data")]
+pub enum AnswerData {
+    ShortAnswer(String),
+    MultiChoice(i64),
+    MultiSelect(Vec<i64>),
+    DropDown(i64),
 }
 
-#[derive(Deserialize, Serialize)]
-pub struct ShortAnswerData {
-    text: String,
-}
+impl AnswerData {
+    pub async fn validate(self) -> Result<()> {
+        match self {
+            Self::ShortAnswer(text) => if text.len() <= 0 {bail!("Empty answer")},
+            Self::MultiSelect(data) => if data.len() <= 0 {bail!("Empty answer")},
+            _ => {},
+        }
 
-#[derive(Deserialize, Serialize)]
-pub struct MultiOptionAnswerData {
-    options: Vec<i64>,
-}
-
-pub trait AnswerData {
-    async fn insert_into_db(self, answer_id: i64, pool: &Pool<Postgres>) -> Result<i64>;
-    async fn get_from_db(answer_id: i64, pool: &Pool<Postgres>) -> Result<Self>
-    where
-        Self: Sized;
-}
-
-impl AnswerData for ShortAnswerData {
-    async fn insert_into_db(self, answer_id: i64, pool: &Pool<Postgres>) -> Result<i64> {
-        let result = sqlx::query!(
-            "INSERT INTO short_answer_answers (text, answer_id) VALUES ($1, $2) RETURNING id",
-            self.text,
-            answer_id
-        )
-        .fetch_one(pool)
-        .await?;
-
-        Ok(result.get("id"))
+        Ok(())
     }
 
-    async fn get_from_db(answer_id: i64, pool: &Pool<Postgres>) -> Result<ShortAnswerData> {
-        let result = sqlx::query!(
-            "SELECT text FROM short_answer_answers WHERE answer_id = $1",
-            answer_id
-        )
-        .fetch_one(pool)
-        .await?;
+    pub async fn insert_into_db(self, answer_id: i64, pool: &Pool<Postgres>) -> Result<()> {
+        match self {
+            Self::ShortAnswer => {
+                let result = sqlx::query!(
+                    "INSERT INTO short_answer_answers (text, answer_id) VALUES ($1, $2)",
+                    self.text,
+                    answer_id
+                )
+                .execute(pool)
+                .await?;
 
-        Ok(ShortAnswerData { text: result.get("text") })
-    }
-}
+                Ok(())
+            },
+            Self::MultiChoice(option_id)
+            | Self::DropDown(option_id) => {
+                let result = sqlx::query!(
+                    "INSERT INTO multi_option_answer_options (option_id, answer_id) VALUES ($1, $2)",
+                    option_id,
+                    answer_id
+                )
+                    .execute(pool)
+                    .await?;
 
-impl AnswerData for MultiOptionAnswerData {
-    async fn insert_into_db(self, answer_id: i64, pool: &Pool<Postgres>) -> Result<i64> {
-        let mut query_builder = sqlx::QueryBuilder::new("INSERT INTO multi_option_answer_options (option_id, answer_id) ");
+                Ok(())
+            },
+            Self::MultiSelect(option_ids) => {
+                let mut query_builder = sqlx::QueryBuilder::new("INSERT INTO multi_option_answer_options (option_id, answer_id)");
 
-        query_builder.push_values(&self.options, |mut b, option_id| {
-            b.push_bind(option_id).push_bind(answer_id);
-        });
+                query_builder.push_values(option_ids, |mut b, option_id| {
+                    b.push_bind(option_id).push_bind(answer_id);
+                });
 
-        query_builder.push(" RETURNING id");
+                let query = query_builder.build();
+                let result = query.execute(pool).await?;
 
-        let query = query_builder.build();
-        let result = query.fetch_one(pool).await?;
-
-        Ok(result.get("id"))
-    }
-
-    async fn get_from_db(answer_id: i64, pool: &Pool<Postgres>) -> Result<MultiOptionAnswerData> {
-        let result = sqlx::query!(
-            "SELECT option_id FROM multi_option_answer_options WHERE answer_id = $1",
-            answer_id
-        )
-        .fetch_all(pool)
-        .await?;
-
-        let options = result.into_iter().map(|r| r.get("option_id")).collect();
-
-        Ok(MultiOptionAnswerData { options })
+                Ok(())
+            }
+        }
     }
 }
