@@ -3,6 +3,7 @@ use anyhow::{bail, Result};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres, QueryBuilder, Row};
+use snowflake::SnowflakeIdGenerator;
 
 /// The `Question` type that will be sent in API responses.
 ///
@@ -18,7 +19,6 @@ use sqlx::{Pool, Postgres, QueryBuilder, Row};
 ///   "data": {
 ///     "options": ["Rust", "Java", "TypeScript"]
 ///   },
-///   "campaign_id": "7233828393345617920",
 ///   "created_at": "2024-06-28T16:29:04.644008111Z",
 ///   "updated_at": "2024-06-30T12:14:12.458390190Z"
 /// }
@@ -85,18 +85,19 @@ impl QuestionData {
         }
     }
 
-    pub async fn insert_into_db(self, question_id: i64, pool: &Pool<Postgres>) -> Result<()> {
+    pub async fn insert_into_db(self, question_id: i64, pool: &Pool<Postgres>, mut snowflake_generator: SnowflakeIdGenerator) -> Result<()> {
         match self {
             Self::ShortAnswer => Ok(()),
             Self::MultiChoice(data)
             | Self::MultiSelect(data)
             | Self::DropDown(data) => {
                 let mut query_builder =
-                    QueryBuilder::new("INSERT INTO multi_option_question_options (text, question_id, rank) ");
+                    QueryBuilder::new("INSERT INTO multi_option_question_options (id, text, question_id, rank)");
 
                 let mut rank = 1;
                 query_builder.push_values(self.options, |mut b, option| {
-                    b.push_bind(option).push_bind(question_id).push_bind(rank);
+                    let id = snowflake_generator.real_time_generate();
+                    b.push_bind(id).push_bind(option).push_bind(question_id).push_bind(rank);
                     rank += 1;
                 });
 
