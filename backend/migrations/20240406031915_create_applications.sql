@@ -6,13 +6,13 @@ CREATE TABLE applications (
     user_id BIGINT NOT NULL,
     status application_status NOT NULL DEFAULT 'Pending',
     private_status application_status NOT NULL DEFAULT 'Pending',
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT FK_applications_campaigns
-       FOREIGN KEY(campaign_id)
-           REFERENCES campaigns(id)
-           ON DELETE CASCADE
-           ON UPDATE CASCADE,
+        FOREIGN KEY(campaign_id)
+            REFERENCES campaigns(id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
     CONSTRAINT FK_applications_users
         FOREIGN KEY(user_id)
             REFERENCES users(id)
@@ -40,7 +40,7 @@ CREATE INDEX IDX_application_roles_applications on application_roles (applicatio
 CREATE INDEX IDX_application_roles_campaign_roles on application_roles (campaign_role_id);
 
 CREATE TABLE answers (
-  id BIGSERIAL PRIMARY KEY,
+  id BIGINT PRIMARY KEY,
   application_id BIGINT NOT NULL,
   question_id BIGINT NOT NULL,
   CONSTRAINT FK_answers_applications
@@ -61,7 +61,7 @@ CREATE INDEX IDX_answers_questions on answers (question_id);
 CREATE TABLE short_answer_answers (
     id BIGSERIAL PRIMARY KEY,
     text TEXT NOT NULL,
-    answer_id INTEGER NOT NULL,
+    answer_id BIGINT NOT NULL,
     CONSTRAINT FK_short_answer_answers_answers
         FOREIGN KEY(answer_id)
             REFERENCES answers(id)
@@ -74,17 +74,34 @@ CREATE INDEX IDX_short_answer_answers_answers on short_answer_answers (answer_id
 CREATE TABLE multi_option_answer_options (
     id BIGSERIAL PRIMARY KEY,
     option_id BIGINT NOT NULL,
-    answer_id INTEGER NOT NULL,
+    answer_id BIGINT NOT NULL,
     CONSTRAINT FK_multi_option_answer_options_question_options
         FOREIGN KEY(option_id)
             REFERENCES multi_option_question_options(id)
             ON DELETE CASCADE
             ON UPDATE CASCADE,
     CONSTRAINT FK_multi_option_answer_options_answers
-       FOREIGN KEY(answer_id)
-           REFERENCES answers(id)
-           ON DELETE CASCADE
-           ON UPDATE CASCADE
+        FOREIGN KEY(answer_id)
+            REFERENCES answers(id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE ranking_answer_rankings (
+    id BIGSERIAL PRIMARY KEY,
+    option_id BIGINT NOT NULL,
+    rank INTEGER NOT NULL,
+    answer_id BIGINT NOT NULL,
+    CONSTRAINT FK_ranking_answer_rankings_question_options
+        FOREIGN KEY(option_id)
+            REFERENCES multi_option_question_options(id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    CONSTRAINT FK_ranking_answer_rankings_answers
+        FOREIGN KEY(answer_id)
+            REFERENCES answers(id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
 );
 
 CREATE INDEX IDX_multi_option_answer_options_question_options on multi_option_answer_options (option_id);
@@ -95,13 +112,13 @@ CREATE TABLE application_ratings (
     application_id BIGINT NOT NULL,
     rater_id BIGINT NOT NULL,
     rating INTEGER NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT FK_application_ratings_applications
-      FOREIGN KEY(application_id)
-          REFERENCES applications(id)
-          ON DELETE CASCADE
-          ON UPDATE CASCADE,
+        FOREIGN KEY(application_id)
+            REFERENCES applications(id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
     CONSTRAINT FK_application_ratings_users
         FOREIGN KEY(rater_id)
             REFERENCES users(id)
