@@ -21,6 +21,7 @@ CREATE TABLE multi_option_question_options (
     id BIGINT PRIMARY KEY,
     text TEXT NOT NULL,
     question_id BIGINT NOT NULL,
+    order INTEGER NOT NULL,
     CONSTRAINT FK_multi_option_question_options_questions
        FOREIGN KEY(question_id)
            REFERENCES questions(id)
