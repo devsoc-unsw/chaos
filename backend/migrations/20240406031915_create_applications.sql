@@ -6,8 +6,8 @@ CREATE TABLE applications (
     user_id BIGINT NOT NULL,
     status application_status NOT NULL,
     private_status application_status NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT FK_applications_campaigns
         FOREIGN KEY(campaign_id)
             REFERENCES campaigns(id)
@@ -95,8 +95,8 @@ CREATE TABLE application_ratings (
     application_id BIGINT NOT NULL,
     rater_id BIGINT NOT NULL,
     rating INTEGER NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT FK_application_ratings_applications
         FOREIGN KEY(application_id)
             REFERENCES applications(id)
