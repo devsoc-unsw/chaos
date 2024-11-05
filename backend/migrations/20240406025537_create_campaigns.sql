@@ -2,7 +2,7 @@ CREATE TABLE campaigns (
     id BIGINT PRIMARY KEY,
     organisation_id BIGINT NOT NULL,
     name TEXT NOT NULL,
-    cover_image TEXT,
+    cover_image UUID,
     description TEXT,
     starts_at TIMESTAMPTZ NOT NULL,
     ends_at TIMESTAMPTZ NOT NULL,
@@ -16,13 +16,13 @@ CREATE TABLE campaigns (
 );
 
 CREATE TABLE campaign_roles (
-    id SERIAL PRIMARY KEY,
+    id BIGINT PRIMARY KEY,
     campaign_id BIGINT NOT NULL,
     name TEXT NOT NULL,
     description TEXT,
-    min_available INTEGER,
-    max_available INTEGER,
-    finalised BOOLEAN,
+    min_available INTEGER NOT NULL,
+    max_available INTEGER NOT NULL,
+    finalised BOOLEAN NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT FK_campaign_roles_campaign

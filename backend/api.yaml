@@ -11,6 +11,7 @@ servers:
 paths:
   /auth/logout:
     post:
+      operationId: logout
       description: Invalidates current token.
       tags:
         - Auth
@@ -26,6 +27,7 @@ paths:
                     example: Successfully logged out.
   /user:
     get:
+      operationId: getLoggedInUser
       description: Returns info about currently logged in user.
       tags:
         - User
@@ -68,6 +70,7 @@ paths:
                     type: string
                     example: Not logged in.
     delete:
+      operationId: deleteUserById
       description: Deletes currently logged in user.
       tags:
         - User
@@ -101,6 +104,7 @@ paths:
                     example: Not logged in.
   /user/{id}:
     get:
+      operationId: getUserById
       parameters:
         - name: id
           in: path
@@ -149,6 +153,7 @@ paths:
                     example: "Insufficient permissions"
   /user/name:
     patch:
+      operationId: updateUserName
       description: Updates currently logged in user's name.
       tags:
         - User
@@ -182,6 +187,7 @@ paths:
                     example: Not logged in.
   /user/zid:
     patch:
+      operationId: updateUserZid
       description: Updates currently logged in user's zID.
       tags:
         - User
@@ -215,6 +221,7 @@ paths:
                     example: Not logged in.
   /user/degree:
     patch:
+      operationId: updateUserDegree
       description: Updates currently logged in user's degree.
       tags:
         - User
@@ -251,6 +258,7 @@ paths:
                     example: Not logged in.
   /organisation:
     post:
+      operationId: createOrganisation
       description: Creates a new organisation.
       tags:
         - Organisation
@@ -289,6 +297,7 @@ paths:
                     example: Unauthorized
   /organisation/{id}:
     get:
+      operationId: getOrganisationById
       parameters:
         - name: id
           in: path
@@ -321,6 +330,7 @@ paths:
                     type: string
                     example: 2024-02-10T18:25:43.511Z
     delete:
+      operationId: deleteOrganisationById
       parameters:
         - name: id
           in: path
@@ -353,6 +363,7 @@ paths:
                     example: Unauthorized
   /organisation/{id}/campaigns:
     get:
+      operationId: getOrganisationCampaignsById
       parameters:
         - name: id
           in: path
@@ -397,6 +408,7 @@ paths:
                           example: 2024-04-15T18:25:43.511Z
   /organisation/{id}/logo:
     patch:
+      operationId: updateOrganisationLogoById
       parameters:
         - name: id
           in: path
@@ -439,6 +451,7 @@ paths:
                     example: Unauthorized
   /organisation/{id}/members:
     get:
+      operationId: getOrganisationMembersById
       parameters:
         - name: id
           in: path
@@ -469,6 +482,9 @@ paths:
                         name:
                           type: string
                           example: Clancy Lion
+                        role:
+                          type: string
+                          example: Admin
         '403':
           description: User is not an organisation admin or member.
           content:
@@ -479,6 +495,7 @@ paths:
                     type: string
                     example: Unauthorized
     put:
+      operationId: updateOrganisationMembersById
       parameters:
         - name: id
           in: path
@@ -533,6 +550,7 @@ paths:
                     example: Unauthorized
   /organisation/{id}/campaign:
     post:
+      operationId: createCampaign
       parameters:
         - name: id
           in: path
@@ -583,6 +601,7 @@ paths:
                     example: Unauthorized
   /campaign:
     get:
+      operationId: getAllCampaigns
       description: Returns all active campaigns.
       tags:
         - Campaign
@@ -626,6 +645,7 @@ paths:
                           example: 2024-04-15T18:25:43.511Z
   /campaign/{id}:
     get:
+      operationId: getCampaignById
       parameters:
         - name: id
           in: path
@@ -671,6 +691,7 @@ paths:
                     type: string
                     example: 2024-04-15T18:25:43.511Z
     put:
+      operationId: updateCampaignById
       parameters:
         - name: id
           in: path
@@ -729,6 +750,7 @@ paths:
                     type: string
                     example: Unauthorized
     delete:
+      operationId: deleteCampaignById
       parameters:
         - name: id
           in: path
@@ -761,6 +783,7 @@ paths:
                     example: Unauthorized
   /campaign/{id}/banner:
     patch:
+      operationId: updateCampaignBannerById
       parameters:
         - name: id
           in: path
@@ -794,6 +817,241 @@ paths:
                     example: Not logged in.
         '403':
           description: User is not an organisation admin.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorized
+
+  /campaign/{id}/role:
+    post:
+      operationId: createRole
+      parameters:
+        - name: id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Creates a new role in a campaign.
+      tags:
+        - Campaign
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+                  example: Chief Mouser
+                description:
+                  type: string
+                  required: False
+                  example: Larry the cat is dead, now we need someone else to handle the rat issues at 10th Downing st.
+                min_available:
+                  type: int32
+                  example: 1
+                max_available:
+                  type: int32
+                  example: 3
+                finalised:
+                  type: boolean
+                  description: Whether this role has been finalised (e.g. max avaliable number)
+                  example: False
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully created organisation.
+        '403':
+          description: User is not a Campaign Admin.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorized
+
+  /campaign/{id}/roles:
+    get:
+      operationId: getRolesByCampaignId
+      parameters:
+        - name: id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns info about all roles in a campaign
+      tags:
+        - Campaign
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  campaigns:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          example: Chief Mouser
+                        description:
+                          type: string
+                          example: Larry the cat gone missing! now we need someone else to handle the rat issues at 10th Downing st.
+                        min_available:
+                          type: int32
+                          example: 1
+                        max_available:
+                          type: int32
+                          example: 3
+                        finalised:
+                          type: boolean
+                          description: Whether this role has been finalised (e.g. max avaliable number)
+                          example: False
+  /role/{id}:
+    get:
+      operationId: getRoleById
+      parameters:
+        - name: id
+          in: path
+          description: Role ID
+          required: true
+          schema:
+            type: integer
+            format: int32
+      description: Returns info about specified role.
+      tags:
+        - Role
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  name:
+                    type: string
+                    example: Chief Mouser
+                  description:
+                    type: string
+                    example: Larry the cat gone missing! now we need someone else to handle the rat issues at 10th Downing st.
+                  min_available:
+                    type: int32
+                    example: 1
+                  max_available:
+                    type: int32
+                    example: 3
+                  finalised:
+                    type: boolean
+                    description: Whether this role has been finalised (e.g. max avaliable number)
+                    example: False
+        '401':
+          description: Not logged in.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Not logged in.
+
+    put:
+      operationId: updateRoleById
+        parameters:
+        - name: id
+          in: path
+          description: Role ID
+          required: true
+          schema:
+            type: integer
+            format: int32
+      description: Update a role given the role id.
+      tags:
+        - Role
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+                  example: Chief Whip
+                description:
+                  type: string
+                  required: False
+                  example: Put a bit of stick about!
+                min_available:
+                  type: int32
+                  example: 1
+                max_available:
+                  type: int32
+                  example: 3
+                finalised:
+                  type: boolean
+                  description: Whether this role has been finalised (e.g. max avaliable number)
+                  example: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully update organisation.
+        '403':
+          description: User is not a Campaign Admin.
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorized
+
+    delete:
+      operationId: deleteRoleById
+      parameters:
+        - name: id
+          in: path
+          description: Role ID
+          required: true
+          schema:
+            type: integer
+            format: int32
+      description: Deletes specified role.
+      tags:
+        - Role
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully deleted role.
+        '403':
+          description: User is not an admin of role's Campaign.
           content:
             application/json:
               schema:
