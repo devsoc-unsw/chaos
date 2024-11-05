@@ -17,7 +17,23 @@ use snowflake::SnowflakeIdGenerator;
 ///   "required": true,
 ///   "question_type": "MultiChoice",
 ///   "data": {
-///     "options": ["Rust", "Java", "TypeScript"]
+///     "options": [
+///         {
+///             "id": 7233828375387640938,
+///             "order": 1,
+///             "text": "Rust"
+///         },
+///         {
+///             "id": 7233828375387640954,
+///             "order": 2,
+///             "text": "Java"
+///         },
+///         {
+///             "id": 7233828375387640374,
+///             "order": 3,
+///             "text": "TypeScript"
+///         }
+///     ]
 ///   },
 ///   "created_at": "2024-06-28T16:29:04.644008111Z",
 ///   "updated_at": "2024-06-30T12:14:12.458390190Z"
