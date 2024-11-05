@@ -94,11 +94,9 @@ impl QuestionData {
                 let mut query_builder =
                     QueryBuilder::new("INSERT INTO multi_option_question_options (id, text, question_id, rank)");
 
-                let mut rank = 1;
-                query_builder.push_values(self.options, |mut b, option| {
+                query_builder.push_values(data.options, |mut b, option| {
                     let id = snowflake_generator.real_time_generate();
-                    b.push_bind(id).push_bind(option).push_bind(question_id).push_bind(rank);
-                    rank += 1;
+                    b.push_bind(id).push_bind(option.text).push_bind(question_id).push_bind(option.rank);
                 });
 
                 let query = query_builder.build();

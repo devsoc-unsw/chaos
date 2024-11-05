@@ -55,10 +55,10 @@ impl AnswerData {
 
     pub async fn insert_into_db(self, answer_id: i64, pool: &Pool<Postgres>) -> Result<()> {
         match self {
-            Self::ShortAnswer => {
+            Self::ShortAnswer(text) => {
                 let result = sqlx::query!(
                     "INSERT INTO short_answer_answers (text, answer_id) VALUES ($1, $2)",
-                    self.text,
+                    text,
                     answer_id
                 )
                 .execute(pool)
