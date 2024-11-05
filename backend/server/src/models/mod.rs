@@ -1,3 +1,4 @@
+pub mod answer;
 pub mod app;
 pub mod auth;
 pub mod error;
