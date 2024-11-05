@@ -40,6 +40,7 @@ pub enum AnswerData {
     MultiChoice(i64),
     MultiSelect(Vec<i64>),
     DropDown(i64),
+    Ranking(Vec<i64>)
 }
 
 impl AnswerData {
@@ -83,6 +84,20 @@ impl AnswerData {
 
                 query_builder.push_values(option_ids, |mut b, option_id| {
                     b.push_bind(option_id).push_bind(answer_id);
+                });
+
+                let query = query_builder.build();
+                let result = query.execute(pool).await?;
+
+                Ok(())
+            },
+            Self::Ranking(option_ids) => {
+                let mut query_builder = sqlx::QueryBuilder::new("INSERT INTO ranking_answer_rankings (option_id, rank, answer_id)");
+
+                let mut rank = 1;
+                query_builder.push_values(option_ids, |mut b, option_id| {
+                    b.push_bind(option_id).push_bind(rank).push_bind(answer_id);
+                    rank += 1;
                 });
 
                 let query = query_builder.build();

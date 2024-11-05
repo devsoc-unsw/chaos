@@ -52,6 +52,7 @@ pub enum QuestionData {
     MultiChoice(MultiOptionData),
     MultiSelect(MultiOptionData),
     DropDown(MultiOptionData),
+    Ranking(MultiOptionData),
 }
 
 #[derive(Deserialize, Serialize)]
@@ -75,7 +76,8 @@ impl QuestionData {
             Self::ShortAnswer => Ok(()),
             Self::MultiChoice(data)
             | Self::MultiSelect(data)
-            | Self::DropDown(data) => {
+            | Self::DropDown(data)
+            | Self::Ranking(data) => {
                 if data.options.len() > 0 {
                     return Ok(());
                 };
@@ -90,7 +92,8 @@ impl QuestionData {
             Self::ShortAnswer => Ok(()),
             Self::MultiChoice(data)
             | Self::MultiSelect(data)
-            | Self::DropDown(data) => {
+            | Self::DropDown(data)
+            | Self::Ranking(data) => {
                 let mut query_builder =
                     QueryBuilder::new("INSERT INTO multi_option_question_options (id, text, question_id, rank)");
 

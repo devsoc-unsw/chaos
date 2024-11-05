@@ -1,4 +1,4 @@
-CREATE TYPE question_type AS ENUM ('ShortAnswer', 'MultiChoice', 'MultiSelect', 'DropDown');
+CREATE TYPE question_type AS ENUM ('ShortAnswer', 'MultiChoice', 'MultiSelect', 'DropDown', 'Ranking');
 
 CREATE TABLE questions (
     id BIGINT PRIMARY KEY,
