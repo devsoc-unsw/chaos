@@ -45,8 +45,8 @@ pub enum AnswerData {
 impl AnswerData {
     pub async fn validate(self) -> Result<()> {
         match self {
-            Self::ShortAnswer(text) => if text.len() <= 0 {bail!("Empty answer")},
-            Self::MultiSelect(data) => if data.len() <= 0 {bail!("Empty answer")},
+            Self::ShortAnswer(text) => if text.len() == 0 { bail!("Empty answer") },
+            Self::MultiSelect(data) => if data.len() == 0 { bail!("Empty answer") },
             _ => {},
         }
 
