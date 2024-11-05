@@ -20,17 +20,17 @@ use snowflake::SnowflakeIdGenerator;
 ///     "options": [
 ///         {
 ///             "id": 7233828375387640938,
-///             "order": 1,
+///             "display_order": 1,
 ///             "text": "Rust"
 ///         },
 ///         {
 ///             "id": 7233828375387640954,
-///             "order": 2,
+///             "display_order": 2,
 ///             "text": "Java"
 ///         },
 ///         {
 ///             "id": 7233828375387640374,
-///             "order": 3,
+///             "display_order": 3,
 ///             "text": "TypeScript"
 ///         }
 ///     ]
@@ -82,7 +82,7 @@ pub struct MultiOptionData {
 #[derive(Deserialize, Serialize)]
 pub struct MultiOptionQuestionOption {
     id: i32,
-    order: i32,
+    display_order: i32,
     text: String,
 }
 
@@ -111,11 +111,11 @@ impl QuestionData {
             | Self::DropDown(data)
             | Self::Ranking(data) => {
                 let mut query_builder =
-                    QueryBuilder::new("INSERT INTO multi_option_question_options (id, text, question_id, order)");
+                    QueryBuilder::new("INSERT INTO multi_option_question_options (id, text, question_id, display_order)");
 
                 query_builder.push_values(data.options, |mut b, option| {
                     let id = snowflake_generator.real_time_generate();
-                    b.push_bind(id).push_bind(option.text).push_bind(question_id).push_bind(option.order);
+                    b.push_bind(id).push_bind(option.text).push_bind(question_id).push_bind(option.display_order);
                 });
 
                 let query = query_builder.build();
