@@ -282,12 +282,12 @@ where
     }
 }
 
-pub struct RatingCreatorAdmin {
+pub struct RatingCreator {
     pub user_id: i64,
 }
 
 #[async_trait]
-impl<S> FromRequestParts<S> for RatingCreatorAdmin
+impl<S> FromRequestParts<S> for RatingCreator
 where
     AppState: FromRef<S>,
     S: Send + Sync,
@@ -319,6 +319,6 @@ where
 
         assert_user_is_rating_creator_and_organisation_member(user_id, rating_id, pool).await?;
 
-        Ok(RatingCreatorAdmin { user_id })
+        Ok(RatingCreator { user_id })
     }
 }

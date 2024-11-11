@@ -1,7 +1,7 @@
 use crate::models::app::AppState;
 use crate::models::auth::{
     ApplicationCreatorAdminGivenApplicationId, ApplicationReviewerAdminGivenApplicationId,
-    ApplicationReviewerAdminGivenRatingId, RatingCreatorAdmin, SuperUser,
+    ApplicationReviewerAdminGivenRatingId, RatingCreator, SuperUser,
 };
 use crate::models::error::ChaosError;
 use crate::models::ratings::{NewRating, Rating};
@@ -35,7 +35,7 @@ impl RatingsHandler {
     pub async fn update(
         State(_state): State<AppState>,
         Path(rating_id): Path<i64>,
-        _admin: RatingCreatorAdmin,
+        _admin: RatingCreator,
         mut transaction: DBTransaction<'_>,
         Json(updated_rating): Json<NewRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
