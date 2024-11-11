@@ -5,7 +5,7 @@ use crate::service::jwt::decode_auth_token;
 use crate::service::organisation::assert_user_is_admin;
 use crate::service::ratings::{
     assert_user_is_application_reviewer_admin_given_application_id,
-    assert_user_is_application_reviewer_admin_given_rating_id,
+    assert_user_is_application_reviewer_admin_given_rating_id, assert_user_is_organisation_member,
     assert_user_is_rating_creator_and_organisation_member,
 };
 use axum::extract::{FromRef, FromRequestParts, Path};
@@ -198,6 +198,48 @@ where
         .await?;
 
         Ok(ApplicationReviewerAdminGivenApplicationId { user_id })
+    }
+}
+
+/// Get the application reviewer given a path that contains the application id.
+pub struct ApplicationCreatorAdminGivenApplicationId {
+    pub user_id: i64,
+}
+
+#[async_trait]
+impl<S> FromRequestParts<S> for ApplicationCreatorAdminGivenApplicationId
+where
+    AppState: FromRef<S>,
+    S: Send + Sync,
+{
+    type Rejection = ChaosError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        // TODO: put into separate function, since this is just getting the id through jwt, and duplicated here.
+        let app_state = AppState::from_ref(state);
+        let decoding_key = &app_state.decoding_key;
+        let jwt_validator = &app_state.jwt_validator;
+        let TypedHeader(cookies) = parts
+            .extract::<TypedHeader<Cookie>>()
+            .await
+            .map_err(|_| ChaosError::NotLoggedIn)?;
+
+        let token = cookies.get("auth_token").ok_or(ChaosError::NotLoggedIn)?;
+
+        let claims =
+            decode_auth_token(token, decoding_key, jwt_validator).ok_or(ChaosError::NotLoggedIn)?;
+
+        let pool = &app_state.db;
+        let user_id = claims.sub;
+
+        let Path(application_id) = parts
+            .extract::<Path<i64>>()
+            .await
+            .map_err(|_| ChaosError::BadRequest)?;
+
+        assert_user_is_organisation_member(user_id, application_id, pool).await?;
+
+        Ok(ApplicationCreatorAdminGivenApplicationId { user_id })
     }
 }
 
