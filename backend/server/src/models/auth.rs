@@ -4,7 +4,6 @@ use crate::service::auth::is_super_user;
 use crate::service::jwt::decode_auth_token;
 use crate::service::organisation::assert_user_is_admin;
 use crate::service::ratings::{
-    assert_user_is_application_reviewer_admin_given_application_id,
     assert_user_is_application_reviewer_admin_given_rating_id, assert_user_is_organisation_member,
     assert_user_is_rating_creator_and_organisation_member,
 };
@@ -154,6 +153,9 @@ where
 // couldn't figure out how to dynamically check whether the id passed in path
 // was a rating id or an application id.
 
+// TODO: there is currently no diff between ApplicationReviewerAdminGivenApplicationId
+// and ApplicationCreatorAdminGivenApplicationId, but that might change, so separating just in case.
+
 /// Get the application reviewer given a path that contains the application id.
 pub struct ApplicationReviewerAdminGivenApplicationId {
     pub user_id: i64,
@@ -190,12 +192,7 @@ where
             .await
             .map_err(|_| ChaosError::BadRequest)?;
 
-        assert_user_is_application_reviewer_admin_given_application_id(
-            user_id,
-            application_id,
-            pool,
-        )
-        .await?;
+        assert_user_is_organisation_member(user_id, application_id, pool).await?;
 
         Ok(ApplicationReviewerAdminGivenApplicationId { user_id })
     }

@@ -1,7 +1,7 @@
 use crate::models::app::AppState;
 use crate::models::auth::{
-    ApplicationReviewerAdminGivenApplicationId, ApplicationReviewerAdminGivenRatingId,
-    RatingCreatorAdmin, SuperUser,
+    ApplicationCreatorAdminGivenApplicationId, ApplicationReviewerAdminGivenApplicationId,
+    ApplicationReviewerAdminGivenRatingId, RatingCreatorAdmin, SuperUser,
 };
 use crate::models::error::ChaosError;
 use crate::models::ratings::{NewRating, Rating};
@@ -17,8 +17,7 @@ impl RatingsHandler {
     pub async fn create_rating(
         State(state): State<AppState>,
         Path(application_id): Path<i64>,
-        // TODO: Potential bug: the check whether user is allowed to access rating doesn't make sense here, because no rating exists yet
-        _admin: ApplicationReviewerAdminGivenApplicationId,
+        _admin: ApplicationCreatorAdminGivenApplicationId,
         mut transaction: DBTransaction<'_>,
         Json(new_rating): Json<NewRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
