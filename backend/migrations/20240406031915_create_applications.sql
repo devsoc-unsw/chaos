@@ -95,6 +95,7 @@ CREATE TABLE application_ratings (
     application_id BIGINT NOT NULL,
     rater_id BIGINT NOT NULL,
     rating INTEGER NOT NULL,
+    comment TEXT,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT FK_application_ratings_applications

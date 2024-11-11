@@ -11,6 +11,7 @@ pub struct Rating {
     pub application_id: i64,
     pub rater_user_id: i64,
     pub rating: i32,
+    pub comment: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -19,6 +20,7 @@ pub struct Rating {
 pub struct NewRating {
     pub rater_user_id: i64,
     pub rating: i32,
+    pub comment: Option<String>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -27,6 +29,7 @@ pub struct RatingDetails {
     pub rater_id: i64,
     pub rater_name: String,
     pub rating: i32,
+    pub comment: Option<String>,
     pub updated_at: DateTime<Utc>,
 }
 
@@ -46,16 +49,18 @@ impl Rating {
         let rating_id = snowflake_generator.generate();
         let rater_user_id = new_rating.rater_user_id;
         let rating = new_rating.rating;
+        let comment = new_rating.comment;
 
         sqlx::query!(
             "
-            INSERT INTO application_ratings (id, application_id, rater_id, rating)
-                VALUES ($1, $2, $3, $4)
+            INSERT INTO application_ratings (id, application_id, rater_id, rating, comment)
+                VALUES ($1, $2, $3, $4, $5)
         ",
             rating_id,
             application_id,
             rater_user_id,
-            rating
+            rating,
+            comment
         )
         .execute(transaction.deref_mut())
         .await?;
@@ -70,17 +75,19 @@ impl Rating {
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         let rating = updated_rating.rating;
+        let comment = updated_rating.comment;
         let current_time = Utc::now();
 
         let _ = sqlx::query!(
             "
             UPDATE application_ratings
-            SET rating = $2, updated_at = $3
+            SET rating = $2, comment = $3, updated_at = $4
             WHERE id = $1
             RETURNING id;
         ",
             rating_id,
             rating,
+            comment,
             current_time
         )
         .fetch_one(transaction.deref_mut())
@@ -96,7 +103,7 @@ impl Rating {
         let rating = sqlx::query_as!(
             RatingDetails,
             "
-            SELECT r.id, rater_id, u.name as rater_name, r.rating, r.updated_at
+            SELECT r.id, rater_id, u.name as rater_name, r.rating, r.comment, r.updated_at
                 FROM application_ratings r
                 JOIN users u ON u.id = r.id
                 WHERE r.id = $1
@@ -117,7 +124,7 @@ impl Rating {
         let ratings = sqlx::query_as!(
             RatingDetails,
             "
-            SELECT r.id, rater_id, u.name as rater_name, r.rating, r.updated_at
+            SELECT r.id, rater_id, u.name as rater_name, r.rating, r.comment, r.updated_at
                 FROM application_ratings r
                 JOIN users u ON u.id = r.id
                 WHERE r.application_id = $1
