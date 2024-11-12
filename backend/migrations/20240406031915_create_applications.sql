@@ -108,12 +108,13 @@ CREATE INDEX IDX_multi_option_answer_options_question_options on multi_option_an
 CREATE INDEX IDX_multi_option_answer_options_answers on multi_option_answer_options (answer_id);
 
 CREATE TABLE application_ratings (
-    id BIGSERIAL PRIMARY KEY,
+    id BIGINT PRIMARY KEY,
     application_id BIGINT NOT NULL,
     rater_id BIGINT NOT NULL,
     rating INTEGER NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    comment TEXT,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT FK_application_ratings_applications
         FOREIGN KEY(application_id)
             REFERENCES applications(id)

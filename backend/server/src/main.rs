@@ -7,6 +7,7 @@ use crate::models::storage::Storage;
 use anyhow::Result;
 use axum::routing::{get, patch, post};
 use axum::Router;
+use handler::ratings::RatingsHandler;
 use handler::role::RoleHandler;
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use models::app::AppState;
@@ -106,6 +107,20 @@ async fn main() -> Result<()> {
             get(OrganisationHandler::get_admins)
                 .put(OrganisationHandler::update_admins)
                 .delete(OrganisationHandler::remove_admin),
+        )
+        .route(
+            "/api/v1/ratings/:rating_id",
+            get(RatingsHandler::get)
+                .delete(RatingsHandler::delete)
+                .put(RatingsHandler::update),
+        )
+        .route(
+            "/api/v1/:application_id/rating",
+            post(RatingsHandler::create_rating),
+        )
+        .route(
+            "/api/v1/:application_id/ratings",
+            get(RatingsHandler::get_ratings_for_application),
         )
         .route(
             "/api/v1/campaign/:campaign_id/role",

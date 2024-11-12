@@ -1,5 +1,4 @@
 use crate::models::error::ChaosError;
-use anyhow::{bail, Result};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres, QueryBuilder, Row};
@@ -44,17 +43,17 @@ pub enum AnswerData {
 }
 
 impl AnswerData {
-    pub async fn validate(self) -> Result<()> {
+    pub async fn validate(self) -> Result<(), ChaosError> {
         match self {
-            Self::ShortAnswer(text) => if text.len() == 0 { bail!("Empty answer") },
-            Self::MultiSelect(data) => if data.len() == 0 { bail!("Empty answer") },
+            Self::ShortAnswer(text) => if text.len() == 0 { return Err(ChaosError::BadRequest) },
+            Self::MultiSelect(data) => if data.len() == 0 { return Err(ChaosError::BadRequest) },
             _ => {},
         }
 
         Ok(())
     }
 
-    pub async fn insert_into_db(self, answer_id: i64, pool: &Pool<Postgres>) -> Result<()> {
+    pub async fn insert_into_db(self, answer_id: i64, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
         match self {
             Self::ShortAnswer(text) => {
                 let result = sqlx::query!(

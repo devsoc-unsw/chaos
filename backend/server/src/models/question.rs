@@ -1,5 +1,4 @@
 use crate::models::error::ChaosError;
-use anyhow::{bail, Result};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres, QueryBuilder, Row};
@@ -87,7 +86,7 @@ pub struct MultiOptionQuestionOption {
 }
 
 impl QuestionData {
-    pub async fn validate(self) -> Result<()> {
+    pub async fn validate(self) -> Result<(), ChaosError> {
         match self {
             Self::ShortAnswer => Ok(()),
             Self::MultiChoice(data)
@@ -98,12 +97,12 @@ impl QuestionData {
                     return Ok(());
                 };
 
-                bail!("Invalid number of options.")
+                Err(ChaosError::BadRequest)
             }
         }
     }
 
-    pub async fn insert_into_db(self, question_id: i64, pool: &Pool<Postgres>, mut snowflake_generator: SnowflakeIdGenerator) -> Result<()> {
+    pub async fn insert_into_db(self, question_id: i64, pool: &Pool<Postgres>, mut snowflake_generator: SnowflakeIdGenerator) -> Result<(), ChaosError> {
         match self {
             Self::ShortAnswer => Ok(()),
             Self::MultiChoice(data)
