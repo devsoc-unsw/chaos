@@ -10,7 +10,7 @@ use uuid::Uuid;
 /// Any member of the organisation that owns the campaign is an application
 /// viewer, because all members are either directors or execs (TODO: might be
 /// changed in the future).
-pub async fn assert_user_is_application_reviewer_admin_given_rating_id(
+pub async fn assert_user_is_application_reviewer_given_rating_id(
     user_id: i64,
     rating_id: i64,
     pool: &Pool<Postgres>,

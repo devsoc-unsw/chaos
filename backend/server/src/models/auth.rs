@@ -4,7 +4,7 @@ use crate::service::auth::is_super_user;
 use crate::service::jwt::decode_auth_token;
 use crate::service::organisation::assert_user_is_admin;
 use crate::service::ratings::{
-    assert_user_is_application_reviewer_admin_given_rating_id, assert_user_is_organisation_member,
+    assert_user_is_application_reviewer_given_rating_id, assert_user_is_organisation_member,
     assert_user_is_rating_creator_and_organisation_member,
 };
 use axum::extract::{FromRef, FromRequestParts, Path};
@@ -157,12 +157,12 @@ where
 // and ApplicationCreatorAdminGivenApplicationId, but that might change, so separating just in case.
 
 /// Get the application reviewer given a path that contains the application id.
-pub struct ApplicationReviewerAdminGivenApplicationId {
+pub struct ApplicationReviewerGivenApplicationId {
     pub user_id: i64,
 }
 
 #[async_trait]
-impl<S> FromRequestParts<S> for ApplicationReviewerAdminGivenApplicationId
+impl<S> FromRequestParts<S> for ApplicationReviewerGivenApplicationId
 where
     AppState: FromRef<S>,
     S: Send + Sync,
@@ -194,17 +194,17 @@ where
 
         assert_user_is_organisation_member(user_id, application_id, pool).await?;
 
-        Ok(ApplicationReviewerAdminGivenApplicationId { user_id })
+        Ok(ApplicationReviewerGivenApplicationId { user_id })
     }
 }
 
 /// Get the application reviewer given a path that contains the application id.
-pub struct ApplicationCreatorAdminGivenApplicationId {
+pub struct ApplicationCreatorGivenApplicationId {
     pub user_id: i64,
 }
 
 #[async_trait]
-impl<S> FromRequestParts<S> for ApplicationCreatorAdminGivenApplicationId
+impl<S> FromRequestParts<S> for ApplicationCreatorGivenApplicationId
 where
     AppState: FromRef<S>,
     S: Send + Sync,
@@ -236,17 +236,17 @@ where
 
         assert_user_is_organisation_member(user_id, application_id, pool).await?;
 
-        Ok(ApplicationCreatorAdminGivenApplicationId { user_id })
+        Ok(ApplicationCreatorGivenApplicationId { user_id })
     }
 }
 
 /// Get the application reviewer given a path that contains the rating id.
-pub struct ApplicationReviewerAdminGivenRatingId {
+pub struct ApplicationReviewerGivenRatingId {
     pub user_id: i64,
 }
 
 #[async_trait]
-impl<S> FromRequestParts<S> for ApplicationReviewerAdminGivenRatingId
+impl<S> FromRequestParts<S> for ApplicationReviewerGivenRatingId
 where
     AppState: FromRef<S>,
     S: Send + Sync,
@@ -276,9 +276,9 @@ where
             .await
             .map_err(|_| ChaosError::BadRequest)?;
 
-        assert_user_is_application_reviewer_admin_given_rating_id(user_id, rating_id, pool).await?;
+        assert_user_is_application_reviewer_given_rating_id(user_id, rating_id, pool).await?;
 
-        Ok(ApplicationReviewerAdminGivenRatingId { user_id })
+        Ok(ApplicationReviewerGivenRatingId { user_id })
     }
 }
 

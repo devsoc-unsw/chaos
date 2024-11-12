@@ -1,7 +1,7 @@
 use crate::models::app::AppState;
 use crate::models::auth::{
-    ApplicationCreatorAdminGivenApplicationId, ApplicationReviewerAdminGivenApplicationId,
-    ApplicationReviewerAdminGivenRatingId, RatingCreator, SuperUser,
+    ApplicationCreatorGivenApplicationId, ApplicationReviewerGivenApplicationId,
+    ApplicationReviewerGivenRatingId, RatingCreator, SuperUser,
 };
 use crate::models::error::ChaosError;
 use crate::models::ratings::{NewRating, Rating};
@@ -17,7 +17,7 @@ impl RatingsHandler {
     pub async fn create_rating(
         State(state): State<AppState>,
         Path(application_id): Path<i64>,
-        _admin: ApplicationCreatorAdminGivenApplicationId,
+        _admin: ApplicationCreatorGivenApplicationId,
         mut transaction: DBTransaction<'_>,
         Json(new_rating): Json<NewRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
@@ -47,7 +47,7 @@ impl RatingsHandler {
     pub async fn get_ratings_for_application(
         State(_state): State<AppState>,
         Path(application_id): Path<i64>,
-        _admin: ApplicationReviewerAdminGivenApplicationId,
+        _admin: ApplicationReviewerGivenApplicationId,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let ratings =
@@ -60,7 +60,7 @@ impl RatingsHandler {
     pub async fn get(
         State(_state): State<AppState>,
         Path(rating_id): Path<i64>,
-        _admin: ApplicationReviewerAdminGivenRatingId,
+        _admin: ApplicationReviewerGivenRatingId,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let org = Rating::get_rating(rating_id, &mut transaction.tx).await?;
@@ -71,7 +71,7 @@ impl RatingsHandler {
     pub async fn delete(
         State(_state): State<AppState>,
         Path(rating_id): Path<i64>,
-        _admin: ApplicationReviewerAdminGivenRatingId,
+        _admin: ApplicationReviewerGivenRatingId,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Rating::delete(rating_id, &mut transaction.tx).await?;
