@@ -1,12 +1,12 @@
-use axum::extract::{Json, Path, State};
-use axum::response::IntoResponse;
-use axum::http::StatusCode;
-use serde_json::json;
 use crate::models::app::AppState;
 use crate::models::auth::{AuthUser, CampaignAdmin, QuestionAdmin};
 use crate::models::error::ChaosError;
 use crate::models::question::{NewQuestion, Question};
 use crate::models::transaction::DBTransaction;
+use axum::extract::{Json, Path, State};
+use axum::http::StatusCode;
+use axum::response::IntoResponse;
+use serde_json::json;
 
 pub struct QuestionHandler;
 
@@ -28,7 +28,8 @@ impl QuestionHandler {
             data.question_data,
             state.snowflake_generator,
             &mut transaction.tx,
-        ).await?;
+        )
+        .await?;
 
         transaction.tx.commit().await?;
 
@@ -40,9 +41,9 @@ impl QuestionHandler {
         _user: AuthUser,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let questions = Question::get_all_by_campaign_and_role(
-            campaign_id, role_id, &mut transaction.tx
-        ).await?;
+        let questions =
+            Question::get_all_by_campaign_and_role(campaign_id, role_id, &mut transaction.tx)
+                .await?;
 
         transaction.tx.commit().await?;
 
@@ -54,9 +55,8 @@ impl QuestionHandler {
         _user: AuthUser,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let questions = Question::get_all_common_by_campaign(
-            campaign_id, &mut transaction.tx,
-        ).await?;
+        let questions =
+            Question::get_all_common_by_campaign(campaign_id, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
 
@@ -71,10 +71,17 @@ impl QuestionHandler {
         Json(data): Json<NewQuestion>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Question::update(
-            question_id, data.title, data.description, data.common,
-            data.roles, data.required, data.question_data,
-            &mut transaction.tx, state.snowflake_generator,
-        ).await?;
+            question_id,
+            data.title,
+            data.description,
+            data.common,
+            data.roles,
+            data.required,
+            data.question_data,
+            &mut transaction.tx,
+            state.snowflake_generator,
+        )
+        .await?;
 
         transaction.tx.commit().await?;
 
@@ -86,10 +93,7 @@ impl QuestionHandler {
         _admin: QuestionAdmin,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Question::delete(
-            question_id,
-            &mut transaction.tx,
-        ).await?;
+        Question::delete(question_id, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
 

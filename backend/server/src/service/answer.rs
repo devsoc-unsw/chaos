@@ -1,10 +1,10 @@
-use sqlx::{Pool, Postgres};
 use crate::models::error::ChaosError;
+use sqlx::{Pool, Postgres};
 
 pub async fn user_is_answer_owner(
     user_id: i64,
     answer_id: i64,
-    pool: &Pool<Postgres>
+    pool: &Pool<Postgres>,
 ) -> Result<(), ChaosError> {
     let is_owner = sqlx::query!(
         "
@@ -16,15 +16,16 @@ pub async fn user_is_answer_owner(
                 )
             )
         ",
-        answer_id, user_id
+        answer_id,
+        user_id
     )
-        .fetch_one(pool)
-        .await?
-        .exists
-        .expect("`exists` should always exist in this query result");
+    .fetch_one(pool)
+    .await?
+    .exists
+    .expect("`exists` should always exist in this query result");
 
     if !is_owner {
-        return Err(ChaosError::Unauthorized)
+        return Err(ChaosError::Unauthorized);
     }
 
     Ok(())

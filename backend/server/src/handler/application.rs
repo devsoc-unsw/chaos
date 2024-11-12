@@ -1,6 +1,6 @@
 use crate::models::app::AppState;
 use crate::models::application::{Application, ApplicationStatus};
-use crate::models::auth::{AuthUser, ApplicationAdmin};
+use crate::models::auth::{ApplicationAdmin, AuthUser};
 use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};

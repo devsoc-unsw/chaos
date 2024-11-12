@@ -86,7 +86,14 @@ impl CampaignHandler {
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewApplication>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Application::create(id, user.user_id, data, state.snowflake_generator, &mut transaction.tx).await?;
+        Application::create(
+            id,
+            user.user_id,
+            data,
+            state.snowflake_generator,
+            &mut transaction.tx,
+        )
+        .await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, "Successfully created application"))
     }

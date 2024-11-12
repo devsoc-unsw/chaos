@@ -1,21 +1,21 @@
+use crate::handler::answer::AnswerHandler;
+use crate::handler::application::ApplicationHandler;
 use crate::handler::auth::google_callback;
-use handler::user::UserHandler;
 use crate::handler::campaign::CampaignHandler;
 use crate::handler::organisation::OrganisationHandler;
-use crate::handler::application::ApplicationHandler;
-use crate::handler::answer::AnswerHandler;
+use crate::handler::question::QuestionHandler;
 use crate::models::storage::Storage;
 use anyhow::Result;
 use axum::routing::{get, patch, post, put};
 use axum::Router;
 use handler::rating::RatingHandler;
 use handler::role::RoleHandler;
+use handler::user::UserHandler;
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use models::app::AppState;
 use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::PgPoolOptions;
 use std::env;
-use crate::handler::question::QuestionHandler;
 
 mod handler;
 mod models;
@@ -128,7 +128,10 @@ async fn main() -> Result<()> {
             "/api/v1/campaign/:campaign_id/role",
             post(CampaignHandler::create_role),
         )
-        .route("/api/v1/campaign/:campaign_id/role/:role_id/questions", get(QuestionHandler::get_all_by_campaign_and_role))
+        .route(
+            "/api/v1/campaign/:campaign_id/role/:role_id/questions",
+            get(QuestionHandler::get_all_by_campaign_and_role),
+        )
         .route(
             "/api/v1/campaign/:campaign_id/roles",
             get(CampaignHandler::get_roles),
@@ -145,7 +148,7 @@ async fn main() -> Result<()> {
         )
         .route(
             "/api/v1/role/:role_id/applications",
-            get(RoleHandler::get_applications)
+            get(RoleHandler::get_applications),
         )
         .route(
             "/api/v1/campaign/:campaign_id",
@@ -154,23 +157,54 @@ async fn main() -> Result<()> {
                 .delete(CampaignHandler::delete),
         )
         .route("/api/v1/campaign", get(CampaignHandler::get_all))
-        .route("/api/v1/campaign/:campaign_id/question", post(QuestionHandler::create))
-        .route("/api/v1/campaign/:campaign_id/question/:id", patch(QuestionHandler::update).delete(QuestionHandler::delete))
-        .route("/api/v1/campaign/:campaign_id/questions/common", get(QuestionHandler::get_all_common_by_campaign))
+        .route(
+            "/api/v1/campaign/:campaign_id/question",
+            post(QuestionHandler::create),
+        )
+        .route(
+            "/api/v1/campaign/:campaign_id/question/:id",
+            patch(QuestionHandler::update).delete(QuestionHandler::delete),
+        )
+        .route(
+            "/api/v1/campaign/:campaign_id/questions/common",
+            get(QuestionHandler::get_all_common_by_campaign),
+        )
         .route(
             "/api/v1/campaign/:campaign_id/banner",
             patch(CampaignHandler::update_banner),
         )
-        .route("api/v1/campaign/:campaign_id/application",
-            post(CampaignHandler::create_application)
+        .route(
+            "api/v1/campaign/:campaign_id/application",
+            post(CampaignHandler::create_application),
         )
-        .route("/api/v1/application/:application_id", get(ApplicationHandler::get))
-        .route("/api/v1/application/:application_id/status", patch(ApplicationHandler::set_status))
-        .route("/api/v1/application/:application_id/private", patch(ApplicationHandler::set_private_status))
-        .route("/api/v1/application/:application_id/answers/common", get(AnswerHandler::get_all_common_by_application))
-        .route("/api/v1/application/:applicaiton_id/answer", post(AnswerHandler::create))
-        .route("/api/v1/application/:application_id/answers/role/:role_id", get(AnswerHandler::get_all_by_application_and_role))
-        .route("/api/v1/answer/:answer_id", patch(AnswerHandler::update).delete(AnswerHandler::delete))
+        .route(
+            "/api/v1/application/:application_id",
+            get(ApplicationHandler::get),
+        )
+        .route(
+            "/api/v1/application/:application_id/status",
+            patch(ApplicationHandler::set_status),
+        )
+        .route(
+            "/api/v1/application/:application_id/private",
+            patch(ApplicationHandler::set_private_status),
+        )
+        .route(
+            "/api/v1/application/:application_id/answers/common",
+            get(AnswerHandler::get_all_common_by_application),
+        )
+        .route(
+            "/api/v1/application/:applicaiton_id/answer",
+            post(AnswerHandler::create),
+        )
+        .route(
+            "/api/v1/application/:application_id/answers/role/:role_id",
+            get(AnswerHandler::get_all_by_application_and_role),
+        )
+        .route(
+            "/api/v1/answer/:answer_id",
+            patch(AnswerHandler::update).delete(AnswerHandler::delete),
+        )
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();

@@ -1,10 +1,10 @@
 use crate::models::error::ChaosError;
+use crate::models::user::UserDetails;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
 use sqlx::{FromRow, Pool, Postgres, Transaction};
 use std::ops::DerefMut;
-use crate::models::user::UserDetails;
 
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Application {
@@ -41,7 +41,7 @@ pub struct ApplicationDetails {
     pub user: UserDetails,
     pub status: ApplicationStatus,
     pub private_status: ApplicationStatus,
-    pub applied_roles: Vec<ApplicationAppliedRoleDetails>
+    pub applied_roles: Vec<ApplicationAppliedRoleDetails>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -65,7 +65,6 @@ pub struct ApplicationAppliedRoleDetails {
     pub campaign_role_id: i64,
     pub role_name: String,
 }
-
 
 #[derive(Deserialize, Serialize, sqlx::Type, Clone, Debug)]
 #[sqlx(type_name = "application_status", rename_all = "PascalCase")]
@@ -116,9 +115,12 @@ impl Application {
     }
 
     /*
-        Get Application given an application id
-     */
-    pub async fn get(id: i64, transaction: &mut Transaction<'_, Postgres>,) -> Result<ApplicationDetails, ChaosError> {
+       Get Application given an application id
+    */
+    pub async fn get(
+        id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<ApplicationDetails, ChaosError> {
         let application_data = sqlx::query_as!(
             ApplicationData,
             "
@@ -149,33 +151,32 @@ impl Application {
         .fetch_all(transaction.deref_mut())
         .await?;
 
-        Ok(
-            ApplicationDetails {
-                id: application_data.id,
-                campaign_id: application_data.campaign_id,
-                status: application_data.status,
-                private_status: application_data.private_status,
-                applied_roles,
-                user: UserDetails {
-                    id: application_data.user_id,
-                    email: application_data.user_email,
-                    zid: application_data.user_zid,
-                    name: application_data.user_name,
-                    pronouns: application_data.user_pronouns,
-                    gender: application_data.user_gender,
-                    degree_name: application_data.user_degree_name,
-                    degree_starting_year: application_data.user_degree_starting_year,
-                },
-            }
-        )
+        Ok(ApplicationDetails {
+            id: application_data.id,
+            campaign_id: application_data.campaign_id,
+            status: application_data.status,
+            private_status: application_data.private_status,
+            applied_roles,
+            user: UserDetails {
+                id: application_data.user_id,
+                email: application_data.user_email,
+                zid: application_data.user_zid,
+                name: application_data.user_name,
+                pronouns: application_data.user_pronouns,
+                gender: application_data.user_gender,
+                degree_name: application_data.user_degree_name,
+                degree_starting_year: application_data.user_degree_starting_year,
+            },
+        })
     }
 
-
     /*
-        Get All applications that apply for a given role
-     */
-    pub async fn get_from_role_id(role_id: i64, transaction: &mut Transaction<'_, Postgres>,)
-    -> Result<Vec<ApplicationDetails>, ChaosError> {
+       Get All applications that apply for a given role
+    */
+    pub async fn get_from_role_id(
+        role_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<ApplicationDetails>, ChaosError> {
         let application_data_list = sqlx::query_as!(
             ApplicationData,
             "
@@ -205,8 +206,8 @@ impl Application {
                 ",
                 application_data.id
             )
-                .fetch_all(transaction.deref_mut())
-                .await?;
+            .fetch_all(transaction.deref_mut())
+            .await?;
 
             let details = ApplicationDetails {
                 id: application_data.id,
@@ -233,10 +234,12 @@ impl Application {
     }
 
     /*
-        Get All applications that apply for a given campaign
-     */
-    pub async fn get_from_campaign_id(campaign_id: i64, transaction: &mut Transaction<'_, Postgres>,)
-    -> Result<Vec<ApplicationDetails>, ChaosError> {
+       Get All applications that apply for a given campaign
+    */
+    pub async fn get_from_campaign_id(
+        campaign_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<ApplicationDetails>, ChaosError> {
         let application_data_list = sqlx::query_as!(
             ApplicationData,
             "
@@ -250,8 +253,8 @@ impl Application {
             ",
             campaign_id
         )
-            .fetch_all(transaction.deref_mut())
-            .await?;
+        .fetch_all(transaction.deref_mut())
+        .await?;
 
         let mut application_details_list = Vec::new();
         for application_data in application_data_list {
@@ -286,7 +289,7 @@ impl Application {
                     degree_starting_year: application_data.user_degree_starting_year,
                 },
             };
-            
+
             application_details_list.push(details)
         }
 
@@ -294,10 +297,12 @@ impl Application {
     }
 
     /*
-        Get All applications that are made by a given user
-     */
-    pub async fn get_from_user_id(user_id: i64, transaction: &mut Transaction<'_, Postgres>,)
-    -> Result<Vec<ApplicationDetails>, ChaosError> {
+       Get All applications that are made by a given user
+    */
+    pub async fn get_from_user_id(
+        user_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<ApplicationDetails>, ChaosError> {
         let application_data_list = sqlx::query_as!(
             ApplicationData,
             "
@@ -311,8 +316,8 @@ impl Application {
             ",
             user_id
         )
-            .fetch_all(transaction.deref_mut())
-            .await?;
+        .fetch_all(transaction.deref_mut())
+        .await?;
 
         let mut application_details_list = Vec::new();
         for application_data in application_data_list {
@@ -327,8 +332,8 @@ impl Application {
                 ",
                 application_data.id
             )
-                .fetch_all(transaction.deref_mut())
-                .await?;
+            .fetch_all(transaction.deref_mut())
+            .await?;
 
             let details = ApplicationDetails {
                 id: application_data.id,
@@ -354,7 +359,11 @@ impl Application {
         Ok(application_details_list)
     }
 
-    pub async fn set_status(id: i64, new_status: ApplicationStatus, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
+    pub async fn set_status(
+        id: i64,
+        new_status: ApplicationStatus,
+        pool: &Pool<Postgres>,
+    ) -> Result<(), ChaosError> {
         sqlx::query!(
             "
                 UPDATE applications
@@ -370,7 +379,11 @@ impl Application {
         Ok(())
     }
 
-    pub async fn set_private_status(id: i64, new_status: ApplicationStatus, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
+    pub async fn set_private_status(
+        id: i64,
+        new_status: ApplicationStatus,
+        pool: &Pool<Postgres>,
+    ) -> Result<(), ChaosError> {
         sqlx::query!(
             "
                 UPDATE applications
@@ -385,5 +398,4 @@ impl Application {
 
         Ok(())
     }
-
 }
