@@ -1,6 +1,6 @@
 use crate::models::error::ChaosError;
 use s3::creds::Credentials;
-use s3::{Bucket, BucketConfiguration, Region};
+use s3::{Bucket, Region};
 use std::env;
 
 pub struct Storage;
@@ -37,9 +37,7 @@ impl Storage {
             endpoint,
         };
 
-        let config = BucketConfiguration::default();
-
-        let mut bucket = Bucket::new(&*bucket_name, region, credentials).unwrap();
+        let bucket = Bucket::new(&*bucket_name, region, credentials).unwrap();
         // TODO: Change depending on style used by provider
         // bucket.set_path_style();
 

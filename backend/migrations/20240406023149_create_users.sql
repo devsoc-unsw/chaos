@@ -5,11 +5,13 @@ CREATE TABLE users (
     email TEXT NOT NULL UNIQUE,
     zid TEXT,
     name TEXT NOT NULL,
+    pronouns TEXT NOT NULL,
+    gender TEXT NOT NULL,
     degree_name TEXT,
     degree_starting_year INTEGER,
     role user_role NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE UNIQUE INDEX IDX_users_email_lower on users ((lower(email)));

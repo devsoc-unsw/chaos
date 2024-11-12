@@ -5,7 +5,6 @@ use crate::models::auth::{AuthUser, OrganisationAdmin};
 use crate::models::error::ChaosError;
 use crate::models::organisation::{AdminToRemove, AdminUpdateList, NewOrganisation, Organisation};
 use crate::models::transaction::DBTransaction;
-use crate::service;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -68,7 +67,6 @@ impl OrganisationHandler {
     }
 
     pub async fn update_admins(
-        State(state): State<AppState>,
         Path(id): Path<i64>,
         _super_user: SuperUser,
         mut transaction: DBTransaction<'_>,
@@ -81,7 +79,6 @@ impl OrganisationHandler {
     }
 
     pub async fn update_members(
-        State(state): State<AppState>,
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
         _admin: OrganisationAdmin,
@@ -141,11 +138,13 @@ impl OrganisationHandler {
     }
 
     pub async fn create_campaign(
+        Path(id): Path<i64>,
         State(mut state): State<AppState>,
         _admin: OrganisationAdmin,
         Json(request_body): Json<models::campaign::Campaign>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Organisation::create_campaign(
+            id,
             request_body.name,
             request_body.description,
             request_body.starts_at,

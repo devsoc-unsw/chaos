@@ -1,10 +1,14 @@
 use crate::handler::auth::google_callback;
+use handler::user::UserHandler;
+use crate::handler::campaign::CampaignHandler;
 use crate::handler::organisation::OrganisationHandler;
+use crate::handler::application::ApplicationHandler;
 use crate::models::storage::Storage;
 use anyhow::Result;
 use axum::routing::{delete, get, patch, post, put};
 use axum::Router;
 use handler::ratings::RatingsHandler;
+use handler::role::RoleHandler;
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use models::app::AppState;
 use snowflake::SnowflakeIdGenerator;
@@ -65,27 +69,41 @@ async fn main() -> Result<()> {
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
         .route("/api/auth/callback/google", get(google_callback))
+        .route("/api/v1/user", get(UserHandler::get))
+        .route("/api/v1/user/name", patch(UserHandler::update_name))
+        .route("/api/v1/user/pronouns", patch(UserHandler::update_pronouns))
+        .route("/api/v1/user/gender", patch(UserHandler::update_gender))
+        .route("/api/v1/user/zid", patch(UserHandler::update_zid))
+        .route("/api/v1/user/degree", patch(UserHandler::update_degree))
+        .route(
+            "/api/v1/user/applications",
+            get(ApplicationHandler::get_from_curr_user),
+        )
         .route("/api/v1/organisation", post(OrganisationHandler::create))
         .route(
-            "/api/v1/organisation/:id",
+            "/api/v1/organisation/:organisation_id",
             get(OrganisationHandler::get).delete(OrganisationHandler::delete),
         )
         .route(
-            "/api/v1/organisation/:id/campaign",
-            get(OrganisationHandler::get_campaigns).post(OrganisationHandler::create_campaign),
+            "/api/v1/organisation/:organisation_id/campaign",
+            post(OrganisationHandler::create_campaign),
         )
         .route(
-            "/api/v1/organisation/:id/logo",
+            "/api/v1/organisation/:organisation_id/campaigns",
+            get(OrganisationHandler::get_campaigns),
+        )
+        .route(
+            "/api/v1/organisation/:organisation_id/logo",
             patch(OrganisationHandler::update_logo),
         )
         .route(
-            "/api/v1/organisation/:id/member",
+            "/api/v1/organisation/:organisation_id/member",
             get(OrganisationHandler::get_members)
                 .put(OrganisationHandler::update_members)
                 .delete(OrganisationHandler::remove_member),
         )
         .route(
-            "/api/v1/organisation/:id/admin",
+            "/api/v1/organisation/:organisation_id/admin",
             get(OrganisationHandler::get_admins)
                 .put(OrganisationHandler::update_admins)
                 .delete(OrganisationHandler::remove_admin),
@@ -104,6 +122,45 @@ async fn main() -> Result<()> {
             "/api/v1/:application_id/ratings",
             get(RatingsHandler::get_ratings_for_application),
         )
+        .route(
+            "/api/v1/campaign/:campaign_id/role",
+            post(CampaignHandler::create_role),
+        )
+        .route(
+            "/api/v1/campaign/:campaign_id/roles",
+            get(CampaignHandler::get_roles),
+        )
+        .route(
+            "/api/v1/campaign/:campaign_id/applications",
+            get(CampaignHandler::get_applications),
+        )
+        .route(
+            "/api/v1/role/:role_id",
+            get(RoleHandler::get)
+                .put(RoleHandler::update)
+                .delete(RoleHandler::delete),
+        )
+        .route(
+            "/api/v1/role/:role_id/applications",
+            get(RoleHandler::get_applications)
+        )
+        .route(
+            "/api/v1/campaign/:campaign_id",
+            get(CampaignHandler::get)
+                .put(CampaignHandler::update)
+                .delete(CampaignHandler::delete),
+        )
+        .route("/api/v1/campaign", get(CampaignHandler::get_all))
+        .route(
+            "/api/v1/campaign/:campaign_id/banner",
+            patch(CampaignHandler::update_banner),
+        )
+        .route("api/v1/campaign/:campaign_id/application",
+            post(CampaignHandler::create_application)
+        )
+        .route("api/v1/application/:application_id", get(ApplicationHandler::get))
+        .route("api/v1/application/:application_id/status", patch(ApplicationHandler::set_status))
+        .route("api/v1/application/:application_id/private", patch(ApplicationHandler::set_private_status))
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
