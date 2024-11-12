@@ -1,7 +1,7 @@
 use crate::models::error::ChaosError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{Pool, Postgres, QueryBuilder, Row};
+use sqlx::{Pool, Postgres};
 
 /// The `Answer` type that will be sent in API responses.
 ///
@@ -43,10 +43,11 @@ pub enum AnswerData {
 }
 
 impl AnswerData {
-    pub async fn validate(self) -> Result<(), ChaosError> {
+    pub fn validate(&self) -> Result<(), ChaosError> {
         match self {
             Self::ShortAnswer(text) => if text.len() == 0 { return Err(ChaosError::BadRequest) },
-            Self::MultiSelect(data) => if data.len() == 0 { return Err(ChaosError::BadRequest) },
+            Self::MultiSelect(data)
+            | Self::Ranking(data) => if data.len() == 0 { return Err(ChaosError::BadRequest) },
             _ => {},
         }
 
@@ -56,7 +57,7 @@ impl AnswerData {
     pub async fn insert_into_db(self, answer_id: i64, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
         match self {
             Self::ShortAnswer(text) => {
-                let result = sqlx::query!(
+                sqlx::query!(
                     "INSERT INTO short_answer_answers (text, answer_id) VALUES ($1, $2)",
                     text,
                     answer_id
@@ -68,7 +69,7 @@ impl AnswerData {
             },
             Self::MultiChoice(option_id)
             | Self::DropDown(option_id) => {
-                let result = sqlx::query!(
+                sqlx::query!(
                     "INSERT INTO multi_option_answer_options (option_id, answer_id) VALUES ($1, $2)",
                     option_id,
                     answer_id
@@ -86,7 +87,7 @@ impl AnswerData {
                 });
 
                 let query = query_builder.build();
-                let result = query.execute(pool).await?;
+                query.execute(pool).await?;
 
                 Ok(())
             },
@@ -100,7 +101,7 @@ impl AnswerData {
                 });
 
                 let query = query_builder.build();
-                let result = query.execute(pool).await?;
+                query.execute(pool).await?;
 
                 Ok(())
             }
