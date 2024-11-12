@@ -66,7 +66,7 @@ pub struct NewQuestion {
     pub question_data: QuestionData,
 }
 
-#[derive(Deserialize, Serialize, sqlx::FromRow)]
+#[derive(Deserialize, sqlx::FromRow)]
 pub struct QuestionRawData {
     id: i64,
     title: String,
@@ -244,7 +244,7 @@ impl Question {
                         LEFT JOIN
                     multi_option_question_options mod ON q.id = mod.question_id
                         AND q.question_type IN ('MultiChoice', 'MultiSelect', 'DropDown', 'Ranking')
-                WHERE q.campaign_id = $1 AND q.common = true AND qr.id = $2
+                WHERE q.campaign_id = $1 AND q.common = true AND qr.role_id = $2
                 GROUP BY
                     q.id
             "
