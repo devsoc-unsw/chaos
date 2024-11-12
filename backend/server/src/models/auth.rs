@@ -5,12 +5,11 @@ use crate::service::application::user_is_application_admin;
 use crate::service::auth::is_super_user;
 use crate::service::campaign::user_is_campaign_admin;
 use crate::service::jwt::decode_auth_token;
-use crate::service::organisation::assert_user_is_admin;
+use crate::service::organisation::assert_user_is_organisation_admin;
 use crate::service::ratings::{
     assert_user_is_application_reviewer_given_rating_id, assert_user_is_organisation_member,
     assert_user_is_rating_creator_and_organisation_member,
 };
-use crate::service::organisation::user_is_organisation_admin;
 use crate::service::role::user_is_role_admin;
 use axum::extract::{FromRef, FromRequestParts, Path};
 use axum::http::request::Parts;
@@ -153,7 +152,7 @@ where
             .get("organisation_id")
             .ok_or(ChaosError::BadRequest)?;
 
-        user_is_organisation_admin(user_id, organisation_id, pool).await?;
+        assert_user_is_organisation_admin(user_id, organisation_id, pool).await?;
 
         Ok(OrganisationAdmin { user_id })
     }

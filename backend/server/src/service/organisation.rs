@@ -1,7 +1,7 @@
 use crate::models::error::ChaosError;
 use sqlx::{Pool, Postgres};
 
-pub async fn assert_user_is_admin(
+pub async fn assert_user_is_organisation_admin(
     user_id: i64,
     organisation_id: i64,
     pool: &Pool<Postgres>,

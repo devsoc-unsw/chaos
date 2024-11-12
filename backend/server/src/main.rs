@@ -5,7 +5,7 @@ use crate::handler::organisation::OrganisationHandler;
 use crate::handler::application::ApplicationHandler;
 use crate::models::storage::Storage;
 use anyhow::Result;
-use axum::routing::{delete, get, patch, post, put};
+use axum::routing::{get, patch, post};
 use axum::Router;
 use handler::ratings::RatingsHandler;
 use handler::role::RoleHandler;
