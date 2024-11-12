@@ -54,6 +54,18 @@ pub struct Question {
     updated_at: DateTime<Utc>,
 }
 
+#[derive(Deserialize)]
+pub struct NewQuestion {
+    title: String,
+    description: Option<String>,
+    common: bool,
+    roles: Option<Vec<i64>>,
+    required: bool,
+
+    #[serde(flatten)]
+    question_data: QuestionData,
+}
+
 #[derive(Deserialize, Serialize, sqlx::FromRow)]
 pub struct QuestionRawData {
     id: i64,
@@ -70,7 +82,7 @@ pub struct QuestionRawData {
 }
 
 impl Question {
-    pub async fn create(campaign_id: i64, title: String, description: Option<String>, common: bool, required: bool, question_data: QuestionData, mut snowflake_generator: SnowflakeIdGenerator, transaction: &mut Transaction<'_, Postgres>) -> Result<i64, ChaosError> {
+    pub async fn create(campaign_id: i64, title: String, description: Option<String>, common: bool, roles: Option<Vec<i64>>, required: bool, question_data: QuestionData, mut snowflake_generator: SnowflakeIdGenerator, transaction: &mut Transaction<'_, Postgres>) -> Result<i64, ChaosError> {
         question_data.validate()?;
 
         let id = snowflake_generator.generate();
@@ -88,6 +100,20 @@ impl Question {
             .await?;
 
         question_data.insert_into_db(id, transaction, snowflake_generator).await?;
+
+        if !common {
+            for role in roles.expect("Should be !None if !common") {
+                sqlx::query!(
+                    "
+                        INSERT INTO question_roles (question_id, role_id) VALUES ($1, $2)
+                    ",
+                    id, role
+                )
+                    .execute(transaction.deref_mut())
+                    .await?;
+            }
+
+        }
 
         Ok(id)
     }
@@ -192,7 +218,112 @@ impl Question {
         Ok(questions)
     }
 
-    pub async fn update(id: i64, title: String, description: Option<String>, common: bool, required: bool, question_data: QuestionData, transaction: &mut Transaction<'_, Postgres>, snowflake_generator: SnowflakeIdGenerator) -> Result<(), ChaosError> {
+    pub async fn get_all_by_campaign_and_role(campaign_id: i64, role_id: i64, transaction: &mut Transaction<'_, Postgres>) -> Result<Vec<Question>, ChaosError> {
+        let question_raw_data: Vec<QuestionRawData> = sqlx::query_as(
+            "
+                SELECT
+                    q.id,
+                    q.title,
+                    q.description,
+                    q.common,
+                    q.required,
+                    q.question_type AS \"question_type: QuestionType\",
+                    q.created_at,
+                    q.updated_at,
+                    array_agg(
+                        jsonb_build_object(
+                                'id', mod.id,
+                                'display_order', mod.display_order,
+                                'text', mod.text
+                        ) ORDER BY mod.display_order
+                    ) FILTER (WHERE mod.id IS NOT NULL) AS \"multi_option_data: Option<sqlx::types::Json<Vec<MultiOptionQuestionOption>>>\"
+                FROM
+                    questions q
+                        JOIN
+                    question_roles qr ON q.id = qr.question_id
+                        LEFT JOIN
+                    multi_option_question_options mod ON q.id = mod.question_id
+                        AND q.question_type IN ('MultiChoice', 'MultiSelect', 'DropDown', 'Ranking')
+                WHERE q.campaign_id = $1 AND q.common = true AND qr.id = $2
+                GROUP BY
+                    q.id
+            "
+        )
+            .bind(campaign_id)
+            .bind(role_id)
+            .fetch_all(transaction.deref_mut())
+            .await?;
+
+        let questions = question_raw_data.into_iter().map(|question_raw_data| {
+            let question_data = QuestionData::from_question_raw_data(question_raw_data.question_type, question_raw_data.multi_option_data);
+
+            Question {
+                id: question_raw_data.id,
+                title: question_raw_data.title,
+                description: question_raw_data.description,
+                common: question_raw_data.common,
+                required: question_raw_data.required,
+                question_data,
+                created_at: question_raw_data.created_at,
+                updated_at: question_raw_data.updated_at,
+            }
+        }).collect();
+
+        Ok(questions)
+    }
+
+    pub async fn get_all_common_by_campaign(campaign_id: i64, transaction: &mut Transaction<'_, Postgres>) -> Result<Vec<Question>, ChaosError> {
+        let question_raw_data: Vec<QuestionRawData> = sqlx::query_as(
+            "
+                SELECT
+                    q.id,
+                    q.title,
+                    q.description,
+                    q.common,
+                    q.required,
+                    q.question_type AS \"question_type: QuestionType\",
+                    q.created_at,
+                    q.updated_at,
+                    array_agg(
+                        jsonb_build_object(
+                                'id', mod.id,
+                                'display_order', mod.display_order,
+                                'text', mod.text
+                        ) ORDER BY mod.display_order
+                    ) FILTER (WHERE mod.id IS NOT NULL) AS \"multi_option_data: Option<sqlx::types::Json<Vec<MultiOptionQuestionOption>>>\"
+                FROM
+                    questions q
+                        LEFT JOIN
+                    multi_option_question_options mod ON q.id = mod.question_id
+                        AND q.question_type IN ('MultiChoice', 'MultiSelect', 'DropDown', 'Ranking')
+                WHERE q.campaign_id = $1 AND q.common = true
+                GROUP BY
+                    q.id
+            "
+        )
+            .bind(campaign_id)
+            .fetch_all(transaction.deref_mut())
+            .await?;
+
+        let questions = question_raw_data.into_iter().map(|question_raw_data| {
+            let question_data = QuestionData::from_question_raw_data(question_raw_data.question_type, question_raw_data.multi_option_data);
+
+            Question {
+                id: question_raw_data.id,
+                title: question_raw_data.title,
+                description: question_raw_data.description,
+                common: question_raw_data.common,
+                required: question_raw_data.required,
+                question_data,
+                created_at: question_raw_data.created_at,
+                updated_at: question_raw_data.updated_at,
+            }
+        }).collect();
+
+        Ok(questions)
+    }
+
+    pub async fn update(id: i64, title: String, description: Option<String>, common: bool, roles: Option<Vec<i64>>, required: bool, question_data: QuestionData, transaction: &mut Transaction<'_, Postgres>, snowflake_generator: SnowflakeIdGenerator) -> Result<(), ChaosError> {
         question_data.validate()?;
 
         let question_type_parent: QuestionTypeParent = sqlx::query_as!(
@@ -214,6 +345,23 @@ impl Question {
         old_data.delete_from_db(id, transaction).await?;
 
         question_data.insert_into_db(id, transaction, snowflake_generator).await?;
+
+        sqlx::query!("DELETE FROM question_roles WHERE question_id = $1", id)
+            .execute(transaction.deref_mut())
+            .await?;
+        if !common {
+            for role in roles.expect("Should be !None if !common") {
+                sqlx::query!(
+                    "
+                        INSERT INTO question_roles (question_id, role_id) VALUES ($1, $2)
+                    ",
+                    id, role
+                )
+                    .execute(transaction.deref_mut())
+                    .await?;
+            }
+
+        }
 
         Ok(())
     }
