@@ -1,0 +1,2 @@
+ALTER TABLE IF EXISTS questions
+    ALTER COLUMN question_type SET NOT NULL;
