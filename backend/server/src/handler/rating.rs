@@ -14,7 +14,7 @@ pub struct RatingHandler;
 
 impl RatingHandler {
     // TODO: are all the user permissions as required? Who should be able to do what with ratings?
-    pub async fn create_rating(
+    pub async fn create(
         State(state): State<AppState>,
         Path(application_id): Path<i64>,
         _admin: ApplicationCreatorGivenApplicationId,
