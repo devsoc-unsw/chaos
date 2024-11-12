@@ -4,15 +4,15 @@ use crate::models::auth::{
     ApplicationReviewerGivenRatingId, RatingCreator,
 };
 use crate::models::error::ChaosError;
-use crate::models::ratings::{NewRating, Rating};
+use crate::models::rating::{NewRating, Rating};
 use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 
-pub struct RatingsHandler;
+pub struct RatingHandler;
 
-impl RatingsHandler {
+impl RatingHandler {
     // TODO: are all the user permissions as required? Who should be able to do what with ratings?
     pub async fn create_rating(
         State(state): State<AppState>,

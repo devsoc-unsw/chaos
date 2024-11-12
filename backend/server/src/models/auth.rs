@@ -6,7 +6,7 @@ use crate::service::auth::is_super_user;
 use crate::service::campaign::user_is_campaign_admin;
 use crate::service::jwt::decode_auth_token;
 use crate::service::organisation::assert_user_is_organisation_admin;
-use crate::service::ratings::{
+use crate::service::rating::{
     assert_user_is_application_reviewer_given_rating_id, assert_user_is_organisation_member,
     assert_user_is_rating_creator_and_organisation_member,
 };

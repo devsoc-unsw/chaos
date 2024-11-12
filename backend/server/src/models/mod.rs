@@ -5,7 +5,7 @@ pub mod campaign;
 pub mod error;
 pub mod question;
 pub mod organisation;
-pub mod ratings;
+pub mod rating;
 pub mod role;
 pub mod storage;
 pub mod transaction;
