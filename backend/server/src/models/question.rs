@@ -406,7 +406,7 @@ pub enum QuestionType {
 
 #[derive(Deserialize)]
 pub struct QuestionTypeParent {
-    question_type: QuestionType
+    pub question_type: QuestionType
 }
 
 impl QuestionType {

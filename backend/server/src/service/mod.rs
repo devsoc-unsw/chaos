@@ -7,3 +7,4 @@ pub mod rating;
 pub mod role;
 pub mod application;
 pub mod question;
+pub mod answer;

@@ -3,6 +3,7 @@ use handler::user::UserHandler;
 use crate::handler::campaign::CampaignHandler;
 use crate::handler::organisation::OrganisationHandler;
 use crate::handler::application::ApplicationHandler;
+use crate::handler::answer::AnswerHandler;
 use crate::models::storage::Storage;
 use anyhow::Result;
 use axum::routing::{get, patch, post, put};
@@ -68,7 +69,7 @@ async fn main() -> Result<()> {
     };
 
     let app = Router::new()
-        .route("/", get(|| async { "Hello, World!" }))
+        .route("/", get(|| async { "Join DevSoc! https://devsoc.app/" }))
         .route("/api/auth/callback/google", get(google_callback))
         .route("/api/v1/user", get(UserHandler::get))
         .route("/api/v1/user/name", patch(UserHandler::update_name))
@@ -154,7 +155,7 @@ async fn main() -> Result<()> {
         )
         .route("/api/v1/campaign", get(CampaignHandler::get_all))
         .route("/api/v1/campaign/:campaign_id/question", post(QuestionHandler::create))
-        .route("/api/v1/campaign/:campaign_id/question/:id", put(QuestionHandler::update).delete(QuestionHandler::delete))
+        .route("/api/v1/campaign/:campaign_id/question/:id", patch(QuestionHandler::update).delete(QuestionHandler::delete))
         .route("/api/v1/campaign/:campaign_id/questions/common", get(QuestionHandler::get_all_common_by_campaign))
         .route(
             "/api/v1/campaign/:campaign_id/banner",
@@ -163,9 +164,13 @@ async fn main() -> Result<()> {
         .route("api/v1/campaign/:campaign_id/application",
             post(CampaignHandler::create_application)
         )
-        .route("api/v1/application/:application_id", get(ApplicationHandler::get))
-        .route("api/v1/application/:application_id/status", patch(ApplicationHandler::set_status))
-        .route("api/v1/application/:application_id/private", patch(ApplicationHandler::set_private_status))
+        .route("/api/v1/application/:application_id", get(ApplicationHandler::get))
+        .route("/api/v1/application/:application_id/status", patch(ApplicationHandler::set_status))
+        .route("/api/v1/application/:application_id/private", patch(ApplicationHandler::set_private_status))
+        .route("/api/v1/application/:application_id/answers/common", get(AnswerHandler::get_all_common_by_application))
+        .route("/api/v1/application/:applicaiton_id/answer", post(AnswerHandler::create))
+        .route("/api/v1/application/:application_id/answers/role/:role_id", get(AnswerHandler::get_all_by_application_and_role))
+        .route("/api/v1/answer/:answer_id", patch(AnswerHandler::update).delete(AnswerHandler::delete))
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
