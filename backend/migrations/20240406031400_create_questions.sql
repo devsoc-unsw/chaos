@@ -27,7 +27,8 @@ CREATE TABLE multi_option_question_options (
            REFERENCES questions(id)
            ON DELETE CASCADE
            ON UPDATE CASCADE
-       DEFERRABLE INITIALLY DEFERRED
+       DEFERRABLE INITIALLY DEFERRED,
+    UNIQUE (question_id, display_order)
 );
 
 CREATE INDEX IDX_multi_option_question_options_questions on multi_option_question_options (question_id);
