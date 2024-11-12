@@ -5,7 +5,7 @@ use crate::handler::organisation::OrganisationHandler;
 use crate::handler::application::ApplicationHandler;
 use crate::models::storage::Storage;
 use anyhow::Result;
-use axum::routing::{get, patch, post};
+use axum::routing::{get, patch, post, put};
 use axum::Router;
 use handler::rating::RatingHandler;
 use handler::role::RoleHandler;
@@ -14,6 +14,7 @@ use models::app::AppState;
 use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::PgPoolOptions;
 use std::env;
+use crate::handler::question::QuestionHandler;
 
 mod handler;
 mod models;
@@ -116,7 +117,7 @@ async fn main() -> Result<()> {
         )
         .route(
             "/api/v1/:application_id/rating",
-            post(RatingHandler::create_rating),
+            post(RatingHandler::create),
         )
         .route(
             "/api/v1/:application_id/ratings",
@@ -126,6 +127,7 @@ async fn main() -> Result<()> {
             "/api/v1/campaign/:campaign_id/role",
             post(CampaignHandler::create_role),
         )
+        .route("/api/v1/campaign/:campaign_id/role/:role_id/questions", get(QuestionHandler::get_all_by_campaign_and_role))
         .route(
             "/api/v1/campaign/:campaign_id/roles",
             get(CampaignHandler::get_roles),
@@ -151,6 +153,9 @@ async fn main() -> Result<()> {
                 .delete(CampaignHandler::delete),
         )
         .route("/api/v1/campaign", get(CampaignHandler::get_all))
+        .route("/api/v1/campaign/:campaign_id/question", post(QuestionHandler::create))
+        .route("/api/v1/campaign/:campaign_id/question/:id", put(QuestionHandler::update).delete(QuestionHandler::delete))
+        .route("/api/v1/campaign/:campaign_id/questions/common", get(QuestionHandler::get_all_common_by_campaign))
         .route(
             "/api/v1/campaign/:campaign_id/banner",
             patch(CampaignHandler::update_banner),

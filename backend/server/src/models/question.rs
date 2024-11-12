@@ -56,14 +56,14 @@ pub struct Question {
 
 #[derive(Deserialize)]
 pub struct NewQuestion {
-    title: String,
-    description: Option<String>,
-    common: bool,
-    roles: Option<Vec<i64>>,
-    required: bool,
+    pub title: String,
+    pub description: Option<String>,
+    pub common: bool,
+    pub roles: Option<Vec<i64>>,
+    pub required: bool,
 
     #[serde(flatten)]
-    question_data: QuestionData,
+    pub question_data: QuestionData,
 }
 
 #[derive(Deserialize, Serialize, sqlx::FromRow)]
@@ -515,84 +515,6 @@ impl QuestionData {
                 query.execute(transaction.deref_mut()).await?;
 
                 Ok(())
-            }
-        }
-    }
-
-    pub async fn get_from_db(self, question_id: i64, transaction: &mut Transaction<'_, Postgres>) -> Result<Self, ChaosError> {
-        match self {
-            Self::ShortAnswer => Ok(Self::ShortAnswer),
-            Self::MultiChoice(_) => {
-                let data_vec = sqlx::query_as!(
-                    MultiOptionQuestionOption,
-                    "
-                        SELECT id, display_order, text FROM multi_option_question_options
-                        WHERE question_id = $1
-                    ",
-                    question_id
-                )
-                    .fetch_all(transaction.deref_mut())
-                    .await?;
-
-                let data = MultiOptionData {
-                    options: data_vec
-                };
-
-                Ok(Self::MultiChoice(data))
-            },
-            Self::MultiSelect(_) => {
-                let data_vec = sqlx::query_as!(
-                    MultiOptionQuestionOption,
-                    "
-                        SELECT id, display_order, text FROM multi_option_question_options
-                        WHERE question_id = $1
-                    ",
-                    question_id
-                )
-                    .fetch_all(transaction.deref_mut())
-                    .await?;
-
-                let data = MultiOptionData {
-                    options: data_vec
-                };
-
-                Ok(Self::MultiSelect(data))
-            }
-            Self::DropDown(_) => {
-                let data_vec = sqlx::query_as!(
-                    MultiOptionQuestionOption,
-                    "
-                        SELECT id, display_order, text FROM multi_option_question_options
-                        WHERE question_id = $1
-                    ",
-                    question_id
-                )
-                    .fetch_all(transaction.deref_mut())
-                    .await?;
-
-                let data = MultiOptionData {
-                    options: data_vec
-                };
-
-                Ok(Self::DropDown(data))
-            }
-            Self::Ranking(_) => {
-                let data_vec = sqlx::query_as!(
-                    MultiOptionQuestionOption,
-                    "
-                        SELECT id, display_order, text FROM multi_option_question_options
-                        WHERE question_id = $1
-                    ",
-                    question_id
-                )
-                    .fetch_all(transaction.deref_mut())
-                    .await?;
-
-                let data = MultiOptionData {
-                    options: data_vec
-                };
-
-                Ok(Self::Ranking(data))
             }
         }
     }

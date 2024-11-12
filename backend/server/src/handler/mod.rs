@@ -5,3 +5,4 @@ pub mod organisation;
 pub mod rating;
 pub mod role;
 pub mod application;
+pub mod question;
