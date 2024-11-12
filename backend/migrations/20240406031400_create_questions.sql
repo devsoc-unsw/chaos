@@ -5,7 +5,7 @@ CREATE TABLE questions (
     title TEXT NOT NULL,
     description TEXT,
     common BOOLEAN NOT NULL,
-    required BOOLEAN,
+    required BOOLEAN NOT NULL,
     question_type question_type NOT NULL,
     campaign_id BIGINT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -27,6 +27,7 @@ CREATE TABLE multi_option_question_options (
            REFERENCES questions(id)
            ON DELETE CASCADE
            ON UPDATE CASCADE
+       DEFERRABLE INITIALLY DEFERRED
 );
 
 CREATE INDEX IDX_multi_option_question_options_questions on multi_option_question_options (question_id);

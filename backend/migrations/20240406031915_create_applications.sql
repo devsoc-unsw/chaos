@@ -53,6 +53,7 @@ CREATE TABLE answers (
           REFERENCES questions(id)
           ON DELETE CASCADE
           ON UPDATE CASCADE
+      DEFERRABLE INITIALLY DEFERRED
 );
 
 CREATE INDEX IDX_answers_applications on answers (application_id);
@@ -79,7 +80,8 @@ CREATE TABLE multi_option_answer_options (
         FOREIGN KEY(option_id)
             REFERENCES multi_option_question_options(id)
             ON DELETE CASCADE
-            ON UPDATE CASCADE,
+            ON UPDATE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
     CONSTRAINT FK_multi_option_answer_options_answers
         FOREIGN KEY(answer_id)
             REFERENCES answers(id)
@@ -96,7 +98,8 @@ CREATE TABLE ranking_answer_rankings (
         FOREIGN KEY(option_id)
             REFERENCES multi_option_question_options(id)
             ON DELETE CASCADE
-            ON UPDATE CASCADE,
+            ON UPDATE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
     CONSTRAINT FK_ranking_answer_rankings_answers
         FOREIGN KEY(answer_id)
             REFERENCES answers(id)
