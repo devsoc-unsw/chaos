@@ -76,6 +76,8 @@ impl QuestionHandler {
             &mut transaction.tx, state.snowflake_generator,
         ).await?;
 
+        transaction.tx.commit().await?;
+
         Ok((StatusCode::OK, "Successfully updated question"))
     }
 
@@ -88,6 +90,8 @@ impl QuestionHandler {
             question_id,
             &mut transaction.tx,
         ).await?;
+
+        transaction.tx.commit().await?;
 
         Ok((StatusCode::OK, "Successfully deleted question"))
     }
