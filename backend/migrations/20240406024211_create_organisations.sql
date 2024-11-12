@@ -21,4 +21,4 @@ CREATE TABLE organisation_members (
 );
 
 
-CREATE INDEX IDX_organisation_admins_organisation on organisation_members (organisation_id);
+CREATE INDEX IDX_organisation_admins_organisation on organisation_members(organisation_id);

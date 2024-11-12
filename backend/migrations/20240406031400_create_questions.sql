@@ -31,4 +31,4 @@ CREATE TABLE multi_option_question_options (
     UNIQUE (question_id, display_order)
 );
 
-CREATE INDEX IDX_multi_option_question_options_questions on multi_option_question_options (question_id);
+CREATE INDEX IDX_multi_option_question_options_questions on multi_option_question_options(question_id);
