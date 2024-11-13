@@ -174,7 +174,7 @@ async fn main() -> Result<()> {
             patch(CampaignHandler::update_banner),
         )
         .route(
-            "api/v1/campaign/:campaign_id/application",
+            "/api/v1/campaign/:campaign_id/application",
             post(CampaignHandler::create_application),
         )
         .route(
