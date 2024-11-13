@@ -13,7 +13,6 @@ use axum::response::IntoResponse;
 pub struct RatingHandler;
 
 impl RatingHandler {
-    // TODO: are all the user permissions as required? Who should be able to do what with ratings?
     pub async fn create(
         State(state): State<AppState>,
         Path(application_id): Path<i64>,
