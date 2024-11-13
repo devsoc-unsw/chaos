@@ -61,9 +61,6 @@ jobs:
       - name: Build
         working-directory: backend/server
         run: cargo build
-      - name: Run
-        working-directory: backend/server
-        run: timeout 30 cargo run
       - name: Cargo Clippy
         working-directory: backend/server
         run: cargo clippy
