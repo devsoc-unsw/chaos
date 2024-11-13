@@ -16,13 +16,14 @@ impl RatingHandler {
     pub async fn create(
         State(state): State<AppState>,
         Path(application_id): Path<i64>,
-        _admin: ApplicationCreatorGivenApplicationId,
+        admin: ApplicationReviewerGivenApplicationId,
         mut transaction: DBTransaction<'_>,
         Json(new_rating): Json<NewRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Rating::create(
             new_rating,
             application_id,
+            admin.user_id,
             state.snowflake_generator,
             &mut transaction.tx,
         )

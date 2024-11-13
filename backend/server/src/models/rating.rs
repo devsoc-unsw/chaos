@@ -18,7 +18,6 @@ pub struct Rating {
 
 #[derive(Deserialize, Serialize)]
 pub struct NewRating {
-    pub rater_user_id: i64,
     pub rating: i32,
     pub comment: Option<String>,
 }
@@ -43,11 +42,11 @@ impl Rating {
     pub async fn create(
         new_rating: NewRating,
         application_id: i64,
+        rater_id: i64,
         mut snowflake_generator: SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         let rating_id = snowflake_generator.generate();
-        let rater_user_id = new_rating.rater_user_id;
         let rating = new_rating.rating;
         let comment = new_rating.comment;
 
@@ -58,7 +57,7 @@ impl Rating {
         ",
             rating_id,
             application_id,
-            rater_user_id,
+            rater_id,
             rating,
             comment
         )
