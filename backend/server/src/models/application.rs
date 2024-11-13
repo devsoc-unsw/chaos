@@ -364,16 +364,16 @@ impl Application {
         new_status: ApplicationStatus,
         pool: &Pool<Postgres>,
     ) -> Result<(), ChaosError> {
-        sqlx::query!(
+        _ = sqlx::query!(
             "
                 UPDATE applications
                 SET status = $2
-                WHERE id = $1;
+                WHERE id = $1 RETURNING id
             ",
             id,
             new_status as ApplicationStatus
         )
-        .execute(pool)
+        .fetch_one(pool)
         .await?;
 
         Ok(())
@@ -384,16 +384,16 @@ impl Application {
         new_status: ApplicationStatus,
         pool: &Pool<Postgres>,
     ) -> Result<(), ChaosError> {
-        sqlx::query!(
+        _ = sqlx::query!(
             "
                 UPDATE applications
                 SET private_status = $2
-                WHERE id = $1;
+                WHERE id = $1 RETURNING id
             ",
             id,
             new_status as ApplicationStatus
         )
-        .execute(pool)
+        .fetch_one(pool)
         .await?;
 
         Ok(())

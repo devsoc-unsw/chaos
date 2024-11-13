@@ -83,7 +83,7 @@ impl Rating {
             UPDATE application_ratings
             SET rating = $2, comment = $3, updated_at = $4
             WHERE id = $1
-            RETURNING id;
+            RETURNING id
         ",
             rating_id,
             rating,
@@ -145,7 +145,7 @@ impl Rating {
         let _ = sqlx::query!(
             "
             DELETE FROM application_ratings WHERE id = $1
-            RETURNING id;
+            RETURNING id
         ",
             rating_id
         )
