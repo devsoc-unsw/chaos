@@ -98,6 +98,7 @@ impl OrganisationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Organisation::remove_admin(id, request_body.user_id, &mut transaction.tx).await?;
 
+        transaction.tx.commit().await?;
         Ok((
             StatusCode::OK,
             "Successfully removed member from organisation",
@@ -112,6 +113,7 @@ impl OrganisationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Organisation::remove_member(id, request_body.user_id, &mut transaction.tx).await?;
 
+        transaction.tx.commit().await?;
         Ok((
             StatusCode::OK,
             "Successfully removed member from organisation",
