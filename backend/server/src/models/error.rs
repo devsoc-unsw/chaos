@@ -36,6 +36,9 @@ pub enum ChaosError {
 
     #[error("S3 error")]
     StorageError(#[from] s3::error::S3Error),
+
+    #[error("DotEnvy error")]
+    DotEnvyError(#[from] dotenvy::Error),
 }
 
 /// Implementation for converting errors into responses. Manages error code and message returned.
