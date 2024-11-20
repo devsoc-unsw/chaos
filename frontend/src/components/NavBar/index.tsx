@@ -1,5 +1,5 @@
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { NavLink, Link as RouterLink } from "react-router-dom";
 import tw, { styled } from "twin.macro";
 
@@ -7,6 +7,7 @@ import chaosImg from "assets/chaos.png";
 import Container from "components/Container";
 import Link from "components/Link";
 import Modal from "components/Modal";
+import { LoggedInContext } from "contexts/LoggedInContext";
 
 import { isLoggedIn } from "../../utils";
 
@@ -21,9 +22,17 @@ const NavButton = styled(NavLink, {
   "&:not(.active)": tw`before:absolute before:inset-0 before:rounded before:bg-gradient-to-r before:from-blue-700 before:to-indigo-700 before:opacity-0 before:transition-opacity before:duration-100 hover:before:opacity-[0.075]`,
 });
 
-const NavBar = ({ campaign }: { campaign: string }) => {
-  const loggedIn = isLoggedIn();
+const NavBar = ({
+  campaign,
+  loggedIn,
+}: {
+  campaign: string;
+  loggedIn: boolean;
+}) => {
   const [aboutOpen, setAboutOpen] = useState(false);
+  const setLoggedIn = useContext(LoggedInContext);
+
+  setLoggedIn(isLoggedIn());
 
   return (
     <header tw="fixed inset-x-0 z-10 bg-white bg-gradient-to-r from-[#9dbbfb55] to-[#a78bfa55] shadow-md">
@@ -55,7 +64,7 @@ const NavBar = ({ campaign }: { campaign: string }) => {
           <div tw="flex items-center gap-4">
             <span tw="border-l border-slate-500">&#x200b;</span>
             {loggedIn ? (
-              <AvatarButton />
+              <AvatarButton onLogout={() => setLoggedIn(false)} />
             ) : (
               // <a
               //   tw="rounded bg-indigo-400/30 px-3 py-1.5 text-black shadow transition-colors hover:bg-indigo-400/[0.42]"
