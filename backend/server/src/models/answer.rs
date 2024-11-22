@@ -358,27 +358,30 @@ impl AnswerData {
         multi_option_answers: Option<Vec<i64>>,
         ranking_answers: Option<Vec<i64>>,
     ) -> Self {
-        return if question_type == QuestionType::ShortAnswer {
-            let answer = short_answer_answer.expect("Data should exist for ShortAnswer variant");
-            AnswerData::ShortAnswer(answer)
-        } else if question_type == QuestionType::MultiChoice
-            || question_type == QuestionType::MultiSelect
-            || question_type == QuestionType::DropDown
-        {
-            let options =
-                multi_option_answers.expect("Data should exist for MultiOptionData variants");
-
-            match question_type {
-                QuestionType::MultiChoice => AnswerData::MultiChoice(options[0]),
-                QuestionType::MultiSelect => AnswerData::MultiSelect(options),
-                QuestionType::DropDown => AnswerData::DropDown(options[0]),
-                _ => AnswerData::ShortAnswer("".to_string()), // Should never be reached, hence return ShortAnswer
+        return match question_type {
+            QuestionType::ShortAnswer => {
+                let answer =
+                    short_answer_answer.expect("Data should exist for ShortAnswer variant");
+                AnswerData::ShortAnswer(answer)
             }
-        } else if question_type == QuestionType::Ranking {
-            let options = ranking_answers.expect("Data should exist for Ranking variant");
-            AnswerData::Ranking(options)
-        } else {
-            AnswerData::ShortAnswer("".to_string()) // Should never be reached, hence return ShortAnswer
+            QuestionType::MultiChoice | QuestionType::MultiSelect | QuestionType::DropDown => {
+                let options =
+                    multi_option_answers.expect("Data should exist for MultiOptionData variants");
+
+                match question_type {
+                    QuestionType::MultiChoice => AnswerData::MultiChoice(options[0]),
+                    QuestionType::MultiSelect => AnswerData::MultiSelect(options),
+                    QuestionType::DropDown => AnswerData::DropDown(options[0]),
+                    _ => AnswerData::ShortAnswer("".to_string()), // Should never be reached, hence return ShortAnswer
+                }
+            }
+            QuestionType::Ranking => {
+                let options = ranking_answers.expect("Data should exist for Ranking variant");
+                AnswerData::Ranking(options)
+            }
+            _ => {
+                AnswerData::ShortAnswer("".to_string()) // Should never be reached, hence return ShortAnswer
+            }
         };
     }
 
