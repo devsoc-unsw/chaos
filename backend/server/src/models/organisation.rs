@@ -115,13 +115,13 @@ impl Organisation {
     }
 
     pub async fn delete(id: i64, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
-        sqlx::query!(
+        _ = sqlx::query!(
             "
-            DELETE FROM organisations WHERE id = $1
+            DELETE FROM organisations WHERE id = $1 RETURNING id
         ",
             id
         )
-        .execute(pool)
+        .fetch_one(pool)
         .await?;
 
         Ok(())
@@ -175,6 +175,13 @@ impl Organisation {
         admin_id_list: Vec<i64>,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
+        let _ = sqlx::query!(
+            "SELECT id FROM organisations WHERE id = $1",
+            organisation_id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
         sqlx::query!(
             "DELETE FROM organisation_members WHERE organisation_id = $1 AND role = $2",
             organisation_id,
@@ -205,6 +212,13 @@ impl Organisation {
         member_id_list: Vec<i64>,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
+        let _ = sqlx::query!(
+            "SELECT id FROM organisations WHERE id = $1",
+            organisation_id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
         sqlx::query!(
             "DELETE FROM organisation_members WHERE organisation_id = $1 AND role = $2",
             organisation_id,
@@ -233,8 +247,15 @@ impl Organisation {
     pub async fn remove_admin(
         organisation_id: i64,
         admin_to_remove: i64,
-        pool: &Pool<Postgres>,
+        transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
+        let _ = sqlx::query!(
+            "SELECT id FROM organisations WHERE id = $1",
+            organisation_id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
         sqlx::query!(
             "
             UPDATE organisation_members SET role = $3 WHERE user_id = $1 AND organisation_id = $2
@@ -243,7 +264,7 @@ impl Organisation {
             organisation_id,
             OrganisationRole::User as OrganisationRole
         )
-        .execute(pool)
+        .execute(transaction.deref_mut())
         .await?;
 
         Ok(())
@@ -252,8 +273,15 @@ impl Organisation {
     pub async fn remove_member(
         organisation_id: i64,
         user_id: i64,
-        pool: &Pool<Postgres>,
+        transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
+        let _ = sqlx::query!(
+            "SELECT id FROM organisations WHERE id = $1",
+            organisation_id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
         sqlx::query!(
             "
             DELETE FROM organisation_members WHERE user_id = $1 AND organisation_id = $2
@@ -261,7 +289,7 @@ impl Organisation {
             user_id,
             organisation_id
         )
-        .execute(pool)
+        .execute(transaction.deref_mut())
         .await?;
 
         Ok(())
@@ -276,17 +304,17 @@ impl Organisation {
 
         let logo_id = Uuid::new_v4();
         let current_time = dt;
-        sqlx::query!(
+        _ = sqlx::query!(
             "
             UPDATE organisations
                 SET logo = $2, updated_at = $3
-                WHERE id = $1
+                WHERE id = $1 RETURNING id
         ",
             id,
             logo_id,
             current_time
         )
-        .execute(pool)
+        .fetch_one(pool)
         .await?;
 
         let upload_url =

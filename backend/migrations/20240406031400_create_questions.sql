@@ -5,7 +5,7 @@ CREATE TABLE questions (
     title TEXT NOT NULL,
     description TEXT,
     common BOOLEAN NOT NULL,
-    required BOOLEAN,
+    required BOOLEAN NOT NULL,
     question_type question_type NOT NULL,
     campaign_id BIGINT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -27,6 +27,30 @@ CREATE TABLE multi_option_question_options (
            REFERENCES questions(id)
            ON DELETE CASCADE
            ON UPDATE CASCADE
+       DEFERRABLE INITIALLY DEFERRED,
+    UNIQUE (question_id, display_order)
 );
 
-CREATE INDEX IDX_multi_option_question_options_questions on multi_option_question_options (question_id);
+CREATE INDEX IDX_multi_option_question_options_questions on multi_option_question_options(question_id);
+
+CREATE TABLE question_roles (
+    id BIGSERIAL PRIMARY KEY,
+    question_id BIGINT NOT NULL,
+    role_id BIGINT NOT NULL,
+    CONSTRAINT FK_question_roles_questions
+        FOREIGN KEY(question_id)
+            REFERENCES questions(id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+        DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT FK_question_roles_roles
+        FOREIGN KEY(role_id)
+            REFERENCES campaign_roles(id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+            DEFERRABLE INITIALLY DEFERRED,
+    UNIQUE (question_id, role_id)
+);
+
+CREATE INDEX IDX_question_roles_questions on question_roles(question_id);
+CREATE INDEX IDX_question_roles_roles on question_roles(role_id);

@@ -91,13 +91,14 @@ impl OrganisationHandler {
     }
 
     pub async fn remove_admin(
-        State(state): State<AppState>,
+        mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
         _super_user: SuperUser,
         Json(request_body): Json<AdminToRemove>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Organisation::remove_admin(id, request_body.user_id, &state.db).await?;
+        Organisation::remove_admin(id, request_body.user_id, &mut transaction.tx).await?;
 
+        transaction.tx.commit().await?;
         Ok((
             StatusCode::OK,
             "Successfully removed member from organisation",
@@ -105,13 +106,14 @@ impl OrganisationHandler {
     }
 
     pub async fn remove_member(
-        State(state): State<AppState>,
+        mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
         _admin: OrganisationAdmin,
         Json(request_body): Json<AdminToRemove>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Organisation::remove_member(id, request_body.user_id, &state.db).await?;
+        Organisation::remove_member(id, request_body.user_id, &mut transaction.tx).await?;
 
+        transaction.tx.commit().await?;
         Ok((
             StatusCode::OK,
             "Successfully removed member from organisation",

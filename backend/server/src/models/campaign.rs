@@ -96,11 +96,11 @@ impl Campaign {
         update: CampaignUpdate,
         pool: &Pool<Postgres>,
     ) -> Result<(), ChaosError> {
-        sqlx::query!(
+        _ = sqlx::query!(
             "
                 UPDATE campaigns
                 SET name = $1, description = $2, starts_at = $3, ends_at = $4
-                WHERE id = $5
+                WHERE id = $5 RETURNING id
             ",
             update.name,
             update.description,
@@ -108,7 +108,7 @@ impl Campaign {
             update.ends_at,
             id
         )
-        .execute(pool)
+        .fetch_one(pool)
         .await?;
 
         Ok(())
@@ -125,17 +125,17 @@ impl Campaign {
         let image_id = Uuid::new_v4();
         let current_time = dt;
 
-        sqlx::query!(
+        _ = sqlx::query!(
             "
                 UPDATE campaigns
                 SET cover_image = $1, updated_at = $2
-                WHERE id = $3
+                WHERE id = $3 RETURNING id
             ",
             image_id,
             current_time,
             id
         )
-        .execute(pool)
+        .fetch_one(pool)
         .await?;
 
         let upload_url =
@@ -146,13 +146,13 @@ impl Campaign {
 
     /// Delete a campaign from the database
     pub async fn delete(id: i64, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
-        sqlx::query!(
+        _ = sqlx::query!(
             "
-                DELETE FROM campaigns WHERE id = $1
+                DELETE FROM campaigns WHERE id = $1 RETURNING id
             ",
             id
         )
-        .execute(pool)
+        .fetch_one(pool)
         .await?;
 
         Ok(())

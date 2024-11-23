@@ -1,29 +1,29 @@
 use crate::models::app::AppState;
 use crate::models::auth::{
     ApplicationCreatorGivenApplicationId, ApplicationReviewerGivenApplicationId,
-    ApplicationReviewerGivenRatingId, RatingCreator, SuperUser,
+    ApplicationReviewerGivenRatingId, RatingCreator,
 };
 use crate::models::error::ChaosError;
-use crate::models::ratings::{NewRating, Rating};
+use crate::models::rating::{NewRating, Rating};
 use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 
-pub struct RatingsHandler;
+pub struct RatingHandler;
 
-impl RatingsHandler {
-    // TODO: are all the user permissions as required? Who should be able to do what with ratings?
-    pub async fn create_rating(
+impl RatingHandler {
+    pub async fn create(
         State(state): State<AppState>,
         Path(application_id): Path<i64>,
-        _admin: ApplicationCreatorGivenApplicationId,
+        admin: ApplicationReviewerGivenApplicationId,
         mut transaction: DBTransaction<'_>,
         Json(new_rating): Json<NewRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Rating::create(
             new_rating,
             application_id,
+            admin.user_id,
             state.snowflake_generator,
             &mut transaction.tx,
         )
