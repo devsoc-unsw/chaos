@@ -1,9 +1,9 @@
-use std::ops::DerefMut;
 use chrono::{DateTime, Utc};
 use s3::Bucket;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Transaction};
 use sqlx::{Pool, Postgres};
+use std::ops::DerefMut;
 use uuid::Uuid;
 
 use super::{error::ChaosError, storage::Storage};
@@ -63,7 +63,9 @@ pub struct CampaignBannerUpdate {
 
 impl Campaign {
     /// Get a list of all campaigns, both published and unpublished
-    pub async fn get_all(transaction: &mut Transaction<'_, Postgres>) -> Result<Vec<Campaign>, ChaosError> {
+    pub async fn get_all(
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<Campaign>, ChaosError> {
         let campaigns = sqlx::query_as!(
             Campaign,
             "
@@ -78,7 +80,10 @@ impl Campaign {
     }
 
     /// Get a campaign based on it's id
-    pub async fn get(id: i64, transaction: &mut Transaction<'_, Postgres>) -> Result<CampaignDetails, ChaosError> {
+    pub async fn get(
+        id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<CampaignDetails, ChaosError> {
         let campaign = sqlx::query_as!(
             CampaignDetails,
             "
@@ -97,7 +102,11 @@ impl Campaign {
         Ok(campaign)
     }
 
-    pub async fn check_slug_availability(organisation_id: i64, slug: String, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
+    pub async fn check_slug_availability(
+        organisation_id: i64,
+        slug: String,
+        pool: &Pool<Postgres>,
+    ) -> Result<(), ChaosError> {
         if !slug.is_ascii() {
             return Err(ChaosError::BadRequest);
         }
@@ -109,19 +118,23 @@ impl Campaign {
             organisation_id,
             slug
         )
-            .fetch_one(pool)
-            .await?
-            .exists
-            .expect("`exists` should always exist in this query result");
+        .fetch_one(pool)
+        .await?
+        .exists
+        .expect("`exists` should always exist in this query result");
 
         if exists {
-            return Err(ChaosError::BadRequest)
+            return Err(ChaosError::BadRequest);
         }
 
         Ok(())
     }
 
-    pub async fn get_by_slugs(organisation_slug: String, campaign_slug: String, transaction: &mut Transaction<'_, Postgres>) -> Result<CampaignDetails, ChaosError> {
+    pub async fn get_by_slugs(
+        organisation_slug: String,
+        campaign_slug: String,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<CampaignDetails, ChaosError> {
         let campaign = sqlx::query_as!(
             CampaignDetails,
             "
@@ -135,8 +148,8 @@ impl Campaign {
             campaign_slug,
             organisation_slug
         )
-            .fetch_one(transaction.deref_mut())
-            .await?;
+        .fetch_one(transaction.deref_mut())
+        .await?;
 
         Ok(campaign)
     }
@@ -197,7 +210,10 @@ impl Campaign {
     }
 
     /// Delete a campaign from the database
-    pub async fn delete(id: i64, transaction: &mut Transaction<'_, Postgres>) -> Result<(), ChaosError> {
+    pub async fn delete(
+        id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
         _ = sqlx::query!(
             "
                 DELETE FROM campaigns WHERE id = $1 RETURNING id

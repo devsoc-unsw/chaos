@@ -1,9 +1,9 @@
-use std::ops::DerefMut;
 use crate::models::error::ChaosError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
 use sqlx::{FromRow, Pool, Postgres, Transaction};
+use std::ops::DerefMut;
 
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Role {

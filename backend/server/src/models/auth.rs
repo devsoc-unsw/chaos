@@ -4,7 +4,8 @@ use crate::service::answer::user_is_answer_owner;
 use crate::service::application::{user_is_application_admin, user_is_application_owner};
 use crate::service::auth::{assert_is_super_user, extract_user_id_from_request};
 use crate::service::campaign::user_is_campaign_admin;
-use crate::service::jwt::decode_auth_token;
+use crate::service::email_template::user_is_email_template_admin;
+use crate::service::offer::{assert_user_is_offer_admin, assert_user_is_offer_recipient};
 use crate::service::organisation::assert_user_is_organisation_admin;
 use crate::service::question::user_is_question_admin;
 use crate::service::rating::{
@@ -16,12 +17,8 @@ use axum::extract::{FromRef, FromRequestParts, Path};
 use axum::http::request::Parts;
 use axum::response::{IntoResponse, Redirect, Response};
 use axum::{async_trait, RequestPartsExt};
-use axum_extra::{headers::Cookie, TypedHeader};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use crate::models::offer::Offer;
-use crate::service::email_template::user_is_email_template_admin;
-use crate::service::offer::{assert_user_is_offer_admin, assert_user_is_offer_recipient};
 
 // tells the web framework how to take the url query params they will have
 #[derive(Deserialize, Serialize)]
@@ -63,9 +60,7 @@ where
         let app_state = AppState::from_ref(state);
         let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
-        Ok(AuthUser {
-            user_id,
-        })
+        Ok(AuthUser { user_id })
     }
 }
 
@@ -88,9 +83,7 @@ where
 
         assert_is_super_user(user_id, &app_state.db).await?;
 
-        Ok(SuperUser {
-            user_id,
-        })
+        Ok(SuperUser { user_id })
     }
 }
 
@@ -293,7 +286,8 @@ where
             .await
             .map_err(|_| ChaosError::BadRequest)?;
 
-        assert_user_is_application_reviewer_given_rating_id(user_id, rating_id, &app_state.db).await?;
+        assert_user_is_application_reviewer_given_rating_id(user_id, rating_id, &app_state.db)
+            .await?;
 
         Ok(ApplicationReviewerGivenRatingId { user_id })
     }
@@ -320,7 +314,8 @@ where
             .await
             .map_err(|_| ChaosError::BadRequest)?;
 
-        assert_user_is_rating_creator_and_organisation_member(user_id, rating_id, &app_state.db).await?;
+        assert_user_is_rating_creator_and_organisation_member(user_id, rating_id, &app_state.db)
+            .await?;
 
         Ok(RatingCreator { user_id })
     }
@@ -340,7 +335,7 @@ where
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
-        let user_id= extract_user_id_from_request(parts, &app_state).await?;
+        let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
         let question_id = *parts
             .extract::<Path<HashMap<String, i64>>>()
@@ -427,7 +422,7 @@ where
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
-        let user_id= extract_user_id_from_request(parts, &app_state).await?;
+        let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
         let template_id = *parts
             .extract::<Path<HashMap<String, i64>>>()
@@ -456,7 +451,7 @@ where
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
-        let user_id= extract_user_id_from_request(parts, &app_state).await?;
+        let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
         let offer_id = *parts
             .extract::<Path<HashMap<String, i64>>>()
@@ -485,7 +480,7 @@ where
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
-        let user_id= extract_user_id_from_request(parts, &app_state).await?;
+        let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
         let offer_id = *parts
             .extract::<Path<HashMap<String, i64>>>()

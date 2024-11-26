@@ -1,11 +1,10 @@
-use axum::extract::{Path, Json};
-use axum::http::StatusCode;
-use axum::response::IntoResponse;
-use crate::models::auth::{AuthUser, CampaignAdmin, OfferAdmin, OfferRecipient};
+use crate::models::auth::{OfferAdmin, OfferRecipient};
 use crate::models::error::ChaosError;
 use crate::models::offer::{Offer, OfferReply};
 use crate::models::transaction::DBTransaction;
-
+use axum::extract::{Json, Path};
+use axum::http::StatusCode;
+use axum::response::IntoResponse;
 
 pub struct OfferHandler;
 impl OfferHandler {
@@ -23,7 +22,7 @@ impl OfferHandler {
     pub async fn delete(
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
-        _user: OfferAdmin
+        _user: OfferAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
         Offer::delete(id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;

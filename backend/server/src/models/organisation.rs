@@ -68,7 +68,7 @@ pub struct AdminToRemove {
 
 #[derive(Deserialize)]
 pub struct SlugCheck {
-    pub slug: String
+    pub slug: String,
 }
 
 impl Organisation {
@@ -112,7 +112,10 @@ impl Organisation {
         Ok(())
     }
 
-    pub async fn check_slug_availability(slug: String, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
+    pub async fn check_slug_availability(
+        slug: String,
+        pool: &Pool<Postgres>,
+    ) -> Result<(), ChaosError> {
         if !slug.is_ascii() {
             return Err(ChaosError::BadRequest);
         }
@@ -123,13 +126,13 @@ impl Organisation {
             ",
             slug
         )
-            .fetch_one(pool)
-            .await?
-            .exists
-            .expect("`exists` should always exist in this query result");
+        .fetch_one(pool)
+        .await?
+        .exists
+        .expect("`exists` should always exist in this query result");
 
         if exists {
-            return Err(ChaosError::BadRequest)
+            return Err(ChaosError::BadRequest);
         }
 
         Ok(())
@@ -151,7 +154,10 @@ impl Organisation {
         Ok(organisation)
     }
 
-    pub async fn get_by_slug(slug: String, pool: &Pool<Postgres>) -> Result<OrganisationDetails, ChaosError> {
+    pub async fn get_by_slug(
+        slug: String,
+        pool: &Pool<Postgres>,
+    ) -> Result<OrganisationDetails, ChaosError> {
         let organisation = sqlx::query_as!(
             OrganisationDetails,
             "
@@ -161,8 +167,8 @@ impl Organisation {
         ",
             slug
         )
-            .fetch_one(pool)
-            .await?;
+        .fetch_one(pool)
+        .await?;
 
         Ok(organisation)
     }
@@ -430,7 +436,13 @@ impl Organisation {
         Ok(())
     }
 
-    pub async fn create_email_template(organisation_id: i64, name: String, template: String, pool: &Pool<Postgres>, mut snowflake_generator: SnowflakeIdGenerator,) -> Result<i64, ChaosError> {
+    pub async fn create_email_template(
+        organisation_id: i64,
+        name: String,
+        template: String,
+        pool: &Pool<Postgres>,
+        mut snowflake_generator: SnowflakeIdGenerator,
+    ) -> Result<i64, ChaosError> {
         let id = snowflake_generator.generate();
 
         let _ = sqlx::query!(
@@ -438,11 +450,13 @@ impl Organisation {
                 INSERT INTO email_templates (id, organisation_id, name, template)
                     VALUES ($1, $2, $3, $4)
             ",
-            id, organisation_id,
-            name, template
+            id,
+            organisation_id,
+            name,
+            template
         )
-            .execute(pool)
-            .await?;
+        .execute(pool)
+        .await?;
 
         Ok(id)
     }

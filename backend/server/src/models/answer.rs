@@ -1,11 +1,9 @@
 use crate::models::error::ChaosError;
-use crate::models::question::{
-    MultiOptionData, MultiOptionQuestionOption, QuestionData, QuestionType, QuestionTypeParent,
-};
+use crate::models::question::QuestionType;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
-use sqlx::{Pool, Postgres, Transaction};
+use sqlx::{Postgres, Transaction};
 use std::ops::DerefMut;
 
 /// The `Answer` type that will be sent in API responses.
@@ -64,7 +62,6 @@ pub struct AnswerTypeApplicationId {
 
 impl Answer {
     pub async fn create(
-        user_id: i64,
         application_id: i64,
         question_id: i64,
         answer_data: AnswerData,
@@ -378,9 +375,6 @@ impl AnswerData {
             QuestionType::Ranking => {
                 let options = ranking_answers.expect("Data should exist for Ranking variant");
                 AnswerData::Ranking(options)
-            }
-            _ => {
-                AnswerData::ShortAnswer("".to_string()) // Should never be reached, hence return ShortAnswer
             }
         };
     }

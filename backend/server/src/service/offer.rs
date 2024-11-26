@@ -1,6 +1,6 @@
 use crate::models::error::ChaosError;
-use sqlx::{Pool, Postgres};
 use crate::models::offer::Offer;
+use sqlx::{Pool, Postgres};
 
 pub async fn assert_user_is_offer_admin(
     user_id: i64,
@@ -19,10 +19,10 @@ pub async fn assert_user_is_offer_admin(
         offer_id,
         user_id
     )
-        .fetch_one(pool)
-        .await?
-        .exists
-        .expect("`exists` should always exist in this query result");
+    .fetch_one(pool)
+    .await?
+    .exists
+    .expect("`exists` should always exist in this query result");
 
     if !is_admin {
         return Err(ChaosError::Unauthorized);
@@ -40,7 +40,7 @@ pub async fn assert_user_is_offer_recipient(
     let offer = Offer::get(offer_id, tx).await?;
 
     if offer.user_id != user_id {
-        return Err(ChaosError::Unauthorized)
+        return Err(ChaosError::Unauthorized);
     }
 
     Ok(())

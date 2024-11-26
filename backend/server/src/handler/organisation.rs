@@ -2,14 +2,16 @@ use crate::models;
 use crate::models::app::AppState;
 use crate::models::auth::SuperUser;
 use crate::models::auth::{AuthUser, OrganisationAdmin};
+use crate::models::campaign::Campaign;
+use crate::models::email_template::EmailTemplate;
 use crate::models::error::ChaosError;
-use crate::models::organisation::{AdminToRemove, AdminUpdateList, NewOrganisation, Organisation, SlugCheck};
+use crate::models::organisation::{
+    AdminToRemove, AdminUpdateList, NewOrganisation, Organisation, SlugCheck,
+};
 use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use crate::models::campaign::{Campaign};
-use crate::models::email_template::EmailTemplate;
 
 pub struct OrganisationHandler;
 
@@ -163,7 +165,7 @@ impl OrganisationHandler {
 
     pub async fn create_campaign(
         Path(id): Path<i64>,
-        State(mut state): State<AppState>,
+        State(state): State<AppState>,
         _admin: OrganisationAdmin,
         Json(request_body): Json<Campaign>,
     ) -> Result<impl IntoResponse, ChaosError> {
@@ -195,9 +197,9 @@ impl OrganisationHandler {
 
     pub async fn create_email_template(
         Path(id): Path<i64>,
-        State(mut state): State<AppState>,
+        State(state): State<AppState>,
         _admin: OrganisationAdmin,
-        Json(request_body): Json<models::email_template::EmailTemplate>
+        Json(request_body): Json<models::email_template::EmailTemplate>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Organisation::create_email_template(
             id,
@@ -205,7 +207,8 @@ impl OrganisationHandler {
             request_body.template,
             &state.db,
             state.snowflake_generator,
-        ).await?;
+        )
+        .await?;
 
         Ok((StatusCode::OK, "Successfully created email template"))
     }
@@ -213,7 +216,7 @@ impl OrganisationHandler {
     pub async fn get_all_email_templates(
         _user: OrganisationAdmin,
         Path(id): Path<i64>,
-        State(state): State<AppState>
+        State(state): State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let email_templates = EmailTemplate::get_all_by_organisation(id, &state.db).await?;
 

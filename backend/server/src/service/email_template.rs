@@ -17,10 +17,10 @@ pub async fn user_is_email_template_admin(
         template_id,
         user_id
     )
-        .fetch_one(pool)
-        .await?
-        .exists
-        .expect("`exists` should always exist in this query result");
+    .fetch_one(pool)
+    .await?
+    .exists
+    .expect("`exists` should always exist in this query result");
 
     if !is_admin {
         return Err(ChaosError::Unauthorized);

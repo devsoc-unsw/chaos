@@ -2,17 +2,16 @@ use crate::models;
 use crate::models::app::AppState;
 use crate::models::application::Application;
 use crate::models::application::NewApplication;
-use crate::models::auth::{AuthUser, SuperUser};
+use crate::models::auth::AuthUser;
 use crate::models::auth::CampaignAdmin;
-use crate::models::campaign::{Campaign};
+use crate::models::campaign::Campaign;
 use crate::models::error::ChaosError;
+use crate::models::offer::Offer;
 use crate::models::role::{Role, RoleUpdate};
 use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use crate::models::offer::Offer;
-use crate::models::organisation::{Organisation, SlugCheck};
 
 pub struct CampaignHandler;
 impl CampaignHandler {
@@ -31,7 +30,8 @@ impl CampaignHandler {
         Path((organisation_slug, campaign_slug)): Path<(String, String)>,
         _user: AuthUser,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let campaign = Campaign::get_by_slugs(organisation_slug, campaign_slug, &mut transaction.tx).await?;
+        let campaign =
+            Campaign::get_by_slugs(organisation_slug, campaign_slug, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(campaign)))
     }
@@ -62,7 +62,8 @@ impl CampaignHandler {
         Path(id): Path<i64>,
         _admin: CampaignAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let banner_url = Campaign::update_banner(id, &mut transaction.tx, &state.storage_bucket).await?;
+        let banner_url =
+            Campaign::update_banner(id, &mut transaction.tx, &state.storage_bucket).await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(banner_url)))
     }
@@ -133,9 +134,18 @@ impl CampaignHandler {
         State(state): State<AppState>,
         _admin: CampaignAdmin,
         mut transaction: DBTransaction<'_>,
-        Json(data): Json<Offer>
+        Json(data): Json<Offer>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let _ = Offer::create(id, data.application_id, data.email_template_id, data.role_id, data.expiry, &mut transaction.tx, state.snowflake_generator).await?;
+        let _ = Offer::create(
+            id,
+            data.application_id,
+            data.email_template_id,
+            data.role_id,
+            data.expiry,
+            &mut transaction.tx,
+            state.snowflake_generator,
+        )
+        .await?;
         transaction.tx.commit().await?;
 
         Ok((StatusCode::OK, "Successfully created offer"))
@@ -144,7 +154,7 @@ impl CampaignHandler {
     pub async fn get_offers(
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
-        _user: CampaignAdmin
+        _user: CampaignAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
         let offers = Offer::get_by_campaign(id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;

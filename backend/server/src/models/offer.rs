@@ -1,12 +1,10 @@
-use std::ops::DerefMut;
+use crate::models::email_template::EmailTemplate;
+use crate::models::error::ChaosError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
 use sqlx::{Postgres, Transaction};
-use crate::models::application::Application;
-use crate::models::campaign::Campaign;
-use crate::models::email_template::EmailTemplate;
-use crate::models::error::ChaosError;
+use std::ops::DerefMut;
 
 #[derive(Deserialize)]
 pub struct Offer {
@@ -44,7 +42,7 @@ pub enum OfferStatus {
     Draft,
     Sent,
     Accepted,
-    Declined
+    Declined,
 }
 
 #[derive(Deserialize)]
@@ -53,7 +51,15 @@ pub struct OfferReply {
 }
 
 impl Offer {
-    pub async fn create(campaign_id: i64, application_id: i64, email_template_id: i64, role_id: i64, expiry: DateTime<Utc>, transaction: &mut Transaction<'_, Postgres>, mut snowflake_id_generator: SnowflakeIdGenerator) -> Result<i64, ChaosError> {
+    pub async fn create(
+        campaign_id: i64,
+        application_id: i64,
+        email_template_id: i64,
+        role_id: i64,
+        expiry: DateTime<Utc>,
+        transaction: &mut Transaction<'_, Postgres>,
+        mut snowflake_id_generator: SnowflakeIdGenerator,
+    ) -> Result<i64, ChaosError> {
         let id = snowflake_id_generator.real_time_generate();
 
         let _ = sqlx::query!(
@@ -73,7 +79,10 @@ impl Offer {
         Ok(id)
     }
 
-    pub async fn get(id: i64, transaction: &mut Transaction<'_, Postgres>) -> Result<OfferDetails, ChaosError> {
+    pub async fn get(
+        id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<OfferDetails, ChaosError> {
         let offer = sqlx::query_as!(
             OfferDetails,
             r#"
@@ -97,13 +106,16 @@ impl Offer {
             "#,
             id
         )
-            .fetch_one(transaction.deref_mut())
-            .await?;
+        .fetch_one(transaction.deref_mut())
+        .await?;
 
         Ok(offer)
     }
 
-    pub async fn get_by_campaign(campaign_id: i64, transaction: &mut Transaction<'_, Postgres>) -> Result<Vec<OfferDetails>, ChaosError> {
+    pub async fn get_by_campaign(
+        campaign_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<OfferDetails>, ChaosError> {
         let offers = sqlx::query_as!(
             OfferDetails,
             r#"
@@ -127,13 +139,16 @@ impl Offer {
             "#,
             campaign_id
         )
-            .fetch_all(transaction.deref_mut())
-            .await?;
+        .fetch_all(transaction.deref_mut())
+        .await?;
 
         Ok(offers)
     }
 
-    pub async fn delete(id: i64, transaction: &mut Transaction<'_, Postgres>) -> Result<(), ChaosError> {
+    pub async fn delete(
+        id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
         let _ = sqlx::query!("DELETE FROM offers WHERE id = $1 RETURNING id", id)
             .fetch_one(transaction.deref_mut())
             .await?;
@@ -141,11 +156,15 @@ impl Offer {
         Ok(())
     }
 
-    pub async fn reply(id: i64, accept: bool, transaction: &mut Transaction<'_, Postgres>) -> Result<(), ChaosError> {
+    pub async fn reply(
+        id: i64,
+        accept: bool,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
         let offer = Offer::get(id, transaction).await?;
 
         if Utc::now() > offer.expiry {
-            return Err(ChaosError::BadRequest)
+            return Err(ChaosError::BadRequest);
         }
 
         let mut status = OfferStatus::Accepted;
@@ -153,22 +172,50 @@ impl Offer {
             status = OfferStatus::Declined;
         }
 
-        let _ = sqlx::query!("UPDATE offers SET status = $2 WHERE id = $1", id, status as OfferStatus)
-            .execute(transaction.deref_mut())
-            .await?;
+        let _ = sqlx::query!(
+            "UPDATE offers SET status = $2 WHERE id = $1",
+            id,
+            status as OfferStatus
+        )
+        .execute(transaction.deref_mut())
+        .await?;
 
         Ok(())
     }
 
-    pub async fn preview_email(id: i64, transaction: &mut Transaction<'_, Postgres>) -> Result<String, ChaosError> {
+    pub async fn preview_email(
+        id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<String, ChaosError> {
         let offer = Offer::get(id, transaction).await?;
-        let email = EmailTemplate::generate_email(offer.user_name, offer.role_name, offer.organisation_name, offer.campaign_name, offer.expiry, offer.email_template_id, transaction).await?;
+        let email = EmailTemplate::generate_email(
+            offer.user_name,
+            offer.role_name,
+            offer.organisation_name,
+            offer.campaign_name,
+            offer.expiry,
+            offer.email_template_id,
+            transaction,
+        )
+        .await?;
         Ok(email)
     }
 
-    pub async fn send_offer(id: i64, transaction: &mut Transaction<'_, Postgres>) -> Result<(), ChaosError> {
+    pub async fn send_offer(
+        id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
         let offer = Offer::get(id, transaction).await?;
-        let email = EmailTemplate::generate_email(offer.user_name, offer.role_name, offer.organisation_name, offer.campaign_name, offer.expiry, offer.email_template_id, transaction).await?;
+        let email = EmailTemplate::generate_email(
+            offer.user_name,
+            offer.role_name,
+            offer.organisation_name,
+            offer.campaign_name,
+            offer.expiry,
+            offer.email_template_id,
+            transaction,
+        )
+        .await?;
 
         // TODO: Send email e.g. send_email(offer.user_email, email).await?;
         Ok(())

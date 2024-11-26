@@ -1,11 +1,11 @@
-use axum::extract::{Path, State, Json};
-use axum::http::StatusCode;
-use axum::response::IntoResponse;
 use crate::models::app::AppState;
 use crate::models::auth::EmailTemplateAdmin;
 use crate::models::email_template::EmailTemplate;
 use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
+use axum::extract::{Json, Path, State};
+use axum::http::StatusCode;
+use axum::response::IntoResponse;
 
 pub struct EmailTemplateHandler;
 impl EmailTemplateHandler {
@@ -23,7 +23,7 @@ impl EmailTemplateHandler {
         _user: EmailTemplateAdmin,
         Path(id): Path<i64>,
         State(state): State<AppState>,
-        Json(request_body): Json<EmailTemplate>
+        Json(request_body): Json<EmailTemplate>,
     ) -> Result<impl IntoResponse, ChaosError> {
         EmailTemplate::update(id, request_body.name, request_body.template, &state.db).await?;
 

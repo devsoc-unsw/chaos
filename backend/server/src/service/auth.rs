@@ -1,14 +1,13 @@
-use axum::extract::FromRef;
+use crate::models::app::AppState;
+use crate::models::error::ChaosError;
+use crate::models::user::UserRole;
+use crate::service::jwt::decode_auth_token;
 use axum::http::request::Parts;
 use axum::RequestPartsExt;
 use axum_extra::headers::Cookie;
 use axum_extra::TypedHeader;
-use crate::models::user::UserRole;
 use snowflake::SnowflakeIdGenerator;
 use sqlx::{Pool, Postgres};
-use crate::models::app::AppState;
-use crate::models::error::ChaosError;
-use crate::service::jwt::decode_auth_token;
 
 /// Checks if a user exists in DB based on given email address. If so, their user_id is returned.
 /// Otherwise, a new user is created in the DB, and the new id is returned.
@@ -53,7 +52,9 @@ pub async fn assert_is_super_user(user_id: i64, pool: &Pool<Postgres>) -> Result
         UserRole::SuperUser as UserRole
     )
     .fetch_one(pool)
-    .await?.exists.expect("`exists` should always exist in this query result");
+    .await?
+    .exists
+    .expect("`exists` should always exist in this query result");
 
     if !is_super_user {
         return Err(ChaosError::Unauthorized);
@@ -62,7 +63,10 @@ pub async fn assert_is_super_user(user_id: i64, pool: &Pool<Postgres>) -> Result
     Ok(())
 }
 
-pub async fn extract_user_id_from_request(parts: &mut Parts, state: &AppState) -> Result<i64, ChaosError> {
+pub async fn extract_user_id_from_request(
+    parts: &mut Parts,
+    state: &AppState,
+) -> Result<i64, ChaosError> {
     let decoding_key = &state.decoding_key;
     let jwt_validator = &state.jwt_validator;
     let TypedHeader(cookies) = parts
