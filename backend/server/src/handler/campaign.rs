@@ -15,67 +15,75 @@ use axum::response::IntoResponse;
 pub struct CampaignHandler;
 impl CampaignHandler {
     pub async fn get(
-        State(state): State<AppState>,
+        mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
         _user: AuthUser,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let campaign = Campaign::get(id, &state.db).await?;
+        let campaign = Campaign::get(id, &mut transaction.tx).await?;
+        transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(campaign)))
     }
 
     pub async fn get_all(
-        State(state): State<AppState>,
+        mut transaction: DBTransaction<'_>,
         _user: AuthUser,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let campaigns = Campaign::get_all(&state.db).await?;
+        let campaigns = Campaign::get_all(&mut transaction.tx).await?;
+        transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(campaigns)))
     }
 
     pub async fn update(
-        State(state): State<AppState>,
+        mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
         _admin: CampaignAdmin,
         Json(request_body): Json<models::campaign::CampaignUpdate>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Campaign::update(id, request_body, &state.db).await?;
+        Campaign::update(id, request_body, &mut transaction.tx).await?;
+        transaction.tx.commit().await?;
         Ok((StatusCode::OK, "Successfully updated campaign"))
     }
 
     pub async fn update_banner(
+        mut transaction: DBTransaction<'_>,
         State(state): State<AppState>,
         Path(id): Path<i64>,
         _admin: CampaignAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let banner_url = Campaign::update_banner(id, &state.db, &state.storage_bucket).await?;
+        let banner_url = Campaign::update_banner(id, &mut transaction.tx, &state.storage_bucket).await?;
+        transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(banner_url)))
     }
 
     pub async fn delete(
-        State(state): State<AppState>,
+        mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
         _admin: CampaignAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Campaign::delete(id, &state.db).await?;
+        Campaign::delete(id, &mut transaction.tx).await?;
+        transaction.tx.commit().await?;
         Ok((StatusCode::OK, "Successfully deleted campaign"))
     }
 
     pub async fn create_role(
+        mut transaction: DBTransaction<'_>,
         State(state): State<AppState>,
         Path(id): Path<i64>,
         _admin: CampaignAdmin,
         Json(data): Json<RoleUpdate>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Role::create(id, data, &state.db, state.snowflake_generator).await?;
+        Role::create(id, data, &mut transaction.tx, state.snowflake_generator).await?;
+        transaction.tx.commit().await?;
         Ok((StatusCode::OK, "Successfully created role"))
     }
 
     pub async fn get_roles(
-        State(state): State<AppState>,
+        mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
         _user: AuthUser,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let roles = Role::get_all_in_campaign(id, &state.db).await?;
-
+        let roles = Role::get_all_in_campaign(id, &mut transaction.tx).await?;
+        transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(roles)))
     }
 

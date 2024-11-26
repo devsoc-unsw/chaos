@@ -1,7 +1,8 @@
+use std::ops::DerefMut;
 use chrono::{DateTime, Utc};
 use s3::Bucket;
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
+use sqlx::{FromRow, Transaction};
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
@@ -57,7 +58,7 @@ pub struct CampaignBannerUpdate {
 
 impl Campaign {
     /// Get a list of all campaigns, both published and unpublished
-    pub async fn get_all(pool: &Pool<Postgres>) -> Result<Vec<Campaign>, ChaosError> {
+    pub async fn get_all(transaction: &mut Transaction<'_, Postgres>) -> Result<Vec<Campaign>, ChaosError> {
         let campaigns = sqlx::query_as!(
             Campaign,
             "
@@ -65,14 +66,14 @@ impl Campaign {
                 JOIN organisations o on c.organisation_id = o.id
             "
         )
-        .fetch_all(pool)
+        .fetch_all(transaction.deref_mut())
         .await?;
 
         Ok(campaigns)
     }
 
     /// Get a campaign based on it's id
-    pub async fn get(id: i64, pool: &Pool<Postgres>) -> Result<CampaignDetails, ChaosError> {
+    pub async fn get(id: i64, transaction: &mut Transaction<'_, Postgres>) -> Result<CampaignDetails, ChaosError> {
         let campaign = sqlx::query_as!(
             CampaignDetails,
             "
@@ -84,7 +85,7 @@ impl Campaign {
             ",
             id
         )
-        .fetch_one(pool)
+        .fetch_one(transaction.deref_mut())
         .await?;
 
         Ok(campaign)
@@ -94,7 +95,7 @@ impl Campaign {
     pub async fn update(
         id: i64,
         update: CampaignUpdate,
-        pool: &Pool<Postgres>,
+        transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         _ = sqlx::query!(
             "
@@ -108,7 +109,7 @@ impl Campaign {
             update.ends_at,
             id
         )
-        .fetch_one(pool)
+        .fetch_one(transaction.deref_mut())
         .await?;
 
         Ok(())
@@ -118,7 +119,7 @@ impl Campaign {
     /// Returns the updated campaign
     pub async fn update_banner(
         id: i64,
-        pool: &Pool<Postgres>,
+        transaction: &mut Transaction<'_, Postgres>,
         storage_bucket: &Bucket,
     ) -> Result<CampaignBannerUpdate, ChaosError> {
         let dt = Utc::now();
@@ -135,7 +136,7 @@ impl Campaign {
             current_time,
             id
         )
-        .fetch_one(pool)
+        .fetch_one(transaction.deref_mut())
         .await?;
 
         let upload_url =
@@ -145,14 +146,14 @@ impl Campaign {
     }
 
     /// Delete a campaign from the database
-    pub async fn delete(id: i64, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
+    pub async fn delete(id: i64, transaction: &mut Transaction<'_, Postgres>) -> Result<(), ChaosError> {
         _ = sqlx::query!(
             "
                 DELETE FROM campaigns WHERE id = $1 RETURNING id
             ",
             id
         )
-        .fetch_one(pool)
+        .fetch_one(transaction.deref_mut())
         .await?;
 
         Ok(())
