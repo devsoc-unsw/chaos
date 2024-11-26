@@ -11,7 +11,7 @@ pub async fn user_is_email_template_admin(
             SELECT EXISTS(
                 SELECT 1 FROM email_templates et
                 JOIN organisation_members m on et.organisation_id = m.organisation_id
-                WHERE et.organisation_id = $1 AND m.user_id = $2 AND m.role = 'Admin'
+                WHERE et.id = $1 AND m.user_id = $2 AND m.role = 'Admin'
             )
         ",
         template_id,
