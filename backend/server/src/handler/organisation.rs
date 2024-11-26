@@ -3,11 +3,13 @@ use crate::models::app::AppState;
 use crate::models::auth::SuperUser;
 use crate::models::auth::{AuthUser, OrganisationAdmin};
 use crate::models::error::ChaosError;
-use crate::models::organisation::{AdminToRemove, AdminUpdateList, NewOrganisation, Organisation};
+use crate::models::organisation::{AdminToRemove, AdminUpdateList, NewOrganisation, Organisation, SlugCheck, CampaignSlugCheck};
 use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
+use crate::models::campaign::{Campaign};
+use crate::models::email_template::EmailTemplate;
 
 pub struct OrganisationHandler;
 
@@ -30,12 +32,31 @@ impl OrganisationHandler {
         Ok((StatusCode::OK, "Successfully created organisation"))
     }
 
+    pub async fn check_organisation_slug_availability(
+        State(state): State<AppState>,
+        _user: SuperUser,
+        Json(data): Json<SlugCheck>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        Organisation::check_slug_availability(data.slug, &state.db).await?;
+
+        Ok((StatusCode::OK, "Organisation slug is available"))
+    }
+
     pub async fn get(
         State(state): State<AppState>,
         Path(id): Path<i64>,
         _user: AuthUser,
     ) -> Result<impl IntoResponse, ChaosError> {
         let org = Organisation::get(id, &state.db).await?;
+        Ok((StatusCode::OK, Json(org)))
+    }
+
+    pub async fn get_by_slug(
+        State(state): State<AppState>,
+        Path(slug): Path<String>,
+        _user: AuthUser,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let org = Organisation::get_by_slug(slug, &state.db).await?;
         Ok((StatusCode::OK, Json(org)))
     }
 
@@ -143,19 +164,58 @@ impl OrganisationHandler {
         Path(id): Path<i64>,
         State(mut state): State<AppState>,
         _admin: OrganisationAdmin,
-        Json(request_body): Json<models::campaign::Campaign>,
+        Json(request_body): Json<Campaign>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Organisation::create_campaign(
             id,
+            request_body.slug,
             request_body.name,
             request_body.description,
             request_body.starts_at,
             request_body.ends_at,
             &state.db,
-            &mut state.snowflake_generator,
+            state.snowflake_generator,
         )
         .await?;
 
         Ok((StatusCode::OK, "Successfully created campaign"))
+    }
+
+    pub async fn check_campaign_slug_availability(
+        Path(organisation_id): Path<i64>,
+        State(state): State<AppState>,
+        _user: OrganisationAdmin,
+        Json(data): Json<SlugCheck>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        Campaign::check_slug_availability(organisation_id, data.slug, &state.db).await?;
+
+        Ok((StatusCode::OK, "Campaign slug is available"))
+    }
+
+    pub async fn create_email_template(
+        Path(id): Path<i64>,
+        State(mut state): State<AppState>,
+        _admin: OrganisationAdmin,
+        Json(request_body): Json<models::email_template::EmailTemplate>
+    ) -> Result<impl IntoResponse, ChaosError> {
+        Organisation::create_email_template(
+            id,
+            request_body.name,
+            request_body.template,
+            &state.db,
+            state.snowflake_generator,
+        ).await?;
+
+        Ok((StatusCode::OK, "Successfully created email template"))
+    }
+
+    pub async fn get_all_email_templates(
+        _user: OrganisationAdmin,
+        Path(id): Path<i64>,
+        State(state): State<AppState>
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let email_templates = EmailTemplate::get_all_by_organisation(id, &state.db).await?;
+
+        Ok((StatusCode::OK, Json(email_templates)))
     }
 }

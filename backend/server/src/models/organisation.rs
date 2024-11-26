@@ -79,6 +79,10 @@ impl Organisation {
         mut snowflake_generator: SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
+        if !slug.is_ascii() {
+            return Err(ChaosError::BadRequest);
+        }
+
         let id = snowflake_generator.generate();
 
         sqlx::query!(
@@ -109,6 +113,10 @@ impl Organisation {
     }
 
     pub async fn check_slug_availability(slug: String, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
+        if !slug.is_ascii() {
+            return Err(ChaosError::BadRequest);
+        }
+
         let exists = sqlx::query!(
             "
                 SELECT EXISTS(SELECT 1 FROM organisations WHERE slug = $1)
@@ -139,6 +147,22 @@ impl Organisation {
         )
         .fetch_one(pool)
         .await?;
+
+        Ok(organisation)
+    }
+
+    pub async fn get_by_slug(slug: String, pool: &Pool<Postgres>) -> Result<OrganisationDetails, ChaosError> {
+        let organisation = sqlx::query_as!(
+            OrganisationDetails,
+            "
+            SELECT id, slug, name, logo, created_at
+                FROM organisations
+                WHERE slug = $1
+        ",
+            slug
+        )
+            .fetch_one(pool)
+            .await?;
 
         Ok(organisation)
     }
@@ -381,6 +405,10 @@ impl Organisation {
         pool: &Pool<Postgres>,
         mut snowflake_id_generator: SnowflakeIdGenerator,
     ) -> Result<(), ChaosError> {
+        if !slug.is_ascii() {
+            return Err(ChaosError::BadRequest);
+        }
+
         let new_campaign_id = snowflake_id_generator.real_time_generate();
 
         sqlx::query!(

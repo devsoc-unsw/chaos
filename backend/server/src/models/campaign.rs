@@ -98,6 +98,10 @@ impl Campaign {
     }
 
     pub async fn check_slug_availability(organisation_id: i64, slug: String, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
+        if !slug.is_ascii() {
+            return Err(ChaosError::BadRequest);
+        }
+
         let exists = sqlx::query!(
             "
                 SELECT EXISTS(SELECT 1 FROM campaigns WHERE organisation_id = $1 AND slug = $2)

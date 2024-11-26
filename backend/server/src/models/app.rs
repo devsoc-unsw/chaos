@@ -96,6 +96,8 @@ pub async fn app() -> Result<Router, ChaosError> {
             "/api/v1/organisation/:organisation_id",
             get(OrganisationHandler::get).delete(OrganisationHandler::delete),
         )
+        .route("/api/v1/organisation/slug/:slug",
+        get(OrganisationHandler::get_by_slug))
         .route(
             "/api/v1/organisation/:organisation_id/campaign",
             post(OrganisationHandler::create_campaign),
