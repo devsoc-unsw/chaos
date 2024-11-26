@@ -3,7 +3,7 @@ use crate::models::app::AppState;
 use crate::models::auth::SuperUser;
 use crate::models::auth::{AuthUser, OrganisationAdmin};
 use crate::models::error::ChaosError;
-use crate::models::organisation::{AdminToRemove, AdminUpdateList, NewOrganisation, Organisation, SlugCheck, CampaignSlugCheck};
+use crate::models::organisation::{AdminToRemove, AdminUpdateList, NewOrganisation, Organisation, SlugCheck};
 use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
@@ -22,6 +22,7 @@ impl OrganisationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Organisation::create(
             data.admin,
+            data.slug,
             data.name,
             state.snowflake_generator,
             &mut transaction.tx,

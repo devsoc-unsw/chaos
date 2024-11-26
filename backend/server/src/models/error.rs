@@ -39,6 +39,12 @@ pub enum ChaosError {
 
     #[error("DotEnvy error")]
     DotEnvyError(#[from] dotenvy::Error),
+
+    #[error("Templating error")]
+    TemplateError(#[from] handlebars::TemplateError),
+
+    #[error("Template rendering error")]
+    TemplateRendorError(#[from] handlebars::RenderError),
 }
 
 /// Implementation for converting errors into responses. Manages error code and message returned.

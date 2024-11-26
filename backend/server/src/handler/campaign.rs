@@ -4,7 +4,7 @@ use crate::models::application::Application;
 use crate::models::application::NewApplication;
 use crate::models::auth::{AuthUser, SuperUser};
 use crate::models::auth::CampaignAdmin;
-use crate::models::campaign::{Campaign, CampaignSlugCheck};
+use crate::models::campaign::{Campaign};
 use crate::models::error::ChaosError;
 use crate::models::role::{Role, RoleUpdate};
 use crate::models::transaction::DBTransaction;

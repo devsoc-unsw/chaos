@@ -62,7 +62,7 @@ pub async fn assert_is_super_user(user_id: i64, pool: &Pool<Postgres>) -> Result
     Ok(())
 }
 
-pub async fn extract_user_id_from_request<S>(parts: &mut Parts, state: AppState) -> Result<i64, ChaosError> where S: Send + Sync {
+pub async fn extract_user_id_from_request(parts: &mut Parts, state: &AppState) -> Result<i64, ChaosError> {
     let decoding_key = &state.decoding_key;
     let jwt_validator = &state.jwt_validator;
     let TypedHeader(cookies) = parts

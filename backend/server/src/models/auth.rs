@@ -58,7 +58,8 @@ where
     type Rejection = ChaosError;
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
-        let user_id = extract_user_id_from_request(parts, app_state).await?;
+        let app_state = AppState::from_ref(state);
+        let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
         Ok(AuthUser {
             user_id,
@@ -81,7 +82,7 @@ where
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
-        let user_id = extract_user_id_from_request(parts, app_state).await?;
+        let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
         assert_is_super_user(user_id, &app_state.db).await?;
 
@@ -105,7 +106,7 @@ where
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
-        let user_id = extract_user_id_from_request(parts, app_state).await?;
+        let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
         let organisation_id = *parts
             .extract::<Path<HashMap<String, i64>>>()
@@ -134,7 +135,7 @@ where
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
-        let user_id = extract_user_id_from_request(parts, app_state).await?;
+        let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
         let campaign_id = *parts
             .extract::<Path<HashMap<String, i64>>>()
@@ -163,7 +164,7 @@ where
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
-        let user_id = extract_user_id_from_request(parts, app_state).await?;
+        let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
         let role_id = *parts
             .extract::<Path<HashMap<String, i64>>>()
@@ -192,7 +193,7 @@ where
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
-        let user_id = extract_user_id_from_request(parts, app_state).await?;
+        let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
         let Path(application_id) = parts
             .extract::<Path<i64>>()
@@ -227,7 +228,7 @@ where
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
-        let user_id = extract_user_id_from_request(parts, app_state).await?;
+        let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
         let Path(application_id) = parts
             .extract::<Path<i64>>()
@@ -255,7 +256,7 @@ where
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
-        let user_id = extract_user_id_from_request(parts, app_state).await?;
+        let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
         let Path(application_id) = parts
             .extract::<Path<i64>>()
@@ -283,7 +284,7 @@ where
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
-        let user_id = extract_user_id_from_request(parts, app_state).await?;
+        let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
         let Path(rating_id) = parts
             .extract::<Path<i64>>()
@@ -310,7 +311,7 @@ where
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
-        let user_id = extract_user_id_from_request(parts, app_state).await?;
+        let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
         let Path(rating_id) = parts
             .extract::<Path<i64>>()
@@ -337,7 +338,7 @@ where
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
-        let user_id= extract_user_id_from_request(parts, app_state).await?;
+        let user_id= extract_user_id_from_request(parts, &app_state).await?;
 
         let question_id = *parts
             .extract::<Path<HashMap<String, i64>>>()
@@ -366,7 +367,7 @@ where
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
-        let user_id = extract_user_id_from_request(parts, app_state).await?;
+        let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
         let application_id = *parts
             .extract::<Path<HashMap<String, i64>>>()
@@ -395,7 +396,7 @@ where
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
-        let user_id = extract_user_id_from_request(parts, app_state).await?;
+        let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
         let application_id = *parts
             .extract::<Path<HashMap<String, i64>>>()
@@ -424,7 +425,7 @@ where
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
-        let user_id= extract_user_id_from_request(parts, app_state).await?;
+        let user_id= extract_user_id_from_request(parts, &app_state).await?;
 
         let template_id = *parts
             .extract::<Path<HashMap<String, i64>>>()
