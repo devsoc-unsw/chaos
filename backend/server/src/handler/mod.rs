@@ -8,3 +8,4 @@ pub mod rating;
 pub mod role;
 pub mod user;
 pub mod email_template;
+pub mod offer;

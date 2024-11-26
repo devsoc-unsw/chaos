@@ -19,7 +19,9 @@ use axum::{async_trait, RequestPartsExt};
 use axum_extra::{headers::Cookie, TypedHeader};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use crate::models::offer::Offer;
 use crate::service::email_template::user_is_email_template_admin;
+use crate::service::offer::{assert_user_is_offer_admin, assert_user_is_offer_recipient};
 
 // tells the web framework how to take the url query params they will have
 #[derive(Deserialize, Serialize)]
@@ -431,11 +433,69 @@ where
             .extract::<Path<HashMap<String, i64>>>()
             .await
             .map_err(|_| ChaosError::BadRequest)?
-            .get("application_id")
+            .get("template_id")
             .ok_or(ChaosError::BadRequest)?;
 
         user_is_email_template_admin(user_id, template_id, &app_state.db).await?;
 
         Ok(EmailTemplateAdmin { user_id })
+    }
+}
+
+pub struct OfferAdmin {
+    pub user_id: i64,
+}
+
+#[async_trait]
+impl<S> FromRequestParts<S> for OfferAdmin
+where
+    AppState: FromRef<S>,
+    S: Send + Sync,
+{
+    type Rejection = ChaosError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let app_state = AppState::from_ref(state);
+        let user_id= extract_user_id_from_request(parts, &app_state).await?;
+
+        let offer_id = *parts
+            .extract::<Path<HashMap<String, i64>>>()
+            .await
+            .map_err(|_| ChaosError::BadRequest)?
+            .get("offer_id")
+            .ok_or(ChaosError::BadRequest)?;
+
+        assert_user_is_offer_admin(user_id, offer_id, &app_state.db).await?;
+
+        Ok(OfferAdmin { user_id })
+    }
+}
+
+pub struct OfferRecipient {
+    pub user_id: i64,
+}
+
+#[async_trait]
+impl<S> FromRequestParts<S> for OfferRecipient
+where
+    AppState: FromRef<S>,
+    S: Send + Sync,
+{
+    type Rejection = ChaosError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let app_state = AppState::from_ref(state);
+        let user_id= extract_user_id_from_request(parts, &app_state).await?;
+
+        let offer_id = *parts
+            .extract::<Path<HashMap<String, i64>>>()
+            .await
+            .map_err(|_| ChaosError::BadRequest)?
+            .get("offer_id")
+            .ok_or(ChaosError::BadRequest)?;
+
+        assert_user_is_offer_recipient(user_id, offer_id, &app_state.db).await?;
+
+        Ok(OfferRecipient { user_id })
     }
 }

@@ -19,6 +19,7 @@ use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 use std::env;
 use crate::handler::email_template::EmailTemplateHandler;
+use crate::handler::offer::OfferHandler;
 use crate::models::organisation::Organisation;
 
 #[derive(Clone)]
@@ -206,6 +207,14 @@ pub async fn app() -> Result<Router, ChaosError> {
             post(CampaignHandler::create_application),
         )
         .route(
+            "/api/v1/campaign/:campaign_id/offer",
+            post(CampaignHandler::create_offer)
+        )
+        .route(
+            "/api/v1/campaign/:campaign_id/offers",
+            get(CampaignHandler::get_offers)
+        )
+        .route(
             "/api/v1/application/:application_id",
             get(ApplicationHandler::get),
         )
@@ -238,6 +247,18 @@ pub async fn app() -> Result<Router, ChaosError> {
             get(EmailTemplateHandler::get)
                 .patch(EmailTemplateHandler::update)
                 .delete(EmailTemplateHandler::delete)
+        )
+        .route(
+            "/api/v1/offer/:offer_id",
+            get(OfferHandler::get).delete(OfferHandler::delete).post(OfferHandler::reply)
+        )
+        .route(
+            "/api/v1/offer/:offer_id/preview",
+            get(OfferHandler::preview_email)
+        )
+        .route(
+            "/api/v1/offer/:offer_id/send",
+            post(OfferHandler::send_offer)
         )
         .with_state(state))
 }

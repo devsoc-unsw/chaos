@@ -10,32 +10,32 @@ use crate::models::error::ChaosError;
 
 #[derive(Deserialize)]
 pub struct Offer {
-    id: i64,
-    campaign_id: i64,
-    application_id: i64,
-    email_template_id: i64,
-    role_id: i64,
-    expiry: DateTime<Utc>,
-    status: OfferStatus,
-    created_at: DateTime<Utc>,
+    pub id: i64,
+    pub campaign_id: i64,
+    pub application_id: i64,
+    pub email_template_id: i64,
+    pub role_id: i64,
+    pub expiry: DateTime<Utc>,
+    pub status: OfferStatus,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Deserialize, Serialize)]
 pub struct OfferDetails {
-    id: i64,
-    campaign_id: i64,
-    organisation_name: String,
-    campaign_name: String,
-    application_id: i64,
-    user_id: i64,
-    user_name: String,
-    user_email: String,
-    email_template_id: i64,
-    role_id: i64,
-    role_name: String,
-    expiry: DateTime<Utc>,
-    status: OfferStatus,
-    created_at: DateTime<Utc>,
+    pub id: i64,
+    pub campaign_id: i64,
+    pub organisation_name: String,
+    pub campaign_name: String,
+    pub application_id: i64,
+    pub user_id: i64,
+    pub user_name: String,
+    pub user_email: String,
+    pub email_template_id: i64,
+    pub role_id: i64,
+    pub role_name: String,
+    pub expiry: DateTime<Utc>,
+    pub status: OfferStatus,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Deserialize, Serialize, sqlx::Type, Clone, Debug)]
@@ -47,8 +47,13 @@ pub enum OfferStatus {
     Declined
 }
 
+#[derive(Deserialize)]
+pub struct OfferReply {
+    pub accept: bool,
+}
+
 impl Offer {
-    pub async fn create(campaign_id: i64, application_id: i64, email_template_id: i64, role_id: i64, expiry: DateTime<Utc>, transaction: &mut Transaction<'_, Postgres>, mut snowflake_id_generator: SnowflakeIdGenerator) -> Result<(), ChaosError> {
+    pub async fn create(campaign_id: i64, application_id: i64, email_template_id: i64, role_id: i64, expiry: DateTime<Utc>, transaction: &mut Transaction<'_, Postgres>, mut snowflake_id_generator: SnowflakeIdGenerator) -> Result<i64, ChaosError> {
         let id = snowflake_id_generator.real_time_generate();
 
         let _ = sqlx::query!(
@@ -65,7 +70,7 @@ impl Offer {
             .execute(transaction.deref_mut())
             .await?;
 
-        Ok(())
+        Ok(id)
     }
 
     pub async fn get(id: i64, transaction: &mut Transaction<'_, Postgres>) -> Result<OfferDetails, ChaosError> {
@@ -136,10 +141,10 @@ impl Offer {
         Ok(())
     }
 
-    pub async fn reply(id: i64, accepting_user_id: i64, accept: bool, transaction: &mut Transaction<'_, Postgres>) -> Result<(), ChaosError> {
+    pub async fn reply(id: i64, accept: bool, transaction: &mut Transaction<'_, Postgres>) -> Result<(), ChaosError> {
         let offer = Offer::get(id, transaction).await?;
 
-        if Utc::now() > offer.expiry || accepting_user_id != offer.user_id {
+        if Utc::now() > offer.expiry {
             return Err(ChaosError::BadRequest)
         }
 

@@ -11,6 +11,7 @@ use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
+use crate::models::offer::Offer;
 use crate::models::organisation::{Organisation, SlugCheck};
 
 pub struct CampaignHandler;
@@ -125,5 +126,29 @@ impl CampaignHandler {
         let applications = Application::get_from_campaign_id(id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(applications)))
+    }
+
+    pub async fn create_offer(
+        Path(id): Path<i64>,
+        State(state): State<AppState>,
+        _admin: CampaignAdmin,
+        mut transaction: DBTransaction<'_>,
+        Json(data): Json<Offer>
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let _ = Offer::create(id, data.application_id, data.email_template_id, data.role_id, data.expiry, &mut transaction.tx, state.snowflake_generator).await?;
+        transaction.tx.commit().await?;
+
+        Ok((StatusCode::OK, "Successfully created offer"))
+    }
+
+    pub async fn get_offers(
+        mut transaction: DBTransaction<'_>,
+        Path(id): Path<i64>,
+        _user: CampaignAdmin
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let offers = Offer::get_by_campaign(id, &mut transaction.tx).await?;
+        transaction.tx.commit().await?;
+
+        Ok((StatusCode::OK, Json(offers)))
     }
 }
