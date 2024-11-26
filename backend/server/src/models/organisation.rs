@@ -66,6 +66,11 @@ pub struct AdminToRemove {
     pub user_id: i64,
 }
 
+#[derive(Deserialize)]
+pub struct SlugCheck {
+    pub slug: String
+}
+
 impl Organisation {
     pub async fn create(
         admin_id: i64,
@@ -99,6 +104,25 @@ impl Organisation {
         )
         .execute(transaction.deref_mut())
         .await?;
+
+        Ok(())
+    }
+
+    pub async fn check_slug_availability(slug: String, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
+        let exists = sqlx::query!(
+            "
+                SELECT EXISTS(SELECT 1 FROM organisations WHERE slug = $1)
+            ",
+            slug
+        )
+            .fetch_one(pool)
+            .await?
+            .exists
+            .expect("`exists` should always exist in this query result");
+
+        if exists {
+            return Err(ChaosError::BadRequest)
+        }
 
         Ok(())
     }

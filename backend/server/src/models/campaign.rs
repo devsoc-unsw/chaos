@@ -97,6 +97,26 @@ impl Campaign {
         Ok(campaign)
     }
 
+    pub async fn check_slug_availability(organisation_id: i64, slug: String, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
+        let exists = sqlx::query!(
+            "
+                SELECT EXISTS(SELECT 1 FROM campaigns WHERE organisation_id = $1 AND slug = $2)
+            ",
+            organisation_id,
+            slug
+        )
+            .fetch_one(pool)
+            .await?
+            .exists
+            .expect("`exists` should always exist in this query result");
+
+        if exists {
+            return Err(ChaosError::BadRequest)
+        }
+
+        Ok(())
+    }
+
     pub async fn get_by_slugs(organisation_slug: String, campaign_slug: String, transaction: &mut Transaction<'_, Postgres>) -> Result<CampaignDetails, ChaosError> {
         let campaign = sqlx::query_as!(
             CampaignDetails,

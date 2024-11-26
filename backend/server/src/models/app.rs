@@ -18,6 +18,8 @@ use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 use std::env;
+use crate::handler::email_template::EmailTemplateHandler;
+use crate::models::organisation::Organisation;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -89,6 +91,7 @@ pub async fn app() -> Result<Router, ChaosError> {
             get(ApplicationHandler::get_from_curr_user),
         )
         .route("/api/v1/organisation", post(OrganisationHandler::create))
+        .route("/api/v1/organisation/slug_check", post(OrganisationHandler::check_organisation_slug_availability))
         .route(
             "/api/v1/organisation/:organisation_id",
             get(OrganisationHandler::get).delete(OrganisationHandler::delete),
@@ -98,8 +101,20 @@ pub async fn app() -> Result<Router, ChaosError> {
             post(OrganisationHandler::create_campaign),
         )
         .route(
+            "/api/v1/organisation/:organisation_id/campaign/slug_check",
+            post(OrganisationHandler::check_campaign_slug_availability)
+        )
+        .route(
             "/api/v1/organisation/:organisation_id/campaigns",
             get(OrganisationHandler::get_campaigns),
+        )
+        .route(
+            "/api/v1/organisation/:organisation_id/email_template",
+            post(OrganisationHandler::create_email_template)
+        )
+        .route(
+            "/api/v1/organisation/:organisation_id/email_templates",
+            get(OrganisationHandler::get_all_email_templates)
         )
         .route(
             "/api/v1/organisation/:organisation_id/logo",
@@ -163,6 +178,10 @@ pub async fn app() -> Result<Router, ChaosError> {
                 .put(CampaignHandler::update)
                 .delete(CampaignHandler::delete),
         )
+        .route(
+            "/api/v1/campaign/slug/:organisation_slug/:campaign_slug",
+            get(CampaignHandler::get_by_slugs)
+        )
         .route("/api/v1/campaign", get(CampaignHandler::get_all))
         .route(
             "/api/v1/campaign/:campaign_id/question",
@@ -211,6 +230,12 @@ pub async fn app() -> Result<Router, ChaosError> {
         .route(
             "/api/v1/answer/:answer_id",
             patch(AnswerHandler::update).delete(AnswerHandler::delete),
+        )
+        .route(
+            "/api/v1/email_template/:template_id",
+            get(EmailTemplateHandler::get)
+                .patch(EmailTemplateHandler::update)
+                .delete(EmailTemplateHandler::delete)
         )
         .with_state(state))
 }
