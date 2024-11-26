@@ -1,7 +1,14 @@
+use axum::extract::FromRef;
+use axum::http::request::Parts;
+use axum::RequestPartsExt;
+use axum_extra::headers::Cookie;
+use axum_extra::TypedHeader;
 use crate::models::user::UserRole;
-use anyhow::Result;
 use snowflake::SnowflakeIdGenerator;
 use sqlx::{Pool, Postgres};
+use crate::models::app::AppState;
+use crate::models::error::ChaosError;
+use crate::service::jwt::decode_auth_token;
 
 /// Checks if a user exists in DB based on given email address. If so, their user_id is returned.
 /// Otherwise, a new user is created in the DB, and the new id is returned.
@@ -13,7 +20,7 @@ pub async fn create_or_get_user_id(
     name: String,
     pool: Pool<Postgres>,
     mut snowflake_generator: SnowflakeIdGenerator,
-) -> Result<i64> {
+) -> Result<i64, ChaosError> {
     let possible_user_id = sqlx::query!(
         "SELECT id FROM users WHERE lower(email) = $1",
         email.to_lowercase()
@@ -39,14 +46,34 @@ pub async fn create_or_get_user_id(
     Ok(user_id)
 }
 
-pub async fn is_super_user(user_id: i64, pool: &Pool<Postgres>) -> Result<bool> {
+pub async fn assert_is_super_user(user_id: i64, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
     let is_super_user = sqlx::query!(
         "SELECT EXISTS(SELECT 1 FROM users WHERE id = $1 AND role = $2)",
         user_id,
         UserRole::SuperUser as UserRole
     )
     .fetch_one(pool)
-    .await?;
+    .await?.exists.expect("`exists` should always exist in this query result");
 
-    Ok(is_super_user.exists.unwrap())
+    if !is_super_user {
+        return Err(ChaosError::Unauthorized);
+    }
+
+    Ok(())
+}
+
+pub async fn extract_user_id_from_request<S>(parts: &mut Parts, state: AppState) -> Result<i64, ChaosError> where S: Send + Sync {
+    let decoding_key = &state.decoding_key;
+    let jwt_validator = &state.jwt_validator;
+    let TypedHeader(cookies) = parts
+        .extract::<TypedHeader<Cookie>>()
+        .await
+        .map_err(|_| ChaosError::NotLoggedIn)?;
+
+    let token = cookies.get("auth_token").ok_or(ChaosError::NotLoggedIn)?;
+
+    let claims =
+        decode_auth_token(token, decoding_key, jwt_validator).ok_or(ChaosError::NotLoggedIn)?;
+
+    Ok(claims.sub)
 }
