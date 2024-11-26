@@ -24,6 +24,16 @@ impl CampaignHandler {
         Ok((StatusCode::OK, Json(campaign)))
     }
 
+    pub async fn get_by_slugs(
+        mut transaction: DBTransaction<'_>,
+        Path((organisation_slug, campaign_slug)): Path<(String, String)>,
+        _user: AuthUser,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let campaign = Campaign::get_by_slugs(organisation_slug, campaign_slug, &mut transaction.tx).await?;
+        transaction.tx.commit().await?;
+        Ok((StatusCode::OK, Json(campaign)))
+    }
+
     pub async fn get_all(
         mut transaction: DBTransaction<'_>,
         _user: AuthUser,
