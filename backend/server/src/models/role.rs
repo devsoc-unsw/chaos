@@ -2,7 +2,8 @@ use crate::models::error::ChaosError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
-use sqlx::{FromRow, Pool, Postgres};
+use sqlx::{FromRow, Pool, Postgres, Transaction};
+use std::ops::DerefMut;
 
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Role {
@@ -41,7 +42,7 @@ impl Role {
     pub async fn create(
         campaign_id: i64,
         role_data: RoleUpdate,
-        pool: &Pool<Postgres>,
+        transaction: &mut Transaction<'_, Postgres>,
         mut snowflake_generator: SnowflakeIdGenerator,
     ) -> Result<(), ChaosError> {
         let id = snowflake_generator.generate();
@@ -59,7 +60,7 @@ impl Role {
             role_data.max_avaliable,
             role_data.finalised
         )
-        .execute(pool)
+        .execute(transaction.deref_mut())
         .await?;
 
         Ok(())
@@ -123,7 +124,7 @@ impl Role {
      */
     pub async fn get_all_in_campaign(
         campaign_id: i64,
-        pool: &Pool<Postgres>,
+        transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<RoleDetails>, ChaosError> {
         let roles = sqlx::query_as!(
             RoleDetails,
@@ -134,7 +135,7 @@ impl Role {
             ",
             campaign_id
         )
-        .fetch_all(pool)
+        .fetch_all(transaction.deref_mut())
         .await?;
 
         Ok(roles)

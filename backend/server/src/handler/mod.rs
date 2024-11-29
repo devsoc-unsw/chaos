@@ -2,6 +2,8 @@ pub mod answer;
 pub mod application;
 pub mod auth;
 pub mod campaign;
+pub mod email_template;
+pub mod offer;
 pub mod organisation;
 pub mod question;
 pub mod rating;

@@ -1,6 +1,6 @@
 use crate::models::answer::{Answer, NewAnswer};
 use crate::models::app::AppState;
-use crate::models::auth::{AnswerOwner, ApplicationOwner, AuthUser};
+use crate::models::auth::{AnswerOwner, ApplicationOwner};
 use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
@@ -13,14 +13,14 @@ pub struct AnswerHandler;
 impl AnswerHandler {
     pub async fn create(
         State(state): State<AppState>,
-        Path(path): Path<i64>,
-        user: AuthUser,
+        Path(application_id): Path<i64>,
+        _user: ApplicationOwner,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewAnswer>,
     ) -> Result<impl IntoResponse, ChaosError> {
+        // TODO: Check whether the question is contained in the campaign being applied to
         let id = Answer::create(
-            user.user_id,
-            data.application_id,
+            application_id,
             data.question_id,
             data.answer_data,
             state.snowflake_generator,

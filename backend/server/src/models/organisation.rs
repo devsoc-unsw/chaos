@@ -12,6 +12,7 @@ use uuid::Uuid;
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Organisation {
     pub id: i64,
+    pub slug: String,
     pub name: String,
     pub logo: Option<Uuid>,
     pub created_at: DateTime<Utc>,
@@ -22,6 +23,7 @@ pub struct Organisation {
 
 #[derive(Deserialize, Serialize)]
 pub struct NewOrganisation {
+    pub slug: String,
     pub name: String,
     pub admin: i64,
 }
@@ -29,6 +31,7 @@ pub struct NewOrganisation {
 #[derive(Deserialize, Serialize)]
 pub struct OrganisationDetails {
     pub id: i64,
+    pub slug: String,
     pub name: String,
     pub logo: Option<Uuid>,
     pub created_at: DateTime<Utc>,
@@ -63,21 +66,32 @@ pub struct AdminToRemove {
     pub user_id: i64,
 }
 
+#[derive(Deserialize)]
+pub struct SlugCheck {
+    pub slug: String,
+}
+
 impl Organisation {
     pub async fn create(
         admin_id: i64,
+        slug: String,
         name: String,
         mut snowflake_generator: SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
+        if !slug.is_ascii() {
+            return Err(ChaosError::BadRequest);
+        }
+
         let id = snowflake_generator.generate();
 
         sqlx::query!(
             "
-            INSERT INTO organisations (id, name)
-                VALUES ($1, $2)
+            INSERT INTO organisations (id, slug, name)
+                VALUES ($1, $2, $3)
         ",
             id,
+            slug,
             name
         )
         .execute(transaction.deref_mut())
@@ -98,15 +112,60 @@ impl Organisation {
         Ok(())
     }
 
+    pub async fn check_slug_availability(
+        slug: String,
+        pool: &Pool<Postgres>,
+    ) -> Result<(), ChaosError> {
+        if !slug.is_ascii() {
+            return Err(ChaosError::BadRequest);
+        }
+
+        let exists = sqlx::query!(
+            "
+                SELECT EXISTS(SELECT 1 FROM organisations WHERE slug = $1)
+            ",
+            slug
+        )
+        .fetch_one(pool)
+        .await?
+        .exists
+        .expect("`exists` should always exist in this query result");
+
+        if exists {
+            return Err(ChaosError::BadRequest);
+        }
+
+        Ok(())
+    }
+
     pub async fn get(id: i64, pool: &Pool<Postgres>) -> Result<OrganisationDetails, ChaosError> {
         let organisation = sqlx::query_as!(
             OrganisationDetails,
             "
-            SELECT id, name, logo, created_at
+            SELECT id, slug, name, logo, created_at
                 FROM organisations
                 WHERE id = $1
         ",
             id
+        )
+        .fetch_one(pool)
+        .await?;
+
+        Ok(organisation)
+    }
+
+    pub async fn get_by_slug(
+        slug: String,
+        pool: &Pool<Postgres>,
+    ) -> Result<OrganisationDetails, ChaosError> {
+        let organisation = sqlx::query_as!(
+            OrganisationDetails,
+            "
+            SELECT id, slug, name, logo, created_at
+                FROM organisations
+                WHERE slug = $1
+        ",
+            slug
         )
         .fetch_one(pool)
         .await?;
@@ -330,7 +389,7 @@ impl Organisation {
         let campaigns = sqlx::query_as!(
             OrganisationCampaign,
             "
-                SELECT id, name, cover_image, description, starts_at, ends_at
+                SELECT id, slug, name, cover_image, description, starts_at, ends_at
                 FROM campaigns
                 WHERE organisation_id = $1
             ",
@@ -344,22 +403,28 @@ impl Organisation {
 
     pub async fn create_campaign(
         organisation_id: i64,
+        slug: String,
         name: String,
         description: Option<String>,
         starts_at: DateTime<Utc>,
         ends_at: DateTime<Utc>,
         pool: &Pool<Postgres>,
-        snowflake_id_generator: &mut SnowflakeIdGenerator,
+        mut snowflake_id_generator: SnowflakeIdGenerator,
     ) -> Result<(), ChaosError> {
+        if !slug.is_ascii() {
+            return Err(ChaosError::BadRequest);
+        }
+
         let new_campaign_id = snowflake_id_generator.real_time_generate();
 
         sqlx::query!(
             "
-            INSERT INTO campaigns (id, organisation_id, name, description, starts_at, ends_at)
-                VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO campaigns (id, organisation_id, slug, name, description, starts_at, ends_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
         ",
             new_campaign_id,
             organisation_id,
+            slug,
             name,
             description,
             starts_at,
@@ -369,5 +434,30 @@ impl Organisation {
         .await?;
 
         Ok(())
+    }
+
+    pub async fn create_email_template(
+        organisation_id: i64,
+        name: String,
+        template: String,
+        pool: &Pool<Postgres>,
+        mut snowflake_generator: SnowflakeIdGenerator,
+    ) -> Result<i64, ChaosError> {
+        let id = snowflake_generator.generate();
+
+        let _ = sqlx::query!(
+            "
+                INSERT INTO email_templates (id, organisation_id, name, template)
+                    VALUES ($1, $2, $3, $4)
+            ",
+            id,
+            organisation_id,
+            name,
+            template
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(id)
     }
 }

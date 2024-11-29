@@ -1,6 +1,7 @@
 CREATE TABLE campaigns (
     id BIGINT PRIMARY KEY,
     organisation_id BIGINT NOT NULL,
+    slug TEXT NOT NULL,
     name TEXT NOT NULL,
     cover_image UUID,
     description TEXT,
@@ -12,7 +13,8 @@ CREATE TABLE campaigns (
        FOREIGN KEY(organisation_id)
            REFERENCES organisations(id)
            ON DELETE CASCADE
-           ON UPDATE CASCADE
+           ON UPDATE CASCADE,
+    UNIQUE (organisation_id, slug)
 );
 
 CREATE TABLE campaign_roles (

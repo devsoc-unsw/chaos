@@ -2,6 +2,8 @@ use crate::handler::answer::AnswerHandler;
 use crate::handler::application::ApplicationHandler;
 use crate::handler::auth::google_callback;
 use crate::handler::campaign::CampaignHandler;
+use crate::handler::email_template::EmailTemplateHandler;
+use crate::handler::offer::OfferHandler;
 use crate::handler::organisation::OrganisationHandler;
 use crate::handler::question::QuestionHandler;
 use crate::handler::rating::RatingHandler;
@@ -90,16 +92,36 @@ pub async fn app() -> Result<Router, ChaosError> {
         )
         .route("/api/v1/organisation", post(OrganisationHandler::create))
         .route(
+            "/api/v1/organisation/slug_check",
+            post(OrganisationHandler::check_organisation_slug_availability),
+        )
+        .route(
             "/api/v1/organisation/:organisation_id",
             get(OrganisationHandler::get).delete(OrganisationHandler::delete),
+        )
+        .route(
+            "/api/v1/organisation/slug/:slug",
+            get(OrganisationHandler::get_by_slug),
         )
         .route(
             "/api/v1/organisation/:organisation_id/campaign",
             post(OrganisationHandler::create_campaign),
         )
         .route(
+            "/api/v1/organisation/:organisation_id/campaign/slug_check",
+            post(OrganisationHandler::check_campaign_slug_availability),
+        )
+        .route(
             "/api/v1/organisation/:organisation_id/campaigns",
             get(OrganisationHandler::get_campaigns),
+        )
+        .route(
+            "/api/v1/organisation/:organisation_id/email_template",
+            post(OrganisationHandler::create_email_template),
+        )
+        .route(
+            "/api/v1/organisation/:organisation_id/email_templates",
+            get(OrganisationHandler::get_all_email_templates),
         )
         .route(
             "/api/v1/organisation/:organisation_id/logo",
@@ -163,6 +185,10 @@ pub async fn app() -> Result<Router, ChaosError> {
                 .put(CampaignHandler::update)
                 .delete(CampaignHandler::delete),
         )
+        .route(
+            "/api/v1/campaign/slug/:organisation_slug/:campaign_slug",
+            get(CampaignHandler::get_by_slugs),
+        )
         .route("/api/v1/campaign", get(CampaignHandler::get_all))
         .route(
             "/api/v1/campaign/:campaign_id/question",
@@ -185,6 +211,14 @@ pub async fn app() -> Result<Router, ChaosError> {
             post(CampaignHandler::create_application),
         )
         .route(
+            "/api/v1/campaign/:campaign_id/offer",
+            post(CampaignHandler::create_offer),
+        )
+        .route(
+            "/api/v1/campaign/:campaign_id/offers",
+            get(CampaignHandler::get_offers),
+        )
+        .route(
             "/api/v1/application/:application_id",
             get(ApplicationHandler::get),
         )
@@ -201,7 +235,7 @@ pub async fn app() -> Result<Router, ChaosError> {
             get(AnswerHandler::get_all_common_by_application),
         )
         .route(
-            "/api/v1/application/:applicaiton_id/answer",
+            "/api/v1/application/:application_id/answer",
             post(AnswerHandler::create),
         )
         .route(
@@ -211,6 +245,26 @@ pub async fn app() -> Result<Router, ChaosError> {
         .route(
             "/api/v1/answer/:answer_id",
             patch(AnswerHandler::update).delete(AnswerHandler::delete),
+        )
+        .route(
+            "/api/v1/email_template/:template_id",
+            get(EmailTemplateHandler::get)
+                .patch(EmailTemplateHandler::update)
+                .delete(EmailTemplateHandler::delete),
+        )
+        .route(
+            "/api/v1/offer/:offer_id",
+            get(OfferHandler::get)
+                .delete(OfferHandler::delete)
+                .post(OfferHandler::reply),
+        )
+        .route(
+            "/api/v1/offer/:offer_id/preview",
+            get(OfferHandler::preview_email),
+        )
+        .route(
+            "/api/v1/offer/:offer_id/send",
+            post(OfferHandler::send_offer),
         )
         .with_state(state))
 }
