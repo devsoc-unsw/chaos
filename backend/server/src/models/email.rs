@@ -1,8 +1,6 @@
 use crate::models::error::ChaosError;
 use lettre::transport::smtp::authentication::Credentials;
-use lettre::{
-    AsyncSmtpTransport, AsyncTransport, Message, SmtpTransport, Tokio1Executor, Transport,
-};
+use lettre::{AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor};
 use serde::Serialize;
 use std::env;
 
@@ -44,7 +42,7 @@ impl ChaosEmail {
         credentials: EmailCredentials,
     ) -> Result<AsyncSmtpTransport<Tokio1Executor>, ChaosError> {
         Ok(
-            AsyncSmtpTransport::<Tokio1Executor>::relay(&*credentials.email_host)?
+            AsyncSmtpTransport::<Tokio1Executor>::relay(&credentials.email_host)?
                 .credentials(credentials.credentials)
                 .build(),
         )

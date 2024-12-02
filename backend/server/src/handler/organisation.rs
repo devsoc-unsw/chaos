@@ -1,4 +1,3 @@
-use crate::models;
 use crate::models::app::AppState;
 use crate::models::auth::SuperUser;
 use crate::models::auth::{AuthUser, OrganisationAdmin};

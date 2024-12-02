@@ -37,7 +37,7 @@ impl Storage {
             endpoint,
         };
 
-        let bucket = Bucket::new(&*bucket_name, region, credentials).unwrap();
+        let bucket = Bucket::new(&bucket_name, region, credentials).unwrap();
         // TODO: Change depending on style used by provider
         // bucket.set_path_style();
 

@@ -491,18 +491,9 @@ impl QuestionType {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Default)]
 pub struct MultiOptionData {
     options: Vec<MultiOptionQuestionOption>,
-}
-
-impl Default for MultiOptionData {
-    fn default() -> Self {
-        Self {
-            // Return an empty vector to be replaced by real data later on.
-            options: vec![],
-        }
-    }
 }
 
 /// Each of these structs represent a row in the `multi_option_question_options`
@@ -530,7 +521,7 @@ impl QuestionData {
         question_type: QuestionType,
         multi_option_data: Option<sqlx::types::Json<Vec<MultiOptionQuestionOption>>>,
     ) -> Self {
-        return if question_type == QuestionType::ShortAnswer {
+        if question_type == QuestionType::ShortAnswer {
             QuestionData::ShortAnswer
         } else if question_type == QuestionType::MultiChoice
             || question_type == QuestionType::MultiSelect
@@ -551,7 +542,7 @@ impl QuestionData {
             }
         } else {
             QuestionData::ShortAnswer // Should never be reached, hence return ShortAnswer
-        };
+        }
     }
 
     pub fn validate(&self) -> Result<(), ChaosError> {
@@ -561,7 +552,7 @@ impl QuestionData {
             | Self::MultiSelect(data)
             | Self::DropDown(data)
             | Self::Ranking(data) => {
-                if data.options.len() > 0 {
+                if !data.options.is_empty() {
                     return Ok(());
                 };
 
