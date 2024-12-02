@@ -1,3 +1,4 @@
+use crate::models::email::EmailParts;
 use crate::models::error::ChaosError;
 use chrono::{DateTime, Local, Utc};
 use handlebars::Handlebars;
@@ -5,7 +6,6 @@ use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres, Transaction};
 use std::collections::HashMap;
 use std::ops::DerefMut;
-use crate::models::email::EmailParts;
 
 /// Email templates to update applicants
 /// Supported tags:
@@ -115,11 +115,6 @@ impl EmailTemplate {
         let subject = handlebars.render("template_subject", &data)?;
         let body = handlebars.render("template_body", &data)?;
 
-        Ok(
-            EmailParts {
-            subject,
-            body
-        }
-        )
+        Ok(EmailParts { subject, body })
     }
 }

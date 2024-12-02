@@ -1,7 +1,9 @@
-use std::env;
-use lettre::{AsyncSmtpTransport, AsyncTransport, Message, SmtpTransport, Tokio1Executor, Transport};
-use lettre::transport::smtp::authentication::Credentials;
 use crate::models::error::ChaosError;
+use lettre::transport::smtp::authentication::Credentials;
+use lettre::{
+    AsyncSmtpTransport, AsyncTransport, Message, SmtpTransport, Tokio1Executor, Transport,
+};
+use std::env;
 
 pub struct ChaosEmail;
 
@@ -32,15 +34,25 @@ impl ChaosEmail {
 
         EmailCredentials {
             credentials: Credentials::new(smtp_username, smtp_password),
-            email_host
+            email_host,
         }
     }
 
-    fn new_connection(credentials: EmailCredentials) -> Result<AsyncSmtpTransport<Tokio1Executor>, ChaosError> {
-        Ok(AsyncSmtpTransport::relay(&*credentials.email_host)?.credentials(credentials.credentials).build())
+    fn new_connection(
+        credentials: EmailCredentials,
+    ) -> Result<AsyncSmtpTransport<Tokio1Executor>, ChaosError> {
+        Ok(AsyncSmtpTransport::relay(&*credentials.email_host)?
+            .credentials(credentials.credentials)
+            .build())
     }
 
-    pub async fn send_message(recipient_name: String, recipient_email_address: String, subject: String, body: String, credentials: EmailCredentials) -> Result<(), ChaosError> {
+    pub async fn send_message(
+        recipient_name: String,
+        recipient_email_address: String,
+        subject: String,
+        body: String,
+        credentials: EmailCredentials,
+    ) -> Result<(), ChaosError> {
         let message = Message::builder()
             .from("Chaos Subcommittee Recruitment <noreply@chaos.devsoc.app>".parse()?)
             .reply_to("help@chaos.devsoc.app".parse()?)

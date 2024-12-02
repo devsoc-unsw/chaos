@@ -1,3 +1,4 @@
+use crate::models::app::AppState;
 use crate::models::auth::{OfferAdmin, OfferRecipient};
 use crate::models::error::ChaosError;
 use crate::models::offer::{Offer, OfferReply};
@@ -5,7 +6,6 @@ use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use crate::models::app::AppState;
 
 pub struct OfferHandler;
 impl OfferHandler {
@@ -58,7 +58,7 @@ impl OfferHandler {
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
         _user: OfferAdmin,
-        State(state): State<AppState>
+        State(state): State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Offer::send_offer(id, &mut transaction.tx, state.email_credentials).await?;
         transaction.tx.commit().await?;

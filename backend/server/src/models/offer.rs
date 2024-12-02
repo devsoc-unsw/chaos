@@ -1,3 +1,4 @@
+use crate::models::email::{ChaosEmail, EmailCredentials, EmailParts};
 use crate::models::email_template::EmailTemplate;
 use crate::models::error::ChaosError;
 use chrono::{DateTime, Utc};
@@ -5,7 +6,6 @@ use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
 use sqlx::{Postgres, Transaction};
 use std::ops::DerefMut;
-use crate::models::email::{ChaosEmail, EmailCredentials, EmailParts};
 
 #[derive(Deserialize)]
 pub struct Offer {
@@ -220,7 +220,14 @@ impl Offer {
         )
         .await?;
 
-        ChaosEmail::send_message(offer.user_name, offer.user_email, email_parts.subject, email_parts.body, email_credentials).await?;
+        ChaosEmail::send_message(
+            offer.user_name,
+            offer.user_email,
+            email_parts.subject,
+            email_parts.body,
+            email_credentials,
+        )
+        .await?;
         Ok(())
     }
 }

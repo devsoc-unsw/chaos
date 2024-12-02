@@ -9,6 +9,7 @@ use crate::handler::question::QuestionHandler;
 use crate::handler::rating::RatingHandler;
 use crate::handler::role::RoleHandler;
 use crate::handler::user::UserHandler;
+use crate::models::email::{ChaosEmail, EmailCredentials};
 use crate::models::error::ChaosError;
 use crate::models::storage::Storage;
 use axum::routing::{get, patch, post};
@@ -20,7 +21,6 @@ use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 use std::env;
-use crate::models::email::{ChaosEmail, EmailCredentials};
 
 #[derive(Clone)]
 pub struct AppState {
