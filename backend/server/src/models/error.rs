@@ -45,6 +45,15 @@ pub enum ChaosError {
 
     #[error("Template rendering error")]
     TemplateRendorError(#[from] handlebars::RenderError),
+
+    #[error("Lettre error")]
+    LettreError(#[from] lettre::error::Error),
+
+    #[error("Email address error")]
+    AddressError(#[from] lettre::address::AddressError),
+
+    #[error("SMTP transport error")]
+    SmtpTransportError(#[from] lettre::transport::smtp::Error),
 }
 
 /// Implementation for converting errors into responses. Manages error code and message returned.

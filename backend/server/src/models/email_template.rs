@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres, Transaction};
 use std::collections::HashMap;
 use std::ops::DerefMut;
+use crate::models::email::EmailParts;
 
 /// Email templates to update applicants
 /// Supported tags:
@@ -18,7 +19,8 @@ pub struct EmailTemplate {
     pub id: i64,
     pub organisation_id: i64,
     pub name: String,
-    pub template: String,
+    pub template_subject: String,
+    pub template_body: String,
 }
 
 impl EmailTemplate {
@@ -55,16 +57,18 @@ impl EmailTemplate {
     pub async fn update(
         id: i64,
         name: String,
-        template: String,
+        template_subject: String,
+        template_body: String,
         pool: &Pool<Postgres>,
     ) -> Result<(), ChaosError> {
         let _ = sqlx::query!(
             "
-                UPDATE email_templates SET name = $2, template = $3 WHERE id = $1 RETURNING id
+                UPDATE email_templates SET name = $2, template_subject = $3, template_body = $4 WHERE id = $1 RETURNING id
             ",
             id,
             name,
-            template
+            template_subject,
+            template_body
         )
         .fetch_one(pool)
         .await?;
@@ -88,11 +92,12 @@ impl EmailTemplate {
         expiry_date: DateTime<Utc>,
         email_template_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<String, ChaosError> {
+    ) -> Result<EmailParts, ChaosError> {
         let template = EmailTemplate::get(email_template_id, transaction).await?;
 
         let mut handlebars = Handlebars::new();
-        handlebars.register_template_string("template", template.template)?;
+        handlebars.register_template_string("template_subject", template.template_subject)?;
+        handlebars.register_template_string("template_body", template.template_body)?;
 
         let mut data = HashMap::new();
         data.insert("name", name);
@@ -107,8 +112,14 @@ impl EmailTemplate {
                 .to_string(),
         );
 
-        let final_string = handlebars.render("template", &data)?;
+        let subject = handlebars.render("template_subject", &data)?;
+        let body = handlebars.render("template_body", &data)?;
 
-        Ok(final_string)
+        Ok(
+            EmailParts {
+            subject,
+            body
+        }
+        )
     }
 }

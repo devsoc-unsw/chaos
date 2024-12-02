@@ -20,6 +20,7 @@ use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 use std::env;
+use crate::models::email::{ChaosEmail, EmailCredentials};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -31,6 +32,7 @@ pub struct AppState {
     pub jwt_validator: Validation,
     pub snowflake_generator: SnowflakeIdGenerator,
     pub storage_bucket: Bucket,
+    pub email_credentials: EmailCredentials,
 }
 
 pub async fn app() -> Result<Router, ChaosError> {
@@ -65,6 +67,9 @@ pub async fn app() -> Result<Router, ChaosError> {
     // Initialise S3 bucket
     let storage_bucket = Storage::init_bucket();
 
+    // Initialise email credentials
+    let email_credentials = ChaosEmail::setup_credentials();
+
     // Add all data to AppState
     let state = AppState {
         db: pool,
@@ -75,6 +80,7 @@ pub async fn app() -> Result<Router, ChaosError> {
         jwt_validator,
         snowflake_generator,
         storage_bucket,
+        email_credentials,
     };
 
     Ok(Router::new()

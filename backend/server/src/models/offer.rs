@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
 use sqlx::{Postgres, Transaction};
 use std::ops::DerefMut;
+use crate::models::email::{ChaosEmail, EmailCredentials, EmailParts};
 
 #[derive(Deserialize)]
 pub struct Offer {
@@ -186,9 +187,9 @@ impl Offer {
     pub async fn preview_email(
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<String, ChaosError> {
+    ) -> Result<EmailParts, ChaosError> {
         let offer = Offer::get(id, transaction).await?;
-        let email = EmailTemplate::generate_email(
+        let email_parts = EmailTemplate::generate_email(
             offer.user_name,
             offer.role_name,
             offer.organisation_name,
@@ -198,15 +199,17 @@ impl Offer {
             transaction,
         )
         .await?;
-        Ok(email)
+
+        Ok(email_parts)
     }
 
     pub async fn send_offer(
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
+        email_credentials: EmailCredentials,
     ) -> Result<(), ChaosError> {
         let offer = Offer::get(id, transaction).await?;
-        let email = EmailTemplate::generate_email(
+        let email_parts = EmailTemplate::generate_email(
             offer.user_name,
             offer.role_name,
             offer.organisation_name,
@@ -217,7 +220,7 @@ impl Offer {
         )
         .await?;
 
-        // TODO: Send email e.g. send_email(offer.user_email, email).await?;
+        ChaosEmail::send_message(offer.user_name, offer.user_email, email_parts.subject, email_parts.body, email_credentials).await?;
         Ok(())
     }
 }
