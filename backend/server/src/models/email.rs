@@ -3,6 +3,7 @@ use lettre::transport::smtp::authentication::Credentials;
 use lettre::{
     AsyncSmtpTransport, AsyncTransport, Message, SmtpTransport, Tokio1Executor, Transport,
 };
+use serde::Serialize;
 use std::env;
 
 pub struct ChaosEmail;
@@ -13,6 +14,7 @@ pub struct EmailCredentials {
     pub email_host: String,
 }
 
+#[derive(Serialize)]
 pub struct EmailParts {
     pub subject: String,
     pub body: String,
@@ -41,9 +43,11 @@ impl ChaosEmail {
     fn new_connection(
         credentials: EmailCredentials,
     ) -> Result<AsyncSmtpTransport<Tokio1Executor>, ChaosError> {
-        Ok(AsyncSmtpTransport::relay(&*credentials.email_host)?
-            .credentials(credentials.credentials)
-            .build())
+        Ok(
+            AsyncSmtpTransport::<Tokio1Executor>::relay(&*credentials.email_host)?
+                .credentials(credentials.credentials)
+                .build(),
+        )
     }
 
     pub async fn send_message(

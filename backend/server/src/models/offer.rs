@@ -210,7 +210,7 @@ impl Offer {
     ) -> Result<(), ChaosError> {
         let offer = Offer::get(id, transaction).await?;
         let email_parts = EmailTemplate::generate_email(
-            offer.user_name,
+            offer.user_name.clone(),
             offer.role_name,
             offer.organisation_name,
             offer.campaign_name,

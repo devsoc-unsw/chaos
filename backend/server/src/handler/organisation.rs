@@ -199,12 +199,13 @@ impl OrganisationHandler {
         Path(id): Path<i64>,
         State(state): State<AppState>,
         _admin: OrganisationAdmin,
-        Json(request_body): Json<models::email_template::EmailTemplate>,
+        Json(request_body): Json<EmailTemplate>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Organisation::create_email_template(
             id,
             request_body.name,
-            request_body.template,
+            request_body.template_subject,
+            request_body.template_body,
             &state.db,
             state.snowflake_generator,
         )

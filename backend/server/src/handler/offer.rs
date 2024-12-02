@@ -48,10 +48,10 @@ impl OfferHandler {
         Path(id): Path<i64>,
         _user: OfferAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let string = Offer::preview_email(id, &mut transaction.tx).await?;
+        let email_parts = Offer::preview_email(id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, string))
+        Ok((StatusCode::OK, Json(email_parts)))
     }
 
     pub async fn send_offer(
