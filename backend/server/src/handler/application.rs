@@ -1,5 +1,5 @@
 use crate::models::app::AppState;
-use crate::models::application::{Application, ApplicationRoleUpdate, ApplicationStatus};
+use crate::models::application::{Application, ApplicationRoleUpdate, ApplicationStatus, OpenApplicationByApplicationId};
 use crate::models::auth::{ApplicationAdmin, ApplicationOwner, AuthUser};
 use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
@@ -62,6 +62,7 @@ impl ApplicationHandler {
 
     pub async fn submit(
         _user: ApplicationOwner,
+        _: OpenApplicationByApplicationId,
         Path(application_id): Path<i64>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {

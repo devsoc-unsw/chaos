@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use crate::models::error::ChaosError;
 use crate::models::user::UserDetails;
 use chrono::{DateTime, Utc};
@@ -5,6 +6,12 @@ use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
 use sqlx::{FromRow, Pool, Postgres, Transaction};
 use std::ops::DerefMut;
+use axum::{async_trait, RequestPartsExt};
+use axum::extract::{FromRef, FromRequestParts, Path};
+use axum::http::request::Parts;
+use crate::models::app::AppState;
+use crate::service::answer::assert_answer_application_is_open;
+use crate::service::application::{assert_application_is_open};
 
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Application {
@@ -417,14 +424,6 @@ impl Application {
         roles: Vec<ApplicationRole>,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        // Users can only update applications as long as they have not submitted
-        let _ = sqlx::query!(
-            "SELECT id FROM applications WHERE id = $1 AND submitted = false",
-            id
-        )
-        .fetch_one(transaction.deref_mut())
-        .await?;
-
         sqlx::query!(
             "
                 DELETE FROM application_roles WHERE application_id = $1
@@ -456,11 +455,9 @@ impl Application {
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        // Can only submit once
         let _ = sqlx::query!(
             "
-                UPDATE applications SET submitted = true
-                WHERE id = $1 AND submitted = false RETURNING id
+                UPDATE applications SET submitted = true WHERE id = $1 RETURNING id
             ",
             id
         )
@@ -468,5 +465,58 @@ impl Application {
         .await?;
 
         Ok(())
+    }
+}
+
+
+pub struct OpenApplicationByApplicationId;
+
+#[async_trait]
+impl<S> FromRequestParts<S> for OpenApplicationByApplicationId
+where
+    AppState: FromRef<S>,
+    S: Send + Sync,
+{
+    type Rejection = ChaosError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let app_state = AppState::from_ref(state);
+
+        let application_id = *parts
+            .extract::<Path<HashMap<String, i64>>>()
+            .await
+            .map_err(|_| ChaosError::BadRequest)?
+            .get("application_id")
+            .ok_or(ChaosError::BadRequest)?;
+
+        assert_application_is_open(application_id, &app_state.db).await?;
+
+        Ok(OpenApplicationByApplicationId)
+    }
+}
+
+pub struct OpenApplicationByAnswerId;
+
+#[async_trait]
+impl<S> FromRequestParts<S> for OpenApplicationByAnswerId
+where
+    AppState: FromRef<S>,
+    S: Send + Sync,
+{
+    type Rejection = ChaosError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let app_state = AppState::from_ref(state);
+
+        let answer_id = *parts
+            .extract::<Path<HashMap<String, i64>>>()
+            .await
+            .map_err(|_| ChaosError::BadRequest)?
+            .get("application_id")
+            .ok_or(ChaosError::BadRequest)?;
+
+        assert_answer_application_is_open(answer_id, &app_state.db).await?;
+
+        Ok(OpenApplicationByAnswerId)
     }
 }

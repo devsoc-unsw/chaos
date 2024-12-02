@@ -19,6 +19,9 @@ pub enum ChaosError {
     #[error("Bad request")]
     BadRequest,
 
+    #[error("Application closed")]
+    ApplicationClosed,
+
     #[error("SQLx error")]
     DatabaseError(#[from] sqlx::Error),
 
@@ -66,6 +69,7 @@ impl IntoResponse for ChaosError {
                 (StatusCode::FORBIDDEN, "Forbidden operation").into_response()
             }
             ChaosError::BadRequest => (StatusCode::BAD_REQUEST, "Bad request").into_response(),
+            ChaosError::ApplicationClosed => (StatusCode::BAD_REQUEST, "Application closed").into_response(),
             ChaosError::DatabaseError(db_error) => match db_error {
                 // We only care about the RowNotFound error, as others are miscellaneous DB errors.
                 sqlx::Error::RowNotFound => (StatusCode::NOT_FOUND, "Not found").into_response(),

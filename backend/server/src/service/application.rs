@@ -1,3 +1,4 @@
+use chrono::Utc;
 use crate::models::error::ChaosError;
 use sqlx::{Pool, Postgres};
 
@@ -56,6 +57,29 @@ pub async fn user_is_application_owner(
 
     if !is_owner {
         return Err(ChaosError::Unauthorized);
+    }
+
+    Ok(())
+}
+
+pub async fn assert_application_is_open(
+    application_id: i64,
+    pool: &Pool<Postgres>,
+) -> Result<(), ChaosError> {
+    let time = Utc::now();
+    let application = sqlx::query!(
+        "
+            SELECT submitted, c.ends_at FROM applications a
+            JOIN campaigns c on c.id = a.campaign_id
+            WHERE a.id = $1
+        ",
+        application_id
+    )
+        .fetch_one(pool)
+        .await?;
+
+    if application.submitted || application.ends_at <= time {
+        return Err(ChaosError::ApplicationClosed)
     }
 
     Ok(())

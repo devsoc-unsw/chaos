@@ -7,6 +7,7 @@ use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use serde_json::json;
+use crate::models::application::{OpenApplicationByAnswerId, OpenApplicationByApplicationId};
 
 pub struct AnswerHandler;
 
@@ -15,6 +16,7 @@ impl AnswerHandler {
         State(state): State<AppState>,
         Path(application_id): Path<i64>,
         _user: ApplicationOwner,
+        _: OpenApplicationByApplicationId,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewAnswer>,
     ) -> Result<impl IntoResponse, ChaosError> {
@@ -63,6 +65,7 @@ impl AnswerHandler {
     pub async fn update(
         Path(answer_id): Path<i64>,
         _owner: AnswerOwner,
+        _: OpenApplicationByAnswerId,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewAnswer>,
     ) -> Result<impl IntoResponse, ChaosError> {
@@ -76,6 +79,7 @@ impl AnswerHandler {
     pub async fn delete(
         Path(answer_id): Path<i64>,
         _owner: AnswerOwner,
+        _: OpenApplicationByAnswerId,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Answer::delete(answer_id, &mut transaction.tx).await?;
