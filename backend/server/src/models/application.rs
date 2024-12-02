@@ -70,7 +70,7 @@ pub struct ApplicationAppliedRoleDetails {
 
 #[derive(Deserialize)]
 pub struct ApplicationRoleUpdate {
-    pub roles: Vec<i64>
+    pub roles: Vec<ApplicationRole>,
 }
 
 #[derive(Deserialize, Serialize, sqlx::Type, Clone, Debug)]
@@ -123,7 +123,7 @@ impl Application {
     }
 
     /*
-       Get Application given an application id
+       Get Application given an application id. Used by application viewers
     */
     pub async fn get(
         id: i64,
@@ -138,7 +138,7 @@ impl Application {
                 u.pronouns AS user_pronouns, u.degree_name AS user_degree_name,
                 u.degree_starting_year AS user_degree_starting_year
                 FROM applications a LEFT JOIN users u ON u.id = a.user_id
-                WHERE a.id = $1
+                WHERE a.id = $1 AND a.submitted = true
             ",
             id
         )
@@ -180,7 +180,7 @@ impl Application {
     }
 
     /*
-       Get All applications that apply for a given role
+       Get All applications that apply for a given role. Used by application viewers
     */
     pub async fn get_from_role_id(
         role_id: i64,
@@ -195,7 +195,7 @@ impl Application {
                 u.pronouns AS user_pronouns, u.degree_name AS user_degree_name,
                 u.degree_starting_year AS user_degree_starting_year
                 FROM applications a LEFT JOIN users u ON u.id = a.user_id LEFT JOIN application_roles ar on ar.application_id = a.id
-                WHERE ar.id = $1
+                WHERE ar.id = $1 AND a.submitted = true
             ",
             role_id
         )
@@ -244,7 +244,7 @@ impl Application {
     }
 
     /*
-       Get All applications that apply for a given campaign
+       Get All applications that apply for a given campaign. Used by application viewers
     */
     pub async fn get_from_campaign_id(
         campaign_id: i64,
@@ -259,7 +259,7 @@ impl Application {
                 u.pronouns AS user_pronouns, u.degree_name AS user_degree_name,
                 u.degree_starting_year AS user_degree_starting_year
                 FROM applications a LEFT JOIN users u ON u.id = a.user_id
-                WHERE a.campaign_id = $1
+                WHERE a.campaign_id = $1 AND a.submitted = true
             ",
             campaign_id
         )
@@ -308,7 +308,7 @@ impl Application {
     }
 
     /*
-       Get All applications that are made by a given user
+       Get All applications that are made by a given user. Used by user
     */
     pub async fn get_from_user_id(
         user_id: i64,
@@ -414,20 +414,25 @@ impl Application {
 
     pub async fn update_roles(
         id: i64,
-        roles: Vec<i64>,
+        roles: Vec<ApplicationRole>,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        // There can be 0 roles, so we cannot use the `RETURNING id` method,
-        // as there could be 0 roles. If application_id is wrong, then
-        // the next query will error, preventing changes to DB.
+        // Users can only update applications as long as they have not submitted
+        let _ = sqlx::query!(
+            "SELECT id FROM applications WHERE id = $1 AND submitted = false",
+            id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
         sqlx::query!(
             "
                 DELETE FROM application_roles WHERE application_id = $1
             ",
             id
         )
-            .execute(transaction.deref_mut())
-            .await?;
+        .execute(transaction.deref_mut())
+        .await?;
 
         // Insert into table application_roles
         for role in roles {
@@ -437,11 +442,31 @@ impl Application {
                     VALUES ($1, $2, $3)
                 ",
                 id,
-                role_applied.campaign_role_id,
-                role_applied.preference
+                role.campaign_role_id,
+                role.preference
             )
-                .execute(transaction.deref_mut())
-                .await?;
+            .execute(transaction.deref_mut())
+            .await?;
         }
+
+        Ok(())
+    }
+
+    pub async fn submit(
+        id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
+        // Can only submit once
+        let _ = sqlx::query!(
+            "
+                UPDATE applications SET submitted = true
+                WHERE id = $1 AND submitted = false RETURNING id
+            ",
+            id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
+        Ok(())
     }
 }

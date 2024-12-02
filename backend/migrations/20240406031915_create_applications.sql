@@ -8,6 +8,7 @@ CREATE TABLE applications (
     private_status application_status NOT NULL DEFAULT 'Pending',
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    submitted BOOLEAN NOT NULL DEFAULT false,
     CONSTRAINT FK_applications_campaigns
         FOREIGN KEY(campaign_id)
             REFERENCES campaigns(id)

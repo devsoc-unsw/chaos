@@ -69,6 +69,16 @@ impl Answer {
     ) -> Result<i64, ChaosError> {
         answer_data.validate()?;
 
+        // Can only answer for applications that haven't been submitted
+        let _ = sqlx::query!(
+            "
+                SELECT id FROM applications WHERE id = $1 AND submitted = false
+            ",
+            application_id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
         let id = snowflake_generator.generate();
 
         sqlx::query!(
@@ -299,6 +309,16 @@ impl Answer {
         .fetch_one(transaction.deref_mut())
         .await?;
 
+        // Can only answer for applications that haven't been submitted
+        let _ = sqlx::query!(
+            "
+                SELECT id FROM applications WHERE id = $1 AND submitted = false
+            ",
+            answer.application_id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
         let old_data = AnswerData::from_question_type(&answer.question_type);
         old_data.delete_from_db(id, transaction).await?;
 
@@ -319,8 +339,22 @@ impl Answer {
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        sqlx::query!("DELETE FROM answers WHERE id = $1 RETURNING id", id)
+        let answer = sqlx::query!("SELECT application_id FROM answers WHERE id = $1", id)
             .fetch_one(transaction.deref_mut())
+            .await?;
+
+        // Can only answer for applications that haven't been submitted
+        let _ = sqlx::query!(
+            "
+                SELECT id FROM applications WHERE id = $1 AND submitted = false
+            ",
+            answer.application_id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
+        sqlx::query!("DELETE FROM answers WHERE id = $1", id)
+            .execute(transaction.deref_mut())
             .await?;
 
         Ok(())

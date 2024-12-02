@@ -53,10 +53,20 @@ impl ApplicationHandler {
         _user: ApplicationOwner,
         Path(application_id): Path<i64>,
         mut transaction: DBTransaction<'_>,
-        Json(data): Json<ApplicationRoleUpdate>
+        Json(data): Json<ApplicationRoleUpdate>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Application::update_roles(application_id, data.roles, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, "Successfully updated application roles"))
+    }
+
+    pub async fn submit(
+        _user: ApplicationOwner,
+        Path(application_id): Path<i64>,
+        mut transaction: DBTransaction<'_>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        Application::submit(application_id, &mut transaction.tx).await?;
+        transaction.tx.commit().await?;
+        Ok((StatusCode::OK, "Successfully submitted application"))
     }
 }
