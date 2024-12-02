@@ -27,6 +27,7 @@ pub struct ApplicationRole {
     pub id: i64,
     pub application_id: i64,
     pub campaign_role_id: i64,
+    pub preference: i32,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -64,6 +65,12 @@ pub struct ApplicationData {
 pub struct ApplicationAppliedRoleDetails {
     pub campaign_role_id: i64,
     pub role_name: String,
+    pub preference: i32,
+}
+
+#[derive(Deserialize)]
+pub struct ApplicationRoleUpdate {
+    pub roles: Vec<i64>
 }
 
 #[derive(Deserialize, Serialize, sqlx::Type, Clone, Debug)]
@@ -101,11 +108,12 @@ impl Application {
         for role_applied in application_data.applied_roles {
             sqlx::query!(
                 "
-                    INSERT INTO application_roles (application_id, campaign_role_id)
-                    VALUES ($1, $2)
+                    INSERT INTO application_roles (application_id, campaign_role_id, preference)
+                    VALUES ($1, $2, $3)
                 ",
                 id,
-                role_applied.campaign_role_id
+                role_applied.campaign_role_id,
+                role_applied.preference
             )
             .execute(transaction.deref_mut())
             .await?;
@@ -140,7 +148,8 @@ impl Application {
         let applied_roles = sqlx::query_as!(
             ApplicationAppliedRoleDetails,
             "
-                SELECT application_roles.campaign_role_id, campaign_roles.name AS role_name
+                SELECT application_roles.campaign_role_id,
+                application_roles.preference, campaign_roles.name AS role_name
                 FROM application_roles
                     LEFT JOIN campaign_roles
                     ON application_roles.campaign_role_id = campaign_roles.id
@@ -198,7 +207,8 @@ impl Application {
             let applied_roles = sqlx::query_as!(
                 ApplicationAppliedRoleDetails,
                 "
-                    SELECT application_roles.campaign_role_id, campaign_roles.name AS role_name
+                    SELECT application_roles.campaign_role_id,
+                    application_roles.preference, campaign_roles.name AS role_name
                     FROM application_roles
                         LEFT JOIN campaign_roles
                         ON application_roles.campaign_role_id = campaign_roles.id
@@ -261,7 +271,8 @@ impl Application {
             let applied_roles = sqlx::query_as!(
                 ApplicationAppliedRoleDetails,
                 "
-                    SELECT application_roles.campaign_role_id, campaign_roles.name AS role_name
+                    SELECT application_roles.campaign_role_id,
+                    application_roles.preference, campaign_roles.name AS role_name
                     FROM application_roles
                         LEFT JOIN campaign_roles
                         ON application_roles.campaign_role_id = campaign_roles.id
@@ -324,7 +335,8 @@ impl Application {
             let applied_roles = sqlx::query_as!(
                 ApplicationAppliedRoleDetails,
                 "
-                    SELECT application_roles.campaign_role_id, campaign_roles.name AS role_name
+                    SELECT application_roles.campaign_role_id,
+                    application_roles.preference, campaign_roles.name AS role_name
                     FROM application_roles
                         LEFT JOIN campaign_roles
                         ON application_roles.campaign_role_id = campaign_roles.id
@@ -338,8 +350,9 @@ impl Application {
             let details = ApplicationDetails {
                 id: application_data.id,
                 campaign_id: application_data.campaign_id,
-                status: application_data.status,
-                private_status: application_data.private_status,
+                status: application_data.status.clone(),
+                // To reuse struct, do not show use private status
+                private_status: application_data.status,
                 applied_roles,
                 user: UserDetails {
                     id: application_data.user_id,
@@ -397,5 +410,38 @@ impl Application {
         .await?;
 
         Ok(())
+    }
+
+    pub async fn update_roles(
+        id: i64,
+        roles: Vec<i64>,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
+        // There can be 0 roles, so we cannot use the `RETURNING id` method,
+        // as there could be 0 roles. If application_id is wrong, then
+        // the next query will error, preventing changes to DB.
+        sqlx::query!(
+            "
+                DELETE FROM application_roles WHERE application_id = $1
+            ",
+            id
+        )
+            .execute(transaction.deref_mut())
+            .await?;
+
+        // Insert into table application_roles
+        for role in roles {
+            sqlx::query!(
+                "
+                    INSERT INTO application_roles (application_id, campaign_role_id, preference)
+                    VALUES ($1, $2, $3)
+                ",
+                id,
+                role_applied.campaign_role_id,
+                role_applied.preference
+            )
+                .execute(transaction.deref_mut())
+                .await?;
+        }
     }
 }

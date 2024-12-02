@@ -1,6 +1,6 @@
 use crate::models::app::AppState;
-use crate::models::application::{Application, ApplicationStatus};
-use crate::models::auth::{ApplicationAdmin, AuthUser};
+use crate::models::application::{Application, ApplicationRoleUpdate, ApplicationStatus};
+use crate::models::auth::{ApplicationAdmin, ApplicationOwner, AuthUser};
 use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
@@ -47,5 +47,16 @@ impl ApplicationHandler {
         let applications = Application::get_from_user_id(user.user_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(applications)))
+    }
+
+    pub async fn update_roles(
+        _user: ApplicationOwner,
+        Path(application_id): Path<i64>,
+        mut transaction: DBTransaction<'_>,
+        Json(data): Json<ApplicationRoleUpdate>
+    ) -> Result<impl IntoResponse, ChaosError> {
+        Application::update_roles(application_id, data.roles, &mut transaction.tx).await?;
+        transaction.tx.commit().await?;
+        Ok((StatusCode::OK, "Successfully updated application roles"))
     }
 }
