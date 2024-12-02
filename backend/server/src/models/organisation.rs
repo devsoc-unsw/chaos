@@ -194,7 +194,7 @@ impl Organisation {
         Member,
         "
             SELECT organisation_members.user_id as id, organisation_members.role AS \"role: OrganisationRole\", users.name from organisation_members
-                LEFT JOIN users on users.id = organisation_members.user_id
+                JOIN users on users.id = organisation_members.user_id
                 WHERE organisation_members.organisation_id = $1 AND organisation_members.role = $2
         ",
         organisation_id,
@@ -216,7 +216,7 @@ impl Organisation {
         Member,
         "
             SELECT organisation_members.user_id as id, organisation_members.role AS \"role: OrganisationRole\", users.name from organisation_members
-                LEFT JOIN users on users.id = organisation_members.user_id
+                JOIN users on users.id = organisation_members.user_id
                 WHERE organisation_members.organisation_id = $1
         ",
         organisation_id

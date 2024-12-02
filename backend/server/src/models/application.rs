@@ -144,7 +144,7 @@ impl Application {
                 u.zid AS user_zid, u.name AS user_name, u.gender AS user_gender,
                 u.pronouns AS user_pronouns, u.degree_name AS user_degree_name,
                 u.degree_starting_year AS user_degree_starting_year
-                FROM applications a LEFT JOIN users u ON u.id = a.user_id
+                FROM applications a JOIN users u ON u.id = a.user_id
                 WHERE a.id = $1 AND a.submitted = true
             ",
             id
@@ -158,7 +158,7 @@ impl Application {
                 SELECT application_roles.campaign_role_id,
                 application_roles.preference, campaign_roles.name AS role_name
                 FROM application_roles
-                    LEFT JOIN campaign_roles
+                    JOIN campaign_roles
                     ON application_roles.campaign_role_id = campaign_roles.id
                 WHERE application_id = $1
             ",
@@ -201,7 +201,7 @@ impl Application {
                 u.zid AS user_zid, u.name AS user_name, u.gender AS user_gender,
                 u.pronouns AS user_pronouns, u.degree_name AS user_degree_name,
                 u.degree_starting_year AS user_degree_starting_year
-                FROM applications a LEFT JOIN users u ON u.id = a.user_id LEFT JOIN application_roles ar on ar.application_id = a.id
+                FROM applications a JOIN users u ON u.id = a.user_id JOIN application_roles ar on ar.application_id = a.id
                 WHERE ar.id = $1 AND a.submitted = true
             ",
             role_id
@@ -217,7 +217,7 @@ impl Application {
                     SELECT application_roles.campaign_role_id,
                     application_roles.preference, campaign_roles.name AS role_name
                     FROM application_roles
-                        LEFT JOIN campaign_roles
+                        JOIN campaign_roles
                         ON application_roles.campaign_role_id = campaign_roles.id
                     WHERE application_id = $1
                 ",
@@ -265,7 +265,7 @@ impl Application {
                 u.zid AS user_zid, u.name AS user_name, u.gender AS user_gender,
                 u.pronouns AS user_pronouns, u.degree_name AS user_degree_name,
                 u.degree_starting_year AS user_degree_starting_year
-                FROM applications a LEFT JOIN users u ON u.id = a.user_id
+                FROM applications a JOIN users u ON u.id = a.user_id
                 WHERE a.campaign_id = $1 AND a.submitted = true
             ",
             campaign_id
@@ -281,7 +281,7 @@ impl Application {
                     SELECT application_roles.campaign_role_id,
                     application_roles.preference, campaign_roles.name AS role_name
                     FROM application_roles
-                        LEFT JOIN campaign_roles
+                        JOIN campaign_roles
                         ON application_roles.campaign_role_id = campaign_roles.id
                     WHERE application_id = $1
                 ",
@@ -329,7 +329,7 @@ impl Application {
                 u.zid AS user_zid, u.name AS user_name, u.gender AS user_gender,
                 u.pronouns AS user_pronouns, u.degree_name AS user_degree_name,
                 u.degree_starting_year AS user_degree_starting_year
-                FROM applications a LEFT JOIN users u ON u.id = a.user_id
+                FROM applications a JOIN users u ON u.id = a.user_id
                 WHERE a.user_id = $1
             ",
             user_id
@@ -345,7 +345,7 @@ impl Application {
                     SELECT application_roles.campaign_role_id,
                     application_roles.preference, campaign_roles.name AS role_name
                     FROM application_roles
-                        LEFT JOIN campaign_roles
+                        JOIN campaign_roles
                         ON application_roles.campaign_role_id = campaign_roles.id
                     WHERE application_id = $1
                 ",
