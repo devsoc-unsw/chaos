@@ -147,7 +147,7 @@ impl Application {
                 FROM applications a
                 JOIN users u ON u.id = a.user_id
                 JOIN campaigns c ON c.id = a.campaign_id
-                WHERE a.id = $1 AND (a.submitted = true OR c.ends_at <= CURRENT_TIMESTAMP)
+                WHERE a.id = $1 AND a.submitted = true
             ",
             id
         )
@@ -207,7 +207,7 @@ impl Application {
                 JOIN users u ON u.id = a.user_id
                 JOIN application_roles ar on ar.application_id = a.id
                 JOIN campaigns c on c.id = a.campaign_id
-                WHERE ar.id = $1 AND (a.submitted = true OR c.ends_at <= CURRENT_TIMESTAMP)
+                WHERE ar.id = $1 AND a.submitted = true
             ",
             role_id
         )
@@ -273,7 +273,7 @@ impl Application {
                 FROM applications a
                 JOIN users u ON u.id = a.user_id
                 JOIN campaigns c ON c.id = a.campaign_id
-                WHERE a.campaign_id = $1 AND (a.submitted = true OR c.ends_at <= CURRENT_TIMESTAMP)
+                WHERE a.campaign_id = $1 AND a.submitted = true
             ",
             campaign_id
         )
