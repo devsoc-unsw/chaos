@@ -40,11 +40,11 @@ impl ChaosEmail {
         Ok(AsyncSmtpTransport::relay(&*credentials.email_host)?.credentials(credentials.credentials).build())
     }
 
-    pub async fn send_message(recepient_name: String, recepient_email_address: String, subject: String, body: String, credentials: EmailCredentials) -> Result<(), ChaosError> {
+    pub async fn send_message(recipient_name: String, recipient_email_address: String, subject: String, body: String, credentials: EmailCredentials) -> Result<(), ChaosError> {
         let message = Message::builder()
             .from("Chaos Subcommittee Recruitment <noreply@chaos.devsoc.app>".parse()?)
             .reply_to("help@chaos.devsoc.app".parse()?)
-            .to(format!("{recepient_name} <{recepient_email_address}>").parse()?)
+            .to(format!("{recipient_name} <{recipient_email_address}>").parse()?)
             .subject(subject)
             .body(body)?;
 
