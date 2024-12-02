@@ -1508,7 +1508,7 @@ paths:
               schema:
                 properties:
                   application:
-                    type: 
+                    type:
                       $ref: '#components/schemas/ApplicationDetails'
         '401':
           description: Not logged in.
@@ -1638,6 +1638,68 @@ paths:
 
 components:
   schemas:
+    Answer:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 6996987893965227483
+        question_id:
+          type: integer
+          format: int64
+          example: 6996987893965227483
+        answer_type:
+          type: string
+          enum:
+            - ShortAnswer
+            - MultiChoice
+            - MultiSelect
+            - DropDown
+            - Ranking
+        data:
+          oneOf:
+            - type: string
+              example: I am passionate about events
+            - type: integer
+              example: 6996987893965227483
+            - type: array
+              format: int64
+              example: [6996987893965227483, 69969829832652228374, 6996987893965228374]
+        created_at:
+          type: string
+          example: 2024-03-15T18:25:43.511Z
+        updated_at:
+          type: string
+          example: 2024-03-15T18:25:43.511Z
+
+    NewAnswer:
+      type: object
+      properties:
+        question_id:
+          type: integer
+          format: int64
+          example: 6996987893965262849
+        answer_type:
+          type: string
+          enum:
+            - ShortAnswer
+            - MultiChoice
+            - MultiSelect
+            - DropDown
+            - Ranking
+        data:
+          oneOf:
+            - type: string
+              example: I am passionate about events
+            - type: integer
+              example: 6996987893965227483
+            - type: array
+              format: int64
+              example: [6996987893965227483, 69969829832652228374, 6996987893965228374]
+
+
+
     ApplicationStatus:
       type: string
       enum:
