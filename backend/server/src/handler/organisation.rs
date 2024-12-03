@@ -1,7 +1,7 @@
 use crate::models::app::AppState;
 use crate::models::auth::SuperUser;
 use crate::models::auth::{AuthUser, OrganisationAdmin};
-use crate::models::campaign::Campaign;
+use crate::models::campaign::{Campaign, NewCampaign};
 use crate::models::email_template::EmailTemplate;
 use crate::models::error::ChaosError;
 use crate::models::organisation::{
@@ -166,7 +166,7 @@ impl OrganisationHandler {
         Path(id): Path<i64>,
         State(state): State<AppState>,
         _admin: OrganisationAdmin,
-        Json(request_body): Json<Campaign>,
+        Json(request_body): Json<NewCampaign>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Organisation::create_campaign(
             id,

@@ -36,6 +36,7 @@ pub struct CampaignDetails {
     pub starts_at: DateTime<Utc>,
     pub ends_at: DateTime<Utc>,
 }
+
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct OrganisationCampaign {
     pub id: i64,
@@ -45,6 +46,15 @@ pub struct OrganisationCampaign {
     pub description: Option<String>,
     pub starts_at: DateTime<Utc>,
     pub ends_at: DateTime<Utc>,
+}
+
+#[derive(Deserialize)]
+pub struct NewCampaign {
+    pub slug: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub starts_at: DateTime<Utc>,
+    pub ends_at: DateTime<Utc>
 }
 
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
