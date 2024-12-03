@@ -249,6 +249,14 @@ pub async fn app() -> Result<Router, ChaosError> {
             get(AnswerHandler::get_all_by_application_and_role),
         )
         .route(
+            "/api/v1/application/:application_id/roles",
+            patch(ApplicationHandler::update_roles)
+        )
+        .route(
+            "/api/v1/application/:application_id/submit",
+            post(ApplicationHandler::submit)
+        )
+        .route(
             "/api/v1/answer/:answer_id",
             patch(AnswerHandler::update).delete(AnswerHandler::delete),
         )
