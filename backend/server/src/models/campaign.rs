@@ -10,7 +10,7 @@ use axum::extract::{FromRef, FromRequestParts, Path};
 use axum::http::request::Parts;
 use uuid::Uuid;
 use crate::models::app::AppState;
-use crate::service::application::assert_application_is_open;
+use crate::service::campaign::assert_campaign_is_open;
 use super::{error::ChaosError, storage::Storage};
 
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
@@ -262,7 +262,7 @@ where
             .get("application_id")
             .ok_or(ChaosError::BadRequest)?;
 
-        assert_application_is_open(application_id, &app_state.db).await?;
+        assert_campaign_is_open(campaign_id, &app_state.db).await?;
 
         Ok(OpenCampaign)
     }
