@@ -2,7 +2,7 @@ use crate::models::app::AppState;
 use crate::models::auth::SuperUser;
 use crate::models::auth::{AuthUser, OrganisationAdmin};
 use crate::models::campaign::{Campaign, NewCampaign};
-use crate::models::email_template::EmailTemplate;
+use crate::models::email_template::{EmailTemplate, NewEmailTemplate};
 use crate::models::error::ChaosError;
 use crate::models::organisation::{
     AdminToRemove, AdminUpdateList, NewOrganisation, Organisation, SlugCheck,
@@ -198,7 +198,7 @@ impl OrganisationHandler {
         Path(id): Path<i64>,
         State(state): State<AppState>,
         _admin: OrganisationAdmin,
-        Json(request_body): Json<EmailTemplate>,
+        Json(request_body): Json<NewEmailTemplate>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Organisation::create_email_template(
             id,

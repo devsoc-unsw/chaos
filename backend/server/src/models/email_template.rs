@@ -23,6 +23,13 @@ pub struct EmailTemplate {
     pub template_body: String,
 }
 
+#[derive(Deserialize, Serialize)]
+pub struct NewEmailTemplate {
+    pub name: String,
+    pub template_subject: String,
+    pub template_body: String,
+}
+
 impl EmailTemplate {
     pub async fn get(
         id: i64,
