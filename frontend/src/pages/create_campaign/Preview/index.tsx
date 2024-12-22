@@ -1,16 +1,12 @@
-import { Grid } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
-import ApplicationForm from "../../../components/ApplicationForm";
 import CampaignCard from "../../../components/CampaignCard";
-import { dateToStringForBackend } from "../../../utils";
 
 import {
-  CampaignCardGrid,
-  CreateDraftButton,
+  ActionButton,
+  CampaignCardLayout,
   InfoText,
   InfoTextBox,
-  PublishButton,
   SubmitWrapper,
 } from "./reviewTab.styled";
 
@@ -32,21 +28,12 @@ const ReviewTab = ({ campaign, onSubmit }: Props) => {
     startDate,
     endDate,
   } = campaign;
-  const [rolesSelected, setRolesSelected] = useState<number[]>([]);
-  const [displayForm, setDisplayForm] = useState(false);
   useEffect(() => {
     const newAnswers = Object.fromEntries(
       questions.map((q) => [q.id, answers[q.id] ?? ""])
     );
     setAnswers(newAnswers);
   }, [questions]);
-
-  const dummyUserInfo = {
-    name: "First Last",
-    zid: "z1234567",
-    email: "firstlast@gmail.com",
-    degree: "Bachelor of Science (Computer Science)",
-  };
 
   return (
     <>
@@ -59,46 +46,33 @@ const ReviewTab = ({ campaign, onSubmit }: Props) => {
           Click &quot;apply&quot; to view/hide the application form.
         </InfoText>
       </InfoTextBox>
-      <CampaignCardGrid container spacing={2} columns={4}>
-        <Grid item xs={1.5} />
-        <Grid item key={campaignName} xs={1}>
-          <CampaignCard
-            title={campaignName}
-            appliedFor={[]}
-            positions={roles.map((r) => ({
-              id: r.id,
-              number: r.quantity,
-              name: r.title,
-            }))}
-            startDate={dateToStringForBackend(startDate)}
-            endDate={dateToStringForBackend(endDate)}
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            img={cover!}
-          />
-        </Grid>
-      </CampaignCardGrid>
-      {displayForm && (
-        <ApplicationForm
-          questions={questions}
-          roles={roles}
-          rolesSelected={rolesSelected}
-          setRolesSelected={setRolesSelected}
-          answers={answers}
-          setAnswers={setAnswers}
-          campaignName={campaignName}
+      <CampaignCardLayout>
+        <CampaignCard
+          title={campaignName}
+          appliedFor={[]}
+          positions={roles.map((r) => ({
+            id: r.id,
+            number: r.quantity,
+            name: r.title,
+          }))}
+          startDate={startDate}
+          endDate={endDate}
+          organisationLogo={undefined}
+          campaigns={[]}
+          setCampaigns={() => {}}
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          headerImage={cover!}
-          description={description}
-          userInfo={dummyUserInfo}
+          img=""
         />
-      )}
+      </CampaignCardLayout>
+      {/* TODO: display campaign description */}
+      {/* TODO: allow admins to preview the application form */}
       <SubmitWrapper>
-        <CreateDraftButton onClick={() => onSubmit(true)} variant="outlined">
+        <ActionButton onClick={() => onSubmit(true)} color="white">
           Create Draft
-        </CreateDraftButton>
-        <PublishButton onClick={() => onSubmit(false)} variant="contained">
+        </ActionButton>
+        <ActionButton onClick={() => onSubmit(false)} color="primary">
           Publish
-        </PublishButton>
+        </ActionButton>
       </SubmitWrapper>
     </>
   );
