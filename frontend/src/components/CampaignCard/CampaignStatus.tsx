@@ -8,7 +8,7 @@ const CampaignStatus = styled.button({
       pending: tw`bg-[hsl(220, 60%, 90%)] shadow-[hsl(220, 60%, 90%)]! text-black`,
       open: tw`bg-[hsl(220, 93%, 60%)] shadow-[hsla(220, 93%, 60%, 50%)]!`,
       closed: tw`bg-gray-100 text-black`,
-      completed: tw`shadow-green-200! bg-green-200 text-orange-900 hover:bg-orange-300`,
+      completed: tw`shadow-orange-200! bg-orange-200 text-orange-900 hover:bg-orange-300`,
     },
   },
 

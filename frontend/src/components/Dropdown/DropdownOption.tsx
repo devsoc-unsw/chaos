@@ -1,13 +1,5 @@
 import { Menu } from "@headlessui/react";
-<<<<<<< HEAD
-<<<<<<< HEAD
-import tw from "twin.macro";
-=======
 import "twin.macro";
->>>>>>> CHAOS-491-migration-away-from-mui
-=======
-import "twin.macro";
->>>>>>> CHAOS-491-migration-away-from-mui
 
 import type { ComponentProps, MouseEvent, ReactElement } from "react";
 

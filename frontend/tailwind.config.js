@@ -22,18 +22,9 @@ module.exports = {
           800: "hsl(220, 85%, 40%)",
           900: "hsl(220, 70%, 30%)",
           950: "hsl(220, 50%, 20%)",
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
         },
         lightgrey: {
           300: "#e2e6ed",
->>>>>>> CHAOS-491-migration-away-from-mui
-=======
-        },
-        lightgrey: {
-          300: "#e2e6ed",
->>>>>>> CHAOS-491-migration-away-from-mui
         },
       },
       minWidth: defaultTheme.width,

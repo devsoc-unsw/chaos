@@ -215,7 +215,7 @@ const Content = ({
         <div tw="aspect-h-9 aspect-w-16 flex items-center justify-center overflow-hidden bg-[#edeeef]">
           <img
             tw="max-h-full w-full object-contain"
-            src={img instanceof File ? URL.createObjectURL(img) : img}
+            src={img}
             alt="Campaign Cover"
           />
         </div>

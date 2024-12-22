@@ -1,14 +1,6 @@
 import { Menu } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
-<<<<<<< HEAD
-<<<<<<< HEAD
-import tw from "twin.macro";
-=======
 import "twin.macro";
->>>>>>> CHAOS-491-migration-away-from-mui
-=======
-import "twin.macro";
->>>>>>> CHAOS-491-migration-away-from-mui
 
 import Card from "components/Card";
 

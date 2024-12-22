@@ -46,7 +46,6 @@ const ReviewTab = ({ campaign, onSubmit }: Props) => {
           Click &quot;apply&quot; to view/hide the application form.
         </InfoText>
       </InfoTextBox>
-<<<<<<< Updated upstream
       <CampaignCardLayout>
         <CampaignCard
           title={campaignName}
@@ -61,35 +60,6 @@ const ReviewTab = ({ campaign, onSubmit }: Props) => {
           organisationLogo={undefined}
           campaigns={[]}
           setCampaigns={() => {}}
-=======
-      <CampaignCardGrid container spacing={2} columns={4}>
-        <Grid item xs={1.5} />
-        <Grid item key={campaignName} xs={1}>
-          <CampaignCard
-            title={campaignName}
-            appliedFor={[]}
-            positions={roles.map((r) => ({
-              id: r.id,
-              number: r.quantity,
-              name: r.title,
-            }))}
-            startDate={startDate}
-            endDate={endDate}
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            img={cover!}
-          />
-        </Grid>
-      </CampaignCardGrid>
-      {displayForm && (
-        <ApplicationForm
-          questions={questions}
-          roles={roles}
-          rolesSelected={rolesSelected}
-          setRolesSelected={setRolesSelected}
-          answers={answers}
-          setAnswers={setAnswers}
-          campaignName={campaignName}
->>>>>>> Stashed changes
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           img=""
         />
