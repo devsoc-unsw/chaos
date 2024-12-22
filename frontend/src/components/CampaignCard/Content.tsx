@@ -38,7 +38,7 @@ type BaseProps = {
   appliedFor: CampaignWithRoles["applied_for"];
   startDate: Date;
   endDate: Date;
-  img: string | File;
+  img: string;
   openModal: MouseEventHandler<HTMLButtonElement>;
   campaigns: Campaign[];
   setCampaigns: Dispatch<SetStateAction<Campaign[]>>;

@@ -265,7 +265,7 @@ const CreateCampaign = () => {
     <Container>
       <Tabs
         value={tab}
-        onChange={(_e, val: number) => onTabChange(val)}
+        onChange={(_e: React.ChangeEvent<HTMLInputElement>, val: number) => onTabChange(val)}
         centered
         style={{ paddingBottom: "30px", paddingTop: "15px" }}
       >

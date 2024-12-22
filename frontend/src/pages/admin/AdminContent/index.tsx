@@ -224,7 +224,6 @@ const AdminContent = ({
         <AdminCampaignContent
           campaigns={campaigns}
           setCampaigns={setCampaigns}
-          orgId={id}
           orgLogo={icon}
         />
       )}

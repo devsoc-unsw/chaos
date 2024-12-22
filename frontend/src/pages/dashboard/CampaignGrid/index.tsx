@@ -76,6 +76,8 @@ const CampaignGrid = ({
             organisationLogo={
               organisations[campaign.campaign.organisation_id].logo
             }
+            campaigns={[]}
+            setCampaigns={() => {}}
           />
         </Transition>
       ))}

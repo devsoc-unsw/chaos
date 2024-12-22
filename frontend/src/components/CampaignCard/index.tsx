@@ -28,7 +28,7 @@ type BaseProps = {
   positions: Position[];
   startDate: Date;
   endDate: Date;
-  img: string | File;
+  img: string;
   campaigns: Campaign[];
   setCampaigns: Dispatch<SetStateAction<Campaign[]>>;
 };
@@ -58,7 +58,7 @@ const CampaignCard = ({
 
   const content = (
     <Content
-      campaignId={campaignId}
+      campaignId={campaignId ?? -1} // campaignId should always exist if isAdmin is true
       organisationLogo={organisationLogo}
       title={title}
       appliedFor={appliedFor}
