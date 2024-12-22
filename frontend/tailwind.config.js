@@ -23,6 +23,12 @@ module.exports = {
           900: "hsl(220, 70%, 30%)",
           950: "hsl(220, 50%, 20%)",
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+        },
+        lightgrey: {
+          300: "#e2e6ed",
+>>>>>>> CHAOS-491-migration-away-from-mui
 =======
         },
         lightgrey: {

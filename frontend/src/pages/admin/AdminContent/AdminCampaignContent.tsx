@@ -23,8 +23,8 @@ const AdminCampaignContent = ({ campaigns, setCampaigns, orgLogo }: Props) => (
         appliedFor={[]}
         positions={[]}
         img={c.image}
-        startDate={c.startDate}
-        endDate={c.endDate}
+        startDate={new Date(c.startDate)}
+        endDate={new Date(c.endDate)}
         isAdmin
         campaigns={campaigns}
         setCampaigns={setCampaigns}

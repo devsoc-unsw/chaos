@@ -38,7 +38,7 @@ type BaseProps = {
   appliedFor: CampaignWithRoles["applied_for"];
   startDate: Date;
   endDate: Date;
-  img: string;
+  img: string | File;
   openModal: MouseEventHandler<HTMLButtonElement>;
   campaigns: Campaign[];
   setCampaigns: Dispatch<SetStateAction<Campaign[]>>;
@@ -164,10 +164,8 @@ const Content = ({
   };
 
   let status: VariantProps<typeof CampaignStatus>["status"];
-  if (appliedFor.some(([_, status]) => status === "Success")) {
-    status = "offered";
-  } else if (appliedFor.some(([_, status]) => status === "Rejected")) {
-    status = "rejected";
+  if (appliedFor.some(([_, status]) => status === "Completed")) {
+    status = "completed";
   } else if (date > endDate) {
     status = "closed";
   } else if (appliedFor.length) {
@@ -217,7 +215,7 @@ const Content = ({
         <div tw="aspect-h-9 aspect-w-16 flex items-center justify-center overflow-hidden bg-[#edeeef]">
           <img
             tw="max-h-full w-full object-contain"
-            src={img}
+            src={img instanceof File ? URL.createObjectURL(img) : img}
             alt="Campaign Cover"
           />
         </div>

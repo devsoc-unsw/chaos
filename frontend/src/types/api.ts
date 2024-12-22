@@ -63,12 +63,32 @@ export type NewQuestion = {
 
 export type QuestionResponse = {
   id: number;
-  role_ids: number[];
   title: string;
   description?: string;
+  common: boolean;
   max_bytes: number;
   required: boolean;
+  questionType: QuestionType;
+  data: QuestionData;
+  created_at: Date;
+  updated_at: Date;
 };
+
+export enum QuestionType {
+  ShortAnswer = "ShortAnswer",
+  MultiChoice = "MultiChoice",
+  MultiSelect = "MultiSelect",
+  DropDown = "DropDown",
+  Ranking = "Ranking",
+}
+
+export type QuestionData = {
+  options: {
+    id: number,
+    displayOrder: number,
+    text: string
+  };
+}
 
 export type QuestionInput = {
   title: string;
@@ -79,7 +99,7 @@ export type QuestionInput = {
 
 export type AdminLevel = "ReadOnly" | "Director" | "Admin";
 
-export type ApplicationStatus = "Draft" | "Pending" | "Rejected" | "Success";
+export type ApplicationStatus = "Draft" | "Pending" | "Completed";
 
 export type Application = {
   id: number;
@@ -123,6 +143,7 @@ export type ApplicationRating = {
 
 export type Campaign = {
   id: number;
+  slug: string
   organisation_id: number;
   name: string;
   cover_image: string;
@@ -146,7 +167,7 @@ export type CampaignWithRoles = {
   campaign: Campaign;
   roles: Role[];
   questions: Question[];
-  applied_for: [number, ApplicationStatus][];
+  applied_for: [number, ApplicationStatus][]; // [roleId, ApplicationStatus]
 };
 
 export type NewCampaignInput = {

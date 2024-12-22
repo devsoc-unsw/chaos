@@ -116,6 +116,11 @@ export const getOrganisation = (organisationId: number) =>
     path: `/organisation/${organisationId}`,
   });
 
+export const getOrganisationBySlug = (organisationSlug: string) =>
+  authenticatedRequest<Organisation>({
+    path: `/organisation/slug/${organisationSlug}`,
+  });
+
 export const createOrganisation = (name: string) =>
   authenticatedRequest<Organisation>({
     method: "POST",
@@ -148,6 +153,11 @@ export const doDeleteOrg = (orgId: number) =>
 export const getCampaign = (campaignId: number) =>
   authenticatedRequest<Campaign>({ path: `/campaign/${campaignId}` });
 
+export const getCampaignBySlugs = (organisationSlug: string, campaignSlug: string) =>
+  authenticatedRequest<Campaign>({
+    path: `campaign/slug/${organisationSlug}/${campaignSlug}`,
+  });
+
 export const getCampaignRoles = (campaignId: number) =>
   authenticatedRequest<{ roles: Role[] }>({
     path: `/campaign/${campaignId}/roles`,
@@ -158,9 +168,14 @@ export const getRoleApplications = (roleId: number) =>
     path: `/role/${roleId}/applications`,
   });
 
-export const getRoleQuestions = (roleId: number) =>
+export const getRoleQuestions = (campaignId: number, roleId: number) =>
   authenticatedRequest<{ questions: QuestionResponse[] }>({
-    path: `/role/${roleId}/questions`,
+    path: `/campaign/${campaignId}/role/${roleId}/questions`,
+  });
+
+export const getCommonQuestions = (campaignID: number) =>
+  authenticatedRequest<{ questions: QuestionResponse[] }>({
+    path: `/campaign/${campaignID}/questions/common`
   });
 
 export const setApplicationRating = (applicationId: number, rating: number) =>

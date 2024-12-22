@@ -28,7 +28,7 @@ type BaseProps = {
   positions: Position[];
   startDate: Date;
   endDate: Date;
-  img: string;
+  img: string | File;
   campaigns: Campaign[];
   setCampaigns: Dispatch<SetStateAction<Campaign[]>>;
 };

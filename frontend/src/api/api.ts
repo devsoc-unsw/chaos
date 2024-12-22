@@ -43,7 +43,7 @@ const API = {
     jsonBody = true,
     jsonResp = true,
   }: Params<T>): Promise<T> => {
-    const endpoint = new URL(`${window.origin}/api${path}`);
+    const endpoint = new URL(`${window.origin}/api/v1/${path}`);
     endpoint.search = new URLSearchParams(queries).toString();
 
     const payload: Payload = {

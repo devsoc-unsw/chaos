@@ -108,22 +108,26 @@ const CampaignTab = ({ campaign }: Props) => {
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <DateTimePicker
             label="Start Date"
-            inputFormat="dd/MM/yyyy hh:mm a"
+            format="dd/MM/yyyy hh:mm a"
             value={startDate}
-            onChange={(date: Date) => setStartDate(date)}
-            renderInput={(params: ComponentProps<typeof CampaignTextField>) => (
+            onChange={(date: Date | null) => date instanceof Date && setStartDate(date)}
+            slots={{
+              textField: (params: ComponentProps<typeof CampaignTextField>) => (
               <CampaignTextField {...params} />
-            )}
+            )
+            }}
           />
           <DateTimePicker
             label="End Date"
-            inputFormat="dd/MM/yyyy hh:mm a"
+            format="dd/MM/yyyy hh:mm a"
             minDateTime={startDate}
             value={endDate}
-            onChange={(date: Date) => setEndDate(date)}
-            renderInput={(params: ComponentProps<typeof CampaignTextField>) => (
+            onChange={(date: Date | null) => date instanceof Date && setEndDate(date)}
+            slots={{
+              textField: (params: ComponentProps<typeof CampaignTextField>) => (
               <CampaignTextField {...params} />
-            )}
+            )
+            }}
           />
         </LocalizationProvider>
       </CampaignRowDiv>
