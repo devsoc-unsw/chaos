@@ -12,7 +12,7 @@ use crate::handler::user::UserHandler;
 use crate::models::email::{ChaosEmail, EmailCredentials};
 use crate::models::error::ChaosError;
 use crate::models::storage::Storage;
-use axum::routing::{get, patch, post};
+use axum::routing::{delete, get, patch, post};
 use axum::Router;
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use reqwest::Client as ReqwestClient;
@@ -134,30 +134,36 @@ pub async fn app() -> Result<Router, ChaosError> {
             patch(OrganisationHandler::update_logo),
         )
         .route(
-            "/api/v1/organisation/:organisation_id/member",
+            "/api/v1/organisation/:organisation_id/members",
             get(OrganisationHandler::get_members)
                 .put(OrganisationHandler::update_members)
-                .delete(OrganisationHandler::remove_member),
+        )
+        .route(
+            "/api/v1/organisation/:organisation_id/member",
+                delete(OrganisationHandler::remove_member),
+        )
+        .route(
+            "/api/v1/organisation/:organisation_id/admins",
+            get(OrganisationHandler::get_admins)
+                .put(OrganisationHandler::update_admins)
         )
         .route(
             "/api/v1/organisation/:organisation_id/admin",
-            get(OrganisationHandler::get_admins)
-                .put(OrganisationHandler::update_admins)
-                .delete(OrganisationHandler::remove_admin),
+                delete(OrganisationHandler::remove_admin),
         )
         .route(
-            "/api/v1/ratings/:rating_id",
+            "/api/v1/rating/:rating_id",
             get(RatingHandler::get)
                 .delete(RatingHandler::delete)
                 .put(RatingHandler::update),
         )
         .route(
             "/api/v1/:application_id/rating",
-            post(RatingHandler::create),
+            post(ApplicationHandler::create_rating),
         )
         .route(
-            "/api/v1/:application_id/ratings",
-            get(RatingHandler::get_ratings_for_application),
+            "/api/v1/application/:application_id/ratings",
+            get(ApplicationHandler::get_ratings),
         )
         .route(
             "/api/v1/campaign/:campaign_id/role",
