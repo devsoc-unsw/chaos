@@ -194,7 +194,7 @@ impl Organisation {
         Member,
         "
             SELECT organisation_members.user_id as id, organisation_members.role AS \"role: OrganisationRole\", users.name from organisation_members
-                LEFT JOIN users on users.id = organisation_members.user_id
+                JOIN users on users.id = organisation_members.user_id
                 WHERE organisation_members.organisation_id = $1 AND organisation_members.role = $2
         ",
         organisation_id,
@@ -216,7 +216,7 @@ impl Organisation {
         Member,
         "
             SELECT organisation_members.user_id as id, organisation_members.role AS \"role: OrganisationRole\", users.name from organisation_members
-                LEFT JOIN users on users.id = organisation_members.user_id
+                JOIN users on users.id = organisation_members.user_id
                 WHERE organisation_members.organisation_id = $1
         ",
         organisation_id
@@ -439,7 +439,8 @@ impl Organisation {
     pub async fn create_email_template(
         organisation_id: i64,
         name: String,
-        template: String,
+        template_subject: String,
+        template_body: String,
         pool: &Pool<Postgres>,
         mut snowflake_generator: SnowflakeIdGenerator,
     ) -> Result<i64, ChaosError> {
@@ -447,13 +448,14 @@ impl Organisation {
 
         let _ = sqlx::query!(
             "
-                INSERT INTO email_templates (id, organisation_id, name, template)
-                    VALUES ($1, $2, $3, $4)
+                INSERT INTO email_templates (id, organisation_id, name, template_subject, template_body)
+                    VALUES ($1, $2, $3, $4, $5)
             ",
             id,
             organisation_id,
             name,
-            template
+            template_subject,
+            template_body
         )
         .execute(pool)
         .await?;

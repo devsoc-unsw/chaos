@@ -4,7 +4,7 @@ use crate::models::application::Application;
 use crate::models::application::NewApplication;
 use crate::models::auth::AuthUser;
 use crate::models::auth::CampaignAdmin;
-use crate::models::campaign::Campaign;
+use crate::models::campaign::{Campaign, OpenCampaign};
 use crate::models::error::ChaosError;
 use crate::models::offer::Offer;
 use crate::models::role::{Role, RoleUpdate};
@@ -104,6 +104,7 @@ impl CampaignHandler {
         State(state): State<AppState>,
         Path(id): Path<i64>,
         user: AuthUser,
+        _: OpenCampaign,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewApplication>,
     ) -> Result<impl IntoResponse, ChaosError> {

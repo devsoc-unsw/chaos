@@ -1,8 +1,9 @@
+use crate::models::app::AppState;
 use crate::models::auth::{OfferAdmin, OfferRecipient};
 use crate::models::error::ChaosError;
 use crate::models::offer::{Offer, OfferReply};
 use crate::models::transaction::DBTransaction;
-use axum::extract::{Json, Path};
+use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 
@@ -47,18 +48,19 @@ impl OfferHandler {
         Path(id): Path<i64>,
         _user: OfferAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let string = Offer::preview_email(id, &mut transaction.tx).await?;
+        let email_parts = Offer::preview_email(id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, string))
+        Ok((StatusCode::OK, Json(email_parts)))
     }
 
     pub async fn send_offer(
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
         _user: OfferAdmin,
+        State(state): State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Offer::send_offer(id, &mut transaction.tx).await?;
+        Offer::send_offer(id, &mut transaction.tx, state.email_credentials).await?;
         transaction.tx.commit().await?;
 
         Ok((StatusCode::OK, "Successfully sent offer"))

@@ -1,11 +1,16 @@
+use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 use s3::Bucket;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Transaction};
 use sqlx::{Pool, Postgres};
 use std::ops::DerefMut;
+use axum::{async_trait, RequestPartsExt};
+use axum::extract::{FromRef, FromRequestParts, Path};
+use axum::http::request::Parts;
 use uuid::Uuid;
-
+use crate::models::app::AppState;
+use crate::service::campaign::assert_campaign_is_open;
 use super::{error::ChaosError, storage::Storage};
 
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
@@ -36,6 +41,7 @@ pub struct CampaignDetails {
     pub starts_at: DateTime<Utc>,
     pub ends_at: DateTime<Utc>,
 }
+
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct OrganisationCampaign {
     pub id: i64,
@@ -45,6 +51,15 @@ pub struct OrganisationCampaign {
     pub description: Option<String>,
     pub starts_at: DateTime<Utc>,
     pub ends_at: DateTime<Utc>,
+}
+
+#[derive(Deserialize)]
+pub struct NewCampaign {
+    pub slug: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub starts_at: DateTime<Utc>,
+    pub ends_at: DateTime<Utc>
 }
 
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
@@ -224,5 +239,31 @@ impl Campaign {
         .await?;
 
         Ok(())
+    }
+}
+
+pub struct OpenCampaign;
+
+#[async_trait]
+impl<S> FromRequestParts<S> for OpenCampaign
+where
+    AppState: FromRef<S>,
+    S: Send + Sync,
+{
+    type Rejection = ChaosError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let app_state = AppState::from_ref(state);
+
+        let campaign_id = *parts
+            .extract::<Path<HashMap<String, i64>>>()
+            .await
+            .map_err(|_| ChaosError::BadRequest)?
+            .get("application_id")
+            .ok_or(ChaosError::BadRequest)?;
+
+        assert_campaign_is_open(campaign_id, &app_state.db).await?;
+
+        Ok(OpenCampaign)
     }
 }

@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use crate::models::error::ChaosError;
 use crate::models::user::UserDetails;
 use chrono::{DateTime, Utc};
@@ -5,6 +6,12 @@ use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
 use sqlx::{FromRow, Pool, Postgres, Transaction};
 use std::ops::DerefMut;
+use axum::{async_trait, RequestPartsExt};
+use axum::extract::{FromRef, FromRequestParts, Path};
+use axum::http::request::Parts;
+use crate::models::app::AppState;
+use crate::service::answer::assert_answer_application_is_open;
+use crate::service::application::{assert_application_is_open};
 
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Application {
@@ -27,6 +34,7 @@ pub struct ApplicationRole {
     pub id: i64,
     pub application_id: i64,
     pub campaign_role_id: i64,
+    pub preference: i32,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -64,6 +72,12 @@ pub struct ApplicationData {
 pub struct ApplicationAppliedRoleDetails {
     pub campaign_role_id: i64,
     pub role_name: String,
+    pub preference: i32,
+}
+
+#[derive(Deserialize)]
+pub struct ApplicationRoleUpdate {
+    pub roles: Vec<ApplicationRole>,
 }
 
 #[derive(Deserialize, Serialize, sqlx::Type, Clone, Debug)]
@@ -101,11 +115,12 @@ impl Application {
         for role_applied in application_data.applied_roles {
             sqlx::query!(
                 "
-                    INSERT INTO application_roles (application_id, campaign_role_id)
-                    VALUES ($1, $2)
+                    INSERT INTO application_roles (application_id, campaign_role_id, preference)
+                    VALUES ($1, $2, $3)
                 ",
                 id,
-                role_applied.campaign_role_id
+                role_applied.campaign_role_id,
+                role_applied.preference
             )
             .execute(transaction.deref_mut())
             .await?;
@@ -115,7 +130,7 @@ impl Application {
     }
 
     /*
-       Get Application given an application id
+       Get Application given an application id. Used by application viewers
     */
     pub async fn get(
         id: i64,
@@ -129,8 +144,10 @@ impl Application {
                 u.zid AS user_zid, u.name AS user_name, u.gender AS user_gender,
                 u.pronouns AS user_pronouns, u.degree_name AS user_degree_name,
                 u.degree_starting_year AS user_degree_starting_year
-                FROM applications a LEFT JOIN users u ON u.id = a.user_id
-                WHERE a.id = $1
+                FROM applications a
+                JOIN users u ON u.id = a.user_id
+                JOIN campaigns c ON c.id = a.campaign_id
+                WHERE a.id = $1 AND a.submitted = true
             ",
             id
         )
@@ -140,9 +157,10 @@ impl Application {
         let applied_roles = sqlx::query_as!(
             ApplicationAppliedRoleDetails,
             "
-                SELECT application_roles.campaign_role_id, campaign_roles.name AS role_name
+                SELECT application_roles.campaign_role_id,
+                application_roles.preference, campaign_roles.name AS role_name
                 FROM application_roles
-                    LEFT JOIN campaign_roles
+                    JOIN campaign_roles
                     ON application_roles.campaign_role_id = campaign_roles.id
                 WHERE application_id = $1
             ",
@@ -171,7 +189,7 @@ impl Application {
     }
 
     /*
-       Get All applications that apply for a given role
+       Get All applications that apply for a given role. Used by application viewers
     */
     pub async fn get_from_role_id(
         role_id: i64,
@@ -185,8 +203,11 @@ impl Application {
                 u.zid AS user_zid, u.name AS user_name, u.gender AS user_gender,
                 u.pronouns AS user_pronouns, u.degree_name AS user_degree_name,
                 u.degree_starting_year AS user_degree_starting_year
-                FROM applications a LEFT JOIN users u ON u.id = a.user_id LEFT JOIN application_roles ar on ar.application_id = a.id
-                WHERE ar.id = $1
+                FROM applications a
+                JOIN users u ON u.id = a.user_id
+                JOIN application_roles ar on ar.application_id = a.id
+                JOIN campaigns c on c.id = a.campaign_id
+                WHERE ar.id = $1 AND a.submitted = true
             ",
             role_id
         )
@@ -198,9 +219,10 @@ impl Application {
             let applied_roles = sqlx::query_as!(
                 ApplicationAppliedRoleDetails,
                 "
-                    SELECT application_roles.campaign_role_id, campaign_roles.name AS role_name
+                    SELECT application_roles.campaign_role_id,
+                    application_roles.preference, campaign_roles.name AS role_name
                     FROM application_roles
-                        LEFT JOIN campaign_roles
+                        JOIN campaign_roles
                         ON application_roles.campaign_role_id = campaign_roles.id
                     WHERE application_id = $1
                 ",
@@ -234,7 +256,7 @@ impl Application {
     }
 
     /*
-       Get All applications that apply for a given campaign
+       Get All applications that apply for a given campaign. Used by application viewers
     */
     pub async fn get_from_campaign_id(
         campaign_id: i64,
@@ -248,8 +270,10 @@ impl Application {
                 u.zid AS user_zid, u.name AS user_name, u.gender AS user_gender,
                 u.pronouns AS user_pronouns, u.degree_name AS user_degree_name,
                 u.degree_starting_year AS user_degree_starting_year
-                FROM applications a LEFT JOIN users u ON u.id = a.user_id
-                WHERE a.campaign_id = $1
+                FROM applications a
+                JOIN users u ON u.id = a.user_id
+                JOIN campaigns c ON c.id = a.campaign_id
+                WHERE a.campaign_id = $1 AND a.submitted = true
             ",
             campaign_id
         )
@@ -261,9 +285,10 @@ impl Application {
             let applied_roles = sqlx::query_as!(
                 ApplicationAppliedRoleDetails,
                 "
-                    SELECT application_roles.campaign_role_id, campaign_roles.name AS role_name
+                    SELECT application_roles.campaign_role_id,
+                    application_roles.preference, campaign_roles.name AS role_name
                     FROM application_roles
-                        LEFT JOIN campaign_roles
+                        JOIN campaign_roles
                         ON application_roles.campaign_role_id = campaign_roles.id
                     WHERE application_id = $1
                 ",
@@ -297,7 +322,7 @@ impl Application {
     }
 
     /*
-       Get All applications that are made by a given user
+       Get All applications that are made by a given user. Used by user
     */
     pub async fn get_from_user_id(
         user_id: i64,
@@ -311,7 +336,7 @@ impl Application {
                 u.zid AS user_zid, u.name AS user_name, u.gender AS user_gender,
                 u.pronouns AS user_pronouns, u.degree_name AS user_degree_name,
                 u.degree_starting_year AS user_degree_starting_year
-                FROM applications a LEFT JOIN users u ON u.id = a.user_id
+                FROM applications a JOIN users u ON u.id = a.user_id
                 WHERE a.user_id = $1
             ",
             user_id
@@ -324,9 +349,10 @@ impl Application {
             let applied_roles = sqlx::query_as!(
                 ApplicationAppliedRoleDetails,
                 "
-                    SELECT application_roles.campaign_role_id, campaign_roles.name AS role_name
+                    SELECT application_roles.campaign_role_id,
+                    application_roles.preference, campaign_roles.name AS role_name
                     FROM application_roles
-                        LEFT JOIN campaign_roles
+                        JOIN campaign_roles
                         ON application_roles.campaign_role_id = campaign_roles.id
                     WHERE application_id = $1
                 ",
@@ -338,8 +364,9 @@ impl Application {
             let details = ApplicationDetails {
                 id: application_data.id,
                 campaign_id: application_data.campaign_id,
-                status: application_data.status,
-                private_status: application_data.private_status,
+                status: application_data.status.clone(),
+                // To reuse struct, do not show use private status
+                private_status: application_data.status,
                 applied_roles,
                 user: UserDetails {
                     id: application_data.user_id,
@@ -397,5 +424,106 @@ impl Application {
         .await?;
 
         Ok(())
+    }
+
+    pub async fn update_roles(
+        id: i64,
+        roles: Vec<ApplicationRole>,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
+        sqlx::query!(
+            "
+                DELETE FROM application_roles WHERE application_id = $1
+            ",
+            id
+        )
+        .execute(transaction.deref_mut())
+        .await?;
+
+        // Insert into table application_roles
+        for role in roles {
+            sqlx::query!(
+                "
+                    INSERT INTO application_roles (application_id, campaign_role_id, preference)
+                    VALUES ($1, $2, $3)
+                ",
+                id,
+                role.campaign_role_id,
+                role.preference
+            )
+            .execute(transaction.deref_mut())
+            .await?;
+        }
+
+        Ok(())
+    }
+
+    pub async fn submit(
+        id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
+        let _ = sqlx::query!(
+            "
+                UPDATE applications SET submitted = true WHERE id = $1 RETURNING id
+            ",
+            id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
+        Ok(())
+    }
+}
+
+
+pub struct OpenApplicationByApplicationId;
+
+#[async_trait]
+impl<S> FromRequestParts<S> for OpenApplicationByApplicationId
+where
+    AppState: FromRef<S>,
+    S: Send + Sync,
+{
+    type Rejection = ChaosError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let app_state = AppState::from_ref(state);
+
+        let application_id = *parts
+            .extract::<Path<HashMap<String, i64>>>()
+            .await
+            .map_err(|_| ChaosError::BadRequest)?
+            .get("application_id")
+            .ok_or(ChaosError::BadRequest)?;
+
+        assert_application_is_open(application_id, &app_state.db).await?;
+
+        Ok(OpenApplicationByApplicationId)
+    }
+}
+
+pub struct OpenApplicationByAnswerId;
+
+#[async_trait]
+impl<S> FromRequestParts<S> for OpenApplicationByAnswerId
+where
+    AppState: FromRef<S>,
+    S: Send + Sync,
+{
+    type Rejection = ChaosError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let app_state = AppState::from_ref(state);
+
+        let answer_id = *parts
+            .extract::<Path<HashMap<String, i64>>>()
+            .await
+            .map_err(|_| ChaosError::BadRequest)?
+            .get("application_id")
+            .ok_or(ChaosError::BadRequest)?;
+
+        assert_answer_application_is_open(answer_id, &app_state.db).await?;
+
+        Ok(OpenApplicationByAnswerId)
     }
 }

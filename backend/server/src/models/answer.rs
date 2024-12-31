@@ -35,7 +35,6 @@ pub struct Answer {
 
 #[derive(Deserialize)]
 pub struct NewAnswer {
-    pub application_id: i64,
     pub question_id: i64,
 
     #[serde(flatten)]
@@ -320,7 +319,7 @@ impl Answer {
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        sqlx::query!("DELETE FROM answers WHERE id = $1 RETURNING id", id)
+        let _ = sqlx::query!("DELETE FROM answers WHERE id = $1 RETURNING id", id)
             .fetch_one(transaction.deref_mut())
             .await?;
 
@@ -355,7 +354,7 @@ impl AnswerData {
         multi_option_answers: Option<Vec<i64>>,
         ranking_answers: Option<Vec<i64>>,
     ) -> Self {
-        return match question_type {
+        match question_type {
             QuestionType::ShortAnswer => {
                 let answer =
                     short_answer_answer.expect("Data should exist for ShortAnswer variant");
@@ -376,18 +375,18 @@ impl AnswerData {
                 let options = ranking_answers.expect("Data should exist for Ranking variant");
                 AnswerData::Ranking(options)
             }
-        };
+        }
     }
 
     pub fn validate(&self) -> Result<(), ChaosError> {
         match self {
             Self::ShortAnswer(text) => {
-                if text.len() == 0 {
+                if text.is_empty() {
                     return Err(ChaosError::BadRequest);
                 }
             }
             Self::MultiSelect(data) | Self::Ranking(data) => {
-                if data.len() == 0 {
+                if data.is_empty() {
                     return Err(ChaosError::BadRequest);
                 }
             }

@@ -1,9 +1,8 @@
-use crate::models;
 use crate::models::app::AppState;
 use crate::models::auth::SuperUser;
 use crate::models::auth::{AuthUser, OrganisationAdmin};
-use crate::models::campaign::Campaign;
-use crate::models::email_template::EmailTemplate;
+use crate::models::campaign::{Campaign, NewCampaign};
+use crate::models::email_template::{EmailTemplate, NewEmailTemplate};
 use crate::models::error::ChaosError;
 use crate::models::organisation::{
     AdminToRemove, AdminUpdateList, NewOrganisation, Organisation, SlugCheck,
@@ -167,7 +166,7 @@ impl OrganisationHandler {
         Path(id): Path<i64>,
         State(state): State<AppState>,
         _admin: OrganisationAdmin,
-        Json(request_body): Json<Campaign>,
+        Json(request_body): Json<NewCampaign>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Organisation::create_campaign(
             id,
@@ -199,12 +198,13 @@ impl OrganisationHandler {
         Path(id): Path<i64>,
         State(state): State<AppState>,
         _admin: OrganisationAdmin,
-        Json(request_body): Json<models::email_template::EmailTemplate>,
+        Json(request_body): Json<NewEmailTemplate>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Organisation::create_email_template(
             id,
             request_body.name,
-            request_body.template,
+            request_body.template_subject,
+            request_body.template_body,
             &state.db,
             state.snowflake_generator,
         )

@@ -25,7 +25,14 @@ impl EmailTemplateHandler {
         State(state): State<AppState>,
         Json(request_body): Json<EmailTemplate>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        EmailTemplate::update(id, request_body.name, request_body.template, &state.db).await?;
+        EmailTemplate::update(
+            id,
+            request_body.name,
+            request_body.template_subject,
+            request_body.template_body,
+            &state.db,
+        )
+        .await?;
 
         Ok((StatusCode::OK, "Successfully updated email template"))
     }
