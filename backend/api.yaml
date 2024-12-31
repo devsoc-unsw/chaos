@@ -271,12 +271,8 @@ paths:
                   message:
                     type: string
                     example: Successfully created organisation
-        "403":
-          description: User is not a SuperUser
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Unauthorized"
+        "401":
+          $ref: "#/components/responses/NotSuperUser"
         "307":
           $ref: "#/components/responses/NotLoggedIn"
   /organisation/slug_check:
@@ -358,12 +354,8 @@ paths:
                   message:
                     type: string
                     example: Successfully deleted organisation
-        "403":
-          description: User is not a SuperUser
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Unauthorized"
+        "401":
+          $ref: "#/components/responses/NotSuperUser"
         "307":
           $ref: "#/components/responses/NotLoggedIn"
   /organisation/slug/{slug}:
@@ -575,9 +567,9 @@ paths:
           $ref: "#/components/responses/NotOrganisationAdmin"
         "307":
           $ref: "#/components/responses/NotLoggedIn"
-  /organisation/{id}/member:
+  /organisation/{id}/members:
     get:
-      operationId: getOrganisationMembersById
+      operationId: Get All Organisation members
       parameters:
         - name: id
           in: path
@@ -586,7 +578,7 @@ paths:
           schema:
             type: integer
             format: int64
-      description: Returns list of members of specified organisation.
+      description: Returns list of members of specified organisation
       tags:
         - Organisation
       responses:
@@ -611,15 +603,8 @@ paths:
                         role:
                           type: string
                           example: Admin
-        "403":
-          description: User is not an organisation admin or member.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Unauthorized
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
     put:
       operationId: updateOrganisationMembersById
       parameters:
@@ -637,6 +622,7 @@ paths:
             schema:
               properties:
                 members:
+                  description: Array of User IDs
                   type: array
                   uniqueItems: true
                   items:
@@ -648,7 +634,7 @@ paths:
                       1541815603606036827,
                       1541815287306036429,
                     ]
-      description: Specifies members for specified organistion.
+      description: Specifies members for specified organistion
       tags:
         - Organisation
       responses:
@@ -662,23 +648,10 @@ paths:
                     type: string
                     example: Successfully updated members.
         "401":
-          description: Not logged in.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Not logged in.
-        "403":
-          description: User is not an organisation admin.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Unauthorized
+          $ref: "#/components/responses/NotOrganisationAdmin"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+  /organisation/{id}/member:
     delete:
       operationId: deleteOrganisationMemberById
       parameters:
@@ -698,7 +671,7 @@ paths:
                 user_id:
                   type: integer
                   format: int64
-      description: Specifies member for deletion in organistion.
+      description: Specifies member for deletion in organistion
       tags:
         - Organisation
       responses:
@@ -712,25 +685,10 @@ paths:
                     type: string
                     example: Successfully updated members.
         "401":
-          description: Not logged in.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Not logged in.
-        "403":
-          description: User is not an organisation admin.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Unauthorized
-
-  /organisation/{id}/admin:
+          $ref: "#/components/responses/NotOrganisationAdmin"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+  /organisation/{id}/admins:
     get:
       operationId: getOrganisationAdminsById
       parameters:
@@ -741,7 +699,7 @@ paths:
           schema:
             type: integer
             format: int64
-      description: Returns list of admins of specified organisation.
+      description: Returns list of admins of specified organisation
       tags:
         - Organisation
       responses:
@@ -766,15 +724,10 @@ paths:
                         role:
                           type: string
                           example: Admin
-        "403":
-          description: User is not a SuperUser.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Unauthorized
+        "401":
+          $ref: "#/components/responses/NotSuperUser"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
     put:
       operationId: updateOrganisationAdminsById
       parameters:
@@ -803,7 +756,7 @@ paths:
                       1541815603606036827,
                       1541815287306036429,
                     ]
-      description: Specifies Admins for specified organistion.
+      description: Specifies admins for specified organistion
       tags:
         - Organisation
       responses:
@@ -815,25 +768,13 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: Successfully updated members.
+                    example: Successfully updated members
         "401":
-          description: Not logged in.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Not logged in.
-        "403":
-          description: User is not a SuperUser.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Unauthorized
+          $ref: "#/components/responses/NotSuperUser"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+
+  /organisation/{id}/admin:
     delete:
       operationId: deleteOrganisationAdminById
       parameters:
@@ -853,7 +794,7 @@ paths:
                 user_id:
                   type: integer
                   format: int64
-      description: Specifies Admin for deletion in organistion.
+      description: Specifies admin for deletion in organisation
       tags:
         - Organisation
       responses:
@@ -865,18 +806,83 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: Successfully deleted Admin.
+                    example: Successfully deleted Admin
         "401":
-          description: Not logged in.
+          $ref: "#/components/responses/NotSuperUser"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+
+  /rating/{id}:
+    get:
+      operationId: getRatingById
+      description: Returns info about specified rating
+      tags:
+        - Rating
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RatingDetails"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+        "401":
+          $ref: "#/components/responses/NotOrganisationMember"
+    delete:
+      operationId: deleteRatingById
+      description: Delete specified rating
+      tags:
+        - Rating
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully deleted rating
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+        "401":
+          description: User is not original rating creator
           content:
             application/json:
               schema:
                 properties:
                   error:
                     type: string
-                    example: Not logged in.
-        "403":
-          description: User is not a SuperUser.
+                    example: Unauthorized
+    put:
+      operationId: updateRatingById
+      description: Update specified rating
+      tags:
+        - Rating
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                data:
+                  type:
+                    $ref: "#components/schemas/NewRating"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully updated rating
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+        "401":
+          description: User is not original rating creator
           content:
             application/json:
               schema:
@@ -1016,24 +1022,10 @@ paths:
                   message:
                     type: string
                     example: Successfully updated campaign.
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
         "401":
-          description: Not logged in.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Not logged in.
-        "403":
-          description: User is not an organisation admin.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Unauthorized
+          $ref: "#/components/responses/NotOrganisationAdmin"
     delete:
       operationId: deleteCampaignById
       parameters:
@@ -1569,7 +1561,6 @@ paths:
                 data:
                   type:
                     $ref: "#components/schemas/ApplicationStatus"
-
       description: Change Status of a specific Application
       tags:
         - Organisation
@@ -1932,6 +1923,41 @@ components:
           type: string
           example: 2024-02-15T18:25:43.511Z
 
+    RatingDetails:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1541815603606036480
+        rater_id:
+          type: integer
+          format: int64
+          example: 1541815603606036480
+        rater_name:
+          type: string
+          example: David
+        rating:
+          type: integer
+          format: int32
+          example: 9
+        comment:
+          type: string
+          nullable: true
+          example: Good answer to this question
+
+    NewRating:
+      type: object
+      properties:
+        rating:
+          type: integer
+          format: int32
+          example: 9
+        comment:
+          type: string
+          nullable: true
+          example: Good answer to this question
+
     EmailTemplate:
       type: object
       properties:
@@ -1978,6 +2004,26 @@ components:
 
     NotOrganisationAdmin:
       description: User is not an organisation admin
+      content:
+        application/json:
+          schema:
+            properties:
+              error:
+                type: string
+                example: Unauthorized
+
+    NotOrganisationMember:
+      description: User is not an organisation member
+      content:
+        application/json:
+          schema:
+            properties:
+              error:
+                type: string
+                example: Unauthorized
+
+    NotSuperUser:
+      description: User is not a Super User
       content:
         application/json:
           schema:
