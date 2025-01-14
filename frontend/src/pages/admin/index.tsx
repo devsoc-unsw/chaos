@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 
-import { getAdminData } from "../../api";
+import { getOrganisation } from "../../api";
 import AdminSidebar from "../../components/AdminSideBar";
 import { SetNavBarTitleContext } from "../../contexts/SetNavbarTitleContext";
 
@@ -40,7 +40,7 @@ const Admin = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { organisations } = await getAdminData();
+      const { organisations } = await getOrganisation();
 
       setOrgList(
         organisations.map((item) => ({

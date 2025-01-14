@@ -4,7 +4,8 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import {
   createCampaign,
-  isAdminInOrganisation,
+  getAdminData,
+  getSelfInfo,
   setCampaignCoverImage,
 } from "api";
 import { FetchError } from "api/api";
@@ -22,7 +23,9 @@ const CreateCampaign = () => {
   const navigate = useNavigate();
   useEffect(() => {
     const fetchData = async () => {
-      const isAdmin = await isAdminInOrganisation(orgId);
+      const user = await getSelfInfo();
+      const { members: admins } = await getAdminData(orgId);
+      const isAdmin = admins.find((member) => member.id === user.id) !== undefined;
       if (!isAdmin) {
         navigate("/");
       }

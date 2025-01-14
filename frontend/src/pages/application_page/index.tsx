@@ -23,30 +23,29 @@ import CampaignDetails from "./CampaignDetails";
 import RolesSidebar from "./RolesSidebar";
 
 import type { RoleQuestion, RoleQuestions } from "./types";
-import { Role, type Campaign, type Organisation, type UserResponse } from "types/api";
+import { NewApplication, Role, User, type Campaign, type Organisation } from "types/api";
 
 const ApplicationPage = () => {
   const navigate = useNavigate();
 
   const [campaign, setCampaign] = useState<Campaign>({
       id: -1,
+      organisation_name: "",
+      organisation_slug: "",
       organisation_id: -1,
       name: "",
       cover_image: "",
       description: "",
       starts_at: "",
       ends_at: "",
-      published: false,
-      created_at: "",
-      updated_at: "",
-      slug: ""
+      campaign_slug: ""
   });
   const [organisation, setOrganisation] = useState<Organisation>({
     id: -1,
     name: "",
+    slug: "",
     logo: "",
     created_at: "",
-    updated_at: "",
   });
 
   const { organisationSlug, campaignSlug } = useParams();
@@ -54,10 +53,13 @@ const ApplicationPage = () => {
 
   const [loading, setLoading] = useState(true);
 
-  const [selfInfo, setSelfInfo] = useState<UserResponse>({
+  const [selfInfo, setSelfInfo] = useState<User>({
+    id: -1,
     email: "",
     zid: "",
-    display_name: "",
+    name: "",
+    pronouns: "",
+    gender: "",
     degree_name: "",
     degree_starting_year: -1,
   });
@@ -89,7 +91,7 @@ const ApplicationPage = () => {
           }
         });
 
-        const { roles: campaignRoles } = await getCampaignRoles(campaignId);
+        const campaignRoles = await getCampaignRoles(campaignId);
         setRoles(campaignRoles);
         // initialise roleQuestions to include common questions
         const roleQuestions: RoleQuestions = Object.fromEntries(
@@ -100,7 +102,7 @@ const ApplicationPage = () => {
         await Promise.all(campaignRoles.map( async ({id: roleId}) => {
           // for each roleId, pushes every question to the rolearray
           const questionsByRole = await getRoleQuestions(campaignId, roleId);
-          const questions = questionsByRole.questions.map((questions) => {
+          const questions = questionsByRole.map((questions) => {
             return {
               id: questions.id,
               text: questions.title,
@@ -178,22 +180,44 @@ const ApplicationPage = () => {
       return;
     }
 
-    Promise.all(
-      rolesSelected.map(async (role) => {
-        const application = await newApplication(role);
-        await Promise.all(
-          Object.keys(answers)
-            .map(Number)
-            .filter((qId) =>
-              roleQuestions[application.role_id]
-                .find((q) => q.id === qId)
-            )
-            .map((qId) => submitAnswer(application.id, qId, answers[qId]))
-        );
-      })
-    )
-      .then(() => navigate("/dashboard"))
+    const newApp: NewApplication = {
+      applied_roles: rolesSelected.map(roleId => {
+                    return {
+                        campaign_role_id: roleId
+                    }}),
+    };
+
+    newApplication(campaign.id, newApp)
+    .then(async (application) => {
+      await Promise.all(
+        Object.keys(answers)
+          .map(Number)
+          .filter((qId) =>
+            roleQuestions[application.role_id]
+              .find((q) => q.id === qId)
+          )
+          .map((qId) => submitAnswer(application.id, qId, answers[qId]))
+      );
+    })
+    .then(() => navigate("/dashboard"))
       .catch(() => alert("Error during submission"));
+
+    // Promise.all(
+    //   rolesSelected.map(async (role) => {
+    //     const application = await newApplication(role);
+    //     await Promise.all(
+    //       Object.keys(answers)
+    //         .map(Number)
+    //         .filter((qId) =>
+    //           roleQuestions[application.role_id]
+    //             .find((q) => q.id === qId)
+    //         )
+    //         .map((qId) => submitAnswer(application.id, qId, answers[qId]))
+    //     );
+    //   })
+    // )
+    //   .then(() => navigate("/dashboard"))
+    //   .catch(() => alert("Error during submission"));
   };
 
   return (
