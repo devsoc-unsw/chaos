@@ -5,6 +5,8 @@ import { Toaster } from "react-hot-toast";
 import { BrowserRouter, Routes } from "react-router-dom";
 import "twin.macro";
 
+import { LoggedInContext } from "contexts/LoggedInContext";
+
 import { LoadingIndicator, NavBar } from "./components";
 import { SetNavBarTitleContext } from "./contexts/SetNavbarTitleContext";
 import routes from "./routes";
@@ -34,27 +36,30 @@ const theme = createTheme({
 
 const App = () => {
   const [AppBarTitle, setNavBarTitle] = useState("");
+  const [loggedIn, setLoggedIn] = useState(false);
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <SnackbarProvider maxSnack={3}>
         <SetNavBarTitleContext.Provider value={setNavBarTitle}>
-          <BrowserRouter>
-            <NavBar campaign={AppBarTitle} />
-            <Box pt={8} minHeight="100vh" display="flex" tw="bg-gray-50">
-              <Suspense fallback={<LoadingIndicator />}>
-                <Routes>{routes}</Routes>
-              </Suspense>
-            </Box>
-            <Toaster
-              position="bottom-right"
-              reverseOrder={false}
-              toastOptions={{
-                duration: 5000,
-              }}
-            />
-          </BrowserRouter>
+          <LoggedInContext.Provider value={setLoggedIn}>
+            <BrowserRouter>
+              <NavBar campaign={AppBarTitle} loggedIn={loggedIn} />
+              <Box pt={8} minHeight="100vh" display="flex" tw="bg-gray-50">
+                <Suspense fallback={<LoadingIndicator />}>
+                  <Routes>{routes}</Routes>
+                </Suspense>
+              </Box>
+              <Toaster
+                position="bottom-right"
+                reverseOrder={false}
+                toastOptions={{
+                  duration: 5000,
+                }}
+              />
+            </BrowserRouter>
+          </LoggedInContext.Provider>
         </SetNavBarTitleContext.Provider>
       </SnackbarProvider>
     </ThemeProvider>
