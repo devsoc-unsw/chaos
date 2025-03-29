@@ -1,0 +1,2 @@
+ALTER TABLE IF EXISTS answers
+    ALTER COLUMN answer_type SET NOT NULL;
