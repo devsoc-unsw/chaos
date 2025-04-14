@@ -69,7 +69,6 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ onDateTimeSelect }) =
 
   
   return (
-    
     <div className="flex flex-col md:flex-row items-start gap-4 md:gap-8 p-4 md:p-8 w-full">
       
       {/* MUI Calendar Section */}
@@ -77,6 +76,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ onDateTimeSelect }) =
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           {isDesktop ? (
             <StaticDatePicker
+              className="bg-indigo-600"
               value={dayjs(selectedDate)}
               onChange={handleDateChange}
               displayStaticWrapperAs="desktop"
@@ -97,7 +97,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ onDateTimeSelect }) =
         </LocalizationProvider>
       </div>
 
-
+          
       {/* Time Slot Section */}
       <div className="w-full mt-6 md:mt-0 transition-all duration-300 overflow-x-auto">
         {/* Header with week control */}
@@ -139,7 +139,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ onDateTimeSelect }) =
                 onClick={() => handleTimeSelect(dateStr, "")}
                 className={`py-2 text-sm font-medium border rounded-full transition-all w-full h-12 flex items-center justify-center ${
                   isSelected
-                    ? "bg-blue-600 text-white border-blue-600 ring-2 ring-blue-300"
+                    ? "bg-gray-400 text-white border-gray-400 ring-2 ring-gray-300"
                     : "bg-white text-gray-800 border-gray-300 hover:bg-gray-100"
                 }`}
               >
@@ -176,7 +176,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ onDateTimeSelect }) =
                         onClick={() => handleTimeSelect(dateStr, time)}
                         className={`w-full text-xs py-2 px-2 border rounded-md shadow-sm transition-all duration-200 ${
                           isSelected
-                            ? "bg-blue-600 text-white border-blue-700 ring-2 ring-blue-400"
+                            ? "bg-indigo-400 text-white border-gray-400 ring-2 ring-gray-300"
                             : "bg-white text-gray-800 border-gray-300 hover:bg-gray-50 hover:shadow"
                         }`}
                       >
@@ -191,7 +191,6 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ onDateTimeSelect }) =
         </div>
       </div>
     </div>
-
   );
 };
 
