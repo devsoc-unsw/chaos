@@ -1,3 +1,4 @@
+import InterviewBooking from "pages/interview_booking/interview_booking";
 import { lazy } from "react";
 import { Route } from "react-router-dom";
 
@@ -40,6 +41,11 @@ const routes = [
     key="ApplicationPage"
     path="/application/:campaignId"
     element={<ApplicationPage />}
+  />,
+  <Route
+    key="interview-booking"
+    path="/interview-booking"
+    element={<InterviewBooking />}
   />,
 ];
 
