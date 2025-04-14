@@ -10,7 +10,7 @@ interface Slot {
   time: string;
 }
 
-const InterviewBooking2: React.FC = () => {
+const InterviewBooking: React.FC = () => {
   // ------------------------------
   // State Definitions
   // ------------------------------
@@ -149,7 +149,7 @@ const InterviewBooking2: React.FC = () => {
 
       
       {/* Confirmation Alert */}
-      <div className="max-w-3xl mx-auto my-2">
+      <div className="max-w-3xl mx-auto my-10">
         {success && (
           <div className="flex items-center gap-3 p-4 mb-4 rounded-lg border border-green-300 bg-green-50 text-green-800 shadow-sm animate-fade-in">
             <span className="text-xl">✅</span>
@@ -198,4 +198,4 @@ const InterviewBooking2: React.FC = () => {
   );
 };
 
-export default InterviewBooking2;
+export default InterviewBooking;

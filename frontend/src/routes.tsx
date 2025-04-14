@@ -1,5 +1,5 @@
-import InterviewBooking from "pages/interview_booking/interview_booking";
-import InterviewBooking2 from "pages/interview_booking/interview_page_2";
+
+import InterviewBooking from "pages/interview_booking/interview_booking_page";
 import { lazy } from "react";
 import { Route } from "react-router-dom";
 
@@ -48,11 +48,7 @@ const routes = [
     path="/interview-booking"
     element={<InterviewBooking />}
   />,
-  <Route
-    key="interview-booking2"
-    path="/interview-booking2"
-    element={<InterviewBooking2 />}
-  />,
+
 ];
 
 export default routes;
