@@ -2,7 +2,7 @@ name: Rust
 
 on:
   pull_request:
-    branches: [main, "renovate/*"]
+    branches: [main, "renovate/*", "CHAOS-224-KHAOS-rewrite"]
   push:
     branches: ["renovate/*"]
 
@@ -12,34 +12,58 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: chaos
+        ports:
+          - 5432:5432
     steps:
       - uses: actions/checkout@v4
-      - name: Mock an env file
+      - name: Setup env file
         run: |
-          echo "DATABASE_URL=test_url" >> backend/.env
+          echo "DATABASE_URL=postgres://postgres:password@localhost:5432/chaos" >> backend/.env
           echo "JWT_SECRET=test_secret" >> backend/.env
           echo "GOOGLE_CLIENT_ID=test" >> backend/.env
           echo "GOOGLE_CLIENT_SECRET=test" >> backend/.env
           echo "GOOGLE_REDIRECT_URI=http://localhost:3000/auth/callback" >> backend/.env
-          echo "ROCKET_DATABASES='{}'" >> backend/.env
+          echo "S3_BUCKET_NAME=chaos-storage" >> backend/.env
+          echo "S3_ACCESS_KEY=test_access_key" >> backend/.env
+          echo "S3_SECRET_KEY=test_secret_key" >> backend/.env
+          echo "S3_ENDPOINT=https://chaos-storage.s3.ap-southeast-1.amazonaws.com" >> backend/.env
+          echo "S3_REGION_NAME=ap-southeast-1" >> backend/.env
       # selecting a toolchain either by action or manual `rustup` calls should happen
       # before the plugin, as it uses the current rustc version as its cache key
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
-      - uses: Swatinem/rust-cache@v2
+      - name: Setup cargo cache
+        uses: actions/cache@v3
         with:
-          working-directory: backend/
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            backend/server/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+      - name: Migrate DB
+        working-directory: backend
+        run: |
+          which sqlx || cargo install sqlx-cli --no-default-features --features native-tls,postgres
+          sqlx database create
+          sqlx migrate run
       - name: Build
-        run: cargo build --manifest-path backend/server/Cargo.toml
+        working-directory: backend/server
+        run: cargo build
       - name: Cargo Clippy
-        run: cargo clippy --manifest-path backend/server/Cargo.toml
+        working-directory: backend/server
+        run: cargo clippy
       - name: RustFmt
-        run: cargo fmt --manifest-path backend/server/Cargo.toml
-      - name: Build
-        run: cargo build --manifest-path backend/seed_data/Cargo.toml
-      - name: Cargo Clippy
-        run: cargo clippy --manifest-path backend/seed_data/Cargo.toml
-      - name: RustFmt
-        run: cargo fmt --manifest-path backend/seed_data/Cargo.toml
+        working-directory: backend/server
+        run: cargo fmt
