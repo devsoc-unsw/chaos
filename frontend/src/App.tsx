@@ -6,6 +6,7 @@ import "twin.macro";
 
 import { LoadingIndicator, NavBar } from "./components";
 import { SetNavBarTitleContext } from "./contexts/SetNavbarTitleContext";
+import { UserProvider } from "contexts/UserContext";
 import routes from "./routes";
 
 const App = () => {
@@ -13,23 +14,25 @@ const App = () => {
 
   return (
     <SnackbarProvider maxSnack={3}>
-      <SetNavBarTitleContext.Provider value={setNavBarTitle}>
-        <BrowserRouter>
-          <NavBar campaign={AppBarTitle} />
-          <div tw="flex min-h-screen bg-gray-50 pt-16">
-            <Suspense fallback={<LoadingIndicator />}>
-              <Routes>{routes}</Routes>
-            </Suspense>
-          </div>
-          <Toaster
-            position="bottom-right"
-            reverseOrder={false}
-            toastOptions={{
-              duration: 5000,
-            }}
-          />
-        </BrowserRouter>
-      </SetNavBarTitleContext.Provider>
+      <UserProvider>
+        <SetNavBarTitleContext.Provider value={setNavBarTitle}>
+          <BrowserRouter>
+            <NavBar campaign={AppBarTitle} />
+            <div tw="flex min-h-screen bg-gray-50 pt-16">
+              <Suspense fallback={<LoadingIndicator />}>
+                <Routes>{routes}</Routes>
+              </Suspense>
+            </div>
+            <Toaster
+              position="bottom-right"
+              reverseOrder={false}
+              toastOptions={{
+                duration: 5000,
+              }}
+            />
+          </BrowserRouter>
+        </SetNavBarTitleContext.Provider>
+      </UserProvider>
     </SnackbarProvider>
   );
 };
