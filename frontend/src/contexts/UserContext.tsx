@@ -1,13 +1,14 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from 'react';
 
 type User = {
     id: string;
-    name: string;
+    name?: string;
     email: string;
 } | null;
 
 type UserContextType = {
     user: User;
+    setUser: Dispatch<SetStateAction<User>>;
     login: (userData: {id: string; name: string; email: string}) => void;
     logout: () => void;
     isLoggedIn: boolean;
@@ -33,7 +34,7 @@ export function UserProvider({ children }: UserProviderProps) {
     const isLoggedIn = user !== null;
 
     return (
-        <UserContext.Provider value={{user, login, logout, isLoggedIn}}>
+        <UserContext.Provider value={{user, setUser, login, logout, isLoggedIn}}>
             {children}
         </UserContext.Provider>
     );
@@ -42,5 +43,8 @@ export function UserProvider({ children }: UserProviderProps) {
 
 export function useUser() {
     const context = useContext(UserContext);
+    if (context === undefined) {
+        throw new Error('User can only exist within UserProvider');
+    }
     return context;
 }

@@ -88,6 +88,7 @@ export const doSignup = async ({
 //   };
 // };
 
+// todo: update to cookies-based approach
 const authenticatedRequest = <T = void>(
   payload: Parameters<typeof API.request<T>>[0]
 ) => {
@@ -119,7 +120,12 @@ export const getAdminData = (organisationId: number) =>
     path: `/v1/organisation/${organisationId}/admin`,
   });
 
-// todo: update all referencing components
+// todo: create backend route + update referencing components
+export const getAdminOrgs = () =>
+  authenticatedRequest<{ organisations: Organisation[] }>({
+    path: "",
+  });
+
 export const getOrganisation = (organisationId: number) =>
   authenticatedRequest<Organisation>({
     path: `/v1/organisation/${organisationId}`,
@@ -190,6 +196,7 @@ export const getRoleQuestions = (campaignId: number, roleId: number) =>
     path: `/v1/campaign/${campaignId}/role/${roleId}/questions`,
   });
 
+// todo: update all referencing components
 export const getCommonQuestions = (campaignID: number) =>
   authenticatedRequest<QuestionResponse[]>({
     path: `/v1/campaign/${campaignID}/questions/common`

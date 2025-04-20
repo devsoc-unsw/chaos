@@ -5,10 +5,8 @@ import "twin.macro";
 import Container from "components/Container";
 
 import {
-  getAllCampaigns,
   getCommonQuestions,
   getRoleQuestions,
-  getOrganisation,
   getSelfInfo,
   newApplication,
   submitAnswer,

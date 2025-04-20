@@ -5,6 +5,11 @@ import Toast from "components/Toast";
 
 import type { ToastType } from "components/Toast";
 
+import { jwtDecode } from "jwt-decode";
+import { useUser } from "contexts/UserContext";
+import { getSelfInfo } from "api";
+
+
 export function isLogin(): boolean {
   return true;
 }
@@ -13,7 +18,17 @@ export function isAdmin(): boolean {
   return true;
 }
 
-export const isLoggedIn = (): boolean => Boolean(localStorage.AUTH_TOKEN);
+// TODO
+export const isLoggedIn = (): boolean => {
+    const userInfo = getSelfInfo();
+    const { isLoggedIn, setUser } = useUser();
+
+
+
+
+    return false;
+    // Boolean(localStorage.AUTH_TOKEN);
+}
 
 export const dateToStringForBackend = (dateObject: Date): string =>
   moment.utc(dateObject).format("YYYY-MM-DD HH:mm:ss");
