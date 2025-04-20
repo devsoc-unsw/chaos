@@ -4,7 +4,7 @@ import PulsingBar from "components/PulsingBar";
 import { Pulse, pulseCss } from "styles/animations";
 
 const Button = styled(Pulse, {
-  ...tw`ml-auto px-2 py-1.5 text-transparent rounded-[0.2rem]`,
+  ...tw`ml-auto rounded-[0.2rem] px-2 py-1.5 text-transparent`,
   ...pulseCss,
 
   variants: {
@@ -27,9 +27,9 @@ type Props = {
   animationDelay?: number;
 };
 const CampaignLoading = ({ status, animationDelay = 0 }: Props) => (
-  <div tw="w-96 rounded bg-white text-xs shadow-md transition hover:(-translate-y-1 shadow-lg)">
+  <div tw="w-96 rounded bg-white text-xs shadow-md transition hover:-translate-y-1 hover:shadow-lg">
     <header tw="flex items-center gap-1.5 p-3">
-      <PulsingBar tw="w-10 h-10" animationDelay={animationDelay} standalone />
+      <PulsingBar tw="h-10 w-10" animationDelay={animationDelay} standalone />
       <Bars>
         <PulsingBar tw="w-36" animationDelay={animationDelay} />
         <PulsingBar tw="w-32" animationDelay={animationDelay + 150} />
@@ -38,7 +38,7 @@ const CampaignLoading = ({ status, animationDelay = 0 }: Props) => (
         {status?.toUpperCase()}
       </Button>
     </header>
-    <div tw="bg-[#edeeef] aspect-w-16 aspect-h-9" />
+    <div tw="aspect-h-9 aspect-w-16 bg-[#edeeef]" />
   </div>
 );
 
