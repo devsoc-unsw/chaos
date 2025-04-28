@@ -5,29 +5,10 @@ import Toast from "components/Toast";
 
 import type { ToastType } from "components/Toast";
 
-import { jwtDecode } from "jwt-decode";
 import { useUser } from "contexts/UserContext";
-import { getSelfInfo } from "api";
 
-
-export function isLogin(): boolean {
-  return true;
-}
-
-export function isAdmin(): boolean {
-  return true;
-}
-
-// TODO
 export const isLoggedIn = (): boolean => {
-    const userInfo = getSelfInfo();
-    const { isLoggedIn, setUser } = useUser();
-
-
-
-
-    return false;
-    // Boolean(localStorage.AUTH_TOKEN);
+  return useUser().isLoggedIn;
 }
 
 export const dateToStringForBackend = (dateObject: Date): string =>
@@ -60,18 +41,11 @@ export const fileToDataUrl = (file: File): Promise<string> => {
 export const base64ToBytes = (base64String: string): number[] =>
   Array.from(atob(base64String), (c) => c.charCodeAt(0));
 
-// set/retrieve from localstorage
-export const getStore = (key: string) => localStorage.getItem(key);
-export const setStore = (key: string, val: string) =>
-  localStorage.setItem(key, val);
-export const removeStore = (key: string) => localStorage.removeItem(key);
-
 export const pushToast = (
   title: string,
   description: string,
   type?: ToastType
-) => {
+) =>
   toast.custom((t) => (
     <Toast t={t} title={title} description={description} type={type} />
   ));
-};

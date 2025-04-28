@@ -7,7 +7,7 @@ import { Transition } from "components";
 import Container from "components/Container";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 
-import { getStore } from "../../utils";
+import { useUser } from "contexts/UserContext";
 
 import Campaigns from "./components/Campaigns";
 import DashboardButton from "./components/DashboardButton";
@@ -16,8 +16,7 @@ import Waves from "./components/Waves";
 
 import type { PointerEvent } from "react";
 
-const OAUTH_CALLBACK_URL =
-  getStore("AUTH_TOKEN") || (import.meta.env.VITE_OAUTH_CALLBACK_URL as string);
+const OAUTH_CALLBACK_URL = "/api/auth/google";
 
 const Landing = () => {
   const setNavBarTitle = useContext(SetNavBarTitleContext);
@@ -25,7 +24,8 @@ const Landing = () => {
     setNavBarTitle("");
   }, []);
 
-  const campaignsRef = useRef<HTMLDivElement>(null);
+  const { isLoggedIn } = useUser();
+   const campaignsRef = useRef<HTMLDivElement>(null);
 
   const [offsetX, setOffsetX] = useState<number>(Infinity);
   const [offsetY, setOffsetY] = useState<number>(Infinity);
@@ -74,11 +74,11 @@ const Landing = () => {
             enter={tw`transition delay-500 duration-[600ms]`}
             enterFrom={tw`translate-y-4 opacity-0`}
           >
-            {getStore("AUTH_TOKEN") ? (
-              <DashboardButton as={Link} to="/dashboard">
-                Your Dashboard
-              </DashboardButton>
-            ) : (
+            {isLoggedIn ? (
+               <DashboardButton as={Link} to="/dashboard">
+                 Your Dashboard
+               </DashboardButton>
+             ) : (
               // <DashboardButton as="a" href={OAUTH_CALLBACK_URL}>
               //   Get Started
               // </DashboardButton>

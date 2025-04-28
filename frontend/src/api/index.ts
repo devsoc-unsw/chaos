@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable camelcase */
-import { getStore } from "../utils";
 
 import API from "./api";
 
@@ -34,46 +33,6 @@ import {
   AnswerData,
 } from "../types/api";
 
-// todo: update to new route
-export const authenticate = async (oauthToken: string) =>
-  API.request<AuthenticateResponse>({
-    method: "POST",
-    path: `/auth/signin`,
-    body: {
-      oauth_token: oauthToken,
-    },
-  });
-
-// todo: update to new route
-export const doSignup = async ({
-  name,
-  degree_name,
-  zid,
-  starting_year,
-  gender,
-  pronouns,
-}: {
-  name: string;
-  degree_name: string;
-  zid: string;
-  starting_year: number;
-  gender: UserGender;
-  pronouns: string;
-}) =>
-  API.request<{ token: string }>({
-    method: "POST",
-    path: `/auth/signup`,
-    body: {
-      signup_token: getStore("signup_token"),
-      zid,
-      display_name: name,
-      degree_starting_year: starting_year,
-      degree_name,
-      gender,
-      pronouns,
-    },
-  });
-
 // const authenticatedRequest = () => {
 //   const token = `Bearer ${localStorage.getItem("AUTH_TOKEN")}`;
 //   return {
@@ -88,23 +47,14 @@ export const doSignup = async ({
 //   };
 // };
 
-// todo: update to cookies-based approach
+// todo: update to cookies-based approach -> done
 const authenticatedRequest = <T = void>(
   payload: Parameters<typeof API.request<T>>[0]
-) => {
-  const token = getStore("AUTH_TOKEN");
-  if (!token) {
-    throw new Error("No token found");
-  }
-
-  return API.request<T>({
-    ...payload,
-    header: {
-      Authorization: `Bearer ${token}`,
-      ...payload.header,
-    },
-  });
-};
+  ) =>
+    API.request<T>({
+      ...payload,
+      
+    });
 
 // todo: update to new route
 export const getAllCampaigns = () =>

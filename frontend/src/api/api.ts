@@ -56,7 +56,7 @@ const API = {
     };
     if (method !== "GET") payload.body = jsonBody ? JSON.stringify(body) : body;
 
-    const resp = await fetch(endpoint, payload);
+    const resp = await fetch(endpoint, { ...payload, credentials: "include" });
     if (!resp.ok) {
       let data;
       try {

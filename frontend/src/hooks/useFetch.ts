@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { getStore, pushToast } from "utils";
+import { pushToast } from "utils";
 
 import type { Json } from "types/api";
 
@@ -64,8 +64,8 @@ const useFetch = <T = void>(url: string, options?: Options<T>) => {
     setRetry({});
   }, []);
 
-  const external = !url.startsWith("/");
-  const baseUrl = !external ? `${window.origin}/api${url}` : url;
+    const external = !url.startsWith("/");
+    const baseUrl = external ? url : `/api${url}`;
 
   const doFetch = useCallback(
     async (url = "", options?: Options<T>): Promise<FetchReturn<T>> => {
@@ -83,17 +83,14 @@ const useFetch = <T = void>(url: string, options?: Options<T>) => {
       setLoading(true);
       setError(error);
 
-      // TODO: move auth tokens to cookies
-      const token = getStore("AUTH_TOKEN");
+      // TODO: move auth tokens to cookies - done
       const { headers, ...init } = options ?? {};
 
       try {
         const resp = await fetch(`${baseUrl}/${url}`, {
+          credentials: "include",        // <-- send cookie
           headers: {
-            // eslint-disable-next-line @typescript-eslint/naming-convention
             "Content-Type": "application/json",
-            // eslint-disable-next-line @typescript-eslint/naming-convention
-            ...(token && !external && { Authorization: `Bearer ${token}` }),
             ...headers,
           },
           ...init,

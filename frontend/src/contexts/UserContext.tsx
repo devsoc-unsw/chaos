@@ -1,4 +1,8 @@
-import { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from 'react';
+import { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction, useEffect } from 'react';
+
+import {
+    getSelfInfo
+} from "api";
 
 type User = {
     id: string;
@@ -23,13 +27,23 @@ type UserProviderProps = {
 export function UserProvider({ children }: UserProviderProps) {
     const [user, setUser] = useState<User>(null);
 
-    const login = (userData: { id: string; name: string; email: string }) => {
-        setUser(userData);
-    }
-
-    const logout = () => {
-        setUser(null);
-    }
+    useEffect(() => {
+        (async () => {
+          try {
+            const u = await getSelfInfo();        // 200 if signed-in
+            setUser({
+              id: u.id.toString(),
+              name: u.name,
+              email: u.email,
+            });
+          } catch {
+            setUser(null);                        // 401 or network → guest
+          }
+        })();
+      }, []);
+    
+    const login = (u: NonNullable<User>) => setUser(u);
+    const logout = () => setUser(null);
 
     const isLoggedIn = user !== null;
 
