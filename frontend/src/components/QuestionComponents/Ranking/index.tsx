@@ -1,7 +1,7 @@
 // Ranking/index.tsx
 import React, { useState, useEffect } from 'react';
 import tw from 'twin.macro';
-import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/solid';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 interface Option {
   id: string | number;
@@ -59,25 +59,25 @@ const Ranking: React.FC<RankingProps> = ({
     }
   }, [options, defaultValue]);
 
-  const moveOption = (optionId: string | number, direction: 'up' | 'down') => {
-    if (disabled) return;
-
-    const currentIndex = rankedOptions.findIndex(opt => opt.id === optionId);
-    if (currentIndex === -1) return;
-
-    const newRankedOptions = [...rankedOptions];
-
-    if (direction === 'up' && currentIndex > 0) {
-      // Swap with previous item
-      [newRankedOptions[currentIndex - 1], newRankedOptions[currentIndex]] =
-      [newRankedOptions[currentIndex], newRankedOptions[currentIndex - 1]];
-    } else if (direction === 'down' && currentIndex < rankedOptions.length - 1) {
-      // Swap with next item
-      [newRankedOptions[currentIndex], newRankedOptions[currentIndex + 1]] =
-      [newRankedOptions[currentIndex + 1], newRankedOptions[currentIndex]];
-    } else {
-      return; // Can't move further in this direction
+  const handleDragEnd = (result: any) => {
+    // Dropped outside the list
+    if (!result.destination) {
+      return;
     }
+
+    // If the item was dropped in the same position, do nothing
+    if (result.destination.index === result.source.index) {
+      return;
+    }
+
+    // Create a new array from the current rankedOptions
+    const newRankedOptions = Array.from(rankedOptions);
+
+    // Remove the dragged item from its original position
+    const [removed] = newRankedOptions.splice(result.source.index, 1);
+
+    // Insert the dragged item at its new position
+    newRankedOptions.splice(result.destination.index, 0, removed);
 
     // Update ranks
     const updatedOptions = newRankedOptions.map((opt, idx) => ({
@@ -87,13 +87,17 @@ const Ranking: React.FC<RankingProps> = ({
 
     setRankedOptions(updatedOptions);
 
+    // Notify parent components
     const orderedIds = updatedOptions.map(opt => opt.id);
     if (onChange) onChange(orderedIds);
     if (onSubmit) onSubmit(id, orderedIds);
   };
 
+  // Sort options by rank for display
+  const sortedOptions = [...rankedOptions].sort((a, b) => a.rank - b.rank);
+
   return (
-    <div tw="mb-6">
+    <div tw="mb-6 max-w-3xl w-full">
       <div tw="flex items-center mb-1">
         <label tw="text-lg font-medium text-gray-900">{question}</label>
         {required && <span tw="ml-1 text-red-500">*</span>}
@@ -103,52 +107,70 @@ const Ranking: React.FC<RankingProps> = ({
         <p tw="mb-2 text-sm text-gray-600">{description}</p>
       )}
 
-      <div tw="border border-gray-300 rounded-md overflow-hidden">
-        {rankedOptions.sort((a, b) => a.rank - b.rank).map((option, index) => (
-          <div
-            key={option.id}
-            css={[
-              tw`flex items-center justify-between p-3 bg-white`,
-              index !== rankedOptions.length - 1 && tw`border-b border-gray-300`,
-              disabled && tw`bg-gray-50`,
-            ]}
-          >
-            <div tw="flex items-center">
-              <span tw="bg-gray-200 text-gray-700 rounded-full w-6 h-6 flex items-center justify-center font-semibold mr-3">
-                {option.rank}
-              </span>
-              <span tw="text-gray-800">{option.label}</span>
-            </div>
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Droppable droppableId="ranking-list" isDropDisabled={disabled}>
+          {(provided, snapshot) => (
+            <div
+              {...provided.droppableProps}
+              ref={provided.innerRef}
+              css={[
+                tw`border-2 border-gray-300 rounded-md overflow-hidden`,
+                snapshot.isDraggingOver && tw`bg-blue-50 border-blue-300`,
+              ]}
+            >
+              {sortedOptions.map((option, index) => (
+                <Draggable
+                  key={option.id.toString()}
+                  draggableId={option.id.toString()}
+                  index={index}
+                  isDragDisabled={disabled}
+                >
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      css={[
+                        tw`flex items-center p-3 bg-white`,
+                        index !== sortedOptions.length - 1 && tw`border-b border-gray-200`,
+                        snapshot.isDragging && tw`bg-blue-100 shadow-md`,
+                        disabled && tw`bg-gray-50 cursor-not-allowed`,
+                      ]}
+                    >
+                      <div
+                        {...provided.dragHandleProps}
+                        tw="mr-3 text-gray-400 hover:text-gray-700 cursor-grab active:cursor-grabbing"
+                      >
+                        <svg
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                        >
+                          <path d="M9,3H11V5H9V3M13,3H15V5H13V3M9,7H11V9H9V7M13,7H15V9H13V7M9,11H11V13H9V11M13,11H15V13H13V11M9,15H11V17H9V15M13,15H15V17H13V15M9,19H11V21H9V19M13,19H15V21H13V19Z" />
+                        </svg>
+                      </div>
 
-            {!disabled && (
-              <div tw="flex space-x-1">
-                <button
-                  type="button"
-                  onClick={() => moveOption(option.id, 'up')}
-                  disabled={index === 0}
-                  css={[
-                    tw`p-1 rounded hover:bg-gray-100`,
-                    index === 0 && tw`opacity-50 cursor-not-allowed`,
-                  ]}
-                >
-                  <ChevronUpIcon tw="h-5 w-5 text-gray-500" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => moveOption(option.id, 'down')}
-                  disabled={index === rankedOptions.length - 1}
-                  css={[
-                    tw`p-1 rounded hover:bg-gray-100`,
-                    index === rankedOptions.length - 1 && tw`opacity-50 cursor-not-allowed`,
-                  ]}
-                >
-                  <ChevronDownIcon tw="h-5 w-5 text-gray-500" />
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+                      <div tw="flex items-center flex-1">
+                        <span tw="bg-gray-200 text-gray-700 rounded-full w-6 h-6 flex items-center justify-center font-semibold mr-3">
+                          {option.rank}
+                        </span>
+                        <span tw="text-gray-800">{option.label}</span>
+                      </div>
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
+
+      {!disabled && (
+        <p tw="mt-2 text-sm text-gray-500 italic">
+          Drag and drop items to reorder them
+        </p>
+      )}
     </div>
   );
 };
