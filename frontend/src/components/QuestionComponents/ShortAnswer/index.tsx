@@ -11,6 +11,8 @@ interface ShortAnswerProps {
   onChange?: (value: string) => void;
   onSubmit?: (questionId: number, value: string) => void;
   disabled?: boolean;
+  rows?: number;
+  columns?: number;
 }
 
 const ShortAnswer: React.FC<ShortAnswerProps> = ({
@@ -22,10 +24,13 @@ const ShortAnswer: React.FC<ShortAnswerProps> = ({
   onChange,
   onSubmit,
   disabled = false,
+  rows = 3, // Fix: expand to 3 rows
+  columns = 77,
 }) => {
   const [value, setValue] = useState(defaultValue);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+  // Changed to handle textarea instead of input
+  const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setValue(e.target.value);
     if (onChange) onChange(e.target.value);
   };
@@ -37,7 +42,7 @@ const ShortAnswer: React.FC<ShortAnswerProps> = ({
   };
 
   return (
-    <div tw="mb-6">
+    <div tw="mb-6 max-w-4xl w-full">
       <div tw="flex items-center mb-1">
         <label tw="text-lg font-medium text-gray-900">{question}</label>
         {required && <span tw="ml-1 text-red-500">*</span>}
@@ -47,14 +52,16 @@ const ShortAnswer: React.FC<ShortAnswerProps> = ({
         <p tw="mb-2 text-sm text-gray-600">{description}</p>
       )}
 
-      <input
-        type="text"
+      <textarea
         value={value}
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={disabled}
+        rows={rows}
+        cols={columns}
         css={[
-          tw`form-input w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500`,
+          tw`form-textarea w-full rounded-md border-2 border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500`,
+          tw`min-h-[180px] p-4 text-base`,
           disabled && tw`bg-gray-100 cursor-not-allowed`,
         ]}
         placeholder="Your answer"
