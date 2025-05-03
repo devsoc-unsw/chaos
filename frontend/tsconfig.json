@@ -2,6 +2,11 @@
   "compilerOptions": {
     "target": "es2020",
     "baseUrl": "src",
+    "paths": {
+      "@/ui/*": ["components/shad_cn/ui/*"],
+      "@/lib/*": ["components/shad_cn/lib/*"]
+    },
+  
     "useDefineForClassFields": true,
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": false,
