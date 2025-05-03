@@ -76,9 +76,13 @@ const InterviewBooking: React.FC = () => {
   return (
     <form onSubmit={handleSubmit} className={`min-h-screen bg-white px-6 py-10 ${loaded ? "opacity-100" : "opacity-0 translate-y-4"} w-full md:w-3/4 mx-auto shadow-lg rounded-xl transition-all duration-700`}> 
   
-      <h1 className="text-5xl md:text-6xl font-bold font-mono text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-pulse drop-shadow-md mb-10">
-        🚀 Book Your Interview
+      <h1
+        className="text-4xl sm:text-5xl md:text-6xl font-bold font-mono text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-pulse mb-10"
+      >
+      Book Your Interview
       </h1>
+
+
 
       {/* Personal Info Card */}
       <div className="mb-10 max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl border-2 border-indigo-400 p-8 my-8 space-y-6 transform transition-all duration-500 hover:scale-[1.01] hover:shadow-purple-500/30">
@@ -87,7 +91,7 @@ const InterviewBooking: React.FC = () => {
             {formData.firstName} {formData.lastName || "🧑"}
           </h2>
           <p className="text-gray-500 text-sm italic">
-            Please confirm your contact information. Don’t ghost us. 👻
+            Please confirm your contact information. We’ll reach out to you via email or phone.
           </p>
         </div>
 
@@ -126,11 +130,11 @@ const InterviewBooking: React.FC = () => {
       {/* Additional Info Card (e.g. Notes) */}
       <div className="mb-10 max-w-3xl mx-auto bg-gradient-to-br from-white via-gray-50 to-purple-50 rounded-xl shadow-lg border border-gray-300 p-6 my-6 transition duration-300 ease-in-out hover:shadow-lg hover:shadow-purple-300/50">
         <h3 className="text-xl font-bold text-purple-700 mb-3 flex items-center gap-2">
-          ✍️ Additional Notes
+          Additional Notes
         </h3>
         <textarea
           id="notes"
-          placeholder="Enter any specific notes or requests... e.g. 'Please don’t call during math class 😅'"
+          placeholder="Enter any specific notes or requests... e.g. 'Please don’t call during math class'"
           value={formData.notes}
           onChange={handleChange}
           className="w-full border border-indigo-200 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 focus:scale-105 transition-all"
@@ -162,7 +166,7 @@ const InterviewBooking: React.FC = () => {
           <div className="flex items-center gap-3 p-4 mb-4 rounded-lg border border-red-300 bg-red-50 text-red-800 shadow-sm animate-shake">
             <span className="text-xl">⚠️</span>
             <div className="text-sm font-medium">
-              Something went wrong. Please try again. 😞
+              Something went wrong. Please try again. 
             </div>
           </div>
         )}
@@ -172,28 +176,33 @@ const InterviewBooking: React.FC = () => {
       {/* Submit and Reset Buttons */}
       <div className="flex flex-col items-center justify-center mb-10 mt-6">
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
+          
+          {/* Submit Button */}
           <button
             type="submit"
-            className="w-full sm:w-auto bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-600 
-                      hover:from-blue-500 hover:to-indigo-500 text-white font-bold px-6 py-3 
-                      rounded-xl shadow-lg shadow-indigo-300 
-                      transition-all duration-300 transform hover:scale-105 
-                      focus:outline-none focus:ring-4 focus:ring-purple-400 animate-pulse"
+            className="w-full sm:w-auto bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 
+                      hover:brightness-110 text-white font-semibold px-6 py-3 
+                      rounded-xl shadow-md transition-transform duration-300 ease-in-out 
+                      hover:scale-105 focus:outline-none focus:ring-4 focus:ring-pink-300"
           >
-            🚀 Submit Booking
+            Submit Booking
           </button>
+
+          {/* Reset Button */}
           <button
             type="button"
             onClick={handleReset}
-            className="w-full sm:w-auto bg-red-100 hover:bg-red-200 text-red-800 font-bold px-6 py-3 
-                      rounded-xl shadow-inner border border-red-300 
-                      transition-all duration-300 transform hover:-rotate-1 hover:scale-105 
-                      focus:outline-none focus:ring-4 focus:ring-red-400"
+            className="w-full sm:w-auto bg-white hover:bg-red-50 text-red-600 font-semibold px-6 py-3 
+                      rounded-xl border border-red-300 shadow-sm 
+                      transition-transform duration-300 ease-in-out hover:-rotate-1 hover:scale-105 
+                      focus:outline-none focus:ring-4 focus:ring-red-300"
           >
-            🔥 Reset Chaos
+            Reset Form
           </button>
+
         </div>
       </div>
+
     </form>
   );
 };
