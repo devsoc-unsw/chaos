@@ -1,7 +1,7 @@
-
-import InterviewBooking from "pages/interview_booking/interview_booking_page";
 import { lazy } from "react";
 import { Route } from "react-router-dom";
+
+import InterviewBooking from "pages/interview_booking/interview_booking_page";
 
 const Admin = lazy(() => import("./pages/admin"));
 const ApplicationPage = lazy(() => import("./pages/application_page"));
@@ -48,7 +48,6 @@ const routes = [
     path="/interview-booking"
     element={<InterviewBooking />}
   />,
-
 ];
 
 export default routes;

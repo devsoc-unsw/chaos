@@ -3,6 +3,7 @@ import { SnackbarProvider } from "notistack";
 import { Suspense, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import { BrowserRouter, Routes } from "react-router-dom";
+
 import "twin.macro";
 import "./index.css";
 import { LoadingIndicator, NavBar } from "./components";

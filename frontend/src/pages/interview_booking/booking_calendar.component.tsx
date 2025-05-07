@@ -1,10 +1,14 @@
-import React, { useState, useMemo } from "react";
 import { addDays, startOfWeek } from "date-fns";
-import { Calendar } from "../../components/shad_cn/ui/calendar";
-import { Button } from "../../components/shad_cn/ui/button";
-import { Card } from "../../components/shad_cn/ui/card";
+import { useMemo, useState } from "react";
+
 import { cn } from "../../components/shad_cn/lib/utils";
+import { Button } from "../../components/shad_cn/ui/button";
+import { Calendar } from "../../components/shad_cn/ui/calendar";
+import { Card } from "../../components/shad_cn/ui/card";
+
 import availableTime from "./availableTimeSlots.json";
+
+import type React from "react";
 
 /**
  * Represents a single time slot available for booking.
@@ -38,11 +42,15 @@ const getWeekDates = (startDate: Date): Date[] =>
  * BookingCalendar displays a calendar UI and available time slots,
  * with different behavior on desktop vs mobile.
  */
-const BookingCalendar: React.FC<BookingCalendarProps> = ({ onDateTimeSelect }) => {
+const BookingCalendar: React.FC<BookingCalendarProps> = ({
+  onDateTimeSelect,
+}) => {
   const slotData: Slot[] = availableTime;
 
   // State to track currently selected date and time
-  const [selectedDate, setSelectedDate] = useState<string>(formatDate(new Date()));
+  const [selectedDate, setSelectedDate] = useState<string>(
+    formatDate(new Date())
+  );
   const [selectedTime, setSelectedTime] = useState<string>("");
 
   // Starting date of the visible week (Monday by default)
@@ -59,10 +67,12 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ onDateTimeSelect }) =
    */
   const groupedSlots = useMemo(() => {
     const map: Record<string, string[]> = {};
-    for (const slot of slotData) {
-      if (!map[slot.date]) map[slot.date] = [];
+    slotData.forEach((slot) => {
+      if (!map[slot.date]) {
+        map[slot.date] = [];
+      }
       map[slot.date].push(slot.time);
-    }
+    });
     return map;
   }, [slotData]);
 
@@ -71,9 +81,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ onDateTimeSelect }) =
    */
   const availableDates = useMemo(() => {
     const dates = new Set<string>();
-    for (const slot of slotData) {
-      dates.add(slot.date);
-    }
+    slotData.forEach((slot) => dates.add(slot.date));
     return dates;
   }, [slotData]);
 
@@ -84,7 +92,8 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ onDateTimeSelect }) =
 
   // Custom class for available dates and selected dates in the calendar
   const modifiersClassNames = {
-    available: "bg-purple-100 text-purple-700 font-semibold border border-purple-400",
+    available:
+      "bg-purple-100 text-purple-700 font-semibold border border-purple-400",
     selected: "bg-purple-500 text-white font-bold border border-purple-700",
   };
 
@@ -115,14 +124,14 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ onDateTimeSelect }) =
   };
 
   return (
-    <div className="flex flex-col md:flex-row gap-6 p-4 w-full">
+    <div className="flex w-full flex-col gap-6 p-4 md:flex-row">
       {/* Calendar Panel */}
-      <div className="max-w-sm w-full">
+      <div className="w-full max-w-sm">
         <Calendar
           mode="single"
           selected={new Date(selectedDate)}
           onSelect={handleDateChange}
-          className="rounded-md border border-purple-300 shadow-sm text-gray-800"
+          className="rounded-md border border-purple-300 text-gray-800 shadow-sm"
           modifiers={modifiers}
           modifiersClassNames={modifiersClassNames}
           disabled={disabled}
@@ -132,20 +141,30 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ onDateTimeSelect }) =
       {/* Time Slot Selector Panel */}
       <div className="flex-1">
         {/* Week Navigation */}
-        <div className="flex justify-between items-center mb-4">
-          <Button variant="outline" onClick={() => setWeekStart(addDays(weekStart, -7))}>
+        <div className="mb-4 flex items-center justify-between">
+          <Button
+            variant="outline"
+            onClick={() => setWeekStart(addDays(weekStart, -7))}
+          >
             ← Previous
           </Button>
           <h2 className="text-md font-semibold">
-            Week of {weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+            Week of{" "}
+            {weekStart.toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+            })}
           </h2>
-          <Button variant="outline" onClick={() => setWeekStart(addDays(weekStart, 7))}>
+          <Button
+            variant="outline"
+            onClick={() => setWeekStart(addDays(weekStart, 7))}
+          >
             Next →
           </Button>
         </div>
 
         {/* Weekday Buttons (User selects a day here) */}
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-2 mb-4">
+        <div className="mb-4 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-7">
           {weekDates.map((date) => {
             const dateStr = formatDate(date);
             const isSelected = dateStr === selectedDate;
@@ -174,7 +193,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ onDateTimeSelect }) =
         </div>
 
         {/* Mobile View: Only show selected day's time slots */}
-        <div className="md:hidden space-y-2">
+        <div className="space-y-2 md:hidden">
           {(groupedSlots[selectedDate] || []).length === 0 ? (
             <div className="text-center text-muted-foreground">No slots</div>
           ) : (
@@ -185,7 +204,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ onDateTimeSelect }) =
                   key={time}
                   onClick={() => handleTimeSelect(selectedDate, time)}
                   className={cn(
-                    "text-center py-2 text-sm cursor-pointer border transition",
+                    "cursor-pointer border py-2 text-center text-sm transition",
                     isSelected
                       ? "bg-indigo-200 ring-2 ring-indigo-100"
                       : "hover:bg-muted"
@@ -199,7 +218,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ onDateTimeSelect }) =
         </div>
 
         {/* Desktop View: Show full week grid of time slots */}
-        <div className="hidden md:grid grid-cols-7 gap-3">
+        <div className="hidden grid-cols-7 gap-3 md:grid">
           {weekDates.map((date) => {
             const dateStr = formatDate(date);
             const times = groupedSlots[dateStr] || [];
@@ -209,13 +228,14 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ onDateTimeSelect }) =
                   <div className="text-center text-muted-foreground">—</div>
                 ) : (
                   times.map((time) => {
-                    const isSelected = selectedDate === dateStr && selectedTime === time;
+                    const isSelected =
+                      selectedDate === dateStr && selectedTime === time;
                     return (
                       <Card
                         key={time}
                         onClick={() => handleTimeSelect(dateStr, time)}
                         className={cn(
-                          "text-center py-2 text-sm cursor-pointer border transition",
+                          "cursor-pointer border py-2 text-center text-sm transition",
                           isSelected
                             ? "bg-indigo-200 ring-2 ring-indigo-100"
                             : "hover:bg-muted"
