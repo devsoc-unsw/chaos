@@ -4,15 +4,18 @@ use crate::models::error::ChaosError;
 use crate::service::auth::create_or_get_user_id;
 use crate::service::jwt::encode_auth_token;
 use axum::extract::{Query, State};
+use axum_extra::extract::cookie::{Cookie, CookieJar, Expiration};
 use axum::response::IntoResponse;
 use oauth2::reqwest::async_http_client;
 use oauth2::{AuthorizationCode, TokenResponse};
+use time::OffsetDateTime;
 
 /// This function handles the passing in of the Google OAuth code. After allowing our app the
 /// requested permissions, the user is redirected to this url on our server, where we use the
 /// code to get the user's email address from Google's OpenID Connect API.
 pub async fn google_callback(
     State(state): State<AppState>,
+    jar: CookieJar,
     Query(query): Query<AuthRequest>,
 ) -> Result<impl IntoResponse, ChaosError> {
     let token = state.oauth2_client
@@ -37,12 +40,19 @@ pub async fn google_callback(
     )
     .await?;
 
-    // TODO: Return JWT as set-cookie header.
     let token = encode_auth_token(
         profile.email,
         user_id,
         &state.encoding_key,
         &state.jwt_header,
     );
-    Ok(token)
+
+    // Create a cookie with the token
+    let cookie = Cookie::build(("token", token))
+        .http_only(true) // Prevent JavaScript access
+        .expires(Expiration::DateTime(OffsetDateTime::now_utc() + time::Duration::days(5))) // Set an expiration time of 5 days, TODO: read from env?
+        .secure(true)    // Send only over HTTPS, comment out for testing
+        .path("/");       // Available for all paths
+    // Add the cookie to the response
+    Ok(jar.add(cookie))
 }
