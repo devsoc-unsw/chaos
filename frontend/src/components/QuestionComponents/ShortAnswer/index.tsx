@@ -1,6 +1,6 @@
-// ShortAnswer/index.tsx
 import React, { useState, ChangeEvent } from 'react';
 import tw from 'twin.macro';
+import Textarea from 'components/Textarea';
 
 interface ShortAnswerProps {
   id: number;
@@ -28,6 +28,7 @@ const ShortAnswer: React.FC<ShortAnswerProps> = ({
   columns = 77,
 }) => {
   const [value, setValue] = useState(defaultValue);
+  const [isFocused, setIsFocused] = useState(false);
 
   // Changed to handle textarea instead of input
   const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
@@ -40,6 +41,9 @@ const ShortAnswer: React.FC<ShortAnswerProps> = ({
       onSubmit(id, value);
     }
   };
+  const handleFocus = () => {
+    setIsFocused(true);
+  };
 
   return (
     <div tw="mb-6 max-w-4xl w-full">
@@ -51,21 +55,20 @@ const ShortAnswer: React.FC<ShortAnswerProps> = ({
       {description && (
         <p tw="mb-2 text-sm text-gray-600">{description}</p>
       )}
-
-      <textarea
+    <Textarea
         value={value}
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={disabled}
         rows={rows}
         cols={columns}
-        css={[
-          tw`form-textarea w-full rounded-md border-2 border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500`,
-          tw`min-h-[180px] p-4 text-base`,
-          disabled && tw`bg-gray-100 cursor-not-allowed`,
-        ]}
+        size="md"
         placeholder="Your answer"
         required={required}
+        style={{
+          caretColor: isFocused ? '#3b82f6' : 'auto',
+          transition: 'all 0.2s ease-in-out',
+        }}
       />
     </div>
   );
