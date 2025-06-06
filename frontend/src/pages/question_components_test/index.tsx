@@ -89,8 +89,8 @@ const QuestionComponentsTestPage: React.FC = () => {
         <h2 tw="text-2xl font-medium mb-4">Ranking</h2>
         <Ranking
           id={5}
-          question="Rank your preference for the following roles"
-          description="Click up/down arrows to reorder by preference"
+          question="Rank your preference for the following options"
+          description="Drag and drop options to your preferences"
           options={sampleOptions}
           required={true}
           defaultValue={answers[5] || []}

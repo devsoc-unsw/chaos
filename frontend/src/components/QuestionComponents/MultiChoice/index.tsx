@@ -1,4 +1,3 @@
-// MultiChoice/index.tsx
 import React, { useState } from 'react';
 import tw from 'twin.macro';
 
