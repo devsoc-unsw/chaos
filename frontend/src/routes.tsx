@@ -14,6 +14,9 @@ const Marking = lazy(() => import("./pages/admin/review/marking"));
 const Rankings = lazy(() => import("./pages/admin/review/rankings"));
 const Review = lazy(() => import("./pages/admin/review"));
 const SignupPage = lazy(() => import("./pages/signup"));
+const InterviewOfferStagingTest = lazy(
+  () => import("./pages/interview_offer_staging_test")
+);
 
 const routes = [
   <Route key="dashboard" path="/dashboard" element={<DashboardPage />} />,
@@ -40,6 +43,11 @@ const routes = [
     key="ApplicationPage"
     path="/application/:campaignId"
     element={<ApplicationPage />}
+  />,
+  <Route
+    key="InterviewOfferStagingTest"
+    path="/interview-offer-staging-test"
+    element={<InterviewOfferStagingTest />}
   />,
 ];
 
