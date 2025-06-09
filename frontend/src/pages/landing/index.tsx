@@ -1,6 +1,7 @@
 import { Fragment, useContext, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import tw from "twin.macro";
+import { Button } from "@/components/ui/button";
 
 import chaosImg from "assets/chaos.png";
 import { Transition } from "components";
