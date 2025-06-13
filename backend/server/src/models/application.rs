@@ -107,9 +107,9 @@ pub struct ApplicationData {
     /// Full name of the applicant
     pub user_name: String,
     /// Pronouns of the applicant
-    pub user_pronouns: String,
+    pub user_pronouns: Option<String>,
     /// Gender of the applicant
-    pub user_gender: String,
+    pub user_gender: Option<String>,
     /// Degree program of the applicant
     pub user_degree_name: Option<String>,
     /// Starting year of the applicant's degree

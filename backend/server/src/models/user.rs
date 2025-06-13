@@ -34,9 +34,9 @@ pub struct UserDetails {
     /// User's full name
     pub name: String,
     /// User's preferred pronouns
-    pub pronouns: String,
+    pub pronouns: Option<String>,
     /// User's gender
-    pub gender: String,
+    pub gender: Option<String>,
     /// User's degree name
     pub degree_name: Option<String>,
     /// Year the user started their degree
@@ -57,9 +57,9 @@ pub struct User {
     /// User's full name
     pub name: String,
     /// User's preferred pronouns
-    pub pronouns: String,
+    pub pronouns: Option<String>,
     /// User's gender
-    pub gender: String,
+    pub gender: Option<String>,
     /// User's degree name
     pub degree_name: Option<String>,
     /// Year the user started their degree
