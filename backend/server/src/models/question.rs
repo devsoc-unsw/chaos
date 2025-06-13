@@ -45,6 +45,7 @@ pub struct Question {
     title: String,
     description: Option<String>,
     common: bool, // Common question are shown at the start
+    roles: Vec<i64>, // (Possibly empty) list of roles the question is for
     required: bool,
 
     #[serde(flatten)]
@@ -72,6 +73,7 @@ pub struct QuestionRawData {
     title: String,
     description: Option<String>,
     common: bool, // Common question are shown at the start
+    roles: Vec<i64>,
     required: bool,
 
     question_type: QuestionType,
@@ -182,6 +184,7 @@ impl Question {
             title: question_raw_data.title,
             description: question_raw_data.description,
             common: question_raw_data.common,
+            roles: question_raw_data.roles,
             required: question_raw_data.required,
             question_data,
             created_at: question_raw_data.created_at,
@@ -238,6 +241,7 @@ impl Question {
                     title: question_raw_data.title,
                     description: question_raw_data.description,
                     common: question_raw_data.common,
+                    roles: question_raw_data.roles,
                     required: question_raw_data.required,
                     question_data,
                     created_at: question_raw_data.created_at,
@@ -302,6 +306,7 @@ impl Question {
                     title: question_raw_data.title,
                     description: question_raw_data.description,
                     common: question_raw_data.common,
+                    roles: question_raw_data.roles,
                     required: question_raw_data.required,
                     question_data,
                     created_at: question_raw_data.created_at,
@@ -362,6 +367,7 @@ impl Question {
                     title: question_raw_data.title,
                     description: question_raw_data.description,
                     common: question_raw_data.common,
+                    roles: question_raw_data.roles,
                     required: question_raw_data.required,
                     question_data,
                     created_at: question_raw_data.created_at,

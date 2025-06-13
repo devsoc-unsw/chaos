@@ -1,3 +1,9 @@
+//! Answer management module for the Chaos application.
+//! 
+//! This module provides functionality for managing answers to application questions,
+//! including creation, retrieval, updating, and deletion of answers. It supports
+//! various question types such as short answer, multiple choice, and ranking questions.
+
 use crate::models::error::ChaosError;
 use crate::models::question::QuestionType;
 use chrono::{DateTime, Utc};
@@ -6,9 +12,11 @@ use snowflake::SnowflakeIdGenerator;
 use sqlx::{Postgres, Transaction};
 use std::ops::DerefMut;
 
-/// The `Answer` type that will be sent in API responses.
-///
-///
+/// Represents an answer in the system.
+/// 
+/// An answer is a response to a question in an application. The answer data is
+/// stored in a type-specific format based on the question type.
+/// 
 /// With the chosen `serde` representation and the use of `#[serde(flatten)]`, the JSON for a
 /// `Answer` will look like this:
 /// ```json
@@ -23,43 +31,81 @@ use std::ops::DerefMut;
 /// ```
 #[derive(Deserialize, Serialize)]
 pub struct Answer {
+    /// Unique identifier for the answer
     id: i64,
+    /// ID of the question this answer is for
     question_id: i64,
 
+    /// The actual answer data, flattened in serialization
     #[serde(flatten)]
     answer_data: AnswerData,
 
+    /// When the answer was created
     created_at: DateTime<Utc>,
+    /// When the answer was last updated
     updated_at: DateTime<Utc>,
 }
 
+/// Data structure for creating a new answer.
+/// 
+/// Contains the question ID and the answer data.
 #[derive(Deserialize)]
 pub struct NewAnswer {
+    /// ID of the question this answer is for
     pub question_id: i64,
 
+    /// The actual answer data, flattened in serialization
     #[serde(flatten)]
     pub answer_data: AnswerData,
 }
 
+/// Raw answer data from the database.
+/// 
+/// Contains all fields needed to construct an Answer structure,
+/// including the question type and various answer formats.
 #[derive(Deserialize, sqlx::FromRow)]
 pub struct AnswerRawData {
+    /// Unique identifier for the answer
     id: i64,
+    /// ID of the question this answer is for
     question_id: i64,
+    /// Type of the question
     question_type: QuestionType,
+    /// Text answer for short answer questions
     short_answer_answer: Option<String>,
+    /// Selected options for multiple choice/select questions
     multi_option_answers: Option<Vec<i64>>,
+    /// Ranked options for ranking questions
     ranking_answers: Option<Vec<i64>>,
+    /// When the answer was created
     created_at: DateTime<Utc>,
+    /// When the answer was last updated
     updated_at: DateTime<Utc>,
 }
 
+/// Data structure for identifying an answer by type and application.
 #[derive(Deserialize)]
 pub struct AnswerTypeApplicationId {
+    /// Type of the question
     question_type: QuestionType,
+    /// ID of the application this answer belongs to
     application_id: i64,
 }
 
 impl Answer {
+    /// Creates a new answer.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `application_id` - ID of the application this answer belongs to
+    /// * `question_id` - ID of the question being answered
+    /// * `answer_data` - The answer data
+    /// * `snowflake_generator` - Generator for creating unique IDs
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<i64, ChaosError>` - ID of the created answer or error
     pub async fn create(
         application_id: i64,
         question_id: i64,
@@ -88,6 +134,16 @@ impl Answer {
         Ok(id)
     }
 
+    /// Retrieves an answer by its ID.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `id` - ID of the answer to retrieve
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<Answer, ChaosError>` - Answer details or error
     pub async fn get(
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
@@ -146,6 +202,18 @@ impl Answer {
         })
     }
 
+    /// Retrieves all common answers for an application.
+    /// 
+    /// Common answers are those that apply to all roles in the application.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `application_id` - ID of the application to get answers for
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<Vec<Answer>, ChaosError>` - List of answers or error
     pub async fn get_all_common_by_application(
         application_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
@@ -211,6 +279,17 @@ impl Answer {
         Ok(answers)
     }
 
+    /// Retrieves all answers for an application and role.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `application_id` - ID of the application to get answers for
+    /// * `role_id` - ID of the role to get answers for
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<Vec<Answer>, ChaosError>` - List of answers or error
     pub async fn get_all_by_application_and_role(
         application_id: i64,
         role_id: i64,
@@ -279,6 +358,17 @@ impl Answer {
         Ok(answers)
     }
 
+    /// Updates an existing answer.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `id` - ID of the answer to update
+    /// * `answer_data` - New answer data
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<(), ChaosError>` - Success or error
     pub async fn update(
         id: i64,
         answer_data: AnswerData,
@@ -315,6 +405,16 @@ impl Answer {
         Ok(())
     }
 
+    /// Deletes an answer.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `id` - ID of the answer to delete
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<(), ChaosError>` - Success or error
     pub async fn delete(
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
@@ -327,17 +427,34 @@ impl Answer {
     }
 }
 
+/// Represents the different types of answer data.
+/// 
+/// Each variant corresponds to a different question type and contains
+/// the appropriate data format for that type.
 #[derive(Deserialize, Serialize)]
-#[serde(tag = "answer_type", content = "data")]
 pub enum AnswerData {
+    /// Text answer for short answer questions
     ShortAnswer(String),
+    /// Single selected option for multiple choice questions
     MultiChoice(i64),
+    /// Multiple selected options for multi-select questions
     MultiSelect(Vec<i64>),
+    /// Single selected option for dropdown questions
     DropDown(i64),
+    /// Ranked list of options for ranking questions
     Ranking(Vec<i64>),
 }
 
 impl AnswerData {
+    /// Creates a new AnswerData instance based on a question type.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `question_type` - Type of the question
+    /// 
+    /// # Returns
+    /// 
+    /// * `AnswerData` - New answer data instance
     fn from_question_type(question_type: &QuestionType) -> Self {
         match question_type {
             QuestionType::ShortAnswer => AnswerData::ShortAnswer("".to_string()),
@@ -348,6 +465,18 @@ impl AnswerData {
         }
     }
 
+    /// Creates an AnswerData instance from raw database data.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `question_type` - Type of the question
+    /// * `short_answer_answer` - Text answer for short answer questions
+    /// * `multi_option_answers` - Selected options for multiple choice/select questions
+    /// * `ranking_answers` - Ranked options for ranking questions
+    /// 
+    /// # Returns
+    /// 
+    /// * `AnswerData` - New answer data instance
     fn from_answer_raw_data(
         question_type: QuestionType,
         short_answer_answer: Option<String>,
@@ -378,6 +507,11 @@ impl AnswerData {
         }
     }
 
+    /// Validates the answer data.
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<(), ChaosError>` - Success if valid, error if not
     pub fn validate(&self) -> Result<(), ChaosError> {
         match self {
             Self::ShortAnswer(text) => {
@@ -396,6 +530,16 @@ impl AnswerData {
         Ok(())
     }
 
+    /// Inserts the answer data into the database.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `answer_id` - ID of the answer to insert data for
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<(), ChaosError>` - Success or error
     pub async fn insert_into_db(
         self,
         answer_id: i64,
@@ -457,6 +601,16 @@ impl AnswerData {
         }
     }
 
+    /// Deletes the answer data from the database.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `answer_id` - ID of the answer to delete data for
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<(), ChaosError>` - Success or error
     pub async fn delete_from_db(
         self,
         answer_id: i64,

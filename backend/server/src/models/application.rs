@@ -1,3 +1,9 @@
+//! Application management module for the Chaos application.
+//! 
+//! This module provides functionality for managing applications within recruitment campaigns,
+//! including creating, retrieving, updating, and submitting applications. It also handles
+//! application status management and role preferences.
+
 use std::collections::HashMap;
 use crate::models::error::ChaosError;
 use crate::models::user::UserDetails;
@@ -13,82 +19,155 @@ use crate::models::app::AppState;
 use crate::service::answer::assert_answer_application_is_open;
 use crate::service::application::{assert_application_is_open};
 
+/// Represents an application in the system.
+/// 
+/// An application is a user's submission for one or more roles within a campaign.
+/// It tracks the application's status, both public and private, and maintains
+/// timestamps for creation and updates.
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Application {
+    /// Unique identifier for the application
     pub id: i64,
+    /// ID of the campaign this application belongs to
     pub campaign_id: i64,
+    /// ID of the user who submitted the application
     pub user_id: i64,
+    /// Public status of the application
     pub status: ApplicationStatus,
+    /// Private status of the application (visible only to admins)
     pub private_status: ApplicationStatus,
+    /// Timestamp when the application was created
     pub created_at: DateTime<Utc>,
+    /// Timestamp when the application was last updated
     pub updated_at: DateTime<Utc>,
 }
 
-/*
-    User could apply for more than one roles at a time, for each application
-    into a role it will be represented by row in application_roles table which
-    is linked to the main Application body through application_id
-*/
+/// Represents a role preference within an application.
+/// 
+/// Users can apply for multiple roles in a single application, specifying their
+/// preferences for each role. This struct links an application to a specific role
+/// and includes the user's preference ranking.
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct ApplicationRole {
+    /// Unique identifier for the role application
     pub id: i64,
+    /// ID of the parent application
     pub application_id: i64,
+    /// ID of the campaign role being applied for
     pub campaign_role_id: i64,
+    /// User's preference ranking for this role (lower number = higher preference)
     pub preference: i32,
 }
 
+/// Data structure for creating a new application.
+/// 
+/// Contains the list of roles the user is applying for, with their preferences.
 #[derive(Deserialize, Serialize)]
 pub struct NewApplication {
+    /// List of roles the user is applying for
     pub applied_roles: Vec<ApplicationRole>,
 }
 
+/// Detailed view of an application, including user information and role preferences.
+/// 
+/// This structure combines application data with user details and the specific roles
+/// the user has applied for.
 #[derive(Deserialize, Serialize)]
 pub struct ApplicationDetails {
+    /// Unique identifier for the application
     pub id: i64,
+    /// ID of the campaign this application belongs to
     pub campaign_id: i64,
+    /// Details of the user who submitted the application
     pub user: UserDetails,
+    /// Public status of the application
     pub status: ApplicationStatus,
+    /// Private status of the application (visible only to admins)
     pub private_status: ApplicationStatus,
+    /// List of roles the user has applied for, with details
     pub applied_roles: Vec<ApplicationAppliedRoleDetails>,
 }
 
+/// Raw application data from the database.
+/// 
+/// Contains all fields needed to construct an ApplicationDetails structure,
+/// including user information and application status.
 #[derive(Deserialize, Serialize)]
 pub struct ApplicationData {
+    /// Unique identifier for the application
     pub id: i64,
+    /// ID of the campaign this application belongs to
     pub campaign_id: i64,
+    /// ID of the user who submitted the application
     pub user_id: i64,
+    /// Email address of the applicant
     pub user_email: String,
+    /// Student ID of the applicant
     pub user_zid: Option<String>,
+    /// Full name of the applicant
     pub user_name: String,
+    /// Pronouns of the applicant
     pub user_pronouns: String,
+    /// Gender of the applicant
     pub user_gender: String,
+    /// Degree program of the applicant
     pub user_degree_name: Option<String>,
+    /// Starting year of the applicant's degree
     pub user_degree_starting_year: Option<i32>,
+    /// Public status of the application
     pub status: ApplicationStatus,
+    /// Private status of the application (visible only to admins)
     pub private_status: ApplicationStatus,
 }
 
+/// Details about a role that has been applied for.
+/// 
+/// Contains information about the role and the user's preference for it.
 #[derive(Deserialize, Serialize)]
 pub struct ApplicationAppliedRoleDetails {
+    /// ID of the campaign role
     pub campaign_role_id: i64,
+    /// Name of the role
     pub role_name: String,
+    /// User's preference ranking for this role
     pub preference: i32,
 }
 
+/// Data structure for updating role preferences in an application.
 #[derive(Deserialize)]
 pub struct ApplicationRoleUpdate {
+    /// Updated list of role preferences
     pub roles: Vec<ApplicationRole>,
 }
 
+/// Possible statuses for an application.
+/// 
+/// Applications can be in one of three states: pending review, rejected, or successful.
 #[derive(Deserialize, Serialize, sqlx::Type, Clone, Debug)]
 #[sqlx(type_name = "application_status", rename_all = "PascalCase")]
 pub enum ApplicationStatus {
+    /// Application is pending review
     Pending,
+    /// Application has been rejected
     Rejected,
+    /// Application has been successful
     Successful,
 }
 
 impl Application {
+    /// Creates a new application in the system.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `campaign_id` - ID of the campaign to apply to
+    /// * `user_id` - ID of the user submitting the application
+    /// * `application_data` - Details of the application including role preferences
+    /// * `snowflake_generator` - Generator for creating unique IDs
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<(), ChaosError>` - Success or error
     pub async fn create(
         campaign_id: i64,
         user_id: i64,
@@ -129,9 +208,16 @@ impl Application {
         Ok(())
     }
 
-    /*
-       Get Application given an application id. Used by application viewers
-    */
+    /// Retrieves an application by its ID.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `id` - ID of the application to retrieve
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<ApplicationDetails, ChaosError>` - Application details or error
     pub async fn get(
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
@@ -188,9 +274,16 @@ impl Application {
         })
     }
 
-    /*
-       Get All applications that apply for a given role. Used by application viewers
-    */
+    /// Retrieves all applications for a specific role.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `role_id` - ID of the role to get applications for
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<Vec<ApplicationDetails>, ChaosError>` - List of applications or error
     pub async fn get_from_role_id(
         role_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
@@ -255,9 +348,16 @@ impl Application {
         Ok(application_details_list)
     }
 
-    /*
-       Get All applications that apply for a given campaign. Used by application viewers
-    */
+    /// Retrieves all applications for a specific campaign.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `campaign_id` - ID of the campaign to get applications for
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<Vec<ApplicationDetails>, ChaosError>` - List of applications or error
     pub async fn get_from_campaign_id(
         campaign_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
@@ -321,9 +421,16 @@ impl Application {
         Ok(application_details_list)
     }
 
-    /*
-       Get All applications that are made by a given user. Used by user
-    */
+    /// Retrieves all applications submitted by a specific user.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `user_id` - ID of the user to get applications for
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<Vec<ApplicationDetails>, ChaosError>` - List of applications or error
     pub async fn get_from_user_id(
         user_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
@@ -386,6 +493,17 @@ impl Application {
         Ok(application_details_list)
     }
 
+    /// Updates the public status of an application.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `id` - ID of the application to update
+    /// * `new_status` - New status to set
+    /// * `pool` - Database connection pool
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<(), ChaosError>` - Success or error
     pub async fn set_status(
         id: i64,
         new_status: ApplicationStatus,
@@ -406,6 +524,17 @@ impl Application {
         Ok(())
     }
 
+    /// Updates the private status of an application.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `id` - ID of the application to update
+    /// * `new_status` - New status to set
+    /// * `pool` - Database connection pool
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<(), ChaosError>` - Success or error
     pub async fn set_private_status(
         id: i64,
         new_status: ApplicationStatus,
@@ -426,6 +555,17 @@ impl Application {
         Ok(())
     }
 
+    /// Updates the role preferences for an application.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `id` - ID of the application to update
+    /// * `roles` - New list of role preferences
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<(), ChaosError>` - Success or error
     pub async fn update_roles(
         id: i64,
         roles: Vec<ApplicationRole>,
@@ -458,6 +598,16 @@ impl Application {
         Ok(())
     }
 
+    /// Submits an application, marking it as ready for review.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `id` - ID of the application to submit
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<(), ChaosError>` - Success or error
     pub async fn submit(
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
@@ -475,14 +625,17 @@ impl Application {
     }
 }
 
-
+/// Extractor for ensuring an application is open by application ID.
+/// 
+/// This extractor is used in route handlers to ensure that the application
+/// being accessed is still open for submissions.
 pub struct OpenApplicationByApplicationId;
 
 #[async_trait]
 impl<S> FromRequestParts<S> for OpenApplicationByApplicationId
 where
-    AppState: FromRef<S>,
     S: Send + Sync,
+    AppState: FromRef<S>,
 {
     type Rejection = ChaosError;
 
@@ -502,13 +655,17 @@ where
     }
 }
 
+/// Extractor for ensuring an application is open by answer ID.
+/// 
+/// This extractor is used in route handlers to ensure that the application
+/// associated with an answer is still open for submissions.
 pub struct OpenApplicationByAnswerId;
 
 #[async_trait]
 impl<S> FromRequestParts<S> for OpenApplicationByAnswerId
 where
-    AppState: FromRef<S>,
     S: Send + Sync,
+    AppState: FromRef<S>,
 {
     type Rejection = ChaosError;
 
