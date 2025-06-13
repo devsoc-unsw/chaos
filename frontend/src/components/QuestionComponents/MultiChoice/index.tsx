@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import tw from 'twin.macro';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 interface Option {
   id: string | number;
@@ -31,7 +33,8 @@ const MultiChoice: React.FC<MultiChoiceProps> = ({
 }) => {
   const [selectedOption, setSelectedOption] = useState<string | number | undefined>(defaultValue);
 
-  const handleChange = (optionId: string | number) => {
+  const handleChange = (value: string) => {
+    const optionId = isNaN(Number(value)) ? value : Number(value);
     setSelectedOption(optionId);
 
     if (onChange) onChange(optionId);
@@ -39,38 +42,37 @@ const MultiChoice: React.FC<MultiChoiceProps> = ({
   };
 
   return (
-    <div tw="mb-6">
-      <div tw="flex items-center mb-1">
-        <label tw="text-lg font-medium text-gray-900">{question}</label>
-        {required && <span tw="ml-1 text-red-500">*</span>}
+    <div className="mb-6">
+      <div className="flex items-center mb-2">
+        <Label className="text-lg font-medium">{question}</Label>
+        {required && <span className="ml-1 text-red-500">*</span>}
       </div>
 
       {description && (
-        <p tw="mb-2 text-sm text-gray-600">{description}</p>
+        <p className="mb-4 text-sm text-muted-foreground">{description}</p>
       )}
 
-      <div tw="space-y-2">
+      <RadioGroup
+        value={selectedOption?.toString()}
+        onValueChange={handleChange}
+        disabled={disabled}
+        className="space-y-3"
+      >
         {options.map((option) => (
-          <div key={option.id} tw="flex items-center">
-            <input
-              type="radio"
-              id={`option-${id}-${option.id}`}
-              name={`question-${id}`}
+          <div key={option.id} className="flex items-center space-x-2">
+            <RadioGroupItem
               value={option.id.toString()}
-              checked={selectedOption === option.id}
-              onChange={() => handleChange(option.id)}
-              disabled={disabled}
-              tw="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+              id={`option-${id}-${option.id}`}
             />
-            <label
+            <Label
               htmlFor={`option-${id}-${option.id}`}
-              tw="ml-3 block text-sm font-medium text-gray-700"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
               {option.label}
-            </label>
+            </Label>
           </div>
         ))}
-      </div>
+      </RadioGroup>
     </div>
   );
 };
