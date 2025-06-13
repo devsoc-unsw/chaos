@@ -19,6 +19,12 @@ pub enum ChaosError {
     #[error("Bad request")]
     BadRequest,
 
+    #[error("Application closed")]
+    ApplicationClosed,
+
+    #[error("Campagin closed")]
+    CampaignClosed,
+
     #[error("SQLx error")]
     DatabaseError(#[from] sqlx::Error),
 
@@ -45,6 +51,15 @@ pub enum ChaosError {
 
     #[error("Template rendering error")]
     TemplateRendorError(#[from] handlebars::RenderError),
+
+    #[error("Lettre error")]
+    LettreError(#[from] lettre::error::Error),
+
+    #[error("Email address error")]
+    AddressError(#[from] lettre::address::AddressError),
+
+    #[error("SMTP transport error")]
+    SmtpTransportError(#[from] lettre::transport::smtp::Error),
 }
 
 /// Implementation for converting errors into responses. Manages error code and message returned.
@@ -57,6 +72,8 @@ impl IntoResponse for ChaosError {
                 (StatusCode::FORBIDDEN, "Forbidden operation").into_response()
             }
             ChaosError::BadRequest => (StatusCode::BAD_REQUEST, "Bad request").into_response(),
+            ChaosError::ApplicationClosed => (StatusCode::BAD_REQUEST, "Application closed").into_response(),
+            ChaosError::CampaignClosed => (StatusCode::BAD_REQUEST, "Campaign closed").into_response(),
             ChaosError::DatabaseError(db_error) => match db_error {
                 // We only care about the RowNotFound error, as others are miscellaneous DB errors.
                 sqlx::Error::RowNotFound => (StatusCode::NOT_FOUND, "Not found").into_response(),

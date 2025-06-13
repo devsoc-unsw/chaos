@@ -9,158 +9,80 @@ servers:
     description: Local server
 
 paths:
+  /:
+    get:
+      operationId: getRoot
+      description: Root of API
+      tags:
+        - Miscellaneous
+      responses:
+        "200":
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Join DevSoc! https://devsoc.app/
+
+  /auth/callback/google:
+    get:
+      operationId: googleCallback
+      description: Google OAuth callback
+      tags:
+        - Auth
+      parameters:
+        - name: code
+          in: query
+          description: Google OAuth code
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Ok
+          content:
   /auth/logout:
     post:
       operationId: logout
-      description: Invalidates current token.
+      description: Invalidates current token
       tags:
         - Auth
       responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                properties:
-                  messages:
-                    type: string
-                    example: Successfully logged out.
-  /user:
-    get:
-      operationId: getLoggedInUser
-      description: Returns info about currently logged in user.
-      tags:
-        - User
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                properties:
-                  id:
-                    type: integer
-                    format: int64
-                    example: 1541815603606036480
-                  email:
-                    type: string
-                    example: me@example.com
-                  zid:
-                    type: string
-                    example: z5555555
-                  name:
-                    type: string
-                    example: Clancy Lion
-                  degree_name:
-                    type: string
-                    example: Computer Science
-                  degree_starting_year:
-                    type: integer
-                    example: 2024
-                  role:
-                    type: string
-                    example: User
-        '401':
-          description: Not logged in.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Not logged in.
-    delete:
-      operationId: deleteUserById
-      description: Deletes currently logged in user.
-      tags:
-        - User
-      responses:
-        '200':
-          description: OK
+        "200":
+          description: Ok
           content:
             application/json:
               schema:
                 properties:
                   message:
                     type: string
-                    example: Successfully deleted user.
-        '403':
-          description: User is only admin of an organisation.
+                    example: Successfully logged out
+        "401":
+          description: Not logged in
           content:
             application/json:
               schema:
-                properties:
-                  error:
-                    type: string
-                    example: "Cannot delete sole admin of an organisation."
-        '401':
-          description: Not logged.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Not logged in.
-  /user/{id}:
+                $ref: "#/components/schemas/NotLoggedIn"
+
+  /user:
     get:
-      operationId: getUserById
-      parameters:
-        - name: id
-          in: path
-          description: User ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Returns info about specified user.
+      operationId: getLoggedInUser
+      description: Returns info about currently logged in user
       tags:
         - User
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: integer
-                    format: int64
-                    example: 1541815603606036480
-                  email:
-                    type: string
-                    example: me@example.com
-                  zid:
-                    type: string
-                    example: z5555555
-                  name:
-                    type: string
-                    example: Clancy Lion
-                  pronouns:
-                    type: string
-                    example: They/Them
-                  gender:
-                    type: string
-                    example: Male
-                  degree_name:
-                    type: string
-                    example: Computer Science
-                  degree_starting_year:
-                    type: integer
-                    example: 2024
-        '403':
-          description: Requested user has not applied to one of authorized user's campaign.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: "Insufficient permissions"
+                $ref: "#/components/schemas/User"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
   /user/name:
     patch:
       operationId: updateUserName
-      description: Updates currently logged in user's name.
+      description: Updates currently logged in user's name
       tags:
         - User
       requestBody:
@@ -173,7 +95,7 @@ paths:
                   type: string
                   example: "Clancy Tiger"
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -181,21 +103,13 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: Successfully updated name.
-        '401':
-          description: Not logged in.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Not logged in.
-
+                    example: Successfully updated name
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
   /user/pronouns:
     patch:
       operationId: updateUserPronouns
-      description: Updates currently logged in user's pronouns.
+      description: Updates currently logged in user's pronouns
       tags:
         - User
       requestBody:
@@ -204,11 +118,11 @@ paths:
           application/json:
             schema:
               properties:
-                zid:
+                pronouns:
                   type: string
-                  example: "z5123456"
+                  example: They/Them
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -216,20 +130,13 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: Successfully updated pronouns.
-        '401':
-          description: Not logged in.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Not logged in.
+                    example: Successfully updated pronouns
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
   /user/gender:
     patch:
       operationId: updateUserGender
-      description: Updates currently logged in user's gender.
+      description: Updates currently logged in user's gender
       tags:
         - User
       requestBody:
@@ -238,11 +145,11 @@ paths:
           application/json:
             schema:
               properties:
-                zid:
+                gender:
                   type: string
-                  example: "z5123456"
+                  example: Female
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -250,22 +157,13 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: Successfully updated gender.
-        '401':
-          description: Not logged in.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Not logged in.
-
-
+                    example: Successfully updated gender
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
   /user/zid:
     patch:
       operationId: updateUserZid
-      description: Updates currently logged in user's zID.
+      description: Updates currently logged in user's zID
       tags:
         - User
       requestBody:
@@ -276,9 +174,9 @@ paths:
               properties:
                 zid:
                   type: string
-                  example: "z5123456"
+                  example: z5123456
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -286,20 +184,13 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: Successfully updated zID.
-        '401':
-          description: Not logged in.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Not logged in.
+                    example: Successfully updated zID
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
   /user/degree:
     patch:
       operationId: updateUserDegree
-      description: Updates currently logged in user's degree.
+      description: Updates currently logged in user's degree
       tags:
         - User
       requestBody:
@@ -310,12 +201,12 @@ paths:
               properties:
                 degree_name:
                   type: string
-                  example: "Electrical Engineering"
+                  example: Electrical Engineering
                 degree_starting_year:
                   type: integer
                   example: 2024
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -323,25 +214,17 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: Successfully updated email.
-        '401':
-          description: Not logged in.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Not logged in.
-
+                    example: Successfully updated email
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
   /user/applications:
     get:
       operationId: getUserApplications
-      description: Returns info about applications made by currently logged in user.
+      description: Returns info about applications made by currently logged in user
       tags:
         - User
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -350,23 +233,14 @@ paths:
                   campaigns:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ApplicationDetails'
-        '401':
-          description: Not logged in.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Not logged in.
-
-
+                      $ref: "#/components/schemas/ApplicationDetails"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
 
   /organisation:
     post:
       operationId: createOrganisation
-      description: Creates a new organisation.
+      description: Create a new organisation
       tags:
         - Organisation
       requestBody:
@@ -375,16 +249,20 @@ paths:
           application/json:
             schema:
               properties:
+                slug:
+                  type: string
+                  description: ASCII string for URL like https://chaos.csesoc.app/s/unsw-devsoc
+                  example: unsw-devsoc
                 name:
                   type: string
-                  example: "UNSW Software Development Society"
+                  example: UNSW Software Development Society
                 admin:
                   type: integer
                   format: int64
                   example: 1541815603606036480
                   description: User ID of admin
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -392,16 +270,44 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: Successfully created organisation.
-        '403':
-          description: User is not a super user.
+                    example: Successfully created organisation
+        "401":
+          $ref: "#/components/responses/NotSuperUser"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+  /organisation/slug_check:
+    post:
+      operationId: checkOrganisationSlugAvailability
+      description: Check if slug is available
+      tags:
+        - Organisation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                slug:
+                  type: string
+                  example: unsw-devsoc
+      responses:
+        "200":
+          description: OK
           content:
             application/json:
               schema:
                 properties:
-                  error:
+                  message:
                     type: string
-                    example: Unauthorized
+                    example: Organisation slug is available
+        "400":
+          description: Bad request - slug is in use or not ASCII
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadRequest"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
   /organisation/{id}:
     get:
       operationId: getOrganisationById
@@ -413,38 +319,18 @@ paths:
           schema:
             type: integer
             format: int64
-      description: Returns info about specified organisation.
+      description: Returns info about specified organisation
       tags:
         - Organisation
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                properties:
-                  id:
-                    type: integer
-                    format: int64
-                    example: 6996987893965262849
-                  name:
-                    type: string
-                    example: UNSW Software Development Society
-                  logo:
-                    type: string
-                    example: "76718252-2a13-4de2-bc07-f977c75dc52b"
-                  created_at:
-                    type: string
-                    example: 2024-02-10T18:25:43.511Z
-        '401':
-          description: Not logged in.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Not logged in.
+                $ref: "#/components/schemas/OrganisationDetails"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
     delete:
       operationId: deleteOrganisationById
       parameters:
@@ -455,11 +341,11 @@ paths:
           schema:
             type: integer
             format: int64
-      description: Deletes specified organisation.
+      description: Deletes specified organisation
       tags:
         - Organisation
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -467,28 +353,36 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: Successfully deleted organisation.
-        '401':
-          description: Not logged in.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Not logged in.
-        '403':
-          description: User is not a super user.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Unauthorized
-  /organisation/{id}/campaigns:
+                    example: Successfully deleted organisation
+        "401":
+          $ref: "#/components/responses/NotSuperUser"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+  /organisation/slug/{slug}:
     get:
-      operationId: getOrganisationCampaignsById
+      operationId: getOrganisationBySlug
+      parameters:
+        - name: slug
+          in: path
+          description: Organisation slug
+          required: true
+          schema:
+            type: string
+      description: Returns info about specified organisation
+      tags:
+        - Organisation
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganisationDetails"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+  /organisation/{id}/campaign:
+    post:
+      operationId: createCampaign
       parameters:
         - name: id
           in: path
@@ -497,11 +391,82 @@ paths:
           schema:
             type: integer
             format: int64
-      description: Returns active campaigns for specified organisation.
+      description: Create a new campaign inside specified organisation
+      tags:
+        - Organisation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewCampaign"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully created campaign
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+  /organisation/{id}/campaign/slug_check:
+    post:
+      operationId: checkCampaignSlugAvailability
+      parameters:
+        - name: id
+          in: path
+          description: Organisation ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Checks availability of campaign slug in specified organisation
+      tags:
+        - Organisation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                slug:
+                  type: string
+                  example: 2024-subcom-recruitment
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Campaign slug is available
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+  /organisation/{id}/campaigns:
+    get:
+      operationId: getAllOrganisationCampaigns
+      parameters:
+        - name: id
+          in: path
+          description: Organisation ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns all (active & ended) campaigns for specified organisation. However, ended campaigns cannot have new applications
       tags:
         - Organisation
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -510,17 +475,69 @@ paths:
                   campaigns:
                     type: array
                     items:
-                      $ref: '#/components/schemas/OrganisationCampaign'
-        '401':
-          description: Not logged in.
+                      $ref: "#/components/schemas/OrganisationCampaign"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+  /organisation/{id}/email_template:
+    post:
+      operationId: createEmailTemplate
+      parameters:
+        - name: id
+          in: path
+          description: Organisation ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Create a new email template within the organisation
+      tags:
+        - Organisation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewEmailTemplate"
+      responses:
+        "200":
+          description: OK
           content:
             application/json:
               schema:
                 properties:
-                  error:
+                  message:
                     type: string
-                    example: Not logged in.
-
+                    example: Successfully created email template
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+  /organisation/{id}/email_templates:
+    get:
+      operationId: getAllOrganisationEmailTemplates
+      parameters:
+        - name: id
+          in: path
+          description: Organisation ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Get all email templates for specified organisation
+      tags:
+        - Organisation
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EmailTemplate"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
   /organisation/{id}/logo:
     patch:
       operationId: updateOrganisationLogoById
@@ -532,11 +549,11 @@ paths:
           schema:
             type: integer
             format: int64
-      description: Updates logo for specified organistion.
+      description: Update logo for specified organistion. Returns a PUT url to upload new image to
       tags:
         - Organisation
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -544,30 +561,15 @@ paths:
                 properties:
                   upload_url:
                     type: string
-                    description: Presigned S3 url to upload file.
-                    example: https://www.youtube.com/watch?v=dQw4w9WgXcQ
-        '401':
-          description: Not logged in.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Not logged in.
-        '403':
-          description: User is not an organisation admin.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Unauthorized
-
-  /organisation/{id}/member:
+                    description: Presigned S3 url to upload file
+                    example: https://presignedurldemo.s3.eu-west-2.amazonaws.com/6996987893965262849/2d19617b-46fd-4927-9f53-77d69232ba5d
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+  /organisation/{id}/members:
     get:
-      operationId: getOrganisationMembersById
+      operationId: Get All Organisation members
       parameters:
         - name: id
           in: path
@@ -576,11 +578,11 @@ paths:
           schema:
             type: integer
             format: int64
-      description: Returns list of members of specified organisation.
+      description: Returns list of members of specified organisation
       tags:
         - Organisation
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -601,15 +603,8 @@ paths:
                         role:
                           type: string
                           example: Admin
-        '403':
-          description: User is not an organisation admin or member.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Unauthorized
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
     put:
       operationId: updateOrganisationMembersById
       parameters:
@@ -627,17 +622,23 @@ paths:
             schema:
               properties:
                 members:
+                  description: Array of User IDs
                   type: array
                   uniqueItems: true
                   items:
                     type: integer
                     format: int64
-                  example: [1541815603606036480, 1541815603606036827, 1541815287306036429]
-      description: Specifies members for specified organistion.
+                  example:
+                    [
+                      1541815603606036480,
+                      1541815603606036827,
+                      1541815287306036429,
+                    ]
+      description: Specifies members for specified organistion
       tags:
         - Organisation
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -646,24 +647,11 @@ paths:
                   message:
                     type: string
                     example: Successfully updated members.
-        '401':
-          description: Not logged in.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Not logged in.
-        '403':
-          description: User is not an organisation admin.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Unauthorized
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+  /organisation/{id}/member:
     delete:
       operationId: deleteOrganisationMemberById
       parameters:
@@ -683,11 +671,11 @@ paths:
                 user_id:
                   type: integer
                   format: int64
-      description: Specifies member for deletion in organistion.
+      description: Specifies member for deletion in organistion
       tags:
         - Organisation
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -696,26 +684,11 @@ paths:
                   message:
                     type: string
                     example: Successfully updated members.
-        '401':
-          description: Not logged in.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Not logged in.
-        '403':
-          description: User is not an organisation admin.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Unauthorized
-
-  /organisation/{id}/admin:
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+  /organisation/{id}/admins:
     get:
       operationId: getOrganisationAdminsById
       parameters:
@@ -726,11 +699,11 @@ paths:
           schema:
             type: integer
             format: int64
-      description: Returns list of admins of specified organisation.
+      description: Returns list of admins of specified organisation
       tags:
         - Organisation
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -751,15 +724,10 @@ paths:
                         role:
                           type: string
                           example: Admin
-        '403':
-          description: User is not a SuperUser.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Unauthorized
+        "401":
+          $ref: "#/components/responses/NotSuperUser"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
     put:
       operationId: updateOrganisationAdminsById
       parameters:
@@ -782,12 +750,17 @@ paths:
                   items:
                     type: integer
                     format: int64
-                  example: [1541815603606036480, 1541815603606036827, 1541815287306036429]
-      description: Specifies Admins for specified organistion.
+                  example:
+                    [
+                      1541815603606036480,
+                      1541815603606036827,
+                      1541815287306036429,
+                    ]
+      description: Specifies admins for specified organistion
       tags:
         - Organisation
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -795,25 +768,13 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: Successfully updated members.
-        '401':
-          description: Not logged in.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Not logged in.
-        '403':
-          description: User is not a SuperUser.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Unauthorized
+                    example: Successfully updated members
+        "401":
+          $ref: "#/components/responses/NotSuperUser"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+
+  /organisation/{id}/admin:
     delete:
       operationId: deleteOrganisationAdminById
       parameters:
@@ -833,11 +794,11 @@ paths:
                 user_id:
                   type: integer
                   format: int64
-      description: Specifies Admin for deletion in organistion.
+      description: Specifies admin for deletion in organisation
       tags:
         - Organisation
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -845,18 +806,48 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: Successfully deleted Admin.
-        '401':
-          description: Not logged in.
+                    example: Successfully deleted Admin
+        "401":
+          $ref: "#/components/responses/NotSuperUser"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+
+  /rating/{id}:
+    get:
+      operationId: getRatingById
+      description: Returns info about specified rating
+      tags:
+        - Rating
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RatingDetails"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+        "401":
+          $ref: "#/components/responses/NotOrganisationMember"
+    delete:
+      operationId: deleteRatingById
+      description: Delete specified rating
+      tags:
+        - Rating
+      responses:
+        "200":
+          description: OK
           content:
             application/json:
               schema:
                 properties:
-                  error:
+                  message:
                     type: string
-                    example: Not logged in.
-        '403':
-          description: User is not a SuperUser.
+                    example: Successfully deleted rating
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+        "401":
+          description: User is not original rating creator
           content:
             application/json:
               schema:
@@ -864,41 +855,22 @@ paths:
                   error:
                     type: string
                     example: Unauthorized
-
-  /organisation/{id}/campaign:
-    post:
-      operationId: createCampaign
-      parameters:
-        - name: id
-          in: path
-          description: Organisation ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Creates a new campaign inside specified organisation.
+    put:
+      operationId: updateRatingById
+      description: Update specified rating
       tags:
-        - Organisation
+        - Rating
       requestBody:
         required: true
         content:
           application/json:
             schema:
               properties:
-                name:
-                  type: string
-                  example: 2024 Subcommittee Recruitment
-                description:
-                  type: string
-                  example: Are you excited to make a difference?
-                starts_at:
-                  type: string
-                  example: 2024-03-15T18:25:43.511Z
-                ends_at:
-                  type: string
-                  example: 2024-04-15T18:25:43.511Z
+                data:
+                  type:
+                    $ref: "#components/schemas/NewRating"
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -906,9 +878,11 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: Successfully created campaign.
-        '403':
-          description: User is not an admin of specified organisation.
+                    example: Successfully updated rating
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+        "401":
+          description: User is not original rating creator
           content:
             application/json:
               schema:
@@ -923,7 +897,7 @@ paths:
       tags:
         - Campaign
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -975,7 +949,7 @@ paths:
       tags:
         - Campaign
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -1039,7 +1013,7 @@ paths:
       tags:
         - Campaign
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -1048,24 +1022,10 @@ paths:
                   message:
                     type: string
                     example: Successfully updated campaign.
-        '401':
-          description: Not logged in.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Not logged in.
-        '403':
-          description: User is not an organisation admin.
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Unauthorized
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
     delete:
       operationId: deleteCampaignById
       parameters:
@@ -1080,7 +1040,7 @@ paths:
       tags:
         - Campaign
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -1089,7 +1049,7 @@ paths:
                   message:
                     type: string
                     example: Successfully deleted campaign.
-        '403':
+        "403":
           description: User is not an admin of campaign's organisation.
           content:
             application/json:
@@ -1113,7 +1073,7 @@ paths:
       tags:
         - Campaign
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -1122,8 +1082,8 @@ paths:
                   upload_url:
                     type: string
                     description: Presigned S3 url to upload file.
-                    example: https://www.youtube.com/watch?v=dQw4w9WgXcQ
-        '401':
+                    example: https://presignedurldemo.s3.eu-west-2.amazonaws.com/6996987893965262849/2d19617b-46fd-4927-9f53-77d69232ba5d
+        "401":
           description: Not logged in.
           content:
             application/json:
@@ -1132,7 +1092,7 @@ paths:
                   error:
                     type: string
                     example: Not logged in.
-        '403':
+        "403":
           description: User is not an organisation admin.
           content:
             application/json:
@@ -1180,7 +1140,7 @@ paths:
                   description: Whether this role has been finalised (e.g. max avaliable number)
                   example: False
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -1189,7 +1149,7 @@ paths:
                   message:
                     type: string
                     example: Successfully created organisation.
-        '403':
+        "403":
           description: User is not a Campaign Admin.
           content:
             application/json:
@@ -1214,7 +1174,7 @@ paths:
       tags:
         - Campaign
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -1223,8 +1183,8 @@ paths:
                   campaigns:
                     type: array
                     items:
-                      $ref: '#components/schemas/RoleDetails'
-        '401':
+                      $ref: "#components/schemas/RoleDetails"
+        "401":
           description: Not logged in.
           content:
             application/json:
@@ -1233,7 +1193,7 @@ paths:
                   error:
                     type: string
                     example: Not logged in.
-        '403':
+        "403":
           description: User is not a Campaign Admin.
           content:
             application/json:
@@ -1258,7 +1218,7 @@ paths:
       tags:
         - Campaign
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -1267,8 +1227,8 @@ paths:
                   applications:
                     type: array
                     items:
-                      $ref: '#components/schemas/ApplicationDetails'
-        '401':
+                      $ref: "#components/schemas/ApplicationDetails"
+        "401":
           description: Not logged in.
           content:
             application/json:
@@ -1277,7 +1237,7 @@ paths:
                   error:
                     type: string
                     example: Not logged in.
-        '403':
+        "403":
           description: User is not a Campaign Admin.
           content:
             application/json:
@@ -1286,7 +1246,6 @@ paths:
                   error:
                     type: string
                     example: Unauthorized
-
 
   /role/{id}:
     get:
@@ -1303,7 +1262,7 @@ paths:
       tags:
         - Role
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -1325,7 +1284,7 @@ paths:
                     type: boolean
                     description: Whether this role has been finalised (e.g. max avaliable number)
                     example: False
-        '401':
+        "401":
           description: Not logged in.
           content:
             application/json:
@@ -1372,7 +1331,7 @@ paths:
                   description: Whether this role has been finalised (e.g. max avaliable number)
                   example: true
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -1381,7 +1340,7 @@ paths:
                   message:
                     type: string
                     example: Successfully update organisation.
-        '401':
+        "401":
           description: Not logged in.
           content:
             application/json:
@@ -1390,7 +1349,7 @@ paths:
                   error:
                     type: string
                     example: Not logged in.
-        '403':
+        "403":
           description: User is not a Campaign Admin.
           content:
             application/json:
@@ -1414,7 +1373,7 @@ paths:
       tags:
         - Role
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -1423,7 +1382,7 @@ paths:
                   message:
                     type: string
                     example: Successfully deleted role.
-        '401':
+        "401":
           description: Not logged in.
           content:
             application/json:
@@ -1432,7 +1391,7 @@ paths:
                   error:
                     type: string
                     example: Not logged in.
-        '403':
+        "403":
           description: User is not an admin of role's Campaign.
           content:
             application/json:
@@ -1457,7 +1416,7 @@ paths:
       tags:
         - Role
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -1466,8 +1425,8 @@ paths:
                   applications:
                     type: array
                     items:
-                      $ref: '#components/schemas/ApplicationDetails'
-        '401':
+                      $ref: "#components/schemas/ApplicationDetails"
+        "401":
           description: Not logged in.
           content:
             application/json:
@@ -1476,7 +1435,7 @@ paths:
                   error:
                     type: string
                     example: Not logged in.
-        '403':
+        "403":
           description: User is not an Application Admin.
           content:
             application/json:
@@ -1501,16 +1460,16 @@ paths:
       tags:
         - Application
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
                 properties:
                   application:
-                    type: 
-                      $ref: '#components/schemas/ApplicationDetails'
-        '401':
+                    type:
+                      $ref: "#components/schemas/ApplicationDetails"
+        "401":
           description: Not logged in.
           content:
             application/json:
@@ -1519,7 +1478,7 @@ paths:
                   error:
                     type: string
                     example: Not logged in.
-        '403':
+        "403":
           description: User is not an Application Admin.
           content:
             application/json:
@@ -1528,7 +1487,6 @@ paths:
                   error:
                     type: string
                     example: Unauthorized
-
 
   /application/{id}/private:
     put:
@@ -1549,13 +1507,13 @@ paths:
               properties:
                 data:
                   type:
-                    $ref: '#components/schemas/ApplicationStatus'
+                    $ref: "#components/schemas/ApplicationStatus"
 
       description: Change Private Status of a specific Application
       tags:
         - Organisation
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -1564,7 +1522,7 @@ paths:
                   message:
                     type: string
                     example: Successfully updated Application Private Status.
-        '401':
+        "401":
           description: Not logged in.
           content:
             application/json:
@@ -1573,7 +1531,7 @@ paths:
                   error:
                     type: string
                     example: Not logged in.
-        '403':
+        "403":
           description: User is not an Application Admin.
           content:
             application/json:
@@ -1602,13 +1560,12 @@ paths:
               properties:
                 data:
                   type:
-                    $ref: '#components/schemas/ApplicationStatus'
-
+                    $ref: "#components/schemas/ApplicationStatus"
       description: Change Status of a specific Application
       tags:
         - Organisation
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -1617,7 +1574,7 @@ paths:
                   message:
                     type: string
                     example: Successfully updated Application Status.
-        '401':
+        "401":
           description: Not logged in.
           content:
             application/json:
@@ -1626,7 +1583,7 @@ paths:
                   error:
                     type: string
                     example: Not logged in.
-        '403':
+        "403":
           description: User is not an Application Admin.
           content:
             application/json:
@@ -1638,12 +1595,115 @@ paths:
 
 components:
   schemas:
+    NotLoggedIn:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Not logged in
+
+    Unauthorized:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Unauthorized
+
+    BadRequest:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Bad request
+
+    Answer:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 6996987893965227483
+        question_id:
+          type: integer
+          format: int64
+          example: 6996987893965227483
+        answer_type:
+          type: string
+          enum:
+            - ShortAnswer
+            - MultiChoice
+            - MultiSelect
+            - DropDown
+            - Ranking
+        data:
+          oneOf:
+            - type: string
+              example: I am passionate about events
+            - type: integer
+              example: 6996987893965227483
+            - type: array
+              format: int64
+              example:
+                [6996987893965227483, 69969829832652228374, 6996987893965228374]
+        created_at:
+          type: string
+          example: 2024-03-15T18:25:43.511Z
+        updated_at:
+          type: string
+          example: 2024-03-15T18:25:43.511Z
+
+    NewAnswer:
+      type: object
+      properties:
+        question_id:
+          type: integer
+          format: int64
+          example: 6996987893965262849
+        answer_type:
+          type: string
+          enum:
+            - ShortAnswer
+            - MultiChoice
+            - MultiSelect
+            - DropDown
+            - Ranking
+        data:
+          oneOf:
+            - type: string
+              example: I am passionate about events
+            - type: integer
+              example: 6996987893965227483
+            - type: array
+              format: int64
+              example:
+                [6996987893965227483, 69969829832652228374, 6996987893965228374]
+
     ApplicationStatus:
       type: string
       enum:
         - Pending
         - Rejected
         - Successful
+
+    OrganisationDetails:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 6996987893965262849
+        slug:
+          type: string
+          example: devsoc-unsw
+        name:
+          type: string
+          example: UNSW Software Development Society
+        logo:
+          type: string
+          example: "76718252-2a13-4de2-bc07-f977c75dc52b"
+        created_at:
+          type: string
+          example: 2024-02-10T18:25:43.511Z
 
     OrganisationCampaign:
       type: object
@@ -1652,6 +1712,9 @@ components:
           type: integer
           format: int64
           example: 6996987893965262849
+        slug:
+          type: string
+          example: 2024-subcom-recruitment
         name:
           type: string
           example: 2024 Subcommittee Recruitment
@@ -1696,6 +1759,43 @@ components:
           description: Whether this role has been finalised (e.g. max avaliable number)
           example: False
 
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1541815603606036480
+        email:
+          type: string
+          example: me@example.com
+        zid:
+          type: string
+          example: z5555555
+          nullable: true
+        name:
+          type: string
+          example: Clancy Lion
+        pronouns:
+          type: string
+          example: He/Him
+        gender:
+          type: string
+          example: Male
+        degree_name:
+          type: string
+          example: Computer Science
+          nullable: true
+        degree_starting_year:
+          type: integer
+          example: 2024
+          nullable: true
+        role:
+          type: string
+          enum:
+            - User
+            - SuperUser
+
     UserDetails:
       type: object
       properties:
@@ -1737,15 +1837,15 @@ components:
           format: int64
           example: 5141815603606036480
         user:
-          $ref: '#/components/schemas/UserDetails'
+          $ref: "#/components/schemas/UserDetails"
         status:
-          $ref: '#/components/schemas/ApplicationStatus'
+          $ref: "#/components/schemas/ApplicationStatus"
         private_status:
-          $ref: '#/components/schemas/ApplicationStatus'
+          $ref: "#/components/schemas/ApplicationStatus"
         applied_roles:
           type: array
           items:
-            $ref: '#/components/schemas/ApplicationAppliedRoleDetails'
+            $ref: "#/components/schemas/ApplicationAppliedRoleDetails"
 
     ApplicationAppliedRoleDetails:
       type: object
@@ -1756,4 +1856,178 @@ components:
           example: 1541815603606036480
         role_name:
           type: String
-          example: UI/UX subcom
+          example: Sponsorships
+        preference:
+          type: integer
+          format: int32
+          example: 1
+
+    NewCampaign:
+      type: object
+      properties:
+        name:
+          type: string
+          example: 2024 Subcommittee Recruitment
+        slug:
+          type: string
+          example: 2024-subcom-recruitment
+        description:
+          type: string
+          example: Are you excited to make a difference?
+        starts_at:
+          type: string
+          example: 2024-03-15T18:25:43.511Z
+        ends_at:
+          type: string
+          example: 2024-04-15T18:25:43.511Z
+
+    Campaign:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1541815603606036480
+        slug:
+          type: string
+          example: 2024-subcom-recruitment
+        name:
+          type: string
+          example: 2024 Subcommittee Recruitment
+        organisation_id:
+          type: integer
+          format: int64
+          example: 1541815603606036480
+        organisation_name:
+          type: string
+          example: UNSW Software Development Society
+        cover_image:
+          type: string
+          format: uuid
+          example: 05ebad1e-8be4-40c3-9d36-140cac9a0075
+          nullable: true
+        description:
+          type: string
+          example: Are you excited to make a difference?
+          nullable: true
+        starts_at:
+          type: string
+          example: 2024-03-15T18:25:43.511Z
+        ends_at:
+          type: string
+          example: 2024-04-15T18:25:43.511Z
+        created_at:
+          type: string
+          example: 2024-02-15T18:25:43.511Z
+        updated_at:
+          type: string
+          example: 2024-02-15T18:25:43.511Z
+
+    RatingDetails:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1541815603606036480
+        rater_id:
+          type: integer
+          format: int64
+          example: 1541815603606036480
+        rater_name:
+          type: string
+          example: David
+        rating:
+          type: integer
+          format: int32
+          example: 9
+        comment:
+          type: string
+          nullable: true
+          example: Good answer to this question
+
+    NewRating:
+      type: object
+      properties:
+        rating:
+          type: integer
+          format: int32
+          example: 9
+        comment:
+          type: string
+          nullable: true
+          example: Good answer to this question
+
+    EmailTemplate:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1541815603606036480
+        organisation_id:
+          type: integer
+          format: int64
+          example: 1541815603606036480
+        name:
+          type: string
+          example: Success Email
+        template_subject:
+          type: string
+          example: "[OUTCOME] {{campaign_name}} - {{role_name}}"
+        template_body:
+          type: string
+          example: "Hi {{name}}, you have been successful in your application for {{organisation_name}} {{role_name}}. Regards {{organisation_name}} Exec"
+
+    NewEmailTemplate:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Success Email
+        template_subject:
+          type: string
+          example: "[OUTCOME] {{campaign_name}} - {{role_name}}"
+        template_body:
+          type: string
+          example: "Hi {{name}}, you have been successful in your application for {{organisation_name}} {{role_name}}. Regards {{organisation_name}} Exec"
+
+  responses:
+    NotLoggedIn:
+      description: Redirect to login
+      headers:
+        Location:
+          description: Login url
+          schema:
+            type: string
+            format: uri
+
+    NotOrganisationAdmin:
+      description: User is not an organisation admin
+      content:
+        application/json:
+          schema:
+            properties:
+              error:
+                type: string
+                example: Unauthorized
+
+    NotOrganisationMember:
+      description: User is not an organisation member
+      content:
+        application/json:
+          schema:
+            properties:
+              error:
+                type: string
+                example: Unauthorized
+
+    NotSuperUser:
+      description: User is not a Super User
+      content:
+        application/json:
+          schema:
+            properties:
+              error:
+                type: string
+                example: Unauthorized
