@@ -3,20 +3,18 @@
     "target": "es2020",
     "baseUrl": "src",
     "paths": {
-      "@/ui/*": ["components/shad_cn/ui/*"],
-      "@/lib/*": ["components/shad_cn/lib/*"]
+      "@/*": ["./*"],
     },
-  
     "useDefineForClassFields": true,
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": false,
     "skipLibCheck": true,
-    "esModuleInterop": false,
+    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
@@ -25,5 +23,9 @@
   },
   "types": ["types"],
   "include": ["src", "types"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ],
 }
