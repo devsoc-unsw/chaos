@@ -1,3 +1,12 @@
+//! Organisation handler for the Chaos application.
+//! 
+//! This module provides HTTP request handlers for managing organisations, including:
+//! - Organisation CRUD operations
+//! - Member and admin management
+//! - Campaign management
+//! - Email template management
+//! - Logo image handling
+
 use crate::models::app::AppState;
 use crate::models::auth::SuperUser;
 use crate::models::auth::{AuthUser, OrganisationAdmin};
@@ -12,9 +21,24 @@ use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 
+/// Handler for organisation-related HTTP requests.
 pub struct OrganisationHandler;
 
 impl OrganisationHandler {
+    /// Creates a new organisation.
+    /// 
+    /// This handler allows super users to create new organisations.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `state` - The application state
+    /// * `_user` - The authenticated user (must be a super user)
+    /// * `transaction` - Database transaction
+    /// * `data` - The new organisation details
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn create(
         State(state): State<AppState>,
         _user: SuperUser,
@@ -34,6 +58,19 @@ impl OrganisationHandler {
         Ok((StatusCode::OK, "Successfully created organisation"))
     }
 
+    /// Checks if an organisation slug is available.
+    /// 
+    /// This handler allows super users to check slug availability.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `state` - The application state
+    /// * `_user` - The authenticated user (must be a super user)
+    /// * `data` - The slug to check
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn check_organisation_slug_availability(
         State(state): State<AppState>,
         _user: SuperUser,
@@ -44,6 +81,19 @@ impl OrganisationHandler {
         Ok((StatusCode::OK, "Organisation slug is available"))
     }
 
+    /// Retrieves an organisation by its ID.
+    /// 
+    /// This handler allows any authenticated user to view organisation details.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `state` - The application state
+    /// * `id` - The ID of the organisation to retrieve
+    /// * `_user` - The authenticated user
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Organisation details or error
     pub async fn get(
         State(state): State<AppState>,
         Path(id): Path<i64>,
@@ -53,6 +103,19 @@ impl OrganisationHandler {
         Ok((StatusCode::OK, Json(org)))
     }
 
+    /// Retrieves an organisation by its slug.
+    /// 
+    /// This handler allows any authenticated user to view organisation details using a slug.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `state` - The application state
+    /// * `slug` - The slug of the organisation
+    /// * `_user` - The authenticated user
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Organisation details or error
     pub async fn get_by_slug(
         State(state): State<AppState>,
         Path(slug): Path<String>,
@@ -62,6 +125,19 @@ impl OrganisationHandler {
         Ok((StatusCode::OK, Json(org)))
     }
 
+    /// Deletes an organisation.
+    /// 
+    /// This handler allows super users to delete organisations.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `state` - The application state
+    /// * `id` - The ID of the organisation to delete
+    /// * `_user` - The authenticated user (must be a super user)
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn delete(
         State(state): State<AppState>,
         Path(id): Path<i64>,
@@ -71,6 +147,19 @@ impl OrganisationHandler {
         Ok((StatusCode::OK, "Successfully deleted organisation"))
     }
 
+    /// Retrieves all admins of an organisation.
+    /// 
+    /// This handler allows super users to view organisation admins.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `state` - The application state
+    /// * `id` - The ID of the organisation
+    /// * `_user` - The authenticated user (must be a super user)
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - List of admins or error
     pub async fn get_admins(
         State(state): State<AppState>,
         Path(id): Path<i64>,
@@ -80,6 +169,19 @@ impl OrganisationHandler {
         Ok((StatusCode::OK, Json(members)))
     }
 
+    /// Retrieves all members of an organisation.
+    /// 
+    /// This handler allows organisation admins to view all members.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `state` - The application state
+    /// * `id` - The ID of the organisation
+    /// * `_admin` - The authenticated user (must be an organisation admin)
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - List of members or error
     pub async fn get_members(
         State(state): State<AppState>,
         Path(id): Path<i64>,
@@ -89,6 +191,20 @@ impl OrganisationHandler {
         Ok((StatusCode::OK, Json(members)))
     }
 
+    /// Updates the admin list of an organisation.
+    /// 
+    /// This handler allows super users to update organisation admins.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `id` - The ID of the organisation
+    /// * `_super_user` - The authenticated user (must be a super user)
+    /// * `transaction` - Database transaction
+    /// * `request_body` - The new admin list
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update_admins(
         Path(id): Path<i64>,
         _super_user: SuperUser,
@@ -101,6 +217,20 @@ impl OrganisationHandler {
         Ok((StatusCode::OK, "Successfully updated organisation members"))
     }
 
+    /// Updates the member list of an organisation.
+    /// 
+    /// This handler allows organisation admins to update members.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `transaction` - Database transaction
+    /// * `id` - The ID of the organisation
+    /// * `_admin` - The authenticated user (must be an organisation admin)
+    /// * `request_body` - The new member list
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update_members(
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
@@ -113,6 +243,20 @@ impl OrganisationHandler {
         Ok((StatusCode::OK, "Successfully updated organisation members"))
     }
 
+    /// Removes an admin from an organisation.
+    /// 
+    /// This handler allows super users to remove admins.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `transaction` - Database transaction
+    /// * `id` - The ID of the organisation
+    /// * `_super_user` - The authenticated user (must be a super user)
+    /// * `request_body` - The admin to remove
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn remove_admin(
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
@@ -128,6 +272,20 @@ impl OrganisationHandler {
         ))
     }
 
+    /// Removes a member from an organisation.
+    /// 
+    /// This handler allows organisation admins to remove members.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `transaction` - Database transaction
+    /// * `id` - The ID of the organisation
+    /// * `_admin` - The authenticated user (must be an organisation admin)
+    /// * `request_body` - The member to remove
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn remove_member(
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
@@ -143,6 +301,19 @@ impl OrganisationHandler {
         ))
     }
 
+    /// Updates an organisation's logo.
+    /// 
+    /// This handler allows organisation admins to update the logo.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `state` - The application state
+    /// * `id` - The ID of the organisation
+    /// * `_admin` - The authenticated user (must be an organisation admin)
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Logo URL or error
     pub async fn update_logo(
         State(state): State<AppState>,
         Path(id): Path<i64>,
@@ -152,6 +323,19 @@ impl OrganisationHandler {
         Ok((StatusCode::OK, Json(logo_url)))
     }
 
+    /// Retrieves all campaigns for an organisation.
+    /// 
+    /// This handler allows any authenticated user to view organisation campaigns.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `state` - The application state
+    /// * `id` - The ID of the organisation
+    /// * `_user` - The authenticated user
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - List of campaigns or error
     pub async fn get_campaigns(
         State(state): State<AppState>,
         Path(id): Path<i64>,
@@ -162,6 +346,20 @@ impl OrganisationHandler {
         Ok((StatusCode::OK, Json(campaigns)))
     }
 
+    /// Creates a new campaign for an organisation.
+    /// 
+    /// This handler allows organisation admins to create campaigns.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `id` - The ID of the organisation
+    /// * `state` - The application state
+    /// * `_admin` - The authenticated user (must be an organisation admin)
+    /// * `request_body` - The new campaign details
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn create_campaign(
         Path(id): Path<i64>,
         State(state): State<AppState>,
@@ -183,6 +381,20 @@ impl OrganisationHandler {
         Ok((StatusCode::OK, "Successfully created campaign"))
     }
 
+    /// Checks if a campaign slug is available.
+    /// 
+    /// This handler allows organisation admins to check slug availability.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `organisation_id` - The ID of the organisation
+    /// * `state` - The application state
+    /// * `_user` - The authenticated user (must be an organisation admin)
+    /// * `data` - The slug to check
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn check_campaign_slug_availability(
         Path(organisation_id): Path<i64>,
         State(state): State<AppState>,
@@ -194,6 +406,20 @@ impl OrganisationHandler {
         Ok((StatusCode::OK, "Campaign slug is available"))
     }
 
+    /// Creates a new email template for an organisation.
+    /// 
+    /// This handler allows organisation admins to create email templates.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `id` - The ID of the organisation
+    /// * `state` - The application state
+    /// * `_admin` - The authenticated user (must be an organisation admin)
+    /// * `request_body` - The new template details
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn create_email_template(
         Path(id): Path<i64>,
         State(state): State<AppState>,
@@ -213,6 +439,19 @@ impl OrganisationHandler {
         Ok((StatusCode::OK, "Successfully created email template"))
     }
 
+    /// Retrieves all email templates for an organisation.
+    /// 
+    /// This handler allows organisation admins to view all email templates.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `_user` - The authenticated user (must be an organisation admin)
+    /// * `id` - The ID of the organisation
+    /// * `state` - The application state
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - List of email templates or error
     pub async fn get_all_email_templates(
         _user: OrganisationAdmin,
         Path(id): Path<i64>,

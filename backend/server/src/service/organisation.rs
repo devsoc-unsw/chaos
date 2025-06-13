@@ -1,6 +1,24 @@
+//! Organisation service for the Chaos application.
+//! 
+//! This module provides functionality for managing organisations, including:
+//! - Verifying organisation admin privileges
+
 use crate::models::error::ChaosError;
 use sqlx::{Pool, Postgres};
 
+/// Verifies if a user has admin privileges for an organisation.
+/// 
+/// This function checks if the user is an admin member of the specified organisation.
+/// 
+/// # Arguments
+/// 
+/// * `user_id` - The ID of the user to check
+/// * `organisation_id` - The ID of the organisation
+/// * `pool` - Database connection pool
+/// 
+/// # Returns
+/// 
+/// * `Result<(), ChaosError>` - Ok if the user is an admin, Unauthorized error otherwise
 pub async fn assert_user_is_organisation_admin(
     user_id: i64,
     organisation_id: i64,

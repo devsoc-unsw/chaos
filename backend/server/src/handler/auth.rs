@@ -1,3 +1,9 @@
+//! Authentication handler for the Chaos application.
+//! 
+//! This module provides HTTP request handlers for authentication, including:
+//! - Google OAuth2 authentication
+//! - JWT token generation
+
 use crate::models::app::AppState;
 use crate::models::auth::{AuthRequest, GoogleUserProfile};
 use crate::models::error::ChaosError;
@@ -10,9 +16,25 @@ use oauth2::basic::BasicClient;
 use oauth2::reqwest::async_http_client;
 use oauth2::{AuthorizationCode, TokenResponse};
 
-/// This function handles the passing in of the Google OAuth code. After allowing our app the
-/// requested permissions, the user is redirected to this url on our server, where we use the
-/// code to get the user's email address from Google's OpenID Connect API.
+/// Handles the Google OAuth2 callback.
+/// 
+/// This handler processes the OAuth2 code received from Google after user authorization.
+/// It exchanges the code for an access token, retrieves the user's profile information,
+/// creates or retrieves the user in the database, and generates a JWT token for authentication.
+/// 
+/// # Arguments
+/// 
+/// * `state` - The application state
+/// * `query` - The OAuth2 callback query parameters containing the authorization code
+/// * `oauth_client` - The OAuth2 client for Google authentication
+/// 
+/// # Returns
+/// 
+/// * `Result<impl IntoResponse, ChaosError>` - JWT token or error
+/// 
+/// # Note
+/// 
+/// Currently returns the JWT token directly. TODO: Return it as a set-cookie header.
 pub async fn google_callback(
     State(state): State<AppState>,
     Query(query): Query<AuthRequest>,

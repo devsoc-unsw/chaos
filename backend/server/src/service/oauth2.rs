@@ -1,11 +1,41 @@
+//! OAuth2 service for the Chaos application.
+//! 
+//! This module provides functionality for OAuth2 authentication with Google,
+//! including client setup and configuration for OpenID Connect.
+
 use oauth2::basic::BasicClient;
 use oauth2::{AuthUrl, ClientId, ClientSecret, RedirectUrl, TokenUrl};
 use std::env;
 
-/// Returns a oauth2::BasicClient, setup with settings for CHAOS Google OAuth.
-///
-/// Client follows OAuth2 Standard (https://oauth.net/2/) to get user's email
-/// using OpenID Connect (https://openid.net/developers/how-connect-works/).
+/// Builds and configures an OAuth2 client for Google authentication.
+/// 
+/// This function creates a BasicClient configured with Google's OAuth2 endpoints
+/// and the application's client credentials. The client follows the OAuth2 standard
+/// and OpenID Connect protocol to authenticate users and retrieve their email.
+/// 
+/// # Arguments
+/// 
+/// * `client_id` - The Google OAuth2 client ID
+/// * `client_secret` - The Google OAuth2 client secret
+/// 
+/// # Returns
+/// 
+/// * `BasicClient` - A configured OAuth2 client ready for authentication
+/// 
+/// # Panics
+/// 
+/// This function will panic if:
+/// * The `CHAOS_HOSTNAME` environment variable is not set
+/// * The redirect URL cannot be parsed
+/// 
+/// # Example
+/// 
+/// ```rust
+/// let client = build_oauth_client(
+///     "your-client-id".to_string(),
+///     "your-client-secret".to_string()
+/// );
+/// ```
 pub fn build_oauth_client(client_id: String, client_secret: String) -> BasicClient {
     let hostname = env::var("CHAOS_HOSTNAME").expect("Could not read CHAOS hostname");
 
