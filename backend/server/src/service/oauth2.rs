@@ -37,9 +37,7 @@ use std::env;
 /// );
 /// ```
 pub fn build_oauth_client(client_id: String, client_secret: String) -> BasicClient {
-    let hostname = env::var("CHAOS_HOSTNAME").expect("Could not read CHAOS hostname");
-
-    let redirect_url = format!("{}/api/auth/callback/google", hostname);
+    let redirect_url = env::var("GOOGLE_REDIRECT_URI").expect("Could not read GOOGLE_REDIRECT_URI");
 
     let auth_url = AuthUrl::new("https://accounts.google.com/o/oauth2/v2/auth".to_string())
         .expect("Invalid authorization endpoint URL");

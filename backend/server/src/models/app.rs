@@ -21,11 +21,14 @@ use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 use std::env;
+use oauth2::basic::BasicClient;
+use crate::service::oauth2::build_oauth_client;
 
 #[derive(Clone)]
 pub struct AppState {
     pub db: Pool<Postgres>,
     pub ctx: ReqwestClient,
+    pub oauth2_client: BasicClient,
     pub decoding_key: DecodingKey,
     pub encoding_key: EncodingKey,
     pub jwt_header: Header,
@@ -61,6 +64,15 @@ pub async fn app() -> Result<Router, ChaosError> {
     // Initialise reqwest client
     let ctx = reqwest::Client::new();
 
+    // Initialise oauth2 client
+    let client_id = env::var("GOOGLE_CLIENT_ID")
+        .expect("Error getting GOOGLE_CLIENT_ID")
+        .to_string();
+    let client_secret = env::var("GOOGLE_CLIENT_SECRET")
+        .expect("Error getting GOOGLE_CLIENT_SECRET")
+        .to_string();
+    let oauth2_client = build_oauth_client(client_id, client_secret);
+
     // Initialise Snowflake Generator
     let snowflake_generator = SnowflakeIdGenerator::new(1, 1);
 
@@ -74,6 +86,7 @@ pub async fn app() -> Result<Router, ChaosError> {
     let state = AppState {
         db: pool,
         ctx,
+        oauth2_client,
         encoding_key,
         decoding_key,
         jwt_header,
