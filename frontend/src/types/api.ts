@@ -90,8 +90,8 @@ export type QuestionResponse = {
   required: boolean;
   questionType: QuestionType;
   data: QuestionData[];
-  created_at: Date;
-  updated_at: Date;
+  created_at: string;
+  updated_at: string;
 };
 
 // models::question::QuestionType
@@ -162,8 +162,8 @@ export type Answer = {
   question_id: number,
   answer_type: QuestionType,
   data: AnswerData,
-  created_at: Date,
-  updated_at: Date,
+  created_at: string,
+  updated_at: string,
 }
 
 export type AnswerData = string | number | number[];
@@ -192,7 +192,7 @@ export type NewRating = {
 export type ApplicationRating = {
   id: number;
   rater_id: number;
-  rater_name: string
+  rater_name: string;
   rating: number;
   comment?: string;
   updated_at: string;
@@ -201,7 +201,7 @@ export type ApplicationRating = {
 // models::campaign::Campaign
 export type CampaignWithDates = {
   id: number;
-  slug: string
+  slug: string;
   organisation_id: number;
   name: string;
   cover_image: string;
@@ -256,14 +256,14 @@ export type LogoError =
   | "ImageStoreFailure";
 
 export type newOrganisation = {
-  admin: number,
-  slug: string,
-  name: string
+  admin: number;
+  slug: string;
+  name: string;
 };
 
 export type Organisation = {
   id: number;
-  slug: string
+  slug: string;
   name: string;
   logo?: string;
   created_at: string;
@@ -293,7 +293,7 @@ export type User = {
   zid: string;
   name: string;
   pronouns: string;
-  gender: string;
+  gender: UserGender;
   degree_name: string;
   degree_starting_year: number;
   role?: UserRole
@@ -301,11 +301,11 @@ export type User = {
 
 // models::user::UserRole
 export enum UserRole {
-  User,
-  SuperUser
+  User = "User",
+  SuperUser = "SuperUser"
 }
 
-export type PostCommentRespone = {
+export type PostCommentResponse = {
   id: number;
   application_id: number;
   commenter_user_id: number;

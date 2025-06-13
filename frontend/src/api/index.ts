@@ -45,22 +45,15 @@ export const authenticate = async (oauthToken: string) =>
   });
 
 // todo: update to new route
-export const doSignup = async ({
-  name,
-  degree_name,
-  zid,
-  starting_year,
-  gender,
-  pronouns,
-}: {
-  name: string;
-  degree_name: string;
-  zid: string;
-  starting_year: number;
-  gender: UserGender;
-  pronouns: string;
-}) =>
-  API.request<{ token: string }>({
+export const doSignup = async (
+  zid: string,
+  name: string,
+  starting_year: number,
+  degree_name: string,
+  gender: UserGender,
+  pronouns: string
+) =>
+  API.request<AuthenticateResponse>({
     method: "POST",
     path: `/auth/signup`,
     body: {
@@ -92,15 +85,9 @@ export const doSignup = async ({
 const authenticatedRequest = <T = void>(
   payload: Parameters<typeof API.request<T>>[0]
 ) => {
-  const token = getStore("AUTH_TOKEN");
-  if (!token) {
-    throw new Error("No token found");
-  }
-
   return API.request<T>({
     ...payload,
     header: {
-      Authorization: `Bearer ${token}`,
       ...payload.header,
     },
   });
@@ -112,7 +99,7 @@ export const getAllCampaigns = () =>
     current_campaigns: CampaignWithRoles[];
     past_campaigns: CampaignWithRoles[];
   }>({
-    path: "/campaign/all",
+    path: "/v1/campaign/all",
   });
 
 export const getAdminData = (organisationId: number) =>
@@ -123,7 +110,7 @@ export const getAdminData = (organisationId: number) =>
 // todo: create backend route + update referencing components
 export const getAdminOrgs = () =>
   authenticatedRequest<{ organisations: Organisation[] }>({
-    path: "",
+    path: "/v1/organisation/admin",
   });
 
 export const getOrganisation = (organisationId: number) =>
@@ -141,23 +128,23 @@ export const createOrganisation = (orgData: newOrganisation) =>
   authenticatedRequest<Organisation>({
     method: "POST",
     path: "/v1/organisation/",
-    body: { orgData },
+    body: orgData,
   });
 
 export const putOrgLogo = async (orgId: number, logo: File) => {
   const presignedUrl = await authenticatedRequest<string>({
     method: "PATCH",
-    path: `/v1/organisation/${orgId}/logo`
+    path: `/v1/organisation/${orgId}/logo`,
   });
 
-  return fetch(presignedUrl, {
+  await fetch(presignedUrl, {
     method: 'PUT',
     headers: {
       'Content-Type': logo.type,
     },
     body: logo
   });
-}
+};
 
 export const newApplication = (campaignId: number, newApp: NewApplication) =>
   authenticatedRequest<Application>({
@@ -205,10 +192,8 @@ export const getCommonQuestions = (campaignID: number) =>
 export const setApplicationRating = (applicationId: number, rating: NewRating) =>
   authenticatedRequest({
     method: "PUT",
-    path: `/v1/${applicationId}/rating`,
-    body: {
-      rating,
-    },
+    path: `/v1/application/${applicationId}/rating`,
+    body: rating,
     jsonResp: false,
   });
 
@@ -227,7 +212,7 @@ export const getCommonApplicationAnswers = (applicationId: number) =>
 
 export const getApplicationRatings = (applicationId: number) =>
   authenticatedRequest<{ ratings: ApplicationRating[] }>({
-    path: `/v1/${applicationId}/ratings`,
+    path: `/v1/application/${applicationId}/ratings`,
   });
 
 // todo: update all referencing components
@@ -240,7 +225,6 @@ export const submitAnswer = (
     method: "POST",
     path: `/v1/application/${applicationId}/answer/`,
     body: {
-      application_id: applicationId,
       question_id: questionId,
       answer_data: answerData,
     },
@@ -272,7 +256,7 @@ export const setCampaignCoverImage = (campaignId: number, cover_image: File) =>
 export const deleteCampaign = (id: number) =>
   authenticatedRequest({
     method: "DELETE",
-    path: `/campaign/${id}`,
+    path: `/v1/campaign/${id}`,
     jsonResp: false,
   });
 
@@ -283,8 +267,8 @@ export const setApplicationStatus = (
 ) =>
   authenticatedRequest({
     method: "PUT",
-    path: `/application/${applicationId}/status`,
-    body: status,
+    path: `/v1/application/${applicationId}/status`,
+    body: { status },
     jsonResp: false,
   });
 

@@ -1,25 +1,19 @@
 import type { Json } from "types/api";
 
 export class FetchError extends Error {
-  public status: number;
-
-  public statusText: string;
-
   constructor(
-    public resp: Response,
+    public response: Response,
     public data?: unknown
   ) {
-    super(resp.statusText);
-
+    super(`HTTP error! status: ${response.status}`);
     this.name = "FetchError";
-    this.status = resp.status;
-    this.statusText = resp.statusText;
   }
 }
 
 type Payload = {
   method: string;
   headers: { [k: string]: string };
+  credentials?: RequestCredentials;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body?: any;
 };
@@ -32,7 +26,6 @@ type Params<T> = {
 } & ({ body?: Json; jsonBody?: true } | { body?: unknown; jsonBody: false }) &
   (T extends void ? { jsonResp: false } : { jsonResp?: true });
 
-// takes in an object
 const API = {
   request: async <T = void>({
     path,
@@ -43,16 +36,17 @@ const API = {
     jsonBody = true,
     jsonResp = true,
   }: Params<T>): Promise<T> => {
-    const endpoint = new URL(`${window.origin}/api/${path}`);
+    const baseUrl = import.meta.env.VITE_API_URL || '/api';
+    const endpoint = new URL(`${baseUrl}/${path}`);
     endpoint.search = new URLSearchParams(queries).toString();
 
     const payload: Payload = {
       method,
       headers: {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         ...(jsonBody && { "Content-Type": "application/json" }),
         ...header,
       },
+      credentials: 'include',
     };
     if (method !== "GET") payload.body = jsonBody ? JSON.stringify(body) : body;
 
@@ -60,7 +54,6 @@ const API = {
     if (!resp.ok) {
       let data;
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         data = await resp.json();
       } catch (e) {
         // just let data be undefined
