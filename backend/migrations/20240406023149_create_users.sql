@@ -9,7 +9,7 @@ CREATE TABLE users (
     gender TEXT,
     degree_name TEXT,
     degree_starting_year INTEGER,
-    role user_role NOT NULL,
+    role user_role NOT NULL DEFAULT 'User',
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

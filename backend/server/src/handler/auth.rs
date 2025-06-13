@@ -5,8 +5,6 @@ use crate::service::auth::create_or_get_user_id;
 use crate::service::jwt::encode_auth_token;
 use axum::extract::{Query, State};
 use axum::response::IntoResponse;
-use axum::Extension;
-use oauth2::basic::BasicClient;
 use oauth2::reqwest::async_http_client;
 use oauth2::{AuthorizationCode, TokenResponse};
 
@@ -16,9 +14,8 @@ use oauth2::{AuthorizationCode, TokenResponse};
 pub async fn google_callback(
     State(state): State<AppState>,
     Query(query): Query<AuthRequest>,
-    Extension(oauth_client): Extension<BasicClient>,
 ) -> Result<impl IntoResponse, ChaosError> {
-    let token = oauth_client
+    let token = state.oauth2_client
         .exchange_code(AuthorizationCode::new(query.code))
         .request_async(async_http_client)
         .await?;
@@ -30,7 +27,7 @@ pub async fn google_callback(
         .send()
         .await?;
 
-    let profile = profile.json::<GoogleUserProfile>().await.unwrap();
+    let profile = profile.json::<GoogleUserProfile>().await?;
 
     let user_id = create_or_get_user_id(
         profile.email.clone(),
@@ -38,8 +35,7 @@ pub async fn google_callback(
         state.db,
         state.snowflake_generator,
     )
-    .await
-    .unwrap();
+    .await?;
 
     // TODO: Return JWT as set-cookie header.
     let token = encode_auth_token(
