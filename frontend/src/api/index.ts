@@ -30,6 +30,7 @@ import {
   type ApplicationDetails,
   type NewRating,
   type Answer,
+  type NewAnswer,
   QuestionType,
   AnswerData,
 } from "../types/api";
@@ -273,6 +274,18 @@ export const setApplicationStatus = (
   });
 
 // todo: update to new route
+export const setApplicationPrivateStatus = (
+  applicationId: number,
+  status: ApplicationStatus
+) =>
+  authenticatedRequest({
+    method: "PUT",
+    path: `/v1/application/${applicationId}/private-status`,
+    body: { status },
+    jsonResp: false,
+  });
+
+// todo: update to new route
 export const inviteUserToOrg = (
   email: string,
   organisationId: number,
@@ -352,3 +365,41 @@ export const getAnsweredApplicationQuestions = (applications: ApplicationDetails
     })
   );
 }
+
+export const updateUserProfile = {
+  name: (name: string) =>
+    authenticatedRequest({
+      method: "PATCH",
+      path: "/v1/user/name",
+      body: { name },
+      jsonResp: false,
+    }),
+  pronouns: (pronouns: string) =>
+    authenticatedRequest({
+      method: "PATCH",
+      path: "/v1/user/pronouns",
+      body: { pronouns },
+      jsonResp: false,
+    }),
+  gender: (gender: UserGender) =>
+    authenticatedRequest({
+      method: "PATCH",
+      path: "/v1/user/gender",
+      body: { gender },
+      jsonResp: false,
+    }),
+  zid: (zid: string) =>
+    authenticatedRequest({
+      method: "PATCH",
+      path: "/v1/user/zid",
+      body: { zid },
+      jsonResp: false,
+    }),
+  degree: (degree_name: string, degree_starting_year: number) =>
+    authenticatedRequest({
+      method: "PATCH",
+      path: "/v1/user/degree",
+      body: { degree_name, degree_starting_year },
+      jsonResp: false,
+    }),
+};

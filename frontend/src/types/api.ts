@@ -85,8 +85,6 @@ export type QuestionResponse = {
   id: number;
   title: string;
   description?: string;
-  //common: boolean;
-  //max_bytes: number;
   required: boolean;
   questionType: QuestionType;
   data: QuestionData[];
@@ -122,7 +120,7 @@ export type QuestionInput = {
 export type OrganisationRole = "User" | "Admin";
 
 // models::application::ApplicationStatus
-export type ApplicationStatus = "Draft" | "Pending" | "Completed";
+export type ApplicationStatus = "Pending" | "Rejected" | "Successful";
 
 // models::application::NewApplication
 export type NewApplication = {
@@ -158,12 +156,12 @@ export type ApplicationResponse = {
 
 // models::answer::Answer
 export type Answer = {
-  id: number,
-  question_id: number,
-  answer_type: QuestionType,
-  data: AnswerData,
-  created_at: string,
-  updated_at: string,
+  id: number;
+  question_id: number;
+  answer_type: QuestionType;
+  data: AnswerData;
+  created_at: string;
+  updated_at: string;
 }
 
 export type AnswerData = string | number | number[];
@@ -185,8 +183,8 @@ export type ApplicationAnswer = {
 };
 
 export type NewRating = {
-  rating: number,
-  comment?: string,
+  rating: number;
+  comment?: string;
 }
 
 export type ApplicationRating = {
