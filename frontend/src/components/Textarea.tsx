@@ -21,8 +21,12 @@ interface WrapperProps extends React.HTMLAttributes<HTMLDivElement> {
 const Wrapper = styled("label", {
   ...styles,
   ...tw`overflow-hidden p-0`,
+<<<<<<< HEAD
 }) as React.FC<PropsWithChildren<WrapperProps>>;
 
+=======
+});
+>>>>>>> CHAOS-542-Auth-Token-Set-Cookie
 const Header = tw.header`flex items-center border-b border-gray-200 bg-gray-100 px-3 py-2`;
 
 export default Object.assign(Textarea, {
