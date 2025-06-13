@@ -56,7 +56,6 @@ const MultiChoice: React.FC<MultiChoiceProps> = ({
         value={selectedOption?.toString()}
         onValueChange={handleChange}
         disabled={disabled}
-        className="space-y-3"
       >
         {options.map((option) => (
           <div key={option.id} className="flex items-center space-x-2">
