@@ -1,3 +1,10 @@
+//! Role handler for the Chaos application.
+//! 
+//! This module provides HTTP request handlers for managing campaign roles, including:
+//! - Retrieving role details
+//! - Updating and deleting roles
+//! - Managing role applications
+
 use crate::models::app::AppState;
 use crate::models::application::Application;
 use crate::models::auth::{AuthUser, RoleAdmin};
@@ -8,9 +15,23 @@ use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 
+/// Handler for role-related HTTP requests.
 pub struct RoleHandler;
 
 impl RoleHandler {
+    /// Retrieves the details of a specific role.
+    /// 
+    /// This handler allows any authenticated user to view role details.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `state` - The application state
+    /// * `id` - The ID of the role to retrieve
+    /// * `_user` - The authenticated user
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Role details or error
     pub async fn get(
         State(state): State<AppState>,
         Path(id): Path<i64>,
@@ -20,6 +41,19 @@ impl RoleHandler {
         Ok((StatusCode::OK, Json(role)))
     }
 
+    /// Deletes a role.
+    /// 
+    /// This handler allows role admins to delete roles.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `state` - The application state
+    /// * `id` - The ID of the role to delete
+    /// * `_admin` - The authenticated user (must be a role admin)
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn delete(
         State(state): State<AppState>,
         Path(id): Path<i64>,
@@ -29,6 +63,20 @@ impl RoleHandler {
         Ok((StatusCode::OK, "Successfully deleted role"))
     }
 
+    /// Updates a role.
+    /// 
+    /// This handler allows role admins to update role details.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `state` - The application state
+    /// * `id` - The ID of the role to update
+    /// * `_admin` - The authenticated user (must be a role admin)
+    /// * `data` - The new role details
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update(
         State(state): State<AppState>,
         Path(id): Path<i64>,
@@ -39,6 +87,19 @@ impl RoleHandler {
         Ok((StatusCode::OK, "Successfully updated role"))
     }
 
+    /// Retrieves all applications for a specific role.
+    /// 
+    /// This handler allows role admins to view all applications for a role.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `id` - The ID of the role
+    /// * `_admin` - The authenticated user (must be a role admin)
+    /// * `transaction` - Database transaction
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - List of applications or error
     pub async fn get_applications(
         Path(id): Path<i64>,
         _admin: RoleAdmin,
