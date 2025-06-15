@@ -42,8 +42,8 @@ jobs:
           file: backend/Dockerfile
           push: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
           tags: |
-            ghcr.io/csesoc/chaos-backend:${{ github.sha }}
-            ghcr.io/csesoc/chaos-backend:latest
+            ghcr.io/devsoc-unsw/chaos-backend:${{ github.sha }}
+            ghcr.io/devsoc-unsw/chaos-backend:latest
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=local,src=/tmp/.buildx-cache
           # Note the mode=max here
@@ -86,8 +86,8 @@ jobs:
             VITE_API_BASE_URL=${{ secrets.API_BASE_URL }}
             VITE_OAUTH_CALLBACK_URL=${{ secrets.OAUTH_CALLBACK_URL }}
           tags: |
-            ghcr.io/csesoc/chaos-frontend:${{ github.sha }}
-            ghcr.io/csesoc/chaos-frontend:latest
+            ghcr.io/devsoc-unsw/chaos-frontend:${{ github.sha }}
+            ghcr.io/devsoc-unsw/chaos-frontend:latest
           labels: ${{ steps.meta.outputs.labels }}
   deploy:
     name: Deploy (CD)
@@ -102,9 +102,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          repository: csesoc/deployment
+          repository: devsoc-unsw/deployment
           token: ${{ secrets.GH_TOKEN }}
-          ref: migration
+          ref: dev
       - name: Install yq - portable yaml processor
         uses: mikefarah/yq@v4.35.2
       - name: Update deployment
@@ -114,10 +114,10 @@ jobs:
           git config user.name "CSESoc CD"
           git config user.email "technical@csesoc.org.au"
           git checkout -b update/chaos/staging/${{ github.sha }}
-          yq -i '.items[0].spec.template.spec.containers[0].image = "ghcr.io/csesoc/chaos-frontend:${{ github.sha }}"' projects/chaos/staging/deploy-frontend.yml
-          yq -i '.items[0].spec.template.spec.containers[0].image = "ghcr.io/csesoc/chaos-backend:${{ github.sha }}"' projects/chaos/staging/deploy-backend.yml
+          yq -i '.items[0].spec.template.spec.containers[0].image = "ghcr.io/devsoc-unsw/chaos-frontend:${{ github.sha }}"' projects/chaos/staging/deploy-frontend.yml
+          yq -i '.items[0].spec.template.spec.containers[0].image = "ghcr.io/devsoc-unsw/chaos-backend:${{ github.sha }}"' projects/chaos/staging/deploy-backend.yml
           git add .
           git commit -m "feat(chaos/staging): update images"
           git push -u origin update/chaos/staging/${{ github.sha }}
-          gh pr create --title "feat(chaos/staging): update images" --body "Updates the images for the chaos staging deployment to commit csesoc/chaos@${{ github.sha }}." > URL
+          gh pr create --title "feat(chaos/staging): update images" --body "Updates the images for the chaos staging deployment to commit devsoc-unsw/chaos@${{ github.sha }}." > URL
           gh pr merge $(cat URL) --squash -d
