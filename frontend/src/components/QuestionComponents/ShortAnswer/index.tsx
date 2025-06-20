@@ -1,6 +1,6 @@
 import React, { useState, ChangeEvent } from 'react';
-import tw from 'twin.macro';
-import Textarea from 'components/Textarea';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 interface ShortAnswerProps {
   id: number;
@@ -12,7 +12,7 @@ interface ShortAnswerProps {
   onSubmit?: (questionId: number, value: string) => void;
   disabled?: boolean;
   rows?: number;
-  columns?: number;
+  placeholder?: string;
 }
 
 const ShortAnswer: React.FC<ShortAnswerProps> = ({
@@ -24,13 +24,11 @@ const ShortAnswer: React.FC<ShortAnswerProps> = ({
   onChange,
   onSubmit,
   disabled = false,
-  rows = 3, // Fix: expand to 3 rows
-  columns = 77,
+  rows = 3,
+  placeholder = "Your answer",
 }) => {
   const [value, setValue] = useState(defaultValue);
-  const [isFocused, setIsFocused] = useState(false);
 
-  // Changed to handle textarea instead of input
   const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setValue(e.target.value);
     if (onChange) onChange(e.target.value);
@@ -41,34 +39,27 @@ const ShortAnswer: React.FC<ShortAnswerProps> = ({
       onSubmit(id, value);
     }
   };
-  const handleFocus = () => {
-    setIsFocused(true);
-  };
 
   return (
-    <div tw="mb-6 max-w-4xl w-full">
-      <div tw="flex items-center mb-1">
-        <label tw="text-lg font-medium text-gray-900">{question}</label>
-        {required && <span tw="ml-1 text-red-500">*</span>}
+    <div className="mb-6 max-w-4xl w-full">
+      <div className="flex items-center mb-2">
+        <Label className="text-lg font-medium">{question}</Label>
+        {required && <span className="ml-1 text-red-500">*</span>}
       </div>
 
       {description && (
-        <p tw="mb-2 text-sm text-gray-600">{description}</p>
+        <p className="mb-4 text-sm text-muted-foreground">{description}</p>
       )}
-    <Textarea
+
+      <Textarea
         value={value}
         onChange={handleChange}
         onBlur={handleBlur}
         disabled={disabled}
         rows={rows}
-        cols={columns}
-        size="md"
-        placeholder="Your answer"
+        placeholder={placeholder}
         required={required}
-        style={{
-          caretColor: isFocused ? '#3b82f6' : 'auto',
-          transition: 'all 0.2s ease-in-out',
-        }}
+        className="w-full resize-y transition-all duration-200 hover:border-blue-400 focus:border-blue-500"
       />
     </div>
   );
