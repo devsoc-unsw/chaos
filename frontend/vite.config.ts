@@ -13,6 +13,9 @@ export default defineConfig({
     }),
     tsconfigPaths(),
   ],
+  css: {
+    postcss: './postcss.config.js',
+  },
   resolve: {
         alias: {
       "@": path.resolve(__dirname, "./src"),

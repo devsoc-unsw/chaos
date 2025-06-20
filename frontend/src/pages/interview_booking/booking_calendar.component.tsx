@@ -1,10 +1,10 @@
 import { addDays, startOfWeek } from "date-fns";
 import { useMemo, useState } from "react";
 
-import { cn } from "../../components/shad_cn/lib/utils";
-import { Button } from "../../components/shad_cn/ui/button";
-import { Calendar } from "../../components/shad_cn/ui/calendar";
-import { Card } from "../../components/shad_cn/ui/card";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Card } from "@/components/ui/card";
 
 import availableTime from "./availableTimeSlots.json";
 
@@ -131,7 +131,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
           mode="single"
           selected={new Date(selectedDate)}
           onSelect={handleDateChange}
-          className="rounded-md border border-purple-300 text-gray-800 shadow-sm"
+          className="rounded-md border text-gray-800 bg-white w-max shadow-sm"
           modifiers={modifiers}
           modifiersClassNames={modifiersClassNames}
           disabled={disabled}
@@ -148,7 +148,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
           >
             ← Previous
           </Button>
-          <h2 className="text-md font-semibold">
+          <h2 className="text-lg font-semibold">
             Week of{" "}
             {weekStart.toLocaleDateString("en-US", {
               month: "short",
@@ -164,7 +164,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
         </div>
 
         {/* Weekday Buttons (User selects a day here) */}
-        <div className="mb-4 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-7">
+        <div className="mb-4 grid grid-cols-3 gap-5 sm:grid-cols-4 md:grid-cols-7">
           {weekDates.map((date) => {
             const dateStr = formatDate(date);
             const isSelected = dateStr === selectedDate;
@@ -174,7 +174,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
                 disabled={!availableDates.has(dateStr)}
                 variant="outline"
                 className={cn(
-                  "flex flex-col py-2",
+                  "flex flex-col py-2 h-11",
                   isSelected && availableDates.has(dateStr)
                     ? "bg-indigo-200 ring-2 ring-indigo-100"
                     : ""

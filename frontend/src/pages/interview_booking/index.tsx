@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import BookingCalendar from "./booking_calendar.component";
 import loginUser from "./login_user.json";
 
-import "react-datepicker/dist/react-datepicker.css";
 import type React from "react";
 
 // Interface representing a single available time slot
@@ -102,7 +101,7 @@ const InterviewBooking: React.FC = () => {
       } mx-auto w-full rounded-xl shadow-lg transition-all duration-700 md:w-3/4`}
     >
       {/* Heading */}
-      <h1 className="mb-10 animate-pulse bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-center font-mono text-4xl font-bold text-transparent sm:text-5xl md:text-6xl">
+      <h1 className="text-5xl font-extrabold mb-8 text-center mt-10">
         Book Your Interview
       </h1>
 
@@ -206,7 +205,7 @@ const InterviewBooking: React.FC = () => {
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:gap-4">
           <button
             type="submit"
-            className="inner-shadow-lg hover:scale-101 w-full rounded-xl bg-gradient-to-r from-indigo-200 to-purple-300 px-6 py-3 font-semibold text-white shadow-md transition-all duration-300 hover:shadow-lg hover:brightness-100 focus:ring-1 focus:ring-purple-400 sm:w-auto"
+            className="w-full rounded-xl border border-black px-6 py-3 font-semibold text-black shadow-sm bg-black text-white focus:outline-none focus:ring-1 focus:ring-black sm:w-auto"
           >
             Submit Booking
           </button>

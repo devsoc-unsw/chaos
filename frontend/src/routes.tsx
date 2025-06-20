@@ -1,7 +1,8 @@
 import { lazy } from "react";
 import { Route } from "react-router-dom";
 
-import InterviewBooking from "pages/interview_booking/interview_booking_page";
+import InterviewBooking from "./pages/interview_booking/index";
+import AdminInterviewBooking from "./pages/interview_booking/admin_index";
 
 const Admin = lazy(() => import("./pages/admin"));
 const ApplicationPage = lazy(() => import("./pages/application_page"));
@@ -53,6 +54,11 @@ const routes = [
     key="interview-booking"
     path="/interview-booking"
     element={<InterviewBooking />}
+  />,
+  <Route
+    key="admin-interview-booking"
+    path="/admin-interview-booking"
+    element={<AdminInterviewBooking />}
   />,
 ];
 
