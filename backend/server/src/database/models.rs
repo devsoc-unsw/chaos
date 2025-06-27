@@ -1,8 +1,9 @@
+use crate::question_types::QuestionData;
 use crate::images::{get_http_image_path, ImageLocation};
 
 use super::schema::{
     answers, applications, campaigns, comments, organisation_users, organisations, questions,
-    ratings, roles, users,
+    ratings, roles, users, multi_select_answers, multi_select_options, short_answer_answers
 };
 use super::schema::{AdminLevel, ApplicationStatus, UserGender};
 use chrono::NaiveDateTime;
@@ -14,6 +15,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::fs::remove_file;
 use std::path::Path;
+use crate::database::schema::QuestionType;
 
 #[derive(Queryable)]
 pub struct User {
@@ -784,10 +786,8 @@ impl Role {
     }
 
     pub fn delete_children(conn: &PgConnection, role: Role) -> Option<()> {
-        use diesel::pg::expression::dsl::any;
-
         let question_items: Vec<Question> = questions::table
-            .filter(any(questions::role_ids).eq(role.id))
+            .filter(questions::role_id.eq(role.id))
             .load(conn)
             .map_err(|x| {
                 eprintln!("error in delete_children: {x:?}");
@@ -795,7 +795,7 @@ impl Role {
             })
             .ok()?;
 
-        diesel::delete(questions::table.filter(any(questions::role_ids).eq(role.id)))
+        diesel::delete(questions::table.filter(questions::role_id.eq(role.id)))
             .execute(conn)
             .map_err(|x| {
                 eprintln!("error in delete_children: {x:?}");
@@ -978,45 +978,51 @@ impl NewApplication {
 #[table_name = "questions"]
 pub struct Question {
     pub id: i32,
-    pub role_ids: Vec<i32>,
+    pub role_id: Option<i32>,
     pub title: String,
     pub description: Option<String>,
     pub max_bytes: i32,
     pub required: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
+    pub question_type: QuestionType,
 }
 
 #[derive(Insertable, Serialize, Deserialize)]
 #[table_name = "questions"]
 pub struct NewQuestion {
-    pub role_ids: Vec<i32>,
+    pub role_id: Option<i32>,
     pub title: String,
     pub description: Option<String>,
     #[serde(default)]
     pub max_bytes: i32,
     pub required: bool,
+    pub question_type: QuestionType,
 }
 
 #[derive(Serialize)]
 pub struct QuestionResponse {
     pub id: i32,
-    pub role_ids: Vec<i32>,
+    pub role_id: Option<i32>,
     pub title: String,
     pub description: Option<String>,
     pub max_bytes: i32,
     pub required: bool,
+    pub question_data: QuestionData,
+    pub question_type: QuestionType,
 }
 
-impl std::convert::From<Question> for QuestionResponse {
-    fn from(question: Question) -> Self {
+impl From<(Question, QuestionData)> for QuestionResponse {
+    fn from(question_with_data: (Question, QuestionData)) -> Self {
         Self {
-            id: question.id,
-            role_ids: question.role_ids,
-            title: question.title,
-            description: question.description,
-            max_bytes: question.max_bytes,
-            required: question.required,
+            id: question_with_data.0.id,
+            role_id: question_with_data.0.role_id,
+            title: question_with_data.0.title,
+            description: question_with_data.0.description,
+            max_bytes: question_with_data.0.max_bytes,
+            required: question_with_data.0.required,
+            question_type: question_with_data.0.question_type,
+            question_data: question_with_data.1
         }
     }
 }
@@ -1030,11 +1036,36 @@ pub struct UpdateQuestionInput {
     pub required: bool,
 }
 
+#[derive(Queryable, Deserialize, Serialize, PartialEq, Debug, Clone)]
+pub struct MultiSelectOption {
+    pub id: i32,
+    pub text: String,
+    pub question_id: i32,
+}
+
+#[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
+pub struct MultiSelectOptionInput {
+    pub text: String,
+}
+
+#[derive(Insertable, Deserialize, Serialize, PartialEq, Debug, Clone)]
+#[table_name = "multi_select_options"]
+pub struct NewMultiSelectOption {
+    pub text: String,
+    pub question_id: i32,
+}
+
+impl NewMultiSelectOption {
+    pub fn insert(&self, conn: &PgConnection) -> Option<MultiSelectOption> {
+        use crate::database::schema::multi_select_options::dsl::*;
+
+        self.insert_into(multi_select_options).get_result(conn).ok()
+    }
+}
+
 impl Question {
     pub fn get_first_role(&self) -> i32 {
-        *self
-            .role_ids
-            .get(0)
+        self.role_id
             .expect("Question should be for at least one role")
     }
 
@@ -1055,7 +1086,7 @@ impl Question {
 
     pub fn get_all_from_role_id(conn: &PgConnection, role_id_val: i32) -> Vec<Question> {
         diesel::sql_query(&format!(
-            "select * from questions where {} = any(role_ids)",
+            "select * from questions where {} = role_id or role_id is null",
             role_id_val
         ))
         .load::<Question>(conn)
@@ -1064,7 +1095,7 @@ impl Question {
 
     pub fn delete_all_from_role_id(conn: &PgConnection, role_id_val: i32) -> bool {
         diesel::sql_query(&format!(
-            "delete from questions where {} = any(role_ids)",
+            "delete from questions where {} = role_id",
             role_id_val
         ))
         .execute(conn)
@@ -1114,14 +1145,69 @@ pub struct Answer {
     pub description: String,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
+    pub answer_type: QuestionType,
+    // pub answer_data: AnswerData,
 }
 
-#[derive(Insertable, Deserialize)]
+#[derive(Insertable, Deserialize, Serialize)]
 #[table_name = "answers"]
 pub struct NewAnswer {
     pub application_id: i32,
     pub question_id: i32,
     pub description: String,
+    pub answer_type: QuestionType,
+    // pub answer_data: AnswerData,
+}
+
+#[derive(Queryable, Deserialize, Serialize, PartialEq, Debug, Clone)]
+pub struct ShortAnswerAnswer {
+    pub id: i32,
+    pub text: String,
+    pub answer_id: i32,
+}
+
+#[derive(Insertable, Deserialize, Serialize, PartialEq, Debug, Clone)]
+#[table_name = "short_answer_answers"]
+pub struct NewShortAnswerAnswer {
+    pub text: String,
+    pub answer_id: i32,
+}
+
+impl NewShortAnswerAnswer {
+    pub fn insert(&self, conn: &PgConnection) -> Option<ShortAnswerAnswer> {
+        use crate::database::schema::short_answer_answers::dsl::*;
+
+        self.insert_into(short_answer_answers).get_result(conn).ok()
+    }
+}
+
+/// A struct to store answers for multi-choice, multi-select and drop-down
+/// question types, as these work the same way in the backend. The only
+/// difference is the restriction on number of answers for each type,
+/// with multi-choice only having one unique answer (vector length 1)
+///
+/// \
+/// The vector will store the id's of each option selected.
+#[derive(Queryable, Deserialize, Serialize, PartialEq, Debug, Clone)]
+pub struct MultiSelectAnswer {
+    pub id: i32,
+    pub option_id: i32,
+    pub answer_id: i32,
+}
+
+#[derive(Insertable, Deserialize, Serialize, PartialEq, Debug, Clone)]
+#[table_name = "multi_select_answers"]
+pub struct NewMultiSelectAnswer {
+    pub option_id: i32,
+    pub answer_id: i32,
+}
+
+impl NewMultiSelectAnswer {
+    pub fn insert(&self, conn: &PgConnection) -> Option<MultiSelectAnswer> {
+        use crate::database::schema::multi_select_answers::dsl::*;
+
+        self.insert_into(multi_select_answers).get_result(conn).ok()
+    }
 }
 
 impl Answer {
@@ -1346,7 +1432,7 @@ pub struct CampaignInfo {
     pub ends_at: NaiveDateTime,
 }
 
-impl std::convert::From<Campaign> for CampaignInfo {
+impl From<Campaign> for CampaignInfo {
     fn from(campaign: Campaign) -> Self {
         Self {
             id: campaign.id,

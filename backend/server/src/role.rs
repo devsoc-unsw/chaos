@@ -1,11 +1,11 @@
-use crate::database::{
+use crate::{database::{
     models::{
         Application, Campaign, GetQuestionsResponse, OrganisationUser, Question, Role, RoleUpdate,
         User,
     },
     schema::ApplicationStatus,
     Database,
-};
+}, question_types::QuestionData};
 use chrono::NaiveDateTime;
 use diesel::PgConnection;
 use rocket::{
@@ -116,6 +116,7 @@ pub enum QuestionsError {
     CampaignNotFound,
     Unauthorized,
     UserNotFound,
+    QuestionDataNotFound,
 }
 
 #[get("/<role_id>/questions")]
@@ -140,8 +141,16 @@ pub async fn get_questions(
             .or(campaign.published)
             .check()
             .map_err(|_| Json(QuestionsError::Unauthorized))?;
+
+        let mut questions_with_data = Vec::new();
+        
+        for question in Question::get_all_from_role_id(conn, role_id) {
+            let data = QuestionData::get_from_question_id(conn, question.id);
+            if let None = data { return Err(Json(QuestionsError::QuestionDataNotFound)); }
+            questions_with_data.push((question, data.unwrap()));
+        }
         Ok(Json(GetQuestionsResponse {
-            questions: Question::get_all_from_role_id(conn, role_id)
+            questions: questions_with_data
                 .into_iter()
                 .map(|x| x.into())
                 .collect(),
