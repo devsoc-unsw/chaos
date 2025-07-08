@@ -1,8 +1,8 @@
 import { lazy } from "react";
 import { Route } from "react-router-dom";
 
-import InterviewBooking from "./pages/interview_booking/index";
-import AdminInterviewBooking from "./pages/interview_booking/admin_index";
+import InterviewBooking from "./pages/interview_booking/user_side/index";
+import AdminInterviewBooking from "./pages/interview_booking/admin_side/admin_index";
 
 const Admin = lazy(() => import("./pages/admin"));
 const ApplicationPage = lazy(() => import("./pages/application_page"));

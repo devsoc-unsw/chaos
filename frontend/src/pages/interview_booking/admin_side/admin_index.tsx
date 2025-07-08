@@ -6,6 +6,11 @@ import { DayPilotCalendar, DayPilot } from "@daypilot/daypilot-lite-react";
 import { format } from 'date-fns';
 import { cn } from "@/lib/utils";
 
+
+
+/**
+ * MOCK DATA FOR ROLES, LOCATIONS, AND ADMIN USERS
+ */
 const ROLES = [
   "Technical Director",
   "Operations Director", 
@@ -25,6 +30,17 @@ const LOCATIONS = [
     "Virtual Meeting (Teams)",
     "Other"
 ];
+
+const MOCK_USERS = [
+  { id: "admin1", name: "Kavika" },
+  { id: "admin2", name: "Isaac" }
+];
+const CURRENT_USER = MOCK_USERS[0];
+
+
+/**
+ * MAIN COMPONENT
+ */
 
 const AdminInterviewBooking = () => {
   // State to store selected time slots
@@ -46,19 +62,30 @@ const AdminInterviewBooking = () => {
     setRedoStack([]); // clear redo stack on new action
   }, [availableSlots]);
 
+  // Helper to compare two roles arrays as sets (order-insensitive)
+  const rolesEqual = (a: string[] = [], b: string[] = []) => {
+    if (a.length !== b.length) return false;
+    const setA = new Set(a);
+    const setB = new Set(b);
+    for (const role of setA) {
+      if (!setB.has(role)) return false;
+    }
+    return true;
+  };
 
   // Handler for selecting a time range (drag to select)
   const handleTimeRangeSelected = async (args: any) => {
     pushToUndo();
-    // Add the selected range as an available slot
+    // New slot has no roles by default
     const newSlot = {
       id: DayPilot.guid(),
       start: args.start,
       end: args.end,
-      backColor: "#b3e6b3", // light green for available
-      roles: [], // Initialize with empty array for multiple roles
-      location: "", // Initialize with empty location
-      // Add DayPilot specific properties to maintain positioning
+      backColor: "#b3e6b3",
+      roles: [],
+      location: "",
+      createdBy: CURRENT_USER,
+      createdAt: new Date().toISOString(),
       cssClass: "available-slot",
       html: "Available",
       toolTip: "Click to assign roles and location",
@@ -132,8 +159,8 @@ const AdminInterviewBooking = () => {
 
   // Toggle role assignment for a slot (add/remove role)
   const handleToggleRole = (slotId: string, role: string) => {
-    setAvailableSlots((prev) =>
-      prev.map((slot) =>
+    setAvailableSlots((prev) => {
+      const updated = prev.map((slot) =>
         slot.id === slotId
           ? {
               ...slot,
@@ -142,20 +169,56 @@ const AdminInterviewBooking = () => {
                 : [...(slot.roles || []), role],
             }
           : slot
-      )
-    );
-    setEvents((prev) =>
-      prev.map((slot) =>
-        slot.id === slotId
-          ? {
-              ...slot,
-              roles: slot.roles?.includes(role)
-                ? slot.roles.filter((r: string) => r !== role)
-                : [...(slot.roles || []), role],
+      );
+      // Merge logic after roles are updated
+      // Group slots by user and roles set
+      const grouped: { [key: string]: any[] } = {};
+      for (const slot of updated) {
+        const key = JSON.stringify([slot.createdBy?.id, (slot.roles || []).slice().sort()]);
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(slot);
+      }
+      // Merge intervals within each group
+      const mergedSlots: any[] = [];
+      for (const group of Object.values(grouped)) {
+        const intervals = group
+          .map(slot => ({ start: slot.start, end: slot.end, slot }))
+          .sort((a, b) => (a.start < b.start ? -1 : a.start > b.start ? 1 : 0));
+        let merged: { start: any; end: any; id: any; createdBy: any; createdAt: any; location: any; roles: any; }[] = [];
+        for (const interval of intervals) {
+          if (merged.length === 0) {
+            merged.push({ start: interval.start, end: interval.end, id: interval.slot.id, createdBy: interval.slot.createdBy, createdAt: interval.slot.createdAt, location: interval.slot.location, roles: interval.slot.roles });
+          } else {
+            const last = merged[merged.length - 1];
+            if (interval.start < last.end && interval.end > last.start) {
+              last.start = last.start < interval.start ? last.start : interval.start;
+              last.end = last.end > interval.end ? last.end : interval.end;
+              // Keep earliest createdAt
+              last.createdAt = last.createdAt < interval.slot.createdAt ? last.createdAt : interval.slot.createdAt;
+            } else {
+              merged.push({ start: interval.start, end: interval.end, id: interval.slot.id, createdBy: interval.slot.createdBy, createdAt: interval.slot.createdAt, location: interval.slot.location, roles: interval.slot.roles });
             }
-          : slot
-      )
-    );
+          }
+        }
+        for (const { start, end, id, createdBy, createdAt, location, roles } of merged) {
+          mergedSlots.push({
+            id,
+            start,
+            end,
+            backColor: "#b3e6b3",
+            roles: roles || [],
+            location: location || "",
+            createdBy,
+            createdAt,
+            cssClass: roles?.length > 0 ? "assigned-slot" : "available-slot",
+            html: "Available",
+            toolTip: "Click to assign roles and location",
+          });
+        }
+      }
+      setEvents(mergedSlots);
+      return mergedSlots;
+    });
     setSaved(false);
   };
 
@@ -186,26 +249,62 @@ const AdminInterviewBooking = () => {
 
   // Remove all roles from a slot
   const handleRemoveAllRoles = (slotId: string) => {
-    setAvailableSlots((prev) =>
-      prev.map((slot) =>
+    setAvailableSlots((prev) => {
+      const updated = prev.map((slot) =>
         slot.id === slotId
           ? {
               ...slot,
               roles: [],
             }
           : slot
-      )
-    );
-    setEvents((prev) =>
-      prev.map((slot) =>
-        slot.id === slotId
-          ? {
-              ...slot,
-              roles: [],
+      );
+      // Merge logic after roles are updated
+      // Group slots by user and roles set
+      const grouped: { [key: string]: any[] } = {};
+      for (const slot of updated) {
+        const key = JSON.stringify([slot.createdBy?.id, (slot.roles || []).slice().sort()]);
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(slot);
+      }
+      const mergedSlots: any[] = [];
+      for (const group of Object.values(grouped)) {
+        const intervals = group
+          .map(slot => ({ start: slot.start, end: slot.end, slot }))
+          .sort((a, b) => (a.start < b.start ? -1 : a.start > b.start ? 1 : 0));
+        let merged: { start: any; end: any; id: any; createdBy: any; createdAt: any; location: any; roles: any; }[] = [];
+        for (const interval of intervals) {
+          if (merged.length === 0) {
+            merged.push({ start: interval.start, end: interval.end, id: interval.slot.id, createdBy: interval.slot.createdBy, createdAt: interval.slot.createdAt, location: interval.slot.location, roles: interval.slot.roles });
+          } else {
+            const last = merged[merged.length - 1];
+            if (interval.start < last.end && interval.end > last.start) {
+              last.start = last.start < interval.start ? last.start : interval.start;
+              last.end = last.end > interval.end ? last.end : interval.end;
+              last.createdAt = last.createdAt < interval.slot.createdAt ? last.createdAt : interval.slot.createdAt;
+            } else {
+              merged.push({ start: interval.start, end: interval.end, id: interval.slot.id, createdBy: interval.slot.createdBy, createdAt: interval.slot.createdAt, location: interval.slot.location, roles: interval.slot.roles });
             }
-          : slot
-      )
-    );
+          }
+        }
+        for (const { start, end, id, createdBy, createdAt, location, roles } of merged) {
+          mergedSlots.push({
+            id,
+            start,
+            end,
+            backColor: "#b3e6b3",
+            roles: roles || [],
+            location: location || "",
+            createdBy,
+            createdAt,
+            cssClass: roles?.length > 0 ? "assigned-slot" : "available-slot",
+            html: "Available",
+            toolTip: "Click to assign roles and location",
+          });
+        }
+      }
+      setEvents(mergedSlots);
+      return mergedSlots;
+    });
     setContextMenu(null);
     setSaved(false);
   };
@@ -517,7 +616,11 @@ const AdminInterviewBooking = () => {
                     Remove Slot
                   </Button>
                 </div>
-                
+                {/* Slot creator and creation time */}
+                <div className="text-md text-gray-500 mb-2">
+                  Created by: {slot.createdBy?.name || "Unknown"}<br/>
+                  At: {slot.createdAt ? format(new Date(slot.createdAt), 'PPpp') : "Unknown"}
+                </div>
                 {/* Roles Section */}
                 <div className="mb-3">
                   <div className="flex items-center gap-2 mb-2">
