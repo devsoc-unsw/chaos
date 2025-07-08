@@ -10,7 +10,8 @@ const ROLES = [
   "Technical Director",
   "Operations Director", 
   "Marketing Director",
-  "Finance Director"
+  "Finance Director",
+  "HR Director",
 ];
 
 const LOCATIONS = [
@@ -45,16 +46,6 @@ const AdminInterviewBooking = () => {
     setRedoStack([]); // clear redo stack on new action
   }, [availableSlots]);
 
-  // Helper to update event display without changing core properties
-  const updateEventDisplay = useCallback((event: any) => {
-    const roles = event.roles || [];
-    return {
-      ...event,
-      html: `${format(new Date(event.start), 'HH:mm')} - ${format(new Date(event.end), 'HH:mm')}` + (roles.length > 0 ? ` | ${roles.map((role: string) => `[${role}]`).join(" ")}` : '') + (event.location ? ` | 📍 ${event.location}` : ''),
-      cssClass: roles.length > 0 ? "assigned-slot" : "available-slot",
-      toolTip: `${roles.length > 0 ? `Roles: ${roles.join(", ")}` : 'No roles assigned'}` + `${event.location ? ` | Location: ${event.location}` : ' | No location assigned'}`,
-    };
-  }, []);
 
   // Handler for selecting a time range (drag to select)
   const handleTimeRangeSelected = async (args: any) => {
@@ -372,6 +363,46 @@ const AdminInterviewBooking = () => {
     return `${format(startOfWeek, 'MMM d')} - ${format(endOfWeek, 'MMM d, yyyy')}`;
   };
 
+  // Handler for resizing a slot (event)
+  const handleEventResize = (args: any) => {
+    pushToUndo();
+    setAvailableSlots((prev) =>
+      prev.map((slot) =>
+        slot.id === args.e.data.id
+          ? { ...slot, start: args.newStart, end: args.newEnd }
+          : slot
+      )
+    );
+    setEvents((prev) =>
+      prev.map((slot) =>
+        slot.id === args.e.data.id
+          ? { ...slot, start: args.newStart, end: args.newEnd }
+          : slot
+      )
+    );
+    setSaved(false);
+  };
+
+  // Handler for moving a slot (event)
+  const handleEventMove = (args: any) => {
+    pushToUndo();
+    setAvailableSlots((prev) =>
+      prev.map((slot) =>
+        slot.id === args.e.data.id
+          ? { ...slot, start: args.newStart, end: args.newEnd }
+          : slot
+      )
+    );
+    setEvents((prev) =>
+      prev.map((slot) =>
+        slot.id === args.e.data.id
+          ? { ...slot, start: args.newStart, end: args.newEnd }
+          : slot
+      )
+    );
+    setSaved(false);
+  };
+
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-8 text-center mt-10">Interview Slot Management</h1>
@@ -429,6 +460,7 @@ const AdminInterviewBooking = () => {
         </div>
 
         <DayPilotCalendar
+            
             viewType="Week"
             durationBarVisible={false}
             onTimeRangeSelected={handleTimeRangeSelected}
@@ -439,6 +471,10 @@ const AdminInterviewBooking = () => {
                 slotId: args.e.data.id,
               });
             }}
+            onEventResize={handleEventResize}
+            eventResizeHandling="Update"
+            onEventMove={handleEventMove}
+            eventMoveHandling="Update"
             events={events.map(event => ({
               ...event,
               // Use html property for display text instead of text to prevent reordering
@@ -453,8 +489,6 @@ const AdminInterviewBooking = () => {
             timeRangeSelectedHandling="Enabled"
             startDate={new DayPilot.Date(currentWeek)}
             heightSpec="Full"
-            // Disable event moving to prevent position changes
-            eventMoveHandling="Disabled"
         />
 
         <div className="mt-6">
