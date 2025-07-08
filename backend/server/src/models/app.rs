@@ -36,7 +36,7 @@ pub struct AppState {
     pub storage_bucket: Bucket,
 }
 
-pub async fn app() -> Result<Router, ChaosError> {
+pub async fn init_app_state() -> AppState {
     // Initialise DB connection
     let db_url = env::var("DATABASE_URL")
         .expect("Error getting DATABASE_URL")
@@ -89,6 +89,13 @@ pub async fn app() -> Result<Router, ChaosError> {
         snowflake_generator,
         storage_bucket,
     };
+    
+    state
+}
+
+pub async fn app() -> Result<Router, ChaosError> {
+    
+    let state = init_app_state().await;
 
     Ok(Router::new()
         .route("/", get(|| async { "Join DevSoc! https://devsoc.app/" }))

@@ -78,7 +78,7 @@ impl Organisation {
         name: String,
         mut snowflake_generator: SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<(), ChaosError> {
+    ) -> Result<i64, ChaosError> {
         if !slug.is_ascii() {
             return Err(ChaosError::BadRequest);
         }
@@ -109,7 +109,7 @@ impl Organisation {
         .execute(transaction.deref_mut())
         .await?;
 
-        Ok(())
+        Ok(id)
     }
 
     pub async fn check_slug_availability(
