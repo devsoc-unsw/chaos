@@ -1,6 +1,9 @@
 import { lazy } from "react";
 import { Route } from "react-router-dom";
 
+import InterviewBooking from "./pages/interview_booking/user_side/index";
+import AdminInterviewBooking from "./pages/interview_booking/admin_side/admin_index";
+
 const Admin = lazy(() => import("./pages/admin"));
 const ApplicationPage = lazy(() => import("./pages/application_page"));
 const AuthSuccess = lazy(() => import("./pages/auth_success"));
@@ -14,6 +17,7 @@ const Marking = lazy(() => import("./pages/admin/review/marking"));
 const Rankings = lazy(() => import("./pages/admin/review/rankings"));
 const Review = lazy(() => import("./pages/admin/review"));
 const SignupPage = lazy(() => import("./pages/signup"));
+const QuestionComponentsTest = lazy(() => import("./pages/question_components_test"));
 
 const routes = [
   <Route key="dashboard" path="/dashboard" element={<DashboardPage />} />,
@@ -40,6 +44,21 @@ const routes = [
     key="ApplicationPage"
     path="/application/:campaignId"
     element={<ApplicationPage />}
+  />,
+  <Route
+    key="QuestionComponentsTest"
+    path="/question-components-test"
+    element={<QuestionComponentsTest />}
+  />,
+  <Route
+    key="interview-booking"
+    path="/interview-booking"
+    element={<InterviewBooking />}
+  />,
+  <Route
+    key="admin-interview-booking"
+    path="/admin-interview-booking"
+    element={<AdminInterviewBooking />}
   />,
 ];
 

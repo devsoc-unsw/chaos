@@ -56,7 +56,7 @@ const CampaignGrid = ({
           appear
           show
           enter={{
-            ...tw`transition duration-[750ms]`,
+            ...tw`duration-[750ms] transition`,
             transitionDelay: `${i * 150}ms`,
           }}
           enterFrom={tw`translate-y-4 opacity-0`}

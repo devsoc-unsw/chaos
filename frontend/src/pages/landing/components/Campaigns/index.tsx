@@ -96,7 +96,7 @@ const Campaigns = forwardRef<HTMLDivElement, Props>(
               as={Heading}
               appear
               show
-              enter={tw`transition-[width] duration-[600ms]`}
+              enter={tw`duration-[600ms] transition-[width]`}
               enterFrom={tw`w-0`}
               enterTo={tw`w-52`}
             />
@@ -110,7 +110,7 @@ const Campaigns = forwardRef<HTMLDivElement, Props>(
               as={Heading}
               appear
               show
-              enter={tw`transition-[width] delay-[400ms] duration-[600ms]`}
+              enter={tw`delay-[400ms] duration-[600ms] transition-[width]`}
               enterFrom={tw`w-0`}
               enterTo={tw`w-56`}
             />

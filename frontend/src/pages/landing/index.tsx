@@ -1,6 +1,7 @@
 import { Fragment, useContext, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import tw from "twin.macro";
+import { Button } from "@/components/ui/button";
 
 import chaosImg from "assets/chaos.png";
 import { Transition } from "components";
@@ -46,7 +47,7 @@ const Landing = () => {
           <Transition
             appear
             show
-            enter={tw`transition duration-[600ms]`}
+            enter={tw`duration-[600ms] transition`}
             enterFrom={tw`-translate-x-6 opacity-0`}
           >
             <h1 tw="text-5xl">
@@ -62,7 +63,7 @@ const Landing = () => {
             as={Fragment}
             appear
             show
-            enter={tw`transition delay-[250ms] duration-[600ms]`}
+            enter={tw`delay-[250ms] duration-[600ms] transition`}
             enterFrom={tw`translate-y-4 opacity-0`}
             enterTo={tw`text-2xl`}
           >
@@ -71,7 +72,7 @@ const Landing = () => {
           <Transition
             appear
             show
-            enter={tw`transition delay-500 duration-[600ms]`}
+            enter={tw`duration-[600ms] transition delay-500`}
             enterFrom={tw`translate-y-4 opacity-0`}
           >
             {getStore("AUTH_TOKEN") ? (
@@ -90,7 +91,7 @@ const Landing = () => {
           <Transition
             show
             appear
-            enter={tw`transition delay-[750ms] duration-[800ms]`}
+            enter={tw`delay-[750ms] duration-[800ms] transition`}
             enterFrom={tw`translate-y-4 opacity-0`}
           >
             <SponsorLogos />
