@@ -81,7 +81,7 @@ impl Application {
         application_data: NewApplication,
         mut snowflake_generator: SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<(), ChaosError> {
+    ) -> Result<i64, ChaosError> {
         let id = snowflake_generator.generate();
 
         // Insert into table applications
@@ -111,7 +111,7 @@ impl Application {
             .await?;
         }
 
-        Ok(())
+        Ok(id)
     }
 
     /*

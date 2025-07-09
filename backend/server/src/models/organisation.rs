@@ -410,7 +410,7 @@ impl Organisation {
         ends_at: DateTime<Utc>,
         pool: &Pool<Postgres>,
         mut snowflake_id_generator: SnowflakeIdGenerator,
-    ) -> Result<(), ChaosError> {
+    ) -> Result<i64, ChaosError> {
         if !slug.is_ascii() {
             return Err(ChaosError::BadRequest);
         }
@@ -433,7 +433,7 @@ impl Organisation {
         .execute(pool)
         .await?;
 
-        Ok(())
+        Ok(new_campaign_id)
     }
 
     pub async fn create_email_template(

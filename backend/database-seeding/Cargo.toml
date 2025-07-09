@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 server = { path = "../server" }
 tokio = { version = "1.34"}
+chrono = { version = "0.4", features = ["serde"] }
 
 
 dotenvy = "0.15"

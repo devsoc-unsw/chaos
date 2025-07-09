@@ -44,7 +44,7 @@ impl Role {
         role_data: RoleUpdate,
         transaction: &mut Transaction<'_, Postgres>,
         mut snowflake_generator: SnowflakeIdGenerator,
-    ) -> Result<(), ChaosError> {
+    ) -> Result<i64, ChaosError> {
         let id = snowflake_generator.generate();
 
         sqlx::query!(
@@ -63,7 +63,7 @@ impl Role {
         .execute(transaction.deref_mut())
         .await?;
 
-        Ok(())
+        Ok(id)
     }
 
     pub async fn get(id: i64, pool: &Pool<Postgres>) -> Result<RoleDetails, ChaosError> {

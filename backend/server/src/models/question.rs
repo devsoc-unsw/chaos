@@ -493,7 +493,7 @@ impl QuestionType {
 
 #[derive(Deserialize, Serialize)]
 pub struct MultiOptionData {
-    options: Vec<MultiOptionQuestionOption>,
+    pub options: Vec<MultiOptionQuestionOption>,
 }
 
 impl Default for MultiOptionData {
@@ -510,9 +510,9 @@ impl Default for MultiOptionData {
 /// language?", there would be rows for "Rust", "Java" and "TypeScript".
 #[derive(Deserialize, Serialize)]
 pub struct MultiOptionQuestionOption {
-    id: i64,
-    display_order: i32,
-    text: String,
+    pub id: i64,
+    pub display_order: i32,
+    pub text: String,
 }
 
 impl QuestionData {
