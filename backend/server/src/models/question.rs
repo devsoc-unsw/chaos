@@ -41,17 +41,17 @@ use std::ops::DerefMut;
 /// ```
 #[derive(Serialize)]
 pub struct Question {
-    id: i64,
-    title: String,
-    description: Option<String>,
-    common: bool, // Common question are shown at the start
-    required: bool,
+    pub id: i64,
+    pub title: String,
+    pub description: Option<String>,
+    pub common: bool, // Common question are shown at the start
+    pub required: bool,
 
     #[serde(flatten)]
-    question_data: QuestionData,
+    pub question_data: QuestionData,
 
-    created_at: DateTime<Utc>,
-    updated_at: DateTime<Utc>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Deserialize)]

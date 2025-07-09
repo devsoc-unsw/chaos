@@ -3,7 +3,7 @@ use server::handler::application;
 use server::models::app;
 use server::models::app::init_app_state;
 use server::models::app::AppState;
-use server::models::transaction;
+use server::models::rating::{Rating, NewRating};
 use server::models::user::{User, UserRole};
 use server::models::organisation::{Organisation};
 use server::models::role::{Role, RoleUpdate};
@@ -168,6 +168,7 @@ pub async fn seed_database(seeder: Seeder) {
         &mut transaction,
     )
     .await.expect("Failed seeding Question 1");
+
     transaction.commit().await.expect("Failed committing transaction seeding Questions");
 
 
@@ -213,7 +214,7 @@ pub async fn seed_database(seeder: Seeder) {
                 ApplicationRole {
                     id: 0,
                     application_id: 0,
-                    campaign_role_id: role_id_1,
+                    campaign_role_id: role_id_2,
                 }
             ]
         },
@@ -223,4 +224,77 @@ pub async fn seed_database(seeder: Seeder) {
     .await.expect("Failed seeding Application 1");
 
     transaction.commit().await.expect("Failed committing transaction seeding Applications");
+
+
+    let mut transaction = seeder.app_state.db.begin().await.unwrap();
+
+    let qtn_1_data = Question::get(question_id_1, &mut transaction).await.expect("Failed getting Question 1");
+
+    let qtn_1_options = 
+        match qtn_1_data.question_data {
+            QuestionData::DropDown(options) => options.options,
+            _ => panic!("Question 1 is not a DropDown question"),
+        };    
+
+    transaction.commit().await.expect("Failed committing transaction getting Question 1");
+
+    let mut transaction = seeder.app_state.db.begin().await.unwrap();
+
+    Answer::create(
+        application_id_1,
+        question_id_1,
+        AnswerData::DropDown(qtn_1_options[0].id),
+        seeder.app_state.snowflake_generator,
+        &mut transaction,
+    )
+    .await.expect("Failed seeding Answer 1");
+
+    Answer::create(
+        application_id_2,
+        question_id_1,
+        AnswerData::DropDown(qtn_1_options[0].id),
+        seeder.app_state.snowflake_generator,
+        &mut transaction,
+    )
+    .await.expect("Failed seeding Answer 2");
+
+    Answer::create(
+        application_id_1,
+        question_id_2,
+        AnswerData::ShortAnswer("A Moand is a Monoid in the Category of Endofunctors, what else do you want?".to_string()),
+        seeder.app_state.snowflake_generator,
+        &mut transaction,
+    )
+    .await.expect("Failed seeding Answer 3");
+
+    transaction.commit().await.expect("Failed committing transaction seeding Answers");
+
+    let mut transaction = seeder.app_state.db.begin().await.unwrap();
+
+    Rating::create(
+        NewRating { rating: 69, comment: Some("This guy does not know what they are talking about!".to_string()) }, 
+        application_id_1, 
+        2,
+        seeder.app_state.snowflake_generator, 
+        &mut transaction)
+        .await.expect("Failed seeding Rating 1");
+
+    Rating::create(
+        NewRating { rating: 100, comment: None }, 
+        application_id_2, 
+        2,
+        seeder.app_state.snowflake_generator, 
+        &mut transaction)
+        .await.expect("Failed seeding Rating 2");
+
+    Rating::create(
+        NewRating { rating: 100, comment: Some("My cousin's resturant could use a janitor".to_string()) }, 
+        application_id_2, 
+        1,
+        seeder.app_state.snowflake_generator, 
+        &mut transaction)
+        .await.expect("Failed seeding Rating 2");
+    
+    transaction.commit().await.expect("Failed committing transaction seeding Ratings");
+
 }
