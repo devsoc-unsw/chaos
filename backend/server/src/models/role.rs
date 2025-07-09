@@ -45,7 +45,7 @@ impl Role {
         transaction: &mut Transaction<'_, Postgres>,
         mut snowflake_generator: SnowflakeIdGenerator,
     ) -> Result<i64, ChaosError> {
-        let id = snowflake_generator.generate();
+        let id = snowflake_generator.real_time_generate();
 
         sqlx::query!(
             "

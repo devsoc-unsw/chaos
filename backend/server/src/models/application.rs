@@ -82,7 +82,7 @@ impl Application {
         mut snowflake_generator: SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<i64, ChaosError> {
-        let id = snowflake_generator.generate();
+        let id = snowflake_generator.real_time_generate();
 
         // Insert into table applications
         sqlx::query!(

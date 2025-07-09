@@ -70,7 +70,7 @@ impl Answer {
     ) -> Result<i64, ChaosError> {
         answer_data.validate()?;
 
-        let id = snowflake_generator.generate();
+        let id = snowflake_generator.real_time_generate();
 
         sqlx::query!(
             "

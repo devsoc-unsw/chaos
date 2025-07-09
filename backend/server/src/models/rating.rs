@@ -46,7 +46,7 @@ impl Rating {
         mut snowflake_generator: SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let rating_id = snowflake_generator.generate();
+        let rating_id = snowflake_generator.real_time_generate();
         let rating = new_rating.rating;
         let comment = new_rating.comment;
 

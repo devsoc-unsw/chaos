@@ -83,7 +83,7 @@ impl Organisation {
             return Err(ChaosError::BadRequest);
         }
 
-        let id = snowflake_generator.generate();
+        let id = snowflake_generator.real_time_generate();
 
         sqlx::query!(
             "
@@ -443,7 +443,7 @@ impl Organisation {
         pool: &Pool<Postgres>,
         mut snowflake_generator: SnowflakeIdGenerator,
     ) -> Result<i64, ChaosError> {
-        let id = snowflake_generator.generate();
+        let id = snowflake_generator.real_time_generate();
 
         let _ = sqlx::query!(
             "
