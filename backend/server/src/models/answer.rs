@@ -93,7 +93,8 @@ impl Answer {
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Answer, ChaosError> {
-        let answer_raw_data: AnswerRawData = sqlx::query_as(
+        let answer_raw_data = sqlx::query_as!(
+            AnswerRawData,
             "
                 SELECT
                     a.id,
@@ -114,11 +115,9 @@ impl Answer {
                         LEFT JOIN
                     multi_option_answer_options moao ON moao.answer_id = a.id
                         AND q.question_type IN ('MultiChoice', 'MultiSelect', 'DropDown')
-
                         LEFT JOIN
                     short_answer_answers saa ON saa.answer_id = a.id
                         AND q.question_type = 'ShortAnswer'
-
                         LEFT JOIN
                     ranking_answer_rankings rar ON rar.answer_id = a.id
                         AND q.question_type = 'Ranking'
@@ -126,8 +125,8 @@ impl Answer {
                 GROUP BY
                     a.id
             ",
+            id
         )
-        .bind(id)
         .fetch_one(transaction.deref_mut())
         .await?;
 
@@ -151,7 +150,8 @@ impl Answer {
         application_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<Answer>, ChaosError> {
-        let answer_raw_data: Vec<AnswerRawData> = sqlx::query_as(
+        let answer_raw_data = sqlx::query_as!(
+            Vec<AnswerRawData>,
             "
                 SELECT
                     a.id,
@@ -184,8 +184,8 @@ impl Answer {
                 GROUP BY
                     a.id
             ",
+            application_id
         )
-        .bind(application_id)
         .fetch_all(transaction.deref_mut())
         .await?;
 
@@ -217,7 +217,8 @@ impl Answer {
         role_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<Answer>, ChaosError> {
-        let answer_raw_data: Vec<AnswerRawData> = sqlx::query_as(
+        let answer_raw_data = sqlx::query_as!(
+            Vec<AnswerRawData>,
             "
                 SELECT
                     a.id,
@@ -251,9 +252,9 @@ impl Answer {
                 GROUP BY
                     a.id
             ",
+            application_id,
+            role_id
         )
-        .bind(application_id)
-        .bind(role_id)
         .fetch_all(transaction.deref_mut())
         .await?;
 

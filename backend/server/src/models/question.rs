@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
 use sqlx::{Postgres, QueryBuilder, Transaction};
 use std::ops::DerefMut;
+use sqlx::types::Json;
 
 /// The `Question` type that will be sent in API responses.
 ///
@@ -140,24 +141,27 @@ impl Question {
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Question, ChaosError> {
-        let question_raw_data: QuestionRawData = sqlx::query_as(
-            "
+        let question_raw_data: QuestionRawData = sqlx::query_as!(
+            QuestionRawData,
+            r#"
                 SELECT
                     q.id,
                     q.title,
                     q.description,
                     q.common,
                     q.required,
-                    q.question_type AS \"question_type: QuestionType\",
+                    q.question_type AS "question_type: QuestionType",
                     q.created_at,
                     q.updated_at,
-                    array_agg(
-                        jsonb_build_object(
+                    to_jsonb(
+                        array_agg(
+                            jsonb_build_object(
                                 'id', mod.id,
                                 'display_order', mod.display_order,
                                 'text', mod.text
-                        ) ORDER BY mod.display_order
-                    ) FILTER (WHERE mod.id IS NOT NULL) AS \"multi_option_data: Option<sqlx::types::Json<Vec<MultiOptionQuestionOption>>>\"
+                            ) ORDER BY mod.display_order
+                        ) FILTER (WHERE mod.id IS NOT NULL)
+                    ) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
                 FROM
                     questions q
                         LEFT JOIN
@@ -166,9 +170,10 @@ impl Question {
                 WHERE q.id = $1
                 GROUP BY
                     q.id
-            "
+            "#,
+            id
         )
-            .bind(id)
+            // .bind(id)
             .fetch_one(transaction.deref_mut())
             .await?;
 
@@ -193,7 +198,8 @@ impl Question {
         campaign_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<Question>, ChaosError> {
-        let question_raw_data: Vec<QuestionRawData> = sqlx::query_as(
+        let question_raw_data = sqlx::query_as!(
+            Vec<QuestionRawData>,
             "
                 SELECT
                     q.id,
@@ -219,9 +225,9 @@ impl Question {
                 WHERE q.campaign_id = $1
                 GROUP BY
                     q.id
-            "
+            ",
+            campaign_id
         )
-            .bind(campaign_id)
             .fetch_all(transaction.deref_mut())
             .await?;
 
@@ -254,7 +260,8 @@ impl Question {
         role_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<Question>, ChaosError> {
-        let question_raw_data: Vec<QuestionRawData> = sqlx::query_as(
+        let question_raw_data = sqlx::query_as!(
+            Vec<QuestionRawData>,
             "
                 SELECT
                     q.id,
@@ -282,10 +289,10 @@ impl Question {
                 WHERE q.campaign_id = $1 AND q.common = true AND qr.role_id = $2
                 GROUP BY
                     q.id
-            "
+            ",
+            campaign_id,
+            role_id
         )
-            .bind(campaign_id)
-            .bind(role_id)
             .fetch_all(transaction.deref_mut())
             .await?;
 
@@ -317,7 +324,8 @@ impl Question {
         campaign_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<Question>, ChaosError> {
-        let question_raw_data: Vec<QuestionRawData> = sqlx::query_as(
+        let question_raw_data = sqlx::query_as!(
+            Vec<QuestionRawData>,
             "
                 SELECT
                     q.id,
@@ -343,9 +351,9 @@ impl Question {
                 WHERE q.campaign_id = $1 AND q.common = true
                 GROUP BY
                     q.id
-            "
+            ",
+            campaign_id
         )
-            .bind(campaign_id)
             .fetch_all(transaction.deref_mut())
             .await?;
 
