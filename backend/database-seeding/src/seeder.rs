@@ -288,12 +288,12 @@ pub async fn seed_database(seeder: Seeder) {
         .await.expect("Failed seeding Rating 2");
 
     Rating::create(
-        NewRating { rating: 100, comment: Some("My cousin's resturant could use a janitor".to_string()) }, 
+        NewRating { rating: 100, comment: Some("My cousin's restaurant could use a janitor".to_string()) },
         application_id_2, 
         1,
-        seeder.app_state.snowflake_generator, 
+        seeder.app_state.snowflake_generator,
         &mut transaction)
-        .await.expect("Failed seeding Rating 2");
+        .await.expect("Failed seeding Rating 3");
     
     transaction.commit().await.expect("Failed committing transaction seeding Ratings");
 
