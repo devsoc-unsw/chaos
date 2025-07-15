@@ -78,7 +78,7 @@ pub async fn user_is_application_owner(
             SELECT EXISTS(
                 SELECT 1 FROM (
                     SELECT FROM applications WHERE id = $1 AND user_id = $2
-                )
+                ) sub
             )
         ",
         application_id,
