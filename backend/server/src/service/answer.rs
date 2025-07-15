@@ -33,7 +33,7 @@ pub async fn user_is_answer_owner(
                     SELECT FROM answers ans
                      JOIN applications app ON ans.application_id = app.id
                      WHERE ans.id = $1 AND app.user_id = $2
-                )
+                ) sub
             )
         ",
         answer_id,
