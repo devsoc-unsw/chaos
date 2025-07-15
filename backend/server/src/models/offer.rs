@@ -58,7 +58,7 @@ impl Offer {
         role_id: i64,
         expiry: DateTime<Utc>,
         transaction: &mut Transaction<'_, Postgres>,
-        mut snowflake_id_generator: SnowflakeIdGenerator,
+        snowflake_id_generator: &mut SnowflakeIdGenerator,
     ) -> Result<i64, ChaosError> {
         let id = snowflake_id_generator.real_time_generate();
 

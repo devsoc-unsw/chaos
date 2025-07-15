@@ -43,7 +43,7 @@ impl Rating {
         new_rating: NewRating,
         application_id: i64,
         rater_id: i64,
-        mut snowflake_generator: SnowflakeIdGenerator,
+        snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         let rating_id = snowflake_generator.real_time_generate();

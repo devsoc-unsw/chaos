@@ -26,7 +26,7 @@ pub async fn init() -> Seeder {
         seeder
     }
 
-pub async fn seed_database(seeder: Seeder) {
+pub async fn seed_database(mut seeder: Seeder) {
     // Super User
     let users = vec![
         User {
@@ -72,7 +72,7 @@ pub async fn seed_database(seeder: Seeder) {
     let org_id = Organisation::create(1, 
         "devsoc".to_string(), 
         "UNSW DevSoc".to_string(),
-        seeder.app_state.snowflake_generator, 
+        &mut seeder.app_state.snowflake_generator, 
         &mut transaction).await.expect("Failed seeding Organisationn");
     transaction.commit().await.expect("Failed committing transaction seeding Organisation");
 
@@ -97,7 +97,7 @@ pub async fn seed_database(seeder: Seeder) {
                 Utc,
             ),
             &seeder.app_state.db,
-            seeder.app_state.snowflake_generator,
+            &mut seeder.app_state.snowflake_generator,
         )
         .await.expect("Failed seeding Campaign");
     
@@ -113,7 +113,7 @@ pub async fn seed_database(seeder: Seeder) {
             finalised: false,
         },
         &mut transaction,
-        seeder.app_state.snowflake_generator,
+        &mut seeder.app_state.snowflake_generator,
     )
     .await.expect("Failed seeding Role 1");
     transaction.commit().await.expect("Failed committing transaction seeding Roles");
@@ -129,7 +129,7 @@ pub async fn seed_database(seeder: Seeder) {
             finalised: true,
         },
         &mut transaction,
-        seeder.app_state.snowflake_generator,
+        &mut seeder.app_state.snowflake_generator,
     )
     .await.expect("Failed seeding Role 2");
     transaction.commit().await.expect("Failed committing transaction seeding Roles");
@@ -164,7 +164,7 @@ pub async fn seed_database(seeder: Seeder) {
                 ]
             },
         ),
-        seeder.app_state.snowflake_generator,
+        &mut seeder.app_state.snowflake_generator,
         &mut transaction,
     )
     .await.expect("Failed seeding Question 1");
@@ -181,7 +181,7 @@ pub async fn seed_database(seeder: Seeder) {
         Some(vec![role_id_1]),
         true,
         QuestionData::ShortAnswer,
-        seeder.app_state.snowflake_generator,
+        &mut seeder.app_state.snowflake_generator,
         &mut transaction,
     )
     .await.expect("Failed seeding Question 1");
@@ -201,7 +201,7 @@ pub async fn seed_database(seeder: Seeder) {
                 }
             ]
         },
-        seeder.app_state.snowflake_generator,
+        &mut seeder.app_state.snowflake_generator,
         &mut transaction,
     )
     .await.expect("Failed seeding Application 1");
@@ -218,7 +218,7 @@ pub async fn seed_database(seeder: Seeder) {
                 }
             ]
         },
-        seeder.app_state.snowflake_generator,
+        &mut seeder.app_state.snowflake_generator,
         &mut transaction,
     )
     .await.expect("Failed seeding Application 1");
@@ -244,7 +244,7 @@ pub async fn seed_database(seeder: Seeder) {
         application_id_1,
         question_id_1,
         AnswerData::DropDown(qtn_1_options[0].id),
-        seeder.app_state.snowflake_generator,
+        &mut seeder.app_state.snowflake_generator,
         &mut transaction,
     )
     .await.expect("Failed seeding Answer 1");
@@ -253,7 +253,7 @@ pub async fn seed_database(seeder: Seeder) {
         application_id_2,
         question_id_1,
         AnswerData::DropDown(qtn_1_options[0].id),
-        seeder.app_state.snowflake_generator,
+        &mut seeder.app_state.snowflake_generator,
         &mut transaction,
     )
     .await.expect("Failed seeding Answer 2");
@@ -262,7 +262,7 @@ pub async fn seed_database(seeder: Seeder) {
         application_id_1,
         question_id_2,
         AnswerData::ShortAnswer("A Moand is a Monoid in the Category of Endofunctors, what else do you want?".to_string()),
-        seeder.app_state.snowflake_generator,
+        &mut seeder.app_state.snowflake_generator,
         &mut transaction,
     )
     .await.expect("Failed seeding Answer 3");
@@ -275,7 +275,7 @@ pub async fn seed_database(seeder: Seeder) {
         NewRating { rating: 69, comment: Some("This guy does not know what they are talking about!".to_string()) }, 
         application_id_1, 
         2,
-        seeder.app_state.snowflake_generator, 
+        &mut seeder.app_state.snowflake_generator, 
         &mut transaction)
         .await.expect("Failed seeding Rating 1");
 
@@ -283,7 +283,7 @@ pub async fn seed_database(seeder: Seeder) {
         NewRating { rating: 100, comment: None }, 
         application_id_2, 
         2,
-        seeder.app_state.snowflake_generator, 
+        &mut seeder.app_state.snowflake_generator, 
         &mut transaction)
         .await.expect("Failed seeding Rating 2");
 
@@ -291,7 +291,7 @@ pub async fn seed_database(seeder: Seeder) {
         NewRating { rating: 100, comment: Some("My cousin's restaurant could use a janitor".to_string()) },
         application_id_2, 
         1,
-        seeder.app_state.snowflake_generator,
+        &mut seeder.app_state.snowflake_generator,
         &mut transaction)
         .await.expect("Failed seeding Rating 3");
     

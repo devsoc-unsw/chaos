@@ -91,7 +91,7 @@ impl Question {
         roles: Option<Vec<i64>>,
         required: bool,
         question_data: QuestionData,
-        mut snowflake_generator: SnowflakeIdGenerator,
+        snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<i64, ChaosError> {
         question_data.validate()?;
@@ -199,7 +199,7 @@ impl Question {
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<Question>, ChaosError> {
         let question_raw_data = sqlx::query_as!(
-            Vec<QuestionRawData>,
+            QuestionRawData,
             "
                 SELECT
                     q.id,
@@ -216,7 +216,7 @@ impl Question {
                                 'display_order', mod.display_order,
                                 'text', mod.text
                         ) ORDER BY mod.display_order
-                    ) FILTER (WHERE mod.id IS NOT NULL) AS \"multi_option_data: Option<sqlx::types::Json<Vec<MultiOptionQuestionOption>>>\"
+                    ) FILTER (WHERE mod.id IS NOT NULL) AS \"multi_option_data: Json<Vec<MultiOptionQuestionOption>>\"
                 FROM
                     questions q
                         LEFT JOIN
@@ -261,15 +261,15 @@ impl Question {
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<Question>, ChaosError> {
         let question_raw_data = sqlx::query_as!(
-            Vec<QuestionRawData>,
-            "
+            QuestionRawData,
+            r#"
                 SELECT
                     q.id,
                     q.title,
                     q.description,
                     q.common,
                     q.required,
-                    q.question_type AS \"question_type: QuestionType\",
+                    q.question_type AS "question_type: QuestionType",
                     q.created_at,
                     q.updated_at,
                     array_agg(
@@ -278,7 +278,7 @@ impl Question {
                                 'display_order', mod.display_order,
                                 'text', mod.text
                         ) ORDER BY mod.display_order
-                    ) FILTER (WHERE mod.id IS NOT NULL) AS \"multi_option_data: Option<sqlx::types::Json<Vec<MultiOptionQuestionOption>>>\"
+                    ) FILTER (WHERE mod.id IS NOT NULL) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
                 FROM
                     questions q
                         JOIN
@@ -289,7 +289,7 @@ impl Question {
                 WHERE q.campaign_id = $1 AND q.common = true AND qr.role_id = $2
                 GROUP BY
                     q.id
-            ",
+            "#,
             campaign_id,
             role_id
         )
@@ -325,7 +325,7 @@ impl Question {
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<Question>, ChaosError> {
         let question_raw_data = sqlx::query_as!(
-            Vec<QuestionRawData>,
+            QuestionRawData,
             "
                 SELECT
                     q.id,
@@ -342,7 +342,7 @@ impl Question {
                                 'display_order', mod.display_order,
                                 'text', mod.text
                         ) ORDER BY mod.display_order
-                    ) FILTER (WHERE mod.id IS NOT NULL) AS \"multi_option_data: Option<sqlx::types::Json<Vec<MultiOptionQuestionOption>>>\"
+                    ) FILTER (WHERE mod.id IS NOT NULL) AS \"multi_option_data: Json<Vec<MultiOptionQuestionOption>>\"
                 FROM
                     questions q
                         LEFT JOIN
@@ -390,7 +390,7 @@ impl Question {
         required: bool,
         question_data: QuestionData,
         transaction: &mut Transaction<'_, Postgres>,
-        snowflake_generator: SnowflakeIdGenerator,
+        snowflake_generator: &mut SnowflakeIdGenerator,
     ) -> Result<(), ChaosError> {
         question_data.validate()?;
 
@@ -582,7 +582,7 @@ impl QuestionData {
         self,
         question_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
-        mut snowflake_generator: SnowflakeIdGenerator,
+        snowflake_generator: &mut SnowflakeIdGenerator,
     ) -> Result<(), ChaosError> {
         match self {
             Self::ShortAnswer => Ok(()),

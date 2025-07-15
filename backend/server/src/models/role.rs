@@ -43,7 +43,7 @@ impl Role {
         campaign_id: i64,
         role_data: RoleUpdate,
         transaction: &mut Transaction<'_, Postgres>,
-        mut snowflake_generator: SnowflakeIdGenerator,
+        snowflake_generator: &mut SnowflakeIdGenerator,
     ) -> Result<i64, ChaosError> {
         let id = snowflake_generator.real_time_generate();
 

@@ -13,7 +13,7 @@ pub struct RatingHandler;
 
 impl RatingHandler {
     pub async fn create(
-        State(state): State<AppState>,
+        State(mut state): State<AppState>,
         Path(application_id): Path<i64>,
         admin: ApplicationReviewerGivenApplicationId,
         mut transaction: DBTransaction<'_>,
@@ -23,7 +23,7 @@ impl RatingHandler {
             new_rating,
             application_id,
             admin.user_id,
-            state.snowflake_generator,
+            &mut state.snowflake_generator,
             &mut transaction.tx,
         )
         .await?;

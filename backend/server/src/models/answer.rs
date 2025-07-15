@@ -65,7 +65,7 @@ impl Answer {
         application_id: i64,
         question_id: i64,
         answer_data: AnswerData,
-        mut snowflake_generator: SnowflakeIdGenerator,
+        snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<i64, ChaosError> {
         answer_data.validate()?;
@@ -95,11 +95,11 @@ impl Answer {
     ) -> Result<Answer, ChaosError> {
         let answer_raw_data = sqlx::query_as!(
             AnswerRawData,
-            "
+            r#"
                 SELECT
                     a.id,
                     a.question_id,
-                    q.question_type AS \"question_type: QuestionType\",
+                    q.question_type AS "question_type: QuestionType",
                     a.created_at,
                     a.updated_at,
                     saa.text AS short_answer_answer,
@@ -123,8 +123,8 @@ impl Answer {
                         AND q.question_type = 'Ranking'
                 WHERE q.id = $1
                 GROUP BY
-                    a.id
-            ",
+                    a.id, q.question_type, saa.text
+            "#,
             id
         )
         .fetch_one(transaction.deref_mut())
@@ -151,12 +151,12 @@ impl Answer {
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<Answer>, ChaosError> {
         let answer_raw_data = sqlx::query_as!(
-            Vec<AnswerRawData>,
-            "
+            AnswerRawData,
+            r#"
                 SELECT
                     a.id,
                     a.question_id,
-                    q.question_type AS \"question_type: QuestionType\",
+                    q.question_type AS "question_type: QuestionType",
                     a.created_at,
                     a.updated_at,
                     saa.text AS short_answer_answer,
@@ -182,8 +182,8 @@ impl Answer {
                         AND q.question_type = 'Ranking'
                 WHERE a.application_id = $1 AND q.common = true
                 GROUP BY
-                    a.id
-            ",
+                    a.id, q.question_type, saa.text
+            "#,
             application_id
         )
         .fetch_all(transaction.deref_mut())
@@ -218,12 +218,12 @@ impl Answer {
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<Answer>, ChaosError> {
         let answer_raw_data = sqlx::query_as!(
-            Vec<AnswerRawData>,
-            "
+            AnswerRawData,
+            r#"
                 SELECT
                     a.id,
                     a.question_id,
-                    q.question_type AS \"question_type: QuestionType\",
+                    q.question_type AS "question_type: QuestionType",
                     a.created_at,
                     a.updated_at,
                     saa.text AS short_answer_answer,
@@ -250,8 +250,8 @@ impl Answer {
                         AND q.question_type = 'Ranking'
                 WHERE a.application_id = $1 AND qr.role_id = $2 AND q.common = true
                 GROUP BY
-                    a.id
-            ",
+                    a.id, q.question_type, saa.text
+            "#,
             application_id,
             role_id
         )
@@ -290,12 +290,12 @@ impl Answer {
 
         let answer = sqlx::query_as!(
             AnswerTypeApplicationId,
-            "
-                SELECT a.application_id, q.question_type AS \"question_type: QuestionType\"
+            r#"
+                SELECT a.application_id, q.question_type AS "question_type: QuestionType"
                     FROM answers a
                     JOIN questions q ON a.question_id = q.id
                     WHERE a.id = $1
-            ",
+            "#,
             id
         )
         .fetch_one(transaction.deref_mut())

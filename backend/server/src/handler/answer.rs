@@ -12,7 +12,7 @@ pub struct AnswerHandler;
 
 impl AnswerHandler {
     pub async fn create(
-        State(state): State<AppState>,
+        State(mut state): State<AppState>,
         Path(application_id): Path<i64>,
         _user: ApplicationOwner,
         mut transaction: DBTransaction<'_>,
@@ -23,7 +23,7 @@ impl AnswerHandler {
             application_id,
             data.question_id,
             data.answer_data,
-            state.snowflake_generator,
+            &mut state.snowflake_generator,
             &mut transaction.tx,
         )
         .await?;

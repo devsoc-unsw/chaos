@@ -14,7 +14,7 @@ use time::OffsetDateTime;
 /// requested permissions, the user is redirected to this url on our server, where we use the
 /// code to get the user's email address from Google's OpenID Connect API.
 pub async fn google_callback(
-    State(state): State<AppState>,
+    State(mut state): State<AppState>,
     jar: CookieJar,
     Query(query): Query<AuthRequest>,
 ) -> Result<impl IntoResponse, ChaosError> {
@@ -36,7 +36,7 @@ pub async fn google_callback(
         profile.email.clone(),
         profile.name,
         state.db,
-        state.snowflake_generator,
+        &mut state.snowflake_generator,
     )
     .await?;
 

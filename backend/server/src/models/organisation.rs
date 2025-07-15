@@ -76,7 +76,7 @@ impl Organisation {
         admin_id: i64,
         slug: String,
         name: String,
-        mut snowflake_generator: SnowflakeIdGenerator,
+        snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<i64, ChaosError> {
         if !slug.is_ascii() {
@@ -91,7 +91,7 @@ impl Organisation {
                 VALUES ($1, $2, $3)
         ",
             id,
-            slug,
+            slug.to_lowercase(),
             name
         )
         .execute(transaction.deref_mut())
@@ -409,7 +409,7 @@ impl Organisation {
         starts_at: DateTime<Utc>,
         ends_at: DateTime<Utc>,
         pool: &Pool<Postgres>,
-        mut snowflake_id_generator: SnowflakeIdGenerator,
+        snowflake_id_generator: &mut SnowflakeIdGenerator,
     ) -> Result<i64, ChaosError> {
         if !slug.is_ascii() {
             return Err(ChaosError::BadRequest);
@@ -424,7 +424,7 @@ impl Organisation {
         ",
             new_campaign_id,
             organisation_id,
-            slug,
+            slug.to_lowercase(),
             name,
             description,
             starts_at,
@@ -441,7 +441,7 @@ impl Organisation {
         name: String,
         template: String,
         pool: &Pool<Postgres>,
-        mut snowflake_generator: SnowflakeIdGenerator,
+        snowflake_generator: &mut SnowflakeIdGenerator,
     ) -> Result<i64, ChaosError> {
         let id = snowflake_generator.real_time_generate();
 

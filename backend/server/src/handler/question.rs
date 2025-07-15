@@ -12,7 +12,7 @@ pub struct QuestionHandler;
 
 impl QuestionHandler {
     pub async fn create(
-        State(state): State<AppState>,
+        State(mut state): State<AppState>,
         Path(campaign_id): Path<i64>,
         _admin: CampaignAdmin,
         mut transaction: DBTransaction<'_>,
@@ -26,7 +26,7 @@ impl QuestionHandler {
             data.roles,
             data.required,
             data.question_data,
-            state.snowflake_generator,
+            &mut state.snowflake_generator,
             &mut transaction.tx,
         )
         .await?;
@@ -64,7 +64,7 @@ impl QuestionHandler {
     }
 
     pub async fn update(
-        State(state): State<AppState>,
+        State(mut state): State<AppState>,
         Path(question_id): Path<i64>,
         _admin: QuestionAdmin,
         mut transaction: DBTransaction<'_>,
@@ -79,7 +79,7 @@ impl QuestionHandler {
             data.required,
             data.question_data,
             &mut transaction.tx,
-            state.snowflake_generator,
+            &mut state.snowflake_generator,
         )
         .await?;
 

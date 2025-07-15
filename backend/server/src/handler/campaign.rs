@@ -80,12 +80,12 @@ impl CampaignHandler {
 
     pub async fn create_role(
         mut transaction: DBTransaction<'_>,
-        State(state): State<AppState>,
+        State(mut state): State<AppState>,
         Path(id): Path<i64>,
         _admin: CampaignAdmin,
         Json(data): Json<RoleUpdate>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Role::create(id, data, &mut transaction.tx, state.snowflake_generator).await?;
+        Role::create(id, data, &mut transaction.tx, &mut state.snowflake_generator).await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, "Successfully created role"))
     }
@@ -101,7 +101,7 @@ impl CampaignHandler {
     }
 
     pub async fn create_application(
-        State(state): State<AppState>,
+        State(mut state): State<AppState>,
         Path(id): Path<i64>,
         user: AuthUser,
         mut transaction: DBTransaction<'_>,
@@ -111,7 +111,7 @@ impl CampaignHandler {
             id,
             user.user_id,
             data,
-            state.snowflake_generator,
+            &mut state.snowflake_generator,
             &mut transaction.tx,
         )
         .await?;
@@ -131,7 +131,7 @@ impl CampaignHandler {
 
     pub async fn create_offer(
         Path(id): Path<i64>,
-        State(state): State<AppState>,
+        State(mut state): State<AppState>,
         _admin: CampaignAdmin,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<Offer>,
@@ -143,7 +143,7 @@ impl CampaignHandler {
             data.role_id,
             data.expiry,
             &mut transaction.tx,
-            state.snowflake_generator,
+            &mut state.snowflake_generator,
         )
         .await?;
         transaction.tx.commit().await?;
