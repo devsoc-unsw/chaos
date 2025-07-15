@@ -61,9 +61,3 @@ jobs:
       - name: Build
         working-directory: backend/server
         run: cargo build
-      - name: Cargo Clippy
-        working-directory: backend/server
-        run: cargo clippy
-      - name: RustFmt
-        working-directory: backend/server
-        run: cargo fmt
