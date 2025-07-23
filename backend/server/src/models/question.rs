@@ -151,6 +151,7 @@ impl Question {
                     q.title,
                     q.description,
                     q.common,
+                    COALESCE(array_agg(qr.role_id), '{}') AS "roles!: Vec<i64>",
                     q.required,
                     q.question_type AS "question_type: QuestionType",
                     q.created_at,
@@ -166,6 +167,8 @@ impl Question {
                     ) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
                 FROM
                     questions q
+                        LEFT JOIN
+                    question_roles qr ON q.id = qr.question_id
                         LEFT JOIN
                     multi_option_question_options mod ON q.id = mod.question_id
                         AND q.question_type IN ('MultiChoice', 'MultiSelect', 'DropDown', 'Ranking')
@@ -203,14 +206,15 @@ impl Question {
     ) -> Result<Vec<Question>, ChaosError> {
         let question_raw_data = sqlx::query_as!(
             QuestionRawData,
-            "
+            r#"
                 SELECT
                     q.id,
                     q.title,
                     q.description,
                     q.common,
+                    COALESCE(array_agg(qr.role_id), '{}') AS "roles!: Vec<i64>",
                     q.required,
-                    q.question_type AS \"question_type: QuestionType\",
+                    q.question_type AS "question_type: QuestionType",
                     q.created_at,
                     q.updated_at,
                     array_agg(
@@ -219,16 +223,18 @@ impl Question {
                                 'display_order', mod.display_order,
                                 'text', mod.text
                         ) ORDER BY mod.display_order
-                    ) FILTER (WHERE mod.id IS NOT NULL) AS \"multi_option_data: Json<Vec<MultiOptionQuestionOption>>\"
+                    ) FILTER (WHERE mod.id IS NOT NULL) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
                 FROM
                     questions q
+                        LEFT JOIN
+                    question_roles qr ON q.id = qr.question_id
                         LEFT JOIN
                     multi_option_question_options mod ON q.id = mod.question_id
                         AND q.question_type IN ('MultiChoice', 'MultiSelect', 'DropDown', 'Ranking')
                 WHERE q.campaign_id = $1
                 GROUP BY
                     q.id
-            ",
+            "#,
             campaign_id
         )
             .fetch_all(transaction.deref_mut())
@@ -272,6 +278,7 @@ impl Question {
                     q.title,
                     q.description,
                     q.common,
+                    COALESCE(array_agg(qr.role_id), '{}') AS "roles!: Vec<i64>",
                     q.required,
                     q.question_type AS "question_type: QuestionType",
                     q.created_at,
@@ -331,14 +338,15 @@ impl Question {
     ) -> Result<Vec<Question>, ChaosError> {
         let question_raw_data = sqlx::query_as!(
             QuestionRawData,
-            "
+            r#"
                 SELECT
                     q.id,
                     q.title,
                     q.description,
                     q.common,
+                    COALESCE(array_agg(qr.role_id), '{}') AS "roles!: Vec<i64>",
                     q.required,
-                    q.question_type AS \"question_type: QuestionType\",
+                    q.question_type AS "question_type: QuestionType",
                     q.created_at,
                     q.updated_at,
                     array_agg(
@@ -347,16 +355,18 @@ impl Question {
                                 'display_order', mod.display_order,
                                 'text', mod.text
                         ) ORDER BY mod.display_order
-                    ) FILTER (WHERE mod.id IS NOT NULL) AS \"multi_option_data: Json<Vec<MultiOptionQuestionOption>>\"
+                    ) FILTER (WHERE mod.id IS NOT NULL) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
                 FROM
                     questions q
+                        LEFT JOIN
+                    question_roles qr ON q.id = qr.question_id
                         LEFT JOIN
                     multi_option_question_options mod ON q.id = mod.question_id
                         AND q.question_type IN ('MultiChoice', 'MultiSelect', 'DropDown', 'Ranking')
                 WHERE q.campaign_id = $1 AND q.common = true
                 GROUP BY
                     q.id
-            ",
+            "#,
             campaign_id
         )
             .fetch_all(transaction.deref_mut())
@@ -402,13 +412,13 @@ impl Question {
 
         let question_type_parent: QuestionTypeParent = sqlx::query_as!(
             QuestionTypeParent,
-            "
+            r#"
                 UPDATE questions SET
                     title = $2, description = $3, common = $4,
                     required = $5, question_type = $6, updated_at = $7
                 WHERE id = $1
-                RETURNING question_type AS \"question_type: QuestionType\"
-            ",
+                RETURNING question_type AS "question_type: QuestionType"
+            "#,
             id,
             title,
             description,
