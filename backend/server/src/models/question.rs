@@ -46,6 +46,7 @@ pub struct Question {
     pub title: String,
     pub description: Option<String>,
     pub common: bool, // Common question are shown at the start
+    pub roles: Vec<i64>, // (Possibly empty) list of roles the question is for
     pub required: bool,
 
     #[serde(flatten)]
@@ -73,6 +74,7 @@ pub struct QuestionRawData {
     title: String,
     description: Option<String>,
     common: bool, // Common question are shown at the start
+    roles: Vec<i64>,
     required: bool,
 
     question_type: QuestionType,
@@ -187,6 +189,7 @@ impl Question {
             title: question_raw_data.title,
             description: question_raw_data.description,
             common: question_raw_data.common,
+            roles: question_raw_data.roles,
             required: question_raw_data.required,
             question_data,
             created_at: question_raw_data.created_at,
@@ -244,6 +247,7 @@ impl Question {
                     title: question_raw_data.title,
                     description: question_raw_data.description,
                     common: question_raw_data.common,
+                    roles: question_raw_data.roles,
                     required: question_raw_data.required,
                     question_data,
                     created_at: question_raw_data.created_at,
@@ -309,6 +313,7 @@ impl Question {
                     title: question_raw_data.title,
                     description: question_raw_data.description,
                     common: question_raw_data.common,
+                    roles: question_raw_data.roles,
                     required: question_raw_data.required,
                     question_data,
                     created_at: question_raw_data.created_at,
@@ -370,6 +375,7 @@ impl Question {
                     title: question_raw_data.title,
                     description: question_raw_data.description,
                     common: question_raw_data.common,
+                    roles: question_raw_data.roles,
                     required: question_raw_data.required,
                     question_data,
                     created_at: question_raw_data.created_at,
@@ -499,18 +505,9 @@ impl QuestionType {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Default)]
 pub struct MultiOptionData {
     pub options: Vec<MultiOptionQuestionOption>,
-}
-
-impl Default for MultiOptionData {
-    fn default() -> Self {
-        Self {
-            // Return an empty vector to be replaced by real data later on.
-            options: vec![],
-        }
-    }
 }
 
 /// Each of these structs represent a row in the `multi_option_question_options`
@@ -538,7 +535,7 @@ impl QuestionData {
         question_type: QuestionType,
         multi_option_data: Option<sqlx::types::Json<Vec<MultiOptionQuestionOption>>>,
     ) -> Self {
-        return if question_type == QuestionType::ShortAnswer {
+        if question_type == QuestionType::ShortAnswer {
             QuestionData::ShortAnswer
         } else if question_type == QuestionType::MultiChoice
             || question_type == QuestionType::MultiSelect
@@ -559,7 +556,7 @@ impl QuestionData {
             }
         } else {
             QuestionData::ShortAnswer // Should never be reached, hence return ShortAnswer
-        };
+        }
     }
 
     pub fn validate(&self) -> Result<(), ChaosError> {
@@ -569,7 +566,7 @@ impl QuestionData {
             | Self::MultiSelect(data)
             | Self::DropDown(data)
             | Self::Ranking(data) => {
-                if data.options.len() > 0 {
+                if !data.options.is_empty() {
                     return Ok(());
                 };
 

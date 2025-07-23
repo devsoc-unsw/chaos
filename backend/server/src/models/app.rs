@@ -9,9 +9,10 @@ use crate::handler::question::QuestionHandler;
 use crate::handler::rating::RatingHandler;
 use crate::handler::role::RoleHandler;
 use crate::handler::user::UserHandler;
+use crate::models::email::{ChaosEmail, EmailCredentials};
 use crate::models::error::ChaosError;
 use crate::models::storage::Storage;
-use axum::routing::{get, patch, post};
+use axum::routing::{delete, get, patch, post};
 use axum::Router;
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use reqwest::Client as ReqwestClient;
@@ -34,7 +35,8 @@ pub struct AppState {
     pub jwt_validator: Validation,
     pub snowflake_generator: SnowflakeIdGenerator,
     pub storage_bucket: Bucket,
-    pub is_dev_env: bool
+    pub is_dev_env: bool,
+    pub email_credentials: EmailCredentials,
 }
 
 pub async fn init_app_state() -> AppState {
@@ -88,6 +90,9 @@ pub async fn init_app_state() -> AppState {
     // Initialise S3 bucket
     let storage_bucket = Storage::init_bucket();
 
+    // Initialise email credentials
+    let email_credentials = ChaosEmail::setup_credentials();
+
     // Add all data to AppState
     let state = AppState {
         db: pool,
@@ -99,7 +104,8 @@ pub async fn init_app_state() -> AppState {
         jwt_validator,
         snowflake_generator,
         storage_bucket,
-        is_dev_env
+        is_dev_env,
+        email_credentials,
     };
     
     state
@@ -163,30 +169,36 @@ pub async fn app() -> Result<Router, ChaosError> {
             patch(OrganisationHandler::update_logo),
         )
         .route(
-            "/api/v1/organisation/:organisation_id/member",
+            "/api/v1/organisation/:organisation_id/members",
             get(OrganisationHandler::get_members)
                 .put(OrganisationHandler::update_members)
-                .delete(OrganisationHandler::remove_member),
+        )
+        .route(
+            "/api/v1/organisation/:organisation_id/member",
+                delete(OrganisationHandler::remove_member),
+        )
+        .route(
+            "/api/v1/organisation/:organisation_id/admins",
+            get(OrganisationHandler::get_admins)
+                .put(OrganisationHandler::update_admins)
         )
         .route(
             "/api/v1/organisation/:organisation_id/admin",
-            get(OrganisationHandler::get_admins)
-                .put(OrganisationHandler::update_admins)
-                .delete(OrganisationHandler::remove_admin),
+                delete(OrganisationHandler::remove_admin),
         )
         .route(
-            "/api/v1/ratings/:rating_id",
+            "/api/v1/rating/:rating_id",
             get(RatingHandler::get)
                 .delete(RatingHandler::delete)
                 .put(RatingHandler::update),
         )
         .route(
-            "/api/v1/:application_id/rating",
-            post(RatingHandler::create),
+            "/api/v1/application/:application_id/rating",
+            post(ApplicationHandler::create_rating),
         )
         .route(
-            "/api/v1/:application_id/ratings",
-            get(RatingHandler::get_ratings_for_application),
+            "/api/v1/application/:application_id/ratings",
+            get(ApplicationHandler::get_ratings),
         )
         .route(
             "/api/v1/campaign/:campaign_id/role",
@@ -276,6 +288,14 @@ pub async fn app() -> Result<Router, ChaosError> {
         .route(
             "/api/v1/application/:application_id/answers/role/:role_id",
             get(AnswerHandler::get_all_by_application_and_role),
+        )
+        .route(
+            "/api/v1/application/:application_id/roles",
+            patch(ApplicationHandler::update_roles)
+        )
+        .route(
+            "/api/v1/application/:application_id/submit",
+            post(ApplicationHandler::submit)
         )
         .route(
             "/api/v1/answer/:answer_id",
