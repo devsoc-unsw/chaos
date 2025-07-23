@@ -51,7 +51,7 @@ pub async fn google_callback(
     let cookie = Cookie::build(("token", token))
         .http_only(true) // Prevent JavaScript access
         .expires(Expiration::DateTime(OffsetDateTime::now_utc() + time::Duration::days(5))) // Set an expiration time of 5 days, TODO: read from env?
-        .secure(true)    // Send only over HTTPS, comment out for testing
+        .secure(!state.is_dev_env)     // Send only over HTTPS, comment out for testing
         .path("/");       // Available for all paths
     // Add the cookie to the response
     Ok(jar.add(cookie))
@@ -81,7 +81,6 @@ impl DevLoginHandler {
         let cookie = Cookie::build(("token", token))
             .http_only(true) // Prevent JavaScript access
             .expires(Expiration::DateTime(OffsetDateTime::now_utc() + time::Duration::days(5))) // Set an expiration time of 5 days, TODO: read from env?
-            .secure(true)    // Send only over HTTPS, comment out for testing
             .path("/");       // Available for all paths
         // Add the cookie to the response
         Ok(jar.add(cookie))
@@ -108,7 +107,6 @@ impl DevLoginHandler {
         let cookie = Cookie::build(("token", token))
             .http_only(true) // Prevent JavaScript access
             .expires(Expiration::DateTime(OffsetDateTime::now_utc() + time::Duration::days(5))) // Set an expiration time of 5 days, TODO: read from env?
-            .secure(true)    // Send only over HTTPS, comment out for testing
             .path("/");       // Available for all paths
         // Add the cookie to the response
         Ok(jar.add(cookie))
@@ -135,7 +133,6 @@ impl DevLoginHandler {
         let cookie = Cookie::build(("token", token))
             .http_only(true) // Prevent JavaScript access
             .expires(Expiration::DateTime(OffsetDateTime::now_utc() + time::Duration::days(5))) // Set an expiration time of 5 days, TODO: read from env?
-            .secure(true)    // Send only over HTTPS, comment out for testing
             .path("/");       // Available for all paths
         // Add the cookie to the response
         Ok(jar.add(cookie))
