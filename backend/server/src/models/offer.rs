@@ -135,7 +135,7 @@ impl Offer {
                     JOIN applications a ON a.id = off.application_id
                     JOIN users u on u.id = a.user_id
                     JOIN campaign_roles r on r.id = off.role_id
-                WHERE off.id = $1
+                WHERE off.campaign_id = $1
             "#,
             campaign_id
         )

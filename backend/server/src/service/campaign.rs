@@ -11,7 +11,7 @@ pub async fn user_is_campaign_admin(
             SELECT EXISTS(
                 SELECT 1 FROM campaigns c
                 JOIN organisation_members m on c.organisation_id = m.organisation_id
-                WHERE c.organisation_id = $1 AND m.user_id = $2 AND m.role = 'Admin'
+                WHERE c.id = $1 AND m.user_id = $2 AND m.role = 'Admin'
             )
         ",
         campaign_id,

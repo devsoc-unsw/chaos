@@ -48,7 +48,7 @@ pub async fn google_callback(
     );
 
     // Create a cookie with the token
-    let cookie = Cookie::build(("token", token))
+    let cookie = Cookie::build(("auth_token", token))
         .http_only(true) // Prevent JavaScript access
         .expires(Expiration::DateTime(OffsetDateTime::now_utc() + time::Duration::days(5))) // Set an expiration time of 5 days, TODO: read from env?
         .secure(!state.is_dev_env)     // Send only over HTTPS, comment out for testing
@@ -78,7 +78,7 @@ impl DevLoginHandler {
         );
 
         // Create a cookie with the token
-        let cookie = Cookie::build(("token", token))
+        let cookie = Cookie::build(("auth_token", token))
             .http_only(true) // Prevent JavaScript access
             .expires(Expiration::DateTime(OffsetDateTime::now_utc() + time::Duration::days(5))) // Set an expiration time of 5 days, TODO: read from env?
             .path("/");       // Available for all paths
@@ -104,7 +104,7 @@ impl DevLoginHandler {
         );
 
         // Create a cookie with the token
-        let cookie = Cookie::build(("token", token))
+        let cookie = Cookie::build(("auth_token", token))
             .http_only(true) // Prevent JavaScript access
             .expires(Expiration::DateTime(OffsetDateTime::now_utc() + time::Duration::days(5))) // Set an expiration time of 5 days, TODO: read from env?
             .path("/");       // Available for all paths
@@ -130,7 +130,7 @@ impl DevLoginHandler {
         );
 
         // Create a cookie with the token
-        let cookie = Cookie::build(("token", token))
+        let cookie = Cookie::build(("auth_token", token))
             .http_only(true) // Prevent JavaScript access
             .expires(Expiration::DateTime(OffsetDateTime::now_utc() + time::Duration::days(5))) // Set an expiration time of 5 days, TODO: read from env?
             .path("/");       // Available for all paths
