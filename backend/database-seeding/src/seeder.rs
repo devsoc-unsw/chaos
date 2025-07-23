@@ -3,12 +3,15 @@ use server::handler::application;
 use server::models::app;
 use server::models::app::init_app_state;
 use server::models::app::AppState;
+use server::models::offer::Offer;
 use server::models::rating::{Rating, NewRating};
 use server::models::user::{User, UserRole};
 use server::models::organisation::{Organisation};
 use server::models::role::{Role, RoleUpdate};
 use server::models::question::*;
 use server::models::answer::*;
+use server::models::offer::*;
+use server::models::email_template::*;
 use server::models::application::{Application, NewApplication, ApplicationRole};
 use chrono::{DateTime, Utc};
 
@@ -296,5 +299,43 @@ pub async fn seed_database(mut seeder: Seeder) {
         .await.expect("Failed seeding Rating 3");
     
     transaction.commit().await.expect("Failed committing transaction seeding Ratings");
+    
+    let template = 
+    "Hello {{name}},
+
+    Congratulations! You have been selected for the role of {{role}} at {{organisation_name}} for our {{campaign_name}}.
+
+    Please confirm your acceptance by {{expiry_date}}.
+
+    Best regards,  
+    The {{organisation_name}} Team".to_string();
+
+
+    let email_template_id = Organisation::create_email_template(
+        org_id, 
+        "Offer".to_string(), 
+        template, 
+        &seeder.app_state.db, 
+        &mut seeder.app_state.snowflake_generator)
+        .await.expect("Failed seeding Email Template");
+
+
+    let mut transaction = seeder.app_state.db.begin().await.unwrap();
+
+    Offer::create(
+        campaign_id, 
+        application_id_1, 
+        email_template_id, 
+        role_id_1, 
+        DateTime::<Utc>::from_naive_utc_and_offset(
+                chrono::NaiveDate::from_ymd_opt(2024, 2, 1).unwrap().and_hms_milli_opt(0, 0, 0, 0).unwrap(),
+                Utc,
+            ), 
+        &mut transaction, 
+        &mut seeder.app_state.snowflake_generator)
+        .await.expect("Failed seeding Offer");
+
+    transaction.commit().await.expect("Failed committing transaction seeding Offer");
+
 
 }
