@@ -20,6 +20,25 @@ use axum::response::IntoResponse;
 pub struct RatingHandler;
 
 impl RatingHandler {
+    pub async fn create(
+        State(mut state): State<AppState>,
+        Path(application_id): Path<i64>,
+        admin: ApplicationReviewerGivenApplicationId,
+        mut transaction: DBTransaction<'_>,
+        Json(new_rating): Json<NewRating>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        Rating::create(
+            new_rating,
+            application_id,
+            admin.user_id,
+            &mut state.snowflake_generator,
+            &mut transaction.tx,
+        )
+        .await?;
+        transaction.tx.commit().await?;
+        Ok((StatusCode::OK, "Successfully created rating"))
+    }
+
     /// Updates an existing rating.
     /// 
     /// This handler allows the creator of a rating to update its details.

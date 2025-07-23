@@ -1,6 +1,6 @@
 use crate::handler::answer::AnswerHandler;
 use crate::handler::application::ApplicationHandler;
-use crate::handler::auth::google_callback;
+use crate::handler::auth::{google_callback, DevLoginHandler};
 use crate::handler::campaign::CampaignHandler;
 use crate::handler::email_template::EmailTemplateHandler;
 use crate::handler::offer::OfferHandler;
@@ -35,10 +35,11 @@ pub struct AppState {
     pub jwt_validator: Validation,
     pub snowflake_generator: SnowflakeIdGenerator,
     pub storage_bucket: Bucket,
+    pub is_dev_env: bool,
     pub email_credentials: EmailCredentials,
 }
 
-pub async fn app() -> Result<Router, ChaosError> {
+pub async fn init_app_state() -> AppState {
     // Initialise DB connection
     let db_url = env::var("DATABASE_URL")
         .expect("Error getting DATABASE_URL")
@@ -73,6 +74,16 @@ pub async fn app() -> Result<Router, ChaosError> {
         .to_string();
     let oauth2_client = build_oauth_client(client_id, client_secret);
 
+    let dev_env = env::var("DEV_ENV")
+        .expect("Error getting DEV_ENV")
+        .to_string();
+
+    let mut is_dev_env = false;
+
+    if dev_env == "dev" {
+        is_dev_env = true;
+    }
+
     // Initialise Snowflake Generator
     let snowflake_generator = SnowflakeIdGenerator::new(1, 1);
 
@@ -93,12 +104,23 @@ pub async fn app() -> Result<Router, ChaosError> {
         jwt_validator,
         snowflake_generator,
         storage_bucket,
+        is_dev_env,
         email_credentials,
     };
+    
+    state
+}
+
+pub async fn app() -> Result<Router, ChaosError> {
+    
+    let state = init_app_state().await;
 
     Ok(Router::new()
         .route("/", get(|| async { "Join DevSoc! https://devsoc.app/" }))
         .route("/api/auth/callback/google", get(google_callback))
+        .route("/api/v1/dev/super_admin_login", get(DevLoginHandler::dev_super_admin_login))
+        .route("/api/v1/dev/org_admin_login", get(DevLoginHandler::dev_org_admin_login))
+        .route("/api/v1/dev/user_login", get(DevLoginHandler::dev_user_login))
         .route("/api/v1/user", get(UserHandler::get))
         .route("/api/v1/user/name", patch(UserHandler::update_name))
         .route("/api/v1/user/pronouns", patch(UserHandler::update_pronouns))

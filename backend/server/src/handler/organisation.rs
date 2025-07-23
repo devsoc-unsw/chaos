@@ -40,7 +40,7 @@ impl OrganisationHandler {
     /// 
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn create(
-        State(state): State<AppState>,
+        State(mut state): State<AppState>,
         _user: SuperUser,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewOrganisation>,
@@ -49,7 +49,7 @@ impl OrganisationHandler {
             data.admin,
             data.slug,
             data.name,
-            state.snowflake_generator,
+            &mut state.snowflake_generator,
             &mut transaction.tx,
         )
         .await?;
@@ -362,7 +362,7 @@ impl OrganisationHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn create_campaign(
         Path(id): Path<i64>,
-        State(state): State<AppState>,
+        State(mut state): State<AppState>,
         _admin: OrganisationAdmin,
         Json(request_body): Json<NewCampaign>,
     ) -> Result<impl IntoResponse, ChaosError> {
@@ -374,7 +374,7 @@ impl OrganisationHandler {
             request_body.starts_at,
             request_body.ends_at,
             &state.db,
-            state.snowflake_generator,
+            &mut state.snowflake_generator,
         )
         .await?;
 
@@ -422,7 +422,7 @@ impl OrganisationHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn create_email_template(
         Path(id): Path<i64>,
-        State(state): State<AppState>,
+        State(mut state): State<AppState>,
         _admin: OrganisationAdmin,
         Json(request_body): Json<NewEmailTemplate>,
     ) -> Result<impl IntoResponse, ChaosError> {
@@ -432,7 +432,7 @@ impl OrganisationHandler {
             request_body.template_subject,
             request_body.template_body,
             &state.db,
-            state.snowflake_generator,
+            &mut state.snowflake_generator,
         )
         .await?;
 

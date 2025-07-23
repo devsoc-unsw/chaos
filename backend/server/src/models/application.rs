@@ -172,10 +172,10 @@ impl Application {
         campaign_id: i64,
         user_id: i64,
         application_data: NewApplication,
-        mut snowflake_generator: SnowflakeIdGenerator,
+        snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<(), ChaosError> {
-        let id = snowflake_generator.generate();
+    ) -> Result<i64, ChaosError> {
+        let id = snowflake_generator.real_time_generate();
 
         // Insert into table applications
         sqlx::query!(
@@ -205,7 +205,7 @@ impl Application {
             .await?;
         }
 
-        Ok(())
+        Ok(id)
     }
 
     /// Retrieves an application by its ID.

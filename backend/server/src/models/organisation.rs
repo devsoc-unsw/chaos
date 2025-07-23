@@ -158,14 +158,14 @@ impl Organisation {
         admin_id: i64,
         slug: String,
         name: String,
-        mut snowflake_generator: SnowflakeIdGenerator,
+        snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<(), ChaosError> {
+    ) -> Result<i64, ChaosError> {
         if !slug.is_ascii() {
             return Err(ChaosError::BadRequest);
         }
 
-        let id = snowflake_generator.generate();
+        let id = snowflake_generator.real_time_generate();
 
         sqlx::query!(
             "
@@ -173,7 +173,7 @@ impl Organisation {
                 VALUES ($1, $2, $3)
         ",
             id,
-            slug,
+            slug.to_lowercase(),
             name
         )
         .execute(transaction.deref_mut())
@@ -191,7 +191,7 @@ impl Organisation {
         .execute(transaction.deref_mut())
         .await?;
 
-        Ok(())
+        Ok(id)
     }
 
     /// Checks if a slug is available for use.
@@ -576,8 +576,8 @@ impl Organisation {
         starts_at: DateTime<Utc>,
         ends_at: DateTime<Utc>,
         pool: &Pool<Postgres>,
-        mut snowflake_id_generator: SnowflakeIdGenerator,
-    ) -> Result<(), ChaosError> {
+        snowflake_id_generator: &mut SnowflakeIdGenerator,
+    ) -> Result<i64, ChaosError> {
         if !slug.is_ascii() {
             return Err(ChaosError::BadRequest);
         }
@@ -591,7 +591,7 @@ impl Organisation {
         ",
             new_campaign_id,
             organisation_id,
-            slug,
+            slug.to_lowercase(),
             name,
             description,
             starts_at,
@@ -600,7 +600,7 @@ impl Organisation {
         .execute(pool)
         .await?;
 
-        Ok(())
+        Ok(new_campaign_id)
     }
 
     pub async fn create_email_template(
@@ -609,9 +609,9 @@ impl Organisation {
         template_subject: String,
         template_body: String,
         pool: &Pool<Postgres>,
-        mut snowflake_generator: SnowflakeIdGenerator,
+        snowflake_generator: &mut SnowflakeIdGenerator,
     ) -> Result<i64, ChaosError> {
-        let id = snowflake_generator.generate();
+        let id = snowflake_generator.real_time_generate();
 
         let _ = sqlx::query!(
             "

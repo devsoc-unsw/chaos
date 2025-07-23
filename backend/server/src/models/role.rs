@@ -93,9 +93,9 @@ impl Role {
         campaign_id: i64,
         role_data: RoleUpdate,
         transaction: &mut Transaction<'_, Postgres>,
-        mut snowflake_generator: SnowflakeIdGenerator,
-    ) -> Result<(), ChaosError> {
-        let id = snowflake_generator.generate();
+        snowflake_generator: &mut SnowflakeIdGenerator,
+    ) -> Result<i64, ChaosError> {
+        let id = snowflake_generator.real_time_generate();
 
         sqlx::query!(
             "
@@ -113,7 +113,7 @@ impl Role {
         .execute(transaction.deref_mut())
         .await?;
 
-        Ok(())
+        Ok(id)
     }
 
     /// Retrieves a role by its ID.

@@ -92,10 +92,10 @@ impl Rating {
         new_rating: NewRating,
         application_id: i64,
         rater_id: i64,
-        mut snowflake_generator: SnowflakeIdGenerator,
+        snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let rating_id = snowflake_generator.generate();
+        let rating_id = snowflake_generator.real_time_generate();
         let rating = new_rating.rating;
         let comment = new_rating.comment;
 
@@ -173,7 +173,7 @@ impl Rating {
             "
             SELECT r.id, rater_id, u.name as rater_name, r.rating, r.comment, r.updated_at
                 FROM application_ratings r
-                JOIN users u ON u.id = r.id
+                JOIN users u ON u.id = r.rater_id
                 WHERE r.id = $1
         ",
             rating_id
@@ -203,7 +203,7 @@ impl Rating {
             "
             SELECT r.id, rater_id, u.name as rater_name, r.rating, r.comment, r.updated_at
                 FROM application_ratings r
-                JOIN users u ON u.id = r.id
+                JOIN users u ON u.id = r.rater_id
                 WHERE r.application_id = $1
         ",
             application_id

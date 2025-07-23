@@ -275,4 +275,32 @@ impl User {
 
         Ok(())
     }
+
+
+    /// Creates a User, This should only used for database seeding
+    pub async fn create_user(
+        data: User,
+        pool: &Pool<Postgres>,
+    ) -> Result<(), ChaosError> {
+        sqlx::query!(
+            "
+            INSERT INTO users (id, email, zid, name, pronouns, gender, degree_name, degree_starting_year, role)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::user_role)
+        ",
+            data.id,
+            data.email,
+            data.zid,
+            data.name,
+            data.pronouns,
+            data.gender,
+            data.degree_name,
+            data.degree_starting_year,
+            data.role as UserRole
+        )
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
+
 }

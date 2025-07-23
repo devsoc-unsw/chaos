@@ -37,7 +37,7 @@ pub async fn create_or_get_user_id(
     email: String,
     name: String,
     pool: Pool<Postgres>,
-    mut snowflake_generator: SnowflakeIdGenerator,
+    snowflake_generator: &mut SnowflakeIdGenerator,
 ) -> Result<i64, ChaosError> {
     let possible_user_id = sqlx::query!(
         "SELECT id FROM users WHERE lower(email) = $1",

@@ -122,7 +122,7 @@ impl Offer {
         role_id: i64,
         expiry: DateTime<Utc>,
         transaction: &mut Transaction<'_, Postgres>,
-        mut snowflake_id_generator: SnowflakeIdGenerator,
+        snowflake_id_generator: &mut SnowflakeIdGenerator,
     ) -> Result<i64, ChaosError> {
         let id = snowflake_id_generator.real_time_generate();
 
@@ -219,7 +219,7 @@ impl Offer {
                     JOIN applications a ON a.id = off.application_id
                     JOIN users u on u.id = a.user_id
                     JOIN campaign_roles r on r.id = off.role_id
-                WHERE off.id = $1
+                WHERE off.campaign_id = $1
             "#,
             campaign_id
         )
