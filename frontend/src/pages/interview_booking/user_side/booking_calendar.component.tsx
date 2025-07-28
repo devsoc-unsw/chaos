@@ -137,94 +137,118 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
 
   return (
     <div className="flex w-full flex-col gap-6 p-4">
-      {/* Personal Info and Notes Section - Side by side on desktop */}
-      <div className="flex w-full flex-col gap-5">
-        {/* Personal Info Section */}
-        <div className="w-full">
-          <div className="mx-auto transform space-y-4 rounded-xl border border-indigo-300 bg-white p-6 shadow-lg transition-all duration-500">
-            <div>
-              <h2 className="mb-2 text-xl font-bold tracking-tight text-gray-800">
-                {formData.firstName} {formData.lastName || "🧑"}
-              </h2>
-              <p className="text-xs italic text-gray-500">
-                Please confirm your contact information. We'll reach out to you via
-                email or phone.
-              </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Header Card Component */}
+        <div className="w-full h-full md:col-span-1">
+          <div className="rounded-lg border border-gray-300 bg-white shadow-lg overflow-hidden h-full flex flex-col">
+            {/* Header Image Section */}
+            <div className="bg-gray-100 border-b border-gray-300 px-6 py-8 text-center flex-shrink-0">
+              <div className="text-2xl font-bold text-gray-700">Header Image</div>
             </div>
 
-            {/* Email and Phone Inputs */}
-            <div className="grid grid-cols-1 gap-4">
-              <div className="flex gap-4">
-                <div>
-                  <label
-                    htmlFor="email"
-                    className="mb-1 block text-xs font-medium text-gray-700"
-                  >
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    required
-                    value={formData.email}
-                    placeholder="johndoe2005@gmail.com"
-                    onChange={handleChange}
-                    className="w-full rounded-md border border-indigo-300 px-3 py-2 text-sm shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 max-w-1/3"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="phone"
-                    className="mb-1 block text-xs font-medium text-gray-700"
-                  >
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    required
-                    value={formData.phone}
-                    placeholder="+61 400 123 456"
-                    onChange={handleChange}
-                    className="w-full rounded-md border border-indigo-300 px-3 py-2 text-sm shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 max-w-1/3"
-                  />
-                </div>
-              </div>
+            {/* Content Section */}
+            <div className="px-6 py-4 bg-gray-50 flex-grow flex flex-col justify-center">
+              <div className="text-sm font-medium text-gray-600 mb-1">UNSW Devsoc</div>
+              <div className="text-lg font-bold text-gray-800 mb-3">2025 Subcommittee Recruitment</div>
+
+              <div className="text-sm text-gray-600 mb-2">Interview For:</div>
+              <div className="text-3xl font-bold text-gray-800">Chaos</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Personal Info and Notes Section - Side by side on desktop */}
+        <div className="flex w-full flex-col gap-5 md:col-span-1 md:order-first">
+          {/* Personal Info Section */}
+          <div className="w-full">
+            <div className="mx-auto transform space-y-4 rounded-xl border border-indigo-300 bg-white p-6 shadow-lg transition-all duration-500">
               <div>
-                <h3 className="mb-3 flex items-center gap-2 text-xl font-bold text-purple-700">
-                  Additional Notes
-                </h3>
-                <textarea
-                  id="notes"
-                  placeholder="Enter any specific notes or requests... e.g. 'Please don't call during math class'"
-                  value={formData.notes}
-                  onChange={handleChange}
-                  className="w-full rounded-md border border-indigo-200 px-4 py-3 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-purple-300 max-w-2/3"
-                  rows={4}
-                />
+                <h2 className="mb-2 text-xl font-bold tracking-tight text-gray-800">
+                  {formData.firstName} {formData.lastName || "🧑"}
+                </h2>
+                <p className="text-xs italic text-gray-500">
+                  Please confirm your contact information. We'll reach out to you via
+                  email or phone.
+                </p>
               </div>
 
+              <div className="grid md:grid-cols-3 grid-cols-1 gap-4">
+                {/* Email and Phone Inputs */}
+                <div className="grid grid-cols-1 gap-4 md:col-span-3">
+                  <div className="flex gap-4">
+                    <div className="w-full">
+                      <label
+                        htmlFor="email"
+                        className="mb-1 block text-xs font-medium text-gray-700"
+                      >
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        required
+                        value={formData.email}
+                        placeholder="johndoe2005@gmail.com"
+                        onChange={handleChange}
+                        className="w-full rounded-md border border-indigo-300 px-3 py-2 text-sm shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                      />
+                    </div>
+                    <div className="w-full">
+                      <label
+                        htmlFor="phone"
+                        className="mb-1 block text-xs font-medium text-gray-700"
+                      >
+                        Phone Number
+                      </label>
+                      <input
+                        type="tel"
+                        id="phone"
+                        required
+                        value={formData.phone}
+                        placeholder="+61 400 123 456"
+                        onChange={handleChange}
+                        className="w-full rounded-md border border-indigo-300 px-3 py-2 text-sm shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                      />
+                    </div>
+
+
+                  </div>
+                  <div>
+                    <h3 className="mb-3 flex items-center gap-2 text-xl font-bold text-purple-700">
+                      Additional Notes
+                    </h3>
+                    <textarea
+                      id="notes"
+                      placeholder="Enter any specific notes or requests... e.g. 'Please don't call during math class'"
+                      value={formData.notes}
+                      onChange={handleChange}
+                      className="w-full rounded-md border border-indigo-200 px-4 py-3 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-purple-300"
+                      rows={4}
+                    />
+
+                  </div>
+
+                </div>
+              </div>
             </div>
           </div>
+
         </div>
 
-        {/* Notes Section */}
-        <div className="w-full">
-          <div className="mx-auto rounded-xl border border-gray-300 bg-gradient-to-br from-white via-gray-50 to-purple-50 p-6 shadow-lg transition duration-300 ease-in-out">
 
-          </div>
-        </div>
       </div>
 
+
       {/* Calendar and Time Slot Section - Side by side */}
-      <div className="flex w-full flex-col gap-6 md:flex-row">
+
+      <div className="flex w-full flex-col gap-6 md:flex-row md:outline md:outline-1 md:outline-indigo-300 md:p-4 md:rounded-lg">
         {/* Calendar Panel */}
         <div className="w-full max-w-sm">
           <Calendar
             mode="single"
             selected={new Date(selectedDate)}
             onSelect={handleDateChange}
-            className="rounded-md border text-gray-800 bg-white w-max shadow-sm"
+            className="rounded-md border text-gray-800 bg-white sm:w-max w-full shadow-sm"
             modifiers={modifiers}
             modifiersClassNames={modifiersClassNames}
             disabled={disabled}
@@ -239,7 +263,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
               variant="outline"
               onClick={() => setWeekStart(addDays(weekStart, -7))}
             >
-              ← Previous
+              ←
             </Button>
             <h2 className="text-lg font-semibold">
               Week of{" "}
@@ -252,7 +276,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
               variant="outline"
               onClick={() => setWeekStart(addDays(weekStart, 7))}
             >
-              Next →
+              →
             </Button>
           </div>
 
@@ -346,6 +370,8 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
         </div>
       </div>
     </div>
+
+
   );
 };
 
