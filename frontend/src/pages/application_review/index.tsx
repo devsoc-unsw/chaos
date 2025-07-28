@@ -13,6 +13,46 @@ const DevsocRecruitmentForm: React.FC = () => {
 
     // Fallback to a default campaign ID 1 if none is provided
     const activeCampaignId = campaignId || "1";
+    // Campaign data based on activeCampaignId
+    const getCampaignData = (id: string) => {
+        const campaigns = {
+            "1": {
+                title: "2025 DevSoc Subcommittee Recruitment",
+                startDate: "2025-02-01",
+                endDate: "2025-02-20"
+            },
+            "2": {
+                title: "2025 Summer Internship Program",
+                startDate: "2025-03-01",
+                endDate: "2025-03-15"
+            },
+            "3": {
+                title: "2025 Winter Workshop Series",
+                startDate: "2025-07-01",
+                endDate: "2025-07-31"
+            }
+        };
+
+        return campaigns[id] || campaigns["1"];
+    };
+
+    // Format date range helper
+    const formatDateRange = (startDate: string, endDate: string): string => {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
+        const options: Intl.DateTimeFormatOptions = {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        };
+
+        const startFormatted = start.toLocaleDateString('en-AU', options);
+        const endFormatted = end.toLocaleDateString('en-AU', options);
+
+        return `${startFormatted} - ${endFormatted}`;
+    };
+    const currentCampaign = getCampaignData(activeCampaignId);
 
     const [currentTab, setCurrentTab] = useState<'general' | 'review'>('general');
     const [selectedRole, setSelectedRole] = useState<string>('');
@@ -106,9 +146,11 @@ const DevsocRecruitmentForm: React.FC = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            2025 DevSoc Subcommittee Recruitment
+            {currentCampaign.title}
           </h1>
-          <p className="text-gray-600">1 Feb 2025 - 20 Feb 2025</p>
+          <p className="text-gray-600">
+                        {formatDateRange(currentCampaign.startDate, currentCampaign.endDate)}
+                    </p>
         </div>
 
         <div className="flex gap-8 w-full">
@@ -177,6 +219,7 @@ const DevsocRecruitmentForm: React.FC = () => {
                         question="First Name"
                         placeholder="First Name"
                         required={true}
+                        width="w-full"
                         onSubmit={handleAnswerSubmit}
                       />
                       <ShortAnswer
@@ -184,6 +227,7 @@ const DevsocRecruitmentForm: React.FC = () => {
                         question="Last Name"
                         placeholder="Last Name"
                         required={true}
+                        width="w-full"
                         onSubmit={handleAnswerSubmit}
                       />
                     </div>
@@ -195,6 +239,7 @@ const DevsocRecruitmentForm: React.FC = () => {
                     question="Email"
                     placeholder="your.email@example.com"
                     required={true}
+                    width="w-full"
                     onSubmit={handleAnswerSubmit}
                   />
 
@@ -204,6 +249,7 @@ const DevsocRecruitmentForm: React.FC = () => {
                     question="zID"
                     placeholder="z1234567"
                     required={true}
+                    width="w-full"
                     onSubmit={handleAnswerSubmit}
                   />
 
@@ -213,6 +259,7 @@ const DevsocRecruitmentForm: React.FC = () => {
                     question="Degree"
                     placeholder="e.g., Computer Science"
                     required={true}
+                    width="w-full"
                     onSubmit={handleAnswerSubmit}
                   />
 
@@ -222,6 +269,7 @@ const DevsocRecruitmentForm: React.FC = () => {
                     question="Phone Number"
                     placeholder="+61 xxx xxx xxx"
                     required={false}
+                    width="w-full"
                     onSubmit={handleAnswerSubmit}
                   />
 
