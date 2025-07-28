@@ -2,7 +2,7 @@
 
 # Development
 
-- Frontend/Backend setup docs are in their respective folders.
+Frontend/Backend setup docs are in their respective folders.
 
 ### Repo-wide git hooks
 
