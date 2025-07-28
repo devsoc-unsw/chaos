@@ -1,3 +1,36 @@
+/**
+ * DevsocRecruitmentForm Component
+ *
+ * This component displays a dynamic recruitment form that loads campaign data and roles from the API.
+ * It implements a fallback system to ensure the form always works, even when the API is unavailable.
+ *
+ * HOW IT WORKS:
+ * 1. Extracts campaignId from URL params (e.g., /campaign/1/apply)
+ * 2. Falls back to campaignId "1" if no ID is provided in the URL
+ * 3. Attempts to fetch real data from two API endpoints:
+ *    - GET /api/v1/campaigns/{campaignId} (for campaign details: name, dates)
+ *    - GET /api/v1/campaigns/{campaignId}/roles (for available roles)
+ * 4. If API calls fail, gracefully falls back to hardcoded mock data
+ * 5. Shows a loading spinner while fetching data
+ * 6. Displays a warning banner when using fallback campaignId
+ *
+ * API INTEGRATION:
+ * - Based on endpoints from PR #562: https://github.com/devsoc-unsw/chaos/pull/562/files
+ * - Maps API response formats to structures
+ * - Automatically assigns colors to API roles
+ * - Converts ISO date strings to display format
+ *
+ * FALLBACK SYSTEM:
+ * - Mock campaigns with different dates and titles for testing
+ * - Predefined roles with descriptions and color schemes
+ * - Ensures form is always functional during development
+ * - Console logging helps identify when fallback is being used
+ *
+ * URL PATTERNS:
+ * - /campaign/1/apply → Real API data for campaign 1 (or fallback)
+ * - /campaign/2/apply → Real API data for campaign 2 (or fallback)
+ * - /apply → Uses default campaign "1" with warning banner
+ */
 import React, { useState, useEffect } from "react";
 import { useParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, RotateCcw, Maximize2 } from "lucide-react";
