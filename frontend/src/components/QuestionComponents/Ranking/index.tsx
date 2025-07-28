@@ -38,8 +38,9 @@ const Ranking: React.FC<RankingProps> = ({
 
   // Initialize ranked options on mount or when options change
   useEffect(() => {
-    if (defaultValue.length > 0) {
-      const initialRanked = defaultValue.map((optionId, index) => {
+    const safeDefaultValue = Array.isArray(defaultValue) ? defaultValue : [];
+    if (safeDefaultValue.length > 0) {
+      const initialRanked = safeDefaultValue.map((optionId, index) => {
         const option = options.find(opt => opt.id === optionId);
         return option ? { ...option, rank: index + 1 } : null;
       }).filter(Boolean) as RankedOption[];

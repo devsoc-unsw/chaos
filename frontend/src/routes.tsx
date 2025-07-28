@@ -50,7 +50,7 @@ const routes = [
   />,
   <Route
     key="Application Review"
-    path="/campaign/1/apply"
+    path="/campaign/:campaignId/apply"
     element={<ApplicationReviewTest/>}
     />
 ];
