@@ -29,11 +29,9 @@
  * URL PATTERNS:
  * - /campaign/1/apply → Real API data for campaign 1 (or fallback)
  * - /campaign/2/apply → Real API data for campaign 2 (or fallback)
- * - /apply → Uses default campaign "1" with warning banner
  */
 import React, { useState, useEffect } from "react";
 import { useParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, RotateCcw, Maximize2 } from "lucide-react";
 import ShortAnswer from "components/QuestionComponents/ShortAnswer";
 import Dropdown from "components/QuestionComponents/Dropdown";
 import MultiChoice from "components/QuestionComponents/MultiChoice";
