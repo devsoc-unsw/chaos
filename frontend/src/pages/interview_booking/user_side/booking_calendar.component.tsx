@@ -21,9 +21,19 @@ interface Slot {
 /**
  * Props accepted by the BookingCalendar component.
  * - onDateTimeSelect: Callback when a date and time are selected.
+ * - formData: Object containing form data including firstName, lastName, email, phone, notes
+ * - handleChange: Function to handle form input changes
  */
 interface BookingCalendarProps {
   onDateTimeSelect: (date: string, time: string) => void;
+  formData: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    notes: string;
+  };
+  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
 }
 
 /**
@@ -44,6 +54,8 @@ const getWeekDates = (startDate: Date): Date[] =>
  */
 const BookingCalendar: React.FC<BookingCalendarProps> = ({
   onDateTimeSelect,
+  formData,
+  handleChange,
 }) => {
   const slotData: Slot[] = availableTime;
 
@@ -124,131 +136,213 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
   };
 
   return (
-    <div className="flex w-full flex-col gap-6 p-4 md:flex-row">
-      {/* Calendar Panel */}
-      <div className="w-full max-w-sm">
-        <Calendar
-          mode="single"
-          selected={new Date(selectedDate)}
-          onSelect={handleDateChange}
-          className="rounded-md border text-gray-800 bg-white w-max shadow-sm"
-          modifiers={modifiers}
-          modifiersClassNames={modifiersClassNames}
-          disabled={disabled}
-        />
+    <div className="flex w-full flex-col gap-6 p-4">
+      {/* Personal Info and Notes Section - Side by side on desktop */}
+      <div className="flex w-full flex-col gap-5">
+        {/* Personal Info Section */}
+        <div className="w-full">
+          <div className="mx-auto transform space-y-4 rounded-xl border border-indigo-300 bg-white p-6 shadow-lg transition-all duration-500">
+            <div>
+              <h2 className="mb-2 text-xl font-bold tracking-tight text-gray-800">
+                {formData.firstName} {formData.lastName || "🧑"}
+              </h2>
+              <p className="text-xs italic text-gray-500">
+                Please confirm your contact information. We'll reach out to you via
+                email or phone.
+              </p>
+            </div>
+
+            {/* Email and Phone Inputs */}
+            <div className="grid grid-cols-1 gap-4">
+              <div className="flex gap-4">
+                <div>
+                  <label
+                    htmlFor="email"
+                    className="mb-1 block text-xs font-medium text-gray-700"
+                  >
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    required
+                    value={formData.email}
+                    placeholder="johndoe2005@gmail.com"
+                    onChange={handleChange}
+                    className="w-full rounded-md border border-indigo-300 px-3 py-2 text-sm shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 max-w-1/3"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="phone"
+                    className="mb-1 block text-xs font-medium text-gray-700"
+                  >
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    required
+                    value={formData.phone}
+                    placeholder="+61 400 123 456"
+                    onChange={handleChange}
+                    className="w-full rounded-md border border-indigo-300 px-3 py-2 text-sm shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 max-w-1/3"
+                  />
+                </div>
+              </div>
+              <div>
+                <h3 className="mb-3 flex items-center gap-2 text-xl font-bold text-purple-700">
+                  Additional Notes
+                </h3>
+                <textarea
+                  id="notes"
+                  placeholder="Enter any specific notes or requests... e.g. 'Please don't call during math class'"
+                  value={formData.notes}
+                  onChange={handleChange}
+                  className="w-full rounded-md border border-indigo-200 px-4 py-3 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-purple-300 max-w-2/3"
+                  rows={4}
+                />
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        {/* Notes Section */}
+        <div className="w-full">
+          <div className="mx-auto rounded-xl border border-gray-300 bg-gradient-to-br from-white via-gray-50 to-purple-50 p-6 shadow-lg transition duration-300 ease-in-out">
+
+          </div>
+        </div>
       </div>
 
-      {/* Time Slot Selector Panel */}
-      <div className="flex-1">
-        {/* Week Navigation */}
-        <div className="mb-4 flex items-center justify-between">
-          <Button
-            variant="outline"
-            onClick={() => setWeekStart(addDays(weekStart, -7))}
-          >
-            ← Previous
-          </Button>
-          <h2 className="text-lg font-semibold">
-            Week of{" "}
-            {weekStart.toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            })}
-          </h2>
-          <Button
-            variant="outline"
-            onClick={() => setWeekStart(addDays(weekStart, 7))}
-          >
-            Next →
-          </Button>
+      {/* Calendar and Time Slot Section - Side by side */}
+      <div className="flex w-full flex-col gap-6 md:flex-row">
+        {/* Calendar Panel */}
+        <div className="w-full max-w-sm">
+          <Calendar
+            mode="single"
+            selected={new Date(selectedDate)}
+            onSelect={handleDateChange}
+            className="rounded-md border text-gray-800 bg-white w-max shadow-sm"
+            modifiers={modifiers}
+            modifiersClassNames={modifiersClassNames}
+            disabled={disabled}
+          />
         </div>
 
-        {/* Weekday Buttons (User selects a day here) */}
-        <div className="mb-4 grid grid-cols-3 gap-5 sm:grid-cols-4 md:grid-cols-7">
-          {weekDates.map((date) => {
-            const dateStr = formatDate(date);
-            const isSelected = dateStr === selectedDate;
-            return (
-              <Button
-                key={dateStr}
-                disabled={!availableDates.has(dateStr)}
-                variant="outline"
-                className={cn(
-                  "flex flex-col py-2 h-11",
-                  isSelected && availableDates.has(dateStr)
-                    ? "bg-indigo-200 ring-2 ring-indigo-100"
-                    : ""
-                )}
-                onClick={() => handleTimeSelect(dateStr, "")}
-              >
-                <span className="text-xs">
-                  {date.toLocaleDateString("en-US", { weekday: "short" })}
-                </span>
-                <span className="font-semibold">
-                  {date.toLocaleDateString("en-US", { day: "numeric" })}
-                </span>
-              </Button>
-            );
-          })}
-        </div>
+        {/* Time Slot Selector Panel */}
+        <div className="flex-1">
+          {/* Week Navigation */}
+          <div className="mb-4 flex items-center justify-between">
+            <Button
+              variant="outline"
+              onClick={() => setWeekStart(addDays(weekStart, -7))}
+            >
+              ← Previous
+            </Button>
+            <h2 className="text-lg font-semibold">
+              Week of{" "}
+              {weekStart.toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              })}
+            </h2>
+            <Button
+              variant="outline"
+              onClick={() => setWeekStart(addDays(weekStart, 7))}
+            >
+              Next →
+            </Button>
+          </div>
 
-        {/* Mobile View: Only show selected day's time slots */}
-        <div className="space-y-2 md:hidden">
-          {(groupedSlots[selectedDate] || []).length === 0 ? (
-            <div className="text-center text-muted-foreground">No slots</div>
-          ) : (
-            groupedSlots[selectedDate].map((time) => {
-              const isSelected = selectedTime === time;
+          {/* Weekday Buttons (User selects a day here) */}
+          <div className="mb-4 grid grid-cols-3 gap-5 sm:grid-cols-4 md:grid-cols-7">
+            {weekDates.map((date) => {
+              const dateStr = formatDate(date);
+              const isSelected = dateStr === selectedDate;
               return (
-                <Card
-                  key={time}
-                  onClick={() => handleTimeSelect(selectedDate, time)}
+                <Button
+                  key={dateStr}
+                  disabled={!availableDates.has(dateStr)}
+                  variant="outline"
                   className={cn(
-                    "cursor-pointer border py-2 text-center text-sm transition",
-                    isSelected
+                    "flex flex-col py-2 h-11",
+                    isSelected && availableDates.has(dateStr)
                       ? "bg-indigo-200 ring-2 ring-indigo-100"
-                      : "hover:bg-muted"
+                      : ""
                   )}
+                  onClick={() => handleTimeSelect(dateStr, "")}
                 >
-                  {time}
-                </Card>
+                  <span className="text-xs">
+                    {date.toLocaleDateString("en-US", { weekday: "short" })}
+                  </span>
+                  <span className="font-semibold">
+                    {date.toLocaleDateString("en-US", { day: "numeric" })}
+                  </span>
+                </Button>
               );
-            })
-          )}
-        </div>
+            })}
+          </div>
 
-        {/* Desktop View: Show full week grid of time slots */}
-        <div className="hidden grid-cols-7 gap-3 md:grid">
-          {weekDates.map((date) => {
-            const dateStr = formatDate(date);
-            const times = groupedSlots[dateStr] || [];
-            return (
-              <div key={dateStr} className="space-y-2">
-                {times.length === 0 ? (
-                  <div className="text-center text-muted-foreground">—</div>
-                ) : (
-                  times.map((time) => {
-                    const isSelected =
-                      selectedDate === dateStr && selectedTime === time;
-                    return (
-                      <Card
-                        key={time}
-                        onClick={() => handleTimeSelect(dateStr, time)}
-                        className={cn(
-                          "cursor-pointer border py-2 text-center text-sm transition",
-                          isSelected
-                            ? "bg-indigo-200 ring-2 ring-indigo-100"
-                            : "hover:bg-muted"
-                        )}
-                      >
-                        {time}
-                      </Card>
-                    );
-                  })
-                )}
-              </div>
-            );
-          })}
+          {/* Mobile View: Only show selected day's time slots */}
+          <div className="space-y-2 md:hidden">
+            {(groupedSlots[selectedDate] || []).length === 0 ? (
+              <div className="text-center text-muted-foreground">No slots</div>
+            ) : (
+              groupedSlots[selectedDate].map((time) => {
+                const isSelected = selectedTime === time;
+                return (
+                  <Card
+                    key={time}
+                    onClick={() => handleTimeSelect(selectedDate, time)}
+                    className={cn(
+                      "cursor-pointer border py-2 text-center text-sm transition",
+                      isSelected
+                        ? "bg-indigo-200 ring-2 ring-indigo-100"
+                        : "hover:bg-muted"
+                    )}
+                  >
+                    {time}
+                  </Card>
+                );
+              })
+            )}
+          </div>
+
+          {/* Desktop View: Show full week grid of time slots */}
+          <div className="hidden grid-cols-7 gap-3 md:grid">
+            {weekDates.map((date) => {
+              const dateStr = formatDate(date);
+              const times = groupedSlots[dateStr] || [];
+              return (
+                <div key={dateStr} className="space-y-2">
+                  {times.length === 0 ? (
+                    <div className="text-center text-muted-foreground">—</div>
+                  ) : (
+                    times.map((time) => {
+                      const isSelected =
+                        selectedDate === dateStr && selectedTime === time;
+                      return (
+                        <Card
+                          key={time}
+                          onClick={() => handleTimeSelect(dateStr, time)}
+                          className={cn(
+                            "cursor-pointer border py-2 text-center text-sm transition",
+                            isSelected
+                              ? "bg-indigo-200 ring-2 ring-indigo-100"
+                              : "hover:bg-muted"
+                          )}
+                        >
+                          {time}
+                        </Card>
+                      );
+                    })
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
