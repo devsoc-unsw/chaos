@@ -11,7 +11,7 @@ const DevsocRecruitmentForm: React.FC = () => {
     // Get the campaignId from the URL parameters
     const { campaignId } = useParams<{ campaignId: string }>();
 
-    // Fallback to a default campaign ID if none is provided
+    // Fallback to a default campaign ID 1 if none is provided
     const activeCampaignId = campaignId || "1";
 
     const [currentTab, setCurrentTab] = useState<'general' | 'review'>('general');

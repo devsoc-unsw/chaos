@@ -1,6 +1,7 @@
 import React, { useState, ChangeEvent } from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import tw from 'twin.macro';
 
 interface ShortAnswerProps {
   id: number;
@@ -13,6 +14,8 @@ interface ShortAnswerProps {
   disabled?: boolean;
   rows?: number;
   placeholder?: string;
+  width?: string;
+  height?: string;
 }
 
 const ShortAnswer: React.FC<ShortAnswerProps> = ({
@@ -26,6 +29,8 @@ const ShortAnswer: React.FC<ShortAnswerProps> = ({
   disabled = false,
   rows = 3,
   placeholder = "Your answer",
+  width = "max-w-4xl",
+  height = "",
 }) => {
   const [value, setValue] = useState(defaultValue);
 
@@ -41,7 +46,7 @@ const ShortAnswer: React.FC<ShortAnswerProps> = ({
   };
 
   return (
-    <div className="mb-6 max-w-4xl w-full">
+    <div tw="mb-6 w-full" css={width ? tw`${width}` : undefined}>
       <div className="flex items-center mb-2">
         <Label className="text-lg font-medium">{question}</Label>
         {required && <span className="ml-1 text-red-500">*</span>}
@@ -59,7 +64,7 @@ const ShortAnswer: React.FC<ShortAnswerProps> = ({
         rows={rows}
         placeholder={placeholder}
         required={required}
-        className="w-full resize-y transition-all duration-200 hover:border-blue-400 focus:border-blue-500"
+        className={`w-full resize-y transition-all duration-200 hover:border-blue-400 focus:border-blue-500 ${width} ${height}`}
       />
     </div>
   );

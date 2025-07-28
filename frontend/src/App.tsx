@@ -42,7 +42,7 @@ const App = () => {
         <SetNavBarTitleContext.Provider value={setNavBarTitle}>
           <BrowserRouter>
             <NavBar campaign={AppBarTitle} />
-            <Box pt={8} minHeight="100vh" display="flex" tw="bg-gray-50">
+            <Box pt={8} minHeight="100vh" tw="bg-gray-50">
               <Suspense fallback={<LoadingIndicator />}>
                 <Routes>{routes}</Routes>
               </Suspense>
