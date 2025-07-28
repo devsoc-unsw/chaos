@@ -6,11 +6,6 @@ import loginUser from "./login_user.json";
 
 import type React from "react";
 
-// Interface representing a single available time slot
-interface Slot {
-  date: string;
-  time: string;
-}
 
 /**
  * InterviewBooking:
@@ -96,9 +91,8 @@ const InterviewBooking: React.FC = () => {
   return (
     <form
       onSubmit={handleSubmit}
-      className={`min-h-screen bg-white px-6 py-10 ${
-        loaded ? "opacity-100" : "translate-y-4 opacity-0"
-      } mx-auto w-full rounded-xl shadow-lg transition-all duration-700 md:w-3/4`}
+      className={`min-h-screen bg-white px-6 py-10 ${loaded ? "opacity-100" : "translate-y-4 opacity-0"
+        } mx-auto w-full rounded-xl shadow-lg transition-all duration-700 md:w-3/4`}
     >
       {/* Heading */}
       <h1 className="text-5xl font-extrabold mb-8 text-center mt-10">
