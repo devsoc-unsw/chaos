@@ -10,6 +10,8 @@ import availableTime from "./availableTimeSlots.json";
 
 import type React from "react";
 
+
+
 /**
  * Represents a single time slot available for booking.
  */
@@ -100,13 +102,6 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
   // Calendar modifier to highlight available dates
   const modifiers = {
     available: (date: Date) => availableDates.has(formatDate(date)),
-  };
-
-  // Custom class for available dates and selected dates in the calendar
-  const modifiersClassNames = {
-    available:
-      "bg-purple-100 text-purple-700 font-semibold border border-purple-400",
-    selected: "bg-purple-500 text-white font-bold border border-purple-700",
   };
 
   /**
@@ -244,15 +239,42 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
       <div className="flex w-full flex-col gap-6 md:flex-row md:outline md:outline-1 md:outline-indigo-300 md:p-4 md:rounded-lg">
         {/* Calendar Panel */}
         <div className="w-full max-w-sm">
-          <Calendar
-            mode="single"
-            selected={new Date(selectedDate)}
-            onSelect={handleDateChange}
-            className="rounded-md border text-gray-800 bg-white sm:w-max w-full shadow-sm"
-            modifiers={modifiers}
-            modifiersClassNames={modifiersClassNames}
-            disabled={disabled}
-          />
+          <div className="rounded-lg border border-gray-400 bg-white shadow-sm p-4">
+            <Calendar
+              mode="single"
+              selected={new Date(selectedDate)}
+              onSelect={handleDateChange}
+              modifiers={modifiers}
+              modifiersClassNames={{
+                available: "bg-purple-100 text-purple-700 font-semibold border border-purple-400 hover:bg-purple-200",
+              }}
+              classNames={{
+                months: "flex justify-center",
+                month: "bg-white rounded-lg p-4 space-y-4",
+                caption: "flex items-center justify-between px-4 text-center font-medium relative",
+                caption_label: "text-sm font-medium",
+                nav: "flex gap-1",
+                nav_button: cn(
+                  "inline-flex items-center justify-center w-8 h-8 border border-gray-300 rounded-md bg-transparent text-gray-500 cursor-pointer transition-all hover:bg-gray-100 hover:text-gray-700"
+                ),
+                nav_button_previous: "absolute left-0",
+                nav_button_next: "absolute right-0",
+                table: "w-full border-collapse mt-4",
+                head_row: "flex",
+                head_cell: "w-10 h-10 flex items-center justify-center text-xs font-medium text-gray-500",
+                row: "flex w-full mt-2",
+                cell: "w-10 h-10 flex items-center justify-center relative",
+                day: cn(
+                  "w-10 h-10 border-none bg-transparent rounded-md cursor-pointer text-sm transition-all hover:bg-gray-100"
+                ),
+                day_selected: "bg-purple-500 text-white hover:bg-purple-600 focus:bg-purple-500",
+                day_today: "bg-gray-100 text-gray-900",
+                day_outside: "text-gray-400 opacity-50",
+                day_disabled: "text-gray-300 cursor-not-allowed",
+                day_hidden: "invisible",
+              }}
+            />
+          </div>
         </div>
 
         {/* Time Slot Selector Panel */}
@@ -370,8 +392,6 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
         </div>
       </div>
     </div>
-
-
   );
 };
 

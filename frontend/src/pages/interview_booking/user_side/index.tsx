@@ -1,4 +1,3 @@
-import Box from "@mui/material/Box";
 import { useEffect, useState } from "react";
 
 import BookingCalendar from "./booking_calendar.component";
@@ -100,15 +99,15 @@ const InterviewBooking: React.FC = () => {
       </h1>
 
       {/* Date & Time Picker */}
-      <Box className="mt-30 border-300 overflow-hidden rounded-xl border shadow-lg transition-all duration-500 hover:shadow-purple-300/50">
-        <BookingCalendar
-          onDateTimeSelect={(date, time) =>
-            setFormData((prev) => ({ ...prev, date, time }))
-          }
-          formData={formData}
-          handleChange={handleChange}
-        />
-      </Box>
+
+      <BookingCalendar
+        onDateTimeSelect={(date, time) =>
+          setFormData((prev) => ({ ...prev, date, time }))
+        }
+        formData={formData}
+        handleChange={handleChange}
+      />
+
 
       {/* Success & Error Alerts */}
       <div className="mx-auto my-10 max-w-3xl">
@@ -150,6 +149,7 @@ const InterviewBooking: React.FC = () => {
         </div>
       </div>
     </form>
+
   );
 };
 
