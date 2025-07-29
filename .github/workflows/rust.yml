@@ -61,3 +61,6 @@ jobs:
       - name: Build
         working-directory: backend/server
         run: cargo build
+      - name: Database Seeding
+        working-directory: backend/database-seeding
+        run: cargo build
