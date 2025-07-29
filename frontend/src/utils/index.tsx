@@ -19,13 +19,15 @@ export function isAdmin(): boolean {
 }
 
 // TODO
-export const isLoggedIn = async (): Promise<boolean> => {
-    try {
-        await getSelfInfo();
-        return true;
-    } catch (error) {
+export const isLoggedIn = (): boolean => {
+    const userInfo = getSelfInfo();
+    const { isLoggedIn, setUser } = useUser();
+
+
+
+
     return false;
-    }
+    // Boolean(localStorage.AUTH_TOKEN);
 }
 
 export const dateToStringForBackend = (dateObject: Date): string =>

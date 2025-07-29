@@ -23,7 +23,7 @@ const AvatarButton = () => {
 
   const navigate = useNavigate();
   const logout = () => {
-    ["name"].forEach((key) => {
+    ["name", "signup_token", "AUTH_TOKEN"].forEach((key) => {
       localStorage.removeItem(key);
       navigate("/");
     });

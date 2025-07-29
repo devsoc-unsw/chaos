@@ -1,6 +1,7 @@
 import type {
+  AdminLevel,
   CampaignInfo,
-  Member as ApiMember,
+  OrganisationUserInfo,
 } from "../../types/api";
 
 export type Organisation = {
@@ -8,9 +9,7 @@ export type Organisation = {
   icon: string;
   orgName: string;
   campaigns: CampaignInfo[];
-  members: ApiMember[];
-  logo?: string;
-  name: string;
+  members: OrganisationUserInfo[];
 };
 
 export type Campaign = {

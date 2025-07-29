@@ -85,11 +85,13 @@ export type QuestionResponse = {
   id: number;
   title: string;
   description?: string;
+  //common: boolean;
+  //max_bytes: number;
   required: boolean;
   questionType: QuestionType;
   data: QuestionData[];
-  created_at: string;
-  updated_at: string;
+  created_at: Date;
+  updated_at: Date;
 };
 
 // models::question::QuestionType
@@ -120,7 +122,7 @@ export type QuestionInput = {
 export type OrganisationRole = "User" | "Admin";
 
 // models::application::ApplicationStatus
-export type ApplicationStatus = "Pending" | "Rejected" | "Successful";
+export type ApplicationStatus = "Draft" | "Pending" | "Completed";
 
 // models::application::NewApplication
 export type NewApplication = {
@@ -156,12 +158,12 @@ export type ApplicationResponse = {
 
 // models::answer::Answer
 export type Answer = {
-  id: number;
-  question_id: number;
-  answer_type: QuestionType;
-  data: AnswerData;
-  created_at: string;
-  updated_at: string;
+  id: number,
+  question_id: number,
+  answer_type: QuestionType,
+  data: AnswerData,
+  created_at: Date,
+  updated_at: Date,
 }
 
 export type AnswerData = string | number | number[];
@@ -183,14 +185,14 @@ export type ApplicationAnswer = {
 };
 
 export type NewRating = {
-  rating: number;
-  comment?: string;
+  rating: number,
+  comment?: string,
 }
 
 export type ApplicationRating = {
   id: number;
   rater_id: number;
-  rater_name: string;
+  rater_name: string
   rating: number;
   comment?: string;
   updated_at: string;
@@ -199,7 +201,7 @@ export type ApplicationRating = {
 // models::campaign::Campaign
 export type CampaignWithDates = {
   id: number;
-  slug: string;
+  slug: string
   organisation_id: number;
   name: string;
   cover_image: string;
@@ -254,14 +256,14 @@ export type LogoError =
   | "ImageStoreFailure";
 
 export type newOrganisation = {
-  admin: number;
-  slug: string;
-  name: string;
+  admin: number,
+  slug: string,
+  name: string
 };
 
 export type Organisation = {
   id: number;
-  slug: string;
+  slug: string
   name: string;
   logo?: string;
   created_at: string;
@@ -291,7 +293,7 @@ export type User = {
   zid: string;
   name: string;
   pronouns: string;
-  gender: UserGender;
+  gender: string;
   degree_name: string;
   degree_starting_year: number;
   role?: UserRole
@@ -299,11 +301,11 @@ export type User = {
 
 // models::user::UserRole
 export enum UserRole {
-  User = "User",
-  SuperUser = "SuperUser"
+  User,
+  SuperUser
 }
 
-export type PostCommentResponse = {
+export type PostCommentRespone = {
   id: number;
   application_id: number;
   commenter_user_id: number;

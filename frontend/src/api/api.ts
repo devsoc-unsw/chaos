@@ -1,19 +1,25 @@
 import type { Json } from "types/api";
 
 export class FetchError extends Error {
+  public status: number;
+
+  public statusText: string;
+
   constructor(
-    public response: Response,
+    public resp: Response,
     public data?: unknown
   ) {
-    super(`HTTP error! status: ${response.status}`);
+    super(resp.statusText);
+
     this.name = "FetchError";
+    this.status = resp.status;
+    this.statusText = resp.statusText;
   }
 }
 
 type Payload = {
   method: string;
   headers: { [k: string]: string };
-  credentials?: RequestCredentials;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body?: any;
 };
@@ -23,12 +29,10 @@ type Params<T> = {
   header?: { [k: string]: string };
   queries?: { [k: string]: string };
   method?: string;
-  credentials?: RequestCredentials;
 } & ({ body?: Json; jsonBody?: true } | { body?: unknown; jsonBody: false }) &
   (T extends void ? { jsonResp: false } : { jsonResp?: true });
 
-const API_BASE_URL = 'http://localhost:8080/api/v1';
-
+// takes in an object
 const API = {
   request: async <T = void>({
     path,
@@ -39,18 +43,16 @@ const API = {
     jsonBody = true,
     jsonResp = true,
   }: Params<T>): Promise<T> => {
-    const baseUrl = API_BASE_URL || '';
-    const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-    const endpoint = new URL(`${baseUrl}/${cleanPath}`, window.location.origin);
+    const endpoint = new URL(`${window.origin}/api/${path}`);
     endpoint.search = new URLSearchParams(queries).toString();
 
     const payload: Payload = {
       method,
       headers: {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         ...(jsonBody && { "Content-Type": "application/json" }),
         ...header,
       },
-      credentials: 'include',
     };
     if (method !== "GET") payload.body = jsonBody ? JSON.stringify(body) : body;
 
@@ -58,6 +60,7 @@ const API = {
     if (!resp.ok) {
       let data;
       try {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         data = await resp.json();
       } catch (e) {
         // just let data be undefined

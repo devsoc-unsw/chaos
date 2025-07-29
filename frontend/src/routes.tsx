@@ -17,7 +17,7 @@ const SignupPage = lazy(() => import("./pages/signup"));
 
 const routes = [
   <Route key="dashboard" path="/dashboard" element={<DashboardPage />} />,
-  <Route key="auth" path="/auth/success" element={<AuthSuccess />} />,
+  <Route key="auth" path="/auth/callback" element={<AuthSuccess />} />,
   <Route key="signup" path="/signup" element={<SignupPage />} />,
   <Route key="landing" path="/" element={<LandingPage />} />,
   <Route key="review" path="/admin/review/:campaignSlug" element={<Review />}>
@@ -33,7 +33,7 @@ const routes = [
   <Route key="Admin" path="/Admin" element={<Admin />} />,
   <Route
     key="create-campaign"
-    path="/Admin/campaign/create/:orgSlug"
+    path="/campaign/create/:orgSlug"
     element={<CampaignCreate />}
   />,
   <Route
