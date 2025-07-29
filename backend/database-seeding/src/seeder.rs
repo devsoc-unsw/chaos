@@ -201,6 +201,7 @@ pub async fn seed_database(mut seeder: Seeder) {
                     id: 0,
                     application_id: 0,
                     campaign_role_id: role_id_1,
+                    preference: 1,
                 }
             ]
         },
@@ -218,6 +219,7 @@ pub async fn seed_database(mut seeder: Seeder) {
                     id: 0,
                     application_id: 0,
                     campaign_role_id: role_id_2,
+                    preference: 1,
                 }
             ]
         },
@@ -313,7 +315,8 @@ pub async fn seed_database(mut seeder: Seeder) {
 
     let email_template_id = Organisation::create_email_template(
         org_id, 
-        "Offer".to_string(), 
+        "Offer".to_string(),
+        "[DevSoc] Position Offer".to_string(),
         template, 
         &seeder.app_state.db, 
         &mut seeder.app_state.snowflake_generator)
