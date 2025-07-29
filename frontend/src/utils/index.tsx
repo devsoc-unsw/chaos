@@ -6,8 +6,6 @@ import Toast from "components/Toast";
 import type { ToastType } from "components/Toast";
 
 import { jwtDecode } from "jwt-decode";
-import { useUser } from "contexts/UserContext";
-import { getSelfInfo } from "api";
 
 
 export function isLogin(): boolean {
@@ -20,14 +18,8 @@ export function isAdmin(): boolean {
 
 // TODO
 export const isLoggedIn = (): boolean => {
-    const userInfo = getSelfInfo();
-    const { isLoggedIn, setUser } = useUser();
-
-
-
-
-    return false;
-    // Boolean(localStorage.AUTH_TOKEN);
+    const token = getStore("AUTH_TOKEN");
+    return Boolean(token);
 }
 
 export const dateToStringForBackend = (dateObject: Date): string =>

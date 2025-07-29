@@ -1,6 +1,6 @@
 use crate::handler::answer::AnswerHandler;
 use crate::handler::application::ApplicationHandler;
-use crate::handler::auth::{google_callback, DevLoginHandler};
+use crate::handler::auth::google_callback;
 use crate::handler::campaign::CampaignHandler;
 use crate::handler::email_template::EmailTemplateHandler;
 use crate::handler::offer::OfferHandler;
@@ -132,9 +132,6 @@ pub async fn app() -> Result<Router, ChaosError> {
     Ok(Router::new()
         .route("/", get(|| async { "Join DevSoc! https://devsoc.app/" }))
         .route("/api/auth/callback/google", get(google_callback))
-        .route("/api/v1/dev/super_admin_login", get(DevLoginHandler::dev_super_admin_login))
-        .route("/api/v1/dev/org_admin_login", get(DevLoginHandler::dev_org_admin_login))
-        .route("/api/v1/dev/user_login", get(DevLoginHandler::dev_user_login))
         .route("/api/v1/user", get(UserHandler::get))
         .route("/api/v1/user/name", patch(UserHandler::update_name))
         .route("/api/v1/user/pronouns", patch(UserHandler::update_pronouns))
