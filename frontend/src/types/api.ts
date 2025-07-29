@@ -202,7 +202,7 @@ export type ApplicationRating = {
 export type CampaignWithDates = {
   id: number;
   slug: string
-  organisation_id: number;
+  organisation_id: string; // Changed to string to handle large integers
   name: string;
   cover_image: string;
   description: string;
@@ -217,7 +217,7 @@ export type Campaign = {
   id: number;
   campaign_slug: string;
   name: string;
-  organisation_id: number;
+  organisation_id: string; // Changed to string to handle large integers
   organisation_slug: string;
   organisation_name: string;
   cover_image: string;
@@ -242,7 +242,7 @@ export type CampaignWithRoles = {
 };
 
 export type NewCampaignInput = {
-  organisation_id: number;
+  organisation_id: string; // Changed to string to handle large integers
   name: string;
   description: string;
   starts_at: string;
@@ -262,7 +262,7 @@ export type newOrganisation = {
 };
 
 export type Organisation = {
-  id: number;
+  id: string; // Changed to string to handle large integers
   slug: string
   name: string;
   logo?: string;

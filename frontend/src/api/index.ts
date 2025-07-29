@@ -88,34 +88,22 @@ export const doSignup = async ({
 //   };
 // };
 
-// todo: update to cookies-based approach
+// Cookies-based approach - HTTP-only cookies are automatically sent with requests
 const authenticatedRequest = <T = void>(
   payload: Parameters<typeof API.request<T>>[0]
 ) => {
-  const token = getStore("AUTH_TOKEN");
-  if (!token) {
-    throw new Error("No token found");
-  }
-
-  return API.request<T>({
-    ...payload,
-    header: {
-      Authorization: `Bearer ${token}`,
-      ...payload.header,
-    },
-  });
+  // With HTTP-only cookies, we don't need to manually add the Authorization header
+  // The cookie will be automatically sent with the request
+  return API.request<T>(payload);
 };
 
 // todo: update to new route
 export const getAllCampaigns = () =>
-  authenticatedRequest<{
-    current_campaigns: CampaignWithRoles[];
-    past_campaigns: CampaignWithRoles[];
-  }>({
-    path: "/campaign/all",
+  authenticatedRequest<Campaign[]>({
+    path: "/v1/campaign",
   });
 
-export const getAdminData = (organisationId: number) =>
+export const getAdminData = (organisationId: string) =>
   authenticatedRequest<{ members: Member[] }>({
     path: `/v1/organisation/${organisationId}/admin`,
   });
@@ -126,7 +114,7 @@ export const getAdminOrgs = () =>
     path: "",
   });
 
-export const getOrganisation = (organisationId: number) =>
+export const getOrganisation = (organisationId: string) =>
   authenticatedRequest<Organisation>({
     path: `/v1/organisation/${organisationId}`,
   });
@@ -144,7 +132,7 @@ export const createOrganisation = (orgData: newOrganisation) =>
     body: { orgData },
   });
 
-export const putOrgLogo = async (orgId: number, logo: File) => {
+export const putOrgLogo = async (orgId: string, logo: File) => {
   const presignedUrl = await authenticatedRequest<string>({
     method: "PATCH",
     path: `/v1/organisation/${orgId}/logo`
@@ -166,7 +154,7 @@ export const newApplication = (campaignId: number, newApp: NewApplication) =>
     body: newApp,
   });
 
-export const doDeleteOrg = (orgId: number) =>
+export const doDeleteOrg = (orgId: string) =>
   authenticatedRequest({
     method: "DELETE",
     path: `/v1/organisation/${orgId}`,
@@ -291,7 +279,7 @@ export const setApplicationStatus = (
 // todo: update to new route
 export const inviteUserToOrg = (
   email: string,
-  organisationId: number,
+  organisationId: string,
   adminLevel: OrganisationRole = "User"
 ) =>
   authenticatedRequest({
