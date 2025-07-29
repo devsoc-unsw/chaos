@@ -7,6 +7,7 @@ import {
   getAdminData,
   getSelfInfo,
   setCampaignCoverImage,
+  getOrganisationBySlug,
 } from "api";
 import { FetchError } from "api/api";
 import { dateToStringForBackend, pushToast } from "utils";
@@ -19,20 +20,34 @@ import { ArrowIcon, NextButton, NextWrapper } from "./createCampaign.styled";
 import type { Answers, Question, Role } from "./types";
 
 const CreateCampaign = () => {
-  const orgId = Number(useParams().orgId);
+  const { orgSlug } = useParams();
   const navigate = useNavigate();
+  const [orgId, setOrgId] = useState<number | null>(null);
+
   useEffect(() => {
     const fetchData = async () => {
+      try {
+        if (!orgSlug) {
+          navigate("/admin");
+          return;
+        }
+
       const user = await getSelfInfo();
-      const { members: admins } = await getAdminData(orgId);
+        const org = await getOrganisationBySlug(orgSlug);
+        setOrgId(org.id);
+        const { members: admins } = await getAdminData(org.id);
       const isAdmin = admins.find((member) => member.id === user.id) !== undefined;
       if (!isAdmin) {
         navigate("/");
+        }
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        navigate("/admin");
       }
     };
 
     void fetchData();
-  }, []);
+  }, [orgSlug, navigate]);
 
   const [tab, setTab] = useState(0);
   const [campaignName, setCampaignName] = useState("");
@@ -170,6 +185,11 @@ const CreateCampaign = () => {
   };
 
   const submitHandler = async (isDraft: boolean) => {
+    if (!orgId) {
+      pushToast("Create Campaign", "Organisation not found", "error");
+      return;
+    }
+
     if (campaignName.length === 0 && !isDraft) {
       setError("Campaign name is required");
       return;
@@ -196,11 +216,10 @@ const CreateCampaign = () => {
     }
     setError(null);
 
-    // const coverSend = cover ? cover.slice(cover.indexOf(";base64,") + 8) : "";
     const startTimeDateString = dateToStringForBackend(startDate);
     const endTimeDateString = dateToStringForBackend(endDate);
     const campaignSend = {
-      organisation_id: Number(orgId),
+      organisation_id: orgId,
       name: campaignName,
       description,
       starts_at: startTimeDateString,

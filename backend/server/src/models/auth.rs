@@ -26,10 +26,10 @@ pub struct AuthRequest {
     pub code: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct GoogleUserProfile {
-    pub name: String,
     pub email: String,
+    pub name: String,
 }
 
 pub struct AuthRedirect;

@@ -17,8 +17,8 @@ pub struct Organisation {
     pub logo: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-    pub campaigns: Vec<OrganisationCampaign>, // Awaiting Campaign to be complete - remove comment once done
-    pub organisation_admins: Vec<i64>,
+    pub campaigns: Option<Vec<i64>>,
+    pub organisation_admins: Option<Vec<i64>>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -69,6 +69,11 @@ pub struct AdminToRemove {
 #[derive(Deserialize)]
 pub struct SlugCheck {
     pub slug: String,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct AdminOrgsResponse {
+    pub organisations: Vec<Organisation>,
 }
 
 impl Organisation {
@@ -461,5 +466,27 @@ impl Organisation {
         .await?;
 
         Ok(id)
+    }
+
+    pub async fn get_admin_orgs(
+        user_id: i64,
+        pool: &Pool<Postgres>,
+    ) -> Result<Vec<Organisation>, ChaosError> {
+        let orgs = sqlx::query_as!(
+            Organisation,
+            r#"
+            SELECT o.id, o.slug, o.name, o.logo, o.created_at, o.updated_at,
+                   ARRAY[]::bigint[] as campaigns,
+                   ARRAY[]::bigint[] as organisation_admins
+            FROM organisations o
+            JOIN organisation_members om ON o.id = om.organisation_id
+            WHERE om.user_id = $1 AND om.role = 'Admin'
+            "#,
+            user_id
+        )
+        .fetch_all(pool)
+        .await?;
+
+        Ok(orgs)
     }
 }

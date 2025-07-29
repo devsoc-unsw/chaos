@@ -1,6 +1,6 @@
 use crate::handler::answer::AnswerHandler;
 use crate::handler::application::ApplicationHandler;
-use crate::handler::auth::google_callback;
+use crate::handler::auth::{google_callback, google_login};
 use crate::handler::campaign::CampaignHandler;
 use crate::handler::email_template::EmailTemplateHandler;
 use crate::handler::offer::OfferHandler;
@@ -23,6 +23,9 @@ use sqlx::{Pool, Postgres};
 use std::env;
 use oauth2::basic::BasicClient;
 use crate::service::oauth2::build_oauth_client;
+use tower_http::cors::CorsLayer;
+use http::header::{HeaderValue, HeaderName};
+use http::Method;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -65,13 +68,7 @@ pub async fn app() -> Result<Router, ChaosError> {
     let ctx = reqwest::Client::new();
 
     // Initialise oauth2 client
-    let client_id = env::var("GOOGLE_CLIENT_ID")
-        .expect("Error getting GOOGLE_CLIENT_ID")
-        .to_string();
-    let client_secret = env::var("GOOGLE_CLIENT_SECRET")
-        .expect("Error getting GOOGLE_CLIENT_SECRET")
-        .to_string();
-    let oauth2_client = build_oauth_client(client_id, client_secret);
+    let oauth2_client = build_oauth_client();
 
     // Initialise Snowflake Generator
     let snowflake_generator = SnowflakeIdGenerator::new(1, 1);
@@ -96,9 +93,32 @@ pub async fn app() -> Result<Router, ChaosError> {
         email_credentials,
     };
 
+    // Configure CORS
+    let allowed_headers = vec![
+        HeaderName::from_static("content-type"),
+        HeaderName::from_static("authorization"),
+        HeaderName::from_static("cookie"),
+    ];
+
+    let allowed_methods = vec![
+        Method::GET,
+        Method::POST,
+        Method::PUT,
+        Method::DELETE,
+        Method::PATCH,
+        Method::OPTIONS,
+    ];
+
+    let cors = CorsLayer::new()
+        .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())
+        .allow_methods(allowed_methods)
+        .allow_headers(allowed_headers)
+        .allow_credentials(true);
+
     Ok(Router::new()
         .route("/", get(|| async { "Join DevSoc! https://devsoc.app/" }))
         .route("/api/auth/callback/google", get(google_callback))
+        .route("/api/auth/login/google", get(google_login))
         .route("/api/v1/user", get(UserHandler::get))
         .route("/api/v1/user/name", patch(UserHandler::update_name))
         .route("/api/v1/user/pronouns", patch(UserHandler::update_pronouns))
@@ -162,7 +182,11 @@ pub async fn app() -> Result<Router, ChaosError> {
         )
         .route(
             "/api/v1/organisation/:organisation_id/admin",
-                delete(OrganisationHandler::remove_admin),
+            get(OrganisationHandler::get_admin_data),
+        )
+        .route(
+            "/api/v1/organisation/admin",
+            get(OrganisationHandler::get_admin_orgs),
         )
         .route(
             "/api/v1/rating/:rating_id",
@@ -299,5 +323,6 @@ pub async fn app() -> Result<Router, ChaosError> {
             "/api/v1/offer/:offer_id/send",
             post(OfferHandler::send_offer),
         )
-        .with_state(state))
+        .with_state(state)
+        .layer(cors))
 }

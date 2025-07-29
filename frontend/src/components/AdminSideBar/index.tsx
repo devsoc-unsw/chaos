@@ -60,14 +60,19 @@ const AdminSidebar = ({
   const onUpload = () => {
     const createOrg = async () => {
       if (uploadedImage.image && inputText) {
-        const { id } = await createOrganisation(inputText);
-        const logo = await putOrgLogo(id, uploadedImage.image);
+        const { id } = await createOrganisation({
+          name: inputText,
+          slug: inputText.toLowerCase().replace(/\s+/g, '-'),
+          admin: 1, // TODO: Get actual user ID
+        });
+        const logoUrl = await putOrgLogo(id, uploadedImage.image);
         const newOrgList = [
           ...orgList,
           {
             id,
-            icon: logo,
+            icon: logoUrl,
             orgName: inputText,
+            name: inputText,
             campaigns: [],
             members: [],
           },

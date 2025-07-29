@@ -192,7 +192,13 @@ const AdminContent = ({
           <button
             tw="text-gray-500 transition-colors hover:text-gray-800"
             type="button"
-            onClick={() => navigate(`/campaign/create/${id}`)}
+            onClick={() => {
+              if (!id) {
+                pushToast("Create Campaign", "Please select an organisation first", "error");
+                return;
+              }
+              navigate(`/campaign/create/${id}`);
+            }}
           >
             <PlusIcon tw="h-12 w-12" />
           </button>

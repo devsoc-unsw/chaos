@@ -23,8 +23,11 @@ type Params<T> = {
   header?: { [k: string]: string };
   queries?: { [k: string]: string };
   method?: string;
+  credentials?: RequestCredentials;
 } & ({ body?: Json; jsonBody?: true } | { body?: unknown; jsonBody: false }) &
   (T extends void ? { jsonResp: false } : { jsonResp?: true });
+
+const API_BASE_URL = 'http://localhost:8080/api/v1';
 
 const API = {
   request: async <T = void>({
@@ -36,8 +39,9 @@ const API = {
     jsonBody = true,
     jsonResp = true,
   }: Params<T>): Promise<T> => {
-    const baseUrl = import.meta.env.VITE_API_URL || '/api';
-    const endpoint = new URL(`${baseUrl}/${path}`);
+    const baseUrl = API_BASE_URL || '';
+    const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+    const endpoint = new URL(`${baseUrl}/${cleanPath}`, window.location.origin);
     endpoint.search = new URLSearchParams(queries).toString();
 
     const payload: Payload = {

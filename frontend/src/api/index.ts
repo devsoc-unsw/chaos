@@ -30,7 +30,6 @@ import {
   type ApplicationDetails,
   type NewRating,
   type Answer,
-  type NewAnswer,
   QuestionType,
   AnswerData,
 } from "../types/api";
@@ -38,11 +37,9 @@ import {
 // todo: update to new route
 export const authenticate = async (oauthToken: string) =>
   API.request<AuthenticateResponse>({
-    method: "POST",
-    path: `/auth/signin`,
-    body: {
-      oauth_token: oauthToken,
-    },
+    method: "GET",
+    path: `/auth/callback/google?code=${oauthToken}`,
+    credentials: 'include', // Ensure cookies are sent with the request
   });
 
 // todo: update to new route
@@ -56,7 +53,7 @@ export const doSignup = async (
 ) =>
   API.request<AuthenticateResponse>({
     method: "POST",
-    path: `/auth/signup`,
+    path: `/user/signup`,
     body: {
       signup_token: getStore("signup_token"),
       zid,
@@ -88,54 +85,49 @@ const authenticatedRequest = <T = void>(
 ) => {
   return API.request<T>({
     ...payload,
-    header: {
-      ...payload.header,
-    },
+    credentials: 'include', // This ensures cookies are sent with the request
   });
 };
 
 // todo: update to new route
 export const getAllCampaigns = () =>
-  authenticatedRequest<{
-    current_campaigns: CampaignWithRoles[];
-    past_campaigns: CampaignWithRoles[];
-  }>({
-    path: "/v1/campaign/all",
+  authenticatedRequest<CampaignWithRoles[]>({
+    path: "/campaign",
   });
 
 export const getAdminData = (organisationId: number) =>
   authenticatedRequest<{ members: Member[] }>({
-    path: `/v1/organisation/${organisationId}/admin`,
+    path: `/organisation/${organisationId}/admin`,
   });
 
 // todo: create backend route + update referencing components
 export const getAdminOrgs = () =>
   authenticatedRequest<{ organisations: Organisation[] }>({
-    path: "/v1/organisation/admin",
+    path: "/organisation/admin",
   });
 
 export const getOrganisation = (organisationId: number) =>
   authenticatedRequest<Organisation>({
-    path: `/v1/organisation/${organisationId}`,
+    path: `/organisation/${organisationId}`,
   });
 
 export const getOrganisationBySlug = (organisationSlug: string) =>
   authenticatedRequest<Organisation>({
-    path: `/v1/organisation/slug/${organisationSlug}`,
+    path: `/organisation/slug/${organisationSlug}`,
   });
 
 // todo: update all referencing components
 export const createOrganisation = (orgData: newOrganisation) =>
   authenticatedRequest<Organisation>({
     method: "POST",
-    path: "/v1/organisation/",
+    path: "/organisation",
     body: orgData,
   });
 
 export const putOrgLogo = async (orgId: number, logo: File) => {
   const presignedUrl = await authenticatedRequest<string>({
     method: "PATCH",
-    path: `/v1/organisation/${orgId}/logo`,
+    path: `/organisation/${orgId}/logo`,
   });
 
   await fetch(presignedUrl, {
@@ -145,75 +137,77 @@ export const putOrgLogo = async (orgId: number, logo: File) => {
     },
     body: logo
   });
+
+  return presignedUrl;
 };
 
 export const newApplication = (campaignId: number, newApp: NewApplication) =>
   authenticatedRequest<Application>({
     method: "POST",
-    path: `/v1/campaign/${campaignId}/application/`,
+    path: `/campaign/${campaignId}/application/`,
     body: newApp,
   });
 
 export const doDeleteOrg = (orgId: number) =>
   authenticatedRequest({
     method: "DELETE",
-    path: `/v1/organisation/${orgId}`,
+    path: `/organisation/${orgId}`,
     jsonResp: false,
   });
 
 export const getCampaign = (campaignId: number) =>
-  authenticatedRequest<Campaign>({ path: `/v1/campaign/${campaignId}` });
+  authenticatedRequest<Campaign>({ path: `/campaign/${campaignId}` });
 
 export const getCampaignBySlugs = (organisationSlug: string, campaignSlug: string) =>
   authenticatedRequest<Campaign>({
-    path: `/v1/campaign/slug/${organisationSlug}/${campaignSlug}`,
+    path: `/campaign/slug/${organisationSlug}/${campaignSlug}`,
   });
 
 export const getCampaignRoles = (campaignId: number) =>
   authenticatedRequest<Role[]>({
-    path: `/v1/campaign/${campaignId}/roles`,
+    path: `/campaign/${campaignId}/roles`,
   });
 
 export const getRoleApplications = (roleId: number) =>
   authenticatedRequest<ApplicationDetails[]>({
-    path: `/v1/role/${roleId}/applications`,
+    path: `/role/${roleId}/applications`,
   });
 
 export const getRoleQuestions = (campaignId: number, roleId: number) =>
   authenticatedRequest<QuestionResponse[]>({
-    path: `/v1/campaign/${campaignId}/role/${roleId}/questions`,
+    path: `/campaign/${campaignId}/role/${roleId}/questions`,
   });
 
 // todo: update all referencing components
 export const getCommonQuestions = (campaignID: number) =>
   authenticatedRequest<QuestionResponse[]>({
-    path: `/v1/campaign/${campaignID}/questions/common`
+    path: `/campaign/${campaignID}/questions/common`
   });
 
 export const setApplicationRating = (applicationId: number, rating: NewRating) =>
   authenticatedRequest({
     method: "PUT",
-    path: `/v1/application/${applicationId}/rating`,
+    path: `/application/${applicationId}/rating`,
     body: rating,
     jsonResp: false,
   });
 
 export const getSelfInfo = () =>
-  authenticatedRequest<User>({ path: "/v1/user" });
+  authenticatedRequest<User>({ path: "/user" });
 
 export const getApplicationAnswers = (applicationId: number, roleId: number) =>
   authenticatedRequest<Answer[]>({
-    path: `/v1/application/${applicationId}/answers/role/${roleId}`,
+    path: `/application/${applicationId}/answers/role/${roleId}`,
   });
 
 export const getCommonApplicationAnswers = (applicationId: number) => 
   authenticatedRequest<Answer[]>({
-    path: `/v1/application/${applicationId}/answers/common`,
+    path: `/application/${applicationId}/answers/common`,
   });
 
 export const getApplicationRatings = (applicationId: number) =>
   authenticatedRequest<{ ratings: ApplicationRating[] }>({
-    path: `/v1/application/${applicationId}/ratings`,
+    path: `/application/${applicationId}/ratings`,
   });
 
 // todo: update all referencing components
@@ -224,11 +218,51 @@ export const submitAnswer = (
 ) =>
   authenticatedRequest({
     method: "POST",
-    path: `/v1/application/${applicationId}/answer/`,
+    path: `/application/${applicationId}/answer`,
     body: {
       question_id: questionId,
       answer_data: answerData,
     },
+    jsonResp: false,
+  });
+
+export const updateAnswer = (
+  answerId: number,
+  answerData: AnswerData
+) =>
+  authenticatedRequest({
+    method: "PATCH",
+    path: `/answer/${answerId}`,
+    body: {
+      answer_data: answerData,
+    },
+    jsonResp: false,
+  });
+
+export const deleteAnswer = (answerId: number) =>
+  authenticatedRequest({
+    method: "DELETE",
+    path: `/answer/${answerId}`,
+    jsonResp: false,
+  });
+
+export const updateApplicationRoles = (
+  applicationId: number,
+  roleIds: number[]
+) =>
+  authenticatedRequest({
+    method: "PATCH",
+    path: `/application/${applicationId}/roles`,
+    body: {
+      role_ids: roleIds,
+    },
+    jsonResp: false,
+  });
+
+export const submitApplication = (applicationId: number) =>
+  authenticatedRequest({
+    method: "POST",
+    path: `/application/${applicationId}/submit`,
     jsonResp: false,
   });
 
@@ -240,15 +274,15 @@ export const createCampaign = (
 ) =>
   authenticatedRequest<Campaign>({
     method: "POST",
-    path: "/campaign",
+    path: `/organisation/${campaign.organisation_id}/campaign`,
     body: { campaign, roles, questions },
   });
 
 // todo: update to new route
 export const setCampaignCoverImage = (campaignId: number, cover_image: File) =>
   authenticatedRequest<string>({
-    method: "PUT",
-    path: `/campaign/${campaignId}/cover_image`,
+    method: "PATCH",
+    path: `/campaign/${campaignId}/banner`,
     body: cover_image,
     jsonBody: false,
   });
@@ -257,7 +291,7 @@ export const setCampaignCoverImage = (campaignId: number, cover_image: File) =>
 export const deleteCampaign = (id: number) =>
   authenticatedRequest({
     method: "DELETE",
-    path: `/v1/campaign/${id}`,
+    path: `/campaign/${id}`,
     jsonResp: false,
   });
 
@@ -267,8 +301,8 @@ export const setApplicationStatus = (
   status: ApplicationStatus
 ) =>
   authenticatedRequest({
-    method: "PUT",
-    path: `/v1/application/${applicationId}/status`,
+    method: "PATCH",
+    path: `/application/${applicationId}/status`,
     body: { status },
     jsonResp: false,
   });
@@ -279,8 +313,8 @@ export const setApplicationPrivateStatus = (
   status: ApplicationStatus
 ) =>
   authenticatedRequest({
-    method: "PUT",
-    path: `/v1/application/${applicationId}/private-status`,
+    method: "PATCH",
+    path: `/application/${applicationId}/private`,
     body: { status },
     jsonResp: false,
   });
@@ -293,10 +327,10 @@ export const inviteUserToOrg = (
 ) =>
   authenticatedRequest({
     method: "POST",
-    path: `/organisation/${organisationId}/invite`,
+    path: `/organisation/${organisationId}/members`,
     body: {
       email,
-      admin_level: adminLevel,
+      role: adminLevel,
     },
     jsonResp: false,
   });
@@ -370,36 +404,76 @@ export const updateUserProfile = {
   name: (name: string) =>
     authenticatedRequest({
       method: "PATCH",
-      path: "/v1/user/name",
+      path: "/user/name",
       body: { name },
       jsonResp: false,
     }),
   pronouns: (pronouns: string) =>
     authenticatedRequest({
       method: "PATCH",
-      path: "/v1/user/pronouns",
+      path: "/user/pronouns",
       body: { pronouns },
       jsonResp: false,
     }),
   gender: (gender: UserGender) =>
     authenticatedRequest({
       method: "PATCH",
-      path: "/v1/user/gender",
+      path: "/user/gender",
       body: { gender },
       jsonResp: false,
     }),
   zid: (zid: string) =>
     authenticatedRequest({
       method: "PATCH",
-      path: "/v1/user/zid",
+      path: "/user/zid",
       body: { zid },
       jsonResp: false,
     }),
   degree: (degree_name: string, degree_starting_year: number) =>
     authenticatedRequest({
       method: "PATCH",
-      path: "/v1/user/degree",
+      path: "/user/degree",
       body: { degree_name, degree_starting_year },
       jsonResp: false,
     }),
 };
+
+export const updateUserName = (name: string) =>
+  authenticatedRequest({
+    method: "PATCH",
+    path: "/user/name",
+    body: { name },
+    jsonResp: false,
+  });
+
+export const updateUserPronouns = (pronouns: string) =>
+  authenticatedRequest({
+    method: "PATCH",
+    path: "/user/pronouns",
+    body: { pronouns },
+    jsonResp: false,
+  });
+
+export const updateUserGender = (gender: UserGender) =>
+  authenticatedRequest({
+    method: "PATCH",
+    path: "/user/gender",
+    body: { gender },
+    jsonResp: false,
+  });
+
+export const updateUserZid = (zid: string) =>
+  authenticatedRequest({
+    method: "PATCH",
+    path: "/user/zid",
+    body: { zid },
+    jsonResp: false,
+  });
+
+export const updateUserDegree = (degree: string) =>
+  authenticatedRequest({
+    method: "PATCH",
+    path: "/user/degree",
+    body: { degree },
+    jsonResp: false,
+  });

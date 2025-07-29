@@ -1,5 +1,5 @@
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink, Link as RouterLink } from "react-router-dom";
 import tw, { styled } from "twin.macro";
 
@@ -22,8 +22,16 @@ const NavButton = styled(NavLink, {
 });
 
 const NavBar = ({ campaign }: { campaign: string }) => {
-  const loggedIn = isLoggedIn();
+  const [loggedIn, setLoggedIn] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
+
+  useEffect(() => {
+    const checkLogin = async () => {
+      const isUserLoggedIn = await isLoggedIn();
+      setLoggedIn(isUserLoggedIn);
+    };
+    checkLogin();
+  }, []);
 
   return (
     <header tw="fixed inset-x-0 z-10 bg-white bg-gradient-to-r from-[#9dbbfb55] to-[#a78bfa55] shadow-md">

@@ -5,6 +5,9 @@
 # backend can only be built and run if the database is also running, due to
 # sqlx.
 
+# Add cargo binary path to PATH
+export PATH="$HOME/.cargo/bin:$PATH"
+
 # Write .env file to temporary file.
 tmp_env_file="$(mktemp)"
 trap 'rm -rf "$tmp_env_file"' EXIT INT TERM
@@ -13,7 +16,7 @@ DATABASE_URL="postgres://user:password@localhost:5432/chaos"
 JWT_SECRET="test_secret"
 GOOGLE_CLIENT_ID="test"
 GOOGLE_CLIENT_SECRET="test"
-GOOGLE_REDIRECT_URI="http://localhost:3000/auth/callback"
+GOOGLE_REDIRECT_URI="http://localhost:8080/api/auth/callback/google"
 S3_BUCKET_NAME="chaos-storage"
 S3_ACCESS_KEY="test_access_key"
 S3_SECRET_KEY="test_secret_key"

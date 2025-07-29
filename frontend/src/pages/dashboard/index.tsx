@@ -52,8 +52,12 @@ const Dashboard = () => {
         throw e;
       }
 
+      const now = new Date();
+      const current = campaigns.filter(c => new Date(c.campaign.ends_at) >= now);
+      const past = campaigns.filter(c => new Date(c.campaign.ends_at) < now);
+
       const organisations = await Promise.all(
-        [...campaigns.current_campaigns, ...campaigns.past_campaigns].map((c) =>
+        [...current, ...past].map((c) =>
           getOrganisation(c.campaign.organisation_id)
         )
       );
@@ -61,10 +65,9 @@ const Dashboard = () => {
         Object.fromEntries(organisations.map((org) => [org.id, org]))
       );
 
-      const current = campaigns.current_campaigns;
       setMyCampaigns(current.filter((c) => c.applied_for.length));
       setCurrentCampaigns(current.filter((c) => !c.applied_for.length));
-      setPastCampaigns(campaigns.past_campaigns);
+      setPastCampaigns(past);
       setIsLoading(false);
     };
 

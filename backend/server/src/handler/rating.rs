@@ -1,6 +1,6 @@
 use crate::models::app::AppState;
 use crate::models::auth::{
-    ApplicationReviewerGivenApplicationId, ApplicationReviewerGivenRatingId, RatingCreator,
+    ApplicationReviewerGivenRatingId, RatingCreator,
 };
 use crate::models::error::ChaosError;
 use crate::models::rating::{NewRating, Rating};

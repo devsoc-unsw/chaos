@@ -5,7 +5,7 @@ use crate::models::campaign::{Campaign, NewCampaign};
 use crate::models::email_template::{EmailTemplate, NewEmailTemplate};
 use crate::models::error::ChaosError;
 use crate::models::organisation::{
-    AdminToRemove, AdminUpdateList, NewOrganisation, Organisation, SlugCheck,
+    AdminToRemove, AdminUpdateList, NewOrganisation, Organisation, SlugCheck, AdminOrgsResponse,
 };
 use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
@@ -221,5 +221,22 @@ impl OrganisationHandler {
         let email_templates = EmailTemplate::get_all_by_organisation(id, &state.db).await?;
 
         Ok((StatusCode::OK, Json(email_templates)))
+    }
+
+    pub async fn get_admin_orgs(
+        State(state): State<AppState>,
+        _user: AuthUser,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let orgs = Organisation::get_admin_orgs(_user.user_id, &state.db).await?;
+        Ok((StatusCode::OK, Json(AdminOrgsResponse { organisations: orgs })))
+    }
+
+    pub async fn get_admin_data(
+        State(state): State<AppState>,
+        Path(id): Path<i64>,
+        _user: AuthUser,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let members = Organisation::get_members(id, &state.db).await?;
+        Ok((StatusCode::OK, Json(members)))
     }
 }

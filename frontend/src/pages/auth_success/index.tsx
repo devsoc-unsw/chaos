@@ -3,95 +3,82 @@ import { useNavigate } from "react-router-dom";
 
 import { FetchError } from "api/api";
 
-import { authenticate } from "../../api";
+import { getSelfInfo } from "../../api";
 import { LoadingIndicator } from "../../components";
 import useQuery from "../../hooks/useQuery";
-import { pushToast, setStore } from "../../utils";
-import { SIGNUP_REQUIRED } from "../../utils/constants";
-
-import type { AuthenticateErrResponse, AuthenticateResponse } from "types/api";
+import { pushToast } from "../../utils";
 
 const AuthSuccess = () => {
   const query = useQuery();
   const navigate = useNavigate();
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [needsSignup, setNeedsSignup] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState({ message: "" });
 
   useEffect(() => {
-    async function attemptAuth() {
-      const code = query.get("code");
-      console.log(code);
-      if (code) {
-        let data: AuthenticateResponse | AuthenticateErrResponse;
-        try {
-          data = await authenticate(code);
+    async function checkAuth() {
+      try {
+        console.log("Checking authentication status...");
+        const user = await getSelfInfo();
+        console.log("Authentication successful:", user);
+        localStorage.setItem("name", user.name);
+        setIsAuthenticated(true);
         } catch (err) {
+        console.error("Authentication error:", err);
           if (err instanceof FetchError) {
-            data = (await err.resp.json()) as AuthenticateErrResponse;
-          } else {
-            console.error(err);
-            if (err instanceof Error) {
-              setError(err);
-            }
-            setError({ message: "An unknown error occurred" });
-            setIsLoading(false);
-            return;
-          }
-        }
-
-        if (typeof data === "string") {
-          // wtf do we do here
-        } else if (SIGNUP_REQUIRED in data) {
-          setNeedsSignup(true);
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          setStore("name", data[SIGNUP_REQUIRED].name!);
-          setStore("signup_token", data[SIGNUP_REQUIRED].signup_token);
+          const errorMessage = err.message || "Unknown error";
+          console.error("Fetch error details:", errorMessage);
+          setError({ message: `Authentication failed: ${errorMessage}` });
         } else {
-          localStorage.setItem("name", data.name);
-          localStorage.setItem("AUTH_TOKEN", data.token);
-          setIsAuthenticated(true);
+          console.error("Unknown error:", err);
+          setError({ message: "An unknown error occurred during authentication" });
         }
+      } finally {
         setIsLoading(false);
       }
     }
 
-    void attemptAuth();
+    void checkAuth();
   }, []);
 
   useEffect(() => {
-    if (needsSignup) {
-      navigate("/signup");
-    } else if (isAuthenticated) {
+    if (isAuthenticated) {
       pushToast("Authenticated", "Logged in successfully", "success");
       navigate("/dashboard");
     }
-  }, [needsSignup, isAuthenticated]);
-
-  const renderIsAuthenticated = () =>
-    isAuthenticated ? (
-      <div>
-        <h1>Redirecting you...</h1>
-      </div>
-    ) : (
-      <div>
-        <h1>Not Authenticated</h1>
-        Error: {error.message}
-      </div>
-    );
+  }, [isAuthenticated, navigate]);
 
   if (isLoading) {
     return (
-      <>
+      <div tw="flex flex-col items-center justify-center gap-4">
         <div>Authenticating...</div>
         <LoadingIndicator />
-      </>
+      </div>
     );
   }
 
-  return renderIsAuthenticated();
+  if (error.message) {
+    return (
+      <div tw="flex flex-col items-center justify-center gap-4">
+        <h1 tw="text-xl font-semibold text-red-600">Authentication Failed</h1>
+        <p tw="text-gray-600">{error.message}</p>
+        <button
+          tw="rounded bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
+          onClick={() => navigate("/")}
+        >
+          Return to Home
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div tw="flex flex-col items-center justify-center gap-4">
+      <h1>Redirecting you...</h1>
+      <LoadingIndicator />
+    </div>
+  );
 };
 
 export default AuthSuccess;

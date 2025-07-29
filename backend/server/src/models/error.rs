@@ -75,11 +75,18 @@ impl IntoResponse for ChaosError {
             ChaosError::ApplicationClosed => (StatusCode::BAD_REQUEST, "Application closed").into_response(),
             ChaosError::CampaignClosed => (StatusCode::BAD_REQUEST, "Campaign closed").into_response(),
             ChaosError::DatabaseError(db_error) => match db_error {
-                // We only care about the RowNotFound error, as others are miscellaneous DB errors.
                 sqlx::Error::RowNotFound => (StatusCode::NOT_FOUND, "Not found").into_response(),
-                _ => (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response(),
+                _ => (StatusCode::INTERNAL_SERVER_ERROR, format!("Database error: {}", db_error)).into_response(),
             },
-            _ => (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response(),
+            ChaosError::ReqwestError(e) => (StatusCode::INTERNAL_SERVER_ERROR, format!("HTTP request error: {}", e)).into_response(),
+            ChaosError::OAuthError(e) => (StatusCode::INTERNAL_SERVER_ERROR, format!("OAuth error: {}", e)).into_response(),
+            ChaosError::StorageError(e) => (StatusCode::INTERNAL_SERVER_ERROR, format!("Storage error: {}", e)).into_response(),
+            ChaosError::DotEnvyError(e) => (StatusCode::INTERNAL_SERVER_ERROR, format!("Environment error: {}", e)).into_response(),
+            ChaosError::TemplateError(e) => (StatusCode::INTERNAL_SERVER_ERROR, format!("Template error: {}", e)).into_response(),
+            ChaosError::TemplateRendorError(e) => (StatusCode::INTERNAL_SERVER_ERROR, format!("Template render error: {}", e)).into_response(),
+            ChaosError::LettreError(e) => (StatusCode::INTERNAL_SERVER_ERROR, format!("Email error: {}", e)).into_response(),
+            ChaosError::AddressError(e) => (StatusCode::INTERNAL_SERVER_ERROR, format!("Email address error: {}", e)).into_response(),
+            ChaosError::SmtpTransportError(e) => (StatusCode::INTERNAL_SERVER_ERROR, format!("SMTP error: {}", e)).into_response(),
         }
     }
 }

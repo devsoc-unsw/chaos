@@ -40,7 +40,14 @@ const Admin = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      try {
       const { organisations } = await getAdminOrgs();
+        
+        if (!organisations) {
+          setOrgList([]);
+          setLoading(false);
+          return;
+        }
 
       setOrgList(
         organisations.map((item) => ({
@@ -48,8 +55,8 @@ const Admin = () => {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           icon: item.logo!,
           orgName: item.name,
-          campaigns: item.campaigns,
-          members: item.members,
+            campaigns: item.campaigns || [],
+            members: item.members || [],
         }))
       );
       if (organisations.length > 0) {
@@ -57,7 +64,7 @@ const Admin = () => {
         const org = organisations[orgSelected];
 
         setCampaigns(
-          org.campaigns.map((item) => ({
+            (org.campaigns || []).map((item) => ({
             id: item.id,
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             image: item.cover_image!,
@@ -68,15 +75,19 @@ const Admin = () => {
         );
 
         setMembers(
-          org.members.map((item) => ({
+            (org.members || []).map((item) => ({
             id: item.id,
             name: item.display_name,
             role: item.role,
           }))
         );
       }
-
+      } catch (error) {
+        console.error('Error fetching admin data:', error);
+        setOrgList([]);
+      } finally {
       setLoading(false);
+      }
     };
 
     void fetchData();
