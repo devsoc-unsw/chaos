@@ -45,6 +45,8 @@ CREATE TABLE answers (
   id BIGINT PRIMARY KEY,
   application_id BIGINT NOT NULL,
   question_id BIGINT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT FK_answers_applications
       FOREIGN KEY(application_id)
           REFERENCES applications(id)

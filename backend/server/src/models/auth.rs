@@ -1,3 +1,9 @@
+//! Authentication and authorization module for the Chaos application.
+//! 
+//! This module provides functionality for handling user authentication and authorization,
+//! including OAuth integration with Google, role-based access control, and various
+//! permission checks for different parts of the application.
+
 use crate::models::app::AppState;
 use crate::models::error::ChaosError;
 use crate::service::answer::user_is_answer_owner;
@@ -20,18 +26,29 @@ use axum::{async_trait, RequestPartsExt};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-// tells the web framework how to take the url query params they will have
+/// Request structure for OAuth authentication.
+/// 
+/// Contains the authorization code received from the OAuth provider.
 #[derive(Deserialize, Serialize)]
 pub struct AuthRequest {
+    /// Authorization code from the OAuth provider
     pub code: String,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+/// User profile information received from Google OAuth.
+/// 
+/// Contains basic user information provided by Google after successful authentication.
+#[derive(Deserialize, Serialize)]
 pub struct GoogleUserProfile {
-    pub email: String,
+    /// User's full name
     pub name: String,
+    /// User's email address
+    pub email: String,
 }
 
+/// Response type for authentication redirects.
+/// 
+/// Handles redirecting users to the appropriate authentication page.
 pub struct AuthRedirect;
 
 impl IntoResponse for AuthRedirect {
@@ -41,13 +58,19 @@ impl IntoResponse for AuthRedirect {
     }
 }
 
+/// Authenticated user information.
+/// 
+/// Contains the user ID of the currently authenticated user.
 #[derive(Deserialize, Serialize)]
 pub struct AuthUser {
+    /// ID of the authenticated user
     pub user_id: i64,
 }
 
-// extractor - takes a request, and we define what we do to it,
-// returns the struct of the type defined
+/// Extractor for authenticated users.
+/// 
+/// This extractor is used in route handlers to ensure that the request
+/// comes from an authenticated user.
 #[async_trait]
 impl<S> FromRequestParts<S> for AuthUser
 where
@@ -64,11 +87,19 @@ where
     }
 }
 
+/// Super user information.
+/// 
+/// Contains the user ID of a user with super user privileges.
 #[derive(Deserialize, Serialize)]
 pub struct SuperUser {
+    /// ID of the super user
     pub user_id: i64,
 }
 
+/// Extractor for super users.
+/// 
+/// This extractor is used in route handlers to ensure that the request
+/// comes from a user with super user privileges.
 #[async_trait]
 impl<S> FromRequestParts<S> for SuperUser
 where
@@ -87,10 +118,18 @@ where
     }
 }
 
+/// Organization administrator information.
+/// 
+/// Contains the user ID of a user with organization administrator privileges.
 pub struct OrganisationAdmin {
+    /// ID of the organization administrator
     pub user_id: i64,
 }
 
+/// Extractor for organization administrators.
+/// 
+/// This extractor is used in route handlers to ensure that the request
+/// comes from a user with organization administrator privileges.
 #[async_trait]
 impl<S> FromRequestParts<S> for OrganisationAdmin
 where
@@ -116,10 +155,18 @@ where
     }
 }
 
+/// Campaign administrator information.
+/// 
+/// Contains the user ID of a user with campaign administrator privileges.
 pub struct CampaignAdmin {
+    /// ID of the campaign administrator
     pub user_id: i64,
 }
 
+/// Extractor for campaign administrators.
+/// 
+/// This extractor is used in route handlers to ensure that the request
+/// comes from a user with campaign administrator privileges.
 #[async_trait]
 impl<S> FromRequestParts<S> for CampaignAdmin
 where
@@ -145,10 +192,18 @@ where
     }
 }
 
+/// Role administrator information.
+/// 
+/// Contains the user ID of a user with role administrator privileges.
 pub struct RoleAdmin {
+    /// ID of the role administrator
     pub user_id: i64,
 }
 
+/// Extractor for role administrators.
+/// 
+/// This extractor is used in route handlers to ensure that the request
+/// comes from a user with role administrator privileges.
 #[async_trait]
 impl<S> FromRequestParts<S> for RoleAdmin
 where
@@ -174,10 +229,18 @@ where
     }
 }
 
+/// Application administrator information.
+/// 
+/// Contains the user ID of a user with application administrator privileges.
 pub struct ApplicationAdmin {
+    /// ID of the application administrator
     pub user_id: i64,
 }
 
+/// Extractor for application administrators.
+/// 
+/// This extractor is used in route handlers to ensure that the request
+/// comes from a user with application administrator privileges.
 #[async_trait]
 impl<S> FromRequestParts<S> for ApplicationAdmin
 where
@@ -201,18 +264,18 @@ where
     }
 }
 
-// TODO: Not very idiomatic way. The reason this impl was chosen was because we
-// couldn't figure out how to dynamically check whether the id passed in path
-// was a rating id or an application id.
-
-// TODO: there is currently no diff between ApplicationReviewerAdminGivenApplicationId
-// and ApplicationCreatorAdminGivenApplicationId, but that might change, so separating just in case.
-
-/// Get the application reviewer given a path that contains the application id.
+/// Application reviewer information for a specific application.
+/// 
+/// Contains the user ID of a user who has permission to review a specific application.
 pub struct ApplicationReviewerGivenApplicationId {
+    /// ID of the application reviewer
     pub user_id: i64,
 }
 
+/// Extractor for application reviewers.
+/// 
+/// This extractor is used in route handlers to ensure that the request
+/// comes from a user with permission to review a specific application.
 #[async_trait]
 impl<S> FromRequestParts<S> for ApplicationReviewerGivenApplicationId
 where
@@ -236,11 +299,18 @@ where
     }
 }
 
-/// Get the application reviewer given a path that contains the application id.
+/// Application creator information for a specific application.
+/// 
+/// Contains the user ID of a user who created a specific application.
 pub struct ApplicationCreatorGivenApplicationId {
+    /// ID of the application creator
     pub user_id: i64,
 }
 
+/// Extractor for application creators.
+/// 
+/// This extractor is used in route handlers to ensure that the request
+/// comes from the creator of a specific application.
 #[async_trait]
 impl<S> FromRequestParts<S> for ApplicationCreatorGivenApplicationId
 where
@@ -258,17 +328,25 @@ where
             .await
             .map_err(|_| ChaosError::BadRequest)?;
 
-        assert_user_is_organisation_member(user_id, application_id, &app_state.db).await?;
+        user_is_application_owner(user_id, application_id, &app_state.db).await?;
 
         Ok(ApplicationCreatorGivenApplicationId { user_id })
     }
 }
 
-/// Get the application reviewer given a path that contains the rating id.
+/// Application reviewer information for a specific rating.
+/// 
+/// Contains the user ID of a user who has permission to review an application
+/// based on a specific rating.
 pub struct ApplicationReviewerGivenRatingId {
+    /// ID of the application reviewer
     pub user_id: i64,
 }
 
+/// Extractor for application reviewers based on rating.
+/// 
+/// This extractor is used in route handlers to ensure that the request
+/// comes from a user with permission to review an application based on a specific rating.
 #[async_trait]
 impl<S> FromRequestParts<S> for ApplicationReviewerGivenRatingId
 where
@@ -286,17 +364,24 @@ where
             .await
             .map_err(|_| ChaosError::BadRequest)?;
 
-        assert_user_is_application_reviewer_given_rating_id(user_id, rating_id, &app_state.db)
-            .await?;
+        assert_user_is_application_reviewer_given_rating_id(user_id, rating_id, &app_state.db).await?;
 
         Ok(ApplicationReviewerGivenRatingId { user_id })
     }
 }
 
+/// Rating creator information.
+/// 
+/// Contains the user ID of a user who created a specific rating.
 pub struct RatingCreator {
+    /// ID of the rating creator
     pub user_id: i64,
 }
 
+/// Extractor for rating creators.
+/// 
+/// This extractor is used in route handlers to ensure that the request
+/// comes from the creator of a specific rating.
 #[async_trait]
 impl<S> FromRequestParts<S> for RatingCreator
 where
@@ -314,17 +399,24 @@ where
             .await
             .map_err(|_| ChaosError::BadRequest)?;
 
-        assert_user_is_rating_creator_and_organisation_member(user_id, rating_id, &app_state.db)
-            .await?;
+        assert_user_is_rating_creator_and_organisation_member(user_id, rating_id, &app_state.db).await?;
 
         Ok(RatingCreator { user_id })
     }
 }
 
+/// Question administrator information.
+/// 
+/// Contains the user ID of a user with question administrator privileges.
 pub struct QuestionAdmin {
+    /// ID of the question administrator
     pub user_id: i64,
 }
 
+/// Extractor for question administrators.
+/// 
+/// This extractor is used in route handlers to ensure that the request
+/// comes from a user with question administrator privileges.
 #[async_trait]
 impl<S> FromRequestParts<S> for QuestionAdmin
 where
@@ -337,12 +429,10 @@ where
         let app_state = AppState::from_ref(state);
         let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
-        let question_id = *parts
-            .extract::<Path<HashMap<String, i64>>>()
+        let Path(question_id) = parts
+            .extract::<Path<i64>>()
             .await
-            .map_err(|_| ChaosError::BadRequest)?
-            .get("question_id")
-            .ok_or(ChaosError::BadRequest)?;
+            .map_err(|_| ChaosError::BadRequest)?;
 
         user_is_question_admin(user_id, question_id, &app_state.db).await?;
 
@@ -350,10 +440,18 @@ where
     }
 }
 
+/// Application owner information.
+/// 
+/// Contains the user ID of a user who owns a specific application.
 pub struct ApplicationOwner {
+    /// ID of the application owner
     pub user_id: i64,
 }
 
+/// Extractor for application owners.
+/// 
+/// This extractor is used in route handlers to ensure that the request
+/// comes from the owner of a specific application.
 #[async_trait]
 impl<S> FromRequestParts<S> for ApplicationOwner
 where
@@ -366,12 +464,10 @@ where
         let app_state = AppState::from_ref(state);
         let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
-        let application_id = *parts
-            .extract::<Path<HashMap<String, i64>>>()
+        let Path(application_id) = parts
+            .extract::<Path<i64>>()
             .await
-            .map_err(|_| ChaosError::BadRequest)?
-            .get("application_id")
-            .ok_or(ChaosError::BadRequest)?;
+            .map_err(|_| ChaosError::BadRequest)?;
 
         user_is_application_owner(user_id, application_id, &app_state.db).await?;
 
@@ -379,10 +475,18 @@ where
     }
 }
 
+/// Answer owner information.
+/// 
+/// Contains the user ID of a user who owns a specific answer.
 pub struct AnswerOwner {
+    /// ID of the answer owner
     pub user_id: i64,
 }
 
+/// Extractor for answer owners.
+/// 
+/// This extractor is used in route handlers to ensure that the request
+/// comes from the owner of a specific answer.
 #[async_trait]
 impl<S> FromRequestParts<S> for AnswerOwner
 where
@@ -395,23 +499,29 @@ where
         let app_state = AppState::from_ref(state);
         let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
-        let application_id = *parts
-            .extract::<Path<HashMap<String, i64>>>()
+        let Path(answer_id) = parts
+            .extract::<Path<i64>>()
             .await
-            .map_err(|_| ChaosError::BadRequest)?
-            .get("application_id")
-            .ok_or(ChaosError::BadRequest)?;
+            .map_err(|_| ChaosError::BadRequest)?;
 
-        user_is_answer_owner(user_id, application_id, &app_state.db).await?;
+        user_is_answer_owner(user_id, answer_id, &app_state.db).await?;
 
         Ok(AnswerOwner { user_id })
     }
 }
 
+/// Email template administrator information.
+/// 
+/// Contains the user ID of a user with email template administrator privileges.
 pub struct EmailTemplateAdmin {
+    /// ID of the email template administrator
     pub user_id: i64,
 }
 
+/// Extractor for email template administrators.
+/// 
+/// This extractor is used in route handlers to ensure that the request
+/// comes from a user with email template administrator privileges.
 #[async_trait]
 impl<S> FromRequestParts<S> for EmailTemplateAdmin
 where
@@ -424,23 +534,29 @@ where
         let app_state = AppState::from_ref(state);
         let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
-        let template_id = *parts
-            .extract::<Path<HashMap<String, i64>>>()
+        let Path(email_template_id) = parts
+            .extract::<Path<i64>>()
             .await
-            .map_err(|_| ChaosError::BadRequest)?
-            .get("template_id")
-            .ok_or(ChaosError::BadRequest)?;
+            .map_err(|_| ChaosError::BadRequest)?;
 
-        user_is_email_template_admin(user_id, template_id, &app_state.db).await?;
+        user_is_email_template_admin(user_id, email_template_id, &app_state.db).await?;
 
         Ok(EmailTemplateAdmin { user_id })
     }
 }
 
+/// Offer administrator information.
+/// 
+/// Contains the user ID of a user with offer administrator privileges.
 pub struct OfferAdmin {
+    /// ID of the offer administrator
     pub user_id: i64,
 }
 
+/// Extractor for offer administrators.
+/// 
+/// This extractor is used in route handlers to ensure that the request
+/// comes from a user with offer administrator privileges.
 #[async_trait]
 impl<S> FromRequestParts<S> for OfferAdmin
 where
@@ -453,12 +569,10 @@ where
         let app_state = AppState::from_ref(state);
         let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
-        let offer_id = *parts
-            .extract::<Path<HashMap<String, i64>>>()
+        let Path(offer_id) = parts
+            .extract::<Path<i64>>()
             .await
-            .map_err(|_| ChaosError::BadRequest)?
-            .get("offer_id")
-            .ok_or(ChaosError::BadRequest)?;
+            .map_err(|_| ChaosError::BadRequest)?;
 
         assert_user_is_offer_admin(user_id, offer_id, &app_state.db).await?;
 
@@ -466,10 +580,18 @@ where
     }
 }
 
+/// Offer recipient information.
+/// 
+/// Contains the user ID of a user who is the recipient of a specific offer.
 pub struct OfferRecipient {
+    /// ID of the offer recipient
     pub user_id: i64,
 }
 
+/// Extractor for offer recipients.
+/// 
+/// This extractor is used in route handlers to ensure that the request
+/// comes from the recipient of a specific offer.
 #[async_trait]
 impl<S> FromRequestParts<S> for OfferRecipient
 where
@@ -482,12 +604,10 @@ where
         let app_state = AppState::from_ref(state);
         let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
-        let offer_id = *parts
-            .extract::<Path<HashMap<String, i64>>>()
+        let Path(offer_id) = parts
+            .extract::<Path<i64>>()
             .await
-            .map_err(|_| ChaosError::BadRequest)?
-            .get("offer_id")
-            .ok_or(ChaosError::BadRequest)?;
+            .map_err(|_| ChaosError::BadRequest)?;
 
         assert_user_is_offer_recipient(user_id, offer_id, &app_state.db).await?;
 

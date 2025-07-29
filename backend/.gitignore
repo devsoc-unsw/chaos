@@ -1,19 +1,6 @@
-<<<<<<< Updated upstream
-.env
-target
-<<<<<<< Updated upstream
-Cargo.lock
-prisma-cli/prisma/migrations
-/.idea
-.DS_Store
-=======
-images
-=======
 .env
 target
 Cargo.lock
 prisma-cli/prisma/migrations
 /.idea
-.DS_Store
->>>>>>> Stashed changes
->>>>>>> Stashed changes
+**/.DS_Store

@@ -1,3 +1,11 @@
+//! Authentication and authorization service for the Chaos application.
+//! 
+//! This module provides functionality for user authentication and authorization, including:
+//! - User creation and retrieval
+//! - Super user verification
+//! - JWT token extraction and validation
+//! - User ID extraction from requests
+
 use crate::models::app::AppState;
 use crate::models::error::ChaosError;
 use crate::models::user::UserRole;
@@ -14,11 +22,22 @@ use sqlx::{Pool, Postgres};
 /// This function is used in OAuth flows to login/signup users when they click the
 /// "Sign in with ___" buttons. The returned user_id will be used to generate a JWT to be
 /// used as a token for the user's browser.
+/// 
+/// # Arguments
+/// 
+/// * `email` - The email address of the user
+/// * `name` - The name of the user
+/// * `pool` - Database connection pool
+/// * `snowflake_generator` - Generator for unique user IDs
+/// 
+/// # Returns
+/// 
+/// * `Result<i64, ChaosError>` - The user ID if successful, or an error
 pub async fn create_or_get_user_id(
     email: String,
     name: String,
     pool: Pool<Postgres>,
-    mut snowflake_generator: SnowflakeIdGenerator,
+    snowflake_generator: &mut SnowflakeIdGenerator,
 ) -> Result<i64, ChaosError> {
     let possible_user_id = sqlx::query!(
         "SELECT id FROM users WHERE lower(email) = $1",
@@ -45,6 +64,16 @@ pub async fn create_or_get_user_id(
     Ok(user_id)
 }
 
+/// Verifies if a user has super user privileges.
+/// 
+/// # Arguments
+/// 
+/// * `user_id` - The ID of the user to check
+/// * `pool` - Database connection pool
+/// 
+/// # Returns
+/// 
+/// * `Result<(), ChaosError>` - Ok if the user is a super user, Unauthorized error otherwise
 pub async fn assert_is_super_user(user_id: i64, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
     let is_super_user = sqlx::query!(
         "SELECT EXISTS(SELECT 1 FROM users WHERE id = $1 AND role = $2)",
@@ -63,6 +92,16 @@ pub async fn assert_is_super_user(user_id: i64, pool: &Pool<Postgres>) -> Result
     Ok(())
 }
 
+/// Extracts the user ID from an HTTP request using the JWT token in cookies.
+/// 
+/// # Arguments
+/// 
+/// * `parts` - The request parts containing headers and cookies
+/// * `state` - The application state containing JWT configuration
+/// 
+/// # Returns
+/// 
+/// * `Result<i64, ChaosError>` - The user ID if successful, NotLoggedIn error otherwise
 pub async fn extract_user_id_from_request(
     parts: &mut Parts,
     state: &AppState,
