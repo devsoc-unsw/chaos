@@ -13,22 +13,22 @@ import { cn } from "@/lib/utils";
  */
 const ROLES = [
   "Technical Director",
-  "Operations Director", 
+  "Operations Director",
   "Marketing Director",
   "Finance Director",
   "HR Director",
 ];
 
 const LOCATIONS = [
-    "Room 101 - Main Building",
-    "Room 102 - Main Building", 
-    "Room 201 - Engineering Wing",
-    "Room 202 - Engineering Wing",
-    "Conference Room A",
-    "Conference Room B",
-    "Virtual Meeting (Zoom)",
-    "Virtual Meeting (Teams)",
-    "Other"
+  "Room 101 - Main Building",
+  "Room 102 - Main Building",
+  "Room 201 - Engineering Wing",
+  "Room 202 - Engineering Wing",
+  "Conference Room A",
+  "Conference Room B",
+  "Virtual Meeting (Zoom)",
+  "Virtual Meeting (Teams)",
+  "Other"
 ];
 
 const MOCK_USERS = [
@@ -163,11 +163,11 @@ const AdminInterviewBooking = () => {
       const updated = prev.map((slot) =>
         slot.id === slotId
           ? {
-              ...slot,
-              roles: slot.roles?.includes(role)
-                ? slot.roles.filter((r: string) => r !== role)
-                : [...(slot.roles || []), role],
-            }
+            ...slot,
+            roles: slot.roles?.includes(role)
+              ? slot.roles.filter((r: string) => r !== role)
+              : [...(slot.roles || []), role],
+          }
           : slot
       );
       // Merge logic after roles are updated
@@ -228,9 +228,9 @@ const AdminInterviewBooking = () => {
       prev.map((slot) =>
         slot.id === slotId
           ? {
-              ...slot,
-              location: location,
-            }
+            ...slot,
+            location: location,
+          }
           : slot
       )
     );
@@ -238,9 +238,9 @@ const AdminInterviewBooking = () => {
       prev.map((slot) =>
         slot.id === slotId
           ? {
-              ...slot,
-              location: location,
-            }
+            ...slot,
+            location: location,
+          }
           : slot
       )
     );
@@ -253,9 +253,9 @@ const AdminInterviewBooking = () => {
       const updated = prev.map((slot) =>
         slot.id === slotId
           ? {
-              ...slot,
-              roles: [],
-            }
+            ...slot,
+            roles: [],
+          }
           : slot
       );
       // Merge logic after roles are updated
@@ -315,9 +315,9 @@ const AdminInterviewBooking = () => {
       prev.map((slot) =>
         slot.id === slotId
           ? {
-              ...slot,
-              location: "",
-            }
+            ...slot,
+            location: "",
+          }
           : slot
       )
     );
@@ -325,9 +325,9 @@ const AdminInterviewBooking = () => {
       prev.map((slot) =>
         slot.id === slotId
           ? {
-              ...slot,
-              location: "",
-            }
+            ...slot,
+            location: "",
+          }
           : slot
       )
     );
@@ -379,26 +379,26 @@ const AdminInterviewBooking = () => {
         className="z-50 bg-white border rounded shadow-md fixed"
         style={{ left: contextMenu.x, top: contextMenu.y, minWidth: 250 }}
       >
-    {/* Roles Section */}
+        {/* Roles Section */}
         <div className="px-4 py-3 text-sm font-semibold text-white bg-indigo-600">
           Assign Roles
         </div>
         {ROLES.map((role) => (
-        <div
+          <div
             key={role}
             className={cn(
-            "px-4 py-3 text-sm flex items-center justify-between transition-colors cursor-pointer rounded-md mx-1 my-0.5",
-            currentRoles.includes(role)
+              "px-4 py-3 text-sm flex items-center justify-between transition-colors cursor-pointer rounded-md mx-1 my-0.5",
+              currentRoles.includes(role)
                 ? "bg-indigo-100 text-indigo-800 font-medium"
                 : "hover:bg-gray-100 text-gray-700"
             )}
             onClick={() => handleToggleRole(contextMenu.slotId, role)}
-        >
+          >
             <span>{role}</span>
             {currentRoles.includes(role) && (
-            <span className="text-indigo-600 text-sm">✓</span>
+              <span className="text-indigo-600 text-sm">✓</span>
             )}
-        </div>
+          </div>
         ))}
 
         {/* Location Section */}
@@ -406,22 +406,22 @@ const AdminInterviewBooking = () => {
           Assign Location
         </div>
         {LOCATIONS.map((location) => (
-            <div
-                key={location}
-                className={cn(
-                "px-4 py-3 text-sm flex items-center justify-between transition-colors cursor-pointer rounded-md mx-1 my-0.5",
-                currentLocation === location
-                    ? "bg-emerald-100 text-emerald-800 font-medium"
-                    : "hover:bg-gray-100 text-gray-700"
-                )}
-                onClick={() => handleAssignLocation(contextMenu.slotId, location)}
-            >
-                <span>{location}</span>
-                {currentLocation === location && (
-                <span className="text-emerald-600 text-sm">✓</span>
-                )}
-            </div>
-            ))}
+          <div
+            key={location}
+            className={cn(
+              "px-4 py-3 text-sm flex items-center justify-between transition-colors cursor-pointer rounded-md mx-1 my-0.5",
+              currentLocation === location
+                ? "bg-emerald-100 text-emerald-800 font-medium"
+                : "hover:bg-gray-100 text-gray-700"
+            )}
+            onClick={() => handleAssignLocation(contextMenu.slotId, location)}
+          >
+            <span>{location}</span>
+            {currentLocation === location && (
+              <span className="text-emerald-600 text-sm">✓</span>
+            )}
+          </div>
+        ))}
         {currentLocation && (
           <div
             className="px-4 py-3 hover:bg-red-50 cursor-pointer text-sm text-red-600 border-t rounded-b-lg font-medium"
@@ -455,10 +455,10 @@ const AdminInterviewBooking = () => {
   const formatWeekRange = (date: Date) => {
     const startOfWeek = new Date(date);
     startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
-    
+
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(endOfWeek.getDate() + 6);
-    
+
     return `${format(startOfWeek, 'MMM d')} - ${format(endOfWeek, 'MMM d, yyyy')}`;
   };
 
@@ -506,7 +506,7 @@ const AdminInterviewBooking = () => {
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-8 text-center mt-10">Interview Slot Management</h1>
       <Card className="p-6 mb-8">
-        
+
         <div className="flex gap-2 mb-4">
           <Button onClick={handleSave} disabled={saved}>
             {saved ? "Saved!" : "Save"}
@@ -525,31 +525,31 @@ const AdminInterviewBooking = () => {
         {/* Week Navigation */}
         <div className="flex items-center justify-between mb-6 p-4 bg-gray-50 rounded-lg">
           <div className="flex items-center gap-4">
-            <Button 
-              onClick={goToPreviousWeek} 
-              variant="outline" 
+            <Button
+              onClick={goToPreviousWeek}
+              variant="outline"
               size="sm"
               className="flex items-center gap-1"
             >
               ← Previous Week
             </Button>
-            <Button 
-              onClick={goToNextWeek} 
-              variant="outline" 
+            <Button
+              onClick={goToNextWeek}
+              variant="outline"
               size="sm"
               className="flex items-center gap-1"
             >
               Next Week →
             </Button>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <span className="text-lg font-semibold text-gray-800">
               {formatWeekRange(currentWeek)}
             </span>
-            <Button 
-              onClick={goToCurrentWeek} 
-              variant="outline" 
+            <Button
+              onClick={goToCurrentWeek}
+              variant="outline"
               size="lg"
               className="text-white bg-purple-500 hover:bg-purple-300"
             >
@@ -559,35 +559,35 @@ const AdminInterviewBooking = () => {
         </div>
 
         <DayPilotCalendar
-            
-            viewType="Week"
-            durationBarVisible={false}
-            onTimeRangeSelected={handleTimeRangeSelected}
-            onEventClick={(args) => {
-              setContextMenu({
-                x: mousePosition.current.x,
-                y: mousePosition.current.y,
-                slotId: args.e.data.id,
-              });
-            }}
-            onEventResize={handleEventResize}
-            eventResizeHandling="Update"
-            onEventMove={handleEventMove}
-            eventMoveHandling="Update"
-            events={events.map(event => ({
-              ...event,
-              // Use html property for display text instead of text to prevent reordering
-              html: `${format(new Date(event.start), 'HH:mm')} - ${format(new Date(event.end), 'HH:mm')}` + 
-                (event.roles?.length > 0 ? ` | ${event.roles.map((role: string) => `[${role}]`).join(" ")}` : '') +
-                (event.location ? ` | 📍 ${event.location}` : ''),
-              // Ensure consistent styling and positioning
-              cssClass: event.roles?.length > 0 ? "assigned-slot" : "available-slot",
-              toolTip: `${event.roles?.length > 0 ? `Roles: ${event.roles.join(", ")}` : 'No roles assigned'}` +
-                `${event.location ? ` | Location: ${event.location}` : ' | No location assigned'}`,
-            }))}
-            timeRangeSelectedHandling="Enabled"
-            startDate={new DayPilot.Date(currentWeek)}
-            heightSpec="Full"
+
+          viewType="Week"
+          durationBarVisible={false}
+          onTimeRangeSelected={handleTimeRangeSelected}
+          onEventClick={(args) => {
+            setContextMenu({
+              x: mousePosition.current.x,
+              y: mousePosition.current.y,
+              slotId: args.e.data.id,
+            });
+          }}
+          onEventResize={handleEventResize}
+          eventResizeHandling="Update"
+          onEventMove={handleEventMove}
+          eventMoveHandling="Update"
+          events={events.map(event => ({
+            ...event,
+            // Use html property for display text instead of text to prevent reordering
+            html: `${format(new Date(event.start), 'HH:mm')} - ${format(new Date(event.end), 'HH:mm')}` +
+              (event.roles?.length > 0 ? ` | ${event.roles.map((role: string) => `[${role}]`).join(" ")}` : '') +
+              (event.location ? ` | 📍 ${event.location}` : ''),
+            // Ensure consistent styling and positioning
+            cssClass: event.roles?.length > 0 ? "assigned-slot" : "available-slot",
+            toolTip: `${event.roles?.length > 0 ? `Roles: ${event.roles.join(", ")}` : 'No roles assigned'}` +
+              `${event.location ? ` | Location: ${event.location}` : ' | No location assigned'}`,
+          }))}
+          timeRangeSelectedHandling="Enabled"
+          startDate={new DayPilot.Date(currentWeek)}
+          heightSpec="Full"
         />
 
         <div className="mt-6">
@@ -607,9 +607,9 @@ const AdminInterviewBooking = () => {
                       {format(new Date(slot.start), 'EEEE, MMMM d')}
                     </span>
                   </div>
-                  <Button 
-                    size="sm" 
-                    variant="destructive" 
+                  <Button
+                    size="sm"
+                    variant="destructive"
                     onClick={() => handleRemoveSlot(slot.id)}
                     className="text-md text-white bg-red-600 hover:bg-red-400 "
                   >
@@ -618,7 +618,7 @@ const AdminInterviewBooking = () => {
                 </div>
                 {/* Slot creator and creation time */}
                 <div className="text-md text-gray-500 mb-2">
-                  Created by: {slot.createdBy?.name || "Unknown"}<br/>
+                  Created by: {slot.createdBy?.name || "Unknown"}<br />
                   At: {slot.createdAt ? format(new Date(slot.createdAt), 'PPpp') : "Unknown"}
                 </div>
                 {/* Roles Section */}

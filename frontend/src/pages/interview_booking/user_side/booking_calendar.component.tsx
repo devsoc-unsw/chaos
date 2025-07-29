@@ -128,6 +128,12 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
     setSelectedDate(date);
     setSelectedTime(time);
     onDateTimeSelect(date, time);
+
+    // If selecting a date from weekday buttons (no time), also update the calendar selection
+    if (time === "") {
+      const dateObj = new Date(date);
+      handleDateChange(dateObj);
+    }
   };
 
   return (
@@ -251,7 +257,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
               classNames={{
                 months: "flex justify-center",
                 month: "bg-white rounded-lg p-4 space-y-4",
-                caption: "flex items-center justify-between px-4 text-center font-medium relative",
+                caption: "flex justify-center px-4 text-center font-medium relative",
                 caption_label: "text-sm font-medium",
                 nav: "flex gap-1",
                 nav_button: cn(
@@ -267,7 +273,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
                 day: cn(
                   "w-10 h-10 border-none bg-transparent rounded-md cursor-pointer text-sm transition-all hover:bg-gray-100"
                 ),
-                day_selected: "bg-purple-500 text-white hover:bg-purple-600 focus:bg-purple-500",
+                day_selected: "!bg-purple-500 !text-white hover:!bg-purple-600 focus:!bg-purple-500",
                 day_today: "bg-gray-100 text-gray-900",
                 day_outside: "text-gray-400 opacity-50",
                 day_disabled: "text-gray-300 cursor-not-allowed",
@@ -296,14 +302,17 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
             </h2>
             <Button
               variant="outline"
-              onClick={() => setWeekStart(addDays(weekStart, 7))}
+              onClick={() => {
+                setWeekStart(addDays(weekStart, 7));
+
+              }}
             >
               →
             </Button>
           </div>
 
           {/* Weekday Buttons (User selects a day here) */}
-          <div className="mb-4 grid grid-cols-3 gap-5 sm:grid-cols-4 md:grid-cols-7">
+          <div className="mb-4 grid grid-cols-3 gap-5 sm:grid-cols-4 md:grid-cols-7 ">
             {weekDates.map((date) => {
               const dateStr = formatDate(date);
               const isSelected = dateStr === selectedDate;
@@ -318,7 +327,11 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
                       ? "bg-indigo-200 ring-2 ring-indigo-100"
                       : ""
                   )}
-                  onClick={() => handleTimeSelect(dateStr, "")}
+                  onClick={() => {
+                    handleTimeSelect(dateStr, "");
+                    handleDateChange(date);
+                  }
+                  }
                 >
                   <span className="text-xs">
                     {date.toLocaleDateString("en-US", { weekday: "short" })}
