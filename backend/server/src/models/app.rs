@@ -21,7 +21,9 @@ use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 use std::env;
+use axum::http::{header, Method};
 use oauth2::basic::BasicClient;
+use tower_http::cors::CorsLayer;
 use crate::service::oauth2::build_oauth_client;
 
 #[derive(Clone)]
@@ -114,6 +116,18 @@ pub async fn init_app_state() -> AppState {
 pub async fn app() -> Result<Router, ChaosError> {
     
     let state = init_app_state().await;
+
+    let cors = CorsLayer::new()
+        .allow_methods([Method::GET, Method::POST, Method::DELETE, Method::PUT])
+        .allow_headers([header::ACCEPT, header::COOKIE, header::SET_COOKIE, header::CONTENT_TYPE])
+        .allow_credentials(true)
+        .allow_origin([
+            "http://localhost".parse().unwrap(),
+            "https://chaos.devsoc.app".parse().unwrap(),
+            "http://chaos.devsoc.app".parse().unwrap(),
+            "https://chaosstaging.devsoc.app".parse().unwrap(),
+            "http://chaosstaging.devsoc.app".parse().unwrap(),
+        ]);
 
     Ok(Router::new()
         .route("/", get(|| async { "Join DevSoc! https://devsoc.app/" }))
