@@ -6,7 +6,8 @@
 //! - Validating rating creator status
 
 use crate::models::error::ChaosError;
-use sqlx::{Pool, Postgres};
+use sqlx::{Pool, Postgres, Transaction};
+use std::ops::DerefMut;
 
 /// Verifies if a user can review an application based on a rating ID.
 /// 
@@ -30,7 +31,7 @@ use sqlx::{Pool, Postgres};
 pub async fn assert_user_is_application_reviewer_given_rating_id(
     user_id: i64,
     rating_id: i64,
-    pool: &Pool<Postgres>,
+    transaction: &mut Transaction<'_, Postgres>,
 ) -> Result<(), ChaosError> {
     let is_admin = sqlx::query!(
         r#"
@@ -51,7 +52,7 @@ pub async fn assert_user_is_application_reviewer_given_rating_id(
         rating_id,
         user_id
     )
-    .fetch_one(pool)
+    .fetch_one(transaction.deref_mut())
     .await?
     .exists
     .expect("`exists` should always exist in this query result");
@@ -81,7 +82,7 @@ pub async fn assert_user_is_application_reviewer_given_rating_id(
 pub async fn assert_user_is_rating_creator_and_organisation_member(
     user_id: i64,
     rating_id: i64,
-    pool: &Pool<Postgres>,
+    transaction: &mut Transaction<'_, Postgres>,
 ) -> Result<(), ChaosError> {
     let is_admin = sqlx::query!(
         r#"
@@ -104,7 +105,7 @@ pub async fn assert_user_is_rating_creator_and_organisation_member(
         rating_id,
         user_id
     )
-    .fetch_one(pool)
+    .fetch_one(transaction.deref_mut())
     .await?
     .exists
     .expect("`exists` should always exist in this query result");
@@ -133,7 +134,7 @@ pub async fn assert_user_is_rating_creator_and_organisation_member(
 pub async fn assert_user_is_organisation_member(
     user_id: i64,
     application_id: i64,
-    pool: &Pool<Postgres>,
+    transaction: &mut Transaction<'_, Postgres>,
 ) -> Result<(), ChaosError> {
     let is_admin = sqlx::query!(
         r#"
@@ -153,7 +154,7 @@ pub async fn assert_user_is_organisation_member(
         application_id,
         user_id
     )
-    .fetch_one(pool)
+    .fetch_one(transaction.deref_mut())
     .await?
     .exists
     .expect("`exists` should always exist in this query result");

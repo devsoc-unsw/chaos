@@ -6,7 +6,8 @@
 
 use chrono::Utc;
 use crate::models::error::ChaosError;
-use sqlx::{Pool, Postgres};
+use sqlx::{Pool, Postgres, Transaction};
+use std::ops::DerefMut;
 
 /// Verifies if a user has admin privileges for a campaign.
 /// 
@@ -24,7 +25,7 @@ use sqlx::{Pool, Postgres};
 pub async fn user_is_campaign_admin(
     user_id: i64,
     campaign_id: i64,
-    pool: &Pool<Postgres>,
+    transaction: &mut Transaction<'_, Postgres>,
 ) -> Result<(), ChaosError> {
     let is_admin = sqlx::query!(
         "
@@ -37,7 +38,7 @@ pub async fn user_is_campaign_admin(
         campaign_id,
         user_id
     )
-    .fetch_one(pool)
+    .fetch_one(transaction.deref_mut())
     .await?
     .exists
     .expect("`exists` should always exist in this query result");
@@ -63,7 +64,7 @@ pub async fn user_is_campaign_admin(
 /// * `Result<(), ChaosError>` - Ok if the campaign is open, CampaignClosed error otherwise
 pub async fn assert_campaign_is_open(
     campaign_id: i64,
-    pool: &Pool<Postgres>,
+    transaction: &mut Transaction<'_, Postgres>,
 ) -> Result<(), ChaosError> {
     let time = Utc::now();
     let campaign = sqlx::query!(
@@ -72,7 +73,7 @@ pub async fn assert_campaign_is_open(
         ",
         campaign_id
     )
-        .fetch_one(pool)
+        .fetch_one(transaction.deref_mut())
         .await?;
 
     if campaign.ends_at <= time {

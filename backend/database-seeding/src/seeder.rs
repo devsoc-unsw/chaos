@@ -30,6 +30,8 @@ pub async fn init() -> Seeder {
     }
 
 pub async fn seed_database(mut seeder: Seeder) {
+    let mut tx = seeder.app_state.db.begin().await.expect("Error beginning DB transaction");
+
     // Super User
     let users = vec![
         User {
@@ -68,22 +70,18 @@ pub async fn seed_database(mut seeder: Seeder) {
     ];
 
     for user in users {
-        User::create_user(user, &seeder.app_state.db).await.expect("Failed seeding Root User");
+        User::create_user(user, &mut tx).await.expect("Failed seeding Root User");
     }
 
-    let mut transaction = seeder.app_state.db.begin().await.unwrap();
     let org_id = Organisation::create(1, 
         "devsoc".to_string(), 
         "UNSW DevSoc".to_string(),
         &mut seeder.app_state.snowflake_generator, 
-        &mut transaction).await.expect("Failed seeding Organisationn");
-    transaction.commit().await.expect("Failed committing transaction seeding Organisation");
+        &mut tx).await.expect("Failed seeding Organisation");
 
-    let mut transaction = seeder.app_state.db.begin().await.unwrap();
     Organisation::update_admins(org_id, 
         vec![2], 
-        &mut transaction).await.expect("Failed updating Organisation Admin");
-    transaction.commit().await.expect("Failed committing transaction updating Organisation Admin");
+        &mut tx).await.expect("Failed updating Organisation Admin");
 
     let campaign_id = Organisation::create_campaign(
             org_id,
@@ -99,13 +97,12 @@ pub async fn seed_database(mut seeder: Seeder) {
                 chrono::NaiveDate::from_ymd_opt(2040, 1, 1).unwrap().and_hms_milli_opt(0, 0, 0, 0).unwrap(),
                 Utc,
             ),
-            &seeder.app_state.db,
+            &mut tx,
             &mut seeder.app_state.snowflake_generator,
         )
         .await.expect("Failed seeding Campaign");
     
 
-    let mut transaction = seeder.app_state.db.begin().await.unwrap();
     let role_id_1 = Role::create(
         campaign_id,
         RoleUpdate {
@@ -115,13 +112,11 @@ pub async fn seed_database(mut seeder: Seeder) {
             max_avaliable: 1,
             finalised: false,
         },
-        &mut transaction,
+        &mut tx,
         &mut seeder.app_state.snowflake_generator,
     )
     .await.expect("Failed seeding Role 1");
-    transaction.commit().await.expect("Failed committing transaction seeding Roles");
 
-    let mut transaction = seeder.app_state.db.begin().await.unwrap();
     let role_id_2 = Role::create(
         campaign_id,
         RoleUpdate {
@@ -131,14 +126,11 @@ pub async fn seed_database(mut seeder: Seeder) {
             max_avaliable: 100,
             finalised: true,
         },
-        &mut transaction,
+        &mut tx,
         &mut seeder.app_state.snowflake_generator,
     )
     .await.expect("Failed seeding Role 2");
-    transaction.commit().await.expect("Failed committing transaction seeding Roles");
 
-
-    let mut transaction = seeder.app_state.db.begin().await.unwrap();
     let question_id_1 = Question::create(
         campaign_id,
         "Career History".to_string(),
@@ -168,14 +160,11 @@ pub async fn seed_database(mut seeder: Seeder) {
             },
         ),
         &mut seeder.app_state.snowflake_generator,
-        &mut transaction,
+        &mut tx,
     )
     .await.expect("Failed seeding Question 1");
 
-    transaction.commit().await.expect("Failed committing transaction seeding Questions");
 
-
-    let mut transaction = seeder.app_state.db.begin().await.unwrap();
     let question_id_2 = Question::create(
         campaign_id,
         "Technical Question (pls don't use AI)".to_string(),
@@ -185,12 +174,9 @@ pub async fn seed_database(mut seeder: Seeder) {
         true,
         QuestionData::ShortAnswer,
         &mut seeder.app_state.snowflake_generator,
-        &mut transaction,
+        &mut tx,
     )
     .await.expect("Failed seeding Question 1");
-    transaction.commit().await.expect("Failed committing transaction seeding Questions");
-
-    let mut transaction = seeder.app_state.db.begin().await.unwrap();
 
     let application_id_1 = Application::create(
         campaign_id,
@@ -206,7 +192,7 @@ pub async fn seed_database(mut seeder: Seeder) {
             ]
         },
         &mut seeder.app_state.snowflake_generator,
-        &mut transaction,
+        &mut tx,
     )
     .await.expect("Failed seeding Application 1");
 
@@ -224,33 +210,24 @@ pub async fn seed_database(mut seeder: Seeder) {
             ]
         },
         &mut seeder.app_state.snowflake_generator,
-        &mut transaction,
+        &mut tx,
     )
     .await.expect("Failed seeding Application 1");
 
-    transaction.commit().await.expect("Failed committing transaction seeding Applications");
-
-
-    let mut transaction = seeder.app_state.db.begin().await.unwrap();
-
-    let qtn_1_data = Question::get(question_id_1, &mut transaction).await.expect("Failed getting Question 1");
+    let qtn_1_data = Question::get(question_id_1, &mut tx).await.expect("Failed getting Question 1");
 
     let qtn_1_options = 
         match qtn_1_data.question_data {
             QuestionData::DropDown(options) => options.options,
             _ => panic!("Question 1 is not a DropDown question"),
-        };    
-
-    transaction.commit().await.expect("Failed committing transaction getting Question 1");
-
-    let mut transaction = seeder.app_state.db.begin().await.unwrap();
+        };
 
     Answer::create(
         application_id_1,
         question_id_1,
         AnswerData::DropDown(qtn_1_options[0].id),
         &mut seeder.app_state.snowflake_generator,
-        &mut transaction,
+        &mut tx,
     )
     .await.expect("Failed seeding Answer 1");
 
@@ -259,7 +236,7 @@ pub async fn seed_database(mut seeder: Seeder) {
         question_id_1,
         AnswerData::DropDown(qtn_1_options[0].id),
         &mut seeder.app_state.snowflake_generator,
-        &mut transaction,
+        &mut tx,
     )
     .await.expect("Failed seeding Answer 2");
 
@@ -268,20 +245,16 @@ pub async fn seed_database(mut seeder: Seeder) {
         question_id_2,
         AnswerData::ShortAnswer("A Moand is a Monoid in the Category of Endofunctors, what else do you want?".to_string()),
         &mut seeder.app_state.snowflake_generator,
-        &mut transaction,
+        &mut tx,
     )
     .await.expect("Failed seeding Answer 3");
-
-    transaction.commit().await.expect("Failed committing transaction seeding Answers");
-
-    let mut transaction = seeder.app_state.db.begin().await.unwrap();
 
     Rating::create(
         NewRating { rating: 69, comment: Some("This guy does not know what they are talking about!".to_string()) }, 
         application_id_1, 
         2,
         &mut seeder.app_state.snowflake_generator, 
-        &mut transaction)
+        &mut tx)
         .await.expect("Failed seeding Rating 1");
 
     Rating::create(
@@ -289,7 +262,7 @@ pub async fn seed_database(mut seeder: Seeder) {
         application_id_2, 
         2,
         &mut seeder.app_state.snowflake_generator, 
-        &mut transaction)
+        &mut tx)
         .await.expect("Failed seeding Rating 2");
 
     Rating::create(
@@ -297,10 +270,8 @@ pub async fn seed_database(mut seeder: Seeder) {
         application_id_2, 
         1,
         &mut seeder.app_state.snowflake_generator,
-        &mut transaction)
+        &mut tx)
         .await.expect("Failed seeding Rating 3");
-    
-    transaction.commit().await.expect("Failed committing transaction seeding Ratings");
     
     let template = 
     "Hello {{name}},
@@ -318,12 +289,9 @@ pub async fn seed_database(mut seeder: Seeder) {
         "Offer".to_string(),
         "[DevSoc] Position Offer".to_string(),
         template, 
-        &seeder.app_state.db, 
+        &mut tx, 
         &mut seeder.app_state.snowflake_generator)
         .await.expect("Failed seeding Email Template");
-
-
-    let mut transaction = seeder.app_state.db.begin().await.unwrap();
 
     Offer::create(
         campaign_id, 
@@ -334,11 +302,9 @@ pub async fn seed_database(mut seeder: Seeder) {
                 chrono::NaiveDate::from_ymd_opt(2024, 2, 1).unwrap().and_hms_milli_opt(0, 0, 0, 0).unwrap(),
                 Utc,
             ), 
-        &mut transaction, 
+        &mut tx,
         &mut seeder.app_state.snowflake_generator)
         .await.expect("Failed seeding Offer");
 
-    transaction.commit().await.expect("Failed committing transaction seeding Offer");
-
-
+    tx.commit().await.expect("Failed to commit DB transaction");
 }

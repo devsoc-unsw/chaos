@@ -4,7 +4,8 @@
 //! - Verifying email template admin privileges
 
 use crate::models::error::ChaosError;
-use sqlx::{Pool, Postgres};
+use sqlx::{Pool, Postgres, Transaction};
+use std::ops::DerefMut;
 
 /// Verifies if a user has admin privileges for an email template.
 /// 
@@ -22,7 +23,7 @@ use sqlx::{Pool, Postgres};
 pub async fn user_is_email_template_admin(
     user_id: i64,
     template_id: i64,
-    pool: &Pool<Postgres>,
+    transaction: &mut Transaction<'_, Postgres>,
 ) -> Result<(), ChaosError> {
     let is_admin = sqlx::query!(
         "
@@ -35,7 +36,7 @@ pub async fn user_is_email_template_admin(
         template_id,
         user_id
     )
-    .fetch_one(pool)
+    .fetch_one(transaction.deref_mut())
     .await?
     .exists
     .expect("`exists` should always exist in this query result");

@@ -7,7 +7,8 @@
 
 use chrono::Utc;
 use crate::models::error::ChaosError;
-use sqlx::{Pool, Postgres};
+use sqlx::{Pool, Postgres, Transaction};
+use std::ops::DerefMut;
 
 /// Verifies if a user has admin privileges for an application.
 /// 
@@ -26,7 +27,7 @@ use sqlx::{Pool, Postgres};
 pub async fn user_is_application_admin(
     user_id: i64,
     application_id: i64,
-    pool: &Pool<Postgres>,
+    transaction: &mut Transaction<'_, Postgres>,
 ) -> Result<(), ChaosError> {
     let is_admin = sqlx::query!(
         "
@@ -43,7 +44,7 @@ pub async fn user_is_application_admin(
         application_id,
         user_id
     )
-    .fetch_one(pool)
+    .fetch_one(transaction.deref_mut())
     .await?
     .exists
     .expect("`exists` should always exist in this query result");
@@ -71,7 +72,7 @@ pub async fn user_is_application_admin(
 pub async fn user_is_application_owner(
     user_id: i64,
     application_id: i64,
-    pool: &Pool<Postgres>,
+    transaction: &mut Transaction<'_, Postgres>,
 ) -> Result<(), ChaosError> {
     let is_owner = sqlx::query!(
         "
@@ -84,7 +85,7 @@ pub async fn user_is_application_owner(
         application_id,
         user_id
     )
-    .fetch_one(pool)
+    .fetch_one(transaction.deref_mut())
     .await?
     .exists
     .expect("`exists` should always exist in this query result");
@@ -111,7 +112,7 @@ pub async fn user_is_application_owner(
 /// * `Result<(), ChaosError>` - Ok if the application is open, ApplicationClosed error otherwise
 pub async fn assert_application_is_open(
     application_id: i64,
-    pool: &Pool<Postgres>,
+    transaction: &mut Transaction<'_, Postgres>,
 ) -> Result<(), ChaosError> {
     let time = Utc::now();
     let application = sqlx::query!(
@@ -122,7 +123,7 @@ pub async fn assert_application_is_open(
         ",
         application_id
     )
-        .fetch_one(pool)
+        .fetch_one(transaction.deref_mut())
         .await?;
 
     if application.submitted || application.ends_at <= time {

@@ -213,7 +213,7 @@ impl Campaign {
     pub async fn check_slug_availability(
         organisation_id: i64,
         slug: String,
-        pool: &Pool<Postgres>,
+        transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         if !slug.is_ascii() {
             return Err(ChaosError::BadRequest);
@@ -226,7 +226,7 @@ impl Campaign {
             organisation_id,
             slug
         )
-        .fetch_one(pool)
+        .fetch_one(transaction.deref_mut())
         .await?
         .exists
         .expect("`exists` should always exist in this query result");
@@ -395,7 +395,9 @@ where
             .await
             .map_err(|_| ChaosError::BadRequest)?;
 
-        assert_campaign_is_open(campaign_id, &app_state.db).await?;
+        let mut tx = app_state.db.begin().await?;
+        assert_campaign_is_open(campaign_id, &mut tx).await?;
+        tx.commit().await?;
 
         Ok(OpenCampaign)
     }

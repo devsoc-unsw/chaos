@@ -11,6 +11,7 @@ use crate::models::user::{User, UserDegree, UserGender, UserName, UserPronouns, 
 use axum::extract::{Json, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
+use crate::models::transaction::DBTransaction;
 
 /// Handler for user-related HTTP requests.
 pub struct UserHandler;
@@ -29,10 +30,12 @@ impl UserHandler {
     /// 
     /// * `Result<impl IntoResponse, ChaosError>` - User details or error
     pub async fn get(
-        State(state): State<AppState>,
+        mut transaction: DBTransaction<'_>,
         user: AuthUser,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let user = User::get(user.user_id, &state.db).await?;
+        let user = User::get(user.user_id, &mut transaction.tx).await?;
+
+        transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(user)))
     }
 
@@ -50,12 +53,13 @@ impl UserHandler {
     /// 
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update_name(
-        State(state): State<AppState>,
+        mut transaction: DBTransaction<'_>,
         user: AuthUser,
         Json(request_body): Json<UserName>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        User::update_name(user.user_id, request_body.name, &state.db).await?;
+        User::update_name(user.user_id, request_body.name, &mut transaction.tx).await?;
 
+        transaction.tx.commit().await?;
         Ok((StatusCode::OK, "Updated username"))
     }
 
@@ -73,12 +77,13 @@ impl UserHandler {
     /// 
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update_pronouns(
-        State(state): State<AppState>,
+        mut transaction: DBTransaction<'_>,
         user: AuthUser,
         Json(request_body): Json<UserPronouns>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        User::update_pronouns(user.user_id, request_body.pronouns, &state.db).await?;
+        User::update_pronouns(user.user_id, request_body.pronouns, &mut transaction.tx).await?;
 
+        transaction.tx.commit().await?;
         Ok((StatusCode::OK, "Updated pronouns"))
     }
 
@@ -96,12 +101,13 @@ impl UserHandler {
     /// 
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update_gender(
-        State(state): State<AppState>,
+        mut transaction: DBTransaction<'_>,
         user: AuthUser,
         Json(request_body): Json<UserGender>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        User::update_gender(user.user_id, request_body.gender, &state.db).await?;
+        User::update_gender(user.user_id, request_body.gender, &mut transaction.tx).await?;
 
+        transaction.tx.commit().await?;
         Ok((StatusCode::OK, "Updated gender"))
     }
 
@@ -119,12 +125,13 @@ impl UserHandler {
     /// 
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update_zid(
-        State(state): State<AppState>,
+        mut transaction: DBTransaction<'_>,
         user: AuthUser,
         Json(request_body): Json<UserZid>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        User::update_zid(user.user_id, request_body.zid, &state.db).await?;
+        User::update_zid(user.user_id, request_body.zid, &mut transaction.tx).await?;
 
+        transaction.tx.commit().await?;
         Ok((StatusCode::OK, "Updated zid"))
     }
 
@@ -142,7 +149,7 @@ impl UserHandler {
     /// 
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update_degree(
-        State(state): State<AppState>,
+        mut transaction: DBTransaction<'_>,
         user: AuthUser,
         Json(request_body): Json<UserDegree>,
     ) -> Result<impl IntoResponse, ChaosError> {
@@ -150,10 +157,11 @@ impl UserHandler {
             user.user_id,
             request_body.degree_name,
             request_body.degree_starting_year,
-            &state.db,
+            &mut transaction.tx,
         )
         .await?;
 
+        transaction.tx.commit().await?;
         Ok((StatusCode::OK, "Updated user degree"))
     }
 }

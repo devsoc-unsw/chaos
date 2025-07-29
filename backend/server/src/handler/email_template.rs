@@ -58,7 +58,7 @@ impl EmailTemplateHandler {
     pub async fn update(
         _user: EmailTemplateAdmin,
         Path(id): Path<i64>,
-        State(state): State<AppState>,
+        mut transaction: DBTransaction<'_>,
         Json(request_body): Json<EmailTemplate>,
     ) -> Result<impl IntoResponse, ChaosError> {
         EmailTemplate::update(
@@ -66,10 +66,11 @@ impl EmailTemplateHandler {
             request_body.name,
             request_body.template_subject,
             request_body.template_body,
-            &state.db,
+            &mut transaction.tx,
         )
         .await?;
 
+        transaction.tx.commit().await?;
         Ok((StatusCode::OK, "Successfully updated email template"))
     }
 
@@ -89,10 +90,11 @@ impl EmailTemplateHandler {
     pub async fn delete(
         _user: EmailTemplateAdmin,
         Path(id): Path<i64>,
-        State(state): State<AppState>,
+        mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        EmailTemplate::delete(id, &state.db).await?;
+        EmailTemplate::delete(id, &mut transaction.tx).await?;
 
+        transaction.tx.commit().await?;
         Ok((StatusCode::OK, "Successfully delete email template"))
     }
 }

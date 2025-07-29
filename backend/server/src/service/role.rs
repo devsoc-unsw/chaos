@@ -3,8 +3,9 @@
 //! This module provides functionality for managing campaign roles, including:
 //! - Verifying role admin privileges
 
+use std::ops::DerefMut;
 use crate::models::error::ChaosError;
-use sqlx::{Pool, Postgres};
+use sqlx::{Pool, Postgres, Transaction};
 
 /// Verifies if a user has admin privileges for a role.
 /// 
@@ -23,7 +24,7 @@ use sqlx::{Pool, Postgres};
 pub async fn user_is_role_admin(
     user_id: i64,
     role_id: i64,
-    pool: &Pool<Postgres>,
+    transaction: &mut Transaction<'_, Postgres>,
 ) -> Result<(), ChaosError> {
     let is_admin = sqlx::query!(
         "
@@ -40,7 +41,7 @@ pub async fn user_is_role_admin(
         role_id,
         user_id
     )
-    .fetch_one(pool)
+    .fetch_one(transaction.deref_mut())
     .await?
     .exists
     .expect("`exists` should always exist in this query result");

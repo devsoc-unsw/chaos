@@ -209,7 +209,7 @@ impl Organisation {
     /// The slug must be ASCII-only.
     pub async fn check_slug_availability(
         slug: String,
-        pool: &Pool<Postgres>,
+        transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         if !slug.is_ascii() {
             return Err(ChaosError::BadRequest);
@@ -221,7 +221,7 @@ impl Organisation {
             ",
             slug
         )
-        .fetch_one(pool)
+        .fetch_one(transaction.deref_mut())
         .await?
         .exists
         .expect("`exists` should always exist in this query result");
@@ -243,7 +243,7 @@ impl Organisation {
     /// Returns a `Result` containing either:
     /// * `Ok(OrganisationDetails)` - The requested organisation details
     /// * `Err(ChaosError)` - An error if retrieval fails
-    pub async fn get(id: i64, pool: &Pool<Postgres>) -> Result<OrganisationDetails, ChaosError> {
+    pub async fn get(id: i64, transaction: &mut Transaction<'_, Postgres>,) -> Result<OrganisationDetails, ChaosError> {
         let organisation = sqlx::query_as!(
             OrganisationDetails,
             "
@@ -253,7 +253,7 @@ impl Organisation {
         ",
             id
         )
-        .fetch_one(pool)
+        .fetch_one(transaction.deref_mut())
         .await?;
 
         Ok(organisation)
@@ -271,7 +271,7 @@ impl Organisation {
     /// * `Err(ChaosError)` - An error if retrieval fails
     pub async fn get_by_slug(
         slug: String,
-        pool: &Pool<Postgres>,
+        transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<OrganisationDetails, ChaosError> {
         let organisation = sqlx::query_as!(
             OrganisationDetails,
@@ -282,7 +282,7 @@ impl Organisation {
         ",
             slug
         )
-        .fetch_one(pool)
+        .fetch_one(transaction.deref_mut())
         .await?;
 
         Ok(organisation)
@@ -298,14 +298,14 @@ impl Organisation {
     /// Returns a `Result` containing either:
     /// * `Ok(())` - If the organisation was deleted successfully
     /// * `Err(ChaosError)` - An error if deletion fails
-    pub async fn delete(id: i64, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
+    pub async fn delete(id: i64, transaction: &mut Transaction<'_, Postgres>,) -> Result<(), ChaosError> {
         _ = sqlx::query!(
             "
             DELETE FROM organisations WHERE id = $1 RETURNING id
         ",
             id
         )
-        .fetch_one(pool)
+        .fetch_one(transaction.deref_mut())
         .await?;
 
         Ok(())
@@ -323,7 +323,7 @@ impl Organisation {
     /// * `Err(ChaosError)` - An error if retrieval fails
     pub async fn get_admins(
         organisation_id: i64,
-        pool: &Pool<Postgres>,
+        transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<MemberList, ChaosError> {
         let admin_list = sqlx::query_as!(
         Member,
@@ -335,7 +335,7 @@ impl Organisation {
         organisation_id,
             OrganisationRole::Admin as OrganisationRole
     )
-            .fetch_all(pool)
+            .fetch_all(transaction.deref_mut())
             .await?;
 
         Ok(MemberList {
@@ -355,7 +355,7 @@ impl Organisation {
     /// * `Err(ChaosError)` - An error if retrieval fails
     pub async fn get_members(
         organisation_id: i64,
-        pool: &Pool<Postgres>,
+        transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<MemberList, ChaosError> {
         let admin_list = sqlx::query_as!(
         Member,
@@ -366,7 +366,7 @@ impl Organisation {
         ",
         organisation_id
     )
-            .fetch_all(pool)
+            .fetch_all(transaction.deref_mut())
             .await?;
 
         Ok(MemberList {
@@ -523,7 +523,7 @@ impl Organisation {
 
     pub async fn update_logo(
         id: i64,
-        pool: &Pool<Postgres>,
+        transaction: &mut Transaction<'_, Postgres>,
         storage_bucket: &Bucket,
     ) -> Result<String, ChaosError> {
         let dt = Utc::now();
@@ -540,7 +540,7 @@ impl Organisation {
             logo_id,
             current_time
         )
-        .fetch_one(pool)
+        .fetch_one(transaction.deref_mut())
         .await?;
 
         let upload_url =
@@ -551,7 +551,7 @@ impl Organisation {
 
     pub async fn get_campaigns(
         organisation_id: i64,
-        pool: &Pool<Postgres>,
+        transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<OrganisationCampaign>, ChaosError> {
         let campaigns = sqlx::query_as!(
             OrganisationCampaign,
@@ -562,7 +562,7 @@ impl Organisation {
             ",
             organisation_id
         )
-        .fetch_all(pool)
+        .fetch_all(transaction.deref_mut())
         .await?;
 
         Ok(campaigns)
@@ -575,7 +575,7 @@ impl Organisation {
         description: Option<String>,
         starts_at: DateTime<Utc>,
         ends_at: DateTime<Utc>,
-        pool: &Pool<Postgres>,
+        transaction: &mut Transaction<'_, Postgres>,
         snowflake_id_generator: &mut SnowflakeIdGenerator,
     ) -> Result<i64, ChaosError> {
         if !slug.is_ascii() {
@@ -597,7 +597,7 @@ impl Organisation {
             starts_at,
             ends_at
         )
-        .execute(pool)
+        .execute(transaction.deref_mut())
         .await?;
 
         Ok(new_campaign_id)
@@ -608,7 +608,7 @@ impl Organisation {
         name: String,
         template_subject: String,
         template_body: String,
-        pool: &Pool<Postgres>,
+        transaction: &mut Transaction<'_, Postgres>,
         snowflake_generator: &mut SnowflakeIdGenerator,
     ) -> Result<i64, ChaosError> {
         let id = snowflake_generator.real_time_generate();
@@ -624,7 +624,7 @@ impl Organisation {
             template_subject,
             template_body
         )
-        .execute(pool)
+        .execute(transaction.deref_mut())
         .await?;
 
         Ok(id)

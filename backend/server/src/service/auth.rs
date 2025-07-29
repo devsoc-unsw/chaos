@@ -15,7 +15,8 @@ use axum::RequestPartsExt;
 use axum_extra::headers::Cookie;
 use axum_extra::TypedHeader;
 use snowflake::SnowflakeIdGenerator;
-use sqlx::{Pool, Postgres};
+use sqlx::{Pool, Postgres, Transaction};
+use std::ops::DerefMut;
 
 /// Checks if a user exists in DB based on given email address. If so, their user_id is returned.
 /// Otherwise, a new user is created in the DB, and the new id is returned.
@@ -74,13 +75,13 @@ pub async fn create_or_get_user_id(
 /// # Returns
 /// 
 /// * `Result<(), ChaosError>` - Ok if the user is a super user, Unauthorized error otherwise
-pub async fn assert_is_super_user(user_id: i64, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
+pub async fn assert_is_super_user(user_id: i64, transaction: &mut Transaction<'_, Postgres>,) -> Result<(), ChaosError> {
     let is_super_user = sqlx::query!(
         "SELECT EXISTS(SELECT 1 FROM users WHERE id = $1 AND role = $2)",
         user_id,
         UserRole::SuperUser as UserRole
     )
-    .fetch_one(pool)
+    .fetch_one(transaction.deref_mut())
     .await?
     .exists
     .expect("`exists` should always exist in this query result");
