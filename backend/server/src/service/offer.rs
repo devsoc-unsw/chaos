@@ -6,7 +6,8 @@
 
 use crate::models::error::ChaosError;
 use crate::models::offer::Offer;
-use sqlx::{Pool, Postgres};
+use sqlx::{Pool, Postgres, Transaction};
+use std::ops::DerefMut;
 
 /// Verifies if a user has admin privileges for an offer.
 /// 
@@ -25,7 +26,7 @@ use sqlx::{Pool, Postgres};
 pub async fn assert_user_is_offer_admin(
     user_id: i64,
     offer_id: i64,
-    pool: &Pool<Postgres>,
+    transaction: &mut Transaction<'_, Postgres>,
 ) -> Result<(), ChaosError> {
     let is_admin = sqlx::query!(
         "
@@ -39,7 +40,7 @@ pub async fn assert_user_is_offer_admin(
         offer_id,
         user_id
     )
-    .fetch_one(pool)
+    .fetch_one(transaction.deref_mut())
     .await?
     .exists
     .expect("`exists` should always exist in this query result");
@@ -67,10 +68,9 @@ pub async fn assert_user_is_offer_admin(
 pub async fn assert_user_is_offer_recipient(
     user_id: i64,
     offer_id: i64,
-    pool: &Pool<Postgres>,
+    transaction: &mut Transaction<'_, Postgres>,
 ) -> Result<(), ChaosError> {
-    let tx = &mut pool.begin().await?;
-    let offer = Offer::get(offer_id, tx).await?;
+    let offer = Offer::get(offer_id, transaction).await?;
 
     if offer.user_id != user_id {
         return Err(ChaosError::Unauthorized);

@@ -6,7 +6,8 @@
 
 use chrono::Utc;
 use crate::models::error::ChaosError;
-use sqlx::{Pool, Postgres};
+use sqlx::{Pool, Postgres, Transaction};
+use std::ops::DerefMut;
 
 /// Verifies if a user is the owner of an answer.
 /// 
@@ -24,7 +25,7 @@ use sqlx::{Pool, Postgres};
 pub async fn user_is_answer_owner(
     user_id: i64,
     answer_id: i64,
-    pool: &Pool<Postgres>,
+    transaction: &mut Transaction<'_, Postgres>,
 ) -> Result<(), ChaosError> {
     let is_owner = sqlx::query!(
         "
@@ -39,7 +40,7 @@ pub async fn user_is_answer_owner(
         answer_id,
         user_id
     )
-    .fetch_one(pool)
+    .fetch_one(transaction.deref_mut())
     .await?
     .exists
     .expect("`exists` should always exist in this query result");
@@ -66,7 +67,7 @@ pub async fn user_is_answer_owner(
 /// * `Result<(), ChaosError>` - Ok if the answer can be modified, ApplicationClosed error otherwise
 pub async fn assert_answer_application_is_open(
     answer_id: i64,
-    pool: &Pool<Postgres>,
+    transaction: &mut Transaction<'_, Postgres>,
 ) -> Result<(), ChaosError> {
     let time = Utc::now();
     let application = sqlx::query!(
@@ -78,7 +79,7 @@ pub async fn assert_answer_application_is_open(
         ",
         answer_id
     )
-        .fetch_one(pool)
+        .fetch_one(transaction.deref_mut())
         .await?;
 
     if application.submitted || application.ends_at <= time {

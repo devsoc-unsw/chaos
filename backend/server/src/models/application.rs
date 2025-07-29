@@ -507,7 +507,7 @@ impl Application {
     pub async fn set_status(
         id: i64,
         new_status: ApplicationStatus,
-        pool: &Pool<Postgres>,
+        transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         _ = sqlx::query!(
             "
@@ -518,7 +518,7 @@ impl Application {
             id,
             new_status as ApplicationStatus
         )
-        .fetch_one(pool)
+        .fetch_one(transaction.deref_mut())
         .await?;
 
         Ok(())
@@ -538,7 +538,7 @@ impl Application {
     pub async fn set_private_status(
         id: i64,
         new_status: ApplicationStatus,
-        pool: &Pool<Postgres>,
+        transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         _ = sqlx::query!(
             "
@@ -549,7 +549,7 @@ impl Application {
             id,
             new_status as ApplicationStatus
         )
-        .fetch_one(pool)
+        .fetch_one(transaction.deref_mut())
         .await?;
 
         Ok(())
@@ -649,7 +649,9 @@ where
             .get("application_id")
             .ok_or(ChaosError::BadRequest)?;
 
-        assert_application_is_open(application_id, &app_state.db).await?;
+        let mut tx = app_state.db.begin().await?;
+        assert_application_is_open(application_id, &mut tx).await?;
+        tx.commit().await?;
 
         Ok(OpenApplicationByApplicationId)
     }
@@ -679,7 +681,9 @@ where
             .get("application_id")
             .ok_or(ChaosError::BadRequest)?;
 
-        assert_answer_application_is_open(answer_id, &app_state.db).await?;
+        let mut tx = app_state.db.begin().await?;
+        assert_answer_application_is_open(answer_id, &mut tx).await?;
+        tx.commit().await?;
 
         Ok(OpenApplicationByAnswerId)
     }

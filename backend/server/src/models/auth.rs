@@ -112,7 +112,9 @@ where
         let app_state = AppState::from_ref(state);
         let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
-        assert_is_super_user(user_id, &app_state.db).await?;
+        let mut tx = app_state.db.begin().await?;
+        assert_is_super_user(user_id, &mut tx).await?;
+        tx.commit().await?;
 
         Ok(SuperUser { user_id })
     }
@@ -149,7 +151,9 @@ where
             .get("organisation_id")
             .ok_or(ChaosError::BadRequest)?;
 
-        assert_user_is_organisation_admin(user_id, organisation_id, &app_state.db).await?;
+        let mut tx = app_state.db.begin().await?;
+        assert_user_is_organisation_admin(user_id, organisation_id, &mut tx).await?;
+        tx.commit().await?;
 
         Ok(OrganisationAdmin { user_id })
     }
@@ -186,7 +190,9 @@ where
             .get("campaign_id")
             .ok_or(ChaosError::BadRequest)?;
 
-        user_is_campaign_admin(user_id, campaign_id, &app_state.db).await?;
+        let mut tx = app_state.db.begin().await?;
+        user_is_campaign_admin(user_id, campaign_id, &mut tx).await?;
+        tx.commit().await?;
 
         Ok(CampaignAdmin { user_id })
     }
@@ -223,7 +229,9 @@ where
             .get("role_id")
             .ok_or(ChaosError::BadRequest)?;
 
-        user_is_role_admin(user_id, role_id, &app_state.db).await?;
+        let mut tx = app_state.db.begin().await?;
+        user_is_role_admin(user_id, role_id, &mut tx).await?;
+        tx.commit().await?;
 
         Ok(RoleAdmin { user_id })
     }
@@ -258,7 +266,9 @@ where
             .await
             .map_err(|_| ChaosError::BadRequest)?;
 
-        user_is_application_admin(user_id, application_id, &app_state.db).await?;
+        let mut tx = app_state.db.begin().await?;
+        user_is_application_admin(user_id, application_id, &mut tx).await?;
+        tx.commit().await?;
 
         Ok(ApplicationAdmin { user_id })
     }
@@ -293,7 +303,9 @@ where
             .await
             .map_err(|_| ChaosError::BadRequest)?;
 
-        assert_user_is_organisation_member(user_id, application_id, &app_state.db).await?;
+        let mut tx = app_state.db.begin().await?;
+        assert_user_is_organisation_member(user_id, application_id, &mut tx).await?;
+        tx.commit().await?;
 
         Ok(ApplicationReviewerGivenApplicationId { user_id })
     }
@@ -328,7 +340,9 @@ where
             .await
             .map_err(|_| ChaosError::BadRequest)?;
 
-        user_is_application_owner(user_id, application_id, &app_state.db).await?;
+        let mut tx = app_state.db.begin().await?;
+        user_is_application_owner(user_id, application_id, &mut tx).await?;
+        tx.commit().await;
 
         Ok(ApplicationCreatorGivenApplicationId { user_id })
     }
@@ -364,7 +378,9 @@ where
             .await
             .map_err(|_| ChaosError::BadRequest)?;
 
-        assert_user_is_application_reviewer_given_rating_id(user_id, rating_id, &app_state.db).await?;
+        let mut tx = app_state.db.begin().await?;
+        assert_user_is_application_reviewer_given_rating_id(user_id, rating_id, &mut tx).await?;
+        tx.commit().await?;
 
         Ok(ApplicationReviewerGivenRatingId { user_id })
     }
@@ -399,7 +415,9 @@ where
             .await
             .map_err(|_| ChaosError::BadRequest)?;
 
-        assert_user_is_rating_creator_and_organisation_member(user_id, rating_id, &app_state.db).await?;
+        let mut tx = app_state.db.begin().await?;
+        assert_user_is_rating_creator_and_organisation_member(user_id, rating_id, &mut tx).await?;
+        tx.commit().await?;
 
         Ok(RatingCreator { user_id })
     }
@@ -434,7 +452,9 @@ where
             .await
             .map_err(|_| ChaosError::BadRequest)?;
 
-        user_is_question_admin(user_id, question_id, &app_state.db).await?;
+        let mut tx = app_state.db.begin().await?;
+        user_is_question_admin(user_id, question_id, &mut tx).await?;
+        tx.commit().await?;
 
         Ok(QuestionAdmin { user_id })
     }
@@ -469,7 +489,9 @@ where
             .await
             .map_err(|_| ChaosError::BadRequest)?;
 
-        user_is_application_owner(user_id, application_id, &app_state.db).await?;
+        let mut tx = app_state.db.begin().await?;
+        user_is_application_owner(user_id, application_id, &mut tx).await?;
+        tx.commit().await?;
 
         Ok(ApplicationOwner { user_id })
     }
@@ -504,7 +526,9 @@ where
             .await
             .map_err(|_| ChaosError::BadRequest)?;
 
-        user_is_answer_owner(user_id, answer_id, &app_state.db).await?;
+        let mut tx = app_state.db.begin().await?;
+        user_is_answer_owner(user_id, answer_id, &mut tx).await?;
+        tx.commit().await?;
 
         Ok(AnswerOwner { user_id })
     }
@@ -539,7 +563,9 @@ where
             .await
             .map_err(|_| ChaosError::BadRequest)?;
 
-        user_is_email_template_admin(user_id, email_template_id, &app_state.db).await?;
+        let mut tx = app_state.db.begin().await?;
+        user_is_email_template_admin(user_id, email_template_id, &mut tx).await?;
+        tx.commit().await?;
 
         Ok(EmailTemplateAdmin { user_id })
     }
@@ -574,7 +600,9 @@ where
             .await
             .map_err(|_| ChaosError::BadRequest)?;
 
-        assert_user_is_offer_admin(user_id, offer_id, &app_state.db).await?;
+        let mut tx = app_state.db.begin().await?;
+        assert_user_is_offer_admin(user_id, offer_id, &mut tx).await?;
+        tx.commit().await?;
 
         Ok(OfferAdmin { user_id })
     }
@@ -609,7 +637,9 @@ where
             .await
             .map_err(|_| ChaosError::BadRequest)?;
 
-        assert_user_is_offer_recipient(user_id, offer_id, &app_state.db).await?;
+        let mut tx = app_state.db.begin().await?;
+        assert_user_is_offer_recipient(user_id, offer_id, &mut tx).await?;
+        tx.commit().await?;
 
         Ok(OfferRecipient { user_id })
     }

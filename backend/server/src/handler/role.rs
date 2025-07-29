@@ -33,11 +33,13 @@ impl RoleHandler {
     /// 
     /// * `Result<impl IntoResponse, ChaosError>` - Role details or error
     pub async fn get(
-        State(state): State<AppState>,
+        mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
         _user: AuthUser,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let role = Role::get(id, &state.db).await?;
+        let role = Role::get(id, &mut transaction.tx).await?;
+
+        transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(role)))
     }
 
@@ -55,11 +57,13 @@ impl RoleHandler {
     /// 
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn delete(
-        State(state): State<AppState>,
+        mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
         _admin: RoleAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Role::delete(id, &state.db).await?;
+        Role::delete(id, &mut transaction.tx).await?;
+
+        transaction.tx.commit().await?;
         Ok((StatusCode::OK, "Successfully deleted role"))
     }
 
@@ -78,12 +82,14 @@ impl RoleHandler {
     /// 
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update(
-        State(state): State<AppState>,
+        mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
         _admin: RoleAdmin,
         Json(data): Json<RoleUpdate>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Role::update(id, data, &state.db).await?;
+        Role::update(id, data, &mut transaction.tx).await?;
+
+        transaction.tx.commit().await?;
         Ok((StatusCode::OK, "Successfully updated role"))
     }
 

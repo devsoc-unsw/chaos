@@ -126,7 +126,7 @@ impl Role {
     /// Returns a `Result` containing either:
     /// * `Ok(RoleDetails)` - The requested role details
     /// * `Err(ChaosError)` - An error if retrieval fails
-    pub async fn get(id: i64, pool: &Pool<Postgres>) -> Result<RoleDetails, ChaosError> {
+    pub async fn get(id: i64, transaction: &mut Transaction<'_, Postgres>,) -> Result<RoleDetails, ChaosError> {
         let role = sqlx::query_as!(
             RoleDetails,
             "
@@ -136,7 +136,7 @@ impl Role {
             ",
             id
         )
-        .fetch_one(pool)
+        .fetch_one(transaction.deref_mut())
         .await?;
 
         Ok(role)
@@ -152,14 +152,14 @@ impl Role {
     /// Returns a `Result` containing either:
     /// * `Ok(())` - If the role was deleted successfully
     /// * `Err(ChaosError)` - An error if deletion fails
-    pub async fn delete(id: i64, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
+    pub async fn delete(id: i64, transaction: &mut Transaction<'_, Postgres>,) -> Result<(), ChaosError> {
         let _ = sqlx::query!(
             "
                 DELETE FROM campaign_roles WHERE id = $1 RETURNING id
             ",
             id
         )
-        .fetch_one(pool)
+        .fetch_one(transaction.deref_mut())
         .await?;
 
         Ok(())
@@ -179,7 +179,7 @@ impl Role {
     pub async fn update(
         id: i64,
         role_data: RoleUpdate,
-        pool: &Pool<Postgres>,
+        transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         let _ = sqlx::query!(
             "
@@ -194,7 +194,7 @@ impl Role {
             role_data.max_avaliable,
             role_data.finalised
         )
-        .fetch_one(pool)
+        .fetch_one(transaction.deref_mut())
         .await?;
 
         Ok(())

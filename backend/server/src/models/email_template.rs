@@ -86,14 +86,14 @@ impl EmailTemplate {
     /// * `Err(ChaosError)` - An error if retrieval fails
     pub async fn get_all_by_organisation(
         organisation_id: i64,
-        pool: &Pool<Postgres>,
+        transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<EmailTemplate>, ChaosError> {
         let templates = sqlx::query_as!(
             EmailTemplate,
             "SELECT * FROM email_templates WHERE organisation_id = $1",
             organisation_id
         )
-        .fetch_all(pool)
+        .fetch_all(transaction.deref_mut())
         .await?;
 
         Ok(templates)
@@ -117,7 +117,7 @@ impl EmailTemplate {
         name: String,
         template_subject: String,
         template_body: String,
-        pool: &Pool<Postgres>,
+        transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         let _ = sqlx::query!(
             "
@@ -128,7 +128,7 @@ impl EmailTemplate {
             template_subject,
             template_body
         )
-        .fetch_one(pool)
+        .fetch_one(transaction.deref_mut())
         .await?;
 
         Ok(())
@@ -144,9 +144,9 @@ impl EmailTemplate {
     /// Returns a `Result` containing either:
     /// * `Ok(())` - If the deletion was successful
     /// * `Err(ChaosError)` - An error if the deletion fails
-    pub async fn delete(id: i64, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
+    pub async fn delete(id: i64, transaction: &mut Transaction<'_, Postgres>,) -> Result<(), ChaosError> {
         let _ = sqlx::query!("DELETE FROM email_templates WHERE id = $1 RETURNING id", id)
-            .fetch_one(pool)
+            .fetch_one(transaction.deref_mut())
             .await?;
 
         Ok(())

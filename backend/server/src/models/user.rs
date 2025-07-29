@@ -5,7 +5,8 @@
 
 use crate::models::error::ChaosError;
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, Pool, Postgres};
+use sqlx::{FromRow, Pool, Postgres, Transaction};
+use std::ops::DerefMut;
 
 /// Represents the role of a user in the system.
 /// 
@@ -116,7 +117,7 @@ impl User {
     /// # Returns
     /// 
     /// * `Result<User, ChaosError>` - User details or error
-    pub async fn get(id: i64, pool: &Pool<Postgres>) -> Result<User, ChaosError> {
+    pub async fn get(id: i64, transaction: &mut Transaction<'_, Postgres>,) -> Result<User, ChaosError> {
         let user = sqlx::query_as!(
             User,
             r#"
@@ -126,7 +127,7 @@ impl User {
         "#,
             id
         )
-        .fetch_one(pool)
+        .fetch_one(transaction.deref_mut())
         .await?;
 
         Ok(user)
@@ -146,7 +147,7 @@ impl User {
     pub async fn update_name(
         id: i64,
         name: String,
-        pool: &Pool<Postgres>,
+        transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         let _ = sqlx::query!(
             "
@@ -155,7 +156,7 @@ impl User {
             name,
             id
         )
-        .fetch_one(pool)
+        .fetch_one(transaction.deref_mut())
         .await?;
 
         Ok(())
@@ -175,7 +176,7 @@ impl User {
     pub async fn update_pronouns(
         id: i64,
         pronouns: String,
-        pool: &Pool<Postgres>,
+        transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         let _ = sqlx::query!(
             "
@@ -184,7 +185,7 @@ impl User {
             pronouns,
             id
         )
-        .fetch_one(pool)
+        .fetch_one(transaction.deref_mut())
         .await?;
 
         Ok(())
@@ -204,7 +205,7 @@ impl User {
     pub async fn update_gender(
         id: i64,
         gender: String,
-        pool: &Pool<Postgres>,
+        transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         let _ = sqlx::query!(
             "
@@ -213,7 +214,7 @@ impl User {
             gender,
             id
         )
-        .fetch_one(pool)
+        .fetch_one(transaction.deref_mut())
         .await?;
 
         Ok(())
@@ -230,7 +231,7 @@ impl User {
     /// # Returns
     /// 
     /// * `Result<(), ChaosError>` - Success or error
-    pub async fn update_zid(id: i64, zid: String, pool: &Pool<Postgres>) -> Result<(), ChaosError> {
+    pub async fn update_zid(id: i64, zid: String, transaction: &mut Transaction<'_, Postgres>,) -> Result<(), ChaosError> {
         let _ = sqlx::query!(
             "
             UPDATE users SET zid = $1 WHERE id = $2 RETURNING id
@@ -238,7 +239,7 @@ impl User {
             zid,
             id
         )
-        .fetch_one(pool)
+        .fetch_one(transaction.deref_mut())
         .await?;
 
         Ok(())
@@ -260,7 +261,7 @@ impl User {
         id: i64,
         degree_name: String,
         degree_starting_year: i32,
-        pool: &Pool<Postgres>,
+        transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         let _ = sqlx::query!(
             "
@@ -270,7 +271,7 @@ impl User {
             degree_starting_year,
             id
         )
-        .fetch_one(pool)
+        .fetch_one(transaction.deref_mut())
         .await?;
 
         Ok(())
@@ -280,7 +281,7 @@ impl User {
     /// Creates a User, This should only used for database seeding
     pub async fn create_user(
         data: User,
-        pool: &Pool<Postgres>,
+        transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         sqlx::query!(
             "
@@ -297,7 +298,7 @@ impl User {
             data.degree_starting_year,
             data.role as UserRole
         )
-        .execute(pool)
+        .execute(transaction.deref_mut())
         .await?;
 
         Ok(())
