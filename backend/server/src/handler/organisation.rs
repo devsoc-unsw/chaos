@@ -153,6 +153,17 @@ impl OrganisationHandler {
         Ok((StatusCode::OK, "Successfully deleted organisation"))
     }
 
+    /// Get all organisations that the logged in user is an Admin of
+    pub async fn get_by_admin(
+        mut transaction: DBTransaction<'_>,
+        user: AuthUser,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let orgs = Organisation::get_by_admin(user.user_id, &mut transaction.tx).await?;
+
+        transaction.tx.commit().await?;
+        Ok((StatusCode::OK, Json(orgs)))
+    }
+
     /// Retrieves all admins of an organisation.
     /// 
     /// This handler allows super users to view organisation admins.

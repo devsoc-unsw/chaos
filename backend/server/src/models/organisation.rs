@@ -288,6 +288,28 @@ impl Organisation {
         Ok(organisation)
     }
 
+    pub async fn get_by_admin(
+        user_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<OrganisationDetails>, ChaosError> {
+        let orgs = sqlx::query_as!(
+            OrganisationDetails,
+            "
+                SELECT o.id, o.slug, o.name, o.logo, o.created_at
+                    FROM organisations o
+                    JOIN organisation_members om
+                    ON o.id = om.organisation_id 
+                    WHERE om.user_id = $1
+                    AND om.role = 'Admin'
+            ",
+            user_id
+        )
+        .fetch_all(transaction.deref_mut())
+        .await?;
+
+        Ok(orgs)
+    }
+
     /// Deletes an organisation.
     /// 
     /// # Arguments
