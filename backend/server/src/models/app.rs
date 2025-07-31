@@ -145,6 +145,7 @@ pub async fn app() -> Result<Router, ChaosError> {
             "/api/v1/user/applications",
             get(ApplicationHandler::get_from_curr_user),
         )
+        .route("/api/v1/user/organisations", get(OrganisationHandler::get_by_admin))
         .route("/api/v1/organisation", post(OrganisationHandler::create))
         .route(
             "/api/v1/organisation/slug_check",
@@ -250,7 +251,7 @@ pub async fn app() -> Result<Router, ChaosError> {
             "/api/v1/campaign/slug/:organisation_slug/:campaign_slug",
             get(CampaignHandler::get_by_slugs),
         )
-        .route("/api/v1/campaign", get(CampaignHandler::get_all))
+        .route("/api/v1/campaigns", get(CampaignHandler::get_all))
         .route(
             "/api/v1/campaign/:campaign_id/question",
             post(QuestionHandler::create),
