@@ -992,6 +992,19 @@
   dependencies:
     "@date-io/core" "^2.16.0"
 
+"@daypilot/daypilot-lite-javascript@4.2.1":
+  version "4.2.1"
+  resolved "https://registry.yarnpkg.com/@daypilot/daypilot-lite-javascript/-/daypilot-lite-javascript-4.2.1.tgz#1f6081bc3ab65ab1bacc94ff68f9d629c13e7626"
+  integrity sha512-DNd+KtzwljRA0JrgEezNQhT6f1DV1SVVcY43t+uEXLWqiEeDfgtfuBJbJgaclov9pFz1ionU/Qy+4e/H1j0mJQ==
+
+"@daypilot/daypilot-lite-react@^4.2.1":
+  version "4.2.1"
+  resolved "https://registry.yarnpkg.com/@daypilot/daypilot-lite-react/-/daypilot-lite-react-4.2.1.tgz#0c2b524b7fd1145cc142642b787e98f44644bb96"
+  integrity sha512-750xYzY7Aa9+sbFDm9aXZocSS7gV41w2ta2zk951YAJQt+/SRCyaejJqGv8LeC8RPAN+eOMCJdgPjnNVBXdlSw==
+  dependencies:
+    "@daypilot/daypilot-lite-javascript" "4.2.1"
+    create-react-class ">=15.0.0"
+
 "@emnapi/core@^1.4.3":
   version "1.4.3"
   resolved "https://registry.yarnpkg.com/@emnapi/core/-/core-1.4.3.tgz#9ac52d2d5aea958f67e52c40a065f51de59b77d6"
@@ -3252,6 +3265,14 @@ cosmiconfig@^7.0.0:
     path-type "^4.0.0"
     yaml "^1.10.0"
 
+create-react-class@>=15.0.0:
+  version "15.7.0"
+  resolved "https://registry.yarnpkg.com/create-react-class/-/create-react-class-15.7.0.tgz#7499d7ca2e69bb51d13faf59bd04f0c65a1d6c1e"
+  integrity sha512-QZv4sFWG9S5RUvkTYWbflxeZX+JG7Cz0Tn33rQBJ+WFQTqTfUTjMjiv9tnfXazjsO5r0KhPs+AqCjyrQX6h2ng==
+  dependencies:
+    loose-envify "^1.3.1"
+    object-assign "^4.1.1"
+
 cross-spawn@^7.0.2, cross-spawn@^7.0.6:
   version "7.0.6"
   resolved "https://registry.npmjs.org/cross-spawn/-/cross-spawn-7.0.6.tgz"
@@ -4943,9 +4964,9 @@ lodash@^4.17.15, lodash@^4.17.21:
   resolved "https://registry.npmjs.org/lodash/-/lodash-4.17.21.tgz"
   integrity sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==
 
-loose-envify@^1.1.0, loose-envify@^1.4.0:
+loose-envify@^1.1.0, loose-envify@^1.3.1, loose-envify@^1.4.0:
   version "1.4.0"
-  resolved "https://registry.npmjs.org/loose-envify/-/loose-envify-1.4.0.tgz"
+  resolved "https://registry.yarnpkg.com/loose-envify/-/loose-envify-1.4.0.tgz#71ee51fa7be4caec1a63839f7e682d8132d30caf"
   integrity sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==
   dependencies:
     js-tokens "^3.0.0 || ^4.0.0"
