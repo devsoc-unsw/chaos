@@ -8,6 +8,7 @@ CREATE TABLE applications (
     private_status application_status NOT NULL DEFAULT 'Pending',
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    submitted BOOLEAN NOT NULL DEFAULT false,
     CONSTRAINT FK_applications_campaigns
         FOREIGN KEY(campaign_id)
             REFERENCES campaigns(id)
@@ -24,6 +25,7 @@ CREATE TABLE application_roles (
     id BIGSERIAL PRIMARY KEY,
     application_id BIGINT NOT NULL,
     campaign_role_id BIGINT NOT NULL,
+    preference INTEGER NOT NULL,
     CONSTRAINT FK_application_roles_applications
         FOREIGN KEY(application_id)
             REFERENCES applications(id)
@@ -43,6 +45,8 @@ CREATE TABLE answers (
   id BIGINT PRIMARY KEY,
   application_id BIGINT NOT NULL,
   question_id BIGINT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT FK_answers_applications
       FOREIGN KEY(application_id)
           REFERENCES applications(id)

@@ -58,7 +58,7 @@ const CampaignCard = ({
 
   const content = (
     <Content
-      campaignId={campaignId}
+      campaignId={campaignId!} // campaignId should always exist if isAdmin is true
       organisationLogo={organisationLogo}
       title={title}
       appliedFor={appliedFor}

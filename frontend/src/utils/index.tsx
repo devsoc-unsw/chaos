@@ -1,7 +1,10 @@
-import { ToastType } from "components/Toast";
 import moment from "moment";
 import { toast } from "react-hot-toast";
+
 import Toast from "components/Toast";
+
+import type { ToastType } from "components/Toast";
+
 
 export function isLogin(): boolean {
   return true;
@@ -11,7 +14,27 @@ export function isAdmin(): boolean {
   return true;
 }
 
-export const isLoggedIn = (): boolean => Boolean(localStorage.AUTH_TOKEN);
+// Check if user is logged in by making a request to the backend
+export const isLoggedIn = async (): Promise<boolean> => {
+    try {
+        // Try to get user info - if it succeeds, user is logged in
+        // Use direct backend URL instead of proxy
+        const response = await fetch(`http://localhost:8080/api/v1/user`, {
+            method: 'GET',
+            credentials: 'include', // Include cookies
+            redirect: 'manual', // Don't follow redirects automatically
+        });
+        
+        // If we get a redirect (307), user is not authenticated
+        if (response.status === 307 || response.status === 302) {
+            return false;
+        }
+        
+        return response.ok;
+    } catch {
+        return false;
+    }
+}
 
 export const dateToStringForBackend = (dateObject: Date): string =>
   moment.utc(dateObject).format("YYYY-MM-DD HH:mm:ss");

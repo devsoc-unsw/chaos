@@ -6,7 +6,7 @@ import CampaignLoading from "pages/dashboard/CampaignGrid/CampaignLoading";
 
 const AdminLoading = () => (
   <div tw="flex flex-1">
-    <div tw="flex flex-col items-center gap-4 w-24 p-4 bg-white shadow">
+    <div tw="flex w-24 flex-col items-center gap-4 bg-white p-4 shadow">
       {Array(4)
         .fill(null)
         .map((_, i) => (
@@ -31,7 +31,7 @@ const AdminLoading = () => (
           <PulsingBar tw="h-10 w-10 shadow" color="red" standalone />
         </div>
       </header>
-      <div tw="flex gap-x-4 gap-y-8 flex-wrap justify-around">
+      <div tw="flex flex-wrap justify-around gap-x-4 gap-y-8">
         {Array(5)
           .fill(null)
           .map((_, i) => (

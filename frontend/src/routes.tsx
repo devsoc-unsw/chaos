@@ -25,12 +25,12 @@ const routes = [
   <Route key="auth" path="/auth/callback" element={<AuthSuccess />} />,
   <Route key="signup" path="/signup" element={<SignupPage />} />,
   <Route key="landing" path="/" element={<LandingPage />} />,
-  <Route key="review" path="/admin/review/:campaignId" element={<Review />}>
-    <Route key="marking" path=":roleId/marking" element={<Marking />} />,
-    <Route key="rankings" path=":roleId/rankings" element={<Rankings />} />,
+  <Route key="review" path="/admin/review/:campaignSlug" element={<Review />}>
+    <Route key="marking" path=":roleSlug/marking" element={<Marking />} />,
+    <Route key="rankings" path=":roleSlug/rankings" element={<Rankings />} />,
     <Route
       key="finalise"
-      path=":roleId/finalise"
+      path=":roleSlug/finalise"
       element={<FinaliseCandidates />}
     />
     ,
@@ -38,12 +38,12 @@ const routes = [
   <Route key="Admin" path="/Admin" element={<Admin />} />,
   <Route
     key="create-campaign"
-    path="/campaign/create/:orgId"
+    path="/campaign/create/:orgSlug"
     element={<CampaignCreate />}
   />,
   <Route
     key="ApplicationPage"
-    path="/application/:campaignId"
+    path="/:organisationSlug/:campaignSlug/application"
     element={<ApplicationPage />}
   />,
   <Route
