@@ -110,31 +110,27 @@ pub async fn extract_user_id_from_request(
     let decoding_key = &state.decoding_key;
     let jwt_validator = &state.jwt_validator;
     
-    println!("Attempting to extract user ID from request...");
     
     let TypedHeader(cookies) = parts
         .extract::<TypedHeader<Cookie>>()
         .await
         .map_err(|e| {
-            eprintln!("Failed to extract cookies: {:?}", e);
             ChaosError::NotLoggedIn
         })?;
 
-    println!("Cookies extracted: {:?}", cookies);
+    
 
     let token = cookies.get("auth_token").ok_or_else(|| {
-        eprintln!("No auth_token cookie found");
         ChaosError::NotLoggedIn
     })?;
 
-    println!("Found auth_token cookie: {}", token);
+    
 
     let claims =
         decode_auth_token(token, decoding_key, jwt_validator).ok_or_else(|| {
-            eprintln!("Failed to decode auth token");
             ChaosError::NotLoggedIn
         })?;
 
-    println!("Successfully decoded token for user ID: {}", claims.sub);
+    
     Ok(claims.sub)
 }
