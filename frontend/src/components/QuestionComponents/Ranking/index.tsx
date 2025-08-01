@@ -21,6 +21,8 @@ interface RankingProps {
   onChange?: (value: Array<string | number>) => void;
   onSubmit?: (questionId: number, value: Array<string | number>) => void;
   disabled?: boolean;
+  width?: string;
+  height?: string;
 }
 
 const Ranking: React.FC<RankingProps> = ({
@@ -33,13 +35,16 @@ const Ranking: React.FC<RankingProps> = ({
   onChange,
   onSubmit,
   disabled = false,
+  width = "max-w-3xl",
+  height = "",
 }) => {
   const [rankedOptions, setRankedOptions] = useState<RankedOption[]>([]);
 
   // Initialize ranked options on mount or when options change
   useEffect(() => {
-    if (defaultValue.length > 0) {
-      const initialRanked = defaultValue.map((optionId, index) => {
+    const safeDefaultValue = Array.isArray(defaultValue) ? defaultValue : [];
+    if (safeDefaultValue.length > 0) {
+      const initialRanked = safeDefaultValue.map((optionId, index) => {
         const option = options.find(opt => opt.id === optionId);
         return option ? { ...option, rank: index + 1 } : null;
       }).filter(Boolean) as RankedOption[];
@@ -83,7 +88,7 @@ const Ranking: React.FC<RankingProps> = ({
   const sortedOptions = [...rankedOptions].sort((a, b) => a.rank - b.rank);
 
   return (
-    <div tw="mb-6 max-w-3xl w-full">
+    <div tw="mb-6 w-full" css={width ? tw`${width}` : undefined}>
       <div tw="flex items-center mb-1">
         <label tw="text-lg font-medium text-gray-900">{question}</label>
         {required && <span tw="ml-1 text-red-500">*</span>}

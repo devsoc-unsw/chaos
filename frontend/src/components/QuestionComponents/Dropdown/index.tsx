@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import tw from 'twin.macro';
 
 interface DropdownOption {
   id: string | number;
@@ -24,6 +25,8 @@ interface DropdownProps {
   onSubmit?: (questionId: number, value: string | number) => void;
   disabled?: boolean;
   placeholder?: string;
+  width?: string;
+  height?: string;
 }
 
 const Dropdown: React.FC<DropdownProps> = ({
@@ -36,6 +39,8 @@ const Dropdown: React.FC<DropdownProps> = ({
   onChange,
   onSubmit,
   disabled = false,
+  width = "max-w-4xl",
+  height = "",
   placeholder = "Select an option",
 }) => {
   const [value, setValue] = useState<string | number | undefined>(defaultValue);
@@ -52,7 +57,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   };
 
   return (
-    <div className="mb-6 max-w-4xl w-full">
+    <div tw="mb-6 w-full" css={width ? tw`${width}` : undefined}>
       <div className="flex items-center mb-2">
         <Label className="text-lg font-medium">{question}</Label>
         {required && <span className="ml-1 text-red-500">*</span>}
