@@ -1,0 +1,91 @@
+[
+  {
+    "id": 1,
+    "applicant": {
+      "firstName": "Sarah",
+      "lastName": "Chen",
+      "email": "sarah.chen@student.unsw.edu.au",
+      "zid": "z5234567",
+      "year": "3rd Year",
+      "degree": "Computer Science",
+      "phone": "+61 412 345 678"
+    },
+    "appliedRoles": ["marketing", "design"],
+    "rolePreferences": { "marketing": 1, "design": 2 },
+    "motivation": "I'm passionate about technology and want to help DevSoc grow its community. I have experience in social media marketing from my internship at a startup, and I love creating engaging content that resonates with tech students.",
+    "roleAnswers": {
+      "marketing": {
+        "marketing_experience": "I managed social media accounts for a tech startup during my internship, growing their Instagram following by 300% in 3 months. I also created content for LinkedIn and Twitter.",
+        "campaign_idea": "I would create a 'Code & Coffee' series featuring weekly posts about different programming languages, paired with coffee shop recommendations near campus. This would combine our tech focus with student lifestyle content."
+      },
+      "design": {
+        "design_portfolio": "https://sarahchen.design",
+        "brand_vision": "I would modernize DevSoc's visual identity with a more vibrant color palette and contemporary typography while maintaining the professional tech aesthetic."
+      }
+    },
+    "submittedAt": "2024-02-25T10:30:00Z",
+    "status": "pending",
+    "rating": null,
+    "reviewComment": "",
+    "reviewedBy": null,
+    "reviewedAt": null
+  },
+  {
+    "id": 2,
+    "applicant": {
+      "firstName": "Marcus",
+      "lastName": "Johnson",
+      "email": "marcus.johnson@student.unsw.edu.au",
+      "zid": "z5345678",
+      "year": "2nd Year",
+      "degree": "Software Engineering",
+      "phone": "+61 423 456 789"
+    },
+    "appliedRoles": ["events", "education"],
+    "rolePreferences": { "events": 1, "education": 2 },
+    "motivation": "I want to contribute to the tech community at UNSW by organizing events that bring students and industry together. I believe in the power of hands-on learning and networking.",
+    "roleAnswers": {
+      "events": {
+        "event_experience": "I organized a hackathon for my high school with 50+ participants. I also helped coordinate orientation week activities for my college.",
+        "event_type": "I would love to organize industry networking nights where students can meet professionals from different tech companies and learn about career paths."
+      },
+      "education": {
+        "teaching_experience": "I tutor first-year programming students and have been a mentor in the UNSW mentoring program for 2 years.",
+        "workshop_topic": "Introduction to Git and GitHub - teaching students version control fundamentals through hands-on exercises and real project scenarios."
+      }
+    },
+    "submittedAt": "2024-02-24T14:15:00Z",
+    "status": "reviewed",
+    "rating": 4,
+    "reviewComment": "Strong experience in event organization and teaching. Good understanding of what students need.",
+    "reviewedBy": "admin@devsoc.com",
+    "reviewedAt": "2024-02-26T09:00:00Z"
+  },
+  {
+    "id": 3,
+    "applicant": {
+      "firstName": "Emily",
+      "lastName": "Rodriguez",
+      "email": "emily.rodriguez@student.unsw.edu.au",
+      "zid": "z5456789",
+      "year": "4th Year",
+      "degree": "Computer Science & Business",
+      "phone": "+61 434 567 890"
+    },
+    "appliedRoles": ["industry"],
+    "rolePreferences": { "industry": 1 },
+    "motivation": "With my business background and tech skills, I want to bridge the gap between DevSoc and industry partners. I'm passionate about creating opportunities for students to connect with potential employers.",
+    "roleAnswers": {
+      "industry": {
+        "networking_experience": "I've attended multiple tech conferences and have connections at Google, Atlassian, and several startups through my internships and networking events.",
+        "partnership_idea": "Create a 'DevSoc Industry Mentorship Program' where professionals mentor students on real projects, providing both learning opportunities and potential recruitment pipelines for companies."
+      }
+    },
+    "submittedAt": "2024-02-23T16:45:00Z",
+    "status": "pending",
+    "rating": null,
+    "reviewComment": "",
+    "reviewedBy": null,
+    "reviewedAt": null
+  }
+] 
