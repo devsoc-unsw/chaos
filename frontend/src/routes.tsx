@@ -15,6 +15,7 @@ const Rankings = lazy(() => import("./pages/admin/review/rankings"));
 const Review = lazy(() => import("./pages/admin/review"));
 const SignupPage = lazy(() => import("./pages/signup"));
 const QuestionComponentsTest = lazy(() => import("./pages/question_components_test"));
+const EmailTemplates = lazy(() => import("./pages/admin/email_templates"));
 
 const routes = [
   <Route key="dashboard" path="/dashboard" element={<DashboardPage />} />,
@@ -46,6 +47,11 @@ const routes = [
     key="QuestionComponentsTest"
     path="/question-components-test"
     element={<QuestionComponentsTest />}
+  />,
+  <Route
+    key="email-templates"
+    path="/admin/email_templates"
+    element={<EmailTemplates />}
   />,
 ];
 
