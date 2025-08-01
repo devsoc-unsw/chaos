@@ -1,0 +1,17 @@
+# Run `docker-compose -f setup-test-database.yml up`
+
+services:
+  database:
+    # Official Postgres image from DockerHub.
+    image: 'postgres:16'
+
+    # By default, a Postgres database is running on port 5432, so make that port accessible from outside of the container.
+    ports:
+      - 5432:5432
+
+    environment:
+      # Username and password to access database.
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      # Name of the database.
+      POSTGRES_DB: chaos
