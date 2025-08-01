@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@date-io/date-fns": "2.16.0",
+    "@daypilot/daypilot-lite-react": "^4.2.1",
     "@emotion/react": "11.11.0",
     "@emotion/styled": "11.11.0",
     "@headlessui/react": "1.7.4",
