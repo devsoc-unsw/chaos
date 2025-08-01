@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import tw from 'twin.macro';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface Option {
   id: string | number;
@@ -31,13 +32,13 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
 }) => {
   const [selectedOptions, setSelectedOptions] = useState<Array<string | number>>(defaultValue);
 
-  const handleChange = (optionId: string | number) => {
+  const handleChange = (optionId: string | number, checked: boolean) => {
     let newSelectedOptions: Array<string | number> = [];
 
-    if (selectedOptions.includes(optionId)) {
-      newSelectedOptions = selectedOptions.filter(id => id !== optionId);
-    } else {
+    if (checked) {
       newSelectedOptions = [...selectedOptions, optionId];
+    } else {
+      newSelectedOptions = selectedOptions.filter(id => id !== optionId);
     }
 
     setSelectedOptions(newSelectedOptions);
@@ -47,35 +48,31 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
   };
 
   return (
-    <div tw="mb-6">
-      <div tw="flex items-center mb-1">
-        <label tw="text-lg font-medium text-gray-900">{question}</label>
-        {required && <span tw="ml-1 text-red-500">*</span>}
+    <div className="mb-6">
+      <div className="flex items-center mb-2">
+        <Label className="text-lg font-medium">{question}</Label>
+        {required && <span className="ml-1 text-red-500">*</span>}
       </div>
 
       {description && (
-        <p tw="mb-2 text-sm text-gray-600">{description}</p>
+        <p className="mb-4 text-sm text-muted-foreground">{description}</p>
       )}
 
-      <div tw="space-y-2">
+      <div className="space-y-3">
         {options.map((option) => (
-          <div key={option.id} tw="flex items-center">
-            <input
-              type="checkbox"
+          <div key={option.id} className="flex items-center space-x-2">
+            <Checkbox
               id={`option-${id}-${option.id}`}
-              name={`question-${id}-${option.id}`}
-              value={option.id.toString()}
               checked={selectedOptions.includes(option.id)}
-              onChange={() => handleChange(option.id)}
+              onCheckedChange={(checked) => handleChange(option.id, !!checked)}
               disabled={disabled}
-              tw="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
             />
-            <label
+            <Label
               htmlFor={`option-${id}-${option.id}`}
-              tw="ml-3 block text-sm font-medium text-gray-700"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
               {option.label}
-            </label>
+            </Label>
           </div>
         ))}
       </div>
