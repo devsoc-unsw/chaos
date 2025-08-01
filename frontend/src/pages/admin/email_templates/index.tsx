@@ -316,32 +316,34 @@ export default function EmailTemplatesPage() {
 
 
       <main className="container mx-auto px-4 py-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-          <div>
-            <Link
-              to="/admin/dashboard"
-              className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
-            >
-              <ArrowLeftIcon className="w-4 h-4" />
-              Back to Admin Dashboard
-            </Link>
-            <h1 className="text-3xl font-bold text-gray-900">Email Templates</h1>
-            <p className="text-gray-600 mt-2">Manage email templates for recruitment communications</p>
-          </div>
-          <div className="flex-shrink-0">
-            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-              <DialogTrigger asChild>
-                <Button
-                  onClick={() => {
-                    setEditingTemplate(null)
-                    setFormData({ name: "", subject: "", body: "", category: "interview" })
-                  }}
-                >
-                  <PlusIcon className="w-4 h-4 mr-2" />
-                  Create Template
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div className="mb-8">
+          <Link
+            to="/admin"
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
+          >
+            <ArrowLeftIcon className="w-4 h-4" />
+            Back to Admin Dashboard
+          </Link>
+          <h1 className="text-3xl font-bold text-gray-900">Email Templates</h1>
+          <p className="text-gray-600 mt-2">Manage email templates for recruitment communications</p>
+        </div>
+
+        {/* Create Template Button */}
+        <div className="mb-8">
+          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+            <DialogTrigger asChild>
+              <Button
+                onClick={() => {
+                  setEditingTemplate(null)
+                  setFormData({ name: "", subject: "", body: "", category: "interview" })
+                }}
+                className="bg-black hover:bg-gray-800 text-white"
+              >
+                <PlusIcon className="w-4 h-4 mr-2" />
+                Create Template
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{editingTemplate ? "Edit Email Template" : "Create New Email Template"}</DialogTitle>
               </DialogHeader>
@@ -479,55 +481,6 @@ export default function EmailTemplatesPage() {
               </Tabs>
             </DialogContent>
           </Dialog>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <EnvelopeIcon className="w-8 h-8 text-blue-600" />
-                <div>
-                  <p className="text-2xl font-bold">{templates.length}</p>
-                  <p className="text-sm text-gray-600">Total Templates</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <UserIcon className="w-8 h-8 text-green-600" />
-                <div>
-                  <p className="text-2xl font-bold">{templates.filter((t) => t.category === "interview").length}</p>
-                  <p className="text-sm text-gray-600">Interview Templates</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <BuildingOfficeIcon className="w-8 h-8 text-purple-600" />
-                <div>
-                  <p className="text-2xl font-bold">{templates.filter((t) => t.category === "acceptance").length}</p>
-                  <p className="text-sm text-gray-600">Acceptance Templates</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <CalendarIcon className="w-8 h-8 text-orange-600" />
-                <div>
-                  <p className="text-2xl font-bold">{new Set(templates.map((t) => t.category)).size}</p>
-                  <p className="text-sm text-gray-600">Categories</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Filters */}
@@ -575,9 +528,9 @@ export default function EmailTemplatesPage() {
         </Card>
 
         {/* Templates List */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredTemplates.map((template) => (
-            <Card key={template.id} className="hover:shadow-md transition-shadow">
+            <Card key={template.id} className="hover:shadow-md transition-shadow flex flex-col h-full">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -588,8 +541,8 @@ export default function EmailTemplatesPage() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
+              <CardContent className="flex flex-col flex-1">
+                <div className="space-y-3 flex-1">
                   <div>
                     <p className="text-sm font-medium text-gray-700">Subject:</p>
                     <p className="text-sm text-gray-600 line-clamp-2">{template.subject}</p>
@@ -598,31 +551,35 @@ export default function EmailTemplatesPage() {
                     <p className="text-sm font-medium text-gray-700">Preview:</p>
                     <p className="text-sm text-gray-600 line-clamp-3">{template.body}</p>
                   </div>
-                  <div className="text-xs text-gray-500">
+                </div>
+
+                <div className="mt-auto">
+                  <div className="text-xs text-gray-500 mb-4">
                     <p>Created: {new Date(template.createdAt).toLocaleDateString()}</p>
                     <p>Updated: {new Date(template.updatedAt).toLocaleDateString()}</p>
                   </div>
-                </div>
 
-                <div className="flex flex-wrap gap-2 mt-4">
-                  <Button color="white" onClick={() => handlePreviewTemplate(template)}>
-                    <EyeIcon className="w-4 h-4 mr-1" />
-                    Preview
-                  </Button>
-                  <Button color="white" onClick={() => handleEditTemplate(template)}>
-                    <PencilIcon className="w-4 h-4 mr-1" />
-                    Edit
-                  </Button>
-                  <Button color="white" onClick={() => handleDuplicateTemplate(template)}>
-                    <DocumentDuplicateIcon className="w-4 h-4 mr-1" />
-                    Duplicate
-                  </Button>
-                  <Button
-                    color="danger"
-                    onClick={() => handleDeleteTemplate(template.id)}
-                  >
-                    <TrashIcon className="w-4 h-4" />
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button color="white" onClick={() => handlePreviewTemplate(template)} className="flex-1 min-w-0 text-xs overflow-hidden">
+                      <EyeIcon className="w-4 h-4 mr-1 flex-shrink-0" />
+                      <span className="truncate">Preview</span>
+                    </Button>
+                    <Button color="white" onClick={() => handleEditTemplate(template)} className="flex-1 min-w-0 text-xs overflow-hidden">
+                      <PencilIcon className="w-4 h-4 mr-1 flex-shrink-0" />
+                      <span className="truncate">Edit</span>
+                    </Button>
+                    <Button color="white" onClick={() => handleDuplicateTemplate(template)} className="flex-1 min-w-0 text-xs overflow-hidden">
+                      <DocumentDuplicateIcon className="w-4 h-4 mr-1 flex-shrink-0" />
+                      <span className="truncate">Copy</span>
+                    </Button>
+                    <Button
+                      color="danger"
+                      onClick={() => handleDeleteTemplate(template.id)}
+                      className="flex-shrink-0"
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
