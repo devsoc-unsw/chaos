@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useRef, useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -458,7 +456,7 @@ export default function AdminDashboard() {
               <div className="mb-4">
                 <Bot className="w-16 h-16 mx-auto text-gray-300 mb-4" />
               </div>
-              <h3 className="text-lg font-semibold mb-2 bg-gray-50 p-4 rounded-lg">tf bro, I'm watching you, do your work dum bass! 👀</h3>
+              <h3 className="text-lg font-semibold mb-2 bg-gray-50 p-4 rounded-lg">tf bro, I'm watching you, do your work dumbass! 👀</h3>
 
             </div>
             <div className="flex justify-end gap-3">
