@@ -336,5 +336,6 @@ pub async fn app() -> Result<Router, ChaosError> {
             "/api/v1/offer/:offer_id/send",
             post(OfferHandler::send_offer),
         )
+        .layer(cors)
         .with_state(state))
 }
