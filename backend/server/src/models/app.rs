@@ -1,6 +1,6 @@
 use crate::handler::answer::AnswerHandler;
 use crate::handler::application::ApplicationHandler;
-use crate::handler::auth::{google_callback, DevLoginHandler};
+use crate::handler::auth::{google_callback, google_auth_init, DevLoginHandler};
 use crate::handler::campaign::CampaignHandler;
 use crate::handler::email_template::EmailTemplateHandler;
 use crate::handler::offer::OfferHandler;
@@ -123,6 +123,7 @@ pub async fn app() -> Result<Router, ChaosError> {
         .allow_credentials(true)
         .allow_origin([
             "http://localhost".parse().unwrap(),
+            "http://localhost:3000".parse().unwrap(),
             "https://chaos.devsoc.app".parse().unwrap(),
             "http://chaos.devsoc.app".parse().unwrap(),
             "https://chaosstaging.devsoc.app".parse().unwrap(),
@@ -131,6 +132,7 @@ pub async fn app() -> Result<Router, ChaosError> {
 
     Ok(Router::new()
         .route("/", get(|| async { "Join DevSoc! https://devsoc.app/" }))
+        .route("/auth/google", get(google_auth_init))
         .route("/api/auth/callback/google", get(google_callback))
         .route("/api/v1/dev/super_admin_login", get(DevLoginHandler::dev_super_admin_login))
         .route("/api/v1/dev/org_admin_login", get(DevLoginHandler::dev_org_admin_login))

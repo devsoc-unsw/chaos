@@ -109,15 +109,28 @@ pub async fn extract_user_id_from_request(
 ) -> Result<i64, ChaosError> {
     let decoding_key = &state.decoding_key;
     let jwt_validator = &state.jwt_validator;
+    
+    
     let TypedHeader(cookies) = parts
         .extract::<TypedHeader<Cookie>>()
         .await
-        .map_err(|_| ChaosError::NotLoggedIn)?;
+        .map_err(|e| {
+            ChaosError::NotLoggedIn
+        })?;
 
-    let token = cookies.get("auth_token").ok_or(ChaosError::NotLoggedIn)?;
+    
+
+    let token = cookies.get("auth_token").ok_or_else(|| {
+        ChaosError::NotLoggedIn
+    })?;
+
+    
 
     let claims =
-        decode_auth_token(token, decoding_key, jwt_validator).ok_or(ChaosError::NotLoggedIn)?;
+        decode_auth_token(token, decoding_key, jwt_validator).ok_or_else(|| {
+            ChaosError::NotLoggedIn
+        })?;
 
+    
     Ok(claims.sub)
 }

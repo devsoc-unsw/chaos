@@ -27,7 +27,7 @@ const Review = () => {
     const fetchData = async () => {
       const { name: campaignName } = await getCampaign(campaignId);
       setNavBarTitle(`Review Candidates for ${campaignName}`);
-      const { roles } = await getCampaignRoles(campaignId);
+      const roles = await getCampaignRoles(campaignId);
       setRoles(roles);
       if (roles.length > 0 && params.roleId === undefined) {
         navigate(`${roles[0].id}/marking`);

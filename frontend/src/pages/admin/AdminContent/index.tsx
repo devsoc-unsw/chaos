@@ -2,9 +2,9 @@ import { PencilIcon, PlusIcon } from "@heroicons/react/24/solid";
 import { DeleteForeverRounded } from "@mui/icons-material";
 import { Button, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
-import "twin.macro";
-
 import { useNavigate } from "react-router-dom";
+
+import "twin.macro";
 
 import { doDeleteOrg, putOrgLogo } from "api";
 import { FetchError } from "api/api";
@@ -224,7 +224,6 @@ const AdminContent = ({
         <AdminCampaignContent
           campaigns={campaigns}
           setCampaigns={setCampaigns}
-          orgId={id}
           orgLogo={icon}
         />
       )}

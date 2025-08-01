@@ -5,11 +5,14 @@ import "twin.macro";
 import Container from "components/Container";
 
 import {
-  getAllCampaigns,
-  getOrganisation,
+  getCommonQuestions,
+  getRoleQuestions,
   getSelfInfo,
   newApplication,
   submitAnswer,
+  getCampaignRoles,
+  getOrganisationBySlug,
+  getCampaignBySlugs,
 } from "../../api";
 
 import ApplicationForm from "./ApplicationForm";
@@ -17,75 +20,108 @@ import ApplicationPageLoading from "./ApplicationPageLoading";
 import CampaignDetails from "./CampaignDetails";
 import RolesSidebar from "./RolesSidebar";
 
-import type { RoleQuestions } from "./types";
-import type { CampaignWithRoles, Organisation, UserResponse } from "types/api";
+import type { RoleQuestion, RoleQuestions } from "./types";
+import { NewApplication, Role, User, type Campaign, type Organisation } from "types/api";
 
 const ApplicationPage = () => {
   const navigate = useNavigate();
 
-  const [campaign, setCampaign] = useState<CampaignWithRoles>({
-    campaign: {
+  const [campaign, setCampaign] = useState<Campaign>({
       id: -1,
+      organisation_name: "",
+      organisation_slug: "",
       organisation_id: -1,
       name: "",
       cover_image: "",
       description: "",
       starts_at: "",
       ends_at: "",
-      published: false,
-      created_at: "",
-      updated_at: "",
-    },
-    roles: [],
-    questions: [],
-    applied_for: [],
+      campaign_slug: ""
   });
   const [organisation, setOrganisation] = useState<Organisation>({
     id: -1,
     name: "",
+    slug: "",
     logo: "",
     created_at: "",
-    updated_at: "",
   });
 
-  const campaignId = Number(useParams().campaignId);
-  const { state } = useLocation() as { state: CampaignWithRoles };
+  const { organisationSlug, campaignSlug } = useParams();
+  //const { state } = useLocation() as { state: CampaignWithRoles };
 
   const [loading, setLoading] = useState(true);
 
-  const [selfInfo, setSelfInfo] = useState<UserResponse>({
+  const [selfInfo, setSelfInfo] = useState<User>({
+    id: -1,
     email: "",
     zid: "",
-    display_name: "",
+    name: "",
+    pronouns: "",
+    gender: "",
     degree_name: "",
     degree_starting_year: -1,
   });
+
+  const [roleQuestions, setRoleQuestions] = useState<RoleQuestions>({0: []});
+  const [roles, setRoles] = useState<Role[]>([]);
+
   useEffect(() => {
     const getData = async () => {
       setSelfInfo(await getSelfInfo());
 
-      if (state) {
-        setCampaign(state);
-      } else {
-        const {
-          past_campaigns: pastCampaigns,
-          current_campaigns: currentCampaigns,
-        } = await getAllCampaigns();
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const campaign = [...pastCampaigns, ...currentCampaigns].find(
-          (x) => x.campaign.id === campaignId
-        )!;
-        setCampaign(campaign);
+      //if (state) {
+      //  setCampaign(state);
+      //} else {
 
-        const organisationId = campaign.campaign.organisation_id;
-        const organisation = await getOrganisation(organisationId);
-        setOrganisation(organisation);
-      }
+      if(organisationSlug && campaignSlug) {
+        const cmpn = await getCampaignBySlugs(organisationSlug, campaignSlug);
+        setCampaign(cmpn);
+
+        const org = await getOrganisationBySlug(organisationSlug);
+        setOrganisation(org);
+
+        const campaignId = cmpn.id;
+        const commonQuestions = await getCommonQuestions(campaignId);
+        const commonQuestionsSimple: RoleQuestion[] = commonQuestions.questions.map((question) => {
+          return {
+            id: question.id,
+            text: question.title,
+          }
+        });
+
+        const campaignRoles = await getCampaignRoles(campaignId);
+        setRoles(campaignRoles);
+        // initialise roleQuestions to include common questions
+        const roleQuestions: RoleQuestions = Object.fromEntries(
+          campaignRoles.map((role) => 
+            [role.id, commonQuestionsSimple]
+        ));
+        
+        await Promise.all(campaignRoles.map( async ({id: roleId}) => {
+          // for each roleId, pushes every question to the rolearray
+          const questionsByRole = await getRoleQuestions(campaignId, roleId);
+          const questions = questionsByRole.map((questions) => {
+            return {
+              id: questions.id,
+              text: questions.title,
+            }
+          });
+          roleQuestions[roleId].push(...questions);
+        }));
+        setRoleQuestions(roleQuestions);
+
+
+      } else {
+        return false;
+      }      
 
       setLoading(false);
     };
 
-    void getData();
+    const res = getData();
+    if(!res) {
+      // page not found
+    }
   }, []);
 
   const [rolesSelected, setRolesSelected] = useState<number[]>([]);
@@ -111,23 +147,26 @@ const ApplicationPage = () => {
 
   if (loading) return <ApplicationPageLoading />;
 
-  const questions = campaign.questions.map((q) => {
-    if (!(q.id in answers)) {
-      answers[q.id] = "";
-    }
-    return {
-      id: q.id,
-      text: q.title,
-      roles: new Set(q.role_ids),
-    };
-  });
+  // const questions = campaign.questions.map((q) => {
+  //   if (!(q.id in answers)) {
+  //     answers[q.id] = "";
+  //   }
+  //   return {
+  //     id: q.id,
+  //     text: q.title,
+  //     roles: new Set(q.role_ids),
+  //   };
+  // });
 
-  const roleQuestions: RoleQuestions = Object.fromEntries(
-    campaign.roles.map((role) => [role.id, []])
-  );
-  questions.forEach(({ roles, ...question }) =>
-    roles.forEach((role) => roleQuestions[role].push(question))
-  );
+  // // gets role questions from roles
+  // const roleQuestions: RoleQuestions = Object.fromEntries(
+  //   // creates object of roleSlugs which map to an empty array
+  //   campaign.roles.map((role) => [role.id, []])
+  // );
+  // questions.forEach(({ roles, ...question }) =>
+  //   // for each roleSlug, pushes every question to the rolearray
+  //   roles.forEach((role) => roleQuestions[role].push(question))
+  // );
 
   const onSubmit = () => {
     //        CHAOS-53, useNavigate() link to post submission page once it is created :)
@@ -139,45 +178,65 @@ const ApplicationPage = () => {
       return;
     }
 
-    Promise.all(
-      rolesSelected.map(async (role) => {
-        const application = await newApplication(role);
-        await Promise.all(
-          Object.keys(answers)
-            .map(Number)
-            .filter((qId) =>
-              questions
-                .find((q) => q.id === qId)
-                ?.roles.has(application.role_id)
-            )
-            .map((qId) => submitAnswer(application.id, qId, answers[qId]))
-        );
-      })
-    )
-      .then(() => navigate("/dashboard"))
-      // eslint-disable-next-line no-alert
+    const newApp: NewApplication = {
+      applied_roles: rolesSelected.map(roleId => {
+                    return {
+                        campaign_role_id: roleId
+                    }}),
+    };
+
+    newApplication(campaign.id, newApp)
+    .then(async (application) => {
+      await Promise.all(
+        Object.keys(answers)
+          .map(Number)
+          .filter((qId) =>
+            roleQuestions[application.role_id]
+              .find((q) => q.id === qId)
+          )
+          .map((qId) => submitAnswer(application.id, qId, answers[qId]))
+      );
+    })
+    .then(() => navigate("/dashboard"))
       .catch(() => alert("Error during submission"));
+
+    // Promise.all(
+    //   rolesSelected.map(async (role) => {
+    //     const application = await newApplication(role);
+    //     await Promise.all(
+    //       Object.keys(answers)
+    //         .map(Number)
+    //         .filter((qId) =>
+    //           roleQuestions[application.role_id]
+    //             .find((q) => q.id === qId)
+    //         )
+    //         .map((qId) => submitAnswer(application.id, qId, answers[qId]))
+    //     );
+    //   })
+    // )
+    //   .then(() => navigate("/dashboard"))
+    //   .catch(() => alert("Error during submission"));
   };
 
   return (
     <Container tw="gap-4">
       <CampaignDetails
-        campaignName={campaign.campaign.name}
-        headerImage={campaign.campaign.cover_image}
+        campaignName={campaign.name}
+        headerImage={campaign.cover_image}
         organisation={organisation}
         campaign={campaign}
-        description={campaign.campaign.description}
+        description={campaign.description}
         userInfo={selfInfo}
       />
 
       <div tw="flex flex-1 gap-4">
         <RolesSidebar
-          roles={campaign.roles}
+          roles={roles}
           rolesSelected={rolesSelected}
           toggleRole={toggleRole}
         />
         <ApplicationForm
-          roles={campaign.roles}
+          roles={roles}
           rolesSelected={rolesSelected}
           roleQuestions={roleQuestions}
           answers={answers}

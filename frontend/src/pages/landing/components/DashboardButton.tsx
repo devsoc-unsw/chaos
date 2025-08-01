@@ -23,7 +23,7 @@ const DashboardButton = <T extends ElementType>({
   children,
   ...props
 }: PropsWithChildren<Props<T>>) => (
-  <Button className="group" {...props}>
+  <Button /*className="group"*/ {...props}>
     <ButtonShadow />
     <ButtonBg />
     {/* <ChevronRightIcon tw="h-6 w-6" /> */}

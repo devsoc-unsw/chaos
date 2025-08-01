@@ -23,6 +23,9 @@ module.exports = {
           900: "hsl(220, 70%, 30%)",
           950: "hsl(220, 50%, 20%)",
         },
+        lightgrey: {
+          300: "#e2e6ed",
+        },
       },
       minWidth: defaultTheme.width,
       maxWidth: defaultTheme.width,
