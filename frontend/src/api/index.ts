@@ -100,7 +100,7 @@ const authenticatedRequest = <T = void>(
 // todo: update to new route
 export const getAllCampaigns = () =>
   authenticatedRequest<Campaign[]>({
-    path: "/v1/campaign",
+    path: "/v1/campaigns",
   });
 
 export const getAdminData = (organisationId: string) =>
@@ -110,8 +110,8 @@ export const getAdminData = (organisationId: string) =>
 
 // todo: create backend route + update referencing components
 export const getAdminOrgs = () =>
-  authenticatedRequest<{ organisations: Organisation[] }>({
-    path: "",
+  authenticatedRequest<Organisation[]>({
+    path: "/v1/user/organisations",
   });
 
 export const getOrganisation = (organisationId: string) =>
@@ -243,15 +243,15 @@ export const createCampaign = (
 ) =>
   authenticatedRequest<Campaign>({
     method: "POST",
-    path: "/campaign",
+    path: `/v1/organisation/${campaign.organisation_id}/campaign`,
     body: { campaign, roles, questions },
   });
 
 // todo: update to new route
 export const setCampaignCoverImage = (campaignId: number, cover_image: File) =>
   authenticatedRequest<string>({
-    method: "PUT",
-    path: `/campaign/${campaignId}/cover_image`,
+    method: "PATCH",
+    path: `/v1/campaign/${campaignId}/banner`,
     body: cover_image,
     jsonBody: false,
   });
@@ -260,7 +260,7 @@ export const setCampaignCoverImage = (campaignId: number, cover_image: File) =>
 export const deleteCampaign = (id: number) =>
   authenticatedRequest({
     method: "DELETE",
-    path: `/campaign/${id}`,
+    path: `/v1/campaign/${id}`,
     jsonResp: false,
   });
 
@@ -270,8 +270,8 @@ export const setApplicationStatus = (
   status: ApplicationStatus
 ) =>
   authenticatedRequest({
-    method: "PUT",
-    path: `/application/${applicationId}/status`,
+    method: "PATCH",
+    path: `/v1/application/${applicationId}/status`,
     body: status,
     jsonResp: false,
   });

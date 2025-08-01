@@ -40,40 +40,27 @@ const Admin = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { organisations } = await getAdminOrgs();
+      try {
+        const organisations = await getAdminOrgs();
 
-      setOrgList(
-        organisations.map((item) => ({
-          id: item.id,
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          icon: item.logo!,
-          orgName: item.name,
-          campaigns: item.campaigns,
-          members: item.members,
-        }))
-      );
-      if (organisations.length > 0) {
-        setOrgSelected(0);
-        const org = organisations[orgSelected];
-
-        setCampaigns(
-          org.campaigns.map((item) => ({
-            id: item.id,
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            image: item.cover_image!,
-            title: item.name,
-            startDate: item.starts_at,
-            endDate: item.ends_at,
+        // For now, create basic org list without campaigns and members
+        // These will be fetched separately when an org is selected
+        setOrgList(
+          organisations.map((item) => ({
+            id: parseInt(item.id, 10),
+            icon: item.logo || '',
+            orgName: item.name,
+            campaigns: [],
+            members: [],
           }))
         );
-
-        setMembers(
-          org.members.map((item) => ({
-            id: item.id,
-            name: item.display_name,
-            role: item.role,
-          }))
-        );
+        
+        if (organisations.length > 0) {
+          setOrgSelected(0);
+        }
+      } catch (error) {
+        console.error('Error fetching admin organizations:', error);
+        setOrgList([]);
       }
 
       setLoading(false);
