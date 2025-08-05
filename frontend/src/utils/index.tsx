@@ -5,7 +5,6 @@ import Toast from "components/Toast";
 
 import type { ToastType } from "components/Toast";
 
-
 export function isLogin(): boolean {
   return true;
 }
