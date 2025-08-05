@@ -4,11 +4,15 @@ import { Link, useParams } from "react-router-dom";
 import "twin.macro";
 
 import {
+  getAnsweredApplicationQuestions,
   getApplicationAnswers,
   getApplicationRatings,
   getCampaign,
+  getCommonApplicationAnswers,
+  getCommonQuestions,
   getRoleApplications,
   getRoleQuestions,
+  getSelfInfo,
   setApplicationRating,
 } from "api";
 import { LoadingIndicator } from "components";
@@ -36,15 +40,10 @@ const Marking = () => {
       const { name: campaignName } = await getCampaign(campaignId);
       setNavBarTitle(`Marking for ${campaignName}`);
 
-      const { applications } = await getRoleApplications(roleId);
+      const applications = await getRoleApplications(roleId);
 
-      const { questions } = await getRoleQuestions(roleId);
-      const answers = await Promise.all(
-        applications.map(async (application) => {
-          const { answers } = await getApplicationAnswers(application.id);
-          return answers;
-        })
-      );
+      const questions = await getRoleQuestions(campaignId, roleId);
+      const answers = await getAnsweredApplicationQuestions(applications, campaignId, roleId);
       const ratings = await Promise.all(
         applications.map(async (application) => {
           const { ratings } = await getApplicationRatings(application.id);
@@ -55,12 +54,13 @@ const Marking = () => {
       setApplications(
         applications.map((application, applicationIdx) => ({
           applicationId: application.id,
-          zId: application.user_zid,
+          zId: application.user.zid,
           mark: ratings[applicationIdx]?.rating,
           questions: questions.map((question, questionIdx) => ({
             question: question.title,
-            answer: answers[applicationIdx][questionIdx]?.description,
-          })),
+            answer: Array.isArray(answers[applicationIdx][questionIdx]) ? 
+                    answers[applicationIdx][questionIdx].join("\n") : answers[applicationIdx][questionIdx],
+          })),      // join multiple answers into a single string
         }))
       );
       setLoading(false);
@@ -75,7 +75,10 @@ const Marking = () => {
     setApplications(newApplications);
     void setApplicationRating(
       applications[selectedApplication].applicationId,
-      newMark
+      {
+        rating: newMark,
+        //comment: comment
+      }
     );
   };
 

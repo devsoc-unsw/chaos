@@ -57,7 +57,7 @@ const AdminMembersContent = ({ orgId, members, setMembers }: Props) => {
           <DummyIconForAlignment />
         </ListItemIcon>
         <ListItemIcon>
-          <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
+          <IconButton onClick={(e: React.MouseEvent<HTMLButtonElement>) => setAnchorEl(e.currentTarget)}>
             <AddIcon />
           </IconButton>
           <InputPopup
@@ -118,7 +118,7 @@ const AdminMembersContent = ({ orgId, members, setMembers }: Props) => {
               <ListItemIcon>
                 <IconButton
                   value={m.id}
-                  onClick={(e) => onDelete(e.currentTarget.value)}
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => onDelete(e.currentTarget.value)}
                 >
                   <ClearIcon />
                 </IconButton>

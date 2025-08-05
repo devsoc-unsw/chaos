@@ -1,13 +1,14 @@
 import { Fragment, useContext, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import tw from "twin.macro";
+import { Button } from "@/components/ui/button";
 
 import chaosImg from "assets/chaos.png";
 import { Transition } from "components";
 import Container from "components/Container";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 
-import { getStore } from "../../utils";
+import { getStore, isLoggedIn } from "../../utils";
 
 import Campaigns from "./components/Campaigns";
 import DashboardButton from "./components/DashboardButton";
@@ -16,13 +17,22 @@ import Waves from "./components/Waves";
 
 import type { PointerEvent } from "react";
 
-const OAUTH_CALLBACK_URL =
-  getStore("AUTH_TOKEN") || (import.meta.env.VITE_OAUTH_CALLBACK_URL as string);
+const OAUTH_CALLBACK_URL = import.meta.env.VITE_OAUTH_CALLBACK_URL as string;
 
 const Landing = () => {
   const setNavBarTitle = useContext(SetNavBarTitleContext);
+  const [loggedIn, setLoggedIn] = useState(false);
+  
   useEffect(() => {
     setNavBarTitle("");
+  }, []);
+
+  useEffect(() => {
+    async function checkLoginStatus() {
+      const status = await isLoggedIn();
+      setLoggedIn(status);
+    }
+    checkLoginStatus();
   }, []);
 
   const campaignsRef = useRef<HTMLDivElement>(null);
@@ -74,7 +84,7 @@ const Landing = () => {
             enter={tw`transition delay-500 duration-[600ms]`}
             enterFrom={tw`translate-y-4 opacity-0`}
           >
-            {getStore("AUTH_TOKEN") ? (
+            {loggedIn ? (
               <DashboardButton as={Link} to="/dashboard">
                 Your Dashboard
               </DashboardButton>

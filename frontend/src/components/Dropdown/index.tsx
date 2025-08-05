@@ -1,6 +1,6 @@
 import { Menu } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
-import tw from "twin.macro";
+import "twin.macro";
 
 import Card from "components/Card";
 

@@ -1,3 +1,4 @@
+import { PropsWithChildren } from "react";
 import tw, { styled } from "twin.macro";
 
 const styles = {
@@ -12,10 +13,16 @@ const styles = {
 };
 
 const Textarea = styled("textarea", styles);
+
+interface WrapperProps extends React.HTMLAttributes<HTMLDivElement> {
+  as?: 'div';
+  size?: 'md' | 'lg';
+}
 const Wrapper = styled("label", {
   ...styles,
   ...tw`overflow-hidden p-0`,
-});
+}) as React.FC<PropsWithChildren<WrapperProps>>;
+
 const Header = tw.header`flex items-center border-b border-gray-200 bg-gray-100 px-3 py-2`;
 
 export default Object.assign(Textarea, {

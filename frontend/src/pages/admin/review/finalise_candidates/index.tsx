@@ -34,8 +34,7 @@ import type { DropFirst } from "types/util";
 
 const Icon = styled.span(tw`inline h-4 w-4`);
 const tabIcons: { [status in ApplicationStatus]?: ReactNode } = {
-  Success: <Icon as={CheckIcon} tw="text-green-600" />,
-  Rejected: <Icon as={XMarkIcon} tw="text-red-600" />,
+  Completed: <Icon as={CheckIcon} tw="text-orange-600" />,
 };
 
 const FinaliseCandidates = () => {
