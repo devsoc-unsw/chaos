@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import "twin.macro";
 
 import Container from "components/Container";
@@ -11,8 +11,8 @@ import {
   newApplication,
   submitAnswer,
   getCampaignRoles,
-  getOrganisationBySlug,
-  getCampaignBySlugs,
+  getCampaign,
+  getOrganisation,
 } from "../../api";
 
 import ApplicationForm from "./ApplicationForm";
@@ -26,27 +26,10 @@ import { NewApplication, Role, User, type Campaign, type Organisation } from "ty
 const ApplicationPage = () => {
   const navigate = useNavigate();
 
-  const [campaign, setCampaign] = useState<Campaign>({
-      id: -1,
-      organisation_name: "",
-      organisation_slug: "",
-      organisation_id: -1,
-      name: "",
-      cover_image: "",
-      description: "",
-      starts_at: "",
-      ends_at: "",
-      campaign_slug: ""
-  });
-  const [organisation, setOrganisation] = useState<Organisation>({
-    id: -1,
-    name: "",
-    slug: "",
-    logo: "",
-    created_at: "",
-  });
+  const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [organisation, setOrganisation] = useState<Organisation | null>(null);
 
-  const { organisationSlug, campaignSlug } = useParams();
+  const { campaignId } = useParams();
   //const { state } = useLocation() as { state: CampaignWithRoles };
 
   const [loading, setLoading] = useState(true);
@@ -69,27 +52,23 @@ const ApplicationPage = () => {
     const getData = async () => {
       setSelfInfo(await getSelfInfo());
 
-      //if (state) {
-      //  setCampaign(state);
-      //} else {
-
-      if(organisationSlug && campaignSlug) {
-        const cmpn = await getCampaignBySlugs(organisationSlug, campaignSlug);
+      if (campaignId) {
+        const id = Number(campaignId);
+        const cmpn = await getCampaign(id);
         setCampaign(cmpn);
 
-        const org = await getOrganisationBySlug(organisationSlug);
+        const org = await getOrganisation(cmpn.organisation_id);
         setOrganisation(org);
 
-        const campaignId = cmpn.id;
-        const commonQuestions = await getCommonQuestions(campaignId);
-        const commonQuestionsSimple: RoleQuestion[] = commonQuestions.questions.map((question) => {
+        const commonQuestions = await getCommonQuestions(id);
+        const commonQuestionsSimple: RoleQuestion[] = commonQuestions.map((question) => {
           return {
             id: question.id,
             text: question.title,
           }
         });
 
-        const campaignRoles = await getCampaignRoles(campaignId);
+        const campaignRoles = await getCampaignRoles(id);
         setRoles(campaignRoles);
         // initialise roleQuestions to include common questions
         const roleQuestions: RoleQuestions = Object.fromEntries(
@@ -99,7 +78,7 @@ const ApplicationPage = () => {
         
         await Promise.all(campaignRoles.map( async ({id: roleId}) => {
           // for each roleId, pushes every question to the rolearray
-          const questionsByRole = await getRoleQuestions(campaignId, roleId);
+          const questionsByRole = await getRoleQuestions(id, roleId);
           const questions = questionsByRole.map((questions) => {
             return {
               id: questions.id,
@@ -109,11 +88,9 @@ const ApplicationPage = () => {
           roleQuestions[roleId].push(...questions);
         }));
         setRoleQuestions(roleQuestions);
-
-
       } else {
         return false;
-      }      
+      }
 
       setLoading(false);
     };
@@ -185,6 +162,7 @@ const ApplicationPage = () => {
                     }}),
     };
 
+    if (!campaign) return;
     newApplication(campaign.id, newApp)
     .then(async (application) => {
       await Promise.all(
@@ -218,14 +196,16 @@ const ApplicationPage = () => {
     //   .catch(() => alert("Error during submission"));
   };
 
+  if (!campaign || !organisation) return <ApplicationPageLoading />;
+
   return (
     <Container tw="gap-4">
       <CampaignDetails
-        campaignName={campaign.name}
-        headerImage={campaign.cover_image}
-        organisation={organisation}
-        campaign={campaign}
-        description={campaign.description}
+        campaignName={campaign!.name}
+        headerImage={campaign!.cover_image}
+        organisation={organisation!}
+        campaign={campaign!}
+        description={campaign!.description}
         userInfo={selfInfo}
       />
 

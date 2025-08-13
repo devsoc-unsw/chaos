@@ -43,7 +43,7 @@ const routes = [
   />,
   <Route
     key="ApplicationPage"
-    path="/:organisationSlug/:campaignSlug/application"
+    path="/apply/:campaignId"
     element={<ApplicationPage />}
   />,
   <Route
