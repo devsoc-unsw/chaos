@@ -147,7 +147,7 @@ export const putOrgLogo = async (orgId: string, logo: File) => {
   });
 }
 
-export const newApplication = (campaignId: number, newApp: NewApplication) =>
+export const newApplication = (campaignId: string, newApp: NewApplication) =>
   authenticatedRequest<Application>({
     method: "POST",
     path: `/v1/campaign/${campaignId}/application/`,
@@ -161,7 +161,7 @@ export const doDeleteOrg = (orgId: string) =>
     jsonResp: false,
   });
 
-export const getCampaign = (campaignId: number) =>
+export const getCampaign = (campaignId: string) =>
   authenticatedRequest<Campaign>({ path: `/v1/campaign/${campaignId}` });
 
 export const getCampaignBySlugs = (organisationSlug: string, campaignSlug: string) =>
@@ -178,28 +178,28 @@ export const getCampaignByOrgAndCampaignSlugs = (
     path: `/v1/organisation/slug/${organisationSlug}/campaign/slug/${campaignSlug}`,
   });
 
-export const getCampaignRoles = (campaignId: number) =>
+export const getCampaignRoles = (campaignId: string) =>
   authenticatedRequest<Role[]>({
     path: `/v1/campaign/${campaignId}/roles`,
   });
 
-export const getRoleApplications = (roleId: number) =>
+export const getRoleApplications = (roleId: string) =>
   authenticatedRequest<ApplicationDetails[]>({
     path: `/v1/role/${roleId}/applications`,
   });
 
-export const getRoleQuestions = (campaignId: number, roleId: number) =>
+export const getRoleQuestions = (campaignId: string, roleId: string) =>
   authenticatedRequest<QuestionResponse[]>({
     path: `/v1/campaign/${campaignId}/role/${roleId}/questions`,
   });
 
 // todo: update all referencing components
-export const getCommonQuestions = (campaignID: number) =>
+export const getCommonQuestions = (campaignID: string) =>
   authenticatedRequest<QuestionResponse[]>({
     path: `/v1/campaign/${campaignID}/questions/common`
   });
 
-export const setApplicationRating = (applicationId: number, rating: NewRating) =>
+export const setApplicationRating = (applicationId: string, rating: NewRating) =>
   authenticatedRequest({
     method: "PUT",
     path: `/v1/${applicationId}/rating`,
@@ -212,25 +212,25 @@ export const setApplicationRating = (applicationId: number, rating: NewRating) =
 export const getSelfInfo = () =>
   authenticatedRequest<User>({ path: "/v1/user" });
 
-export const getApplicationAnswers = (applicationId: number, roleId: number) =>
+export const getApplicationAnswers = (applicationId: string, roleId: string) =>
   authenticatedRequest<Answer[]>({
     path: `/v1/application/${applicationId}/answers/role/${roleId}`,
   });
 
-export const getCommonApplicationAnswers = (applicationId: number) => 
+export const getCommonApplicationAnswers = (applicationId: string) => 
   authenticatedRequest<Answer[]>({
     path: `/v1/application/${applicationId}/answers/common`,
   });
 
-export const getApplicationRatings = (applicationId: number) =>
+export const getApplicationRatings = (applicationId: string) =>
   authenticatedRequest<{ ratings: ApplicationRating[] }>({
     path: `/v1/${applicationId}/ratings`,
   });
 
 // todo: update all referencing components
 export const submitAnswer = (
-  applicationId: number,
-  questionId: number,
+  applicationId: string,
+  questionId: string,
   answerData: AnswerData
 ) =>
   authenticatedRequest({
@@ -257,7 +257,7 @@ export const createCampaign = (
   });
 
 // todo: update to new route
-export const setCampaignCoverImage = (campaignId: number, cover_image: File) =>
+export const setCampaignCoverImage = (campaignId: string, cover_image: File) =>
   authenticatedRequest<string>({
     method: "PATCH",
     path: `/v1/campaign/${campaignId}/banner`,
@@ -266,7 +266,7 @@ export const setCampaignCoverImage = (campaignId: number, cover_image: File) =>
   });
 
 // todo: update to new route
-export const deleteCampaign = (id: number) =>
+export const deleteCampaign = (id: string) =>
   authenticatedRequest({
     method: "DELETE",
     path: `/v1/campaign/${id}`,
@@ -275,7 +275,7 @@ export const deleteCampaign = (id: number) =>
 
 // todo: update to new route
 export const setApplicationStatus = (
-  applicationId: number,
+  applicationId: string,
   status: ApplicationStatus
 ) =>
   authenticatedRequest({
@@ -315,7 +315,7 @@ export const inviteUserToOrg = (
  * @param roleId 
  * @returns string[][][] or string[][]
  */
-export const getAnsweredApplicationQuestions = (applications: ApplicationDetails[], campaignId: number, roleId: number) => {
+export const getAnsweredApplicationQuestions = (applications: ApplicationDetails[], campaignId: string, roleId: string) => {
   return Promise.all(
     applications.map(async (application) => {
       const roleAnswers = await getApplicationAnswers(application.id, roleId);

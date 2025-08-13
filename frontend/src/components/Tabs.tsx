@@ -30,7 +30,7 @@ const TabButton = styled("button", {
 });
 
 type Props = ComponentProps<typeof TabList> & {
-  tabs: { id: number; contents: ReactNode }[];
+  tabs: { id: string; contents: ReactNode }[];
 };
 const Tabs = ({ tabs, vertical, ...props }: Props) => (
   <TabList as="div" vertical={vertical} {...props}>

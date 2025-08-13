@@ -21,6 +21,7 @@ use uuid::Uuid;
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Organisation {
     /// Unique identifier for the organisation
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// URL-friendly identifier for the organisation
     pub slug: String,
@@ -35,6 +36,7 @@ pub struct Organisation {
     /// List of campaigns run by this organisation
     pub campaigns: Vec<OrganisationCampaign>, // Awaiting Campaign to be complete - remove comment once done
     /// List of user IDs who are administrators of this organisation
+    #[serde(serialize_with = "crate::models::serde_string::serialize_vec")]
     pub organisation_admins: Vec<i64>,
 }
 
@@ -59,6 +61,7 @@ pub struct NewOrganisation {
 #[derive(Deserialize, Serialize)]
 pub struct OrganisationDetails {
     /// Unique identifier for the organisation
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// URL-friendly identifier for the organisation
     pub slug: String,
@@ -90,6 +93,7 @@ pub enum OrganisationRole {
 #[derive(Deserialize, Serialize, FromRow)]
 pub struct Member {
     /// ID of the user
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// Name of the user
     pub name: String,

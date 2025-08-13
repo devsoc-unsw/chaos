@@ -4,13 +4,13 @@ import { Textarea } from '@/components/ui/textarea';
 import tw from 'twin.macro';
 
 interface ShortAnswerProps {
-  id: number;
+  id: string;
   question: string;
   description?: string;
   required?: boolean;
   defaultValue?: string;
   onChange?: (value: string) => void;
-  onSubmit?: (questionId: number, value: string) => void;
+  onSubmit?: (questionId: string, value: string) => void;
   disabled?: boolean;
   rows?: number;
   placeholder?: string;

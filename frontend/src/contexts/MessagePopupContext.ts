@@ -3,7 +3,7 @@ import { createContext } from "react";
 export type Message = {
   type: "error" | "warning" | "success";
   message: string;
-  id: number;
+  id: string;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function

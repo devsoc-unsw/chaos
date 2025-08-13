@@ -42,10 +42,12 @@ use sqlx::types::Json;
 /// ```
 #[derive(Serialize)]
 pub struct Question {
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     pub title: String,
     pub description: Option<String>,
     pub common: bool, // Common question are shown at the start
+    #[serde(serialize_with = "crate::models::serde_string::serialize_vec")]
     pub roles: Vec<i64>, // (Possibly empty) list of roles the question is for
     pub required: bool,
 
@@ -525,6 +527,7 @@ pub struct MultiOptionData {
 /// language?", there would be rows for "Rust", "Java" and "TypeScript".
 #[derive(Deserialize, Serialize)]
 pub struct MultiOptionQuestionOption {
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     pub display_order: i32,
     pub text: String,

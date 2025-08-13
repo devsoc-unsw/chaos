@@ -40,7 +40,7 @@ import Ranking from "components/QuestionComponents/Ranking";
 
 // Types for API responses
 interface ApiRole {
-  id: number;
+  id: string;
   name: string;
   description: string;
   min_available: number;
@@ -49,7 +49,7 @@ interface ApiRole {
 }
 
 interface ApiCampaign {
-  id: number;
+  id: string;
   name: string;
   description?: string;
   starts_at: string;
@@ -79,7 +79,7 @@ const DevsocRecruitmentForm: React.FC = () => {
 
     const [currentTab, setCurrentTab] = useState<'general' | 'review'>('general');
     const [selectedRole, setSelectedRole] = useState<string>('');
-    const [answers, setAnswers] = useState<{ [key: number]: any }>({});
+    const [answers, setAnswers] = useState<{ [key: string]: any }>({});
     const [showCampaignWarning, setShowCampaignWarning] = useState(!campaignId);
 
     // New state for dynamic data
@@ -230,7 +230,7 @@ const DevsocRecruitmentForm: React.FC = () => {
         loadData();
     }, [activeCampaignId]);
 
-    const handleAnswerSubmit = (questionId: number, value: any) => {
+    const handleAnswerSubmit = (questionId: string, value: any) => {
         setAnswers((prev) => ({
             ...prev,
             [questionId]: value,
@@ -368,8 +368,8 @@ const DevsocRecruitmentForm: React.FC = () => {
                                     <div>
                                         <h3 className="text-lg font-medium text-gray-900 mb-4">Name</h3>
                                         <div className="grid grid-cols-2 gap-4">
-                                            <ShortAnswer
-                                                id={1}
+                                    <ShortAnswer
+                                        id={"1"}
                                                 question="First Name"
                                                 placeholder="First Name"
                                                 required={true}
@@ -377,7 +377,7 @@ const DevsocRecruitmentForm: React.FC = () => {
                                                 onSubmit={handleAnswerSubmit}
                                             />
                                             <ShortAnswer
-                                                id={2}
+                                        id={"2"}
                                                 question="Last Name"
                                                 placeholder="Last Name"
                                                 required={true}
@@ -389,7 +389,7 @@ const DevsocRecruitmentForm: React.FC = () => {
 
                                     {/* Email */}
                                     <ShortAnswer
-                                        id={3}
+                                        id={"3"}
                                         question="Email"
                                         placeholder="your.email@example.com"
                                         required={true}
@@ -399,7 +399,7 @@ const DevsocRecruitmentForm: React.FC = () => {
 
                                     {/* zID */}
                                     <ShortAnswer
-                                        id={4}
+                                        id={"4"}
                                         question="zID"
                                         placeholder="z1234567"
                                         required={true}
@@ -409,7 +409,7 @@ const DevsocRecruitmentForm: React.FC = () => {
 
                                     {/* Degree */}
                                     <ShortAnswer
-                                        id={5}
+                                        id={"5"}
                                         question="Degree"
                                         placeholder="e.g., Computer Science"
                                         required={true}
@@ -419,7 +419,7 @@ const DevsocRecruitmentForm: React.FC = () => {
 
                                     {/* Phone Number */}
                                     <ShortAnswer
-                                        id={6}
+                                        id={"6"}
                                         question="Phone Number"
                                         placeholder="+61 xxx xxx xxx"
                                         required={false}
@@ -429,37 +429,37 @@ const DevsocRecruitmentForm: React.FC = () => {
 
                                     {/* Gender */}
                                     <MultiChoice
-                                        id={7}
+                                        id={"7"}
                                         question="Gender"
                                         options={sampleOptions}
                                         required={false}
                                         onSubmit={handleAnswerSubmit}
                                     />
                                     <Dropdown
-                                        id={8}
+                                        id={"8"}
                                         question="What is your preferred programming language?"
                                         description="Select one option from the dropdown"
                                         options={sampleOptions}
                                         required={true}
-                                        defaultValue={answers[2]}
+                                        defaultValue={answers["2"]}
                                         onSubmit={handleAnswerSubmit}
                                     />
                                     <MultiSelect
-                                        id={9}
+                                        id={"9"}
                                         question="Which technologies are you familiar with?"
                                         description="Select all that apply"
                                         options={sampleOptions}
                                         required={true}
-                                        defaultValue={answers[4] || []}
+                                        defaultValue={answers["4"] || []}
                                         onSubmit={handleAnswerSubmit}
                                     />
                                     <Ranking
-                                        id={10}
+                                        id={"10"}
                                         question="Rank your preference for the following options"
                                         description="Drag and drop options to your preferences"
                                         options={sampleOptions}
                                         required={true}
-                                        defaultValue={answers[5] || []}
+                                        defaultValue={answers["5"] || []}
                                         onSubmit={handleAnswerSubmit}
                                     />
                                 </div>

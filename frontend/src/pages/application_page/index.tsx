@@ -35,7 +35,7 @@ const ApplicationPage = () => {
   const [loading, setLoading] = useState(true);
 
   const [selfInfo, setSelfInfo] = useState<User>({
-    id: -1,
+    id: "",
     email: "",
     zid: "",
     name: "",
@@ -45,7 +45,7 @@ const ApplicationPage = () => {
     degree_starting_year: -1,
   });
 
-  const [roleQuestions, setRoleQuestions] = useState<RoleQuestions>({0: []});
+  const [roleQuestions, setRoleQuestions] = useState<RoleQuestions>({"0": []});
   const [roles, setRoles] = useState<Role[]>([]);
 
   useEffect(() => {
@@ -53,7 +53,7 @@ const ApplicationPage = () => {
       setSelfInfo(await getSelfInfo());
 
       if (campaignId) {
-        const id = Number(campaignId);
+        const id = campaignId;
         const cmpn = await getCampaign(id);
         setCampaign(cmpn);
 
@@ -101,11 +101,11 @@ const ApplicationPage = () => {
     }
   }, []);
 
-  const [rolesSelected, setRolesSelected] = useState<number[]>([]);
-  const [answers, setAnswers] = useState<{ [question: number]: string }>({});
+  const [rolesSelected, setRolesSelected] = useState<string[]>([]);
+  const [answers, setAnswers] = useState<{ [question: string]: string }>({});
 
   const toggleRole = useCallback(
-    (roleId: number) => {
+    (roleId: string) => {
       if (rolesSelected.includes(roleId)) {
         setRolesSelected(rolesSelected.filter((r) => r !== roleId));
       } else {
@@ -116,7 +116,7 @@ const ApplicationPage = () => {
   );
 
   const setAnswer = useCallback(
-    (question: number, answer: string) => {
+    (question: string, answer: string) => {
       setAnswers({ ...answers, [question]: answer });
     },
     [answers]
@@ -156,10 +156,9 @@ const ApplicationPage = () => {
     }
 
     const newApp: NewApplication = {
-      applied_roles: rolesSelected.map(roleId => {
-                    return {
-                        campaign_role_id: roleId
-                    }}),
+      applied_roles: rolesSelected.map(roleId => ({
+        campaign_role_id: roleId
+      })),
     };
 
     if (!campaign) return;
@@ -167,7 +166,6 @@ const ApplicationPage = () => {
     .then(async (application) => {
       await Promise.all(
         Object.keys(answers)
-          .map(Number)
           .filter((qId) =>
             roleQuestions[application.role_id]
               .find((q) => q.id === qId)

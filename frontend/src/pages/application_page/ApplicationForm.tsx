@@ -11,10 +11,10 @@ import type { Role } from "types/api";
 
 type Props = {
   roles: Role[];
-  rolesSelected: number[];
+  rolesSelected: string[];
   roleQuestions: RoleQuestions;
-  answers: { [question: number]: string };
-  setAnswer: (_question: number, _answer: string) => void;
+  answers: { [question: string]: string };
+  setAnswer: (_question: string, _answer: string) => void;
   onSubmit: () => void;
 };
 const ApplicationForm = ({

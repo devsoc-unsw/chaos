@@ -12,13 +12,13 @@ import type { Dispatch, MouseEvent, SetStateAction } from "react";
 import type { CampaignWithRoles } from "types/api";
 
 type AdminProps = {
-  campaignId: number;
+  campaignId: string;
   campaignSlug: string;
   isAdmin: true;
 };
 
 type NonAdminProps = {
-  campaignId?: number;
+  campaignId?: string;
   campaignSlug?: string;
   isAdmin?: false;
 };

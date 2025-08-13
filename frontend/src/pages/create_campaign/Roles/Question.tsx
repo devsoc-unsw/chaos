@@ -14,7 +14,7 @@ type Props = {
   question: IQuestion;
   handleQuestionInput: (
     e: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>,
-    qId: number
+    qId: string
   ) => void;
   onQuestionDelete: MouseEventHandler<HTMLButtonElement>;
 };

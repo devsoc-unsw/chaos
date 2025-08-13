@@ -10,10 +10,10 @@ import Ranking from "components/QuestionComponents/Ranking";
 
 const QuestionComponentsTestPage: React.FC = () => {
   // State to store answers
-  const [answers, setAnswers] = useState<{ [key: number]: any }>({});
+  const [answers, setAnswers] = useState<{ [key: string]: any }>({});
 
   // Handler for answer submission
-  const handleAnswerSubmit = (questionId: number, value: any) => {
+  const handleAnswerSubmit = (questionId: string, value: any) => {
     setAnswers((prev) => ({
       ...prev,
       [questionId]: value,
@@ -39,11 +39,11 @@ const QuestionComponentsTestPage: React.FC = () => {
         </CardHeader>
         <CardContent>
           <ShortAnswer
-            id={1}
+            id={"1"}
             question="What is your name?"
             description="Please enter your full name"
             required={true}
-            defaultValue={answers[1] || ""}
+            defaultValue={answers["1"] || ""}
             onSubmit={handleAnswerSubmit}
           />
         </CardContent>
@@ -55,12 +55,12 @@ const QuestionComponentsTestPage: React.FC = () => {
         </CardHeader>
         <CardContent>
           <Dropdown
-            id={2}
+            id={"2"}
             question="What is your preferred programming language?"
             description="Select one option from the dropdown"
             options={sampleOptions}
             required={true}
-            defaultValue={answers[2]}
+            defaultValue={answers["2"]}
             onSubmit={handleAnswerSubmit}
           />
         </CardContent>
@@ -72,12 +72,12 @@ const QuestionComponentsTestPage: React.FC = () => {
         </CardHeader>
         <CardContent>
           <MultiChoice
-            id={3}
+            id={"3"}
             question="Which team are you most interested in?"
             description="Select one option"
             options={sampleOptions}
             required={true}
-            defaultValue={answers[3]}
+            defaultValue={answers["3"]}
             onSubmit={handleAnswerSubmit}
           />
         </CardContent>
@@ -89,12 +89,12 @@ const QuestionComponentsTestPage: React.FC = () => {
         </CardHeader>
         <CardContent>
           <MultiSelect
-            id={4}
+            id={"4"}
             question="Which technologies are you familiar with?"
             description="Select all that apply"
             options={sampleOptions}
             required={true}
-            defaultValue={answers[4] || []}
+            defaultValue={answers["4"] || []}
             onSubmit={handleAnswerSubmit}
           />
         </CardContent>
@@ -106,12 +106,12 @@ const QuestionComponentsTestPage: React.FC = () => {
         </CardHeader>
         <CardContent>
           <Ranking
-            id={5}
+            id={"5"}
             question="Rank your preference for the following options"
             description="Drag and drop options to your preferences"
             options={sampleOptions}
             required={true}
-            defaultValue={answers[5] || []}
+            defaultValue={answers["5"] || []}
             onSubmit={handleAnswerSubmit}
           />
         </CardContent>

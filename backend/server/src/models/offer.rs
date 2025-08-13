@@ -19,14 +19,19 @@ use std::ops::DerefMut;
 #[derive(Deserialize)]
 pub struct Offer {
     /// Unique identifier for the offer
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the campaign this offer belongs to
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_id: i64,
     /// ID of the application this offer is for
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub application_id: i64,
     /// ID of the email template to use for notifications
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub email_template_id: i64,
     /// ID of the role being offered
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub role_id: i64,
     /// When the offer expires
     pub expiry: DateTime<Utc>,
@@ -43,24 +48,30 @@ pub struct Offer {
 #[derive(Deserialize, Serialize)]
 pub struct OfferDetails {
     /// Unique identifier for the offer
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the campaign this offer belongs to
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_id: i64,
     /// Name of the organisation making the offer
     pub organisation_name: String,
     /// Name of the campaign
     pub campaign_name: String,
     /// ID of the application this offer is for
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub application_id: i64,
     /// ID of the user receiving the offer
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub user_id: i64,
     /// Name of the user receiving the offer
     pub user_name: String,
     /// Email address of the user receiving the offer
     pub user_email: String,
     /// ID of the email template to use for notifications
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub email_template_id: i64,
     /// ID of the role being offered
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub role_id: i64,
     /// Name of the role being offered
     pub role_name: String,

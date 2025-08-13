@@ -17,10 +17,13 @@ use std::ops::DerefMut;
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Rating {
     /// Unique identifier for the rating
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the application being rated
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub application_id: i64,
     /// ID of the user who created the rating
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub rater_user_id: i64,
     /// Numerical rating value
     pub rating: i32,
@@ -51,8 +54,10 @@ pub struct NewRating {
 #[derive(Deserialize, Serialize)]
 pub struct RatingDetails {
     /// Unique identifier for the rating
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the user who created the rating
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub rater_id: i64,
     /// Name of the user who created the rating
     pub rater_name: String,

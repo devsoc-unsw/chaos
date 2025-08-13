@@ -19,7 +19,7 @@ import { ArrowIcon, NextButton, NextWrapper } from "./createCampaign.styled";
 import type { Answers, Question, Role } from "./types";
 
 const CreateCampaign = () => {
-  const orgId = Number(useParams().orgId);
+  const orgId = String(useParams().orgId);
   const navigate = useNavigate();
   useEffect(() => {
     const fetchData = async () => {
@@ -114,8 +114,8 @@ const CreateCampaign = () => {
         return;
       }
 
-      const roleMap = new Map<number, Role>();
-      const roleCheckSet = new Set<number>();
+       const roleMap = new Map<string, Role>();
+       const roleCheckSet = new Set<string>();
       let flag = true;
 
       roles.forEach((role) => {
@@ -200,7 +200,7 @@ const CreateCampaign = () => {
     const startTimeDateString = dateToStringForBackend(startDate);
     const endTimeDateString = dateToStringForBackend(endDate);
     const campaignSend = {
-      organisation_id: Number(orgId),
+      organisation_id: orgId,
       name: campaignName,
       description,
       starts_at: startTimeDateString,
