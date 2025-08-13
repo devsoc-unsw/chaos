@@ -88,7 +88,7 @@ export type QuestionResponse = {
   //common: boolean;
   //max_bytes: number;
   required: boolean;
-  questionType: QuestionType;
+  question_type: QuestionType;
   data: QuestionData[];
   created_at: Date;
   updated_at: Date;

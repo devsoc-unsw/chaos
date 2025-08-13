@@ -186,7 +186,7 @@ const CampaignLandingPage = () => {
               </div>
             </div>
             <Button asChild className="w-full bg-purple-600 hover:bg-purple-700">
-              <Link to={`/apply/${campaign.id}`}>
+              <Link to={`/campaign/${campaign.id}/apply`}>
                 Apply for this Campaign
               </Link>
             </Button>
