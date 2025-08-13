@@ -63,6 +63,8 @@ const CampaignGrid = ({
         >
           <CampaignCard
             campaignId={campaign.id}
+            campaignSlug={campaign.slug}
+            organisationSlug={campaign.organisation_slug}
             title={campaign.name}
             appliedFor={[]} // No applied_for data available from backend
             positions={[]} // No roles data available from backend

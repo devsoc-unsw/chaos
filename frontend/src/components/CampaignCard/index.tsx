@@ -13,16 +13,19 @@ import type { CampaignWithRoles } from "types/api";
 
 type AdminProps = {
   campaignId: number;
+  campaignSlug: string;
   isAdmin: true;
 };
 
 type NonAdminProps = {
   campaignId?: number;
+  campaignSlug?: string;
   isAdmin?: false;
 };
 
 type BaseProps = {
   organisationLogo?: string;
+  organisationSlug?: string;
   title: string;
   appliedFor: CampaignWithRoles["applied_for"];
   positions: Position[];
@@ -37,7 +40,9 @@ type Props = BaseProps & (AdminProps | NonAdminProps);
 
 const CampaignCard = ({
   campaignId,
+  campaignSlug,
   organisationLogo,
+  organisationSlug,
   title,
   appliedFor,
   positions,
@@ -84,7 +89,7 @@ const CampaignCard = ({
   const linkComponent = isAdmin ? (
     <Link to={`/admin/review/${campaignId}`}>{content}</Link>
   ) : (
-    <Link to={`/application/${campaignId}`}>{content}</Link>
+    <Link to={`/campaign/${organisationSlug}/${campaignSlug}`}>{content}</Link>
   );
 
   return (

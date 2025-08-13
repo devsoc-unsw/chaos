@@ -19,6 +19,7 @@ const SignupPage = lazy(() => import("./pages/signup"));
 const QuestionComponentsTest = lazy(() => import("./pages/question_components_test"));
 const AdminApplicationDashboard = lazy(() => import("./pages/admin_application_dashboard"));
 const ApplicationReviewTest = lazy(() => import("./pages/application_review"))
+const CampaignLandingPage = lazy(() => import("./pages/campaign"));
 
 const routes = [
   <Route key="dashboard" path="/dashboard" element={<DashboardPage />} />,
@@ -33,7 +34,6 @@ const routes = [
       path=":roleSlug/finalise"
       element={<FinaliseCandidates />}
     />
-    ,
   </Route>,
   <Route key="Admin" path="/Admin" element={<Admin />} />,
   <Route
@@ -61,6 +61,11 @@ const routes = [
     path="/campaign/:campaignId/apply"
     element={<ApplicationReviewTest/>}
     />,
+  <Route
+    key="campaign-landing"
+    path="/campaign/:organisationSlug/:campaignSlug"
+    element={<CampaignLandingPage />}
+  />,
 <Route
     key="InterviewBooking"
     path="/interview-booking"

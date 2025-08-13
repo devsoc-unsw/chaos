@@ -215,7 +215,7 @@ export type CampaignWithDates = {
 // models::campaign::CampaignDetails
 export type Campaign = {
   id: number;
-  campaign_slug: string;
+  slug: string;
   name: string;
   organisation_id: string; // Changed to string to handle large integers
   organisation_slug: string;

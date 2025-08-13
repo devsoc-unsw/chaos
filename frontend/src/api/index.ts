@@ -169,6 +169,15 @@ export const getCampaignBySlugs = (organisationSlug: string, campaignSlug: strin
     path: `/v1/campaign/slug/${organisationSlug}/${campaignSlug}`,
   });
 
+// Preferred explicit path for organisation + campaign slugs
+export const getCampaignByOrgAndCampaignSlugs = (
+  organisationSlug: string,
+  campaignSlug: string
+) =>
+  authenticatedRequest<Campaign>({
+    path: `/v1/organisation/slug/${organisationSlug}/campaign/slug/${campaignSlug}`,
+  });
+
 export const getCampaignRoles = (campaignId: number) =>
   authenticatedRequest<Role[]>({
     path: `/v1/campaign/${campaignId}/roles`,
