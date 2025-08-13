@@ -89,7 +89,7 @@ export type QuestionResponse = {
   //max_bytes: number;
   required: boolean;
   question_type: QuestionType;
-  data: QuestionData[];
+  data: QuestionData;
   created_at: Date;
   updated_at: Date;
 };
@@ -106,9 +106,9 @@ export enum QuestionType {
 export type QuestionData = {
   options: {
     id: string,
-    displayOrder: number,
+    display_order: number,
     text: string
-  };
+  }[];
 }
 
 export type QuestionInput = {
