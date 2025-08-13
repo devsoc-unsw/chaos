@@ -219,13 +219,15 @@ impl Question {
                     q.question_type AS "question_type: QuestionType",
                     q.created_at,
                     q.updated_at,
-                    array_agg(
-                        jsonb_build_object(
+                    to_jsonb(
+                        array_agg(
+                            jsonb_build_object(
                                 'id', mod.id,
                                 'display_order', mod.display_order,
                                 'text', mod.text
-                        ) ORDER BY mod.display_order
-                    ) FILTER (WHERE mod.id IS NOT NULL) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
+                            ) ORDER BY mod.display_order
+                        ) FILTER (WHERE mod.id IS NOT NULL)
+                    ) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
                 FROM
                     questions q
                         LEFT JOIN
@@ -285,13 +287,15 @@ impl Question {
                     q.question_type AS "question_type: QuestionType",
                     q.created_at,
                     q.updated_at,
-                    array_agg(
-                        jsonb_build_object(
+                    to_jsonb(
+                        array_agg(
+                            jsonb_build_object(
                                 'id', mod.id,
                                 'display_order', mod.display_order,
                                 'text', mod.text
-                        ) ORDER BY mod.display_order
-                    ) FILTER (WHERE mod.id IS NOT NULL) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
+                            ) ORDER BY mod.display_order
+                        ) FILTER (WHERE mod.id IS NOT NULL)
+                    ) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
                 FROM
                     questions q
                         JOIN
@@ -351,13 +355,15 @@ impl Question {
                     q.question_type AS "question_type: QuestionType",
                     q.created_at,
                     q.updated_at,
-                    array_agg(
-                        jsonb_build_object(
+                    to_jsonb(
+                        array_agg(
+                            jsonb_build_object(
                                 'id', mod.id,
                                 'display_order', mod.display_order,
                                 'text', mod.text
-                        ) ORDER BY mod.display_order
-                    ) FILTER (WHERE mod.id IS NOT NULL) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
+                            ) ORDER BY mod.display_order
+                        ) FILTER (WHERE mod.id IS NOT NULL)
+                    ) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
                 FROM
                     questions q
                         LEFT JOIN
