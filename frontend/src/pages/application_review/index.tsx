@@ -7,6 +7,14 @@ import MultiSelect from "components/QuestionComponents/MultiSelect";
 import Ranking from "components/QuestionComponents/Ranking";
 import { getCampaign, getCampaignRoles, getCommonQuestions, getRoleQuestions } from "api";
 import type { Campaign, Role, QuestionResponse, QuestionData } from "types/api";
+import { Button } from "components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "components/ui/dialog";
 
 const ApplicationReview: React.FC = () => {
   const { campaignId } = useParams<{ campaignId: string }>();
@@ -19,6 +27,7 @@ const ApplicationReview: React.FC = () => {
   const [questionsByRole, setQuestionsByRole] = useState<Record<string, QuestionResponse[]>>({});
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const [loading, setLoading] = useState(true);
+  const [showReviewDialog, setShowReviewDialog] = useState(false);
 
   useEffect(() => {
     if (!campaignId) return;
@@ -71,6 +80,35 @@ const ApplicationReview: React.FC = () => {
 
   const setAnswer = (questionId: string, value: unknown) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
+  };
+
+  const formatAnswer = (question: QuestionResponse, answer: unknown): string => {
+    if (answer === null || answer === undefined || answer === '') {
+      return "No answer provided";
+    }
+
+    switch (question.question_type) {
+      case "ShortAnswer":
+        return String(answer);
+      
+      case "MultiChoice":
+      case "DropDown":
+        const selectedOption = question.data.options.find(opt => opt.id === answer);
+        return selectedOption ? selectedOption.text : String(answer);
+      
+      case "MultiSelect":
+      case "Ranking":
+        if (Array.isArray(answer)) {
+          const selectedOptions = question.data.options
+            .filter(opt => answer.includes(opt.id))
+            .map(opt => opt.text);
+          return selectedOptions.length > 0 ? selectedOptions.join(", ") : "No selections";
+        }
+        return String(answer);
+      
+      default:
+        return String(answer);
+    }
   };
 
   const renderQuestion = (q: QuestionResponse) => {
@@ -254,6 +292,98 @@ const ApplicationReview: React.FC = () => {
             )}
           </div>
         </div>
+
+        {/* Review Answers Button - Fixed position bottom right */}
+        <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
+          <DialogTrigger asChild>
+            <Button 
+              className="fixed bottom-8 right-8 shadow-lg"
+              size="lg"
+            >
+              Review Answers
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Application Review Summary</DialogTitle>
+            </DialogHeader>
+            
+            {/* Applied Roles Section */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-3">Applied Roles:</h3>
+              {selectedRoleIds.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {selectedRoleIds.map((roleId) => {
+                    const role = roles.find(r => String(r.id) === roleId);
+                    return (
+                      <span 
+                        key={roleId}
+                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                      >
+                        {role?.name || `Role ${roleId}`}
+                      </span>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-gray-600">No roles selected</p>
+              )}
+            </div>
+
+            {/* Common Questions Section */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-3">General Questions:</h3>
+              {commonQuestions.length > 0 ? (
+                <div className="space-y-4">
+                  {commonQuestions.map((question) => (
+                    <div key={question.id} className="border-l-4 border-gray-200 pl-4">
+                      <h4 className="font-medium text-gray-900 mb-1">{question.title}</h4>
+                      {question.description && (
+                        <p className="text-sm text-gray-600 mb-2">{question.description}</p>
+                      )}
+                      <p className="text-gray-800 bg-gray-50 p-2 rounded">
+                        {formatAnswer(question, answers[String(question.id)])}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-600">No general questions</p>
+              )}
+            </div>
+
+            {/* Role-specific Questions Sections */}
+            {selectedRoleIds.map((roleId) => {
+              const role = roles.find(r => String(r.id) === roleId);
+              const roleQuestions = questionsByRole[roleId] || [];
+              
+              return (
+                <div key={roleId} className="mb-6">
+                  <h3 className="text-lg font-semibold mb-3">
+                    {role?.name || `Role ${roleId}`} Questions:
+                  </h3>
+                  {roleQuestions.length > 0 ? (
+                    <div className="space-y-4">
+                      {roleQuestions.map((question) => (
+                        <div key={question.id} className="border-l-4 border-blue-200 pl-4">
+                          <h4 className="font-medium text-gray-900 mb-1">{question.title}</h4>
+                          {question.description && (
+                            <p className="text-sm text-gray-600 mb-2">{question.description}</p>
+                          )}
+                          <p className="text-gray-800 bg-blue-50 p-2 rounded">
+                            {formatAnswer(question, answers[String(question.id)])}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-600">No questions for this role</p>
+                  )}
+                </div>
+              );
+            })}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

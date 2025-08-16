@@ -8,7 +8,7 @@ import type { Role } from "types/api";
 type Props = {
   roles: Role[];
   rolesSelected: string[];
-  toggleRole: (_roleId: string) => void;
+  toggleRole: (_roleId: string) => Promise<void>;
 };
 const RolesSidebar = ({ roles, rolesSelected, toggleRole }: Props) => (
   <NavCard tw="w-72" title="Roles">

@@ -47,6 +47,7 @@ const ApplicationPage = () => {
 
   const [roleQuestions, setRoleQuestions] = useState<RoleQuestions>({"0": []});
   const [roles, setRoles] = useState<Role[]>([]);
+  const [loadingRoleQuestions, setLoadingRoleQuestions] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const getData = async () => {
@@ -70,24 +71,9 @@ const ApplicationPage = () => {
 
         const campaignRoles = await getCampaignRoles(id);
         setRoles(campaignRoles);
-        // initialise roleQuestions to include common questions
-        const roleQuestions: RoleQuestions = Object.fromEntries(
-          campaignRoles.map((role) => 
-            [role.id, commonQuestionsSimple]
-        ));
         
-        await Promise.all(campaignRoles.map( async ({id: roleId}) => {
-          // for each roleId, pushes every question to the rolearray
-          const questionsByRole = await getRoleQuestions(id, roleId);
-          const questions = questionsByRole.map((questions) => {
-            return {
-              id: questions.id,
-              text: questions.title,
-            }
-          });
-          roleQuestions[roleId].push(...questions);
-        }));
-        setRoleQuestions(roleQuestions);
+        // Initialize roleQuestions with only common questions (stored under key "0")
+        setRoleQuestions({"0": commonQuestionsSimple});
       } else {
         return false;
       }
@@ -105,14 +91,42 @@ const ApplicationPage = () => {
   const [answers, setAnswers] = useState<{ [question: string]: string }>({});
 
   const toggleRole = useCallback(
-    (roleId: string) => {
+    async (roleId: string) => {
       if (rolesSelected.includes(roleId)) {
         setRolesSelected(rolesSelected.filter((r) => r !== roleId));
       } else {
         setRolesSelected([...rolesSelected, roleId]);
+        
+        // Fetch questions for this role if not already loaded and not currently loading
+        if (!roleQuestions[roleId] && !loadingRoleQuestions.has(roleId) && campaignId) {
+          setLoadingRoleQuestions(prev => new Set([...prev, roleId]));
+          
+          try {
+            const commonQuestions = roleQuestions["0"] || [];
+            const roleSpecificQuestions = await getRoleQuestions(campaignId, roleId);
+            const questionsSimple = roleSpecificQuestions.map((question) => ({
+              id: question.id,
+              text: question.title,
+            }));
+            
+            setRoleQuestions(prev => ({
+              ...prev,
+              [roleId]: [...commonQuestions, ...questionsSimple]
+            }));
+          } catch (error) {
+            console.error(`Failed to fetch questions for role ${roleId}:`, error);
+            // You could show a user-friendly error message here
+          } finally {
+            setLoadingRoleQuestions(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(roleId);
+              return newSet;
+            });
+          }
+        }
       }
     },
-    [rolesSelected]
+    [rolesSelected, roleQuestions, loadingRoleQuestions, campaignId]
   );
 
   const setAnswer = useCallback(
@@ -220,6 +234,7 @@ const ApplicationPage = () => {
           answers={answers}
           setAnswer={setAnswer}
           onSubmit={onSubmit}
+          loadingRoleQuestions={loadingRoleQuestions}
         />
       </div>
     </Container>
