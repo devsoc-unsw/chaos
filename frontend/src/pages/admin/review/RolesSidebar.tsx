@@ -10,7 +10,7 @@ type Props = {
   roles: Role[];
 };
 const RolesSidebar = ({ roles }: Props) => {
-  const roleId = Number(useParams().roleId);
+  const roleId = String(useParams().roleId);
   return (
     <NavCard
       tw="fixed bottom-0 left-0 top-16 rounded-none shadow-xl"

@@ -32,8 +32,10 @@ use std::ops::DerefMut;
 #[derive(Deserialize, Serialize)]
 pub struct Answer {
     /// Unique identifier for the answer
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     id: i64,
     /// ID of the question this answer is for
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     question_id: i64,
 
     /// The actual answer data, flattened in serialization
@@ -437,12 +439,16 @@ pub enum AnswerData {
     /// Text answer for short answer questions
     ShortAnswer(String),
     /// Single selected option for multiple choice questions
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     MultiChoice(i64),
     /// Multiple selected options for multi-select questions
+    #[serde(serialize_with = "crate::models::serde_string::serialize_vec")]
     MultiSelect(Vec<i64>),
     /// Single selected option for dropdown questions
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     DropDown(i64),
     /// Ranked list of options for ranking questions
+    #[serde(serialize_with = "crate::models::serde_string::serialize_vec")]
     Ranking(Vec<i64>),
 }
 

@@ -64,6 +64,7 @@ impl IntoResponse for AuthRedirect {
 #[derive(Deserialize, Serialize)]
 pub struct AuthUser {
     /// ID of the authenticated user
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub user_id: i64,
 }
 
@@ -93,6 +94,7 @@ where
 #[derive(Deserialize, Serialize)]
 pub struct SuperUser {
     /// ID of the super user
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub user_id: i64,
 }
 

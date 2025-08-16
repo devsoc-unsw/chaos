@@ -9,14 +9,14 @@ interface Option {
 }
 
 interface MultiChoiceProps {
-  id: number;
+  id: string;
   question: string;
   description?: string;
   options: Option[];
   required?: boolean;
   defaultValue?: string | number;
   onChange?: (value: string | number) => void;
-  onSubmit?: (questionId: number, value: string | number) => void;
+  onSubmit?: (questionId: string, value: string | number) => void;
   disabled?: boolean;
 }
 

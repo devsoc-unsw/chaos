@@ -45,13 +45,13 @@ const AdminContent = ({
   members,
   setMembers,
 }: Props) => {
-  let id: number;
+  let id: string;
   let icon;
   let orgName: string;
   if (org) {
     ({ id, icon, orgName } = org);
   } else {
-    id = 0;
+    id = "0";
     icon = "";
     orgName = "...";
   }

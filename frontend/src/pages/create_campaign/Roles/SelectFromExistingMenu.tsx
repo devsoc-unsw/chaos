@@ -8,7 +8,7 @@ import type { MouseEventHandler } from "react";
 
 type Props = {
   filteredQuestions: Question[];
-  selectFromExisting: (id: number) => void;
+  selectFromExisting: (id: string) => void;
   open: boolean;
   handleSelectFromExistingClick: MouseEventHandler<HTMLButtonElement>;
   handleCloseSelectFromExisting: MouseEventHandler<HTMLElement>;

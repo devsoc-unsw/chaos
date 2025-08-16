@@ -5,7 +5,7 @@ import type {
 } from "../../types/api";
 
 export type Organisation = {
-  id: number;
+  id: string;
   icon: string;
   orgName: string;
   campaigns: CampaignInfo[];
@@ -13,7 +13,7 @@ export type Organisation = {
 };
 
 export type Campaign = {
-  id: number;
+  id: string;
   image: string;
   title: string;
   startDate: string;
@@ -21,7 +21,7 @@ export type Campaign = {
 };
 
 export type Member = {
-  id: number;
+  id: string;
   name: string;
   role: AdminLevel;
 };
@@ -32,7 +32,7 @@ type Question = {
 };
 
 export type ApplicationWithQuestions = {
-  applicationId: number;
+  applicationId: string;
   zId: string;
   mark?: number;
   questions: Question[];

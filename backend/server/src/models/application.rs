@@ -27,10 +27,13 @@ use crate::service::application::{assert_application_is_open};
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Application {
     /// Unique identifier for the application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the campaign this application belongs to
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_id: i64,
     /// ID of the user who submitted the application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub user_id: i64,
     /// Public status of the application
     pub status: ApplicationStatus,
@@ -50,10 +53,13 @@ pub struct Application {
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct ApplicationRole {
     /// Unique identifier for the role application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the parent application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub application_id: i64,
     /// ID of the campaign role being applied for
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_role_id: i64,
     /// User's preference ranking for this role (lower number = higher preference)
     pub preference: i32,
@@ -75,8 +81,10 @@ pub struct NewApplication {
 #[derive(Deserialize, Serialize)]
 pub struct ApplicationDetails {
     /// Unique identifier for the application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the campaign this application belongs to
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_id: i64,
     /// Details of the user who submitted the application
     pub user: UserDetails,
@@ -95,10 +103,13 @@ pub struct ApplicationDetails {
 #[derive(Deserialize, Serialize)]
 pub struct ApplicationData {
     /// Unique identifier for the application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the campaign this application belongs to
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_id: i64,
     /// ID of the user who submitted the application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub user_id: i64,
     /// Email address of the applicant
     pub user_email: String,
@@ -126,6 +137,7 @@ pub struct ApplicationData {
 #[derive(Deserialize, Serialize)]
 pub struct ApplicationAppliedRoleDetails {
     /// ID of the campaign role
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_role_id: i64,
     /// Name of the role
     pub role_name: String,

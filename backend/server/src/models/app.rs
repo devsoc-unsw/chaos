@@ -250,7 +250,7 @@ pub async fn app() -> Result<Router, ChaosError> {
                 .delete(CampaignHandler::delete),
         )
         .route(
-            "/api/v1/campaign/slug/:organisation_slug/:campaign_slug",
+            "/api/v1/organisation/slug/:organisation_slug/campaign/slug/:campaign_slug",
             get(CampaignHandler::get_by_slugs),
         )
         .route("/api/v1/campaigns", get(CampaignHandler::get_all))
