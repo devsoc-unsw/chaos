@@ -15,6 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "components/ui/dialog";
+import { Info } from "lucide-react";
 
 const ApplicationReview: React.FC = () => {
   const { campaignId } = useParams<{ campaignId: string }>();
@@ -215,26 +216,38 @@ const ApplicationReview: React.FC = () => {
           {/* Sidebar – multi-select roles */}
           <div className="w-80 flex-shrink-0">
             <h2 className="text-xl font-semibold mb-4 text-gray-900">Available Roles</h2>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {roles.map((role) => {
                 const selected = selectedRoleIds.includes(String(role.id));
                 return (
                   <div
                     key={role.id}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
                       selected ? "bg-blue-50 border-blue-300" : "bg-white border-gray-200 hover:border-gray-300"
                     }`}
                     onClick={() => toggleRole(String(role.id))}
                   >
-                    <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-semibold">{role.name}</h3>
-                      <span className={`text-xs ${selected ? "text-blue-700" : "text-gray-400"}`}>
-                        {selected ? "Selected" : "Select"}
-                      </span>
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-medium text-sm">{role.name}</h3>
+                      <div className="flex items-center gap-2">
+                        {role.description && (
+                          <div className="group relative">
+                            <Info tw="h-4 w-4 text-blue-500 hover:text-blue-600 transition-colors" />
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                              {role.description}
+                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                            </div>
+                          </div>
+                        )}
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          selected 
+                            ? "bg-blue-100 text-blue-700" 
+                            : "bg-gray-100 text-gray-500"
+                        }`}>
+                          {selected ? "Selected" : "Select"}
+                        </span>
+                      </div>
                     </div>
-                    {role.description && (
-                      <p className="text-sm text-gray-600">{role.description}</p>
-                    )}
                   </div>
                 );
               })}
