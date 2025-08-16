@@ -57,7 +57,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   };
 
   return (
-    <div tw="mb-6 w-full" css={width ? tw`${width}` : undefined}>
+    <div tw="mb-6 w-full max-w-sm" css={width ? tw`${width}` : undefined}>
       <div className="flex items-center mb-2">
         <Label className="text-lg font-medium">{question}</Label>
         {required && <span className="ml-1 text-red-500">*</span>}
