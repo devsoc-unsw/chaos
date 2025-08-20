@@ -251,39 +251,7 @@ export default function EmailTemplatesPage() {
     setTemplates((prev) => [...prev, duplicatedTemplate])
   }
 
-  const insertVariable = (variable: string) => {
-    const textarea = document.getElementById("template-body") as HTMLTextAreaElement
-    if (textarea) {
-      const start = textarea.selectionStart
-      const end = textarea.selectionEnd
-      const currentBody = formData.body
-      const newBody = currentBody.substring(0, start) + variable + currentBody.substring(end)
-      setFormData((prev) => ({ ...prev, body: newBody }))
 
-      // Set cursor position after the inserted variable
-      setTimeout(() => {
-        textarea.focus()
-        textarea.setSelectionRange(start + variable.length, start + variable.length)
-      }, 0)
-    }
-  }
-
-  const insertVariableInSubject = (variable: string) => {
-    const input = document.getElementById("template-subject") as HTMLInputElement
-    if (input) {
-      const start = input.selectionStart || 0
-      const end = input.selectionEnd || 0
-      const currentSubject = formData.subject
-      const newSubject = currentSubject.substring(0, start) + variable + currentSubject.substring(end)
-      setFormData((prev) => ({ ...prev, subject: newSubject }))
-
-      // Set cursor position after the inserted variable
-      setTimeout(() => {
-        input.focus()
-        input.setSelectionRange(start + variable.length, start + variable.length)
-      }, 0)
-    }
-  }
 
   const replaceVariables = (text: string, data: any) => {
     let result = text
@@ -393,7 +361,6 @@ export default function EmailTemplatesPage() {
                           <Button
                             key={variable.key}
                             color="white"
-                            onClick={() => insertVariableInSubject(variable.key)}
                             className="text-xs"
                           >
                             {variable.key}
@@ -417,7 +384,6 @@ export default function EmailTemplatesPage() {
                           <Button
                             key={variable.key}
                             color="white"
-                            onClick={() => insertVariable(variable.key)}
                             className="text-xs"
                           >
                             {variable.key}
@@ -460,16 +426,8 @@ export default function EmailTemplatesPage() {
                                 <p className="text-sm text-gray-600 mt-1">{variable.description}</p>
                                 <p className="text-xs text-gray-500">Example: {variable.example}</p>
                               </div>
-                              <div className="flex gap-2">
-                                <Button
-                                  color="white"
-                                  onClick={() => insertVariableInSubject(variable.key)}
-                                >
-                                  Add to Subject
-                                </Button>
-                                <Button color="white" onClick={() => insertVariable(variable.key)}>
-                                  Add to Body
-                                </Button>
+                              <div>
+                                {/* Variable information only - insertion handled in editor tab */}
                               </div>
                             </div>
                           </CardContent>
@@ -559,19 +517,21 @@ export default function EmailTemplatesPage() {
                     <p>Updated: {new Date(template.updatedAt).toLocaleDateString()}</p>
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
-                    <Button color="white" onClick={() => handlePreviewTemplate(template)} className="flex-1 min-w-0 text-xs overflow-hidden">
-                      <EyeIcon className="w-4 h-4 mr-1 flex-shrink-0" />
-                      <span className="truncate">Preview</span>
-                    </Button>
-                    <Button color="white" onClick={() => handleEditTemplate(template)} className="flex-1 min-w-0 text-xs overflow-hidden">
-                      <PencilIcon className="w-4 h-4 mr-1 flex-shrink-0" />
-                      <span className="truncate">Edit</span>
-                    </Button>
-                    <Button color="white" onClick={() => handleDuplicateTemplate(template)} className="flex-1 min-w-0 text-xs overflow-hidden">
-                      <DocumentDuplicateIcon className="w-4 h-4 mr-1 flex-shrink-0" />
-                      <span className="truncate">Copy</span>
-                    </Button>
+                  <div className="flex justify-between items-center gap-2">
+                    <div className="flex gap-2">
+                      <Button color="white" onClick={() => handlePreviewTemplate(template)} className="w-24 text-xs">
+                        <EyeIcon className="w-4 h-4 mr-1 flex-shrink-0" />
+                        <span>Preview</span>
+                      </Button>
+                      <Button color="white" onClick={() => handleEditTemplate(template)} className="w-20 text-xs">
+                        <PencilIcon className="w-4 h-4 mr-1 flex-shrink-0" />
+                        <span>Edit</span>
+                      </Button>
+                      <Button color="white" onClick={() => handleDuplicateTemplate(template)} className="w-20 text-xs">
+                        <DocumentDuplicateIcon className="w-4 h-4 mr-1 flex-shrink-0" />
+                        <span>Copy</span>
+                      </Button>
+                    </div>
                     <Button
                       color="danger"
                       onClick={() => handleDeleteTemplate(template.id)}
