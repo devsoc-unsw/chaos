@@ -167,6 +167,57 @@ pub enum ApplicationStatus {
 }
 
 impl Application {
+    /// Creates a new application if it doesn't exist, otherwise returns the existing application ID.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `campaign_id` - ID of the campaign to apply to
+    /// * `user_id` - ID of the user submitting the application
+    /// * `snowflake_generator` - Generator for creating unique IDs
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<i64, ChaosError>` - ID of the application or error
+    pub async fn create_or_get(
+        campaign_id: i64,
+        user_id: i64,
+        snowflake_generator: &mut SnowflakeIdGenerator,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<i64, ChaosError> {
+        // Check if application already exists
+        let application = sqlx::query!(
+            "
+                SELECT id FROM applications
+                WHERE campaign_id = $1 AND user_id = $2
+            ",
+            campaign_id,
+            user_id
+        )
+        .fetch_optional(transaction.deref_mut())
+        .await?;
+
+        if let Some(application) = application {
+            return Ok(application.id);
+        }
+
+        let id = snowflake_generator.real_time_generate();
+        // Create new application
+        sqlx::query!(
+            "
+                INSERT INTO applications (id, campaign_id, user_id)
+                VALUES ($1, $2, $3)
+            ",
+            id,
+            campaign_id,
+            user_id
+        )
+        .execute(transaction.deref_mut())
+        .await?;
+
+        Ok(id)
+    }
+    
     /// Creates a new application in the system.
     /// 
     /// # Arguments

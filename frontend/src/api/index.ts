@@ -199,6 +199,12 @@ export const getCommonQuestions = (campaignID: string) =>
     path: `/v1/campaign/${campaignID}/questions/common`
   });
 
+export const createOrGetApplication = (campaignId: string) =>
+  authenticatedRequest<{ application_id: string }>({
+    method: "POST",
+    path: `/v1/campaign/${campaignId}/apply`,
+  });
+
 export const setApplicationRating = (applicationId: string, rating: NewRating) =>
   authenticatedRequest({
     method: "PUT",

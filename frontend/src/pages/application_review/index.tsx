@@ -5,7 +5,7 @@ import Dropdown from "components/QuestionComponents/Dropdown";
 import MultiChoice from "components/QuestionComponents/MultiChoice";
 import MultiSelect from "components/QuestionComponents/MultiSelect";
 import Ranking from "components/QuestionComponents/Ranking";
-import { getCampaign, getCampaignRoles, getCommonQuestions, getRoleQuestions } from "api";
+import { getCampaign, getCampaignRoles, getCommonQuestions, getRoleQuestions, createOrGetApplication } from "api";
 import type { Campaign, Role, QuestionResponse, QuestionData } from "types/api";
 import { Button } from "components/ui/button";
 import {
@@ -29,6 +29,7 @@ const ApplicationReview: React.FC = () => {
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const [loading, setLoading] = useState(true);
   const [showReviewDialog, setShowReviewDialog] = useState(false);
+  const [applicationId, setApplicationId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!campaignId) return;
@@ -36,13 +37,15 @@ const ApplicationReview: React.FC = () => {
       setLoading(true);
       try {
         const idStr = campaignId;
-        const [c, r, common] = await Promise.all([
+        const [c, r, common, application] = await Promise.all([
           getCampaign(idStr),
           getCampaignRoles(idStr),
           getCommonQuestions(idStr),
+          createOrGetApplication(idStr),
         ]);
         setCampaign(c);
         setRoles(r);
+        setApplicationId(application.application_id);
         const commonList = Array.isArray(common)
           ? common
           : (common as unknown as { questions?: QuestionResponse[] }).questions ?? [];
@@ -210,6 +213,11 @@ const ApplicationReview: React.FC = () => {
           <p className="text-gray-600">
             {new Date(campaign.starts_at).toLocaleDateString()} - {new Date(campaign.ends_at).toLocaleDateString()}
           </p>
+          {applicationId && (
+            <p className="text-sm text-gray-500 mt-2">
+              Application ID: {applicationId}
+            </p>
+          )}
         </div>
 
         <div className="flex gap-8 w-full">
@@ -318,7 +326,14 @@ const ApplicationReview: React.FC = () => {
           </DialogTrigger>
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Application Review Summary</DialogTitle>
+              <DialogTitle>
+                Application Review Summary
+                {applicationId && (
+                  <span className="text-sm font-normal text-gray-500 ml-2">
+                    (ID: {applicationId})
+                  </span>
+                )}
+              </DialogTitle>
             </DialogHeader>
             
             {/* Applied Roles Section */}
