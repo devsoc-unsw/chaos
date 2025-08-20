@@ -17,6 +17,7 @@ interface MultiSelectProps {
   onChange?: (value: Array<string | number>) => void;
   onSubmit?: (questionId: string, value: Array<string | number>) => void;
   disabled?: boolean;
+  answerId?: string;
 }
 
 const MultiSelect: React.FC<MultiSelectProps> = ({
@@ -29,6 +30,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
   onChange,
   onSubmit,
   disabled = false,
+  answerId,
 }) => {
   const [selectedOptions, setSelectedOptions] = useState<Array<string | number>>(defaultValue);
 
@@ -56,6 +58,10 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
 
       {description && (
         <p className="mb-4 text-sm text-muted-foreground">{description}</p>
+      )}
+      
+      {answerId && (
+        <p className="mb-2 text-xs text-gray-400">Answer ID: {answerId}</p>
       )}
 
       <div className="space-y-3">

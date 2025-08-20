@@ -27,6 +27,7 @@ interface DropdownProps {
   placeholder?: string;
   width?: string;
   height?: string;
+  answerId?: string;
 }
 
 const Dropdown: React.FC<DropdownProps> = ({
@@ -42,6 +43,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   width = "max-w-4xl",
   height = "",
   placeholder = "Select an option",
+  answerId,
 }) => {
   const [value, setValue] = useState<string | number | undefined>(defaultValue);
 
@@ -65,6 +67,10 @@ const Dropdown: React.FC<DropdownProps> = ({
 
       {description && (
         <p className="mb-4 text-sm text-muted-foreground">{description}</p>
+      )}
+      
+      {answerId && (
+        <p className="mb-2 text-xs text-gray-400">Answer ID: {answerId}</p>
       )}
 
       <Select

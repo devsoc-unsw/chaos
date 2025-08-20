@@ -93,6 +93,7 @@ pub enum ChaosError {
 /// errors from external dependencies.
 impl IntoResponse for ChaosError {
     fn into_response(self) -> Response {
+        println!("Error: {:?}", self);
         match self {
             ChaosError::NotLoggedIn => Redirect::temporary("/auth/google").into_response(),
             ChaosError::Unauthorized => (StatusCode::UNAUTHORIZED, "Unauthorized").into_response(),

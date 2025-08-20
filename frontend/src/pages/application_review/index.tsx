@@ -5,8 +5,8 @@ import Dropdown from "components/QuestionComponents/Dropdown";
 import MultiChoice from "components/QuestionComponents/MultiChoice";
 import MultiSelect from "components/QuestionComponents/MultiSelect";
 import Ranking from "components/QuestionComponents/Ranking";
-import { getCampaign, getCampaignRoles, getCommonQuestions, getRoleQuestions, createOrGetApplication } from "api";
-import type { Campaign, Role, QuestionResponse, QuestionData } from "types/api";
+import { getCampaign, getCampaignRoles, getCommonQuestions, getRoleQuestions, createOrGetApplication, getCommonApplicationAnswers, getApplicationAnswers } from "api";
+import type { Campaign, Role, QuestionResponse, QuestionData, Answer } from "types/api";
 import { Button } from "components/ui/button";
 import {
   Dialog,
@@ -30,6 +30,8 @@ const ApplicationReview: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showReviewDialog, setShowReviewDialog] = useState(false);
   const [applicationId, setApplicationId] = useState<string | null>(null);
+  const [commonAnswers, setCommonAnswers] = useState<Answer[]>([]);
+  const [roleAnswers, setRoleAnswers] = useState<Record<string, Answer[]>>({});
 
   useEffect(() => {
     if (!campaignId) return;
@@ -56,25 +58,64 @@ const ApplicationReview: React.FC = () => {
     })();
   }, [campaignId]);
 
+  // Load common answers when application ID is available
+  useEffect(() => {
+    if (!applicationId) return;
+    (async () => {
+      try {
+        const answers = await getCommonApplicationAnswers(applicationId);
+        setCommonAnswers(answers);
+        
+        // Pre-fill answers in the answers state
+        const answerMap: Record<string, unknown> = {};
+        answers.forEach(answer => {
+          answerMap[answer.question_id] = answer.data;
+        });
+        setAnswers(prev => ({ ...prev, ...answerMap }));
+      } catch (error) {
+        console.error('Failed to load common answers:', error);
+      }
+    })();
+  }, [applicationId]);
+
   // Fetch role-specific questions when a new role is selected
   useEffect(() => {
-    if (!campaignId) return;
+    if (!campaignId || !applicationId) return;
     const id = campaignId;
     const missing = selectedRoleIds.filter((rid) => questionsByRole[rid] === undefined);
     if (missing.length === 0) return;
     (async () => {
       const updates: Record<string, QuestionResponse[]> = {};
+      const roleAnswersUpdates: Record<string, Answer[]> = {};
+      
       await Promise.all(
         missing.map(async (rid) => {
-          const resp = await getRoleQuestions(id, rid);
-          updates[rid] = Array.isArray(resp)
-            ? resp
-            : (resp as unknown as { questions?: QuestionResponse[] }).questions ?? [];
+          const [questionsResp, answersResp] = await Promise.all([
+            getRoleQuestions(id, rid),
+            getApplicationAnswers(applicationId, rid)
+          ]);
+          
+          updates[rid] = Array.isArray(questionsResp)
+            ? questionsResp
+            : (questionsResp as unknown as { questions?: QuestionResponse[] }).questions ?? [];
+          
+          roleAnswersUpdates[rid] = answersResp;
         })
       );
+      
       setQuestionsByRole((prev) => ({ ...prev, ...updates }));
+      setRoleAnswers((prev) => ({ ...prev, ...roleAnswersUpdates }));
+      
+      // Pre-fill answers state with role-specific answers
+      const answerMap: Record<string, unknown> = {};
+      Object.values(roleAnswersUpdates).forEach(answers => {
+        answers.forEach(answer => {
+          answerMap[answer.question_id] = answer.data;
+        });
+      });
+      setAnswers(prev => ({ ...prev, ...answerMap }));
     })();
-  }, [selectedRoleIds, campaignId, questionsByRole]);
+  }, [selectedRoleIds, campaignId, questionsByRole, applicationId]);
 
   const toggleRole = (roleId: string) => {
     setSelectedRoleIds((prev: string[]) =>
@@ -84,6 +125,20 @@ const ApplicationReview: React.FC = () => {
 
   const setAnswer = (questionId: string, value: unknown) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
+  };
+
+  const getAnswerId = (questionId: string): string | undefined => {
+    // Check common answers first
+    const commonAnswer = commonAnswers.find(a => a.question_id === questionId);
+    if (commonAnswer) return commonAnswer.id;
+    
+    // Check role-specific answers
+    for (const [roleId, answers] of Object.entries(roleAnswers)) {
+      const roleAnswer = answers.find(a => a.question_id === questionId);
+      if (roleAnswer) return roleAnswer.id;
+    }
+    
+    return undefined;
   };
 
   const formatAnswer = (question: QuestionResponse, answer: unknown): string => {
@@ -132,6 +187,7 @@ const ApplicationReview: React.FC = () => {
             required={q.required}
             defaultValue={(answers[idStr] as string) ?? ""}
             onSubmit={(qid, val) => setAnswer(qid, val)}
+            answerId={getAnswerId(idStr)}
           />
         );
       case "DropDown":
@@ -145,6 +201,7 @@ const ApplicationReview: React.FC = () => {
             options={options}
             defaultValue={answers[idStr] as string | number | undefined}
             onSubmit={(qid, val) => setAnswer(qid, val)}
+            answerId={getAnswerId(idStr)}
           />
         );
       case "MultiChoice":
@@ -158,6 +215,7 @@ const ApplicationReview: React.FC = () => {
             options={options}
             defaultValue={answers[idStr] as string | number | undefined}
             onSubmit={(qid, val) => setAnswer(qid, val)}
+            answerId={getAnswerId(idStr)}
           />
         );
       case "MultiSelect":
@@ -171,6 +229,7 @@ const ApplicationReview: React.FC = () => {
             options={options}
             defaultValue={(answers[idStr] as Array<string | number>) ?? []}
             onSubmit={(qid, val) => setAnswer(qid, val)}
+            answerId={getAnswerId(idStr)}
           />
         );
       case "Ranking":
@@ -184,6 +243,7 @@ const ApplicationReview: React.FC = () => {
             options={options}
             defaultValue={(answers[idStr] as Array<string | number>) ?? []}
             onSubmit={(qid, val) => setAnswer(qid, val)}
+            answerId={getAnswerId(idStr)}
           />
         );
       default:
@@ -216,6 +276,12 @@ const ApplicationReview: React.FC = () => {
           {applicationId && (
             <p className="text-sm text-gray-500 mt-2">
               Application ID: {applicationId}
+            </p>
+          )}
+          {Object.keys(roleAnswers).length > 0 && (
+            <p className="text-sm text-gray-500 mt-1">
+              Role Answers Loaded: {Object.keys(roleAnswers).join(', ')} 
+              (Total: {Object.values(roleAnswers).reduce((sum, answers) => sum + answers.length, 0)} answers)
             </p>
           )}
         </div>

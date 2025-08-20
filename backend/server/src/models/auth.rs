@@ -486,10 +486,12 @@ where
         let app_state = AppState::from_ref(state);
         let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
-        let Path(application_id) = parts
-            .extract::<Path<i64>>()
+        let Path(ids) = parts
+            .extract::<Path<HashMap<String, i64>>>()
             .await
             .map_err(|_| ChaosError::BadRequest)?;
+
+        let application_id = ids.get("application_id").ok_or(ChaosError::BadRequest)?.clone();
 
         let mut tx = app_state.db.begin().await?;
         user_is_application_owner(user_id, application_id, &mut tx).await?;
