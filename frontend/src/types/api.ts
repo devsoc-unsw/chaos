@@ -160,12 +160,16 @@ export type ApplicationResponse = {
 export type Answer = {
   id: string,
   question_id: string,
-  answer_type: QuestionType,
-  data: AnswerData,
+  answer_type: AnswerType,
+  answer_data: AnswerData,
   created_at: Date,
   updated_at: Date,
 }
 
+// Same answer types as question types
+export type AnswerType = QuestionType;
+
+// Either an option id, an array of option ids, or a string of short answer
 export type AnswerData = string | string[];
 
 // export type AnswerData = 

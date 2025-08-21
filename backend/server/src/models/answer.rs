@@ -40,7 +40,7 @@ pub struct Answer {
 
     /// The actual answer data, flattened in serialization
     #[serde(flatten)]
-    answer_data: AnswerData,
+    data: AnswerData,
 
     /// When the answer was created
     created_at: DateTime<Utc>,
@@ -51,15 +51,15 @@ pub struct Answer {
 /// Data structure for creating a new answer.
 /// 
 /// Contains the question ID and the answer data.
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct NewAnswer {
     /// ID of the question this answer is for
     #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
     pub question_id: i64,
 
     /// The actual answer data, flattened in serialization
-    // #[serde(flatten)]
-    pub answer_data: AnswerData,
+    #[serde(flatten)]
+    pub data: AnswerData,
 }
 
 /// Raw answer data from the database.
@@ -112,11 +112,11 @@ impl Answer {
     pub async fn create(
         application_id: i64,
         question_id: i64,
-        answer_data: AnswerData,
+        data: AnswerData,
         snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<i64, ChaosError> {
-        answer_data.validate()?;
+        data.validate()?;
 
         let id = snowflake_generator.real_time_generate();
 
@@ -132,7 +132,7 @@ impl Answer {
         .execute(transaction.deref_mut())
         .await?;
 
-        answer_data.insert_into_db(id, transaction).await?;
+        data.insert_into_db(id, transaction).await?;
 
         Ok(id)
     }
@@ -198,7 +198,7 @@ impl Answer {
         Ok(Answer {
             id,
             question_id: answer_raw_data.question_id,
-            answer_data,
+            data: answer_data,
             created_at: answer_raw_data.created_at,
             updated_at: answer_raw_data.updated_at,
         })
@@ -272,7 +272,7 @@ impl Answer {
                 Answer {
                     id: answer_raw_data.id,
                     question_id: answer_raw_data.question_id,
-                    answer_data,
+                    data: answer_data,
                     created_at: answer_raw_data.created_at,
                     updated_at: answer_raw_data.updated_at,
                 }
@@ -329,7 +329,7 @@ impl Answer {
                         LEFT JOIN
                     ranking_answer_rankings rar ON rar.answer_id = a.id
                         AND q.question_type = 'Ranking'
-                WHERE a.application_id = $1 AND qr.role_id = $2 AND q.common = true
+                WHERE a.application_id = $1 AND qr.role_id = $2 AND q.common = false
                 GROUP BY
                     a.id, q.question_type, saa.text
             "#,
@@ -352,7 +352,7 @@ impl Answer {
                 Answer {
                     id: answer_raw_data.id,
                     question_id: answer_raw_data.question_id,
-                    answer_data,
+                    data: answer_data,
                     created_at: answer_raw_data.created_at,
                     updated_at: answer_raw_data.updated_at,
                 }
@@ -375,10 +375,10 @@ impl Answer {
     /// * `Result<(), ChaosError>` - Success or error
     pub async fn update(
         id: i64,
-        answer_data: AnswerData,
+        data: AnswerData,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        answer_data.validate()?;
+        data.validate()?;
 
         let answer = sqlx::query_as!(
             AnswerTypeApplicationId,
@@ -396,7 +396,7 @@ impl Answer {
         let old_data = AnswerData::from_question_type(&answer.question_type);
         old_data.delete_from_db(id, transaction).await?;
 
-        answer_data.insert_into_db(id, transaction).await?;
+        data.insert_into_db(id, transaction).await?;
 
         sqlx::query!(
             "UPDATE applications SET updated_at = $1 WHERE id = $2",
@@ -436,7 +436,7 @@ impl Answer {
 /// Each variant corresponds to a different question type and contains
 /// the appropriate data format for that type.
 #[derive(Deserialize, Serialize)]
-#[serde(untagged)]
+#[serde(tag = "answer_type", content = "answer_data")]
 pub enum AnswerData {
     /// Text answer for short answer questions
     ShortAnswer(String),
