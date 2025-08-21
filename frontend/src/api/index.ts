@@ -233,7 +233,46 @@ export const getApplicationRatings = (applicationId: string) =>
     path: `/v1/${applicationId}/ratings`,
   });
 
-// todo: update all referencing components
+// Create a new answer
+export const createAnswer = (
+  applicationId: string,
+  questionId: string,
+  answerType: QuestionType,
+  answerData: AnswerData
+) =>
+  authenticatedRequest<{ id: string }>({
+    method: "POST",
+    path: `/v1/application/${applicationId}/answer`,
+    body: {
+      question_id: questionId,
+      answer_type: answerType,
+      answer_data: answerData,
+    },
+  });
+
+// Update an existing answer
+export const updateAnswer = (
+  answerId: string,
+  answerData: AnswerData
+) =>
+  authenticatedRequest({
+    method: "PATCH",
+    path: `/v1/answer/${answerId}`,
+    body: {
+      data: answerData,
+    },
+    jsonResp: false,
+  });
+
+// Delete an answer
+export const deleteAnswer = (answerId: string) =>
+  authenticatedRequest({
+    method: "DELETE",
+    path: `/v1/answer/${answerId}`,
+    jsonResp: false,
+  });
+
+// Legacy function - keeping for backward compatibility
 export const submitAnswer = (
   applicationId: string,
   questionId: string,
@@ -341,31 +380,31 @@ export const getAnsweredApplicationQuestions = (applications: ApplicationDetails
           case QuestionType.MultiChoice:
             // search question list for questions of Multichoice type
             return completeQuestions.find(question => 
-              question.questionType === QuestionType.MultiChoice &&
+              question.question_type === QuestionType.MultiChoice &&
               // then search that question's multichoice options for the option which was selected
-              question.data.some(data => data.options.id === answer.data
-              ))?.data.find(data => data.options.id === answer.data)?.options.text; // return the text of the actual question option
+              question.data.options.some(option => option.id === answer.data)
+            )?.data.options.find(option => option.id === answer.data)?.text; // return the text of the actual question option
             
           case QuestionType.MultiSelect:
             return completeQuestions.find(question => 
-                question.questionType === QuestionType.MultiSelect &&
-                question.data.some(data => Array.isArray(answer.data) && answer.data.includes(data.options.id)
-              ))?.data.filter(data => Array.isArray(answer.data) && answer.data.includes(data.options.id))
-              .map(data => data.options.text); // return list of text of selected options
+                question.question_type === QuestionType.MultiSelect &&
+                question.data.options.some(option => Array.isArray(answer.data) && answer.data.includes(option.id))
+              )?.data.options.filter(option => Array.isArray(answer.data) && answer.data.includes(option.id))
+              .map(option => option.text); // return list of text of selected options
             
           case QuestionType.DropDown:
             return completeQuestions.find(question => 
-                question.questionType === QuestionType.DropDown &&
-                question.data.some(data => data.options.id === answer.data
-                ))?.data.find(data => data.options.id === answer.data)
-                ?.options.text;
+                question.question_type === QuestionType.DropDown &&
+                question.data.options.some(option => option.id === answer.data)
+                )?.data.options.find(option => option.id === answer.data)
+                ?.text;
           
           case QuestionType.Ranking:
             return completeQuestions.find(question => 
-                question.questionType === QuestionType.Ranking &&
-                question.data.some(data => Array.isArray(answer.data) && answer.data.includes(data.options.id)
-              ))?.data.filter(data => Array.isArray(answer.data) && answer.data.includes(data.options.id))
-              .map(data => data.options.text);
+                question.question_type === QuestionType.Ranking &&
+                question.data.options.some(option => Array.isArray(answer.data) && answer.data.includes(option.id))
+              )?.data.options.filter(option => Array.isArray(answer.data) && answer.data.includes(option.id))
+              .map(option => option.text);
         }
       });
     })

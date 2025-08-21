@@ -54,10 +54,11 @@ pub struct Answer {
 #[derive(Deserialize)]
 pub struct NewAnswer {
     /// ID of the question this answer is for
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
     pub question_id: i64,
 
     /// The actual answer data, flattened in serialization
-    #[serde(flatten)]
+    // #[serde(flatten)]
     pub answer_data: AnswerData,
 }
 
@@ -159,13 +160,13 @@ impl Answer {
                     q.question_type AS "question_type: QuestionType",
                     a.created_at,
                     a.updated_at,
-                    saa.text AS short_answer_answer,
-                    array_agg(
+                    COALESCE(saa.text, '') AS short_answer_answer,
+                    array_remove(array_agg(
                         moao.option_id
-                    ) multi_option_answers,
-                    array_agg(
+                    ), NULL) AS multi_option_answers,
+                    array_remove(array_agg(
                         rar.option_id ORDER BY rar.rank
-                    ) ranking_answers
+                    ), NULL) AS ranking_answers
                 FROM
                     answers a
                     JOIN questions q ON a.question_id = q.id
@@ -228,13 +229,13 @@ impl Answer {
                     q.question_type AS "question_type: QuestionType",
                     a.created_at,
                     a.updated_at,
-                    saa.text AS short_answer_answer,
-                    array_agg(
+                    COALESCE(saa.text, '') AS short_answer_answer,
+                    array_remove(array_agg(
                         moao.option_id
-                    ) multi_option_answers,
-                    array_agg(
+                    ), NULL) AS multi_option_answers,
+                    array_remove(array_agg(
                         rar.option_id ORDER BY rar.rank
-                    ) ranking_answers
+                    ), NULL) AS ranking_answers
                 FROM
                     answers a
                     JOIN questions q ON a.question_id = q.id
@@ -306,13 +307,13 @@ impl Answer {
                     q.question_type AS "question_type: QuestionType",
                     a.created_at,
                     a.updated_at,
-                    saa.text AS short_answer_answer,
-                    array_agg(
+                    COALESCE(saa.text, '') AS short_answer_answer,
+                    array_remove(array_agg(
                         moao.option_id
-                    ) multi_option_answers,
-                    array_agg(
+                    ), NULL) AS multi_option_answers,
+                    array_remove(array_agg(
                         rar.option_id ORDER BY rar.rank
-                    ) ranking_answers
+                    ), NULL) AS ranking_answers
                 FROM
                     answers a
                     JOIN questions q ON a.question_id = q.id
@@ -435,20 +436,25 @@ impl Answer {
 /// Each variant corresponds to a different question type and contains
 /// the appropriate data format for that type.
 #[derive(Deserialize, Serialize)]
+#[serde(untagged)]
 pub enum AnswerData {
     /// Text answer for short answer questions
     ShortAnswer(String),
     /// Single selected option for multiple choice questions
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
     MultiChoice(i64),
     /// Multiple selected options for multi-select questions
     #[serde(serialize_with = "crate::models::serde_string::serialize_vec")]
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize_vec")]
     MultiSelect(Vec<i64>),
     /// Single selected option for dropdown questions
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
     DropDown(i64),
     /// Ranked list of options for ranking questions
     #[serde(serialize_with = "crate::models::serde_string::serialize_vec")]
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize_vec")]
     Ranking(Vec<i64>),
 }
 

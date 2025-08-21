@@ -5,7 +5,7 @@ import Dropdown from "components/QuestionComponents/Dropdown";
 import MultiChoice from "components/QuestionComponents/MultiChoice";
 import MultiSelect from "components/QuestionComponents/MultiSelect";
 import Ranking from "components/QuestionComponents/Ranking";
-import { getCampaign, getCampaignRoles, getCommonQuestions, getRoleQuestions, createOrGetApplication, getCommonApplicationAnswers, getApplicationAnswers } from "api";
+import { getCampaign, getCampaignRoles, getCommonQuestions, getRoleQuestions, createOrGetApplication, getCommonApplicationAnswers, getApplicationAnswers, createAnswer, updateAnswer, deleteAnswer } from "api";
 import type { Campaign, Role, QuestionResponse, QuestionData, Answer } from "types/api";
 import { Button } from "components/ui/button";
 import {
@@ -127,6 +127,99 @@ const ApplicationReview: React.FC = () => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
   };
 
+  const submitAnswer = async (questionId: string, value: unknown, questionType: string) => {
+    if (!applicationId) return;
+
+    const answerId = getAnswerId(questionId);
+    const question = [...commonQuestions, ...Object.values(questionsByRole).flat()].find(q => String(q.id) === questionId);
+    
+    if (!question) return;
+
+    try {
+      // Check if the answer should be deleted (empty/blank)
+      const shouldDelete = 
+        (questionType === "ShortAnswer" && (!value || String(value).trim() === "")) ||
+        (questionType === "MultiSelect" && (!Array.isArray(value) || value.length === 0));
+
+      if (shouldDelete) {
+        if (answerId) {
+          // Delete existing answer
+          await deleteAnswer(answerId);
+          // Remove from local state
+          setCommonAnswers(prev => prev.filter(a => a.id !== answerId));
+          setRoleAnswers(prev => {
+            const newRoleAnswers = { ...prev };
+            Object.keys(newRoleAnswers).forEach(roleId => {
+              newRoleAnswers[roleId] = newRoleAnswers[roleId].filter(a => a.id !== answerId);
+            });
+            return newRoleAnswers;
+          });
+        }
+        return;
+      }
+
+      // Determine the answer type for the API
+      let apiAnswerType: string;
+      let apiAnswerData: unknown;
+      
+      switch (questionType) {
+        case "ShortAnswer":
+          apiAnswerType = "ShortAnswer";
+          apiAnswerData = String(value);
+          break;
+        case "MultiChoice":
+        case "DropDown":
+          apiAnswerType = questionType;
+          apiAnswerData = value;
+          break;
+        case "MultiSelect":
+        case "Ranking":
+          apiAnswerType = questionType;
+          apiAnswerData = Array.isArray(value) ? value : [];
+          break;
+        default:
+          apiAnswerType = "ShortAnswer";
+          apiAnswerData = String(value);
+      }
+
+      if (answerId) {
+        // Update existing answer
+        await updateAnswer(answerId, apiAnswerData as any);
+      } else {
+        // Create new answer
+        const newAnswer = await createAnswer(applicationId, questionId, apiAnswerType as any, apiAnswerData as any);
+        
+        // Update local state with the new answer
+        const newAnswerObj: Answer = {
+          id: newAnswer?.id || String(Date.now()), // Fallback ID if API doesn't return one
+          question_id: questionId,
+          answer_type: apiAnswerType as any,
+          data: apiAnswerData as any,
+          created_at: new Date(),
+          updated_at: new Date()
+        };
+
+        // Add to appropriate state based on whether it's a common or role question
+        if (commonQuestions.find(q => String(q.id) === questionId)) {
+          setCommonAnswers(prev => [...prev, newAnswerObj]);
+        } else {
+          // Find which role this question belongs to
+          for (const [roleId, questions] of Object.entries(questionsByRole)) {
+            if (questions.find(q => String(q.id) === questionId)) {
+              setRoleAnswers(prev => ({
+                ...prev,
+                [roleId]: [...(prev[roleId] || []), newAnswerObj]
+              }));
+              break;
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to submit answer:', error);
+    }
+  };
+
   const getAnswerId = (questionId: string): string | undefined => {
     // Check common answers first
     const commonAnswer = commonAnswers.find(a => a.question_id === questionId);
@@ -186,7 +279,7 @@ const ApplicationReview: React.FC = () => {
             description={q.description}
             required={q.required}
             defaultValue={(answers[idStr] as string) ?? ""}
-            onSubmit={(qid, val) => setAnswer(qid, val)}
+            onSubmit={(qid, val) => submitAnswer(qid, val, q.question_type)}
             answerId={getAnswerId(idStr)}
           />
         );
@@ -200,7 +293,7 @@ const ApplicationReview: React.FC = () => {
             required={q.required}
             options={options}
             defaultValue={answers[idStr] as string | number | undefined}
-            onSubmit={(qid, val) => setAnswer(qid, val)}
+            onSubmit={(qid, val) => submitAnswer(qid, val, q.question_type)}
             answerId={getAnswerId(idStr)}
           />
         );
@@ -214,7 +307,7 @@ const ApplicationReview: React.FC = () => {
             required={q.required}
             options={options}
             defaultValue={answers[idStr] as string | number | undefined}
-            onSubmit={(qid, val) => setAnswer(qid, val)}
+            onSubmit={(qid, val) => submitAnswer(qid, val, q.question_type)}
             answerId={getAnswerId(idStr)}
           />
         );
@@ -228,7 +321,7 @@ const ApplicationReview: React.FC = () => {
             required={q.required}
             options={options}
             defaultValue={(answers[idStr] as Array<string | number>) ?? []}
-            onSubmit={(qid, val) => setAnswer(qid, val)}
+            onSubmit={(qid, val) => submitAnswer(qid, val, q.question_type)}
             answerId={getAnswerId(idStr)}
           />
         );
@@ -242,7 +335,7 @@ const ApplicationReview: React.FC = () => {
             required={q.required}
             options={options}
             defaultValue={(answers[idStr] as Array<string | number>) ?? []}
-            onSubmit={(qid, val) => setAnswer(qid, val)}
+            onSubmit={(qid, val) => submitAnswer(qid, val, q.question_type)}
             answerId={getAnswerId(idStr)}
           />
         );
