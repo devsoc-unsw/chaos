@@ -15,18 +15,19 @@ interface DropdownOption {
 }
 
 interface DropdownProps {
-  id: number;
+  id: string;
   question: string;
   description?: string;
   options: DropdownOption[];
   required?: boolean;
   defaultValue?: string | number;
   onChange?: (value: string | number) => void;
-  onSubmit?: (questionId: number, value: string | number) => void;
+  onSubmit?: (questionId: string, value: string | number) => void;
   disabled?: boolean;
   placeholder?: string;
   width?: string;
   height?: string;
+  answerId?: string;
 }
 
 const Dropdown: React.FC<DropdownProps> = ({
@@ -42,6 +43,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   width = "max-w-4xl",
   height = "",
   placeholder = "Select an option",
+  answerId,
 }) => {
   const [value, setValue] = useState<string | number | undefined>(defaultValue);
 
@@ -57,7 +59,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   };
 
   return (
-    <div tw="mb-6 w-full" css={width ? tw`${width}` : undefined}>
+    <div tw="mb-6 w-full max-w-sm" css={width ? tw`${width}` : undefined}>
       <div className="flex items-center mb-2">
         <Label className="text-lg font-medium">{question}</Label>
         {required && <span className="ml-1 text-red-500">*</span>}
@@ -65,6 +67,10 @@ const Dropdown: React.FC<DropdownProps> = ({
 
       {description && (
         <p className="mb-4 text-sm text-muted-foreground">{description}</p>
+      )}
+      
+      {answerId && (
+        <p className="mb-2 text-xs text-gray-400">Answer ID: {answerId}</p>
       )}
 
       <Select

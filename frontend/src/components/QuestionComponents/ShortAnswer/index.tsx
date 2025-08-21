@@ -4,18 +4,19 @@ import { Textarea } from '@/components/ui/textarea';
 import tw from 'twin.macro';
 
 interface ShortAnswerProps {
-  id: number;
+  id: string;
   question: string;
   description?: string;
   required?: boolean;
   defaultValue?: string;
   onChange?: (value: string) => void;
-  onSubmit?: (questionId: number, value: string) => void;
+  onSubmit?: (questionId: string, value: string) => void;
   disabled?: boolean;
   rows?: number;
   placeholder?: string;
   width?: string;
   height?: string;
+  answerId?: string;
 }
 
 const ShortAnswer: React.FC<ShortAnswerProps> = ({
@@ -31,6 +32,7 @@ const ShortAnswer: React.FC<ShortAnswerProps> = ({
   placeholder = "Your answer",
   width = "max-w-4xl",
   height = "",
+  answerId,
 }) => {
   const [value, setValue] = useState(defaultValue);
 
@@ -54,6 +56,10 @@ const ShortAnswer: React.FC<ShortAnswerProps> = ({
 
       {description && (
         <p className="mb-4 text-sm text-muted-foreground">{description}</p>
+      )}
+      
+      {answerId && (
+        <p className="mb-2 text-xs text-gray-400">Answer ID: {answerId}</p>
       )}
 
       <Textarea

@@ -1163,6 +1163,37 @@ paths:
         "307":
           $ref: "#/components/responses/NotLoggedIn"
 
+  /campaign/{id}/apply:
+    post:
+      operationId: createOrGetApplication
+      parameters:
+        - name: id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Create a new application or get existing application for the specified campaign
+      tags:
+        - Campaign
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  application_id:
+                    type: integer
+                    format: int64
+                    description: ID of the created or existing application
+                    example: 1541815603606036480
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+
   /campaign/{id}/applications:
     get:
       operationId: getCampaignApplications

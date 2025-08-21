@@ -26,13 +26,17 @@ use super::{error::ChaosError, storage::Storage};
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Campaign {
     /// Unique identifier for the campaign
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// URL-friendly identifier for the campaign
     pub slug: String,
     /// Display name of the campaign
     pub name: String,
     /// ID of the organization running the campaign
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub organisation_id: i64,
+    /// URL-friendly identifier for the organization
+    pub organisation_slug: String,
     /// Name of the organization running the campaign
     pub organisation_name: String,
     /// Optional UUID of the campaign's cover image
@@ -55,12 +59,14 @@ pub struct Campaign {
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct CampaignDetails {
     /// Unique identifier for the campaign
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// URL-friendly identifier for the campaign
     pub campaign_slug: String,
     /// Display name of the campaign
     pub name: String,
     /// ID of the organization running the campaign
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub organisation_id: i64,
     /// URL-friendly identifier for the organization
     pub organisation_slug: String,
@@ -83,6 +89,7 @@ pub struct CampaignDetails {
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct OrganisationCampaign {
     /// Unique identifier for the campaign
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// URL-friendly identifier for the campaign
     pub slug: String,
@@ -157,7 +164,8 @@ impl Campaign {
         let campaigns = sqlx::query_as!(
             Campaign,
             "
-                SELECT c.*, o.name as organisation_name FROM campaigns c
+                SELECT c.*, o.name as organisation_name, o.slug as organisation_slug
+                FROM campaigns c
                 JOIN organisations o on c.organisation_id = o.id
             "
         )

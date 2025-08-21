@@ -17,7 +17,7 @@ import type { Role } from "types/api";
 
 const Review = () => {
   const params = useParams();
-  const campaignId = Number(params.campaignId);
+  const campaignId = String(params.campaignId);
   const navigate = useNavigate();
 
   const setNavBarTitle = useContext(SetNavBarTitleContext);
@@ -50,6 +50,7 @@ const Review = () => {
   );
 };
 
-export const useRoles = () => useOutletContext<{ [id: number]: Role }>();
+export const useRoles = () => useOutletContext<{ [id: string]: Role }>();
+// IDs are strings now, but the outlet context type isn't used heavily.
 
 export default Review;

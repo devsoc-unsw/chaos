@@ -27,10 +27,13 @@ use crate::service::application::{assert_application_is_open};
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Application {
     /// Unique identifier for the application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the campaign this application belongs to
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_id: i64,
     /// ID of the user who submitted the application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub user_id: i64,
     /// Public status of the application
     pub status: ApplicationStatus,
@@ -50,10 +53,13 @@ pub struct Application {
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct ApplicationRole {
     /// Unique identifier for the role application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the parent application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub application_id: i64,
     /// ID of the campaign role being applied for
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_role_id: i64,
     /// User's preference ranking for this role (lower number = higher preference)
     pub preference: i32,
@@ -75,8 +81,10 @@ pub struct NewApplication {
 #[derive(Deserialize, Serialize)]
 pub struct ApplicationDetails {
     /// Unique identifier for the application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the campaign this application belongs to
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_id: i64,
     /// Details of the user who submitted the application
     pub user: UserDetails,
@@ -95,10 +103,13 @@ pub struct ApplicationDetails {
 #[derive(Deserialize, Serialize)]
 pub struct ApplicationData {
     /// Unique identifier for the application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the campaign this application belongs to
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_id: i64,
     /// ID of the user who submitted the application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub user_id: i64,
     /// Email address of the applicant
     pub user_email: String,
@@ -126,6 +137,7 @@ pub struct ApplicationData {
 #[derive(Deserialize, Serialize)]
 pub struct ApplicationAppliedRoleDetails {
     /// ID of the campaign role
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_role_id: i64,
     /// Name of the role
     pub role_name: String,
@@ -155,6 +167,57 @@ pub enum ApplicationStatus {
 }
 
 impl Application {
+    /// Creates a new application if it doesn't exist, otherwise returns the existing application ID.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `campaign_id` - ID of the campaign to apply to
+    /// * `user_id` - ID of the user submitting the application
+    /// * `snowflake_generator` - Generator for creating unique IDs
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<i64, ChaosError>` - ID of the application or error
+    pub async fn create_or_get(
+        campaign_id: i64,
+        user_id: i64,
+        snowflake_generator: &mut SnowflakeIdGenerator,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<i64, ChaosError> {
+        // Check if application already exists
+        let application = sqlx::query!(
+            "
+                SELECT id FROM applications
+                WHERE campaign_id = $1 AND user_id = $2
+            ",
+            campaign_id,
+            user_id
+        )
+        .fetch_optional(transaction.deref_mut())
+        .await?;
+
+        if let Some(application) = application {
+            return Ok(application.id);
+        }
+
+        let id = snowflake_generator.real_time_generate();
+        // Create new application
+        sqlx::query!(
+            "
+                INSERT INTO applications (id, campaign_id, user_id)
+                VALUES ($1, $2, $3)
+            ",
+            id,
+            campaign_id,
+            user_id
+        )
+        .execute(transaction.deref_mut())
+        .await?;
+
+        Ok(id)
+    }
+    
     /// Creates a new application in the system.
     /// 
     /// # Arguments

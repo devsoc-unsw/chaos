@@ -21,7 +21,7 @@ const FinalRatingApplicationComments = ({
   application,
 }: Props) => {
   const roles = useRoles();
-  const roleId = Number(useParams().roleId);
+  const roleId = String(useParams().roleId);
 
   return (
     <Dialog onClose={handleClose} open={open}>

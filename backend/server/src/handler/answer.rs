@@ -49,7 +49,7 @@ impl AnswerHandler {
         let id = Answer::create(
             application_id,
             data.question_id,
-            data.answer_data,
+            data.data,
             &mut state.snowflake_generator,
             &mut transaction.tx,
         )
@@ -135,9 +135,9 @@ impl AnswerHandler {
         _owner: AnswerOwner,
         _: OpenApplicationByAnswerId,
         mut transaction: DBTransaction<'_>,
-        Json(data): Json<NewAnswer>,
+        Json(new_answer): Json<NewAnswer>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Answer::update(answer_id, data.answer_data, &mut transaction.tx).await?;
+        Answer::update(answer_id, new_answer.data, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
 

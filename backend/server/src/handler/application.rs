@@ -14,12 +14,37 @@ use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
+use serde_json::json;
 use crate::models::rating::{NewRating, Rating};
 
 /// Handler for application-related HTTP requests.
 pub struct ApplicationHandler;
 
 impl ApplicationHandler {
+    /// Creates a new application if it doesn't exist, otherwise returns the existing application ID.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `campaign_id` - ID of the campaign to apply to
+    /// * `user_id` - ID of the user submitting the application
+    /// * `snowflake_generator` - Generator for creating unique IDs
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Application details or error
+    pub async fn create_or_get(
+        Path(campaign_id): Path<i64>,
+        user: AuthUser,
+        State(mut state): State<AppState>,
+        mut transaction: DBTransaction<'_>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let application_id = Application::create_or_get(campaign_id, user.user_id, &mut state.snowflake_generator, &mut transaction.tx).await?;
+        transaction.tx.commit().await?;
+
+        Ok((StatusCode::OK, Json(json!({ "application_id": application_id.to_string() }))))
+    }
+
     /// Retrieves the details of a specific application.
     /// 
     /// This handler allows application admins to view application details.

@@ -23,8 +23,10 @@ use std::ops::DerefMut;
 #[derive(Deserialize, Serialize)]
 pub struct EmailTemplate {
     /// Unique identifier for the template
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the organisation that owns this template
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub organisation_id: i64,
     /// Display name of the template
     pub name: String,
