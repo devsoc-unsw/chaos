@@ -1,7 +1,8 @@
 import { lazy } from "react";
 import { Route } from "react-router-dom";
-import InterviewBooking from "./pages/interview_booking/user_side";
+
 import AdminInterviewBooking from "./pages/interview_booking/admin_side/admin_index";
+import InterviewBooking from "./pages/interview_booking/user_side";
 
 const Admin = lazy(() => import("./pages/admin"));
 const ApplicationPage = lazy(() => import("./pages/application_page"));
@@ -16,9 +17,14 @@ const Marking = lazy(() => import("./pages/admin/review/marking"));
 const Rankings = lazy(() => import("./pages/admin/review/rankings"));
 const Review = lazy(() => import("./pages/admin/review"));
 const SignupPage = lazy(() => import("./pages/signup"));
-const QuestionComponentsTest = lazy(() => import("./pages/question_components_test"));
-const AdminApplicationDashboard = lazy(() => import("./pages/admin_application_dashboard"));
-const ApplicationReviewTest = lazy(() => import("./pages/application_review"))
+const QuestionComponentsTest = lazy(
+  () => import("./pages/question_components_test")
+);
+const EmailTemplates = lazy(() => import("./pages/admin/email_templates"));
+const ApplicationReviewTest = lazy(() => import("./pages/application_review"));
+const AdminApplicationDashboard = lazy(
+  () => import("./pages/admin_application_dashboard")
+);
 const CampaignLandingPage = lazy(() => import("./pages/campaign"));
 
 const routes = [
@@ -52,6 +58,11 @@ const routes = [
     element={<QuestionComponentsTest />}
   />,
   <Route
+    key="email-templates"
+    path="/admin/email_templates"
+    element={<EmailTemplates />}
+  />,
+  <Route
     key="AdminApplicationDashboard"
     path="/admin/application-dashboard"
     element={<AdminApplicationDashboard />}
@@ -59,14 +70,14 @@ const routes = [
   <Route
     key="Application Review"
     path="/campaign/:campaignId/apply"
-    element={<ApplicationReviewTest/>}
-    />,
+    element={<ApplicationReviewTest />}
+  />,
   <Route
     key="campaign-landing"
     path="/campaign/:organisationSlug/:campaignSlug"
     element={<CampaignLandingPage />}
   />,
-<Route
+  <Route
     key="InterviewBooking"
     path="/interview-booking"
     element={<InterviewBooking />}
