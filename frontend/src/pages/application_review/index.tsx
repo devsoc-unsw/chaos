@@ -268,6 +268,9 @@ const ApplicationReview: React.FC = () => {
             }
           }
         }
+
+        // Update the main answers state so the review modal shows the correct value
+        setAnswers(prev => ({ ...prev, [questionId]: apiAnswerData }));
       }
     } catch (error) {
       console.error('Failed to submit answer:', error);
