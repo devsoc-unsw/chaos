@@ -25,12 +25,12 @@ import type { ApplicationWithQuestions } from "pages/admin/types";
 
 const Marking = () => {
   const setNavBarTitle = useContext(SetNavBarTitleContext);
-  const campaignId = Number(useParams().campaignId);
+  const campaignId = String(useParams().campaignId);
   const [loading, setLoading] = useState(true);
   const [applications, setApplications] = useState<ApplicationWithQuestions[]>(
     []
   );
-  const roleId = Number(useParams().roleId);
+  const roleId = String(useParams().roleId);
   const [selectedApplication, setSelectedApplication] = useState(0);
 
   useEffect(() => {

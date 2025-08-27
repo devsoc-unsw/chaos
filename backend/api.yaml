@@ -1163,6 +1163,37 @@ paths:
         "307":
           $ref: "#/components/responses/NotLoggedIn"
 
+  /campaign/{id}/apply:
+    post:
+      operationId: createOrGetApplication
+      parameters:
+        - name: id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Create a new application or get existing application for the specified campaign
+      tags:
+        - Campaign
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  application_id:
+                    type: integer
+                    format: int64
+                    description: ID of the created or existing application
+                    example: 1541815603606036480
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+
   /campaign/{id}/applications:
     get:
       operationId: getCampaignApplications
@@ -1984,6 +2015,30 @@ paths:
           $ref: "#/components/responses/NotLoggedIn"
 
   /application/{application_id}/roles:
+    get:
+      operationId: getApplicationRoles
+      parameters:
+        - name: application_id
+          in: path
+          description: Application ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Get all roles for a specific application
+      tags:
+        - Campaign
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ApplicationRole"
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
     patch:
       operationId: updateApplicationRoles
       parameters:
@@ -2484,6 +2539,23 @@ components:
         updated_at:
           type: string
           example: 2024-03-15T18:25:43.511Z
+
+    ApplicationRole:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "6996987893965227483"
+        application_id:
+          type: string
+          example: "6996987893965227484"
+        campaign_role_id:
+          type: string
+          example: "6996987893965227485"
+        preference:
+          type: integer
+          format: int32
+          example: 1
 
     NewAnswer:
       type: object

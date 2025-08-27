@@ -17,8 +17,10 @@ use std::ops::DerefMut;
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Role {
     /// Unique identifier for the role
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the campaign this role belongs to
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_id: i64,
     /// Optional name of the role
     pub name: Option<String>,
@@ -61,8 +63,10 @@ pub struct RoleUpdate {
 #[derive(Deserialize, Serialize)]
 pub struct RoleDetails {
     /// Unique identifier for the role
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the campaign this role belongs to
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_id: i64,
     /// Name of the role
     pub name: String,

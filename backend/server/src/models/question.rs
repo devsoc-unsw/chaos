@@ -42,10 +42,12 @@ use sqlx::types::Json;
 /// ```
 #[derive(Serialize)]
 pub struct Question {
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     pub title: String,
     pub description: Option<String>,
     pub common: bool, // Common question are shown at the start
+    #[serde(serialize_with = "crate::models::serde_string::serialize_vec")]
     pub roles: Vec<i64>, // (Possibly empty) list of roles the question is for
     pub required: bool,
 
@@ -217,13 +219,15 @@ impl Question {
                     q.question_type AS "question_type: QuestionType",
                     q.created_at,
                     q.updated_at,
-                    array_agg(
-                        jsonb_build_object(
+                    to_jsonb(
+                        array_agg(
+                            jsonb_build_object(
                                 'id', mod.id,
                                 'display_order', mod.display_order,
                                 'text', mod.text
-                        ) ORDER BY mod.display_order
-                    ) FILTER (WHERE mod.id IS NOT NULL) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
+                            ) ORDER BY mod.display_order
+                        ) FILTER (WHERE mod.id IS NOT NULL)
+                    ) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
                 FROM
                     questions q
                         LEFT JOIN
@@ -283,13 +287,15 @@ impl Question {
                     q.question_type AS "question_type: QuestionType",
                     q.created_at,
                     q.updated_at,
-                    array_agg(
-                        jsonb_build_object(
+                    to_jsonb(
+                        array_agg(
+                            jsonb_build_object(
                                 'id', mod.id,
                                 'display_order', mod.display_order,
                                 'text', mod.text
-                        ) ORDER BY mod.display_order
-                    ) FILTER (WHERE mod.id IS NOT NULL) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
+                            ) ORDER BY mod.display_order
+                        ) FILTER (WHERE mod.id IS NOT NULL)
+                    ) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
                 FROM
                     questions q
                         JOIN
@@ -297,7 +303,7 @@ impl Question {
                         LEFT JOIN
                     multi_option_question_options mod ON q.id = mod.question_id
                         AND q.question_type IN ('MultiChoice', 'MultiSelect', 'DropDown', 'Ranking')
-                WHERE q.campaign_id = $1 AND q.common = true AND qr.role_id = $2
+                WHERE q.campaign_id = $1 AND q.common = false AND qr.role_id = $2
                 GROUP BY
                     q.id
             "#,
@@ -349,13 +355,15 @@ impl Question {
                     q.question_type AS "question_type: QuestionType",
                     q.created_at,
                     q.updated_at,
-                    array_agg(
-                        jsonb_build_object(
+                    to_jsonb(
+                        array_agg(
+                            jsonb_build_object(
                                 'id', mod.id,
                                 'display_order', mod.display_order,
                                 'text', mod.text
-                        ) ORDER BY mod.display_order
-                    ) FILTER (WHERE mod.id IS NOT NULL) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
+                            ) ORDER BY mod.display_order
+                        ) FILTER (WHERE mod.id IS NOT NULL)
+                    ) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
                 FROM
                     questions q
                         LEFT JOIN
@@ -525,6 +533,7 @@ pub struct MultiOptionData {
 /// language?", there would be rows for "Rust", "Java" and "TypeScript".
 #[derive(Deserialize, Serialize)]
 pub struct MultiOptionQuestionOption {
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     pub display_order: i32,
     pub text: String,

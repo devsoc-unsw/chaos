@@ -42,7 +42,7 @@ impl CampaignHandler {
     pub async fn get(
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
-        _user: AuthUser,
+        // no need for AuthUser as this is public
     ) -> Result<impl IntoResponse, ChaosError> {
         let campaign = Campaign::get(id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;

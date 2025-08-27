@@ -250,10 +250,14 @@ pub async fn app() -> Result<Router, ChaosError> {
                 .delete(CampaignHandler::delete),
         )
         .route(
-            "/api/v1/campaign/slug/:organisation_slug/:campaign_slug",
+            "/api/v1/organisation/slug/:organisation_slug/campaign/slug/:campaign_slug",
             get(CampaignHandler::get_by_slugs),
         )
         .route("/api/v1/campaigns", get(CampaignHandler::get_all))
+        .route(
+            "/api/v1/campaign/:campaign_id/apply",
+            post(ApplicationHandler::create_or_get),
+        )
         .route(
             "/api/v1/campaign/:campaign_id/question",
             post(QuestionHandler::create),
@@ -308,7 +312,7 @@ pub async fn app() -> Result<Router, ChaosError> {
         )
         .route(
             "/api/v1/application/:application_id/roles",
-            patch(ApplicationHandler::update_roles)
+            get(ApplicationHandler::get_roles).patch(ApplicationHandler::update_roles)
         )
         .route(
             "/api/v1/application/:application_id/submit",

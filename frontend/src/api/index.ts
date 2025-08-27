@@ -32,6 +32,7 @@ import {
   type Answer,
   QuestionType,
   AnswerData,
+  type ApplicationRoleUpdateInput,
 } from "../types/api";
 
 // todo: update to new route
@@ -147,7 +148,7 @@ export const putOrgLogo = async (orgId: string, logo: File) => {
   });
 }
 
-export const newApplication = (campaignId: number, newApp: NewApplication) =>
+export const newApplication = (campaignId: string, newApp: NewApplication) =>
   authenticatedRequest<Application>({
     method: "POST",
     path: `/v1/campaign/${campaignId}/application/`,
@@ -161,7 +162,7 @@ export const doDeleteOrg = (orgId: string) =>
     jsonResp: false,
   });
 
-export const getCampaign = (campaignId: number) =>
+export const getCampaign = (campaignId: string) =>
   authenticatedRequest<Campaign>({ path: `/v1/campaign/${campaignId}` });
 
 export const getCampaignBySlugs = (organisationSlug: string, campaignSlug: string) =>
@@ -169,28 +170,43 @@ export const getCampaignBySlugs = (organisationSlug: string, campaignSlug: strin
     path: `/v1/campaign/slug/${organisationSlug}/${campaignSlug}`,
   });
 
-export const getCampaignRoles = (campaignId: number) =>
+// Preferred explicit path for organisation + campaign slugs
+export const getCampaignByOrgAndCampaignSlugs = (
+  organisationSlug: string,
+  campaignSlug: string
+) =>
+  authenticatedRequest<Campaign>({
+    path: `/v1/organisation/slug/${organisationSlug}/campaign/slug/${campaignSlug}`,
+  });
+
+export const getCampaignRoles = (campaignId: string) =>
   authenticatedRequest<Role[]>({
     path: `/v1/campaign/${campaignId}/roles`,
   });
 
-export const getRoleApplications = (roleId: number) =>
+export const getRoleApplications = (roleId: string) =>
   authenticatedRequest<ApplicationDetails[]>({
     path: `/v1/role/${roleId}/applications`,
   });
 
-export const getRoleQuestions = (campaignId: number, roleId: number) =>
+export const getRoleQuestions = (campaignId: string, roleId: string) =>
   authenticatedRequest<QuestionResponse[]>({
     path: `/v1/campaign/${campaignId}/role/${roleId}/questions`,
   });
 
 // todo: update all referencing components
-export const getCommonQuestions = (campaignID: number) =>
+export const getCommonQuestions = (campaignID: string) =>
   authenticatedRequest<QuestionResponse[]>({
     path: `/v1/campaign/${campaignID}/questions/common`
   });
 
-export const setApplicationRating = (applicationId: number, rating: NewRating) =>
+export const createOrGetApplication = (campaignId: string) =>
+  authenticatedRequest<{ application_id: string }>({
+    method: "POST",
+    path: `/v1/campaign/${campaignId}/apply`,
+  });
+
+export const setApplicationRating = (applicationId: string, rating: NewRating) =>
   authenticatedRequest({
     method: "PUT",
     path: `/v1/${applicationId}/rating`,
@@ -203,25 +219,86 @@ export const setApplicationRating = (applicationId: number, rating: NewRating) =
 export const getSelfInfo = () =>
   authenticatedRequest<User>({ path: "/v1/user" });
 
-export const getApplicationAnswers = (applicationId: number, roleId: number) =>
+export const getApplicationAnswers = (applicationId: string, roleId: string) =>
   authenticatedRequest<Answer[]>({
     path: `/v1/application/${applicationId}/answers/role/${roleId}`,
   });
 
-export const getCommonApplicationAnswers = (applicationId: number) => 
+export const getCommonApplicationAnswers = (applicationId: string) => 
   authenticatedRequest<Answer[]>({
     path: `/v1/application/${applicationId}/answers/common`,
   });
 
-export const getApplicationRatings = (applicationId: number) =>
+export const getApplicationRatings = (applicationId: string) =>
   authenticatedRequest<{ ratings: ApplicationRating[] }>({
     path: `/v1/${applicationId}/ratings`,
   });
 
-// todo: update all referencing components
+// Update application roles (selection and preference)
+export const updateApplicationRoles = (
+  applicationId: string,
+  payload: ApplicationRoleUpdateInput
+) =>
+  authenticatedRequest({
+    method: "PATCH",
+    path: `/v1/application/${applicationId}/roles`,
+    body: payload,
+    jsonResp: false,
+  });
+
+// Get application roles
+export const getApplicationRoles = (applicationId: string) =>
+  authenticatedRequest<ApplicationRole[]>({
+    path: `/v1/application/${applicationId}/roles`,
+  });
+
+// Create a new answer
+export const createAnswer = (
+  applicationId: string,
+  questionId: string,
+  answerType: QuestionType,
+  answerData: AnswerData
+) =>
+  authenticatedRequest<{ id: string }>({
+    method: "POST",
+    path: `/v1/application/${applicationId}/answer`,
+    body: {
+      question_id: questionId,
+      answer_type: answerType,
+      answer_data: answerData,
+    },
+  });
+
+// Update an existing answer
+export const updateAnswer = (
+  answerId: string,
+  questionId: string,
+  answerType: QuestionType,
+  answerData: AnswerData
+) =>
+  authenticatedRequest({
+    method: "PATCH",
+    path: `/v1/answer/${answerId}`,
+    body: {
+      question_id: questionId,
+      answer_type: answerType,
+      answer_data: answerData,
+    },
+    jsonResp: false,
+  });
+
+// Delete an answer
+export const deleteAnswer = (answerId: string) =>
+  authenticatedRequest({
+    method: "DELETE",
+    path: `/v1/answer/${answerId}`,
+    jsonResp: false,
+  });
+
+// Legacy function - keeping for backward compatibility
 export const submitAnswer = (
-  applicationId: number,
-  questionId: number,
+  applicationId: string,
+  questionId: string,
   answerData: AnswerData
 ) =>
   authenticatedRequest({
@@ -248,7 +325,7 @@ export const createCampaign = (
   });
 
 // todo: update to new route
-export const setCampaignCoverImage = (campaignId: number, cover_image: File) =>
+export const setCampaignCoverImage = (campaignId: string, cover_image: File) =>
   authenticatedRequest<string>({
     method: "PATCH",
     path: `/v1/campaign/${campaignId}/banner`,
@@ -257,7 +334,7 @@ export const setCampaignCoverImage = (campaignId: number, cover_image: File) =>
   });
 
 // todo: update to new route
-export const deleteCampaign = (id: number) =>
+export const deleteCampaign = (id: string) =>
   authenticatedRequest({
     method: "DELETE",
     path: `/v1/campaign/${id}`,
@@ -266,7 +343,7 @@ export const deleteCampaign = (id: number) =>
 
 // todo: update to new route
 export const setApplicationStatus = (
-  applicationId: number,
+  applicationId: string,
   status: ApplicationStatus
 ) =>
   authenticatedRequest({
@@ -306,7 +383,7 @@ export const inviteUserToOrg = (
  * @param roleId 
  * @returns string[][][] or string[][]
  */
-export const getAnsweredApplicationQuestions = (applications: ApplicationDetails[], campaignId: number, roleId: number) => {
+export const getAnsweredApplicationQuestions = (applications: ApplicationDetails[], campaignId: string, roleId: string) => {
   return Promise.all(
     applications.map(async (application) => {
       const roleAnswers = await getApplicationAnswers(application.id, roleId);
@@ -319,38 +396,42 @@ export const getAnsweredApplicationQuestions = (applications: ApplicationDetails
       const completeQuestions = [...commonQuestions, ...roleQuestions];
 
       return completeAnswers.map((answer) => {
+        // normalize to use answer.answer_data
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const data: any = (answer as any).answer_data ?? (answer as any).data;
+        const type = answer.answer_type;
         switch (answer.answer_type) {
           case QuestionType.ShortAnswer:
-            return answer.data as string;
+            return data as string;
           
           case QuestionType.MultiChoice:
             // search question list for questions of Multichoice type
             return completeQuestions.find(question => 
-              question.questionType === QuestionType.MultiChoice &&
+              question.question_type === QuestionType.MultiChoice &&
               // then search that question's multichoice options for the option which was selected
-              question.data.some(data => data.options.id === answer.data
-              ))?.data.find(data => data.options.id === answer.data)?.options.text; // return the text of the actual question option
+              question.data.options.some(option => option.id === data)
+            )?.data.options.find(option => option.id === data)?.text; // return the text of the actual question option
             
           case QuestionType.MultiSelect:
             return completeQuestions.find(question => 
-                question.questionType === QuestionType.MultiSelect &&
-                question.data.some(data => Array.isArray(answer.data) && answer.data.includes(data.options.id)
-              ))?.data.filter(data => Array.isArray(answer.data) && answer.data.includes(data.options.id))
-              .map(data => data.options.text); // return list of text of selected options
+                question.question_type === QuestionType.MultiSelect &&
+                question.data.options.some(option => Array.isArray(data) && data.includes(option.id))
+              )?.data.options.filter(option => Array.isArray(data) && data.includes(option.id))
+              .map(option => option.text); // return list of text of selected options
             
           case QuestionType.DropDown:
             return completeQuestions.find(question => 
-                question.questionType === QuestionType.DropDown &&
-                question.data.some(data => data.options.id === answer.data
-                ))?.data.find(data => data.options.id === answer.data)
-                ?.options.text;
+                question.question_type === QuestionType.DropDown &&
+                question.data.options.some(option => option.id === data)
+                )?.data.options.find(option => option.id === data)
+                ?.text;
           
           case QuestionType.Ranking:
             return completeQuestions.find(question => 
-                question.questionType === QuestionType.Ranking &&
-                question.data.some(data => Array.isArray(answer.data) && answer.data.includes(data.options.id)
-              ))?.data.filter(data => Array.isArray(answer.data) && answer.data.includes(data.options.id))
-              .map(data => data.options.text);
+                question.question_type === QuestionType.Ranking &&
+                question.data.options.some(option => Array.isArray(data) && data.includes(option.id))
+              )?.data.options.filter(option => Array.isArray(data) && data.includes(option.id))
+              .map(option => option.text);
         }
       });
     })

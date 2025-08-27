@@ -85,8 +85,8 @@ pub async fn seed_database(mut seeder: Seeder) {
 
     let campaign_id = Organisation::create_campaign(
             org_id,
-            "ChaosCampusRecruitment".to_string(),
-            "Chaos Campus Recruitment".to_string(),
+            "subcommittee-recruitment-2025".to_string(),
+            "Subcommittee Recruitment 2025".to_string(),
             Some("This Campaign will MAKE EVERYONE EMPLOYEED".to_string()),
             DateTime::<Utc>::from_naive_utc_and_offset(
                 chrono::NaiveDate::from_ymd_opt(2024, 1, 1).unwrap().and_hms_milli_opt(0, 0, 0, 0).unwrap(),
@@ -106,10 +106,10 @@ pub async fn seed_database(mut seeder: Seeder) {
     let role_id_1 = Role::create(
         campaign_id,
         RoleUpdate {
-            name: "Software Engineer".to_string(),
-            description: Some("We are looking for a Software Engineer to join our team.".to_string()),
+            name: "Chaos".to_string(),
+            description: Some("We are looking for a passionate Rust developer to join our team.".to_string()),
             min_available: 1,
-            max_avaliable: 1,
+            max_avaliable: 10,
             finalised: false,
         },
         &mut tx,
@@ -120,8 +120,8 @@ pub async fn seed_database(mut seeder: Seeder) {
     let role_id_2 = Role::create(
         campaign_id,
         RoleUpdate {
-            name: "High Temperature Starch Heat Treatment Technician".to_string(),
-            description: Some("Just put the fries in the ...".to_string()),
+            name: "Notangles".to_string(),
+            description: Some("We hate tangles.".to_string()),
             min_available: 1,
             max_avaliable: 100,
             finalised: true,
@@ -133,8 +133,9 @@ pub async fn seed_database(mut seeder: Seeder) {
 
     let question_id_1 = Question::create(
         campaign_id,
-        "Career History".to_string(),
-        Some("How many years of industry experience do you have?".to_string()),
+        "What year are you in?".to_string(),
+        None,
+        // Some("How many years of industry experience do you have?".to_string()),
         true,
         None,
         true,
@@ -143,18 +144,23 @@ pub async fn seed_database(mut seeder: Seeder) {
                 options: vec![
                     MultiOptionQuestionOption {
                         id: 0,
-                        text: "Less than 1 year".to_string(),
+                        text: "1".to_string(),
                         display_order: 1,
                     },
                     MultiOptionQuestionOption {
                         id: 0,
-                        text: "2 years".to_string(),
+                        text: "2".to_string(),
                         display_order: 2,
                     },
                     MultiOptionQuestionOption {
                         id: 0,
-                        text: "More than 2 years".to_string(),
+                        text: "3".to_string(),
                         display_order: 3,
+                    },
+                    MultiOptionQuestionOption {
+                        id: 0,
+                        text: "4+".to_string(),
+                        display_order: 4,
                     },
                 ]
             },
@@ -167,8 +173,8 @@ pub async fn seed_database(mut seeder: Seeder) {
 
     let question_id_2 = Question::create(
         campaign_id,
-        "Technical Question (pls don't use AI)".to_string(),
-        Some("What is a Monad?".to_string()),
+        "Why do you love Rust?".to_string(),
+        Some("This is a special question just for Chaos applicants".to_string()),
         false,
         Some(vec![role_id_1]),
         true,
@@ -177,6 +183,51 @@ pub async fn seed_database(mut seeder: Seeder) {
         &mut tx,
     )
     .await.expect("Failed seeding Question 1");
+
+    let question_id_3 = Question::create(
+        campaign_id,
+        "What languages are you familiar with?".to_string(),
+        Some("This is a general question for all technical roles".to_string()),
+        false,
+        Some(vec![role_id_1, role_id_2]),
+        true,
+        QuestionData::MultiSelect(
+            MultiOptionData {
+                options: vec![
+                    MultiOptionQuestionOption {
+                        id: 0,
+                        text: "Rust".to_string(),
+                        display_order: 1,
+                    },
+                    MultiOptionQuestionOption {
+                        id: 0,
+                        text: "Python".to_string(),
+                        display_order: 2,
+                    },
+                    MultiOptionQuestionOption {
+                        id: 0,
+                        text: "JavaScript".to_string(),
+                        display_order: 3,
+                    },
+                    
+                    MultiOptionQuestionOption {
+                        id: 0,
+                        text: "Java".to_string(),
+                        display_order: 4,
+                    },
+                    
+                    MultiOptionQuestionOption {
+                        id: 0,
+                        text: "C++".to_string(),
+                        display_order: 5,
+                    },
+                ]
+            }
+        ),
+        &mut seeder.app_state.snowflake_generator,
+        &mut tx,
+    )
+    .await.expect("Failed seeding Question 3");
 
     let application_id_1 = Application::create(
         campaign_id,

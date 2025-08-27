@@ -12,6 +12,7 @@ pub mod app;
 pub mod application;
 pub mod auth;
 pub mod campaign;
+pub mod serde_string;
 pub mod email;
 pub mod email_template;
 pub mod error;

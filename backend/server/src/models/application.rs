@@ -27,10 +27,13 @@ use crate::service::application::{assert_application_is_open};
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Application {
     /// Unique identifier for the application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the campaign this application belongs to
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_id: i64,
     /// ID of the user who submitted the application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub user_id: i64,
     /// Public status of the application
     pub status: ApplicationStatus,
@@ -50,10 +53,16 @@ pub struct Application {
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct ApplicationRole {
     /// Unique identifier for the role application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
     pub id: i64,
     /// ID of the parent application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
     pub application_id: i64,
     /// ID of the campaign role being applied for
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
     pub campaign_role_id: i64,
     /// User's preference ranking for this role (lower number = higher preference)
     pub preference: i32,
@@ -75,8 +84,10 @@ pub struct NewApplication {
 #[derive(Deserialize, Serialize)]
 pub struct ApplicationDetails {
     /// Unique identifier for the application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the campaign this application belongs to
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_id: i64,
     /// Details of the user who submitted the application
     pub user: UserDetails,
@@ -95,10 +106,13 @@ pub struct ApplicationDetails {
 #[derive(Deserialize, Serialize)]
 pub struct ApplicationData {
     /// Unique identifier for the application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the campaign this application belongs to
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_id: i64,
     /// ID of the user who submitted the application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub user_id: i64,
     /// Email address of the applicant
     pub user_email: String,
@@ -126,6 +140,7 @@ pub struct ApplicationData {
 #[derive(Deserialize, Serialize)]
 pub struct ApplicationAppliedRoleDetails {
     /// ID of the campaign role
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_role_id: i64,
     /// Name of the role
     pub role_name: String,
@@ -155,6 +170,57 @@ pub enum ApplicationStatus {
 }
 
 impl Application {
+    /// Creates a new application if it doesn't exist, otherwise returns the existing application ID.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `campaign_id` - ID of the campaign to apply to
+    /// * `user_id` - ID of the user submitting the application
+    /// * `snowflake_generator` - Generator for creating unique IDs
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<i64, ChaosError>` - ID of the application or error
+    pub async fn create_or_get(
+        campaign_id: i64,
+        user_id: i64,
+        snowflake_generator: &mut SnowflakeIdGenerator,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<i64, ChaosError> {
+        // Check if application already exists
+        let application = sqlx::query!(
+            "
+                SELECT id FROM applications
+                WHERE campaign_id = $1 AND user_id = $2
+            ",
+            campaign_id,
+            user_id
+        )
+        .fetch_optional(transaction.deref_mut())
+        .await?;
+
+        if let Some(application) = application {
+            return Ok(application.id);
+        }
+
+        let id = snowflake_generator.real_time_generate();
+        // Create new application
+        sqlx::query!(
+            "
+                INSERT INTO applications (id, campaign_id, user_id)
+                VALUES ($1, $2, $3)
+            ",
+            id,
+            campaign_id,
+            user_id
+        )
+        .execute(transaction.deref_mut())
+        .await?;
+
+        Ok(id)
+    }
+    
     /// Creates a new application in the system.
     /// 
     /// # Arguments
@@ -555,6 +621,40 @@ impl Application {
         Ok(())
     }
 
+    /// Retrieves all roles associated with a specific application.
+    ///
+    /// This function queries the database to get all application roles for a given
+    /// application ID, including their preference rankings. The roles are returned
+    /// in the order they appear in the database (typically by preference).
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - The ID of the application to retrieve roles for
+    /// * `transaction` - Database transaction to use
+    ///
+    /// # Returns
+    ///
+    /// * `Result<Vec<ApplicationRole>, ChaosError>` - List of application roles or error
+    pub async fn get_roles(
+        id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<ApplicationRole>, ChaosError> {
+        let roles = sqlx::query_as!(
+            ApplicationRole,
+
+            "
+                SELECT id, application_id, campaign_role_id, preference
+                FROM application_roles
+                WHERE application_id = $1
+            ",
+            id
+        )
+        .fetch_all(transaction.deref_mut())
+        .await?;
+
+        Ok(roles)
+    }
+
     /// Updates the role preferences for an application.
     /// 
     /// # Arguments
@@ -678,7 +778,7 @@ where
             .extract::<Path<HashMap<String, i64>>>()
             .await
             .map_err(|_| ChaosError::BadRequest)?
-            .get("application_id")
+            .get("answer_id")
             .ok_or(ChaosError::BadRequest)?;
 
         let mut tx = app_state.db.begin().await?;

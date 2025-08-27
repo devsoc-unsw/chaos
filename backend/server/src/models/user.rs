@@ -27,6 +27,7 @@ pub enum UserRole {
 #[derive(Deserialize, Serialize, FromRow)]
 pub struct UserDetails {
     /// Unique identifier for the user
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// User's email address
     pub email: String,
@@ -50,6 +51,7 @@ pub struct UserDetails {
 #[derive(Deserialize, Serialize, FromRow)]
 pub struct User {
     /// Unique identifier for the user
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// User's email address
     pub email: String,
