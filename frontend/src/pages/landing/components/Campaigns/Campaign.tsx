@@ -11,7 +11,7 @@ const Bar = ({
 }: HTMLAttributes<HTMLDivElement> & { transitionDelay: number }) => (
   <Transition.Child
     as={Fragment}
-    enter={tw`duration-500 transition-[width]`}
+    enter={tw`transition-[width] duration-500`}
     enterFrom={tw`w-0!`}
   >
     <div
@@ -24,12 +24,12 @@ const Bar = ({
 );
 
 const Button = styled.div({
-  ...tw`ml-auto px-2 py-1.5 rounded-[0.2rem]`,
+  ...tw`ml-auto rounded-[0.2rem] px-2 py-1.5`,
 
   variants: {
     status: {
       pending: tw`bg-[hsl(220, 60%, 90%)] text-[hsl(220, 60%, 25%)]`,
-      open: tw`text-white bg-[hsl(220, 93%, 60%)]`,
+      open: tw`bg-[hsl(220, 93%, 60%)] text-white`,
     },
   },
 });
@@ -51,7 +51,7 @@ const Campaign = ({ logo, active = false, transitionDelay = 0 }: Props) => {
       enterFrom={tw`translate-y-4 scale-90 opacity-0`}
       style={{ transitionDelay: `${transitionDelay}ms` }}
     >
-      <div tw="w-72 rounded bg-white shadow-md transition hover:(-translate-y-1 shadow-lg)">
+      <div tw="w-72 rounded bg-white shadow-md transition hover:-translate-y-1 hover:shadow-lg">
         <header tw="flex items-center gap-1.5 p-3">
           <img tw="w-7 rounded-sm" src={logo} alt="logo" />
           <Bars>

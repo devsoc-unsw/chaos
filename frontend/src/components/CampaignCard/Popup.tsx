@@ -42,9 +42,9 @@ const Popup = ({ appliedFor, positions, open, closeModal }: Props) => {
       description="Roles available for this campaign"
       open={open}
       closeModal={closeModal}
-    >
-      <ul tw="flex flex-col gap-1.5">
-        {positions.map((pos) => (
+      >
+       <ul tw="flex flex-col gap-1.5">
+    {positions.map((pos) => (
           <PositionItem key={pos.id} status={positionStatuses[pos.id]?.status}>
             {pos.name}
           </PositionItem>

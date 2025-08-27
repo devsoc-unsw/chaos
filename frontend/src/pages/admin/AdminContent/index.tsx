@@ -2,9 +2,9 @@ import { PencilIcon, PlusIcon } from "@heroicons/react/24/solid";
 import { DeleteForeverRounded } from "@mui/icons-material";
 import { Button, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
-import "twin.macro";
-
 import { useNavigate } from "react-router-dom";
+
+import "twin.macro";
 
 import { doDeleteOrg, putOrgLogo } from "api";
 import { FetchError } from "api/api";
@@ -45,13 +45,13 @@ const AdminContent = ({
   members,
   setMembers,
 }: Props) => {
-  let id: number;
+  let id: string;
   let icon;
   let orgName: string;
   if (org) {
     ({ id, icon, orgName } = org);
   } else {
-    id = 0;
+    id = "0";
     icon = "";
     orgName = "...";
   }
@@ -181,20 +181,20 @@ const AdminContent = ({
           <OrgInfoImage src={icon} />
           <OrgInfoName>{orgName}</OrgInfoName>
         </OrgInfo>
-        <div tw="flex gap-4 items-center">
+        <div tw="flex items-center gap-4">
           <button
-            tw="text-gray-500 hover:text-gray-800 transition-colors"
+            tw="text-gray-500 transition-colors hover:text-gray-800"
             type="button"
             onClick={() => setShowEditDialog(true)}
           >
-            <PencilIcon tw="w-8 h-8" />
+            <PencilIcon tw="h-8 w-8" />
           </button>
           <button
-            tw="text-gray-500 hover:text-gray-800 transition-colors"
+            tw="text-gray-500 transition-colors hover:text-gray-800"
             type="button"
             onClick={() => navigate(`/campaign/create/${id}`)}
           >
-            <PlusIcon tw="w-12 h-12" />
+            <PlusIcon tw="h-12 w-12" />
           </button>
           {/* have to add addition button here to create campaigns,
           or maybe it should go in a more obvious spot? */}
@@ -224,7 +224,6 @@ const AdminContent = ({
         <AdminCampaignContent
           campaigns={campaigns}
           setCampaigns={setCampaigns}
-          orgId={id}
           orgLogo={icon}
         />
       )}
@@ -253,7 +252,7 @@ const AdminContent = ({
             </p>
           ) : (
             <img
-              tw="max-w-full max-h-full"
+              tw="max-h-full max-w-full"
               src={imageSrc}
               alt="campaign cover"
             />

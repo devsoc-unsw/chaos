@@ -8,21 +8,31 @@ import { Transition } from "components";
 import Container from "components/Container";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 
-import { getStore } from "../../utils";
+import { getStore, isLoggedIn } from "../../utils";
 
 import Campaigns from "./components/Campaigns";
 import DashboardButton from "./components/DashboardButton";
+import SponsorLogos from "./components/SponsorLogos";
 import Waves from "./components/Waves";
 
 import type { PointerEvent } from "react";
 
-const OAUTH_CALLBACK_URL =
-  getStore("AUTH_TOKEN") || (import.meta.env.VITE_OAUTH_CALLBACK_URL as string);
+const OAUTH_CALLBACK_URL = import.meta.env.VITE_OAUTH_CALLBACK_URL as string;
 
 const Landing = () => {
   const setNavBarTitle = useContext(SetNavBarTitleContext);
+  const [loggedIn, setLoggedIn] = useState(false);
+  
   useEffect(() => {
     setNavBarTitle("");
+  }, []);
+
+  useEffect(() => {
+    async function checkLoginStatus() {
+      const status = await isLoggedIn();
+      setLoggedIn(status);
+    }
+    checkLoginStatus();
   }, []);
 
   const campaignsRef = useRef<HTMLDivElement>(null);
@@ -40,9 +50,9 @@ const Landing = () => {
   };
 
   return (
-    <div tw="flex flex-1 justify-center" onPointerMove={onPointerMove}>
-      <Container tw="my-auto p-12 translate-y-[-100px]">
-        <main tw="font-light w-fit pointer-events-none [& > *]:(w-fit pointer-events-auto)">
+    <div tw="flex flex-1 flex-row justify-center" onPointerMove={onPointerMove}>
+      <Container tw="my-auto translate-y-[-100px] p-12">
+        <main tw="[& > *]:w-fit [& > *]:pointer-events-auto pointer-events-none w-fit font-light">
           <Transition
             appear
             show
@@ -51,7 +61,7 @@ const Landing = () => {
           >
             <h1 tw="text-5xl">
               <img
-                tw="inline drop-shadow-md filter h-[1em]"
+                tw="inline h-[1em] drop-shadow-md filter"
                 src={chaosImg}
                 alt="Chaos Logo"
               />{" "}
@@ -62,7 +72,7 @@ const Landing = () => {
             as={Fragment}
             appear
             show
-            enter={tw`transition duration-[600ms] delay-[250ms]`}
+            enter={tw`transition delay-[250ms] duration-[600ms]`}
             enterFrom={tw`translate-y-4 opacity-0`}
             enterTo={tw`text-2xl`}
           >
@@ -74,20 +84,30 @@ const Landing = () => {
             enter={tw`transition delay-500 duration-[600ms]`}
             enterFrom={tw`translate-y-4 opacity-0`}
           >
-            {getStore("AUTH_TOKEN") ? (
+            {loggedIn ? (
               <DashboardButton as={Link} to="/dashboard">
                 Your Dashboard
               </DashboardButton>
             ) : (
-              <DashboardButton as="a" href={OAUTH_CALLBACK_URL}>
-                Get Started
+              // <DashboardButton as="a" href={OAUTH_CALLBACK_URL}>
+              //   Get Started
+              // </DashboardButton>
+              <DashboardButton as="a" disabled>
+                Coming Soon!
               </DashboardButton>
             )}
+          </Transition>
+          <Transition
+            show
+            appear
+            enter={tw`transition delay-[750ms] duration-[800ms]`}
+            enterFrom={tw`translate-y-4 opacity-0`}
+          >
+            <SponsorLogos />
           </Transition>
         </main>
         <Campaigns ref={campaignsRef} offsetX={offsetX} offsetY={offsetY} />
       </Container>
-
       <Waves />
     </div>
   );

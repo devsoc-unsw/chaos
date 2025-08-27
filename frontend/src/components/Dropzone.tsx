@@ -24,7 +24,7 @@ const Dropzone = ({
     {({ getRootProps, getInputProps, isDragActive }) => (
       <section>
         <div
-          tw="h-64 p-4 flex items-center justify-center bg-gray-50 text-center border border-dashed border-gray-300 rounded cursor-pointer hover:border-brand-600 transition-colors"
+          tw="flex h-64 cursor-pointer items-center justify-center rounded border border-dashed border-gray-300 bg-gray-50 p-4 text-center transition-colors hover:border-brand-600"
           css={{ ...(isDragActive && tw`border-brand-600`) }}
           // eslint-disable-next-line react/jsx-props-no-spreading -- this *should* be fine here
           {...getRootProps()}

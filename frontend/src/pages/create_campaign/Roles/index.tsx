@@ -106,7 +106,7 @@ const RolesTab = ({ campaign }: Props) => {
   ) => {
     setQuestions(
       questions.map((q) =>
-        q.id !== targetQID
+         q.id !== targetQID
           ? q
           : { id: q.id, text: e.currentTarget.value, roles: q.roles }
       )

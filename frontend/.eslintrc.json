@@ -14,12 +14,19 @@
     "plugin:import/typescript",
     "plugin:react/jsx-runtime"
   ],
+  "ignorePatterns": [
+    "babel-plugin-macros.config.js",
+    "tailwind.config.js",
+    "prettier.config.js",
+    "postcss.config.js",
+    "vite.config.ts"
+  ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": 12,
     "sourceType": "module",
     "project": ["./tsconfig.json", "./tsconfig.node.json"],
-    "tsconfigRootDir": "./",
+    "tsconfigRootDir": "./"
   },
   "plugins": ["react", "prettier"],
   "rules": {
@@ -33,42 +40,43 @@
     "@typescript-eslint/no-shadow": "off",
     "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": [
-      1,
+      "warn",
       {
         "varsIgnorePattern": "^_",
         "argsIgnorePattern": "^_"
       }
     ],
     "@typescript-eslint/naming-convention": [
-        "error",
-        {
-            "selector": "default",
-            "format": ["camelCase"],
-            "leadingUnderscore": "allow",
-            "trailingUnderscore": "allow"
-        },
+      "error",
+      {
+        "selector": "default",
+        "format": ["camelCase"],
+        "leadingUnderscore": "allow",
+        "trailingUnderscore": "allow"
+      },
 
-        {
-            "selector": "variable",
-            "format": ["camelCase", "UPPER_CASE", "PascalCase"],
-            "leadingUnderscore": "allow",
-            "trailingUnderscore": "allow"
-        },
+      {
+        "selector": "variable",
+        "format": ["camelCase", "UPPER_CASE", "PascalCase"],
+        "leadingUnderscore": "allow",
+        "trailingUnderscore": "allow"
+      },
 
-        {
-            "selector": "function",
-            "format": ["camelCase", "PascalCase"]
-        },
+      {
+        "selector": "function",
+        "format": ["camelCase", "PascalCase"]
+      },
 
-        {
-            "selector": "typeLike",
-            "format": ["PascalCase"]
-        },
+      {
+        "selector": "typeLike",
+        "format": ["PascalCase"],
+        "leadingUnderscore": "allow"
+      },
 
-        {
-            "selector": "objectLiteralProperty",
-            "format": null
-        }
+      {
+        "selector": "objectLiteralProperty",
+        "format": null
+      }
     ],
     "import/prefer-default-export": "off",
     "import/no-extraneous-dependencies": ["error", { "devDependencies": true }],
@@ -104,7 +112,7 @@
         "custom": "ignore"
       }
     ],
-    "react/no-unknown-property": [2, { "ignore": ["tw", "css"] }],
+    "react/no-unknown-property": ["error", { "ignore": ["tw", "css"] }],
     "react/require-default-props": "off",
     "@typescript-eslint/consistent-type-imports": "error",
     "no-void": "off",

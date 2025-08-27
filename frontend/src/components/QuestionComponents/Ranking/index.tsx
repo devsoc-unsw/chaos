@@ -12,17 +12,18 @@ interface RankedOption extends Option {
 }
 
 interface RankingProps {
-  id: number;
+  id: string;
   question: string;
   description?: string;
   options: Option[];
   required?: boolean;
   defaultValue?: Array<string | number>;
   onChange?: (value: Array<string | number>) => void;
-  onSubmit?: (questionId: number, value: Array<string | number>) => void;
+  onSubmit?: (questionId: string, value: Array<string | number>) => void;
   disabled?: boolean;
   width?: string;
   height?: string;
+  answerId?: string;
 }
 
 const Ranking: React.FC<RankingProps> = ({
@@ -37,6 +38,7 @@ const Ranking: React.FC<RankingProps> = ({
   disabled = false,
   width = "max-w-3xl",
   height = "",
+  answerId,
 }) => {
   const [rankedOptions, setRankedOptions] = useState<RankedOption[]>([]);
 
@@ -96,6 +98,10 @@ const Ranking: React.FC<RankingProps> = ({
 
       {description && (
         <p tw="mb-2 text-sm text-gray-600">{description}</p>
+      )}
+      
+      {answerId && (
+        <p tw="mb-2 text-xs text-gray-400">Answer ID: {answerId}</p>
       )}
 
       <DragDropContext onDragEnd={handleDragEnd}>

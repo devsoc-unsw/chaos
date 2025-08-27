@@ -31,7 +31,7 @@ import type { ChangeEventHandler, Dispatch, SetStateAction } from "react";
 import type { AdminLevel } from "types/api";
 
 type Props = {
-  orgId: number;
+  orgId: string;
   members: Member[];
   setMembers: Dispatch<SetStateAction<Member[]>>;
 };
@@ -40,7 +40,7 @@ const AdminMembersContent = ({ orgId, members, setMembers }: Props) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const onDelete = (memberId: string) => {
     // FIXME: CHAOS-55, integrate with backend to actually delete
-    setMembers(members.filter((m) => m.id !== Number(memberId)));
+    setMembers(members.filter((m) => m.id !== memberId));
   };
   const inviteUser = (formValues: {
     email: string;
@@ -57,7 +57,7 @@ const AdminMembersContent = ({ orgId, members, setMembers }: Props) => {
           <DummyIconForAlignment />
         </ListItemIcon>
         <ListItemIcon>
-          <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
+          <IconButton onClick={(e: React.MouseEvent<HTMLButtonElement>) => setAnchorEl(e.currentTarget)}>
             <AddIcon />
           </IconButton>
           <InputPopup
@@ -118,7 +118,7 @@ const AdminMembersContent = ({ orgId, members, setMembers }: Props) => {
               <ListItemIcon>
                 <IconButton
                   value={m.id}
-                  onClick={(e) => onDelete(e.currentTarget.value)}
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => onDelete(e.currentTarget.value)}
                 >
                   <ClearIcon />
                 </IconButton>

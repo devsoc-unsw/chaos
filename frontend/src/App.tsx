@@ -1,4 +1,3 @@
-import { Box, CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 import { SnackbarProvider } from "notistack";
 import { Suspense, useState } from "react";
 import { Toaster } from "react-hot-toast";
@@ -7,46 +6,23 @@ import "twin.macro";
 
 import { LoadingIndicator, NavBar } from "./components";
 import { SetNavBarTitleContext } from "./contexts/SetNavbarTitleContext";
+import { UserProvider } from "contexts/UserContext";
 import routes from "./routes";
-
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: "#3A76F8",
-      dark: "#151719",
-      // csesoc dark: "#40404C",
-      light: "#ADC7FF",
-    },
-    // secondary: {
-    //   main: "#DBD2Ef",
-    //   light: "#eceded",
-    // },
-  },
-  components: {
-    MuiButton: {
-      defaultProps: {
-        variant: "contained",
-        color: "primary",
-      },
-    },
-  },
-});
 
 const App = () => {
   const [AppBarTitle, setNavBarTitle] = useState("");
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <SnackbarProvider maxSnack={3}>
+    <SnackbarProvider maxSnack={3}>
+      <UserProvider>
         <SetNavBarTitleContext.Provider value={setNavBarTitle}>
           <BrowserRouter>
             <NavBar campaign={AppBarTitle} />
-            <Box pt={8} minHeight="100vh" tw="bg-gray-50">
+            <div tw="flex min-h-screen bg-gray-50 pt-16">
               <Suspense fallback={<LoadingIndicator />}>
                 <Routes>{routes}</Routes>
               </Suspense>
-            </Box>
+            </div>
             <Toaster
               position="bottom-right"
               reverseOrder={false}
@@ -56,8 +32,8 @@ const App = () => {
             />
           </BrowserRouter>
         </SetNavBarTitleContext.Provider>
-      </SnackbarProvider>
-    </ThemeProvider>
+      </UserProvider>
+    </SnackbarProvider>
   );
 };
 

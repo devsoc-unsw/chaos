@@ -5,7 +5,7 @@ export type QuestionType = 'short_answer' | 'dropdown' | 'multi_choice' | 'multi
 
 // Export common interfaces
 export interface BaseQuestionProps {
-  id: number;
+  id: string;
   question: string;
   description?: string;
   required?: boolean;
