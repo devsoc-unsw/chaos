@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import ShortAnswer from "components/QuestionComponents/ShortAnswer";
-import Dropdown from "components/QuestionComponents/Dropdown";
+import Dropdown, { NO_ANSWER_VALUE } from "components/QuestionComponents/Dropdown";
 import MultiChoice from "components/QuestionComponents/MultiChoice";
 import MultiSelect from "components/QuestionComponents/MultiSelect";
 import Ranking from "components/QuestionComponents/Ranking";
-import { getCampaign, getCampaignRoles, getCommonQuestions, getRoleQuestions, createOrGetApplication, getCommonApplicationAnswers, getApplicationAnswers, createAnswer, updateAnswer, deleteAnswer } from "api";
-import type { Campaign, Role, QuestionResponse, QuestionData, Answer } from "types/api";
+import { getCampaign, getCampaignRoles, getCommonQuestions, getRoleQuestions, createOrGetApplication, getCommonApplicationAnswers, getApplicationAnswers, createAnswer, updateAnswer, deleteAnswer, updateApplicationRoles, getApplicationRoles } from "api";
+import type { Campaign, Role, QuestionResponse, QuestionData, Answer, ApplicationRoleUpdateInput } from "types/api";
 import { Button } from "components/ui/button";
 import {
   Dialog,
@@ -65,15 +65,34 @@ const ApplicationReview: React.FC = () => {
       try {
         const answers = await getCommonApplicationAnswers(applicationId);
         setCommonAnswers(answers);
-        
+
         // Pre-fill answers in the answers state
         const answerMap: Record<string, unknown> = {};
         answers.forEach(answer => {
-          answerMap[answer.question_id] = answer.data;
+          // API returns `answer_data` field
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          answerMap[answer.question_id] = (answer as any).answer_data ?? (answer as any).data;
         });
         setAnswers(prev => ({ ...prev, ...answerMap }));
       } catch (error) {
         console.error('Failed to load common answers:', error);
+      }
+    })();
+  }, [applicationId]);
+
+  // Load application roles when application ID is available
+  useEffect(() => {
+    if (!applicationId) return;
+    (async () => {
+      try {
+        const applicationRoles = await getApplicationRoles(applicationId);
+        // Set selected role IDs based on loaded application roles
+        const roleIds = applicationRoles.map(role => role.campaign_role_id);
+        setSelectedRoleIds(roleIds);
+      } catch (error) {
+        console.error('Failed to load application roles:', error);
+        // If no roles are found, that's OK - user can select roles
+        setSelectedRoleIds([]);
       }
     })();
   }, [applicationId]);
@@ -110,17 +129,38 @@ const ApplicationReview: React.FC = () => {
       const answerMap: Record<string, unknown> = {};
       Object.values(roleAnswersUpdates).forEach(answers => {
         answers.forEach(answer => {
-          answerMap[answer.question_id] = answer.data;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          answerMap[answer.question_id] = (answer as any).answer_data ?? (answer as any).data;
         });
       });
       setAnswers(prev => ({ ...prev, ...answerMap }));
     })();
   }, [selectedRoleIds, campaignId, questionsByRole, applicationId]);
 
-  const toggleRole = (roleId: string) => {
-    setSelectedRoleIds((prev: string[]) =>
-      prev.includes(roleId) ? prev.filter((id) => id !== roleId) : [...prev, roleId]
-    );
+  const syncRoles = async (nextSelectedRoles: string[]) => {
+    if (!applicationId) return;
+    const payload: ApplicationRoleUpdateInput = {
+      roles: nextSelectedRoles.map((rid, idx) => ({
+        id: "0",
+        application_id: applicationId,
+        campaign_role_id: rid,
+        preference: idx + 1,
+      })),
+    };
+    try {
+      await updateApplicationRoles(applicationId, payload);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error("Failed to update application roles", e);
+    }
+  };
+
+  const toggleRole = async (roleId: string) => {
+    setSelectedRoleIds((prev: string[]) => {
+      const next = prev.includes(roleId) ? prev.filter((id) => id !== roleId) : [...prev, roleId];
+      void syncRoles(next);
+      return next;
+    });
   };
 
   const setAnswer = (questionId: string, value: unknown) => {
@@ -137,9 +177,10 @@ const ApplicationReview: React.FC = () => {
 
     try {
       // Check if the answer should be deleted (empty/blank)
-      const shouldDelete = 
+      const shouldDelete =
         (questionType === "ShortAnswer" && (!value || String(value).trim() === "")) ||
-        (questionType === "MultiSelect" && (!Array.isArray(value) || value.length === 0));
+        (questionType === "MultiSelect" && (!Array.isArray(value) || value.length === 0)) ||
+        (questionType === "DropDown" && value === NO_ANSWER_VALUE);
 
       if (shouldDelete) {
         if (answerId) {
@@ -153,6 +194,17 @@ const ApplicationReview: React.FC = () => {
               newRoleAnswers[roleId] = newRoleAnswers[roleId].filter(a => a.id !== answerId);
             });
             return newRoleAnswers;
+          });
+        }
+        // Update answers state to reflect the deletion
+        // For dropdowns, set to NO_ANSWER_VALUE for review modal display
+        if (questionType === "DropDown") {
+          setAnswers(prev => ({ ...prev, [questionId]: NO_ANSWER_VALUE }));
+        } else {
+          setAnswers(prev => {
+            const newAnswers = { ...prev };
+            delete newAnswers[questionId];
+            return newAnswers;
           });
         }
         return;
@@ -184,20 +236,22 @@ const ApplicationReview: React.FC = () => {
 
       if (answerId) {
         // Update existing answer
-        await updateAnswer(answerId, apiAnswerData as any);
+        await updateAnswer(answerId, questionId, apiAnswerType as any, apiAnswerData as any);
       } else {
         // Create new answer
         const newAnswer = await createAnswer(applicationId, questionId, apiAnswerType as any, apiAnswerData as any);
         
         // Update local state with the new answer
-        const newAnswerObj: Answer = {
-          id: newAnswer?.id || String(Date.now()), // Fallback ID if API doesn't return one
+        // Keep shape consistent with API (`answer_data`)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const newAnswerObj: any = {
+          id: newAnswer?.id || String(Date.now()),
           question_id: questionId,
-          answer_type: apiAnswerType as any,
-          data: apiAnswerData as any,
+          answer_type: apiAnswerType,
+          answer_data: apiAnswerData,
           created_at: new Date(),
           updated_at: new Date()
-        };
+        } as Answer & { answer_data: unknown };
 
         // Add to appropriate state based on whether it's a common or role question
         if (commonQuestions.find(q => String(q.id) === questionId)) {
@@ -245,6 +299,9 @@ const ApplicationReview: React.FC = () => {
       
       case "MultiChoice":
       case "DropDown":
+        if (answer === NO_ANSWER_VALUE) {
+          return "No answer provided";
+        }
         const selectedOption = question.data.options.find(opt => opt.id === answer);
         return selectedOption ? selectedOption.text : String(answer);
       
@@ -392,7 +449,7 @@ const ApplicationReview: React.FC = () => {
                     className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
                       selected ? "bg-blue-50 border-blue-300" : "bg-white border-gray-200 hover:border-gray-300"
                     }`}
-                    onClick={() => toggleRole(String(role.id))}
+                    onClick={() => void toggleRole(String(role.id))}
                   >
                     <div className="flex items-center justify-between">
                       <h3 className="font-medium text-sm">{role.name}</h3>

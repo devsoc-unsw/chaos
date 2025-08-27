@@ -2015,6 +2015,30 @@ paths:
           $ref: "#/components/responses/NotLoggedIn"
 
   /application/{application_id}/roles:
+    get:
+      operationId: getApplicationRoles
+      parameters:
+        - name: application_id
+          in: path
+          description: Application ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Get all roles for a specific application
+      tags:
+        - Campaign
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ApplicationRole"
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
     patch:
       operationId: updateApplicationRoles
       parameters:
@@ -2515,6 +2539,23 @@ components:
         updated_at:
           type: string
           example: 2024-03-15T18:25:43.511Z
+
+    ApplicationRole:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "6996987893965227483"
+        application_id:
+          type: string
+          example: "6996987893965227484"
+        campaign_role_id:
+          type: string
+          example: "6996987893965227485"
+        preference:
+          type: integer
+          format: int32
+          example: 1
 
     NewAnswer:
       type: object

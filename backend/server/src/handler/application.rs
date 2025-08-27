@@ -139,6 +139,31 @@ impl ApplicationHandler {
         Ok((StatusCode::OK, Json(applications)))
     }
 
+    /// Retrieves all roles associated with a specific application.
+    ///
+    /// This handler allows application owners to view all roles they have applied for
+    /// in a specific application, including their preference rankings.
+    ///
+    /// # Arguments
+    ///
+    /// * `_user` - The authenticated user (must be the application owner)
+    /// * `application_id` - The ID of the application to retrieve roles for
+    /// * `transaction` - Database transaction
+    ///
+    /// # Returns
+    ///
+    /// * `Result<impl IntoResponse, ChaosError>` - List of application roles with preferences or error
+    pub async fn get_roles(
+        _user: ApplicationOwner,
+        Path(application_id): Path<i64>,
+        mut transaction: DBTransaction<'_>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let roles = Application::get_roles(application_id, &mut transaction.tx).await?;
+        transaction.tx.commit().await?;
+
+        Ok((StatusCode::OK, Json(roles)))
+    }
+
     /// Updates the roles associated with an application.
     /// 
     /// This handler allows application owners to update the roles they're applying for.

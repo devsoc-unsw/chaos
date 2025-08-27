@@ -134,6 +134,18 @@ export type ApplicationRole = {
   campaign_role_id: string,
 }
 
+// Payload for updating roles on an application (PATCH /application/{application_id}/roles)
+export type ApplicationRoleUpdateInput = {
+  roles: ApplicationRoleUpdateInputRole[];
+}
+
+export type ApplicationRoleUpdateInputRole = {
+  id: string; // placeholder OK (backend ignores on update)
+  application_id: string;
+  campaign_role_id: string;
+  preference: number;
+}
+
 export type Application = {
   id: string;
   user_id: string;

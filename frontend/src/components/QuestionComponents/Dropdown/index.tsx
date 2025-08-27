@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -8,6 +8,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import tw from 'twin.macro';
+
+// Special value to represent "No Answer" selection
+export const NO_ANSWER_VALUE = '__NO_ANSWER__';
 
 interface DropdownOption {
   id: string | number;
@@ -47,6 +50,11 @@ const Dropdown: React.FC<DropdownProps> = ({
 }) => {
   const [value, setValue] = useState<string | number | undefined>(defaultValue);
 
+  // Sync internal state when the defaultValue prop changes (e.g., after async prefill)
+  useEffect(() => {
+    setValue(defaultValue);
+  }, [defaultValue]);
+
   const handleSelect = (selectedValue: string) => {
     // Convert back to number if the original option id was a number
     const originalOption = options.find(opt => opt.id.toString() === selectedValue);
@@ -79,9 +87,23 @@ const Dropdown: React.FC<DropdownProps> = ({
         disabled={disabled}
       >
         <SelectTrigger>
-          <SelectValue placeholder={placeholder} />
+          <SelectValue placeholder={placeholder}>
+            {value === NO_ANSWER_VALUE ? "No Answer" : undefined}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
+          {/* "No Answer" option for clearing the selection */}
+          <SelectItem
+            key={NO_ANSWER_VALUE}
+            value={NO_ANSWER_VALUE}
+            style={{
+              '--hover-bg': 'rgb(254 242 242)',
+              '--hover-text': 'rgb(153 27 27)',
+            } as React.CSSProperties}
+            className="hover:bg-[var(--hover-bg)] hover:text-[var(--hover-text)] data-[highlighted]:bg-[var(--hover-bg)] data-[highlighted]:text-[var(--hover-text)] text-red-600 font-medium"
+          >
+            No Answer
+          </SelectItem>
           {options.map((option) => (
             <SelectItem
               key={option.id}

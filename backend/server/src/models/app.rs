@@ -312,7 +312,7 @@ pub async fn app() -> Result<Router, ChaosError> {
         )
         .route(
             "/api/v1/application/:application_id/roles",
-            patch(ApplicationHandler::update_roles)
+            get(ApplicationHandler::get_roles).patch(ApplicationHandler::update_roles)
         )
         .route(
             "/api/v1/application/:application_id/submit",

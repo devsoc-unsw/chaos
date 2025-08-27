@@ -32,6 +32,7 @@ import {
   type Answer,
   QuestionType,
   AnswerData,
+  type ApplicationRoleUpdateInput,
 } from "../types/api";
 
 // todo: update to new route
@@ -233,6 +234,24 @@ export const getApplicationRatings = (applicationId: string) =>
     path: `/v1/${applicationId}/ratings`,
   });
 
+// Update application roles (selection and preference)
+export const updateApplicationRoles = (
+  applicationId: string,
+  payload: ApplicationRoleUpdateInput
+) =>
+  authenticatedRequest({
+    method: "PATCH",
+    path: `/v1/application/${applicationId}/roles`,
+    body: payload,
+    jsonResp: false,
+  });
+
+// Get application roles
+export const getApplicationRoles = (applicationId: string) =>
+  authenticatedRequest<ApplicationRole[]>({
+    path: `/v1/application/${applicationId}/roles`,
+  });
+
 // Create a new answer
 export const createAnswer = (
   applicationId: string,
@@ -253,13 +272,17 @@ export const createAnswer = (
 // Update an existing answer
 export const updateAnswer = (
   answerId: string,
+  questionId: string,
+  answerType: QuestionType,
   answerData: AnswerData
 ) =>
   authenticatedRequest({
     method: "PATCH",
     path: `/v1/answer/${answerId}`,
     body: {
-      data: answerData,
+      question_id: questionId,
+      answer_type: answerType,
+      answer_data: answerData,
     },
     jsonResp: false,
   });
@@ -373,37 +396,41 @@ export const getAnsweredApplicationQuestions = (applications: ApplicationDetails
       const completeQuestions = [...commonQuestions, ...roleQuestions];
 
       return completeAnswers.map((answer) => {
+        // normalize to use answer.answer_data
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const data: any = (answer as any).answer_data ?? (answer as any).data;
+        const type = answer.answer_type;
         switch (answer.answer_type) {
           case QuestionType.ShortAnswer:
-            return answer.data as string;
+            return data as string;
           
           case QuestionType.MultiChoice:
             // search question list for questions of Multichoice type
             return completeQuestions.find(question => 
               question.question_type === QuestionType.MultiChoice &&
               // then search that question's multichoice options for the option which was selected
-              question.data.options.some(option => option.id === answer.data)
-            )?.data.options.find(option => option.id === answer.data)?.text; // return the text of the actual question option
+              question.data.options.some(option => option.id === data)
+            )?.data.options.find(option => option.id === data)?.text; // return the text of the actual question option
             
           case QuestionType.MultiSelect:
             return completeQuestions.find(question => 
                 question.question_type === QuestionType.MultiSelect &&
-                question.data.options.some(option => Array.isArray(answer.data) && answer.data.includes(option.id))
-              )?.data.options.filter(option => Array.isArray(answer.data) && answer.data.includes(option.id))
+                question.data.options.some(option => Array.isArray(data) && data.includes(option.id))
+              )?.data.options.filter(option => Array.isArray(data) && data.includes(option.id))
               .map(option => option.text); // return list of text of selected options
             
           case QuestionType.DropDown:
             return completeQuestions.find(question => 
                 question.question_type === QuestionType.DropDown &&
-                question.data.options.some(option => option.id === answer.data)
-                )?.data.options.find(option => option.id === answer.data)
+                question.data.options.some(option => option.id === data)
+                )?.data.options.find(option => option.id === data)
                 ?.text;
           
           case QuestionType.Ranking:
             return completeQuestions.find(question => 
                 question.question_type === QuestionType.Ranking &&
-                question.data.options.some(option => Array.isArray(answer.data) && answer.data.includes(option.id))
-              )?.data.options.filter(option => Array.isArray(answer.data) && answer.data.includes(option.id))
+                question.data.options.some(option => Array.isArray(data) && data.includes(option.id))
+              )?.data.options.filter(option => Array.isArray(data) && data.includes(option.id))
               .map(option => option.text);
         }
       });

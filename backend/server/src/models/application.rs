@@ -54,12 +54,15 @@ pub struct Application {
 pub struct ApplicationRole {
     /// Unique identifier for the role application
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
     pub id: i64,
     /// ID of the parent application
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
     pub application_id: i64,
     /// ID of the campaign role being applied for
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
     pub campaign_role_id: i64,
     /// User's preference ranking for this role (lower number = higher preference)
     pub preference: i32,
@@ -618,6 +621,40 @@ impl Application {
         Ok(())
     }
 
+    /// Retrieves all roles associated with a specific application.
+    ///
+    /// This function queries the database to get all application roles for a given
+    /// application ID, including their preference rankings. The roles are returned
+    /// in the order they appear in the database (typically by preference).
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - The ID of the application to retrieve roles for
+    /// * `transaction` - Database transaction to use
+    ///
+    /// # Returns
+    ///
+    /// * `Result<Vec<ApplicationRole>, ChaosError>` - List of application roles or error
+    pub async fn get_roles(
+        id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<ApplicationRole>, ChaosError> {
+        let roles = sqlx::query_as!(
+            ApplicationRole,
+
+            "
+                SELECT id, application_id, campaign_role_id, preference
+                FROM application_roles
+                WHERE application_id = $1
+            ",
+            id
+        )
+        .fetch_all(transaction.deref_mut())
+        .await?;
+
+        Ok(roles)
+    }
+
     /// Updates the role preferences for an application.
     /// 
     /// # Arguments
@@ -741,7 +778,7 @@ where
             .extract::<Path<HashMap<String, i64>>>()
             .await
             .map_err(|_| ChaosError::BadRequest)?
-            .get("application_id")
+            .get("answer_id")
             .ok_or(ChaosError::BadRequest)?;
 
         let mut tx = app_state.db.begin().await?;

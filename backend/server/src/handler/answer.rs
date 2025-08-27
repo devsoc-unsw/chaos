@@ -133,7 +133,7 @@ impl AnswerHandler {
     pub async fn update(
         Path(answer_id): Path<i64>,
         _owner: AnswerOwner,
-        _: OpenApplicationByAnswerId,
+        _: OpenApplicationByAnswerId, // Troublesome throws BadRequest
         mut transaction: DBTransaction<'_>,
         Json(new_answer): Json<NewAnswer>,
     ) -> Result<impl IntoResponse, ChaosError> {
