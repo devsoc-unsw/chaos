@@ -16,8 +16,9 @@ To run the backend in a dev/testing environment:
 2. Navigate to the directory this file is in (`backend`) in your terminal (not `backend/server`).
 3. Possibly terminate any running instances of postgres, as the dockerized postgres we will spawn uses the same default port, so the two might interefere with each other.
 4. Run `./setup-dev-env.sh` (you might have to make it executable before with `chmod +x setup-dev-env.sh`), which should drop you into a new shell that has the required tools installed.
-5. Now, you can `cd server` and should be able to `cargo build` successfully.
-6. Once you exit out of the newly created shell (e.g. type `exit`, or kill the terminal), the dockerized postgres instance should automatically be torn down, so it's not unnecessarily running in the background all the time.
+5. First, you should seed the databse. `cd database-seeding` and run `cargo build` and `cargo run`.
+6. Now, you can `cd server` (`cd ../server` if you are in the `database-seeding` directory) and should be able to `cargo build` successfully.
+7. Once you exit out of the newly created shell (e.g. type `exit`, or kill the terminal), the dockerized postgres instance should automatically be torn down, so it's not unnecessarily running in the background all the time.
 
 
 ## Code Structure
