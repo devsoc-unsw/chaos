@@ -10,6 +10,9 @@ import { Button } from "components/ui/button";
 import { Badge } from "components/ui/badge";
 import { Calendar, Users, Clock, MapPin } from "lucide-react";
 import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
+import { useUser } from "contexts/UserContext";
+
+import { isLoggedIn } from "../../utils";
 
 import type { Campaign, Organisation, Role } from "types/api";
 
@@ -27,10 +30,22 @@ const CampaignLandingPage = () => {
   const [error, setError] = useState<string | undefined>();
   const [organisation, setOrganisation] = useState<Organisation | undefined>();
   const [roles, setRoles] = useState<Role[]>([]);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [loggedIn, setLoggedIn] = useState(false);
   const setNavBarTitle = useContext(SetNavBarTitleContext);
+
+
 
   useEffect(() => {
     setNavBarTitle("");
+  }, []);
+
+  useEffect(() => {
+    async function checkLoginStatus() {
+      const status = await isLoggedIn();
+      setLoggedIn(status);
+    }
+    checkLoginStatus();
   }, []);
 
   useEffect(() => {
@@ -186,7 +201,7 @@ const CampaignLandingPage = () => {
               </div>
             </div>
             <Button asChild className="w-full bg-purple-600 hover:bg-purple-700">
-              <Link to={`/campaign/${campaign.id}/apply`}>
+              <Link to={loggedIn ? `/campaign/${campaign.id}/apply` : `${import.meta.env.VITE_OAUTH_CALLBACK_URL as string}?to=${encodeURIComponent(`/campaign/${campaign.id}/apply`)}`}>
                 Apply for this Campaign
               </Link>
             </Button>
