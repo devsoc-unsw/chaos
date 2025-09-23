@@ -10,7 +10,6 @@ These questions are there to help familiarise you with the codebase. The goal is
 #### Getting started
 0. Make sure you have Rust installed! You can refer to the [Rust Book](https://doc.rust-lang.org/book/ch01-01-installation.html) for installation instructions. This book can also a useful beginner-friendly reference guide for Rust if you are unfamiliar with some things in the backend codebase! For Axum related things, you can refer to [this repo](https://github.com/joelparkerhenderson/demo-rust-axum).
 1. Start the backend (hint: you may want to look at the `README.md` file in the `backend` directory)
-- (your answer here)
 2. Make a `GET` request to the root backend route. What is in the response object?
 - (your answer here)
 #### Exploring the routes
