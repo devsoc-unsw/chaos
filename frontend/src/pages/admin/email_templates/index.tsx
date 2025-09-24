@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { Link } from "react-router-dom"
 import Button from "@/components/Button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,6 +9,17 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 import { PlusIcon, PencilIcon, TrashIcon, EyeIcon, DocumentDuplicateIcon, ArrowLeftIcon, EnvelopeIcon, CalendarIcon, UserIcon, BuildingOfficeIcon } from "@heroicons/react/24/outline"
 
@@ -169,6 +180,9 @@ const previewData = {
 }
 
 export default function EmailTemplatesPage() {
+  const subjectInputRef = useRef<HTMLInputElement>(null)
+  const bodyTextareaRef = useRef<HTMLTextAreaElement>(null)
+  const [lastFocused, setLastFocused] = useState<"subject" | "body">("subject")
   const [templates, setTemplates] = useState<EmailTemplate[]>(mockTemplates)
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [searchTerm, setSearchTerm] = useState("")
@@ -193,6 +207,13 @@ export default function EmailTemplatesPage() {
     return matchesCategory && matchesSearch
   })
 
+  // Sort newest -> oldest by updatedAt (fallback to createdAt)
+  const sortedTemplates = [...filteredTemplates].sort((a, b) => {
+    const aTime = new Date(a.updatedAt || a.createdAt).getTime()
+    const bTime = new Date(b.updatedAt || b.createdAt).getTime()
+    return bTime - aTime
+  })
+
   const handleCreateTemplate = () => {
     const newTemplate = {
       id: Date.now(),
@@ -211,7 +232,8 @@ export default function EmailTemplatesPage() {
       )
       setEditingTemplate(null)
     } else {
-      setTemplates((prev) => [...prev, newTemplate])
+      // Insert newest at the front
+      setTemplates((prev) => [newTemplate, ...prev])
     }
 
     setFormData({ name: "", subject: "", body: "", category: "interview" })
@@ -230,9 +252,7 @@ export default function EmailTemplatesPage() {
   }
 
   const handleDeleteTemplate = (templateId: number) => {
-    if (confirm("Are you sure you want to delete this template?")) {
-      setTemplates((prev) => prev.filter((template) => template.id !== templateId))
-    }
+    setTemplates((prev) => prev.filter((template) => template.id !== templateId))
   }
 
   const handlePreviewTemplate = (template: EmailTemplate) => {
@@ -248,11 +268,43 @@ export default function EmailTemplatesPage() {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
-    setTemplates((prev) => [...prev, duplicatedTemplate])
+    // Insert duplicate at the front
+    setTemplates((prev) => [duplicatedTemplate, ...prev])
   }
 
-
-
+  const insertAtCursor = (
+    target: "subject" | "body",
+    variable: string,
+  ) => {
+    if (target === "subject") {
+      const input = subjectInputRef.current
+      if (!input) return
+      const start = input.selectionStart ?? input.value.length
+      const end = input.selectionEnd ?? input.value.length
+      const current = formData.subject
+      const next = current.slice(0, start) + variable + current.slice(end)
+      setFormData((prev) => ({ ...prev, subject: next }))
+      // restore cursor after state update
+      requestAnimationFrame(() => {
+        input.focus()
+        const pos = start + variable.length
+        input.setSelectionRange(pos, pos)
+      })
+    } else {
+      const textarea = bodyTextareaRef.current
+      if (!textarea) return
+      const start = textarea.selectionStart ?? textarea.value.length
+      const end = textarea.selectionEnd ?? textarea.value.length
+      const current = formData.body
+      const next = current.slice(0, start) + variable + current.slice(end)
+      setFormData((prev) => ({ ...prev, body: next }))
+      requestAnimationFrame(() => {
+        textarea.focus()
+        const pos = start + variable.length
+        textarea.setSelectionRange(pos, pos)
+      })
+    }
+  }
   const replaceVariables = (text: string, data: any) => {
     let result = text
     Object.entries(data).forEach(([key, value]) => {
@@ -344,7 +396,11 @@ export default function EmailTemplatesPage() {
                         </SelectTrigger>
                         <SelectContent>
                           {templateCategories.slice(1).map((category) => (
-                            <SelectItem key={category.value} value={category.value}>
+                            <SelectItem
+                              key={category.value}
+                              value={category.value}
+                              className="cursor-pointer hover:bg-accent hover:text-accent-foreground"
+                            >
                               {category.label}
                             </SelectItem>
                           ))}
@@ -356,20 +412,11 @@ export default function EmailTemplatesPage() {
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <Label htmlFor="template-subject">Subject Line</Label>
-                      <div className="flex gap-1">
-                        {templateVariables.map((variable) => (
-                          <Button
-                            key={variable.key}
-                            color="white"
-                            className="text-xs"
-                          >
-                            {variable.key}
-                          </Button>
-                        ))}
-                      </div>
                     </div>
                     <Input
                       id="template-subject"
+                      ref={subjectInputRef}
+                      onFocus={() => setLastFocused("subject")}
                       value={formData.subject}
                       onChange={(e) => setFormData((prev) => ({ ...prev, subject: e.target.value }))}
                       placeholder="e.g., Interview Invitation - {{role}} at {{organisation_name}}"
@@ -379,25 +426,28 @@ export default function EmailTemplatesPage() {
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <Label htmlFor="template-body">Email Body</Label>
-                      <div className="flex gap-1 flex-wrap">
-                        {templateVariables.map((variable) => (
-                          <Button
-                            key={variable.key}
-                            color="white"
-                            className="text-xs"
-                          >
-                            {variable.key}
-                          </Button>
-                        ))}
-                      </div>
                     </div>
                     <Textarea
                       id="template-body"
+                      ref={bodyTextareaRef}
+                      onFocus={() => setLastFocused("body")}
                       value={formData.body}
                       onChange={(e) => setFormData((prev) => ({ ...prev, body: e.target.value }))}
                       placeholder="Enter your email template content here..."
                       className="min-h-[300px]"
                     />
+                    <div className="mt-3 flex gap-1 flex-wrap">
+                      {templateVariables.map((variable) => (
+                        <Button
+                          key={variable.key}
+                          color="white"
+                          className="text-xs"
+                          onClick={() => insertAtCursor(lastFocused, variable.key)}
+                        >
+                          {variable.key}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="flex gap-3">
@@ -487,7 +537,7 @@ export default function EmailTemplatesPage() {
 
         {/* Templates List */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredTemplates.map((template) => (
+          {sortedTemplates.map((template) => (
             <Card key={template.id} className="hover:shadow-md transition-shadow flex flex-col h-full">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
@@ -532,13 +582,32 @@ export default function EmailTemplatesPage() {
                         <span>Copy</span>
                       </Button>
                     </div>
-                    <Button
-                      color="danger"
-                      onClick={() => handleDeleteTemplate(template.id)}
-                      className="flex-shrink-0"
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          color="danger"
+                          className="flex-shrink-0 bg-red-600 text-white hover:bg-red-700"
+                          aria-label="Delete template"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete template?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the email template
+                            "{template.name}".
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDeleteTemplate(template.id)}>
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
               </CardContent>
