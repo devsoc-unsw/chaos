@@ -1,5 +1,11 @@
-import { Box, Button, Popover, TextField, Typography } from "@mui/material";
+import { Popover } from "@mui/material";
 import { useState } from "react";
+
+import Button from "components/Button";
+import Input from "components/Input";
+import { TypographyH6 } from "components/Typography";
+
+import "twin.macro";
 
 import type {
   ChangeEvent,
@@ -50,7 +56,6 @@ const InputPopup = ({
     });
   };
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    // eslint-disable-next-line no-shadow
     const { name, value } = e.target;
     setFormValue(name, value);
   };
@@ -68,32 +73,32 @@ const InputPopup = ({
         horizontal: "right",
       }}
     >
-      <Box p={2} display="flex" flexDirection="column" gap={2}>
-        <Typography variant="h6">{title}</Typography>
+      <div tw="flex flex-col gap-4 p-4 px-6">
+        <TypographyH6>{title}</TypographyH6>
         <form
           onSubmit={(e) => {
             e.preventDefault();
             onSubmit(formValues);
           }}
         >
-          <Box display="flex" flexDirection="column" gap={1}>
-            <Box display="flex" gap={1}>
-              <TextField
-                label={label}
-                name={name}
-                size="small"
-                autoFocus
-                value={formValues[name]}
-                onChange={handleInputChange}
-              />
+          <div tw="flex flex-col gap-4">
+            <div tw="flex flex-row gap-2">
+              <Input.Label>
+                <Input.LabelText required>{label}</Input.LabelText>
+                <Input
+                  required
+                  value={formValues[name]}
+                  onChange={handleInputChange}
+                />
+              </Input.Label>
               <Button type="submit">{submitText}</Button>
-            </Box>
+            </div>
             {typeof children === "function"
               ? children({ formValues, setFormValue, handleInputChange })
               : children}
-          </Box>
+          </div>
         </form>
-      </Box>
+      </div>
     </Popover>
   );
 };

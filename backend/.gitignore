@@ -3,4 +3,5 @@ target
 Cargo.lock
 prisma-cli/prisma/migrations
 /.idea
-.DS_Store
+**/.DS_Store
+.env.*

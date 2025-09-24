@@ -1,28 +1,22 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 
-import { getAdminData } from "../../api";
+import { getAdminOrgs } from "../../api";
 import AdminSidebar from "../../components/AdminSideBar";
 import { SetNavBarTitleContext } from "../../contexts/SetNavbarTitleContext";
 
 import AdminContent from "./AdminContent";
 import AdminLoading from "./AdminLoading";
 import { OrgContext } from "./OrgContext";
-import { AdminContainer } from "./admin.styled";
+
+import "twin.macro";
 
 import type { Campaign, Member, Organisation } from "./types";
-
-const isFormOpenContext = createContext({
-  isFormOpen: false,
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  setIsFormOpen: (_isFormOpen: boolean) => {},
-});
 
 const Admin = () => {
   const setNavBarTitle = useContext(SetNavBarTitleContext);
   useEffect(() => {
     setNavBarTitle("Admin");
   }, []);
-  const [sidebarWidth, setSidebarWidth] = useState("80px");
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   const [orgList, setOrgList] = useState<Organisation[]>([]);
@@ -31,7 +25,7 @@ const Admin = () => {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // FIXME: CHAOS-56, implement default behaviour for users w/ no org
+  // TODO: FIXME: CHAOS-56, implement default behaviour for users w/ no org
   const [orgSelected, setOrgSelected] = useState(0);
 
   const orgContextValue = useMemo(
@@ -43,47 +37,30 @@ const Admin = () => {
     }),
     [orgSelected, setOrgSelected, orgList, setOrgList]
   );
-  const isFormOpenContextValue = useMemo(
-    () => ({ isFormOpen, setIsFormOpen }),
-    [isFormOpen, setIsFormOpen]
-  );
 
   useEffect(() => {
     const fetchData = async () => {
-      const { organisations } = await getAdminData();
+      try {
+        const organisations = await getAdminOrgs();
 
-      setOrgList(
-        organisations.map((item) => ({
-          id: item.id,
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          icon: item.logo!,
-          orgName: item.name,
-          campaigns: item.campaigns,
-          members: item.members,
-        }))
-      );
-      if (organisations.length > 0) {
-        setOrgSelected(0);
-        const org = organisations[orgSelected];
-
-        setCampaigns(
-          org.campaigns.map((item) => ({
-            id: item.id,
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            image: item.cover_image!,
-            title: item.name,
-            startDate: item.starts_at,
-            endDate: item.ends_at,
+        // For now, create basic org list without campaigns and members
+        // These will be fetched separately when an org is selected
+        setOrgList(
+          organisations.map((item) => ({
+            id: parseInt(item.id, 10),
+            icon: item.logo || '',
+            orgName: item.name,
+            campaigns: [],
+            members: [],
           }))
         );
-
-        setMembers(
-          org.members.map((item) => ({
-            id: item.id,
-            name: item.display_name,
-            role: item.role,
-          }))
-        );
+        
+        if (organisations.length > 0) {
+          setOrgSelected(0);
+        }
+      } catch (error) {
+        console.error('Error fetching admin organizations:', error);
+        setOrgList([]);
       }
 
       setLoading(false);
@@ -118,27 +95,23 @@ const Admin = () => {
 
   return (
     <OrgContext.Provider value={orgContextValue}>
-      <isFormOpenContext.Provider value={isFormOpenContextValue}>
-        <AdminContainer>
-          <AdminSidebar
-            orgList={orgList}
-            setOrgList={setOrgList}
-            orgSelected={orgSelected}
-            setOrgSelected={setOrgSelected}
-            isFormOpen={isFormOpen}
-            setIsFormOpen={setIsFormOpen}
-            sidebarWidth={sidebarWidth}
-            setSidebarWidth={setSidebarWidth}
-          />
-          <AdminContent
-            org={orgList[orgSelected]}
-            campaigns={campaigns}
-            setCampaigns={setCampaigns}
-            members={members}
-            setMembers={setMembers}
-          />
-        </AdminContainer>
-      </isFormOpenContext.Provider>
+      <div tw="m-0 flex w-full">
+        <AdminSidebar
+          orgList={orgList}
+          setOrgList={setOrgList}
+          orgSelected={orgSelected}
+          setOrgSelected={setOrgSelected}
+          isFormOpen={isFormOpen}
+          setIsFormOpen={setIsFormOpen}
+        />
+        <AdminContent
+          org={orgList[orgSelected]}
+          campaigns={campaigns}
+          setCampaigns={setCampaigns}
+          members={members}
+          setMembers={setMembers}
+        />
+      </div>
     </OrgContext.Provider>
   );
 };

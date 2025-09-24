@@ -61,7 +61,7 @@ const Modal = ({
                 <div>
                   <Dialog.Title
                     as="h3"
-                    tw="font-medium text-2xl text-gray-900 leading-8"
+                    tw="text-2xl font-medium leading-8 text-gray-900"
                   >
                     {title}
                   </Dialog.Title>
@@ -74,7 +74,7 @@ const Modal = ({
                 {closeButton && (
                   <button
                     type="button"
-                    tw="ml-auto p-2 rounded-full transition outline-none hover:bg-slate-50 focus-within:(ring ring-blue-600/50)"
+                    tw="ml-auto rounded-full p-2 outline-none transition focus-within:ring focus-within:ring-blue-600/50 hover:bg-slate-50"
                     onClick={closeModal}
                   >
                     <XMarkIcon tw="h-7 w-7" />

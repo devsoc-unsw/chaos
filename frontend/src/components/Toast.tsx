@@ -11,7 +11,7 @@ import type { Toast as ToastObject } from "react-hot-toast";
 const ButtonContainer = styled("div", tw`border-l border-gray-200`);
 
 const ToastContainer = styled("div", {
-  ...tw`flex w-full max-w-md bg-white rounded border shadow`,
+  ...tw`flex w-full max-w-md rounded border bg-white shadow`,
 
   variants: {
     type: {
@@ -46,25 +46,19 @@ const Toast = ({ t, title, description, type = "notification" }: Props) => (
     show={t.visible}
     appear
     enter={tw`duration-200 ease-out`}
-    enterFrom={tw`opacity-0 scale-95`}
+    enterFrom={tw`scale-95 opacity-0`}
     leave={tw`duration-150 ease-in`}
-    leaveTo={tw`opacity-0 scale-95`}
+    leaveTo={tw`scale-95 opacity-0`}
   >
     <ToastContainer type={type}>
-      <div tw="flex-1 flex flex-col px-4 py-3">
+      <div tw="flex flex-1 flex-col px-4 py-3">
         <h1 tw="font-semibold">{title}</h1>
         <p tw="text-sm">{description}</p>
       </div>
       <ButtonContainer>
         <button
           type="button"
-          tw="
-            w-12 h-full py-3 px-8
-            flex items-center justify-center
-            text-blue-600 text-sm font-medium rounded-r
-            hover:(text-blue-700 bg-slate-50)
-            focus-visible:(outline-none ring-2 ring-blue-600)
-          "
+          tw="flex h-full w-12 items-center justify-center rounded-r px-8 py-3 text-sm font-medium text-blue-600 ring-2 hover:bg-slate-50 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-blue-600"
           onClick={() => toast.dismiss(t.id)}
         >
           Close

@@ -1,6 +1,7 @@
 import { Menu } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
-import tw from "twin.macro";
+import "twin.macro";
+
 import Card from "components/Card";
 
 import type { ReactNode } from "react";
@@ -16,7 +17,7 @@ const Dropdown = ({ children }: Props) => (
         <EllipsisVerticalIcon tw="h-6 w-6" aria-hidden="true" />
       </Menu.Button>
       <Menu.Items>
-        <Card tw="gap-1 mt-5 absolute right-0 z-20 text-left p-1">
+        <Card tw="absolute right-0 z-20 mt-5 gap-1 p-1 text-left">
           {children}
         </Card>
       </Menu.Items>

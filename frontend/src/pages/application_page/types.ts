@@ -1,6 +1,8 @@
 export type RoleQuestions = {
-  [role: number]: {
-    id: number;
-    text: string;
-  }[];
+  [role: string]: RoleQuestion[];
 };
+
+export type RoleQuestion = {
+  id: string;
+  text: string;
+}

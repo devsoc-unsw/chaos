@@ -9,15 +9,16 @@ interface Option {
 }
 
 interface MultiChoiceProps {
-  id: number;
+  id: string;
   question: string;
   description?: string;
   options: Option[];
   required?: boolean;
   defaultValue?: string | number;
   onChange?: (value: string | number) => void;
-  onSubmit?: (questionId: number, value: string | number) => void;
+  onSubmit?: (questionId: string, value: string | number) => void;
   disabled?: boolean;
+  answerId?: string;
 }
 
 const MultiChoice: React.FC<MultiChoiceProps> = ({
@@ -30,6 +31,7 @@ const MultiChoice: React.FC<MultiChoiceProps> = ({
   onChange,
   onSubmit,
   disabled = false,
+  answerId,
 }) => {
   const [selectedOption, setSelectedOption] = useState<string | number | undefined>(defaultValue);
 
@@ -50,6 +52,10 @@ const MultiChoice: React.FC<MultiChoiceProps> = ({
 
       {description && (
         <p className="mb-4 text-sm text-muted-foreground">{description}</p>
+      )}
+      
+      {answerId && (
+        <p className="mb-2 text-xs text-gray-400">Answer ID: {answerId}</p>
       )}
 
       <RadioGroup

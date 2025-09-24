@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
 use sqlx::{Postgres, QueryBuilder, Transaction};
 use std::ops::DerefMut;
+use sqlx::types::Json;
 
 /// The `Question` type that will be sent in API responses.
 ///
@@ -41,17 +42,20 @@ use std::ops::DerefMut;
 /// ```
 #[derive(Serialize)]
 pub struct Question {
-    id: i64,
-    title: String,
-    description: Option<String>,
-    common: bool, // Common question are shown at the start
-    required: bool,
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub id: i64,
+    pub title: String,
+    pub description: Option<String>,
+    pub common: bool, // Common question are shown at the start
+    #[serde(serialize_with = "crate::models::serde_string::serialize_vec")]
+    pub roles: Vec<i64>, // (Possibly empty) list of roles the question is for
+    pub required: bool,
 
     #[serde(flatten)]
-    question_data: QuestionData,
+    pub question_data: QuestionData,
 
-    created_at: DateTime<Utc>,
-    updated_at: DateTime<Utc>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Deserialize)]
@@ -72,6 +76,7 @@ pub struct QuestionRawData {
     title: String,
     description: Option<String>,
     common: bool, // Common question are shown at the start
+    roles: Vec<i64>,
     required: bool,
 
     question_type: QuestionType,
@@ -90,12 +95,12 @@ impl Question {
         roles: Option<Vec<i64>>,
         required: bool,
         question_data: QuestionData,
-        mut snowflake_generator: SnowflakeIdGenerator,
+        snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<i64, ChaosError> {
         question_data.validate()?;
 
-        let id = snowflake_generator.generate();
+        let id = snowflake_generator.real_time_generate();
 
         sqlx::query!(
             "
@@ -140,35 +145,42 @@ impl Question {
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Question, ChaosError> {
-        let question_raw_data: QuestionRawData = sqlx::query_as(
-            "
+        let question_raw_data: QuestionRawData = sqlx::query_as!(
+            QuestionRawData,
+            r#"
                 SELECT
                     q.id,
                     q.title,
                     q.description,
                     q.common,
+                    COALESCE(array_remove(array_agg(qr.role_id), NULL), '{}') AS "roles!: Vec<i64>",
                     q.required,
-                    q.question_type AS \"question_type: QuestionType\",
+                    q.question_type AS "question_type: QuestionType",
                     q.created_at,
                     q.updated_at,
-                    array_agg(
-                        jsonb_build_object(
+                    to_jsonb(
+                        array_agg(
+                            jsonb_build_object(
                                 'id', mod.id,
                                 'display_order', mod.display_order,
                                 'text', mod.text
-                        ) ORDER BY mod.display_order
-                    ) FILTER (WHERE mod.id IS NOT NULL) AS \"multi_option_data: Option<sqlx::types::Json<Vec<MultiOptionQuestionOption>>>\"
+                            ) ORDER BY mod.display_order
+                        ) FILTER (WHERE mod.id IS NOT NULL)
+                    ) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
                 FROM
                     questions q
+                        LEFT JOIN
+                    question_roles qr ON q.id = qr.question_id
                         LEFT JOIN
                     multi_option_question_options mod ON q.id = mod.question_id
                         AND q.question_type IN ('MultiChoice', 'MultiSelect', 'DropDown', 'Ranking')
                 WHERE q.id = $1
                 GROUP BY
                     q.id
-            "
+            "#,
+            id
         )
-            .bind(id)
+            // .bind(id)
             .fetch_one(transaction.deref_mut())
             .await?;
 
@@ -182,6 +194,7 @@ impl Question {
             title: question_raw_data.title,
             description: question_raw_data.description,
             common: question_raw_data.common,
+            roles: question_raw_data.roles,
             required: question_raw_data.required,
             question_data,
             created_at: question_raw_data.created_at,
@@ -193,35 +206,41 @@ impl Question {
         campaign_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<Question>, ChaosError> {
-        let question_raw_data: Vec<QuestionRawData> = sqlx::query_as(
-            "
+        let question_raw_data = sqlx::query_as!(
+            QuestionRawData,
+            r#"
                 SELECT
                     q.id,
                     q.title,
                     q.description,
                     q.common,
+                    COALESCE(array_remove(array_agg(qr.role_id), NULL), '{}') AS "roles!: Vec<i64>",
                     q.required,
-                    q.question_type AS \"question_type: QuestionType\",
+                    q.question_type AS "question_type: QuestionType",
                     q.created_at,
                     q.updated_at,
-                    array_agg(
-                        jsonb_build_object(
+                    to_jsonb(
+                        array_agg(
+                            jsonb_build_object(
                                 'id', mod.id,
                                 'display_order', mod.display_order,
                                 'text', mod.text
-                        ) ORDER BY mod.display_order
-                    ) FILTER (WHERE mod.id IS NOT NULL) AS \"multi_option_data: Option<sqlx::types::Json<Vec<MultiOptionQuestionOption>>>\"
+                            ) ORDER BY mod.display_order
+                        ) FILTER (WHERE mod.id IS NOT NULL)
+                    ) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
                 FROM
                     questions q
+                        LEFT JOIN
+                    question_roles qr ON q.id = qr.question_id
                         LEFT JOIN
                     multi_option_question_options mod ON q.id = mod.question_id
                         AND q.question_type IN ('MultiChoice', 'MultiSelect', 'DropDown', 'Ranking')
                 WHERE q.campaign_id = $1
                 GROUP BY
                     q.id
-            "
+            "#,
+            campaign_id
         )
-            .bind(campaign_id)
             .fetch_all(transaction.deref_mut())
             .await?;
 
@@ -238,6 +257,7 @@ impl Question {
                     title: question_raw_data.title,
                     description: question_raw_data.description,
                     common: question_raw_data.common,
+                    roles: question_raw_data.roles,
                     required: question_raw_data.required,
                     question_data,
                     created_at: question_raw_data.created_at,
@@ -254,24 +274,28 @@ impl Question {
         role_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<Question>, ChaosError> {
-        let question_raw_data: Vec<QuestionRawData> = sqlx::query_as(
-            "
+        let question_raw_data = sqlx::query_as!(
+            QuestionRawData,
+            r#"
                 SELECT
                     q.id,
                     q.title,
                     q.description,
                     q.common,
+                    COALESCE(array_remove(array_agg(qr.role_id), NULL), '{}') AS "roles!: Vec<i64>",
                     q.required,
-                    q.question_type AS \"question_type: QuestionType\",
+                    q.question_type AS "question_type: QuestionType",
                     q.created_at,
                     q.updated_at,
-                    array_agg(
-                        jsonb_build_object(
+                    to_jsonb(
+                        array_agg(
+                            jsonb_build_object(
                                 'id', mod.id,
                                 'display_order', mod.display_order,
                                 'text', mod.text
-                        ) ORDER BY mod.display_order
-                    ) FILTER (WHERE mod.id IS NOT NULL) AS \"multi_option_data: Option<sqlx::types::Json<Vec<MultiOptionQuestionOption>>>\"
+                            ) ORDER BY mod.display_order
+                        ) FILTER (WHERE mod.id IS NOT NULL)
+                    ) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
                 FROM
                     questions q
                         JOIN
@@ -279,13 +303,13 @@ impl Question {
                         LEFT JOIN
                     multi_option_question_options mod ON q.id = mod.question_id
                         AND q.question_type IN ('MultiChoice', 'MultiSelect', 'DropDown', 'Ranking')
-                WHERE q.campaign_id = $1 AND q.common = true AND qr.role_id = $2
+                WHERE q.campaign_id = $1 AND q.common = false AND qr.role_id = $2
                 GROUP BY
                     q.id
-            "
+            "#,
+            campaign_id,
+            role_id
         )
-            .bind(campaign_id)
-            .bind(role_id)
             .fetch_all(transaction.deref_mut())
             .await?;
 
@@ -302,6 +326,7 @@ impl Question {
                     title: question_raw_data.title,
                     description: question_raw_data.description,
                     common: question_raw_data.common,
+                    roles: question_raw_data.roles,
                     required: question_raw_data.required,
                     question_data,
                     created_at: question_raw_data.created_at,
@@ -317,35 +342,41 @@ impl Question {
         campaign_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<Question>, ChaosError> {
-        let question_raw_data: Vec<QuestionRawData> = sqlx::query_as(
-            "
+        let question_raw_data = sqlx::query_as!(
+            QuestionRawData,
+            r#"
                 SELECT
                     q.id,
                     q.title,
                     q.description,
                     q.common,
+                    COALESCE(array_remove(array_agg(qr.role_id), NULL), '{}') AS "roles!: Vec<i64>",
                     q.required,
-                    q.question_type AS \"question_type: QuestionType\",
+                    q.question_type AS "question_type: QuestionType",
                     q.created_at,
                     q.updated_at,
-                    array_agg(
-                        jsonb_build_object(
+                    to_jsonb(
+                        array_agg(
+                            jsonb_build_object(
                                 'id', mod.id,
                                 'display_order', mod.display_order,
                                 'text', mod.text
-                        ) ORDER BY mod.display_order
-                    ) FILTER (WHERE mod.id IS NOT NULL) AS \"multi_option_data: Option<sqlx::types::Json<Vec<MultiOptionQuestionOption>>>\"
+                            ) ORDER BY mod.display_order
+                        ) FILTER (WHERE mod.id IS NOT NULL)
+                    ) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
                 FROM
                     questions q
+                        LEFT JOIN
+                    question_roles qr ON q.id = qr.question_id
                         LEFT JOIN
                     multi_option_question_options mod ON q.id = mod.question_id
                         AND q.question_type IN ('MultiChoice', 'MultiSelect', 'DropDown', 'Ranking')
                 WHERE q.campaign_id = $1 AND q.common = true
                 GROUP BY
                     q.id
-            "
+            "#,
+            campaign_id
         )
-            .bind(campaign_id)
             .fetch_all(transaction.deref_mut())
             .await?;
 
@@ -362,6 +393,7 @@ impl Question {
                     title: question_raw_data.title,
                     description: question_raw_data.description,
                     common: question_raw_data.common,
+                    roles: question_raw_data.roles,
                     required: question_raw_data.required,
                     question_data,
                     created_at: question_raw_data.created_at,
@@ -382,19 +414,19 @@ impl Question {
         required: bool,
         question_data: QuestionData,
         transaction: &mut Transaction<'_, Postgres>,
-        snowflake_generator: SnowflakeIdGenerator,
+        snowflake_generator: &mut SnowflakeIdGenerator,
     ) -> Result<(), ChaosError> {
         question_data.validate()?;
 
         let question_type_parent: QuestionTypeParent = sqlx::query_as!(
             QuestionTypeParent,
-            "
+            r#"
                 UPDATE questions SET
                     title = $2, description = $3, common = $4,
                     required = $5, question_type = $6, updated_at = $7
                 WHERE id = $1
-                RETURNING question_type AS \"question_type: QuestionType\"
-            ",
+                RETURNING question_type AS "question_type: QuestionType"
+            "#,
             id,
             title,
             description,
@@ -491,18 +523,9 @@ impl QuestionType {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Default)]
 pub struct MultiOptionData {
-    options: Vec<MultiOptionQuestionOption>,
-}
-
-impl Default for MultiOptionData {
-    fn default() -> Self {
-        Self {
-            // Return an empty vector to be replaced by real data later on.
-            options: vec![],
-        }
-    }
+    pub options: Vec<MultiOptionQuestionOption>,
 }
 
 /// Each of these structs represent a row in the `multi_option_question_options`
@@ -510,9 +533,10 @@ impl Default for MultiOptionData {
 /// language?", there would be rows for "Rust", "Java" and "TypeScript".
 #[derive(Deserialize, Serialize)]
 pub struct MultiOptionQuestionOption {
-    id: i64,
-    display_order: i32,
-    text: String,
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub id: i64,
+    pub display_order: i32,
+    pub text: String,
 }
 
 impl QuestionData {
@@ -530,7 +554,7 @@ impl QuestionData {
         question_type: QuestionType,
         multi_option_data: Option<sqlx::types::Json<Vec<MultiOptionQuestionOption>>>,
     ) -> Self {
-        return if question_type == QuestionType::ShortAnswer {
+        if question_type == QuestionType::ShortAnswer {
             QuestionData::ShortAnswer
         } else if question_type == QuestionType::MultiChoice
             || question_type == QuestionType::MultiSelect
@@ -551,7 +575,7 @@ impl QuestionData {
             }
         } else {
             QuestionData::ShortAnswer // Should never be reached, hence return ShortAnswer
-        };
+        }
     }
 
     pub fn validate(&self) -> Result<(), ChaosError> {
@@ -561,7 +585,7 @@ impl QuestionData {
             | Self::MultiSelect(data)
             | Self::DropDown(data)
             | Self::Ranking(data) => {
-                if data.options.len() > 0 {
+                if !data.options.is_empty() {
                     return Ok(());
                 };
 
@@ -574,7 +598,7 @@ impl QuestionData {
         self,
         question_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
-        mut snowflake_generator: SnowflakeIdGenerator,
+        snowflake_generator: &mut SnowflakeIdGenerator,
     ) -> Result<(), ChaosError> {
         match self {
             Self::ShortAnswer => Ok(()),

@@ -22,11 +22,6 @@ To run the backend in a dev/testing environment:
 
 ## Code Structure
 
-### Service
-The service module contains all functions that conduct business logic, and also interact with the database. This
-separation from the request handling makes it easy to swap out any new form of requests, but reuse the same business
-logic.
-
 ### Handler
 The handler module takes care of request handling. It implements the framework or library we are using, invokes the
 service functions and responds via HTTP  with their return values.
@@ -38,8 +33,13 @@ is authorization, where middleware is used to find the userId from the user's to
 ### Models
 Models are Rust structs that represent the data. There must be a struct for each table in the database, as well as a
 struct to describe the fully joined data. E.g. A campaign struct with a array of questions, even though questions are
-stored as rows in a separate table. These models are used by the service functions when interacting with the database,
-and also when conducting business logic.
+stored as rows in a separate table. These models implement all functions that conduct business logic on the respective
+entity, and also interact with the database. This separation from request handling makes it easy to swap out any new
+form of requests, but reuse the same logic functions.
+
+### Service
+The service module contains all helper functions. For example, functions for determining a user's authorization to
+mutate an object are defined here.
 
 #### Request Path
 Request -> Middleware (optional) -> Handler -> Service -> Middleware (Optional) -> Response

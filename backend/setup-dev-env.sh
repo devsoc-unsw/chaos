@@ -19,6 +19,10 @@ S3_ACCESS_KEY="test_access_key"
 S3_SECRET_KEY="test_secret_key"
 S3_ENDPOINT="https://chaos-storage.s3.ap-southeast-1.amazonaws.com"
 S3_REGION_NAME="ap-southeast-1"
+DEV_ENV="dev"
+SMTP_USERNAME="test_username"
+SMTP_PASSWORD="test_password"
+SMTP_HOST="smtp.example.com"
 EOF
 
 # Check the user has all required tools installed.

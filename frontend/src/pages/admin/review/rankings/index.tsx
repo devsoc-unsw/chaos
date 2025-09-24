@@ -4,9 +4,11 @@ import { useContext, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import {
+  getAnsweredApplicationQuestions,
   getApplicationAnswers,
   getApplicationRatings,
   getCampaign,
+  getCommonApplicationAnswers,
   getRoleApplications,
   getRoleQuestions,
 } from "api";
@@ -23,16 +25,12 @@ import type { ApplicationStatus } from "types/api";
 
 const statusCmp = (x: ApplicationStatus, y: ApplicationStatus) => {
   switch (x) {
-    case "Success":
-      return y === "Success" ? 0 : -1;
-    case "Rejected":
-      return y === "Rejected" ? 0 : 1;
+    case "Completed":
+      return y === "Completed" ? 0 : -1;
     default:
       switch (y) {
-        case "Success":
+        case "Completed":
           return 1;
-        case "Rejected":
-          return -1;
         default:
           return 0;
       }
@@ -47,9 +45,9 @@ const rankingCmp = (x: Ranking, y: Ranking) =>
   ratingsMean(y.ratings) - ratingsMean(x.ratings);
 
 const Rankings = () => {
-  const campaignId = Number(useParams().campaignId);
+  const campaignId = String(useParams().campaignId);
   const setNavBarTitle = useContext(SetNavBarTitleContext);
-  const roleId = Number(useParams().roleId);
+  const roleId = String(useParams().roleId);
   const [loading, setLoading] = useState(true);
   const [rankings, setRankings] = useState<Ranking[]>([]);
   const [applications, setApplications] = useState<Applications>({});
@@ -93,26 +91,26 @@ const Rankings = () => {
       const { name: campaignName } = await getCampaign(campaignId);
       setNavBarTitle(`Ranking for ${campaignName}`);
 
-      const { applications } = await getRoleApplications(roleId);
-      const getRatings = async (applicationId: number) => {
+      const applications = await getRoleApplications(roleId);
+      const getRatings = async (applicationId: string) => {
         const { ratings } = await getApplicationRatings(applicationId);
         const userIdsSeen = new Set();
         return ratings
           .reverse()
           .filter((rating) => {
-            const seen = userIdsSeen.has(rating.rater_user_id);
-            userIdsSeen.add(rating.rater_user_id);
+            const seen = userIdsSeen.has(rating.rater_id);
+            userIdsSeen.add(rating.rater_id);
             return !seen;
           })
           .map((rating) => ({
-            rater: `User ${rating.rater_user_id}`,
+            rater: `User ${rating.rater_id}`,
             rating: rating.rating,
           }));
       };
 
       const rankings = await Promise.all(
         applications.map(async (application) => ({
-          name: application.user_display_name,
+          name: application.user.name,
           id: application.id,
           status: application.private_status,
           ratings: await getRatings(application.id),
@@ -120,17 +118,12 @@ const Rankings = () => {
       );
       rankings.sort(rankingCmp);
       setRankings(rankings);
-      const passIndex = rankings.findIndex((r) => r.status !== "Success");
+      const passIndex = rankings.findIndex((r) => r.status !== "Completed");
       setPassIndex(passIndex === -1 ? rankings.length : passIndex);
 
-      const { questions } = await getRoleQuestions(roleId);
+      const questions = await getRoleQuestions(campaignId, roleId);
 
-      const answers = await Promise.all(
-        applications.map(async (application) => {
-          const { answers } = await getApplicationAnswers(application.id);
-          return answers;
-        })
-      );
+      const answers = await getAnsweredApplicationQuestions(applications, campaignId, roleId);
 
       setApplications(
         Object.fromEntries(
@@ -138,11 +131,12 @@ const Rankings = () => {
             application.id,
             {
               applicationId: application.id,
-              zId: application.user_zid,
+              zId: application.user.zid,
               questions: questions.map((question, questionIdx) => ({
                 question: question.title,
-                answer: answers[applicationIdx][questionIdx]?.description,
-              })),
+                answer: Array.isArray(answers[applicationIdx][questionIdx]) ? 
+                answers[applicationIdx][questionIdx].join("\n") : answers[applicationIdx][questionIdx],
+              })),      // join multiple answers into a single string
             },
           ])
         )

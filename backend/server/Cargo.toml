@@ -9,7 +9,7 @@ edition = "2021"
 # Primary crates
 tokio = { version = "1.34", features = ["macros", "rt-multi-thread"] }
 axum = { version = "0.7", features = ["macros"] }
-axum-extra = { version = "0.9", features = ["typed-header"] }
+axum-extra = { version = "0.9.6", features = ["typed-header", "cookie"] }
 sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "chrono", "uuid"] }
 
 # Important secondary crates
@@ -27,3 +27,6 @@ rs-snowflake = "0.6"
 jsonwebtoken = "9.1"
 dotenvy = "0.15"
 handlebars = "6.2"
+lettre = { version = "0.11", default-features = false, features = ["tokio1-rustls-tls", "smtp-transport", "builder"] }
+time = "0.3.37"
+tower-http = { version = "0.6", features = ["cors"] }

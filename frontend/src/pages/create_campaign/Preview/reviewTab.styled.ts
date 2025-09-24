@@ -1,38 +1,17 @@
-import { Button, Grid } from "@mui/material";
-import { styled } from "@mui/material/styles";
+import tw, { styled } from "twin.macro";
 
-import { COLOURS } from "../../../utils/constants";
+import Button from "components/Button";
 
-export const SubmitWrapper = styled("div")`
-  display: flex;
-  justify-content: center;
-  margin-bottom: 50px;
-`;
+export const SubmitWrapper = tw.div`flex flex-row justify-center gap-5`;
 
-export const PublishButton = styled(Button)`
-  font-size: 20px;
-  margin-left: 10px;
-`;
+export const ActionButton = styled(Button, {
+  ...tw`text-[20px]`,
+});
 
-export const CreateDraftButton = styled(Button)`
-  font-size: 20px;
-  margin-right: 10px;
-`;
+export const InfoTextBox = styled("div", {
+  ...tw`bg-lightgrey-300 flex flex-col p-[3%]`,
+});
 
-export const InfoTextBox = styled("div")`
-  display: flex;
-  background-color: ${COLOURS.lightGrey};
-  padding: 3%;
-  flex-direction: column;
-`;
+export const InfoText = tw.div`p-[5px] text-center`;
 
-export const InfoText = styled("div")`
-  text-align: center;
-  padding: 5px;
-`;
-
-export const CampaignCardGrid = styled(Grid)`
-  padding-top: 30px;
-  margin-bottom: 50px;
-  margin-top: 0px;
-`;
+export const CampaignCardLayout = tw.div`m-0 flex w-full flex-row justify-center py-12`;
