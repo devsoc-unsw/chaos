@@ -332,10 +332,11 @@ export default function EmailTemplatesPage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen w-full flex justify-center mx-auto">
 
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 flex justify-center">
+        <div className="w-full max-w-6xl">
         <div className="mb-8">
           <Link
             to="/admin"
@@ -622,6 +623,7 @@ export default function EmailTemplatesPage() {
             </CardContent>
           </Card>
         )}
+        </div>
       </main>
 
       {/* Preview Dialog */}
