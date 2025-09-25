@@ -259,6 +259,10 @@ pub async fn app() -> Result<Router, ChaosError> {
             post(ApplicationHandler::create_or_get),
         )
         .route(
+            "/api/v1/campaign/:campaign_id/application/exists",
+            get(ApplicationHandler::check_application_exists),
+        )
+        .route(
             "/api/v1/campaign/:campaign_id/question",
             post(QuestionHandler::create),
         )

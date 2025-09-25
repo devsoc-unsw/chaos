@@ -304,7 +304,6 @@ impl Organisation {
                     JOIN organisation_members om
                     ON o.id = om.organisation_id 
                     WHERE om.user_id = $1
-                    AND om.role = 'Admin'
             ",
             user_id
         )

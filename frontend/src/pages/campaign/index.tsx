@@ -13,6 +13,7 @@ import { SetNavBarTitleContext } from "contexts/SetNavbarTitleContext";
 import { useUser } from "contexts/UserContext";
 
 import { isLoggedIn } from "../../utils";
+import { checkApplicationExists } from "api";
 
 import type { Campaign, Organisation, Role } from "types/api";
 
@@ -32,6 +33,7 @@ const CampaignLandingPage = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [loggedIn, setLoggedIn] = useState(false);
+  const [hasExistingApplication, setHasExistingApplication] = useState(false);
   const setNavBarTitle = useContext(SetNavBarTitleContext);
 
 
@@ -47,6 +49,24 @@ const CampaignLandingPage = () => {
     }
     checkLoginStatus();
   }, []);
+
+  useEffect(() => {
+    // If logged in and campaign loaded, check if an application exists
+    if (!loggedIn || !campaign?.id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await checkApplicationExists(campaign.id);
+        if (!cancelled) setHasExistingApplication(Boolean(res.application_exists));
+      } catch (e) {
+        // swallow - default is false
+        if (!cancelled) setHasExistingApplication(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loggedIn, campaign?.id]);
 
   useEffect(() => {
     let isMounted = true;
@@ -202,7 +222,7 @@ const CampaignLandingPage = () => {
             </div>
             <Button asChild className="w-full bg-purple-600 hover:bg-purple-700">
               <Link to={loggedIn ? `/campaign/${campaign.id}/apply` : `${import.meta.env.VITE_OAUTH_CALLBACK_URL as string}?to=${encodeURIComponent(`/campaign/${campaign.id}/apply`)}`}>
-                Apply for this Campaign
+                {loggedIn && hasExistingApplication ? "Resume application" : "Apply for this Campaign"}
               </Link>
             </Button>
           </Card>
