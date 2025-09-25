@@ -40,9 +40,45 @@ These questions are there to help familiarise you with the codebase. The goal is
     - (your answer here)
     4. How would the response object for this API call look (if any)? 
     - (your answer here)
+#### PostgreSQL
+6. Explain what each line in this query is doing:
+    ```
+    1. SELECT submitted, c.ends_at FROM applications a
+    2. JOIN campaigns c on c.id = a.campaign_id
+    3. WHERE a.id = 12345
+    ```
+    1. (your answer here)
+    2. (your answer here)
+    3. (your answer here)
+7. Explain what each line in this query is doing:
+    ```
+    1. SELECT app.submitted, c.ends_at FROM answers ans
+    2. JOIN applications app ON app.id = ans.application_id
+    3. JOIN campaigns c on c.id = app.campaign_id
+    4. WHERE ans.id = 54321
+    ```
+    1. (your answer here)
+    2. (your answer here)
+    3. (your answer here)
+    4. (your answer here)
+8. Explain what each line in this query is doing:
+    ```
+    1. SELECT o.id, o.slug, o.name, o.logo, o.created_at
+    2. FROM organisations o
+    3. JOIN organisation_members om
+    4. ON o.id = om.organisation_id 
+    5. WHERE om.user_id = 98765
+    6. AND om.role = 'Admin'
+    ```
+    1. (your answer here)
+    2. (your answer here)
+    3. (your answer here)
+    4. (your answer here)
+    5. (your answer here)
+    6. (your answer here)
 
 ### Adding to the codebase
-6. Let's say that we want to expand `CHAOS` to keep track of `University`. We want to write some code to be able to fetch a `University` by its ID. We can imagine a university struct might look something like this:
+9. Let's say that we want to expand `CHAOS` to keep track of `University`. We want to write some code to be able to fetch a `University` by its ID. We can imagine a university struct might look something like this:
     ```
     University {
         id: i64,
@@ -53,7 +89,5 @@ These questions are there to help familiarise you with the codebase. The goal is
     2. Where would you write the code that handles the HTTP request? Please include the file name, location and code in your response.
     3. What would the API URL look like?
     4. Which HTTP method would you use?
-
-#### PostgreSQL
 
 ### Frontend
