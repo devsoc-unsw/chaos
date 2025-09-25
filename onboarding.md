@@ -40,7 +40,20 @@ These questions are there to help familiarise you with the codebase. The goal is
     - (your answer here)
     4. How would the response object for this API call look (if any)? 
     - (your answer here)
-    
+
+### Adding to the codebase
+6. Let's say that we want to expand `CHAOS` to keep track of `University`. We want to write some code to be able to fetch a `University` by its ID. We can imagine a university struct might look something like this:
+    ```
+    University {
+        id: i64,
+        name: String, 
+    }
+    ```
+    1. Where would you write the code that interfaces with the database? Please include the file name, location and code in your response. 
+    2. Where would you write the code that handles the HTTP request? Please include the file name, location and code in your response.
+    3. What would the API URL look like?
+    4. Which HTTP method would you use?
+
 #### PostgreSQL
 
 ### Frontend
