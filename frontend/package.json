@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@blocknote/core": "^0.39.1",
+    "@blocknote/mantine": "^0.39.1",
+    "@blocknote/react": "^0.39.1",
     "@date-io/date-fns": "2.16.0",
     "@daypilot/daypilot-lite-react": "^4.2.1",
     "@emotion/react": "11.11.0",
@@ -49,6 +52,7 @@
     "@testing-library/jest-dom": "5.16.5",
     "@testing-library/react": "14.0.0",
     "@testing-library/user-event": "14.4.3",
+    "@tiptap/extensions": "^3.5.2",
     "bezier-easing": "2.1.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
