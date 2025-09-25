@@ -84,7 +84,9 @@ These questions are there to help familiarise you with the codebase. The goal is
     2. have even numbered ids
     3. have been submitted
     4. have been reviewed (status is not `pending`)
+- (your answer here)
 11. Write a query that retrieves all `campaigns` with **only** `dropdown` questions types, with every `dropdown` question having less than `3` answer options.
+- (your answer here)
 ### Adding to the codebase (putting it all together)
 12. Let's say that we want to expand `CHAOS` to keep track of `University`. We want to write some code to be able to <ins>fetch a university by its ID</ins>. We can imagine a university struct might look something like this:
     ```rust
