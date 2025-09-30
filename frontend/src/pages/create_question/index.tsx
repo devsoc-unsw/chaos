@@ -1,6 +1,9 @@
-import React from "react";
 import QuestionEditor from "components/QuestionEditor/QuestionEditor";
 
+/**
+ * This page is an example of how to use the QuestionEditor component.
+ * @returns {JSX.Element}
+ */
 export default function CreateQuestion() {
     return (
         <div className="h-screen w-full p-4">
