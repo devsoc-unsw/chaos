@@ -2,6 +2,7 @@ import { lazy } from "react";
 import { Route } from "react-router-dom";
 import InterviewBooking from "./pages/interview_booking/user_side";
 import AdminInterviewBooking from "./pages/interview_booking/admin_side/admin_index";
+import CreateQuestion from "./pages/create_question";
 
 const Admin = lazy(() => import("./pages/admin"));
 const ApplicationPage = lazy(() => import("./pages/application_page"));
@@ -59,14 +60,14 @@ const routes = [
   <Route
     key="Application Review"
     path="/campaign/:campaignId/apply"
-    element={<ApplicationReviewTest/>}
-    />,
+    element={<ApplicationReviewTest />}
+  />,
   <Route
     key="campaign-landing"
     path="/campaign/:organisationSlug/:campaignSlug"
     element={<CampaignLandingPage />}
   />,
-<Route
+  <Route
     key="InterviewBooking"
     path="/interview-booking"
     element={<InterviewBooking />}
@@ -75,6 +76,11 @@ const routes = [
     key="AdminInterviewBooking"
     path="/admin-interview-booking"
     element={<AdminInterviewBooking />}
+  />,
+  <Route
+    key="CreateQuestion"
+    path="/create-question"
+    element={<CreateQuestion />}
   />,
 ];
 
