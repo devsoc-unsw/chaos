@@ -211,7 +211,9 @@ pub async fn app() -> Result<Router, ChaosError> {
         )
         .route(
             "/api/v1/application/:application_id/rating",
-            post(ApplicationHandler::create_rating),
+            get(ApplicationHandler::get_rating_by_current_user)
+                .post(ApplicationHandler::create_rating)
+                .put(ApplicationHandler::update_rating),
         )
         .route(
             "/api/v1/application/:application_id/ratings",
