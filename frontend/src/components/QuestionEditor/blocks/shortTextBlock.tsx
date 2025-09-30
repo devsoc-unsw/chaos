@@ -54,20 +54,11 @@ export const shortTextBlock = createReactBlockSpec(
                         rows={2}
                     />
 
-                    {/* Placeholder Editor */}
+                    {/* Answer Field */}
                     <input
                         type="text"
-
                         onChange={(e) => updatePlaceholder(e.target.value)}
-                        className="w-full text-sm border-none outline-none bg-transparent mt-2 text-gray-500"
-                        placeholder="Enter placeholder text..."
-                    />
-
-                    {/* Sample Answer Field */}
-                    <input
-                        type="text"
-                        disabled
-                        placeholder={block.props.placeholder || "Enter your answer..."}
+                        placeholder={"Enter your answer..."}
                         className="w-full text-sm border border-gray-200 bg-gray-100 p-2 rounded mt-2 text-gray-400"
                     />
                 </div>

@@ -1,5 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { createReactBlockSpec } from "@blocknote/react";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 type Option = {
     text: string;
@@ -21,6 +28,7 @@ export const dropDownQuestionBlock = createReactBlockSpec(
         render: (props) => {
             const { block, editor } = props;
             const options: Option[] = JSON.parse(block.props.options);
+            const [selectedValue, setSelectedValue] = useState("");
 
             const updateQuestion = (newQuestion: string) => {
                 editor.updateBlock(block, {
@@ -78,14 +86,26 @@ export const dropDownQuestionBlock = createReactBlockSpec(
                         rows={2}
                     />
 
-                    <select disabled className="w-full border border-gray-300 bg-gray-100 p-2 rounded mb-3 text-gray-500">
-                        <option>Select an option...</option>
-                        {options.map((option, index) => (
-                            <option key={index}>{option.text}</option>
-                        ))}
-                    </select>
+                    {/* Dropdown with Shadcn UI Select */}
+                    <div className="relative z-50 mb-3">
+                        <Select value={selectedValue} onValueChange={setSelectedValue}>
+                            <SelectTrigger className="w-full border-purple-300 hover:border-purple-400 focus:border-purple-500 focus:ring-purple-200">
+                                <SelectValue placeholder="Select an option..." />
+                            </SelectTrigger>
+                            <SelectContent className="z-[60]">
+                                {options.map((option, index) => (
+                                    <SelectItem key={index} value={option.text}>
+                                        {option.text}
+                                        {option.correct && (
+                                            <span className="ml-2 text-green-600 text-xs">✓ Correct</span>
+                                        )}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2 relative z-0">
                         {options.map((option, index) => (
                             <div key={index} className="flex items-center gap-2">
                                 <input

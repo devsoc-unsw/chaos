@@ -2,7 +2,6 @@ import React from "react";
 import { createReactBlockSpec } from "@blocknote/react";
 
 type Option = {
-    id: string;
     text: string;
     correct: boolean;
 };
@@ -13,32 +12,18 @@ export const multiSelectQuestionBlock = createReactBlockSpec(
         type: "multiSelectQuestion",
         propSchema: {
             question: { default: "" },
-            description: { default: "" },
-            options: { default: JSON.stringify([{ id: "opt-1", text: "Option 1", correct: false }]) },
+            options: { default: JSON.stringify([{ text: "Option 1", correct: false }]) },
         },
         content: "none",
     },
     {
         render: (props) => {
             const { block, editor } = props;
-            let parsedOptions = JSON.parse(block.props.options);
-
-            // Migrate old options that don't have IDs
-            const options: Option[] = parsedOptions.map((option: any, index: number) => ({
-                id: option.id || `migrated-${index}-${Date.now()}`,
-                text: option.text,
-                correct: option.correct || false,
-            }));
+            const options: Option[] = JSON.parse(block.props.options);
 
             const updateQuestion = (newQuestion: string) => {
                 editor.updateBlock(block, {
                     props: { ...block.props, question: newQuestion },
-                });
-            };
-
-            const updateDescription = (newDescription: string) => {
-                editor.updateBlock(block, {
-                    props: { ...block.props, description: newDescription },
                 });
             };
 
@@ -51,8 +36,7 @@ export const multiSelectQuestionBlock = createReactBlockSpec(
             };
 
             const addOption = () => {
-                const newId = `opt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                const newOptions = [...options, { id: newId, text: `Option ${options.length + 1}`, correct: false }];
+                const newOptions = [...options, { text: `Option ${options.length + 1}`, correct: false }];
                 editor.updateBlock(block, {
                     props: { ...block.props, options: JSON.stringify(newOptions) },
                 });
@@ -78,13 +62,6 @@ export const multiSelectQuestionBlock = createReactBlockSpec(
                         onChange={(e) => updateQuestion(e.target.value)}
                         className="w-full text-base font-medium border border-gray-400 bg-gray-50 p-2 rounded mb-3 text-black"
                         placeholder="Enter your question..."
-                    />
-
-                    <textarea
-                        onChange={(e) => updateDescription(e.target.value)}
-                        className="w-full text-sm border border-gray-300 bg-gray-50 p-2 rounded mb-3 text-gray-600 resize-none"
-                        placeholder="Add a description (optional)..."
-                        rows={2}
                     />
 
                     <div className="space-y-2">
