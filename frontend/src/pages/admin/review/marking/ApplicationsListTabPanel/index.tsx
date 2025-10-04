@@ -1,35 +1,31 @@
 import { Box, Divider, Grid, TextField, Typography } from "@mui/material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import tw from "twin.macro";
 
 import { MarkChip } from "components";
 import ApplicationPreviewer from "components/ApplicationPreviewer";
-import useFetch from "hooks/useFetch";
 
 import { RatingChips } from "./applicationsListTabPanel";
 
 import type { ApplicationWithQuestions } from "pages/admin/types";
-import type { PostCommentRespone } from "types/api";
 
 type Props = {
   application: ApplicationWithQuestions;
   setMark: (mark: number) => void;
+  setComment: (comment: string) => void;
 };
 
-const ApplicationsListTabPanel = ({ application, setMark }: Props) => {
-  const [comments, setComments] = useState("");
+const ApplicationsListTabPanel = ({ application, setMark, setComment }: Props) => {
+  const [comments, setComments] = useState(application.comment || "");
 
-  const { put: putComment } = useFetch<PostCommentRespone>("/comment", {
-    abortBehaviour: "sameUrl",
-  });
+  // Update local comments state when application changes
+  useEffect(() => {
+    setComments(application.comment || "");
+  }, [application.applicationId, application.comment]);
 
-  const updateComments = () => {
-    const reqBody = {
-      description: comments,
-      application_id: application.applicationId,
-    };
-
-    void putComment("/", { body: reqBody });
+  const handleCommentChange = (newComment: string) => {
+    setComments(newComment);
+    setComment(newComment);
   };
 
   return (
@@ -98,8 +94,8 @@ const ApplicationsListTabPanel = ({ application, setMark }: Props) => {
           rows={4}
           fullWidth
           placeholder="Your comments"
-          onChange={(e) => setComments(e.target.value)}
-          onBlur={updateComments}
+          value={comments}
+          onChange={(e) => handleCommentChange(e.target.value)}
         />
       </Box>
     </div>
