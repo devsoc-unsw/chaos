@@ -118,7 +118,7 @@ pub async fn app() -> Result<Router, ChaosError> {
     let state = init_app_state().await;
 
     let cors = CorsLayer::new()
-        .allow_methods([Method::GET, Method::POST, Method::DELETE, Method::PUT])
+        .allow_methods([Method::GET, Method::POST, Method::DELETE, Method::PUT, Method::PATCH])
         .allow_headers([header::ACCEPT, header::COOKIE, header::SET_COOKIE, header::CONTENT_TYPE])
         .allow_credentials(true)
         .allow_origin([
