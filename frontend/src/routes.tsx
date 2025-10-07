@@ -32,7 +32,7 @@ const routes = [
   <Route key="auth" path="/auth/callback" element={<AuthSuccess />} />,
   <Route key="signup" path="/signup" element={<SignupPage />} />,
   <Route key="landing" path="/" element={<LandingPage />} />,
-  <Route key="review" path="/admin/review/:campaignSlug" element={<Review />}>
+  <Route key="review" path="/admin/review/:campaignId" element={<Review />}>
     <Route key="marking" path=":roleSlug/marking" element={<Marking />} />,
     <Route key="rankings" path=":roleSlug/rankings" element={<Rankings />} />,
     <Route

@@ -220,6 +220,31 @@ impl Application {
 
         Ok(id)
     }
+
+    /// Checks if an application exists for a given campaign and user.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `campaign_id` - ID of the campaign to check
+    /// * `user_id` - ID of the user to check
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<bool, ChaosError>` - True if application exists, false otherwise
+    pub async fn check_application_exists(
+        campaign_id: i64,
+        user_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<bool, ChaosError> {
+        let application = sqlx::query!(
+            "SELECT id FROM applications WHERE campaign_id = $1 AND user_id = $2",
+            campaign_id, user_id)
+        .fetch_optional(transaction.deref_mut())
+        .await?;
+
+        Ok(application.is_some())
+    }
     
     /// Creates a new application in the system.
     /// 
@@ -366,7 +391,7 @@ impl Application {
                 JOIN users u ON u.id = a.user_id
                 JOIN application_roles ar on ar.application_id = a.id
                 JOIN campaigns c on c.id = a.campaign_id
-                WHERE ar.id = $1 AND a.submitted = true
+                WHERE ar.campaign_role_id = $1 AND a.submitted = true
             ",
             role_id
         )

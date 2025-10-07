@@ -25,12 +25,13 @@ import type { ApplicationWithQuestions } from "pages/admin/types";
 
 const Marking = () => {
   const setNavBarTitle = useContext(SetNavBarTitleContext);
-  const campaignId = String(useParams().campaignId);
+  const params = useParams();
+  const campaignId = String(params.campaignId ?? params.campaignSlug);
   const [loading, setLoading] = useState(true);
   const [applications, setApplications] = useState<ApplicationWithQuestions[]>(
     []
   );
-  const roleId = String(useParams().roleId);
+  const roleId = String(params.roleId ?? params.roleSlug);
   const [selectedApplication, setSelectedApplication] = useState(0);
 
   useEffect(() => {
@@ -41,8 +42,10 @@ const Marking = () => {
       setNavBarTitle(`Marking for ${campaignName}`);
 
       const applications = await getRoleApplications(roleId);
+      console.log(applications[0]);
 
       const questions = await getRoleQuestions(campaignId, roleId);
+      const commonQuestions = await getCommonQuestions(campaignId);
       const answers = await getAnsweredApplicationQuestions(applications, campaignId, roleId);
       const ratings = await Promise.all(
         applications.map(async (application) => {
@@ -54,20 +57,40 @@ const Marking = () => {
       setApplications(
         applications.map((application, applicationIdx) => ({
           applicationId: application.id,
-          zId: application.user.zid,
+          campaign_id: application.campaign_id,
+          user: application.user,
+          status: application.status,
+          private_status: application.private_status,
+          applied_roles: application.applied_roles,
+          zId: application.user.zid || "N/A", // Convenience field extracted from user.zid
           mark: ratings[applicationIdx]?.rating,
-          questions: questions.map((question, questionIdx) => ({
-            question: question.title,
-            answer: Array.isArray(answers[applicationIdx][questionIdx]) ? 
-                    answers[applicationIdx][questionIdx].join("\n") : answers[applicationIdx][questionIdx],
-          })),      // join multiple answers into a single string
+          questions: [
+            // Common questions first
+            ...commonQuestions.map((question) => {
+              const answer = answers[applicationIdx][question.id];
+              return {
+                question: question.title,
+                answer: Array.isArray(answer) ? answer.join("\n") : (answer || "No answer provided"),
+                isCommon: true,
+              };
+            }),
+            // Role-specific questions second
+            ...questions.map((question) => {
+              const answer = answers[applicationIdx][question.id];
+              return {
+                question: question.title,
+                answer: Array.isArray(answer) ? answer.join("\n") : (answer || "No answer provided"),
+                isCommon: false,
+              };
+            }),
+          ],
         }))
       );
       setLoading(false);
     };
 
     void fetchData();
-  }, [roleId]);
+  }, [roleId, campaignId]);
 
   const setMark = (newMark: number) => {
     const newApplications = [...applications];

@@ -231,7 +231,7 @@ export const getCommonApplicationAnswers = (applicationId: string) =>
 
 export const getApplicationRatings = (applicationId: string) =>
   authenticatedRequest<{ ratings: ApplicationRating[] }>({
-    path: `/v1/${applicationId}/ratings`,
+    path: `/v1/application/${applicationId}/ratings`,
   });
 
 // Update application roles (selection and preference)
@@ -293,6 +293,34 @@ export const deleteAnswer = (answerId: string) =>
     method: "DELETE",
     path: `/v1/answer/${answerId}`,
     jsonResp: false,
+  });
+
+// Submit an application
+export const submitApplication = (applicationId: string) =>
+  authenticatedRequest({
+    method: "POST",
+    path: `/v1/application/${applicationId}/submit`,
+    jsonResp: false,
+  });
+
+// Check if current user already has an application for this campaign
+export const checkApplicationExists = (campaignId: string) =>
+  authenticatedRequest<{ application_exists: boolean}>({
+    path: `/v1/campaign/${campaignId}/application/exists`,
+  });
+
+// Get campaigns for an organisation
+export const getOrganisationCampaigns = (organisationId: string) =>
+  authenticatedRequest<Array<{
+    id: string;
+    slug: string;
+    name: string;
+    cover_image?: string | null;
+    description?: string | null;
+    starts_at: string;
+    ends_at: string;
+  }>>({
+    path: `/v1/organisation/${organisationId}/campaigns`,
   });
 
 // Legacy function - keeping for backward compatibility
@@ -372,16 +400,12 @@ export const inviteUserToOrg = (
 /**
  * helper function to retrieve list of all answers in every application,
  * retrieving answer option text for question types with predefined answers such as
- * multiple choice.
- * 
- * first layer of [] -> list of applications
- * second layer pf [] -> list of questions/answers
- * third (optional) layer of [] -> list of selected answers for multiselect questions
+ * multiple choice. Returns answers mapped by question ID for proper matching.
  * 
  * @param applications 
  * @param campaignId 
  * @param roleId 
- * @returns string[][][] or string[][]
+ * @returns Record<string, string | string[]>[] - array of answer maps per application
  */
 export const getAnsweredApplicationQuestions = (applications: ApplicationDetails[], campaignId: string, roleId: string) => {
   return Promise.all(
@@ -395,45 +419,56 @@ export const getAnsweredApplicationQuestions = (applications: ApplicationDetails
       const completeAnswers = [...commonAnswers, ...roleAnswers];
       const completeQuestions = [...commonQuestions, ...roleQuestions];
 
-      return completeAnswers.map((answer) => {
+      // Create a map of answers by question ID
+      const answerMap: Record<string, string | string[]> = {};
+      
+      completeAnswers.forEach((answer) => {
         // normalize to use answer.answer_data
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const data: any = (answer as any).answer_data ?? (answer as any).data;
-        const type = answer.answer_type;
+        const questionId = answer.question_id;
+        
         switch (answer.answer_type) {
           case QuestionType.ShortAnswer:
-            return data as string;
+            answerMap[questionId] = data as string;
+            break;
           
           case QuestionType.MultiChoice:
             // search question list for questions of Multichoice type
-            return completeQuestions.find(question => 
-              question.question_type === QuestionType.MultiChoice &&
-              // then search that question's multichoice options for the option which was selected
-              question.data.options.some(option => option.id === data)
-            )?.data.options.find(option => option.id === data)?.text; // return the text of the actual question option
+            const mcQuestion = completeQuestions.find(question => 
+              question.id === questionId && question.question_type === QuestionType.MultiChoice
+            );
+            answerMap[questionId] = mcQuestion?.data.options.find(option => option.id === data)?.text || '';
+            break;
             
           case QuestionType.MultiSelect:
-            return completeQuestions.find(question => 
-                question.question_type === QuestionType.MultiSelect &&
-                question.data.options.some(option => Array.isArray(data) && data.includes(option.id))
-              )?.data.options.filter(option => Array.isArray(data) && data.includes(option.id))
-              .map(option => option.text); // return list of text of selected options
+            const msQuestion = completeQuestions.find(question => 
+              question.id === questionId && question.question_type === QuestionType.MultiSelect
+            );
+            answerMap[questionId] = msQuestion?.data.options
+              .filter(option => Array.isArray(data) && data.includes(option.id))
+              .map(option => option.text) || [];
+            break;
             
           case QuestionType.DropDown:
-            return completeQuestions.find(question => 
-                question.question_type === QuestionType.DropDown &&
-                question.data.options.some(option => option.id === data)
-                )?.data.options.find(option => option.id === data)
-                ?.text;
+            const ddQuestion = completeQuestions.find(question => 
+              question.id === questionId && question.question_type === QuestionType.DropDown
+            );
+            answerMap[questionId] = ddQuestion?.data.options.find(option => option.id === data)?.text || '';
+            break;
           
           case QuestionType.Ranking:
-            return completeQuestions.find(question => 
-                question.question_type === QuestionType.Ranking &&
-                question.data.options.some(option => Array.isArray(data) && data.includes(option.id))
-              )?.data.options.filter(option => Array.isArray(data) && data.includes(option.id))
-              .map(option => option.text);
+            const rankQuestion = completeQuestions.find(question => 
+              question.id === questionId && question.question_type === QuestionType.Ranking
+            );
+            answerMap[questionId] = rankQuestion?.data.options
+              .filter(option => Array.isArray(data) && data.includes(option.id))
+              .map(option => option.text) || [];
+            break;
         }
       });
+      
+      return answerMap;
     })
   );
 }

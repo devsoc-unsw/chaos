@@ -26,6 +26,14 @@ use axum::{async_trait, RequestPartsExt};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+/// Request structure for login.
+/// 
+/// Contains the redirect URL for the login page.
+#[derive(Deserialize)]
+pub struct LoginRequest {
+    pub to: Option<String>,
+}
+
 /// Request structure for OAuth authentication.
 /// 
 /// Contains the authorization code received from the OAuth provider.
@@ -33,6 +41,9 @@ use std::collections::HashMap;
 pub struct AuthRequest {
     /// Authorization code from the OAuth provider
     pub code: String,
+
+    /// Redirect URL (Optional)
+    pub state: Option<String>,
 }
 
 /// User profile information received from Google OAuth.

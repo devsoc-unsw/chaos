@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 import { useParams } from "react-router-dom";
 import ShortAnswer from "components/QuestionComponents/ShortAnswer";
 import Dropdown, { NO_ANSWER_VALUE } from "components/QuestionComponents/Dropdown";
 import MultiChoice from "components/QuestionComponents/MultiChoice";
 import MultiSelect from "components/QuestionComponents/MultiSelect";
 import Ranking from "components/QuestionComponents/Ranking";
-import { getCampaign, getCampaignRoles, getCommonQuestions, getRoleQuestions, createOrGetApplication, getCommonApplicationAnswers, getApplicationAnswers, createAnswer, updateAnswer, deleteAnswer, updateApplicationRoles, getApplicationRoles } from "api";
+import { getCampaign, getCampaignRoles, getCommonQuestions, getRoleQuestions, createOrGetApplication, getCommonApplicationAnswers, getApplicationAnswers, createAnswer, updateAnswer, deleteAnswer, updateApplicationRoles, getApplicationRoles, submitApplication } from "api";
 import type { Campaign, Role, QuestionResponse, QuestionData, Answer, ApplicationRoleUpdateInput } from "types/api";
 import { Button } from "components/ui/button";
 import {
@@ -29,6 +30,9 @@ const ApplicationReview: React.FC = () => {
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const [loading, setLoading] = useState(true);
   const [showReviewDialog, setShowReviewDialog] = useState(false);
+  const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [applicationId, setApplicationId] = useState<string | null>(null);
   const [commonAnswers, setCommonAnswers] = useState<Answer[]>([]);
   const [roleAnswers, setRoleAnswers] = useState<Record<string, Answer[]>>({});
@@ -161,10 +165,58 @@ const ApplicationReview: React.FC = () => {
       void syncRoles(next);
       return next;
     });
+    // Clear validation error when user changes roles
+    if (validationError) {
+      setValidationError(null);
+    }
+  };
+
+  const handleDragEnd = (result: DropResult) => {
+    const { source, destination, draggableId } = result;
+    if (!destination) return;
+
+    // Reorder within selected list
+    if (source.droppableId === "selected-roles" && destination.droppableId === "selected-roles") {
+      if (source.index === destination.index) return;
+      setSelectedRoleIds((prev) => {
+        const next = [...prev];
+        const [moved] = next.splice(source.index, 1);
+        next.splice(destination.index, 0, moved);
+        void syncRoles(next);
+        return next;
+      });
+      return;
+    }
+
+    // Move from available -> selected (insert at destination.index)
+    if (source.droppableId === "available-roles" && destination.droppableId === "selected-roles") {
+      setSelectedRoleIds((prev) => {
+        if (prev.includes(draggableId)) return prev; // already selected
+        const next = [...prev];
+        next.splice(destination.index, 0, draggableId);
+        void syncRoles(next);
+        return next;
+      });
+      return;
+    }
+
+    // Move from selected -> available (remove)
+    if (source.droppableId === "selected-roles" && destination.droppableId === "available-roles") {
+      setSelectedRoleIds((prev) => {
+        const next = prev.filter((rid) => rid !== draggableId);
+        void syncRoles(next);
+        return next;
+      });
+      return;
+    }
   };
 
   const setAnswer = (questionId: string, value: unknown) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
+    // Clear validation error when user makes changes
+    if (validationError) {
+      setValidationError(null);
+    }
   };
 
   const submitAnswer = async (questionId: string, value: unknown, questionType: string) => {
@@ -323,6 +375,74 @@ const ApplicationReview: React.FC = () => {
     }
   };
 
+  const validateRequiredAnswers = (): { isValid: boolean; missingQuestions: string[] } => {
+    const missingQuestions: string[] = [];
+    
+    // Check common questions
+    commonQuestions.forEach(question => {
+      if (question.required) {
+        const answer = answers[String(question.id)];
+        const isEmpty = answer === null || answer === undefined || answer === '' || 
+                       answer === NO_ANSWER_VALUE || 
+                       (Array.isArray(answer) && answer.length === 0);
+        if (isEmpty) {
+          missingQuestions.push(question.title);
+        }
+      }
+    });
+    
+    // Check role-specific questions
+    selectedRoleIds.forEach(roleId => {
+      const roleQuestions = questionsByRole[roleId] || [];
+      roleQuestions.forEach(question => {
+        if (question.required) {
+          const answer = answers[String(question.id)];
+          const isEmpty = answer === null || answer === undefined || answer === '' || 
+                         answer === NO_ANSWER_VALUE || 
+                         (Array.isArray(answer) && answer.length === 0);
+          if (isEmpty) {
+            missingQuestions.push(question.title);
+          }
+        }
+      });
+    });
+    
+    return {
+      isValid: missingQuestions.length === 0,
+      missingQuestions
+    };
+  };
+
+  const handleSubmitClick = () => {
+    setValidationError(null); // Clear any previous errors
+    
+    const validation = validateRequiredAnswers();
+    if (!validation.isValid) {
+      setValidationError(`Please answer all required questions:\n${validation.missingQuestions.join('\n')}`);
+      return;
+    }
+    
+    // If validation passes, open the confirmation modal
+    setShowSubmitDialog(true);
+  };
+
+  const handleConfirmSubmit = async () => {
+    if (!applicationId) return;
+    
+    setSubmitting(true);
+    try {
+      await submitApplication(applicationId);
+      alert('Application submitted successfully!');
+      setShowSubmitDialog(false);
+      // Optionally redirect or update UI
+    } catch (error) {
+      console.error('Failed to submit application:', error);
+      alert('Failed to submit application. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const renderQuestion = (q: QuestionResponse) => {
     const options = (q.question_type === "MultiChoice" || q.question_type === "MultiSelect" || q.question_type === "DropDown" || q.question_type === "Ranking")
       ? (q.data.options.map((o) => ({ id: o.id, label: o.text })) ?? [])
@@ -442,43 +562,118 @@ const ApplicationReview: React.FC = () => {
         <div className="flex gap-8 w-full">
           {/* Sidebar – multi-select roles */}
           <div className="w-80 flex-shrink-0">
-            <h2 className="text-xl font-semibold mb-4 text-gray-900">Available Roles</h2>
-            <div className="space-y-2">
-              {roles.map((role) => {
-                const selected = selectedRoleIds.includes(String(role.id));
-                return (
-                  <div
-                    key={role.id}
-                    className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                      selected ? "bg-blue-50 border-blue-300" : "bg-white border-gray-200 hover:border-gray-300"
-                    }`}
-                    onClick={() => void toggleRole(String(role.id))}
-                  >
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-medium text-sm">{role.name}</h3>
-                      <div className="flex items-center gap-2">
-                        {role.description && (
-                          <div className="group relative">
-                            <Info tw="h-4 w-4 text-blue-500 hover:text-blue-600 transition-colors" />
-                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-                              {role.description}
-                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                            </div>
-                          </div>
-                        )}
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          selected 
-                            ? "bg-blue-100 text-blue-700" 
-                            : "bg-gray-100 text-gray-500"
-                        }`}>
-                          {selected ? "Selected" : "Select"}
-                        </span>
-                      </div>
+            <h2 className="text-xl font-semibold mb-4 text-gray-900">Roles</h2>
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <div className="space-y-6">
+                {/* Selected roles (draggable & reorderable) */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-2">Selected Roles</h3>
+                  <p className="text-sm text-gray-500 mb-2">Drag to reorder based on preference</p>
+                  <Droppable droppableId="selected-roles">
+                   {(provided) => (
+                     <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-2 min-h-[12px] border-2 border-dashed border-gray-200 rounded-lg p-2">
+                       {selectedRoleIds.length === 0 && (
+                         <div className="text-sm text-gray-500 px-2 py-1">Drag a role from below to apply</div>
+                       )}
+                      {selectedRoleIds.map((rid, index) => {
+                        const role = roles.find((r) => String(r.id) === rid);
+                        if (!role) return null;
+                        const selected = true;
+                        return (
+                          <Draggable key={rid} draggableId={rid} index={index}>
+                            {(dragProvided) => (
+                              <div
+                                ref={dragProvided.innerRef}
+                                {...dragProvided.draggableProps}
+                                {...dragProvided.dragHandleProps}
+                                className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                                  selected ? "bg-blue-50 border-blue-300" : "bg-white border-gray-200 hover:border-gray-300"
+                                }`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-semibold bg-blue-200 text-blue-800 rounded-full">
+                                      {index + 1}
+                                    </span>
+                                    <h3 className="font-medium text-sm truncate">{role.name}</h3>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    {role.description && (
+                                      <div className="group relative">
+                                        <Info tw="h-4 w-4 text-blue-500 hover:text-blue-600 transition-colors" />
+                                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                                          {role.description}
+                                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                                        </div>
+                                      </div>
+                                    )}
+                                    <span className={`text-xs px-2 py-1 rounded-full ${
+                                      selected 
+                                        ? "bg-blue-100 text-blue-700" 
+                                        : "bg-gray-100 text-gray-500"
+                                    }`}>
+                                      Selected
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </Draggable>
+                        );
+                      })}
+                      {provided.placeholder}
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  )}
+                  </Droppable>
+                </div>
+
+                {/* Available roles (draggable into selected) */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-2">Available Roles</h3>
+                  <Droppable droppableId="available-roles">
+                    {(provided) => (
+                       <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-2 min-h-[12px] border-2 border-dashed border-gray-200 rounded-lg p-2">
+                         {roles.filter((r) => !selectedRoleIds.includes(String(r.id))).length === 0 && (
+                           <div className="text-sm text-gray-500 px-2 py-1">All roles selected</div>
+                         )}
+                        {roles
+                          .filter((r) => !selectedRoleIds.includes(String(r.id)))
+                          .map((role, index) => (
+                            <Draggable key={String(role.id)} draggableId={String(role.id)} index={index}>
+                              {(dragProvided) => (
+                                <div
+                                  ref={dragProvided.innerRef}
+                                  {...dragProvided.draggableProps}
+                                  {...dragProvided.dragHandleProps}
+                                  className="p-3 rounded-lg border-2 cursor-pointer transition-all bg-white border-gray-200 hover:border-gray-300"
+                                  onClick={() => void toggleRole(String(role.id))}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <h3 className="font-medium text-sm">{role.name}</h3>
+                                    <div className="flex items-center gap-2">
+                                      {role.description && (
+                                        <div className="group relative">
+                                          <Info tw="h-4 w-4 text-blue-500 hover:text-blue-600 transition-colors" />
+                                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                                            {role.description}
+                                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                                          </div>
+                                        </div>
+                                      )}
+                                      <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-500">Select</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </Draggable>
+                          ))}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </div>
+              </div>
+            </DragDropContext>
           </div>
 
           {/* Main Content */}
@@ -533,20 +728,30 @@ const ApplicationReview: React.FC = () => {
           </div>
         </div>
 
-        {/* Review Answers Button - Fixed position bottom right */}
-        <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
-          <DialogTrigger asChild>
-            <Button 
-              className="fixed bottom-8 right-8 shadow-lg"
-              size="lg"
-            >
-              Review Answers
-            </Button>
-          </DialogTrigger>
+        {/* Submit Button - Fixed position bottom right */}
+        <div className="fixed bottom-8 right-8 flex flex-col items-end gap-2">
+          {validationError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 max-w-sm">
+              <p className="text-red-700 text-sm whitespace-pre-line">
+                {validationError}
+              </p>
+            </div>
+          )}
+          <Button 
+            className="shadow-lg"
+            size="lg"
+            onClick={handleSubmitClick}
+          >
+            Submit
+          </Button>
+        </div>
+
+        {/* Submit Confirmation Modal */}
+        <Dialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                Application Review Summary
+                Confirm Application Submission
                 {applicationId && (
                   <span className="text-sm font-normal text-gray-500 ml-2">
                     (ID: {applicationId})
@@ -554,6 +759,12 @@ const ApplicationReview: React.FC = () => {
                 )}
               </DialogTitle>
             </DialogHeader>
+            
+            <div className="mb-6">
+              <p className="text-gray-700 mb-4">
+                Please review your application before submitting. Once submitted, you won't be able to make changes.
+              </p>
+            </div>
             
             {/* Applied Roles Section */}
             <div className="mb-6">
@@ -584,7 +795,10 @@ const ApplicationReview: React.FC = () => {
                 <div className="space-y-4">
                   {commonQuestions.map((question) => (
                     <div key={question.id} className="border-l-4 border-gray-200 pl-4">
-                      <h4 className="font-medium text-gray-900 mb-1">{question.title}</h4>
+                      <h4 className="font-medium text-gray-900 mb-1">
+                        {question.title}
+                        {question.required && <span className="text-red-500 ml-1">*</span>}
+                      </h4>
                       {question.description && (
                         <p className="text-sm text-gray-600 mb-2">{question.description}</p>
                       )}
@@ -613,7 +827,10 @@ const ApplicationReview: React.FC = () => {
                     <div className="space-y-4">
                       {roleQuestions.map((question) => (
                         <div key={question.id} className="border-l-4 border-blue-200 pl-4">
-                          <h4 className="font-medium text-gray-900 mb-1">{question.title}</h4>
+                          <h4 className="font-medium text-gray-900 mb-1">
+                            {question.title}
+                            {question.required && <span className="text-red-500 ml-1">*</span>}
+                          </h4>
                           {question.description && (
                             <p className="text-sm text-gray-600 mb-2">{question.description}</p>
                           )}
@@ -629,6 +846,24 @@ const ApplicationReview: React.FC = () => {
                 </div>
               );
             })}
+
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowSubmitDialog(false)}
+                disabled={submitting}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleConfirmSubmit}
+                disabled={submitting}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {submitting ? "Submitting..." : "Confirm Submit"}
+              </Button>
+            </div>
           </DialogContent>
         </Dialog>
       </div>

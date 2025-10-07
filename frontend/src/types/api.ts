@@ -55,10 +55,11 @@ export type ApplicationDetails = {
   applied_roles: ApplicationAppliedRoleDetails[];
 }
 
-// models::application::ApplicationRoleDetails
+// models::application::ApplicationAppliedRoleDetails
 export type ApplicationAppliedRoleDetails = {
   campaign_role_id: string;
   role_name: string;
+  preference: number;
 }
 
 export type Question = {
@@ -122,7 +123,7 @@ export type QuestionInput = {
 export type OrganisationRole = "User" | "Admin";
 
 // models::application::ApplicationStatus
-export type ApplicationStatus = "Draft" | "Pending" | "Completed";
+export type ApplicationStatus = "Pending" | "Rejected" | "Successful";
 
 // models::application::NewApplication
 export type NewApplication = {
@@ -306,12 +307,12 @@ export type UserGender = "Male" | "Female" | "Unspecified";
 export type User = {
   id: string;
   email: string;
-  zid: string;
+  zid?: string;
   name: string;
-  pronouns: string;
-  gender: string;
-  degree_name: string;
-  degree_starting_year: number;
+  pronouns?: string;
+  gender?: string;
+  degree_name?: string;
+  degree_starting_year?: number;
   role?: UserRole
 };
 

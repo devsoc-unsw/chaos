@@ -6,6 +6,7 @@
 use crate::models::error::ChaosError;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Pool, Postgres, Transaction};
+use crate::models::organisation::OrganisationDetails;
 use std::ops::DerefMut;
 
 /// Represents the role of a user in the system.
@@ -305,5 +306,4 @@ impl User {
 
         Ok(())
     }
-
 }

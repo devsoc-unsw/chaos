@@ -1,7 +1,5 @@
-import { Link, useNavigate } from "react-router-dom";
 import "twin.macro";
-
-import { CampaignCard } from "components";
+import { useNavigate } from "react-router-dom";
 
 import type { Campaign } from "../types";
 import type { Dispatch, SetStateAction } from "react";
@@ -12,25 +10,50 @@ type Props = {
   orgLogo: string;
 };
 
-const AdminCampaignContent = ({ campaigns, setCampaigns, orgLogo }: Props) => (
-  <div tw="ml-20 flex flex-wrap gap-4">
-    {campaigns.map((c) => (
-      <CampaignCard
-        key={c.id}
-        campaignId={c.id}
-        organisationLogo={orgLogo}
-        title={c.title}
-        appliedFor={[]}
-        positions={[]}
-        img={c.image}
-        startDate={new Date(c.startDate)}
-        endDate={new Date(c.endDate)}
-        isAdmin
-        campaigns={campaigns}
-        setCampaigns={setCampaigns}
-      />
-    ))}
+const SimpleCampaignCard = ({ title, startDate, endDate, onClick }: { title: string; startDate: string; endDate: string; onClick?: () => void }) => (
+  <div tw="w-full rounded-lg border border-gray-200 bg-white p-4 shadow-sm cursor-pointer hover:border-gray-300" onClick={onClick}>
+    <h3 tw="mb-1 text-lg font-semibold text-gray-900">{title}</h3>
+    <p tw="text-sm text-gray-600">
+      {new Date(startDate).toLocaleDateString()} – {new Date(endDate).toLocaleDateString()}
+    </p>
   </div>
 );
+
+const AdminCampaignContent = ({ campaigns, setCampaigns: _setCampaigns, orgLogo: _orgLogo }: Props) => {
+  const navigate = useNavigate();
+  const now = new Date();
+  const active = campaigns.filter((c) => new Date(c.endDate) >= now);
+  const past = campaigns.filter((c) => new Date(c.endDate) < now);
+
+  return (
+    <div tw="mx-20 flex flex-col gap-8">
+      <section>
+        <h2 tw="mb-4 text-xl font-bold">Active Campaigns</h2>
+        <div tw="flex flex-col gap-3">
+          {active.length === 0 ? (
+            <p tw="text-gray-600">No active campaigns.</p>
+          ) : (
+            active.map((c) => (
+              <SimpleCampaignCard key={c.id} title={c.title} startDate={c.startDate} endDate={c.endDate} onClick={() => navigate(`/admin/review/${c.id}`)} />
+            ))
+          )}
+        </div>
+      </section>
+
+      <section>
+        <h2 tw="mb-4 text-xl font-bold">Past Campaigns</h2>
+        <div tw="flex flex-col gap-3">
+          {past.length === 0 ? (
+            <p tw="text-gray-600">No past campaigns.</p>
+          ) : (
+            past.map((c) => (
+              <SimpleCampaignCard key={c.id} title={c.title} startDate={c.startDate} endDate={c.endDate} onClick={() => navigate(`/admin/review/${c.id}`)} />
+            ))
+          )}
+        </div>
+      </section>
+    </div>
+  );
+};
 
 export default AdminCampaignContent;

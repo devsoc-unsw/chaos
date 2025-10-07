@@ -45,6 +45,28 @@ impl ApplicationHandler {
         Ok((StatusCode::OK, Json(json!({ "application_id": application_id.to_string() }))))
     }
 
+    /// Checks if an application exists for a given campaign and user.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `campaign_id` - ID of the campaign to check
+    /// * `user` - The authenticated user
+    /// * `transaction` - Database transaction
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - True if application exists, false otherwise
+    pub async fn check_application_exists(
+        Path(campaign_id): Path<i64>,
+        user: AuthUser,
+        mut transaction: DBTransaction<'_>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let application_exists = Application::check_application_exists(campaign_id, user.user_id, &mut transaction.tx).await?;
+
+        transaction.tx.commit().await?;
+        Ok((StatusCode::OK, Json(json!({ "application_exists": application_exists }))))
+    }
+
     /// Retrieves the details of a specific application.
     /// 
     /// This handler allows application admins to view application details.

@@ -46,7 +46,7 @@ const ApplicationsList = ({
                   alignItems="center"
                   justifyContent="space-between"
                 >
-                  {application.zId}
+                  {application.applicationId}
                   {application.mark ? (
                     <MarkChip mark={application.mark} colored />
                   ) : (
