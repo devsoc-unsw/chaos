@@ -34,6 +34,7 @@ const ApplicationReview: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [applicationId, setApplicationId] = useState<string | null>(null);
+  const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [commonAnswers, setCommonAnswers] = useState<Answer[]>([]);
   const [roleAnswers, setRoleAnswers] = useState<Record<string, Answer[]>>({});
 
@@ -142,7 +143,11 @@ const ApplicationReview: React.FC = () => {
   }, [selectedRoleIds, campaignId, questionsByRole, applicationId]);
 
   const syncRoles = async (nextSelectedRoles: string[]) => {
-    if (!applicationId) return;
+    if (!applicationId) {
+      console.error("No applicationId available for syncing roles");
+      return;
+    }
+    
     const payload: ApplicationRoleUpdateInput = {
       roles: nextSelectedRoles.map((rid, idx) => ({
         id: "0",
@@ -151,18 +156,30 @@ const ApplicationReview: React.FC = () => {
         preference: idx + 1,
       })),
     };
+    
+    console.log("🔄 Syncing roles:", { applicationId, selectedRoles: nextSelectedRoles, payload });
+    
     try {
-      await updateApplicationRoles(applicationId, payload);
+      const result = await updateApplicationRoles(applicationId, payload);
+      console.log("✅ Roles synced successfully:", result);
     } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error("Failed to update application roles", e);
+      console.error("❌ Failed to update application roles:", e);
+      setValidationError(`Failed to save role selection: ${e instanceof Error ? e.message : 'Unknown error'}`);
     }
   };
 
   const toggleRole = async (roleId: string) => {
+    if (isSubmitted) {
+      setValidationError('Cannot modify roles: Application has already been submitted.');
+      return;
+    }
+    
     setSelectedRoleIds((prev: string[]) => {
       const next = prev.includes(roleId) ? prev.filter((id) => id !== roleId) : [...prev, roleId];
-      void syncRoles(next);
+      // Don't use void - let the error be handled by syncRoles
+      syncRoles(next).catch((e) => {
+        console.error("Role toggle sync failed:", e);
+      });
       return next;
     });
     // Clear validation error when user changes roles
@@ -172,6 +189,11 @@ const ApplicationReview: React.FC = () => {
   };
 
   const handleDragEnd = (result: DropResult) => {
+    if (isSubmitted) {
+      setValidationError('Cannot modify roles: Application has already been submitted.');
+      return;
+    }
+    
     const { source, destination, draggableId } = result;
     if (!destination) return;
 
@@ -182,7 +204,9 @@ const ApplicationReview: React.FC = () => {
         const next = [...prev];
         const [moved] = next.splice(source.index, 1);
         next.splice(destination.index, 0, moved);
-        void syncRoles(next);
+        syncRoles(next).catch((e) => {
+          console.error("Role reorder sync failed:", e);
+        });
         return next;
       });
       return;
@@ -194,7 +218,9 @@ const ApplicationReview: React.FC = () => {
         if (prev.includes(draggableId)) return prev; // already selected
         const next = [...prev];
         next.splice(destination.index, 0, draggableId);
-        void syncRoles(next);
+        syncRoles(next).catch((e) => {
+          console.error("Role add sync failed:", e);
+        });
         return next;
       });
       return;
@@ -204,7 +230,9 @@ const ApplicationReview: React.FC = () => {
     if (source.droppableId === "selected-roles" && destination.droppableId === "available-roles") {
       setSelectedRoleIds((prev) => {
         const next = prev.filter((rid) => rid !== draggableId);
-        void syncRoles(next);
+        syncRoles(next).catch((e) => {
+          console.error("Role remove sync failed:", e);
+        });
         return next;
       });
       return;
@@ -220,12 +248,32 @@ const ApplicationReview: React.FC = () => {
   };
 
   const submitAnswer = async (questionId: string, value: unknown, questionType: string) => {
-    if (!applicationId) return;
+    if (isSubmitted) {
+      setValidationError('Cannot modify answers: Application has already been submitted.');
+      return;
+    }
+    
+    if (!applicationId) {
+      console.error("No applicationId available for submitting answer");
+      return;
+    }
 
     const answerId = getAnswerId(questionId);
     const question = [...commonQuestions, ...Object.values(questionsByRole).flat()].find(q => String(q.id) === questionId);
     
-    if (!question) return;
+    if (!question) {
+      console.error("Question not found:", questionId);
+      return;
+    }
+
+    console.log("🔄 Submitting answer:", { questionId, value, questionType, answerId, applicationId });
+    
+    // Check if this is an update or create operation
+    if (answerId) {
+      console.log("📝 This is an UPDATE operation for existing answer:", answerId);
+    } else {
+      console.log("➕ This is a CREATE operation for new answer");
+    }
 
     try {
       // Check if the answer should be deleted (empty/blank)
@@ -288,10 +336,14 @@ const ApplicationReview: React.FC = () => {
 
       if (answerId) {
         // Update existing answer
-        await updateAnswer(answerId, questionId, apiAnswerType as any, apiAnswerData as any);
+        console.log("📝 Updating existing answer:", { answerId, questionId, apiAnswerType, apiAnswerData });
+        const result = await updateAnswer(answerId, questionId, apiAnswerType as any, apiAnswerData as any);
+        console.log("✅ Answer updated successfully:", result);
       } else {
         // Create new answer
+        console.log("➕ Creating new answer:", { applicationId, questionId, apiAnswerType, apiAnswerData });
         const newAnswer = await createAnswer(applicationId, questionId, apiAnswerType as any, apiAnswerData as any);
+        console.log("✅ Answer created successfully:", newAnswer);
         
         // Update local state with the new answer
         // Keep shape consistent with API (`answer_data`)
@@ -325,7 +377,16 @@ const ApplicationReview: React.FC = () => {
         setAnswers(prev => ({ ...prev, [questionId]: apiAnswerData }));
       }
     } catch (error) {
-      console.error('Failed to submit answer:', error);
+      console.error('❌ Failed to submit answer:', error);
+      
+      // Check if it's an ApplicationClosed error
+      if (error instanceof Error && error.message.includes('Application closed')) {
+        setValidationError('Cannot update answers: Application has been submitted or campaign has ended.');
+      } else if (error instanceof Error && error.message.includes('Failed to fetch')) {
+        setValidationError('Network error: Failed to connect to server. Please check if the backend is running.');
+      } else {
+        setValidationError(`Failed to save answer: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     }
   };
 
@@ -431,12 +492,18 @@ const ApplicationReview: React.FC = () => {
     
     setSubmitting(true);
     try {
+      // Ensure roles are synced before submission
+      console.log("🔄 Final sync before submission...");
+      await syncRoles(selectedRoleIds);
+      console.log("✅ Final role sync completed");
+      
       await submitApplication(applicationId);
-      alert('Application submitted successfully!');
+      setIsSubmitted(true);
+      // alert('Application submitted successfully!');
       setShowSubmitDialog(false);
       // Optionally redirect or update UI
     } catch (error) {
-      console.error('Failed to submit application:', error);
+      console.error('❌ Failed to submit application:', error);
       alert('Failed to submit application. Please try again.');
     } finally {
       setSubmitting(false);

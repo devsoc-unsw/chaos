@@ -2,6 +2,7 @@ import { lazy } from "react";
 import { Route } from "react-router-dom";
 
 import AdminInterviewBooking from "./pages/interview_booking/admin_side/admin_index";
+import CreateQuestion from "./pages/create_question";
 import InterviewBooking from "./pages/interview_booking/user_side";
 
 const Admin = lazy(() => import("./pages/admin"));
@@ -86,6 +87,11 @@ const routes = [
     key="AdminInterviewBooking"
     path="/admin-interview-booking"
     element={<AdminInterviewBooking />}
+  />,
+  <Route
+    key="CreateQuestion"
+    path="/create-question"
+    element={<CreateQuestion />}
   />,
 ];
 

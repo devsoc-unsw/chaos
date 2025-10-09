@@ -189,6 +189,36 @@ impl Rating {
         Ok(rating)
     }
 
+    /// Retrieves a rating by its ID.
+    /// 
+    /// # Arguments
+    /// * `rating_id` - The ID of the rating to retrieve
+    /// * `transaction` - A mutable reference to the database transaction
+    /// 
+    /// # Returns
+    /// Returns a `Result` containing either:
+    /// * `Ok(RatingDetails)` - The requested rating details
+    /// * `Err(ChaosError)` - An error if retrieval fails
+    pub async fn get_rating_by_rater_id(
+        rater_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<RatingDetails, ChaosError> {
+        let rating = sqlx::query_as!(
+            RatingDetails,
+            "
+            SELECT r.id, rater_id, u.name as rater_name, r.rating, r.comment, r.updated_at
+                FROM application_ratings r
+                JOIN users u ON u.id = r.rater_id
+                WHERE r.rater_id = $1
+        ",
+            rater_id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
+        Ok(rating)
+    }
+
     /// Retrieves all ratings for a specific application.
     /// 
     /// # Arguments

@@ -118,7 +118,7 @@ pub async fn app() -> Result<Router, ChaosError> {
     let state = init_app_state().await;
 
     let cors = CorsLayer::new()
-        .allow_methods([Method::GET, Method::POST, Method::DELETE, Method::PUT])
+        .allow_methods([Method::GET, Method::POST, Method::DELETE, Method::PUT, Method::PATCH])
         .allow_headers([header::ACCEPT, header::COOKIE, header::SET_COOKIE, header::CONTENT_TYPE])
         .allow_credentials(true)
         .allow_origin([
@@ -211,7 +211,9 @@ pub async fn app() -> Result<Router, ChaosError> {
         )
         .route(
             "/api/v1/application/:application_id/rating",
-            post(ApplicationHandler::create_rating),
+            get(ApplicationHandler::get_rating_by_current_user)
+                .post(ApplicationHandler::create_rating)
+                .put(ApplicationHandler::update_rating),
         )
         .route(
             "/api/v1/application/:application_id/ratings",

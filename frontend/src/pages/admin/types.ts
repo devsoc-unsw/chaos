@@ -45,5 +45,6 @@ export type ApplicationWithQuestions = {
   applied_roles: ApplicationAppliedRoleDetails[];
   zId: string; // Convenience field extracted from user.zid
   mark?: number; // UI state for marking
+  comment?: string; // UI state for comments
   questions: Question[]; // UI state with question-answer pairs
 };

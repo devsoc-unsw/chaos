@@ -202,6 +202,7 @@ impl ApplicationHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update_roles(
         _user: ApplicationOwner,
+        _: OpenApplicationByApplicationId,
         Path(application_id): Path<i64>,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<ApplicationRoleUpdate>,
@@ -237,6 +238,31 @@ impl ApplicationHandler {
         Ok((StatusCode::OK, "Successfully submitted application"))
     }
 
+    /// Retrieves the rating for an application given by the current user.
+    /// 
+    /// This handler allows application reviewers to view the rating for an application.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `state` - The application state
+    /// * `application_id` - The ID of the application to get the rating for
+    /// * `admin` - The authenticated user (must be an application reviewer)
+    /// * `transaction` - Database transaction
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Rating or error
+    pub async fn get_rating_by_current_user(
+        State(mut state): State<AppState>,
+        Path(application_id): Path<i64>,
+        admin: ApplicationReviewerGivenApplicationId,
+        mut transaction: DBTransaction<'_>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let rating = Rating::get_rating_by_rater_id(admin.user_id, &mut transaction.tx).await?;
+        transaction.tx.commit().await?;
+        Ok((StatusCode::OK, Json(rating)))
+    }
+
     /// Creates a new rating for an application.
     /// 
     /// This handler allows application reviewers to create ratings.
@@ -269,6 +295,20 @@ impl ApplicationHandler {
             .await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, "Successfully created rating"))
+    }
+
+    pub async fn update_rating(
+        State(mut state): State<AppState>,
+        Path(application_id): Path<i64>,
+        admin: ApplicationReviewerGivenApplicationId,
+        mut transaction: DBTransaction<'_>,
+        Json(updated_rating): Json<NewRating>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let rating = Rating::get_rating_by_rater_id(admin.user_id, &mut transaction.tx).await?;
+
+        Rating::update(rating.id, updated_rating, &mut transaction.tx).await?;
+        transaction.tx.commit().await?;
+        Ok((StatusCode::OK, "Successfully updated rating"))
     }
 
     /// Retrieves all ratings for an application.
