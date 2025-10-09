@@ -28,7 +28,12 @@ const AdminCampaignContent = ({ campaigns, setCampaigns: _setCampaigns, orgLogo:
   return (
     <div tw="mx-20 flex flex-col gap-8">
       <section>
-        <h2 tw="mb-4 text-xl font-bold">Active Campaigns</h2>
+        <div tw="flex justify-between items-center mb-4">
+          <h2 tw="text-xl font-bold">Active Campaigns</h2>
+          <button tw="bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700 transition-colors">
+            NEW CAMPAIGN
+          </button>
+        </div>
         <div tw="flex flex-col gap-3">
           {active.length === 0 ? (
             <p tw="text-gray-600">No active campaigns.</p>
