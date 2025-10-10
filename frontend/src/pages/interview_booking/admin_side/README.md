@@ -1,5 +1,5 @@
 # Admin Interview Booking System - Backend Integration
-To run this component, run 'npm yarn start', the page is at '/admin-interview-booking'
+To run this component, run 'npm bun start', the page is at '/admin-interview-booking'
 
 
 

@@ -1,11 +1,11 @@
-# Grab the latest Node base image
-FROM node:24-alpine as builder
+# Use Bun base image for building
+FROM oven/bun:1-alpine as builder
 
 # Set the current working directory inside the container
 WORKDIR /app
 
-COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
 ARG VITE_API_BASE_URL
 ARG VITE_OAUTH_CALLBACK_URL
@@ -14,7 +14,7 @@ ENV VITE_OAUTH_CALLBACK_URL $VITE_OAUTH_CALLBACK_URL
 
 COPY . .
 
-RUN yarn run build
+RUN bun run build
 
 # nginx state for serving content
 FROM nginx:1.25.0-alpine
