@@ -83,7 +83,7 @@ export const newBlock = createReactBlockSpec(
     }
 );
 ```
-yarn start and look at pages/create_question/index.tsx for the example.
+bun start and look at pages/create_question/index.tsx for the example.
 
 ## 🎨 All Blocks Include
 
