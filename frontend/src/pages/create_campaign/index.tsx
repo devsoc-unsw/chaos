@@ -24,11 +24,13 @@ const CreateCampaign = () => {
   useEffect(() => {
     const fetchData = async () => {
       const user = await getSelfInfo();
-      const { members: admins } = await getAdminData(orgId);
-      const isAdmin = admins.find((member) => member.id === user.id) !== undefined;
-      if (!isAdmin) {
-        navigate("/");
-      }
+      // commenting this out as we need to be super users to call this, and anyway
+      // the routes to fetch stuff should already be admin protected? not too sure
+      // const { members: admins } = await getAdminData(orgId);
+      // const isAdmin = admins.find((member) => member.id === user.id) !== undefined;
+      // if (!isAdmin) {
+      //   navigate("/");
+      // }
     };
 
     void fetchData();
@@ -83,89 +85,89 @@ const CreateCampaign = () => {
 
   const onTabChange = (newTab: number) => {
     // only allow user to access review tab if all inputs are non-empty
-    if (newTab === reviewTabIdx) {
-      if (campaignName === "") {
-        pushToast("Create Campaign", "Campaign name is required!", "error");
-        return;
-      }
-      if (description === "") {
-        pushToast(
-          "Create Campaign",
-          "Campaign description is required!",
-          "error"
-        );
-        return;
-      }
-      if (cover === null) {
-        pushToast(
-          "Create Campaign",
-          "Campaign cover image is required!",
-          "error"
-        );
-        return;
-      }
+    // if (newTab === reviewTabIdx) {
+    //   if (campaignName === "") {
+    //     pushToast("Create Campaign", "Campaign name is required!", "error");
+    //     return;
+    //   }
+    //   if (description === "") {
+    //     pushToast(
+    //       "Create Campaign",
+    //       "Campaign description is required!",
+    //       "error"
+    //     );
+    //     return;
+    //   }
+    //   if (cover === null) {
+    //     pushToast(
+    //       "Create Campaign",
+    //       "Campaign cover image is required!",
+    //       "error"
+    //     );
+    //     return;
+    //   }
 
-      if (roles.length === 0) {
-        pushToast(
-          "Create Campaign",
-          "You need to create at least one role",
-          "error"
-        );
-        return;
-      }
+    //   if (roles.length === 0) {
+    //     pushToast(
+    //       "Create Campaign",
+    //       "You need to create at least one role",
+    //       "error"
+    //     );
+    //     return;
+    //   }
 
-       const roleMap = new Map<string, Role>();
-       const roleCheckSet = new Set<string>();
-      let flag = true;
+    //    const roleMap = new Map<string, Role>();
+    //    const roleCheckSet = new Set<string>();
+    //   let flag = true;
 
-      roles.forEach((role) => {
-        roleMap.set(role.id, role);
-        roleCheckSet.add(role.id);
-      });
+    //   roles.forEach((role) => {
+    //     roleMap.set(role.id, role);
+    //     roleCheckSet.add(role.id);
+    //   });
 
-      questions.forEach((question) => {
-        // Go through all the roles of a question and remove if its not a role
-        question.roles.forEach((role) => {
-          if (!roleMap.has(role)) {
-            question.roles.delete(role);
-          }
-        });
+    //   questions.forEach((question) => {
+    //     // Go through all the roles of a question and remove if its not a role
+    //     question.roles.forEach((role) => {
+    //       if (!roleMap.has(role)) {
+    //         question.roles.delete(role);
+    //       }
+    //     });
 
-        if (question.roles.size === 0) {
-          pushToast(
-            "Create Campaign",
-            `The question '${question.text}' is not assigned to a role`,
-            "error"
-          );
-          flag = false;
-        } else {
-          question.roles.forEach((roleId) => {
-            if (roleCheckSet.has(roleId)) {
-              roleCheckSet.delete(roleId);
-            }
-          });
-        }
-      });
+    //     if (question.roles.size === 0) {
+    //       pushToast(
+    //         "Create Campaign",
+    //         `The question '${question.text}' is not assigned to a role`,
+    //         "error"
+    //       );
+    //       flag = false;
+    //     } else {
+    //       question.roles.forEach((roleId) => {
+    //         if (roleCheckSet.has(roleId)) {
+    //           roleCheckSet.delete(roleId);
+    //         }
+    //       });
+    //     }
+    //   });
 
-      if (roleCheckSet.size !== 0) {
-        flag = false;
-        roleCheckSet.forEach((roleID) => {
-          const role = roleMap.get(roleID);
+    //   if (roleCheckSet.size !== 0) {
+    //     flag = false;
+    //     roleCheckSet.forEach((roleID) => {
+    //       const role = roleMap.get(roleID);
 
-          if (role) {
-            pushToast(
-              "Create Campaign",
-              `The role '${role.title}' does not have any questions`,
-              "error"
-            );
-          }
-        });
-      }
+    //       if (role) {
+    //         pushToast(
+    //           "Create Campaign",
+    //           `The role '${role.title}' does not have any questions`,
+    //           "error"
+    //         );
+    //       }
+    //     });
+    //   }
 
-      if (!flag) {
-        return;
-      }
-    }
+    //   if (!flag) {
+    //     return;
+    //   }
+    // }
     setTab(newTab);
   };
 

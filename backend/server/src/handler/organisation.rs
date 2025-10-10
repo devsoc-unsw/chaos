@@ -405,12 +405,12 @@ impl OrganisationHandler {
         )
         .await;
 
-        if let Err(ref e) = result {
-            eprintln!(
-                "{:?}",
-                e
-            );
-        }
+        // if let Err(ref e) = result {
+        //     eprintln!(
+        //         "{:?}",
+        //         e
+        //     );
+        // }
 
         let new_campaign_id = result?;
 
