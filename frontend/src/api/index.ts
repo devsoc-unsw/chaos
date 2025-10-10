@@ -106,7 +106,7 @@ export const getAllCampaigns = () =>
 
 export const getAdminData = (organisationId: string) =>
   authenticatedRequest<{ members: Member[] }>({
-    path: `/v1/organisation/${organisationId}/admin`,
+    path: `/v1/organisation/${organisationId}/admins`,
   });
 
 // todo: create backend route + update referencing components
@@ -136,17 +136,17 @@ export const createOrganisation = (orgData: newOrganisation) =>
 export const putOrgLogo = async (orgId: string, logo: File) => {
   const presignedUrl = await authenticatedRequest<string>({
     method: "PATCH",
-    path: `/v1/organisation/${orgId}/logo`
+    path: `/v1/organisation/${orgId}/logo`,
   });
 
   return fetch(presignedUrl, {
-    method: 'PUT',
+    method: "PUT",
     headers: {
-      'Content-Type': logo.type,
+      "Content-Type": logo.type,
     },
-    body: logo
+    body: logo,
   });
-}
+};
 
 export const newApplication = (campaignId: string, newApp: NewApplication) =>
   authenticatedRequest<Application>({
@@ -165,7 +165,10 @@ export const doDeleteOrg = (orgId: string) =>
 export const getCampaign = (campaignId: string) =>
   authenticatedRequest<Campaign>({ path: `/v1/campaign/${campaignId}` });
 
-export const getCampaignBySlugs = (organisationSlug: string, campaignSlug: string) =>
+export const getCampaignBySlugs = (
+  organisationSlug: string,
+  campaignSlug: string
+) =>
   authenticatedRequest<Campaign>({
     path: `/v1/campaign/slug/${organisationSlug}/${campaignSlug}`,
   });
@@ -197,7 +200,7 @@ export const getRoleQuestions = (campaignId: string, roleId: string) =>
 // todo: update all referencing components
 export const getCommonQuestions = (campaignID: string) =>
   authenticatedRequest<QuestionResponse[]>({
-    path: `/v1/campaign/${campaignID}/questions/common`
+    path: `/v1/campaign/${campaignID}/questions/common`,
   });
 
 export const createOrGetApplication = (campaignId: string) =>
@@ -206,7 +209,10 @@ export const createOrGetApplication = (campaignId: string) =>
     path: `/v1/campaign/${campaignId}/apply`,
   });
 
-export const setApplicationRating = (applicationId: string, rating: NewRating) =>
+export const setApplicationRating = (
+  applicationId: string,
+  rating: NewRating
+) =>
   authenticatedRequest({
     method: "PUT",
     path: `/v1/${applicationId}/rating`,
@@ -224,7 +230,7 @@ export const getApplicationAnswers = (applicationId: string, roleId: string) =>
     path: `/v1/application/${applicationId}/answers/role/${roleId}`,
   });
 
-export const getCommonApplicationAnswers = (applicationId: string) => 
+export const getCommonApplicationAnswers = (applicationId: string) =>
   authenticatedRequest<Answer[]>({
     path: `/v1/application/${applicationId}/answers/common`,
   });
@@ -305,21 +311,23 @@ export const submitApplication = (applicationId: string) =>
 
 // Check if current user already has an application for this campaign
 export const checkApplicationExists = (campaignId: string) =>
-  authenticatedRequest<{ application_exists: boolean}>({
+  authenticatedRequest<{ application_exists: boolean }>({
     path: `/v1/campaign/${campaignId}/application/exists`,
   });
 
 // Get campaigns for an organisation
 export const getOrganisationCampaigns = (organisationId: string) =>
-  authenticatedRequest<Array<{
-    id: string;
-    slug: string;
-    name: string;
-    cover_image?: string | null;
-    description?: string | null;
-    starts_at: string;
-    ends_at: string;
-  }>>({
+  authenticatedRequest<
+    Array<{
+      id: string;
+      slug: string;
+      name: string;
+      cover_image?: string | null;
+      description?: string | null;
+      starts_at: string;
+      ends_at: string;
+    }>
+  >({
     path: `/v1/organisation/${organisationId}/campaigns`,
   });
 
@@ -342,16 +350,15 @@ export const submitAnswer = (
 
 // todo: update to new route
 export const createCampaign = (
-  campaign: NewCampaignInput,
-  roles: RoleInput[],
-  questions: QuestionInput[]
+  campaign: NewCampaignInput
+  // roles: RoleInput[],
+  // questions: QuestionInput[]
 ) =>
-  authenticatedRequest<Campaign>({
+  authenticatedRequest<{ id: string }>({
     method: "POST",
     path: `/v1/organisation/${campaign.organisation_id}/campaign`,
-    body: { campaign, roles, questions },
+    body: campaign,
   });
-
 // todo: update to new route
 export const setCampaignCoverImage = (campaignId: string, cover_image: File) =>
   authenticatedRequest<string>({
@@ -360,7 +367,6 @@ export const setCampaignCoverImage = (campaignId: string, cover_image: File) =>
     body: cover_image,
     jsonBody: false,
   });
-
 // todo: update to new route
 export const deleteCampaign = (id: string) =>
   authenticatedRequest({
@@ -401,13 +407,17 @@ export const inviteUserToOrg = (
  * helper function to retrieve list of all answers in every application,
  * retrieving answer option text for question types with predefined answers such as
  * multiple choice. Returns answers mapped by question ID for proper matching.
- * 
- * @param applications 
- * @param campaignId 
- * @param roleId 
+ *
+ * @param applications
+ * @param campaignId
+ * @param roleId
  * @returns Record<string, string | string[]>[] - array of answer maps per application
  */
-export const getAnsweredApplicationQuestions = (applications: ApplicationDetails[], campaignId: string, roleId: string) => {
+export const getAnsweredApplicationQuestions = (
+  applications: ApplicationDetails[],
+  campaignId: string,
+  roleId: string
+) => {
   return Promise.all(
     applications.map(async (application) => {
       const roleAnswers = await getApplicationAnswers(application.id, roleId);
@@ -415,60 +425,78 @@ export const getAnsweredApplicationQuestions = (applications: ApplicationDetails
 
       const roleQuestions = await getRoleQuestions(campaignId, roleId);
       const commonQuestions = await getCommonQuestions(campaignId);
-      
+
       const completeAnswers = [...commonAnswers, ...roleAnswers];
       const completeQuestions = [...commonQuestions, ...roleQuestions];
 
       // Create a map of answers by question ID
       const answerMap: Record<string, string | string[]> = {};
-      
+
       completeAnswers.forEach((answer) => {
         // normalize to use answer.answer_data
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const data: any = (answer as any).answer_data ?? (answer as any).data;
         const questionId = answer.question_id;
-        
+
         switch (answer.answer_type) {
           case QuestionType.ShortAnswer:
             answerMap[questionId] = data as string;
             break;
-          
+
           case QuestionType.MultiChoice:
             // search question list for questions of Multichoice type
-            const mcQuestion = completeQuestions.find(question => 
-              question.id === questionId && question.question_type === QuestionType.MultiChoice
+            const mcQuestion = completeQuestions.find(
+              (question) =>
+                question.id === questionId &&
+                question.question_type === QuestionType.MultiChoice
             );
-            answerMap[questionId] = mcQuestion?.data.options.find(option => option.id === data)?.text || '';
+            answerMap[questionId] =
+              mcQuestion?.data.options.find((option) => option.id === data)
+                ?.text || "";
             break;
-            
+
           case QuestionType.MultiSelect:
-            const msQuestion = completeQuestions.find(question => 
-              question.id === questionId && question.question_type === QuestionType.MultiSelect
+            const msQuestion = completeQuestions.find(
+              (question) =>
+                question.id === questionId &&
+                question.question_type === QuestionType.MultiSelect
             );
-            answerMap[questionId] = msQuestion?.data.options
-              .filter(option => Array.isArray(data) && data.includes(option.id))
-              .map(option => option.text) || [];
+            answerMap[questionId] =
+              msQuestion?.data.options
+                .filter(
+                  (option) => Array.isArray(data) && data.includes(option.id)
+                )
+                .map((option) => option.text) || [];
             break;
-            
+
           case QuestionType.DropDown:
-            const ddQuestion = completeQuestions.find(question => 
-              question.id === questionId && question.question_type === QuestionType.DropDown
+            const ddQuestion = completeQuestions.find(
+              (question) =>
+                question.id === questionId &&
+                question.question_type === QuestionType.DropDown
             );
-            answerMap[questionId] = ddQuestion?.data.options.find(option => option.id === data)?.text || '';
+            answerMap[questionId] =
+              ddQuestion?.data.options.find((option) => option.id === data)
+                ?.text || "";
             break;
-          
+
           case QuestionType.Ranking:
-            const rankQuestion = completeQuestions.find(question => 
-              question.id === questionId && question.question_type === QuestionType.Ranking
+            const rankQuestion = completeQuestions.find(
+              (question) =>
+                question.id === questionId &&
+                question.question_type === QuestionType.Ranking
             );
-            answerMap[questionId] = rankQuestion?.data.options
-              .filter(option => Array.isArray(data) && data.includes(option.id))
-              .map(option => option.text) || [];
+            answerMap[questionId] =
+              rankQuestion?.data.options
+                .filter(
+                  (option) => Array.isArray(data) && data.includes(option.id)
+                )
+                .map((option) => option.text) || [];
             break;
         }
       });
-      
+
       return answerMap;
     })
   );
-}
+};

@@ -14,12 +14,12 @@ import { dateToStringForBackend, pushToast } from "utils";
 import CampaignTab from "./Campaign";
 import ReviewTab from "./Preview";
 import RolesTab from "./Roles";
-import { ArrowIcon, NextButton, NextWrapper } from "./createCampaign.styled";
+import { ArrowIcon, CreateButton, NextWrapper } from "./createCampaign.styled";
 
 import type { Answers, Question, Role } from "./types";
 
 const CreateCampaign = () => {
-  const orgId = String(useParams().orgSlug);
+  const orgId = String(useParams().orgId);
   const navigate = useNavigate();
   useEffect(() => {
     const fetchData = async () => {
@@ -186,21 +186,29 @@ const CreateCampaign = () => {
       setError("Start date must be before end date");
       return;
     }
-    if (roles.length === 0 && !isDraft) {
-      setError("At least one role is required");
-      return;
-    }
-    if (questions.length === 0 && !isDraft) {
-      setError("At least one question is required");
-      return;
-    }
+    // if (roles.length === 0 && !isDraft) {
+    //   setError("At least one role is required");
+    //   return;
+    // }
+    // if (questions.length === 0 && !isDraft) {
+    //   setError("At least one question is required");
+    //   return;
+    // }
     setError(null);
 
     // const coverSend = cover ? cover.slice(cover.indexOf(";base64,") + 8) : "";
-    const startTimeDateString = dateToStringForBackend(startDate);
-    const endTimeDateString = dateToStringForBackend(endDate);
+    const startTimeDateString = startDate.toISOString(); //dateToStringForBackend(startDate); 
+    const endTimeDateString = endDate.toISOString();//dateToStringForBackend(endDate);
+    const slug = campaignName
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-");
+
     const campaignSend = {
       organisation_id: orgId,
+      slug,
       name: campaignName,
       description,
       starts_at: startTimeDateString,
@@ -208,35 +216,33 @@ const CreateCampaign = () => {
       published: !isDraft,
     };
 
-    const roleQuestions: { [id: string]: number[] } = {};
+    // const roleQuestions: { [id: string]: number[] } = {};
 
-    const questionsSend = questions.map((q, i) => {
-      q.roles.forEach((roleId) => {
-        const array = roleQuestions[roleId] ?? [];
-        array.push(i);
-        roleQuestions[roleId] = array;
-      });
+    // const questionsSend = questions.map((q, i) => {
+    //   q.roles.forEach((roleId) => {
+    //     const array = roleQuestions[roleId] ?? [];
+    //     array.push(i);
+    //     roleQuestions[roleId] = array;
+    //   });
 
-      return {
-        title: q.text,
-        required: q.required ?? true,
-      };
-    });
+    //   return {
+    //     title: q.text,
+    //     required: q.required ?? true,
+    //   };
+    // });
 
-    const rolesSend = roles.map((r) => ({
-      name: r.title,
-      min_available: r.quantity,
-      max_available: r.quantity,
-      questions_for_role: roleQuestions[r.id] ?? [],
-    }));
+    // const rolesSend = roles.map((r) => ({
+    //   name: r.title,
+    //   min_available: r.quantity,
+    //   max_available: r.quantity,
+    //   questions_for_role: roleQuestions[r.id] ?? [],
+    // }));
 
     try {
-      const { id: campaignId } = await createCampaign(
-        campaignSend,
-        rolesSend,
-        questionsSend
-      );
-      await setCampaignCoverImage(campaignId, cover);
+      const { id: campaignId } = await createCampaign(campaignSend);
+      if (cover) {
+        await setCampaignCoverImage(campaignId, cover);
+      }
       navigate("/admin");
     } catch (err) {
       if (err instanceof FetchError) {
@@ -286,15 +292,12 @@ const CreateCampaign = () => {
       )}
       {(tab === campaignTabIdx || tab === rolesTabIdx) && (
         <NextWrapper>
-          <NextButton
+          <CreateButton
             variant="contained"
-            onClick={() => {
-              onTabChange(tab + 1);
-            }}
+            onClick={() => void submitHandler(false)}
           >
-            Next
-            <ArrowIcon />
-          </NextButton>
+            Create Campaign
+          </CreateButton>
         </NextWrapper>
       )}
     </Container>
