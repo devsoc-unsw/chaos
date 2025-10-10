@@ -19,7 +19,7 @@ import { ArrowIcon, NextButton, NextWrapper } from "./createCampaign.styled";
 import type { Answers, Question, Role } from "./types";
 
 const CreateCampaign = () => {
-  const orgId = String(useParams().orgId);
+  const orgId = String(useParams().orgSlug);
   const navigate = useNavigate();
   useEffect(() => {
     const fetchData = async () => {
