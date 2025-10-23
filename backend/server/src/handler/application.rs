@@ -202,6 +202,7 @@ impl ApplicationHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update_roles(
         _user: ApplicationOwner,
+        _: OpenApplicationByApplicationId,
         Path(application_id): Path<i64>,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<ApplicationRoleUpdate>,

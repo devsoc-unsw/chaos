@@ -14,6 +14,7 @@ import {
   getRoleQuestions,
   getSelfInfo,
   setApplicationRating,
+  createApplicationRating,
 } from "api";
 import { LoadingIndicator } from "components";
 import ReviewerStepper from "components/ReviewerStepper";
@@ -33,6 +34,8 @@ const Marking = () => {
   );
   const roleId = String(params.roleId ?? params.roleSlug);
   const [selectedApplication, setSelectedApplication] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState<string>("");
 
   useEffect(() => {
     setLoading(true);
@@ -64,6 +67,7 @@ const Marking = () => {
           applied_roles: application.applied_roles,
           zId: application.user.zid || "N/A", // Convenience field extracted from user.zid
           mark: ratings[applicationIdx]?.rating,
+          comment: ratings[applicationIdx]?.comment || "",
           questions: [
             // Common questions first
             ...commonQuestions.map((question) => {
@@ -96,13 +100,55 @@ const Marking = () => {
     const newApplications = [...applications];
     newApplications[selectedApplication].mark = newMark;
     setApplications(newApplications);
-    void setApplicationRating(
-      applications[selectedApplication].applicationId,
-      {
-        rating: newMark,
-        //comment: comment
-      }
-    );
+  };
+
+  const setComment = (newComment: string) => {
+    const newApplications = [...applications];
+    newApplications[selectedApplication].comment = newComment;
+    setApplications(newApplications);
+  };
+
+  const submitAllRatings = async () => {
+    setSubmitting(true);
+    setSubmitMessage("");
+    
+    try {
+      const ratingPromises = applications.map(async (application) => {
+        if (application.mark && application.mark > 0) {
+          const ratingData = {
+            rating: application.mark,
+            comment: application.comment || undefined,
+          };
+          
+          try {
+            // Try to update existing rating first
+            await setApplicationRating(application.applicationId, ratingData);
+            console.log(`Updated rating for application ${application.applicationId}`);
+          } catch (error) {
+            // If update fails, try to create new rating
+            try {
+              await createApplicationRating(application.applicationId, ratingData);
+              console.log(`Created new rating for application ${application.applicationId}`);
+            } catch (createError) {
+              console.error(`Failed to create rating for application ${application.applicationId}:`, createError);
+              throw createError;
+            }
+          }
+        }
+      });
+
+      await Promise.all(ratingPromises);
+      setSubmitMessage("Review submitted successfully!");
+      
+      // Clear the message after 3 seconds
+      setTimeout(() => setSubmitMessage(""), 3000);
+      
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      setSubmitMessage("Error saving review. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -117,20 +163,43 @@ const Marking = () => {
         <ApplicationsList
           applications={applications}
           setMark={setMark}
+          setComment={setComment}
           selectedApplication={selectedApplication}
           setSelectedApplication={setSelectedApplication}
         />
       ) : null}
 
-      <Grid container justifyContent="flex-end">
-        <Button
-          component={Link}
-          to="../rankings"
-          relative="path"
-          disabled={applications.some((application) => application.mark === 0)}
-        >
-          Next (Rankings)
-        </Button>
+      <Grid container justifyContent="space-between" alignItems="center" sx={{ mt: 2 }}>
+        <Grid item>
+          {submitMessage && (
+            <div style={{ 
+              color: submitMessage.includes("Error") ? "red" : "green",
+              fontWeight: "bold",
+              marginBottom: "10px"
+            }}>
+              {submitMessage}
+            </div>
+          )}
+        </Grid>
+        <Grid item>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={submitAllRatings}
+            disabled={submitting || applications.length === 0}
+            sx={{ mr: 2 }}
+          >
+            {submitting ? "Saving..." : "Save Review"}
+          </Button>
+          <Button
+            component={Link}
+            to="../rankings"
+            relative="path"
+            disabled={applications.some((application) => application.mark === 0)}
+          >
+            Next (Rankings)
+          </Button>
+        </Grid>
       </Grid>
     </Container>
   );

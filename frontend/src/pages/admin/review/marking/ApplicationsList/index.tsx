@@ -9,6 +9,7 @@ import type { SyntheticEvent } from "react";
 type Props = {
   applications: ApplicationWithQuestions[];
   setMark: (mark: number) => void;
+  setComment: (comment: string) => void;
   selectedApplication: number;
   setSelectedApplication: (selectedApplication: number) => void;
 };
@@ -16,6 +17,7 @@ type Props = {
 const ApplicationsList = ({
   applications,
   setMark,
+  setComment,
   selectedApplication,
   setSelectedApplication,
 }: Props) => {
@@ -64,6 +66,7 @@ const ApplicationsList = ({
           <ApplicationsListTabPanel
             application={applications[selectedApplication]}
             setMark={setMark}
+            setComment={setComment}
           />
         </Grid>
       ) : null}

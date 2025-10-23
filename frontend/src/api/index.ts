@@ -33,6 +33,7 @@ import {
   QuestionType,
   AnswerData,
   type ApplicationRoleUpdateInput,
+  type ApplicationRole,
 } from "../types/api";
 
 // todo: update to new route
@@ -215,10 +216,16 @@ export const setApplicationRating = (
 ) =>
   authenticatedRequest({
     method: "PUT",
-    path: `/v1/${applicationId}/rating`,
-    body: {
-      rating,
-    },
+    path: `/v1/application/${applicationId}/rating`,
+    body: rating,
+    jsonResp: false,
+  });
+
+export const createApplicationRating = (applicationId: string, rating: NewRating) =>
+  authenticatedRequest({
+    method: "POST",
+    path: `/v1/application/${applicationId}/rating`,
+    body: rating,
     jsonResp: false,
   });
 
