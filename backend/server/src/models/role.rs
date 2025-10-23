@@ -29,7 +29,7 @@ pub struct Role {
     /// Minimum number of positions available
     pub min_available: i32,
     /// Maximum number of positions available
-    pub max_avaliable: i32,
+    pub max_available: i32,
     /// Whether the role details have been finalized
     pub finalised: bool,
     /// When the role was created
@@ -51,7 +51,7 @@ pub struct RoleUpdate {
     /// Minimum number of positions available
     pub min_available: i32,
     /// Maximum number of positions available
-    pub max_avaliable: i32,
+    pub max_available: i32,
     /// Whether the role details have been finalized
     pub finalised: bool,
 }
@@ -111,7 +111,7 @@ impl Role {
             role_data.name,
             role_data.description,
             role_data.min_available,
-            role_data.max_avaliable,
+            role_data.max_available,
             role_data.finalised
         )
         .execute(transaction.deref_mut())
@@ -195,7 +195,7 @@ impl Role {
             role_data.name,
             role_data.description,
             role_data.min_available,
-            role_data.max_avaliable,
+            role_data.max_available,
             role_data.finalised
         )
         .fetch_one(transaction.deref_mut())
