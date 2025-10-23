@@ -31,7 +31,7 @@ const AdminCampaignContent = ({ campaigns, setCampaigns: _setCampaigns, orgLogo:
       <section>
         <div tw="flex justify-between items-center mb-4">
           <h2 tw="text-xl font-bold">Active Campaigns</h2>
-          <button tw="bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700 transition-colors" onClick={() => navigate(`/campaign/create/${orgId}`)}>
+          <button tw="bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700 transition-colors" onClick={() => navigate(`/admin/organisation/${orgId}/campaign/create`)}>
             NEW CAMPAIGN
           </button>
         </div>
