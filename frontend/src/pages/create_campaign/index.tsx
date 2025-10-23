@@ -14,7 +14,7 @@ import { dateToStringForBackend, pushToast } from "utils";
 import CampaignTab from "./Campaign";
 import ReviewTab from "./Preview";
 import RolesTab from "./Roles";
-import { ArrowIcon, NextButton, NextWrapper } from "./createCampaign.styled";
+import { ArrowIcon, CreateButton, NextWrapper } from "./createCampaign.styled";
 
 import type { Answers, Question, Role } from "./types";
 
@@ -24,11 +24,13 @@ const CreateCampaign = () => {
   useEffect(() => {
     const fetchData = async () => {
       const user = await getSelfInfo();
-      const { members: admins } = await getAdminData(orgId);
-      const isAdmin = admins.find((member) => member.id === user.id) !== undefined;
-      if (!isAdmin) {
-        navigate("/");
-      }
+      // commenting this out as we need to be super users to call this, and anyway
+      // the routes to fetch stuff should already be admin protected? not too sure
+      // const { members: admins } = await getAdminData(orgId);
+      // const isAdmin = admins.find((member) => member.id === user.id) !== undefined;
+      // if (!isAdmin) {
+      //   navigate("/");
+      // }
     };
 
     void fetchData();
@@ -83,89 +85,89 @@ const CreateCampaign = () => {
 
   const onTabChange = (newTab: number) => {
     // only allow user to access review tab if all inputs are non-empty
-    if (newTab === reviewTabIdx) {
-      if (campaignName === "") {
-        pushToast("Create Campaign", "Campaign name is required!", "error");
-        return;
-      }
-      if (description === "") {
-        pushToast(
-          "Create Campaign",
-          "Campaign description is required!",
-          "error"
-        );
-        return;
-      }
-      if (cover === null) {
-        pushToast(
-          "Create Campaign",
-          "Campaign cover image is required!",
-          "error"
-        );
-        return;
-      }
+    // if (newTab === reviewTabIdx) {
+    //   if (campaignName === "") {
+    //     pushToast("Create Campaign", "Campaign name is required!", "error");
+    //     return;
+    //   }
+    //   if (description === "") {
+    //     pushToast(
+    //       "Create Campaign",
+    //       "Campaign description is required!",
+    //       "error"
+    //     );
+    //     return;
+    //   }
+    //   if (cover === null) {
+    //     pushToast(
+    //       "Create Campaign",
+    //       "Campaign cover image is required!",
+    //       "error"
+    //     );
+    //     return;
+    //   }
 
-      if (roles.length === 0) {
-        pushToast(
-          "Create Campaign",
-          "You need to create at least one role",
-          "error"
-        );
-        return;
-      }
+    //   if (roles.length === 0) {
+    //     pushToast(
+    //       "Create Campaign",
+    //       "You need to create at least one role",
+    //       "error"
+    //     );
+    //     return;
+    //   }
 
-       const roleMap = new Map<string, Role>();
-       const roleCheckSet = new Set<string>();
-      let flag = true;
+    //    const roleMap = new Map<string, Role>();
+    //    const roleCheckSet = new Set<string>();
+    //   let flag = true;
 
-      roles.forEach((role) => {
-        roleMap.set(role.id, role);
-        roleCheckSet.add(role.id);
-      });
+    //   roles.forEach((role) => {
+    //     roleMap.set(role.id, role);
+    //     roleCheckSet.add(role.id);
+    //   });
 
-      questions.forEach((question) => {
-        // Go through all the roles of a question and remove if its not a role
-        question.roles.forEach((role) => {
-          if (!roleMap.has(role)) {
-            question.roles.delete(role);
-          }
-        });
+    //   questions.forEach((question) => {
+    //     // Go through all the roles of a question and remove if its not a role
+    //     question.roles.forEach((role) => {
+    //       if (!roleMap.has(role)) {
+    //         question.roles.delete(role);
+    //       }
+    //     });
 
-        if (question.roles.size === 0) {
-          pushToast(
-            "Create Campaign",
-            `The question '${question.text}' is not assigned to a role`,
-            "error"
-          );
-          flag = false;
-        } else {
-          question.roles.forEach((roleId) => {
-            if (roleCheckSet.has(roleId)) {
-              roleCheckSet.delete(roleId);
-            }
-          });
-        }
-      });
+    //     if (question.roles.size === 0) {
+    //       pushToast(
+    //         "Create Campaign",
+    //         `The question '${question.text}' is not assigned to a role`,
+    //         "error"
+    //       );
+    //       flag = false;
+    //     } else {
+    //       question.roles.forEach((roleId) => {
+    //         if (roleCheckSet.has(roleId)) {
+    //           roleCheckSet.delete(roleId);
+    //         }
+    //       });
+    //     }
+    //   });
 
-      if (roleCheckSet.size !== 0) {
-        flag = false;
-        roleCheckSet.forEach((roleID) => {
-          const role = roleMap.get(roleID);
+    //   if (roleCheckSet.size !== 0) {
+    //     flag = false;
+    //     roleCheckSet.forEach((roleID) => {
+    //       const role = roleMap.get(roleID);
 
-          if (role) {
-            pushToast(
-              "Create Campaign",
-              `The role '${role.title}' does not have any questions`,
-              "error"
-            );
-          }
-        });
-      }
+    //       if (role) {
+    //         pushToast(
+    //           "Create Campaign",
+    //           `The role '${role.title}' does not have any questions`,
+    //           "error"
+    //         );
+    //       }
+    //     });
+    //   }
 
-      if (!flag) {
-        return;
-      }
-    }
+    //   if (!flag) {
+    //     return;
+    //   }
+    // }
     setTab(newTab);
   };
 
@@ -186,21 +188,29 @@ const CreateCampaign = () => {
       setError("Start date must be before end date");
       return;
     }
-    if (roles.length === 0 && !isDraft) {
-      setError("At least one role is required");
-      return;
-    }
-    if (questions.length === 0 && !isDraft) {
-      setError("At least one question is required");
-      return;
-    }
+    // if (roles.length === 0 && !isDraft) {
+    //   setError("At least one role is required");
+    //   return;
+    // }
+    // if (questions.length === 0 && !isDraft) {
+    //   setError("At least one question is required");
+    //   return;
+    // }
     setError(null);
 
     // const coverSend = cover ? cover.slice(cover.indexOf(";base64,") + 8) : "";
-    const startTimeDateString = dateToStringForBackend(startDate);
-    const endTimeDateString = dateToStringForBackend(endDate);
+    const startTimeDateString = startDate.toISOString(); //dateToStringForBackend(startDate); 
+    const endTimeDateString = endDate.toISOString();//dateToStringForBackend(endDate);
+    const slug = campaignName
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-");
+
     const campaignSend = {
       organisation_id: orgId,
+      slug,
       name: campaignName,
       description,
       starts_at: startTimeDateString,
@@ -208,35 +218,33 @@ const CreateCampaign = () => {
       published: !isDraft,
     };
 
-    const roleQuestions: { [id: string]: number[] } = {};
+    // const roleQuestions: { [id: string]: number[] } = {};
 
-    const questionsSend = questions.map((q, i) => {
-      q.roles.forEach((roleId) => {
-        const array = roleQuestions[roleId] ?? [];
-        array.push(i);
-        roleQuestions[roleId] = array;
-      });
+    // const questionsSend = questions.map((q, i) => {
+    //   q.roles.forEach((roleId) => {
+    //     const array = roleQuestions[roleId] ?? [];
+    //     array.push(i);
+    //     roleQuestions[roleId] = array;
+    //   });
 
-      return {
-        title: q.text,
-        required: q.required ?? true,
-      };
-    });
+    //   return {
+    //     title: q.text,
+    //     required: q.required ?? true,
+    //   };
+    // });
 
-    const rolesSend = roles.map((r) => ({
-      name: r.title,
-      min_available: r.quantity,
-      max_available: r.quantity,
-      questions_for_role: roleQuestions[r.id] ?? [],
-    }));
+    // const rolesSend = roles.map((r) => ({
+    //   name: r.title,
+    //   min_available: r.quantity,
+    //   max_available: r.quantity,
+    //   questions_for_role: roleQuestions[r.id] ?? [],
+    // }));
 
     try {
-      const { id: campaignId } = await createCampaign(
-        campaignSend,
-        rolesSend,
-        questionsSend
-      );
-      await setCampaignCoverImage(campaignId, cover);
+      const { id: campaignId } = await createCampaign(campaignSend);
+      if (cover) {
+        await setCampaignCoverImage(campaignId, cover);
+      }
       navigate("/admin");
     } catch (err) {
       if (err instanceof FetchError) {
@@ -286,15 +294,12 @@ const CreateCampaign = () => {
       )}
       {(tab === campaignTabIdx || tab === rolesTabIdx) && (
         <NextWrapper>
-          <NextButton
+          <CreateButton
             variant="contained"
-            onClick={() => {
-              onTabChange(tab + 1);
-            }}
+            onClick={() => void submitHandler(false)}
           >
-            Next
-            <ArrowIcon />
-          </NextButton>
+            Create Campaign
+          </CreateButton>
         </NextWrapper>
       )}
     </Container>

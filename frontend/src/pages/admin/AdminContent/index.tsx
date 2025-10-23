@@ -189,13 +189,6 @@ const AdminContent = ({
           >
             <PencilIcon tw="h-8 w-8" />
           </button>
-          <button
-            tw="text-gray-500 transition-colors hover:text-gray-800"
-            type="button"
-            onClick={() => navigate(`/campaign/create/${id}`)}
-          >
-            <PlusIcon tw="h-12 w-12" />
-          </button>
           {/* have to add addition button here to create campaigns,
           or maybe it should go in a more obvious spot? */}
           <ToggleButtonContainer>
@@ -225,6 +218,7 @@ const AdminContent = ({
           campaigns={campaigns}
           setCampaigns={setCampaigns}
           orgLogo={icon}
+          orgId={id}
         />
       )}
       {windowSelected === "members" && (

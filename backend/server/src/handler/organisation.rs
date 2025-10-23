@@ -20,6 +20,8 @@ use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
+use serde::Serialize;
+use serde_json::json;
 
 /// Handler for organisation-related HTTP requests.
 pub struct OrganisationHandler;
@@ -392,7 +394,7 @@ impl OrganisationHandler {
         _admin: OrganisationAdmin,
         Json(request_body): Json<NewCampaign>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Organisation::create_campaign(
+        let new_campaign_id = Organisation::create_campaign(
             id,
             request_body.slug,
             request_body.name,
@@ -405,7 +407,7 @@ impl OrganisationHandler {
         .await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully created campaign"))
+        Ok((StatusCode::OK, Json(json!({ "id": new_campaign_id }))))
     }
 
     /// Checks if a campaign slug is available.
