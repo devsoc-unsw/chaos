@@ -11,14 +11,21 @@ CHAOS' backend is implemented in Rust and for data persistence, we use PostgreSQ
 
 ## Dev Setup
 
+### Backend Development
 To run the backend in a dev/testing environment:
 1. Install `docker-compose` (see [official installation guide](https://docs.docker.com/compose/install/)).
 2. Navigate to the directory this file is in (`backend`) in your terminal (not `backend/server`).
 3. Possibly terminate any running instances of postgres, as the dockerized postgres we will spawn uses the same default port, so the two might interefere with each other.
-4. Run `./setup-dev-env.sh` (you might have to make it executable before with `chmod +x setup-dev-env.sh`), which should drop you into a new shell that has the required tools installed.
-5. Now, you can `cd server` and should be able to `cargo build` successfully.
-6. Once you exit out of the newly created shell (e.g. type `exit`, or kill the terminal), the dockerized postgres instance should automatically be torn down, so it's not unnecessarily running in the background all the time.
+4. Run `./setup-dev-env.sh` (you might have to make it executable before with `chmod +x setup-dev-env.sh`), which should drop you into a new shell that has the required tools installed. This will install the SQLx CLI (for managing database transactions) and start a Postgres container in Docker.
+5. Seed the database with demo data by running `cargo run` in the `backend/database-seeding` folder.
+6. Now, you can `cd server` and should be able to `cargo build` successfully.
+7. Once you exit out of the newly created shell (e.g. type `exit`, or kill the terminal), the dockerized postgres instance should automatically be torn down, so it's not unnecessarily running in the background all the time.
 
+### Authentication
+Some routes are only accessible by Users/Admins/SuperAdmins. To login your browser with a respective User/Admin/SuperAdmin cookie, seed your database as above (step 5), and then call one of the following routes in your browser:
+- **Normal User:** `/api/v1/dev/user_login`
+- **Organisation Admin User:** `/api/v1/dev/org_admin_login`
+- **Super Admin User:** `/api/v1/dev/super_admin_login`
 
 ## Code Structure
 
