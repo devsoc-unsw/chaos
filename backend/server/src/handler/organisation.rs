@@ -21,6 +21,7 @@ use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use serde::Serialize;
+use serde_json::json;
 
 /// Handler for organisation-related HTTP requests.
 pub struct OrganisationHandler;
@@ -393,7 +394,7 @@ impl OrganisationHandler {
         _admin: OrganisationAdmin,
         Json(request_body): Json<NewCampaign>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let result = Organisation::create_campaign(
+        let new_campaign_id = Organisation::create_campaign(
             id,
             request_body.slug,
             request_body.name,
@@ -403,25 +404,10 @@ impl OrganisationHandler {
             &mut transaction.tx,
             &mut state.snowflake_generator,
         )
-        .await;
-
-        // if let Err(ref e) = result {
-        //     eprintln!(
-        //         "{:?}",
-        //         e
-        //     );
-        // }
-
-        let new_campaign_id = result?;
+        .await?;
 
         transaction.tx.commit().await?;
-        #[derive(Serialize)]
-        struct IdResponse {
-            #[serde(serialize_with = "crate::models::serde_string::serialize")]
-            pub id: i64,
-        }
-
-        Ok((StatusCode::OK, Json(IdResponse { id: new_campaign_id })))
+        Ok((StatusCode::OK, Json(json!({ "id": new_campaign_id }))))
     }
 
     /// Checks if a campaign slug is available.
