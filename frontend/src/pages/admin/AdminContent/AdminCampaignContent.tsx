@@ -8,6 +8,7 @@ type Props = {
   campaigns: Campaign[];
   setCampaigns: Dispatch<SetStateAction<Campaign[]>>;
   orgLogo: string;
+  orgId: string;
 };
 
 const SimpleCampaignCard = ({ title, startDate, endDate, onClick }: { title: string; startDate: string; endDate: string; onClick?: () => void }) => (
@@ -19,7 +20,7 @@ const SimpleCampaignCard = ({ title, startDate, endDate, onClick }: { title: str
   </div>
 );
 
-const AdminCampaignContent = ({ campaigns, setCampaigns: _setCampaigns, orgLogo: _orgLogo }: Props) => {
+const AdminCampaignContent = ({ campaigns, setCampaigns: _setCampaigns, orgLogo: _orgLogo, orgId }: Props) => {
   const navigate = useNavigate();
   const now = new Date();
   const active = campaigns.filter((c) => new Date(c.endDate) >= now);
@@ -28,7 +29,12 @@ const AdminCampaignContent = ({ campaigns, setCampaigns: _setCampaigns, orgLogo:
   return (
     <div tw="mx-20 flex flex-col gap-8">
       <section>
-        <h2 tw="mb-4 text-xl font-bold">Active Campaigns</h2>
+        <div tw="flex justify-between items-center mb-4">
+          <h2 tw="text-xl font-bold">Active Campaigns</h2>
+          <button tw="bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700 transition-colors" onClick={() => navigate(`/admin/organisation/${orgId}/campaign/create`)}>
+            NEW CAMPAIGN
+          </button>
+        </div>
         <div tw="flex flex-col gap-3">
           {active.length === 0 ? (
             <p tw="text-gray-600">No active campaigns.</p>
