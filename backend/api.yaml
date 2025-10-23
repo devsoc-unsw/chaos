@@ -2654,7 +2654,7 @@ components:
           example: 3
         finalised:
           type: boolean
-          description: Whether this role has been finalised (e.g. max avaliable number)
+          description: Whether this role has been finalised (e.g. max available number)
           example: False
 
     RoleDetails:
@@ -2682,7 +2682,7 @@ components:
           example: 3
         finalised:
           type: boolean
-          description: Whether this role has been finalised (e.g. max avaliable number)
+          description: Whether this role has been finalised (e.g. max available number)
           example: False
 
     User:
@@ -3011,7 +3011,7 @@ components:
           example: 3
         finalised:
           type: boolean
-          description: Whether this role has been finalised (e.g. max avaliable number)
+          description: Whether this role has been finalised (e.g. max available number)
           example: False
 
     NewApplication:
