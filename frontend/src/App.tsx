@@ -4,7 +4,7 @@ import { Toaster } from "react-hot-toast";
 import { BrowserRouter, Routes } from "react-router-dom";
 import "twin.macro";
 
-import { LoadingIndicator, NavBar } from "./components";
+import { LoadingIndicator, NavBar, DevToolBar } from "./components";
 import { SetNavBarTitleContext } from "./contexts/SetNavbarTitleContext";
 import { UserProvider } from "contexts/UserContext";
 import routes from "./routes";
@@ -23,6 +23,7 @@ const App = () => {
                 <Routes>{routes}</Routes>
               </Suspense>
             </div>
+            <DevToolBar />
             <Toaster
               position="bottom-right"
               reverseOrder={false}
