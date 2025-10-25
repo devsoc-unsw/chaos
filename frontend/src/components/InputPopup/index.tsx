@@ -91,7 +91,11 @@ const InputPopup = ({
                   onChange={handleInputChange}
                 />
               </Input.Label>
-              <Button type="submit">{submitText}</Button>
+              {/*
+                Had to manually add below as the button was showing up as white(should be primary right?)
+                This component only appears here I'll try to get to the bottom of that later, was just bugging me
+              */}
+              <Button type="submit" className="bg-brand-500 text-white ring-brand-500/40 hover:bg-brand-600 active:bg-brand-700">{submitText}</Button>
             </div>
             {typeof children === "function"
               ? children({ formValues, setFormValue, handleInputChange })
