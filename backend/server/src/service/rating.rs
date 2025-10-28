@@ -145,7 +145,7 @@ pub async fn assert_user_is_organisation_member(
             JOIN applications a ON a.campaign_id = c.id
             -- Find the organisation that this application rating belongs to
             -- (via the campaign the rating belongs to).
-            WHERE a.id = $1 AND a.submitted == true
+            WHERE a.id = $1 AND a.submitted = true
             -- Assert user is current member of the organisation that owns the
             -- campaign this application belongs to.
             AND om.user_id = $2
