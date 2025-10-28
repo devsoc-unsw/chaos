@@ -13,9 +13,7 @@ use crate::models::auth::{AuthUser, OrganisationAdmin};
 use crate::models::campaign::{Campaign, NewCampaign};
 use crate::models::email_template::{EmailTemplate, NewEmailTemplate};
 use crate::models::error::ChaosError;
-use crate::models::organisation::{
-    AdminToRemove, AdminUpdateList, NewOrganisation, Organisation, SlugCheck,
-};
+use crate::models::organisation::{AdminToRemove, AdminUpdateList, NewOrganisation, Organisation, OrganisationDetails, SlugCheck};
 use crate::models::transaction::DBTransaction;
 use crate::service::auth::assert_is_super_user;
 use axum::extract::{Json, Path, State};
@@ -162,15 +160,15 @@ impl OrganisationHandler {
         mut transaction: DBTransaction<'_>,
         user: AuthUser,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let mut orgs = Vec::<crate::models::organisation::OrganisationDetails>::new();
-        // Check if user is super user
+        let mut orgs = Vec::<OrganisationDetails>::new();
+        // Check if user is Super User
         match assert_is_super_user(user.user_id, &mut transaction.tx).await {
             Ok(_) => {
-                // Is super user
+                // Is Super User
                 orgs = Organisation::get_all(&mut transaction.tx).await?;
             }
             Err(ChaosError::Unauthorized) => {
-                // Not a super user
+                // Not a Super User
                 orgs = Organisation::get_by_admin(user.user_id, &mut transaction.tx).await?;
             }
             Err(e) => {
