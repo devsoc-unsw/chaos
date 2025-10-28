@@ -8,7 +8,7 @@
 
 use crate::models::app::AppState;
 use crate::models::application::{Application, ApplicationRoleUpdate, ApplicationStatus, OpenApplicationByApplicationId};
-use crate::models::auth::{ApplicationAdmin, ApplicationOwner, ApplicationReviewerGivenApplicationId, AuthUser};
+use crate::models::auth::{ApplicationAdmin, ApplicationOwner, ApplicationOwnerOrReviewer, ApplicationReviewerGivenApplicationId, AuthUser};
 use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
@@ -176,7 +176,7 @@ impl ApplicationHandler {
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - List of application roles with preferences or error
     pub async fn get_roles(
-        _user: ApplicationOwner,
+        _user: ApplicationOwnerOrReviewer,
         Path(application_id): Path<i64>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
