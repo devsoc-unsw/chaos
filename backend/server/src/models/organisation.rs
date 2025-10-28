@@ -595,7 +595,7 @@ impl Organisation {
         let campaigns = sqlx::query_as!(
             OrganisationCampaign,
             "
-                SELECT id, slug, name, cover_image, description, starts_at, ends_at
+                SELECT id, slug, name, cover_image, description, starts_at, ends_at, published
                 FROM campaigns
                 WHERE organisation_id = $1
             ",

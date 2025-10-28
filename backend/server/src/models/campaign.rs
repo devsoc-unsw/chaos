@@ -82,6 +82,8 @@ pub struct CampaignDetails {
     pub starts_at: DateTime<Utc>,
     /// When the campaign stops accepting applications
     pub ends_at: DateTime<Utc>,
+    /// Whether the campaign is published
+    pub published: bool,
 }
 
 /// Simplified view of a campaign for organization listings.
@@ -105,6 +107,8 @@ pub struct OrganisationCampaign {
     pub starts_at: DateTime<Utc>,
     /// When the campaign stops accepting applications
     pub ends_at: DateTime<Utc>,
+    /// Whether the campaign is published
+    pub published: bool,
 }
 
 /// Data structure for creating a new campaign.
@@ -196,7 +200,7 @@ impl Campaign {
             "
                 SELECT c.id, c.slug AS campaign_slug, c.name, c.organisation_id,
                 o.slug AS organisation_slug, o.name as organisation_name, c.cover_image,
-                c.description, c.starts_at, c.ends_at
+                c.description, c.starts_at, c.ends_at, c.published
                 FROM campaigns c
                 JOIN organisations o on c.organisation_id = o.id
                 WHERE c.id = $1
@@ -269,7 +273,7 @@ impl Campaign {
             "
                 SELECT c.id, c.slug AS campaign_slug, c.name, c.organisation_id,
                 o.slug AS organisation_slug, o.name as organisation_name, c.cover_image,
-                c.description, c.starts_at, c.ends_at
+                c.description, c.starts_at, c.ends_at, c.published
                 FROM campaigns c
                 JOIN organisations o on c.organisation_id = o.id
                 WHERE c.slug = $1 AND o.slug = $2
