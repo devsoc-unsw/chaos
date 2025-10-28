@@ -135,7 +135,7 @@ pub async fn assert_user_is_organisation_member(
     user_id: i64,
     application_id: i64,
     transaction: &mut Transaction<'_, Postgres>,
-) -> Result<(), ChaosError> {
+) -> Result<bool, ChaosError> {
     let is_admin = sqlx::query!(
         r#"
         SELECT EXISTS (
@@ -163,5 +163,5 @@ pub async fn assert_user_is_organisation_member(
         return Err(ChaosError::Unauthorized);
     }
 
-    Ok(())
+    Ok(true)
 }
