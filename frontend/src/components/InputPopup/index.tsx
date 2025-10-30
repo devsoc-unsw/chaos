@@ -50,10 +50,10 @@ const InputPopup = ({
 }: Props) => {
   const [formValues, setFormValues] = useState({ [name]: "", ...defaultState });
   const setFormValue = (key: string, value: string) => {
-    setFormValues({
+    setFormValues((formValues) => ({
       ...formValues,
       [key]: value,
-    });
+    }));
   };
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -68,6 +68,9 @@ const InputPopup = ({
         vertical: "bottom",
         horizontal: "right",
       }}
+      disableEnforceFocus
+      disableAutoFocus
+      disableRestoreFocus
       transformOrigin={{
         vertical: "top",
         horizontal: "right",
@@ -86,9 +89,11 @@ const InputPopup = ({
               <Input.Label>
                 <Input.LabelText required>{label}</Input.LabelText>
                 <Input
+                  id="member-add-email"
                   required
                   value={formValues[name]}
                   onChange={handleInputChange}
+                  placeholder="lol"
                 />
               </Input.Label>
               {/*
