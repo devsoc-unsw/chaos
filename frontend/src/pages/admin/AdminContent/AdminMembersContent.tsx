@@ -151,9 +151,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
- 
+
+import AddMemberButton from "@/components/AdminMembersContent/AddMemberButton"
+import EditMemberButton from "@/components/AdminMembersContent/EditMemberButton"
+
 import { Button } from "@/components/ui/button"
-import { PlusIcon, Ellipsis } from "lucide-react"
+import { PlusIcon, Ellipsis, Edit } from "lucide-react"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -178,7 +181,15 @@ export function AdminMembersContent<TData, TValue>({
             <TableHead className="p-4">Members</TableHead>
             <TableHead>Role</TableHead>
             <TableHead className="text-right">
-              <Button variant="secondary" size="icon" ><PlusIcon/></Button>
+              {/* 
+                Pops a dialogue which has
+                  - email input form
+                  - add button
+                    - on press the email checks the database to see if the user exists
+                      -if no user exists 404 + show no user found
+                      - if exists, appends the new user id to id list as a post //new backend route
+              */}
+              <AddMemberButton/>
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -187,9 +198,7 @@ export function AdminMembersContent<TData, TValue>({
             <TableCell className="p-4">Joe M. Ama</TableCell>
             <TableCell>Emperor</TableCell>
             <TableCell className="text-right">
-              <Button size="icon" variant="ghost">
-                <Ellipsis/>
-              </Button>
+              <EditMemberButton/>
             </TableCell>
           </TableRow>
         </TableBody>
