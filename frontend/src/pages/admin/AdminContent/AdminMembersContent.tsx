@@ -153,7 +153,7 @@ import {
 } from "@/components/ui/table"
  
 import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
+import { PlusIcon, Ellipsis } from "lucide-react"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -175,18 +175,22 @@ export function AdminMembersContent<TData, TValue>({
       <Table>
         <TableHeader className="fit-content">
           <TableRow>
-            <TableHead className="text-bold">Members</TableHead>
+            <TableHead className="p-4">Members</TableHead>
             <TableHead>Role</TableHead>
             <TableHead className="text-right">
-              <Button variant="secondary" size="icon" ><Plus/></Button>
+              <Button variant="secondary" size="icon" ><PlusIcon/></Button>
             </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody className="bg-white">
           <TableRow>
-            <TableCell>Joe M. Ama</TableCell>
+            <TableCell className="p-4">Joe M. Ama</TableCell>
             <TableCell>Emperor</TableCell>
-            <TableCell className="">filler</TableCell>
+            <TableCell className="text-right">
+              <Button size="icon" variant="ghost">
+                <Ellipsis/>
+              </Button>
+            </TableCell>
           </TableRow>
         </TableBody>
       </Table>
