@@ -498,13 +498,14 @@ impl OrganisationHandler {
     }
 
     pub async fn add_member(
+        _user: OrganisationAdmin,
         mut transaction: DBTransaction<'_>,
         Path(org_id): Path<i64>,
         Json(req): Json<EmailRoleBody>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let tx = &mut transaction.tx;
         let user_id = user_exists_by_email(req.email, tx).await?;
-        assert_user_is_in_organisation(user_id, org_id, tx).await?;
+        assert_user_is_in_organisation(user_id, org_id, tx).await.is_err();
         Organisation::add_member_or_admin_to_organisation(org_id, user_id, req.role.clone(), tx).await?;
 
         transaction.tx.commit().await?;
@@ -512,6 +513,7 @@ impl OrganisationHandler {
     }
 
     pub async fn update_member_role(
+        _user: OrganisationAdmin,
         mut transaction: DBTransaction<'_>,
         Path(org_id): Path<i64>,
         Json(req): Json<EmailRoleBody>,

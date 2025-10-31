@@ -21,6 +21,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { PlusIcon} from "lucide-react"
+import { useState } from "react"
+import { addOrganisationMember } from "@/api"
+import type { OrganisationRole } from "@/types/api"
 import {
   Select,
   SelectContent,
@@ -28,10 +31,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-const AddMemberButton = () => {
+type Props = { orgId: string; onAdded?: () => void }
+
+const AddMemberButton = ({ orgId, onAdded }: Props) => {
+    const [email, setEmail] = useState("")
+    const [role, setRole] = useState<OrganisationRole>("User")
+    const [open, setOpen] = useState(false)
+    const onSubmit = async () => {
+        await addOrganisationMember(orgId, email, role)
+        setOpen(false)
+        setEmail("")
+        setRole("User")
+        onAdded && onAdded()
+    }
     return (
         <Dialog>
-            <DialogTrigger asChild>
+            <DialogTrigger asChild onClick={() => setOpen(true)}>
                 <Button variant="secondary" size="icon" ><PlusIcon/></Button>
             </DialogTrigger>
             <DialogContent>
@@ -45,11 +60,11 @@ const AddMemberButton = () => {
                 </DialogHeader>
                 <div className="grid gap-3">
                     <Label htmlFor="email-1">Email</Label>
-                    <Input id="email-1" name="email" placeholder="Email" />
+                    <Input id="email-1" name="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
                 <div>
                     <Label>Role</Label>
-                    <Select>
+                    <Select value={role} onValueChange={(v) => setRole(v as OrganisationRole)}>
                         <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="Role" />
                         </SelectTrigger>
@@ -58,8 +73,8 @@ const AddMemberButton = () => {
                                 !cursor-pointer
                                 hover:bg-accent hover:text-accent-foreground
                                 data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground
-                            ">Member</SelectItem>
-                            <SelectItem value="admin" className="
+                            ">User</SelectItem>
+                            <SelectItem value="Admin" className="
                                 !cursor-pointer
                                 hover:bg-accent hover:text-accent-foreground
                                 data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground
@@ -68,7 +83,7 @@ const AddMemberButton = () => {
                     </Select>
                 </div>
                 <DialogFooter>
-                    <Button type="submit" variant="outline">Add User</Button>
+                    <Button type="button" variant="outline" onClick={() => void onSubmit()}>Add User</Button>
                 </DialogFooter>
             </DialogContent>
          </Dialog>

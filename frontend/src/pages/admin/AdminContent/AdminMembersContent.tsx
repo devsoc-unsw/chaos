@@ -163,16 +163,26 @@ interface DataTableProps<TData, TValue> {
   data: TData[]
 }
  
-export function AdminMembersContent<TData, TValue>({
-  columns,
-  data,
-}: DataTableProps<TData, TValue>) {
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  })
- 
+import { useEffect } from "react"
+import { getOrganisationMembers } from "@/api"
+import type { Member } from "../../admin/types"
+
+type Props = {
+  orgId: string
+  members: Member[]
+  setMembers: (members: Member[]) => void
+}
+
+export function AdminMembersContent(_: any) { return null }
+
+const AdminMembersContentImpl = ({ orgId, members, setMembers }: Props) => {
+  useEffect(() => {
+    void (async () => {
+      const resp = await getOrganisationMembers(orgId)
+      setMembers(resp.members)
+    })()
+  }, [orgId, setMembers])
+
   return (
     <div className="overflow-hidden border-none">
       <Table>
@@ -181,30 +191,30 @@ export function AdminMembersContent<TData, TValue>({
             <TableHead className="p-4">Members</TableHead>
             <TableHead>Role</TableHead>
             <TableHead className="text-right">
-              {/* 
-                Pops a dialogue which has
-                  - email input form
-                  - add button
-                    - on press the email checks the database to see if the user exists
-                      -if no user exists 404 + show no user found
-                      - if exists, appends the new user id to id list as a post //new backend route
-              */}
-              <AddMemberButton/>
+              <AddMemberButton orgId={orgId} onAdded={async () => {
+                const resp = await getOrganisationMembers(orgId)
+                setMembers(resp.members)
+              }} />
             </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody className="bg-white">
-          <TableRow>
-            <TableCell className="p-4">Joe M. Ama</TableCell>
-            <TableCell>Emperor</TableCell>
-            <TableCell className="text-right">
-              <EditMemberButton/>
-            </TableCell>
-          </TableRow>
+          {members.map((m) => (
+            <TableRow key={m.id}>
+              <TableCell className="p-4">{m.name}</TableCell>
+              <TableCell>{m.role}</TableCell>
+              <TableCell className="text-right">
+                <EditMemberButton orgId={orgId} member={m} onChanged={async () => {
+                  const resp = await getOrganisationMembers(orgId)
+                  setMembers(resp.members)
+                }} />
+              </TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
     </div>
   )
 }
 
-export default AdminMembersContent;
+export default AdminMembersContentImpl;

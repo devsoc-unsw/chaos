@@ -127,6 +127,7 @@ pub struct AdminUpdateList {
 /// from the administrator role.
 #[derive(Deserialize, Serialize)]
 pub struct AdminToRemove {
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
     /// ID of the user to remove as administrator
     pub user_id: i64,
 }

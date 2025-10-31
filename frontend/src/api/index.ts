@@ -34,6 +34,7 @@ import {
   AnswerData,
   type ApplicationRoleUpdateInput,
   type ApplicationRole,
+  type OrganisationRole as OrgRoleType,
 } from "../types/api";
 
 // todo: update to new route
@@ -507,3 +508,44 @@ export const getAnsweredApplicationQuestions = (
     })
   );
 };
+
+// Organisation members
+export const getOrganisationMembers = (organisationId: string) =>
+  authenticatedRequest<{ members: Member[] }>({
+    path: `/v1/organisation/${organisationId}/members`,
+  });
+
+export const addOrganisationMember = (
+  organisationId: string,
+  email: string,
+  role: OrgRoleType
+) =>
+  authenticatedRequest({
+    method: "POST",
+    path: `/v1/organisation/${organisationId}/member`,
+    body: { email, role },
+    jsonResp: false,
+  });
+
+export const removeOrganisationMember = (
+  organisationId: string,
+  userId: string
+) =>
+  authenticatedRequest({
+    method: "DELETE",
+    path: `/v1/organisation/${organisationId}/member`,
+    body: { user_id: userId },
+    jsonResp: false,
+  });
+
+export const updateOrganisationMemberRole = (
+  organisationId: string,
+  email: string,
+  role: OrgRoleType
+) =>
+  authenticatedRequest({
+    method: "PUT",
+    path: `/v1/organisation/${organisationId}/member`,
+    body: { email, role },
+    jsonResp: false,
+  });
