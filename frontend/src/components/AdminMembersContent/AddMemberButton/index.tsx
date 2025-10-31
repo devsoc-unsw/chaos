@@ -54,11 +54,22 @@ const AddMemberButton = () => {
                             <SelectValue placeholder="Role" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="member">Member</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
+                            <SelectItem value="member" className="
+                                !cursor-pointer
+                                hover:bg-accent hover:text-accent-foreground
+                                data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground
+                            ">Member</SelectItem>
+                            <SelectItem value="admin" className="
+                                !cursor-pointer
+                                hover:bg-accent hover:text-accent-foreground
+                                data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground
+                            ">Admin</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
+                <DialogFooter>
+                    <Button type="submit" variant="outline">Add User</Button>
+                </DialogFooter>
             </DialogContent>
          </Dialog>
     );

@@ -39,3 +39,37 @@ pub async fn assert_user_is_organisation_admin(
 
     Ok(())
 }
+
+/// Verifies if a user is in an organization
+/// 
+/// This function checks if the user is a member of the specified organisation.
+/// 
+/// # Arguments
+/// 
+/// * `user_id` - The ID of the user to check
+/// * `organisation_id` - The ID of the organisation
+/// * `pool` - Database connection pool
+/// 
+/// # Returns
+/// 
+/// * `Result<(), ChaosError>` - Ok if the user is a member, Unauthorized error otherwise
+pub async fn assert_user_is_in_organisation(
+    user_id: i64,
+    organisation_id: i64,
+    transaction: &mut Transaction<'_, Postgres>,
+) -> Result<(), ChaosError> {
+    let in_organization = sqlx::query!(
+        "SELECT EXISTS(SELECT 1 FROM organisation_members WHERE organisation_id = $1 AND user_id = $2)",
+        organisation_id,
+        user_id
+    )
+        .fetch_one(transaction.deref_mut())
+        .await?.exists.expect("`exists` should always exist in this query result");
+
+    if !in_organization{
+        return Err(ChaosError::Unauthorized);
+    }
+
+    Ok(())
+}
+

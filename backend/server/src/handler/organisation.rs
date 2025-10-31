@@ -14,8 +14,10 @@ use crate::models::campaign::{Campaign, NewCampaign};
 use crate::models::email_template::{EmailTemplate, NewEmailTemplate};
 use crate::models::error::ChaosError;
 use crate::models::organisation::{
-    AdminToRemove, AdminUpdateList, NewOrganisation, Organisation, SlugCheck,
+    AdminToRemove, AdminUpdateList, NewOrganisation, Organisation, SlugCheck, EmailRoleBody
 };
+use crate::service::user::{user_exists_by_email};
+use crate::service::organisation::{assert_user_is_in_organisation};
 use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
@@ -493,5 +495,37 @@ impl OrganisationHandler {
 
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(email_templates)))
+    }
+
+    pub async fn add_member(
+        mut transaction: DBTransaction<'_>,
+        Path(org_id): Path<i64>,
+        Json(req): Json<EmailRoleBody>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let tx = &mut transaction.tx;
+        let user_id = user_exists_by_email(req.email, tx).await?;
+        assert_user_is_in_organisation(user_id, org_id, tx).await?;
+        Organisation::add_member_or_admin_to_organisation(org_id, user_id, req.role.clone(), tx).await?;
+
+        transaction.tx.commit().await?;
+        Ok((StatusCode::OK, "Member added to organisation"))
+    }
+
+    pub async fn update_member_role(
+        mut transaction: DBTransaction<'_>,
+        Path(org_id): Path<i64>,
+        Json(req): Json<EmailRoleBody>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let tx = &mut transaction.tx;
+        let user_id = user_exists_by_email(req.email, tx).await?;
+        Organisation::change_member_role(
+            org_id,
+            user_id,
+            req.role.clone(),
+            tx
+        )
+        .await?;
+        transaction.tx.commit().await?;
+        Ok(StatusCode::OK)
     }
 }

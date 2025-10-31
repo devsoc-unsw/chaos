@@ -131,8 +131,17 @@ pub struct AdminToRemove {
     pub user_id: i64,
 }
 
-/// Data structure for checking slug availability.
+/// Data structure for adding a user
 /// 
+/// This struct contains a user's email, and the role for that user.
+#[derive(Deserialize, Serialize)]
+pub struct EmailRoleBody {
+    // email
+    pub email: String,
+    // role
+    pub role: String
+}
+
 /// This struct contains a slug to check for availability
 /// when creating a new organisation.
 #[derive(Deserialize)]
@@ -653,5 +662,61 @@ impl Organisation {
         .await?;
 
         Ok(id)
+    }
+
+    pub async fn add_member_or_admin_to_organisation(
+        organisation_id: i64,
+        member_id: i64,
+        given_role: String, //was gonna make bool but we need to extend for other members jsut brute force w/ match arm rn
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<i64, ChaosError> {
+
+
+        let role:OrganisationRole = match given_role.to_lowercase().as_str() {
+            "user" => OrganisationRole::User,
+            _ => OrganisationRole::Admin
+        };
+
+        let _ = sqlx::query!(
+            "INSERT INTO organisation_members(organisation_id, user_id, role)
+            VALUES ($1, $2, $3)",
+            organisation_id,
+            member_id,
+            role as OrganisationRole
+        )
+        .execute(transaction.deref_mut())
+        .await?;
+
+        Ok(member_id)
+    }
+
+    pub async fn change_member_role(
+        organisation_id: i64,
+        member_id: i64,
+        new_role: String,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
+        let role: OrganisationRole = match new_role.to_lowercase().as_str() {
+            "user" => OrganisationRole::User,
+            _ => OrganisationRole::Admin
+        };
+
+        let result = sqlx::query!(
+            "UPDATE organisation_members
+            SET role = $1
+            WHERE organisation_id = $2 AND user_id = $3",
+            role as OrganisationRole,
+            organisation_id,
+            member_id
+        )
+        .execute(transaction.deref_mut())
+        .await?;
+
+        // User didn't exist if nothing is affected
+        if result.rows_affected() == 0 {
+            return Err(ChaosError::BadRequest);
+        }
+
+        Ok(())
     }
 }

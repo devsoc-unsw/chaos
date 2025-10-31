@@ -192,7 +192,9 @@ pub async fn app() -> Result<Router, ChaosError> {
         )
         .route(
             "/api/v1/organisation/:organisation_id/member",
-                delete(OrganisationHandler::remove_member),
+                delete(OrganisationHandler::remove_member)
+                .put(OrganisationHandler::update_member_role)
+                .post(OrganisationHandler::add_member),
         )
         .route(
             "/api/v1/organisation/:organisation_id/admins",
