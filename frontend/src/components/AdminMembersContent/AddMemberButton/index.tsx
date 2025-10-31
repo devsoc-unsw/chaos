@@ -45,7 +45,7 @@ const AddMemberButton = ({ orgId, onAdded }: Props) => {
         onAdded && onAdded()
     }
     return (
-        <Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild onClick={() => setOpen(true)}>
                 <Button variant="secondary" size="icon" className="cursor-pointer"><PlusIcon/></Button>
             </DialogTrigger>
