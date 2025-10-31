@@ -64,30 +64,37 @@ const API = {
       credentials: 'include', // Include cookies
     });
     
+    // Read response body once (can only be read once)
+    const text = await resp.text();
+    
     if (!resp.ok) {
       let data;
       try {
-        // Use the same regex approach for error responses
-        const text = await resp.text();
-        const processedText = text.replace(/"organisation_id":(\d{16,})/g, '"organisation_id":"$1"')
-                                 .replace(/"id":(\d{16,})/g, '"id":"$1"')
-                                 .replace(/"campaign_id":(\d{16,})/g, '"campaign_id":"$1"')
-                                 .replace(/"user_id":(\d{16,})/g, '"user_id":"$1"')
-                                 .replace(/"role_id":(\d{16,})/g, '"role_id":"$1"')
-                                 .replace(/"application_id":(\d{16,})/g, '"application_id":"$1"')
-                                 .replace(/"question_id":(\d{16,})/g, '"question_id":"$1"')
-                                 .replace(/"rater_id":(\d{16,})/g, '"rater_id":"$1"')
-                                 .replace(/"commenter_user_id":(\d{16,})/g, '"commenter_user_id":"$1"');
-        data = JSON.parse(processedText);
+        // Try to parse as JSON first, fallback to plain text
+        try {
+          const processedText = text.replace(/"organisation_id":(\d{16,})/g, '"organisation_id":"$1"')
+                                   .replace(/"id":(\d{16,})/g, '"id":"$1"')
+                                   .replace(/"campaign_id":(\d{16,})/g, '"campaign_id":"$1"')
+                                   .replace(/"user_id":(\d{16,})/g, '"user_id":"$1"')
+                                   .replace(/"role_id":(\d{16,})/g, '"role_id":"$1"')
+                                   .replace(/"application_id":(\d{16,})/g, '"application_id":"$1"')
+                                   .replace(/"question_id":(\d{16,})/g, '"question_id":"$1"')
+                                   .replace(/"rater_id":(\d{16,})/g, '"rater_id":"$1"')
+                                   .replace(/"commenter_user_id":(\d{16,})/g, '"commenter_user_id":"$1"');
+          data = JSON.parse(processedText);
+        } catch (jsonError) {
+          // If not JSON, store as plain text in a message field
+          data = { message: text || resp.statusText };
+        }
       } catch (e) {
-        // just let data be undefined
+        // If we can't parse, store status info
+        data = { message: `HTTP ${resp.status}: ${resp.statusText}` };
       }
       throw new FetchError(resp, data);
     }
 
     if (jsonResp) {
       // Parse JSON manually to preserve large integers
-      const text = await resp.text();
       
       // Use regex to replace large integers with strings before parsing
       const processedText = text.replace(/"organisation_id":(\d{16,})/g, '"organisation_id":"$1"')

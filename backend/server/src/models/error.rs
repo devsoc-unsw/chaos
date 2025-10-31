@@ -6,6 +6,8 @@
 
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Redirect, Response};
+use axum::Json;
+use serde_json::json;
 
 /// Custom error enum for Chaos.
 ///
@@ -30,6 +32,10 @@ pub enum ChaosError {
     /// Invalid request parameters or data
     #[error("Bad request")]
     BadRequest,
+    
+    /// Invalid request parameters or data with detailed message
+    #[error("Bad request: {0}")]
+    BadRequestWithMessage(String),
 
     /// Application period has ended
     #[error("Application closed")]
@@ -99,7 +105,12 @@ impl IntoResponse for ChaosError {
             ChaosError::ForbiddenOperation => {
                 (StatusCode::FORBIDDEN, "Forbidden operation").into_response()
             }
-            ChaosError::BadRequest => (StatusCode::BAD_REQUEST, "Bad request").into_response(),
+            ChaosError::BadRequest => {
+                (StatusCode::BAD_REQUEST, Json(json!({"error": "Bad request", "message": "Invalid request data or validation failed"}))).into_response()
+            },
+            ChaosError::BadRequestWithMessage(msg) => {
+                (StatusCode::BAD_REQUEST, Json(json!({"error": "Bad request", "message": msg}))).into_response()
+            },
             ChaosError::ApplicationClosed => (StatusCode::BAD_REQUEST, "Application closed").into_response(),
             ChaosError::CampaignClosed => (StatusCode::BAD_REQUEST, "Campaign closed").into_response(),
             ChaosError::DatabaseError(db_error) => match db_error {

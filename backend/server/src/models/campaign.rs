@@ -51,6 +51,8 @@ pub struct Campaign {
     pub created_at: DateTime<Utc>,
     /// When the campaign was last updated
     pub updated_at: DateTime<Utc>,
+    /// Whether the campaign has been published
+    pub published: bool,
 }
 
 /// Detailed view of a campaign.
@@ -80,6 +82,8 @@ pub struct CampaignDetails {
     pub starts_at: DateTime<Utc>,
     /// When the campaign stops accepting applications
     pub ends_at: DateTime<Utc>,
+    /// Whether the campaign has been published
+    pub published: bool,
 }
 
 /// Simplified view of a campaign for organization listings.
@@ -103,6 +107,8 @@ pub struct OrganisationCampaign {
     pub starts_at: DateTime<Utc>,
     /// When the campaign stops accepting applications
     pub ends_at: DateTime<Utc>,
+    /// Whether the campaign has been published
+    pub published: bool,
 }
 
 /// Data structure for creating a new campaign.
@@ -194,7 +200,7 @@ impl Campaign {
             "
                 SELECT c.id, c.slug AS campaign_slug, c.name, c.organisation_id,
                 o.slug AS organisation_slug, o.name as organisation_name, c.cover_image,
-                c.description, c.starts_at, c.ends_at
+                c.description, c.starts_at, c.ends_at, c.published
                 FROM campaigns c
                 JOIN organisations o on c.organisation_id = o.id
                 WHERE c.id = $1
@@ -267,7 +273,7 @@ impl Campaign {
             "
                 SELECT c.id, c.slug AS campaign_slug, c.name, c.organisation_id,
                 o.slug AS organisation_slug, o.name as organisation_name, c.cover_image,
-                c.description, c.starts_at, c.ends_at
+                c.description, c.starts_at, c.ends_at, c.published
                 FROM campaigns c
                 JOIN organisations o on c.organisation_id = o.id
                 WHERE c.slug = $1 AND o.slug = $2
@@ -308,6 +314,34 @@ impl Campaign {
             update.description,
             update.starts_at,
             update.ends_at,
+            id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
+        Ok(())
+    }
+
+    /// Publishes a campaign by setting its published field to true.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `id` - ID of the campaign to publish
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<(), ChaosError>` - Success or error
+    pub async fn publish(
+        id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
+        _ = sqlx::query!(
+            "
+                UPDATE campaigns
+                SET published = true
+                WHERE id = $1 RETURNING id
+            ",
             id
         )
         .fetch_one(transaction.deref_mut())

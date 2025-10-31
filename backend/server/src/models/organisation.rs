@@ -581,7 +581,7 @@ impl Organisation {
         let campaigns = sqlx::query_as!(
             OrganisationCampaign,
             "
-                SELECT id, slug, name, cover_image, description, starts_at, ends_at
+                SELECT id, slug, name, cover_image, description, starts_at, ends_at, published
                 FROM campaigns
                 WHERE organisation_id = $1
             ",
@@ -611,8 +611,8 @@ impl Organisation {
 
         sqlx::query!(
             "
-            INSERT INTO campaigns (id, organisation_id, slug, name, description, starts_at, ends_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
+            INSERT INTO campaigns (id, organisation_id, slug, name, description, starts_at, ends_at, published)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, false)
         ",
             new_campaign_id,
             organisation_id,

@@ -418,13 +418,13 @@ const ApplicationReview: React.FC = () => {
         if (answer === NO_ANSWER_VALUE) {
           return "No answer provided";
         }
-        const selectedOption = question.data.options.find(opt => opt.id === answer);
+        const selectedOption = question.data?.options?.find(opt => opt.id === answer);
         return selectedOption ? selectedOption.text : String(answer);
       
       case "MultiSelect":
       case "Ranking":
         if (Array.isArray(answer)) {
-          const selectedOptions = question.data.options
+          const selectedOptions = (question.data?.options ?? [])
             .filter(opt => answer.includes(opt.id))
             .map(opt => opt.text);
           return selectedOptions.length > 0 ? selectedOptions.join(", ") : "No selections";
@@ -512,7 +512,7 @@ const ApplicationReview: React.FC = () => {
 
   const renderQuestion = (q: QuestionResponse) => {
     const options = (q.question_type === "MultiChoice" || q.question_type === "MultiSelect" || q.question_type === "DropDown" || q.question_type === "Ranking")
-      ? (q.data.options.map((o) => ({ id: o.id, label: o.text })) ?? [])
+      ? ((q.data?.options ?? []).map((o) => ({ id: o.id, label: o.text })) ?? [])
       : [];
     const idStr = String(q.id);
 

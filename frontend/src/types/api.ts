@@ -86,11 +86,11 @@ export type QuestionResponse = {
   id: string;
   title: string;
   description?: string;
-  //common: boolean;
-  //max_bytes: number;
+  common: boolean;
+  roles: string[];
   required: boolean;
   question_type: QuestionType;
-  data: QuestionData;
+  data?: QuestionData;
   created_at: Date;
   updated_at: Date;
 };
@@ -260,11 +260,11 @@ export type CampaignWithRoles = {
 
 export type NewCampaignInput = {
   organisation_id: string; // Changed to string to handle large integers
+  slug: string;
   name: string;
-  description: string;
+  description?: string; // Optional to match backend, but validated as required on frontend
   starts_at: string;
   ends_at: string;
-  published: boolean;
 };
 
 export type LogoError =

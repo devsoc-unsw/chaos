@@ -10,7 +10,7 @@ export const getQuestionSlashMenuItems = (editor: any): DefaultReactSuggestionIt
                     {
                         type: "mcqQuestion",
                         props: {
-                            question: "Enter your multiple choice question...",
+                            question: "",
                         },
                     },
                 ],
@@ -31,8 +31,8 @@ export const getQuestionSlashMenuItems = (editor: any): DefaultReactSuggestionIt
                     {
                         type: "textQuestion",
                         props: {
-                            question: "Enter your text question...",
-                            placeholder: "Answer will appear here...",
+                            question: "",
+                            placeholder: "",
                         },
                     },
                 ],
@@ -53,7 +53,7 @@ export const getQuestionSlashMenuItems = (editor: any): DefaultReactSuggestionIt
                     {
                         type: "multiSelectQuestion",
                         props: {
-                            question: "Enter your multi-select question...",
+                            question: "",
                         },
                     },
                 ],
@@ -74,7 +74,7 @@ export const getQuestionSlashMenuItems = (editor: any): DefaultReactSuggestionIt
                     {
                         type: "dropDownQuestion",
                         props: {
-                            question: "Enter your dropdown question...",
+                            question: "",
                         },
                     },
                 ],
@@ -95,7 +95,7 @@ export const getQuestionSlashMenuItems = (editor: any): DefaultReactSuggestionIt
                     {
                         type: "rankingQuestion",
                         props: {
-                            question: "Enter your ranking question...",
+                            question: "",
                         },
                     },
                 ],

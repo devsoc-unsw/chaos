@@ -14,6 +14,9 @@ use crate::models::error::ChaosError;
 use crate::models::storage::Storage;
 use axum::routing::{delete, get, patch, post};
 use axum::Router;
+use axum::response::Response;
+use axum::http::StatusCode;
+use axum::extract::rejection::JsonRejection;
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use reqwest::Client as ReqwestClient;
 use s3::Bucket;
@@ -238,7 +241,7 @@ pub async fn app() -> Result<Router, ChaosError> {
         .route(
             "/api/v1/role/:role_id",
             get(RoleHandler::get)
-                .put(RoleHandler::update)
+                .patch(RoleHandler::update)
                 .delete(RoleHandler::delete),
         )
         .route(
@@ -250,6 +253,10 @@ pub async fn app() -> Result<Router, ChaosError> {
             get(CampaignHandler::get)
                 .put(CampaignHandler::update)
                 .delete(CampaignHandler::delete),
+        )
+        .route(
+            "/api/v1/campaign/:campaign_id/publish",
+            post(CampaignHandler::publish),
         )
         .route(
             "/api/v1/organisation/slug/:organisation_slug/campaign/slug/:campaign_slug",

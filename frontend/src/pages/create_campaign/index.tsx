@@ -10,6 +10,7 @@ import {
 } from "api";
 import { FetchError } from "api/api";
 import { dateToStringForBackend, pushToast } from "utils";
+import type { User } from "types/api";
 
 import CampaignTab from "./Campaign";
 import ReviewTab from "./Preview";
@@ -21,9 +22,12 @@ import type { Answers, Question, Role } from "./types";
 const CreateCampaign = () => {
   const orgId = String(useParams().orgId);
   const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
+  
   useEffect(() => {
     const fetchData = async () => {
-      const user = await getSelfInfo();
+      const userData = await getSelfInfo();
+      setUser(userData);
       // commenting this out as we need to be super users to call this, and anyway
       // the routes to fetch stuff should already be admin protected? not too sure
       // const { members: admins } = await getAdminData(orgId);
@@ -51,6 +55,7 @@ const CreateCampaign = () => {
   const [roleSelected, setRoleSelected] = useState(0);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Answers>({});
+  const [isLoading, setIsLoading] = useState(false);
   const campaign = {
     tab,
     setTab,
@@ -171,13 +176,10 @@ const CreateCampaign = () => {
     setTab(newTab);
   };
 
-  const submitHandler = async (isDraft: boolean) => {
-    if (campaignName.length === 0 && !isDraft) {
+  const submitHandler = async () => {
+    // Validation
+    if (campaignName.length === 0) {
       setError("Campaign name is required");
-      return;
-    }
-    if (description === "" && !isDraft) {
-      setError("Campaign description is required");
       return;
     }
     if (cover === null) {
@@ -188,14 +190,7 @@ const CreateCampaign = () => {
       setError("Start date must be before end date");
       return;
     }
-    // if (roles.length === 0 && !isDraft) {
-    //   setError("At least one role is required");
-    //   return;
-    // }
-    // if (questions.length === 0 && !isDraft) {
-    //   setError("At least one question is required");
-    //   return;
-    // }
+    
     setError(null);
 
     // const coverSend = cover ? cover.slice(cover.indexOf(";base64,") + 8) : "";
@@ -212,10 +207,9 @@ const CreateCampaign = () => {
       organisation_id: orgId,
       slug,
       name: campaignName,
-      description,
+      description: description || undefined,
       starts_at: startTimeDateString,
       ends_at: endTimeDateString,
-      published: !isDraft,
     };
 
     // const roleQuestions: { [id: string]: number[] } = {};
@@ -240,17 +234,20 @@ const CreateCampaign = () => {
     //   questions_for_role: roleQuestions[r.id] ?? [],
     // }));
 
+    setIsLoading(true);
     try {
       const { id: campaignId } = await createCampaign(campaignSend);
+      
       if (cover) {
         await setCampaignCoverImage(campaignId, cover);
       }
-      navigate("/admin");
+      
+      // Redirect to edit page instead of admin
+      navigate(`/organisation/${orgId}/campaign/${campaignId}/edit`);
     } catch (err) {
       if (err instanceof FetchError) {
         try {
           const data = (await err.resp.json()) as string;
-
           pushToast("Create Campaign", `Internal Error: ${data}`, "error");
         } catch {
           pushToast(
@@ -259,7 +256,6 @@ const CreateCampaign = () => {
             "error"
           );
         }
-
         return;
       }
 
@@ -269,39 +265,23 @@ const CreateCampaign = () => {
         "Something went wrong on the backend!",
         "error"
       );
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <Container>
-      <Tabs
-        value={tab}
-        onChange={(_e: React.ChangeEvent<HTMLInputElement>, val: number) => onTabChange(val)}
-        centered
-        style={{ paddingBottom: "30px", paddingTop: "15px" }}
-      >
-        <Tab label="campaign" />
-        <Tab label="roles" />
-        <Tab label="review" />
-      </Tabs>
-      {tab === campaignTabIdx && <CampaignTab campaign={campaign} />}
-      {tab === rolesTabIdx && <RolesTab campaign={campaign} />}
-      {tab === reviewTabIdx && (
-        <ReviewTab
-          campaign={campaign}
-          onSubmit={(e) => void submitHandler(e)}
-        />
-      )}
-      {(tab === campaignTabIdx || tab === rolesTabIdx) && (
-        <NextWrapper>
-          <CreateButton
-            variant="contained"
-            onClick={() => void submitHandler(false)}
-          >
-            Create Campaign
-          </CreateButton>
-        </NextWrapper>
-      )}
+    <Container style={{ marginTop: "60px", marginBottom: "60px" }}>
+      <CampaignTab campaign={campaign} />
+      <NextWrapper style={{ marginTop: "60px" }}>
+        <CreateButton
+          variant="contained"
+          onClick={() => void submitHandler()}
+          disabled={isLoading || campaignName.trim().length === 0 || cover === null}
+        >
+          {isLoading ? "Creating Campaign..." : "Create Campaign"}
+        </CreateButton>
+      </NextWrapper>
     </Container>
   );
 };

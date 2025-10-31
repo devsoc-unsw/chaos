@@ -63,6 +63,7 @@ pub struct NewQuestion {
     pub title: String,
     pub description: Option<String>,
     pub common: bool,
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize_option_vec")]
     pub roles: Option<Vec<i64>>,
     pub required: bool,
 
@@ -484,7 +485,7 @@ impl Question {
 /// Some question types are stored in memory and JSON using the same struct, and only differ
 /// in their implementation when inserting to the database and in their restrictions
 /// (e.g. max 1 answer allowed in multi-choice vs. many in multi-select)
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 #[serde(tag = "question_type", content = "data")]
 pub enum QuestionData {
     ShortAnswer,
@@ -523,7 +524,7 @@ impl QuestionType {
     }
 }
 
-#[derive(Deserialize, Serialize, Default)]
+#[derive(Deserialize, Serialize, Default, Debug)]
 pub struct MultiOptionData {
     pub options: Vec<MultiOptionQuestionOption>,
 }
@@ -531,7 +532,7 @@ pub struct MultiOptionData {
 /// Each of these structs represent a row in the `multi_option_question_options`
 /// table. For a `MultiChoice` question like "What is your favourite programming
 /// language?", there would be rows for "Rust", "Java" and "TypeScript".
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct MultiOptionQuestionOption {
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
@@ -585,11 +586,10 @@ impl QuestionData {
             | Self::MultiSelect(data)
             | Self::DropDown(data)
             | Self::Ranking(data) => {
-                if !data.options.is_empty() {
-                    return Ok(());
-                };
-
-                Err(ChaosError::BadRequest)
+                if data.options.is_empty() {
+                    return Err(ChaosError::BadRequest);
+                }
+                Ok(())
             }
         }
     }

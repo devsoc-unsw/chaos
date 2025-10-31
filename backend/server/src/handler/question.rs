@@ -10,7 +10,7 @@ use crate::models::auth::{AuthUser, CampaignAdmin, QuestionAdmin};
 use crate::models::error::ChaosError;
 use crate::models::question::{NewQuestion, Question};
 use crate::models::transaction::DBTransaction;
-use axum::extract::{Json, Path, State};
+use axum::extract::{Json, Path, State, Request};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use serde_json::json;
@@ -120,6 +120,7 @@ impl QuestionHandler {
     /// # Arguments
     /// 
     /// * `state` - The application state
+    /// * `campaign_id` - The ID of the campaign (extracted from path but not used)
     /// * `question_id` - The ID of the question to update
     /// * `_admin` - The authenticated user (must be a question admin)
     /// * `transaction` - Database transaction
@@ -130,11 +131,29 @@ impl QuestionHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update(
         State(mut state): State<AppState>,
-        Path(question_id): Path<i64>,
+        Path((_campaign_id, question_id)): Path<(i64, i64)>,
         _admin: QuestionAdmin,
         mut transaction: DBTransaction<'_>,
-        Json(data): Json<NewQuestion>,
+        request: Request,
     ) -> Result<impl IntoResponse, ChaosError> {
+        let body_bytes = axum::body::to_bytes(request.into_body(), usize::MAX).await
+            .map_err(|e| {
+                ChaosError::BadRequestWithMessage(format!("Failed to read request body: {:?}", e))
+            })?;
+        
+        let data: NewQuestion = serde_json::from_slice(&body_bytes)
+            .map_err(|e| {
+                let error_msg = format!("JSON deserialization failed: {}. Body: {}", e, String::from_utf8_lossy(&body_bytes));
+                ChaosError::BadRequestWithMessage(error_msg)
+            })?;
+        
+        // Validate question_data before updating
+        data.question_data.validate()
+            .map_err(|_| {
+                let error_msg = format!("Question validation failed: options array is empty for question type {:?}", data.question_data);
+                ChaosError::BadRequestWithMessage(error_msg)
+            })?;
+        
         Question::update(
             question_id,
             data.title,
@@ -146,7 +165,11 @@ impl QuestionHandler {
             &mut transaction.tx,
             &mut state.snowflake_generator,
         )
-        .await?;
+        .await
+        .map_err(|e| {
+            let error_msg = format!("Failed to update question: {:?}", e);
+            ChaosError::BadRequestWithMessage(error_msg)
+        })?;
 
         transaction.tx.commit().await?;
 
@@ -159,6 +182,7 @@ impl QuestionHandler {
     /// 
     /// # Arguments
     /// 
+    /// * `campaign_id` - The ID of the campaign (extracted from path but not used)
     /// * `question_id` - The ID of the question to delete
     /// * `_admin` - The authenticated user (must be a question admin)
     /// * `transaction` - Database transaction
@@ -167,7 +191,7 @@ impl QuestionHandler {
     /// 
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn delete(
-        Path(question_id): Path<i64>,
+        Path((_campaign_id, question_id)): Path<(i64, i64)>,
         _admin: QuestionAdmin,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {

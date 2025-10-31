@@ -1,5 +1,6 @@
 import "twin.macro";
 import { useNavigate } from "react-router-dom";
+import { Pencil } from "lucide-react";
 
 import type { Campaign } from "../types";
 import type { Dispatch, SetStateAction } from "react";
@@ -11,12 +12,40 @@ type Props = {
   orgId: string;
 };
 
-const SimpleCampaignCard = ({ title, startDate, endDate, onClick }: { title: string; startDate: string; endDate: string; onClick?: () => void }) => (
-  <div tw="w-full rounded-lg border border-gray-200 bg-white p-4 shadow-sm cursor-pointer hover:border-gray-300" onClick={onClick}>
-    <h3 tw="mb-1 text-lg font-semibold text-gray-900">{title}</h3>
-    <p tw="text-sm text-gray-600">
-      {new Date(startDate).toLocaleDateString()} – {new Date(endDate).toLocaleDateString()}
-    </p>
+const SimpleCampaignCard = ({ 
+  title, 
+  startDate, 
+  endDate, 
+  onClick,
+  onEdit,
+}: { 
+  title: string; 
+  startDate: string; 
+  endDate: string; 
+  onClick?: () => void;
+  onEdit?: () => void;
+}) => (
+  <div tw="w-full rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:border-gray-300">
+    <div tw="flex justify-between items-start">
+      <div tw="flex-1 cursor-pointer" onClick={onClick}>
+        <h3 tw="mb-1 text-lg font-semibold text-gray-900">{title}</h3>
+        <p tw="text-sm text-gray-600">
+          {new Date(startDate).toLocaleDateString()} – {new Date(endDate).toLocaleDateString()}
+        </p>
+      </div>
+      {onEdit && (
+        <button
+          tw="ml-4 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-md hover:bg-gray-200 transition-colors flex items-center justify-center"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
+          aria-label="Edit campaign"
+        >
+          <Pencil className="h-4 w-4 text-gray-700" />
+        </button>
+      )}
+    </div>
   </div>
 );
 
@@ -40,7 +69,14 @@ const AdminCampaignContent = ({ campaigns, setCampaigns: _setCampaigns, orgLogo:
             <p tw="text-gray-600">No active campaigns.</p>
           ) : (
             active.map((c) => (
-              <SimpleCampaignCard key={c.id} title={c.title} startDate={c.startDate} endDate={c.endDate} onClick={() => navigate(`/admin/review/${c.id}`)} />
+              <SimpleCampaignCard 
+                key={c.id} 
+                title={c.title} 
+                startDate={c.startDate} 
+                endDate={c.endDate} 
+                onClick={() => navigate(`/admin/review/${c.id}`)}
+                onEdit={() => navigate(`/organisation/${orgId}/campaign/${c.id}/edit`)}
+              />
             ))
           )}
         </div>
@@ -53,7 +89,14 @@ const AdminCampaignContent = ({ campaigns, setCampaigns: _setCampaigns, orgLogo:
             <p tw="text-gray-600">No past campaigns.</p>
           ) : (
             past.map((c) => (
-              <SimpleCampaignCard key={c.id} title={c.title} startDate={c.startDate} endDate={c.endDate} onClick={() => navigate(`/admin/review/${c.id}`)} />
+              <SimpleCampaignCard 
+                key={c.id} 
+                title={c.title} 
+                startDate={c.startDate} 
+                endDate={c.endDate} 
+                onClick={() => navigate(`/admin/review/${c.id}`)}
+                onEdit={() => navigate(`/organisation/${orgId}/campaign/${c.id}/edit`)}
+              />
             ))
           )}
         </div>

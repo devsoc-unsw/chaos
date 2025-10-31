@@ -79,7 +79,7 @@ const CampaignTab = ({ campaign }: Props) => {
               <input {...getInputProps()} />
               {cover === null && (
                 <p>
-                  Drag and drop your campaign cover image, or click to select an
+                  Drag and drop your campaign cover image *, or click to select an
                   image
                 </p>
               )}
@@ -91,10 +91,11 @@ const CampaignTab = ({ campaign }: Props) => {
         )}
       </Dropzone>
       <CampaignTextField
-        label="Campaign Name"
+        label="Campaign Name *"
         variant="outlined"
         value={campaignName}
         onChange={(e) => setCampaignName(e.target.value)}
+        required
       />
       <CampaignTextField
         label="Campaign Description"
@@ -107,25 +108,25 @@ const CampaignTab = ({ campaign }: Props) => {
       <CampaignRowDiv>
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <DateTimePicker
-            label="Start Date"
+            label="Start Date *"
             format="dd/MM/yyyy hh:mm a"
             value={startDate}
             onChange={(date: Date | null) => date instanceof Date && setStartDate(date)}
             slots={{
               textField: (params: ComponentProps<typeof CampaignTextField>) => (
-              <CampaignTextField {...params} />
+              <CampaignTextField {...params} required />
             )
             }}
           />
           <DateTimePicker
-            label="End Date"
+            label="End Date *"
             format="dd/MM/yyyy hh:mm a"
             minDateTime={startDate}
             value={endDate}
             onChange={(date: Date | null) => date instanceof Date && setEndDate(date)}
             slots={{
               textField: (params: ComponentProps<typeof CampaignTextField>) => (
-              <CampaignTextField {...params} />
+              <CampaignTextField {...params} required />
             )
             }}
           />

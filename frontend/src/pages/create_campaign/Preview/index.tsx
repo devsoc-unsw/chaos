@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 
 import CampaignCard from "../../../components/CampaignCard";
+import { publishCampaign } from "api";
+import { pushToast } from "utils";
 
 import {
   ActionButton,
@@ -14,7 +16,7 @@ import type { Campaign } from "../types";
 
 type Props = {
   campaign: Campaign;
-  onSubmit: (isDraft: boolean) => void;
+  onSubmit: (isDraft: boolean, campaignId: string) => void;
 };
 const ReviewTab = ({ campaign, onSubmit }: Props) => {
   const {
@@ -67,10 +69,10 @@ const ReviewTab = ({ campaign, onSubmit }: Props) => {
       {/* TODO: display campaign description */}
       {/* TODO: allow admins to preview the application form */}
       <SubmitWrapper>
-        <ActionButton onClick={() => onSubmit(true)} color="white">
+        <ActionButton onClick={() => onSubmit(true, "")} color="white">
           Create Draft
         </ActionButton>
-        <ActionButton onClick={() => onSubmit(false)} color="primary">
+        <ActionButton onClick={() => onSubmit(false, "")} color="primary">
           Publish
         </ActionButton>
       </SubmitWrapper>
