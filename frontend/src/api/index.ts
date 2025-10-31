@@ -222,7 +222,10 @@ export const setApplicationRating = (
     jsonResp: false,
   });
 
-export const createApplicationRating = (applicationId: string, rating: NewRating) =>
+export const createApplicationRating = (
+  applicationId: string,
+  rating: NewRating
+) =>
   authenticatedRequest({
     method: "POST",
     path: `/v1/application/${applicationId}/rating`,
@@ -529,12 +532,12 @@ export const addOrganisationMember = (
 
 export const removeOrganisationMember = (
   organisationId: string,
-  userId: string
+  email: string
 ) =>
   authenticatedRequest({
     method: "DELETE",
     path: `/v1/organisation/${organisationId}/member`,
-    body: { user_id: userId },
+    body: { email },
     jsonResp: false,
   });
 

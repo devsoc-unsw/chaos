@@ -15,18 +15,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { removeOrganisationMember, updateOrganisationMemberRole } from "@/api"
-import type { Member } from "@/pages/admin/types"
-import type { OrganisationRole } from "@/types/api"
+import type { Member, OrganisationRole } from "@/types/api"
 
 type Props = { orgId: string; member: Member; onChanged?: () => void }
 
 const EditMemberButton = ({ orgId, member, onChanged }: Props) => {
     const handleRoleChange = async (role: OrganisationRole) => {
-        await updateOrganisationMemberRole(orgId, member.name /* placeholder email? */, role)
+        await updateOrganisationMemberRole(orgId, member.email, role)
         onChanged && onChanged()
     }
     const handleDelete = async () => {
-        await removeOrganisationMember(orgId, member.id)
+        await removeOrganisationMember(orgId, member.email)
         onChanged && onChanged()
     }
     return (

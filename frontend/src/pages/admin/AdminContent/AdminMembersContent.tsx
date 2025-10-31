@@ -165,7 +165,7 @@ interface DataTableProps<TData, TValue> {
  
 import { useEffect } from "react"
 import { getOrganisationMembers } from "@/api"
-import type { Member } from "../../admin/types"
+import type { Member } from "@/types/api"
 
 type Props = {
   orgId: string
@@ -189,6 +189,7 @@ const AdminMembersContentImpl = ({ orgId, members, setMembers }: Props) => {
         <TableHeader className="fit-content">
           <TableRow>
             <TableHead className="p-4">Members</TableHead>
+            <TableHead>Email</TableHead>
             <TableHead>Role</TableHead>
             <TableHead className="text-right">
               <AddMemberButton orgId={orgId} onAdded={async () => {
@@ -202,6 +203,7 @@ const AdminMembersContentImpl = ({ orgId, members, setMembers }: Props) => {
           {members.map((m) => (
             <TableRow key={m.id}>
               <TableCell className="p-4">{m.name}</TableCell>
+              <TableCell>{m.email}</TableCell>
               <TableCell>{m.role}</TableCell>
               <TableCell className="text-right">
                 <EditMemberButton orgId={orgId} member={m} onChanged={async () => {

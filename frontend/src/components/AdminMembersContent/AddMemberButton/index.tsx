@@ -69,7 +69,7 @@ const AddMemberButton = ({ orgId, onAdded }: Props) => {
                             <SelectValue placeholder="Role" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="member" className="
+                            <SelectItem value="User" className="
                                 !cursor-pointer
                                 hover:bg-accent hover:text-accent-foreground
                                 data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground

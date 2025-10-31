@@ -99,6 +99,8 @@ pub struct Member {
     pub name: String,
     /// User's role in the organisation
     pub role: OrganisationRole,
+    /// User's email
+    pub email: String,
 }
 
 /// Collection of organisation members.
@@ -140,9 +142,17 @@ pub struct EmailRoleBody {
     // email
     pub email: String,
     // role
-    pub role: String
+    pub role: OrganisationRole
 }
 
+/// Data structure for passing in a user's email
+///
+/// This struct contains a user's email
+#[derive(Deserialize, Serialize)]
+pub struct EmailBody {
+    // email
+    pub email: String
+}
 /// This struct contains a slug to check for availability
 /// when creating a new organisation.
 #[derive(Deserialize)]
@@ -363,7 +373,7 @@ impl Organisation {
         let admin_list = sqlx::query_as!(
         Member,
         "
-            SELECT organisation_members.user_id as id, organisation_members.role AS \"role: OrganisationRole\", users.name from organisation_members
+            SELECT organisation_members.user_id as id, organisation_members.role AS \"role: OrganisationRole\", users.name, users.email from organisation_members
                 JOIN users on users.id = organisation_members.user_id
                 WHERE organisation_members.organisation_id = $1 AND organisation_members.role = $2
         ",
@@ -395,7 +405,7 @@ impl Organisation {
         let admin_list = sqlx::query_as!(
         Member,
         "
-            SELECT organisation_members.user_id as id, organisation_members.role AS \"role: OrganisationRole\", users.name from organisation_members
+            SELECT organisation_members.user_id as id, organisation_members.role AS \"role: OrganisationRole\", users.name, users.email from organisation_members
                 JOIN users on users.id = organisation_members.user_id
                 WHERE organisation_members.organisation_id = $1
         ",
@@ -668,15 +678,9 @@ impl Organisation {
     pub async fn add_member_or_admin_to_organisation(
         organisation_id: i64,
         member_id: i64,
-        given_role: String, //was gonna make bool but we need to extend for other members jsut brute force w/ match arm rn
+        role: OrganisationRole, //was gonna make bool but we need to extend for other members jsut brute force w/ match arm rn
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<i64, ChaosError> {
-
-
-        let role:OrganisationRole = match given_role.to_lowercase().as_str() {
-            "user" => OrganisationRole::User,
-            _ => OrganisationRole::Admin
-        };
 
         let _ = sqlx::query!(
             "INSERT INTO organisation_members(organisation_id, user_id, role)
@@ -694,19 +698,14 @@ impl Organisation {
     pub async fn change_member_role(
         organisation_id: i64,
         member_id: i64,
-        new_role: String,
+        new_role: OrganisationRole,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let role: OrganisationRole = match new_role.to_lowercase().as_str() {
-            "user" => OrganisationRole::User,
-            _ => OrganisationRole::Admin
-        };
-
         let result = sqlx::query!(
             "UPDATE organisation_members
             SET role = $1
             WHERE organisation_id = $2 AND user_id = $3",
-            role as OrganisationRole,
+            new_role as OrganisationRole,
             organisation_id,
             member_id
         )
