@@ -47,7 +47,7 @@ const AddMemberButton = ({ orgId, onAdded }: Props) => {
     return (
         <Dialog>
             <DialogTrigger asChild onClick={() => setOpen(true)}>
-                <Button variant="secondary" size="icon" ><PlusIcon/></Button>
+                <Button variant="secondary" size="icon" className="cursor-pointer"><PlusIcon/></Button>
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>

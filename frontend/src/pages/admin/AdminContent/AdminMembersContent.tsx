@@ -184,7 +184,7 @@ const AdminMembersContentImpl = ({ orgId, members, setMembers }: Props) => {
   }, [orgId, setMembers])
 
   return (
-    <div className="overflow-hidden border-none">
+    <div className="overflow-hidden border-bottom-1">
       <Table>
         <TableHeader className="fit-content">
           <TableRow>
@@ -199,7 +199,7 @@ const AdminMembersContentImpl = ({ orgId, members, setMembers }: Props) => {
             </TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody className="bg-white">
+        <TableBody className="bg-white border-l-0 border-r-0">
           {members.map((m) => (
             <TableRow key={m.id}>
               <TableCell className="p-4">{m.name}</TableCell>
