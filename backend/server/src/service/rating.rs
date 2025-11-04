@@ -135,7 +135,7 @@ pub async fn assert_user_is_organisation_member(
     user_id: i64,
     application_id: i64,
     transaction: &mut Transaction<'_, Postgres>,
-) -> Result<(), ChaosError> {
+) -> Result<bool, ChaosError> {
     let is_admin = sqlx::query!(
         r#"
         SELECT EXISTS (
@@ -145,7 +145,7 @@ pub async fn assert_user_is_organisation_member(
             JOIN applications a ON a.campaign_id = c.id
             -- Find the organisation that this application rating belongs to
             -- (via the campaign the rating belongs to).
-            WHERE a.id = $1
+            WHERE a.id = $1 AND a.submitted = true
             -- Assert user is current member of the organisation that owns the
             -- campaign this application belongs to.
             AND om.user_id = $2
@@ -163,5 +163,5 @@ pub async fn assert_user_is_organisation_member(
         return Err(ChaosError::Unauthorized);
     }
 
-    Ok(())
+    Ok(true)
 }

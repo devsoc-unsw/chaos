@@ -51,7 +51,7 @@ pub struct Campaign {
     pub created_at: DateTime<Utc>,
     /// When the campaign was last updated
     pub updated_at: DateTime<Utc>,
-    /// Whether the campaign has been published
+    /// Whether the campaign is published
     pub published: bool,
 }
 
@@ -82,7 +82,7 @@ pub struct CampaignDetails {
     pub starts_at: DateTime<Utc>,
     /// When the campaign stops accepting applications
     pub ends_at: DateTime<Utc>,
-    /// Whether the campaign has been published
+    /// Whether the campaign is published
     pub published: bool,
 }
 
@@ -107,7 +107,7 @@ pub struct OrganisationCampaign {
     pub starts_at: DateTime<Utc>,
     /// When the campaign stops accepting applications
     pub ends_at: DateTime<Utc>,
-    /// Whether the campaign has been published
+    /// Whether the campaign is published
     pub published: bool,
 }
 
