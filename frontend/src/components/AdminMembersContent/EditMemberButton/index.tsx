@@ -21,11 +21,11 @@ type Props = { orgId: string; member: Member; onChanged?: () => void }
 
 const EditMemberButton = ({ orgId, member, onChanged }: Props) => {
     const handleRoleChange = async (role: OrganisationRole) => {
-        await updateOrganisationMemberRole(orgId, member.email, role)
+        await updateOrganisationMemberRole(orgId, member.id, role)
         onChanged && onChanged()
     }
     const handleDelete = async () => {
-        await removeOrganisationMember(orgId, member.email)
+        await removeOrganisationMember(orgId, member.id)
         onChanged && onChanged()
     }
     return (

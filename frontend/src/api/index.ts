@@ -532,23 +532,23 @@ export const addOrganisationMember = (
 
 export const removeOrganisationMember = (
   organisationId: string,
-  email: string
+  user_id: string
 ) =>
   authenticatedRequest({
     method: "DELETE",
     path: `/v1/organisation/${organisationId}/member`,
-    body: { email },
+    body: { user_id },
     jsonResp: false,
   });
 
 export const updateOrganisationMemberRole = (
   organisationId: string,
-  email: string,
+  user_id: string,
   role: OrgRoleType
 ) =>
   authenticatedRequest({
     method: "PUT",
     path: `/v1/organisation/${organisationId}/member`,
-    body: { email, role },
+    body: { user_id, role },
     jsonResp: false,
   });

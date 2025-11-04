@@ -153,6 +153,28 @@ pub struct EmailBody {
     // email
     pub email: String
 }
+
+/// Data structure for passing in a user's email
+///
+/// This struct contains a user's email
+#[derive(Deserialize, Serialize)]
+pub struct IdBody {
+    // email
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
+    pub user_id: i64
+}
+
+/// Data structure for passing in a user's email and role
+///
+/// This struct contains a user's email
+#[derive(Deserialize, Serialize)]
+pub struct IdRoleBody {
+    // email
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
+    pub user_id: i64,
+    pub role: OrganisationRole
+}
+
 /// This struct contains a slug to check for availability
 /// when creating a new organisation.
 #[derive(Deserialize)]
