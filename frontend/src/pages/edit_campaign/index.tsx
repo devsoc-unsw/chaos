@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 
 import RolesTab from "./Roles";
 import QuestionsTab from "./Questions";
-import ReviewTab from "./Review";
+import ReviewTab from "../preview_campaign";
 
 const EditCampaign = () => {
   const { orgId, campaignId } = useParams();

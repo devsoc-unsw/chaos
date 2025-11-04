@@ -120,7 +120,7 @@ impl QuestionHandler {
     /// # Arguments
     /// 
     /// * `state` - The application state
-    /// * `campaign_id` - The ID of the campaign (extracted from path but not used)
+    /// * `campaign_id` - The ID of the campaign
     /// * `question_id` - The ID of the question to update
     /// * `_admin` - The authenticated user (must be a question admin)
     /// * `transaction` - Database transaction
@@ -182,7 +182,7 @@ impl QuestionHandler {
     /// 
     /// # Arguments
     /// 
-    /// * `campaign_id` - The ID of the campaign (extracted from path but not used)
+    /// * `campaign_id` - The ID of the campaign
     /// * `question_id` - The ID of the question to delete
     /// * `_admin` - The authenticated user (must be a question admin)
     /// * `transaction` - Database transaction

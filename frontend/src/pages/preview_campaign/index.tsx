@@ -58,7 +58,7 @@ const ReviewTab = ({ campaignId }: Props) => {
     <>
       <InfoTextBox>
         <InfoText>
-          Please review the campaign card before publishing.
+          Please review both the application card and form before publishing.
           This is how your campaign will appear to applicants.
         </InfoText>
       </InfoTextBox>
@@ -79,6 +79,8 @@ const ReviewTab = ({ campaignId }: Props) => {
           img=""
         />
       </CampaignCardLayout>
+      {/* TODO: display campaign description */}
+      {/* TODO: allow admins to preview the application form */}
       <SubmitWrapper>
         <ActionButton onClick={() => void handlePublish()} color="primary" disabled={isLoading}>
           {isLoading ? "Publishing..." : "Publish Campaign"}
@@ -89,4 +91,3 @@ const ReviewTab = ({ campaignId }: Props) => {
 };
 
 export default ReviewTab;
-

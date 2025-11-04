@@ -31,8 +31,8 @@ export const getQuestionSlashMenuItems = (editor: any): DefaultReactSuggestionIt
                     {
                         type: "textQuestion",
                         props: {
-                            question: "",
-                            placeholder: "",
+                            question: "Enter your text question...",
+                            placeholder: "Answer will appear here...",
                         },
                     },
                 ],
@@ -53,7 +53,7 @@ export const getQuestionSlashMenuItems = (editor: any): DefaultReactSuggestionIt
                     {
                         type: "multiSelectQuestion",
                         props: {
-                            question: "",
+                            question: "Enter your multi-select question...",
                         },
                     },
                 ],
@@ -74,7 +74,7 @@ export const getQuestionSlashMenuItems = (editor: any): DefaultReactSuggestionIt
                     {
                         type: "dropDownQuestion",
                         props: {
-                            question: "",
+                            question: "Enter your dropdown question...",
                         },
                     },
                 ],
@@ -95,7 +95,7 @@ export const getQuestionSlashMenuItems = (editor: any): DefaultReactSuggestionIt
                     {
                         type: "rankingQuestion",
                         props: {
-                            question: "",
+                            question: "Enter your ranking question...",
                         },
                     },
                 ],

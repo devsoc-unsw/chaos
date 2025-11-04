@@ -13,8 +13,7 @@ import { dateToStringForBackend, pushToast } from "utils";
 import type { User } from "types/api";
 
 import CampaignTab from "./Campaign";
-import ReviewTab from "./Preview";
-import RolesTab from "./Roles";
+import ReviewTab from "../preview_campaign";
 import { ArrowIcon, CreateButton, NextWrapper } from "./createCampaign.styled";
 
 import type { Answers, Question, Role } from "./types";
@@ -242,7 +241,6 @@ const CreateCampaign = () => {
         await setCampaignCoverImage(campaignId, cover);
       }
       
-      // Redirect to edit page instead of admin
       navigate(`/organisation/${orgId}/campaign/${campaignId}/edit`);
     } catch (err) {
       if (err instanceof FetchError) {

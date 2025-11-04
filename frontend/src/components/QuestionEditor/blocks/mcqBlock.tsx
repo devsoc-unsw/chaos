@@ -1,13 +1,17 @@
 import { createReactBlockSpec } from "@blocknote/react";
-import React from "react";
+import type { Block } from "@blocknote/core";
+import React, { useState } from "react";
 import { useQuestionSave } from "../QuestionSaveContext";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MoreVertical } from "lucide-react";
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Option = {
     text: string;
@@ -23,9 +27,9 @@ export const mcqQuestionBlock = createReactBlockSpec(
             question: { default: "" },
             description: { default: "" },
             options: { default: JSON.stringify([{ text: "Option 1", correct: false }]) },
-            questionId: { default: "" }, // Database ID for existing questions
-            originalCommon: { default: false }, // Original common status
-            originalRoles: { default: JSON.stringify([]) }, // Original roles array
+            questionId: { default: "" }, 
+            common: { default: false }, 
+            roles: { default: JSON.stringify([]) },
         },
         content: "none",
     },
@@ -36,6 +40,7 @@ export const mcqQuestionBlock = createReactBlockSpec(
             const isExistingQuestion = !!(block.props.questionId as string);
             const isSavingThis = savingBlockId === block.id;
             const options: Option[] = JSON.parse(block.props.options);
+            const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
             const updateQuestion = (newQuestion: string) => {
                 editor.updateBlock(block, {
@@ -77,6 +82,23 @@ export const mcqQuestionBlock = createReactBlockSpec(
                     editor.updateBlock(block, {
                         props: { ...block.props, options: JSON.stringify(newOptions) },
                     });
+                }
+            };
+
+            const handleDeleteClick = () => {
+                if (isExistingQuestion) {
+                    // Show confirmation dialog for existing questions
+                    setShowDeleteDialog(true);
+                } else {
+                    // Directly delete uncreated questions
+                    editor.removeBlocks([block]);
+                }
+            };
+
+            const handleConfirmDelete = () => {
+                setShowDeleteDialog(false);
+                if (onDeleteQuestion) {
+                    void onDeleteQuestion(block as unknown as Block);
                 }
             };
 
@@ -159,36 +181,37 @@ export const mcqQuestionBlock = createReactBlockSpec(
                         </button>
                     </div>
 
-                    {/* Save/Edit Button and Delete Menu */}
+                    {/* Save/Edit Button */}
                     <div className="mt-4 flex justify-end items-center gap-2">
-                        {isExistingQuestion && (
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <button
-                                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                                        onClick={(e) => e.stopPropagation()}
-                                    >
-                                        <MoreVertical className="h-5 w-5 text-gray-600" />
-                                    </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem
-                                        onClick={() => void onDeleteQuestion(block)}
-                                        className="text-red-600 focus:text-red-600 focus:bg-red-50"
-                                    >
-                                        Delete
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        )}
                         <button
-                            onClick={() => void onSaveQuestion(block)}
+                            onClick={() => void onSaveQuestion?.(block as unknown as Block)}
                             disabled={isSavingThis || !block.props.question}
                             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isSavingThis ? "Saving..." : isExistingQuestion ? "Edit Question" : "Create Question"}
                         </button>
                     </div>
+
+                    {/* Delete Confirmation Dialog */}
+                    <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Question</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Are you sure you want to delete this question? This action cannot be undone.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                    onClick={handleConfirmDelete}
+                                    className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                                >
+                                    Delete
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </div>
             );
         },

@@ -23,6 +23,16 @@ import {
 import { getQuestionSlashMenuItems } from "./config/slashMenuItems";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { QuestionSaveContext } from "./QuestionSaveContext";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // Base theme
 const lightTheme = {
@@ -87,6 +97,11 @@ type Props = {
 export default function QuestionEditor({ campaignId: _campaignId, roleId: _roleId, isCommon: _isCommon, onSaveQuestion, onDeleteQuestion, initialBlocks, documentKey, onEditorReady }: Props) {
     const [isSaving, setIsSaving] = useState(false);
     const [savingBlockId, setSavingBlockId] = useState<string | null>(null);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [pendingDeleteBlocks, setPendingDeleteBlocks] = useState<Block[]>([]);
+    const isConfirmedDeleteRef = useRef(false);
+    const deletingBlockIdsRef = useRef<Set<string>>(new Set());
+    const originalRemoveBlocksRef = useRef<((blocksToRemove: any) => any) | null>(null);
     const lastDocumentKeyRef = useRef<string | undefined>();
     const latestInitialBlocksRef = useRef<unknown[] | undefined>(initialBlocks);
 
@@ -116,6 +131,88 @@ export default function QuestionEditor({ campaignId: _campaignId, roleId: _roleI
         schema,
         initialContent,
     });
+
+    // Override removeBlocks to intercept deletions and show confirmation for existing questions
+    useEffect(() => {
+        // Store the original function BEFORE we override it
+        const originalRemoveBlocks = editor.removeBlocks;
+        originalRemoveBlocksRef.current = originalRemoveBlocks;
+        
+        // Override the function
+        (editor as any).removeBlocks = (blocksToRemove: any) => {
+            // Convert BlockIdentifier[] to Block[] for checking
+            const blocks = blocksToRemove.map((idOrBlock: any) => {
+                if (typeof idOrBlock === 'string') {
+                    return editor.document.find((b) => b.id === idOrBlock);
+                }
+                return idOrBlock;
+            }).filter(Boolean) as Block[];
+
+            // Check if any of these blocks are already being deleted (via confirmed delete flow)
+            const blockIds = blocks.map(b => b.id);
+            const isAlreadyDeleting = blockIds.some(id => deletingBlockIdsRef.current.has(id));
+            
+            // If this is a confirmed delete or blocks are already being deleted, bypass interception
+            if (isConfirmedDeleteRef.current || isAlreadyDeleting) {
+                // Clear the flag after processing
+                if (isConfirmedDeleteRef.current) {
+                    isConfirmedDeleteRef.current = false;
+                }
+                // Note: Don't clear deletingBlockIdsRef here - let handleConfirmDelete clear it after completion
+                return originalRemoveBlocks.call(editor, blocksToRemove);
+            }
+
+            // Check if any of the blocks being deleted are existing questions
+            const existingQuestionBlocks = blocks.filter((block) => {
+                const blockProps = (block as any).props || {};
+                return !!(blockProps.questionId as string);
+            });
+
+            // If there are existing questions, show confirmation dialog
+            if (existingQuestionBlocks.length > 0 && onDeleteQuestion) {
+                setPendingDeleteBlocks(blocks);
+                setShowDeleteDialog(true);
+                return []; // Return empty array to prevent deletion
+            }
+
+            // For uncreated questions or if no onDeleteQuestion handler, delete directly using original
+            return originalRemoveBlocks.call(editor, blocksToRemove);
+        };
+    }, [editor, onDeleteQuestion]);
+
+    const handleConfirmDelete = async () => {
+        setShowDeleteDialog(false);
+        if (pendingDeleteBlocks.length > 0) {
+            // Track which blocks are being deleted to prevent duplicate confirmations
+            const blockIds = pendingDeleteBlocks.map(b => b.id);
+            blockIds.forEach(id => deletingBlockIdsRef.current.add(id));
+            
+            // Set flag to bypass interception when handler calls removeBlocks
+            isConfirmedDeleteRef.current = true;
+            
+            // Delete each existing question block via the handler if provided
+            if (onDeleteQuestion) {
+                for (const block of pendingDeleteBlocks) {
+                    await onDeleteQuestion(block);
+                }
+            } else {
+                // If no handler, just remove from editor directly
+                if (originalRemoveBlocksRef.current) {
+                    isConfirmedDeleteRef.current = true;
+                    originalRemoveBlocksRef.current.call(editor, pendingDeleteBlocks.map(b => b.id));
+                }
+            }
+            
+            // Clear tracking after deletion completes
+            blockIds.forEach(id => deletingBlockIdsRef.current.delete(id));
+            setPendingDeleteBlocks([]);
+        }
+    };
+
+    const handleCancelDelete = () => {
+        setShowDeleteDialog(false);
+        setPendingDeleteBlocks([]);
+    };
 
     useEffect(() => {
         latestInitialBlocksRef.current = initialBlocks;
@@ -211,6 +308,25 @@ export default function QuestionEditor({ campaignId: _campaignId, roleId: _roleI
                         />
                     </BlockNoteView>
                 </div>
+                <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Question</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Are you sure you want to delete this question? This action cannot be undone.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel onClick={handleCancelDelete}>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                                onClick={handleConfirmDelete}
+                                className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                            >
+                                Delete
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </div>
         </QuestionSaveContext.Provider>
     );

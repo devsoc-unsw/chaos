@@ -262,7 +262,7 @@ export type NewCampaignInput = {
   organisation_id: string; // Changed to string to handle large integers
   slug: string;
   name: string;
-  description?: string; // Optional to match backend, but validated as required on frontend
+  description?: string;
   starts_at: string;
   ends_at: string;
 };

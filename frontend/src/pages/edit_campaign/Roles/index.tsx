@@ -34,15 +34,27 @@ const RolesTab = ({ campaignId }: Props) => {
     void loadRoles();
   }, [campaignId]);
 
-  const handleAddRole = async (data: { name: string; description: string }) => {
+  const handleAddRole = async (data: {
+    name: string;
+    description: string;
+    min_available: number;
+    max_available: number;
+    finalised: boolean;
+  }) => {
     setIsLoading(true);
     try {
+      if (data.min_available > data.max_available) {
+        pushToast("Error", "Min available must be <= Max available", "error");
+        setIsLoading(false);
+        return;
+      }
+
       await createRole(campaignId, {
         name: data.name,
         description: data.description || undefined,
-        min_available: 1,
-        max_available: 1,
-        finalised: false,
+        min_available: data.min_available,
+        max_available: data.max_available,
+        finalised: data.finalised,
       });
       
       pushToast("Success", "Role created successfully", "success");

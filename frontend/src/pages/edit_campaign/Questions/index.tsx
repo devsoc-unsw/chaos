@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import QuestionEditor from "components/QuestionEditor/QuestionEditor";
 import { createQuestion, updateQuestion, deleteQuestion, getCampaignRoles, getCommonQuestions, getRoleQuestions } from "api";
 import { pushToast } from "utils";
-import type { Block, BlockNoteEditor, PartialBlock } from "@blocknote/core";
+import type { Block, BlockNoteEditor } from "@blocknote/core";
 import type { Role, QuestionResponse } from "types/api";
 
 type Props = {
@@ -15,7 +15,7 @@ const QuestionsTab = ({ campaignId }: Props) => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
   const [isCommon, setIsCommon] = useState(true);
-  const [documentsByTab, setDocumentsByTab] = useState<Record<string, PartialBlock[]>>({});
+  const [documentsByTab, setDocumentsByTab] = useState<Record<string, unknown[]>>({});
   const [documentVersions, setDocumentVersions] = useState<Record<string, number>>({});
   const editorRef = useRef<BlockNoteEditor<any, any, any> | null>(null);
   const [isLoadingTab, setIsLoadingTab] = useState(false);
@@ -43,7 +43,7 @@ const QuestionsTab = ({ campaignId }: Props) => {
 
     // Save current editor state before switching tabs
     if (editorRef.current) {
-      const currentDocument = JSON.parse(JSON.stringify(editorRef.current.document)) as PartialBlock[];
+      const currentDocument = JSON.parse(JSON.stringify(editorRef.current.document)) as unknown[];
       setDocumentsByTab((prev) => ({
         ...prev,
         [currentKey]: currentDocument,
@@ -78,7 +78,7 @@ const QuestionsTab = ({ campaignId }: Props) => {
     [getTabKey, isCommon, selectedRoleId]
   );
 
-  const questionToBlock = useCallback((question: QuestionResponse): PartialBlock | null => {
+  const questionToBlock = useCallback((question: QuestionResponse): unknown | null => {
     try {
       const description = question.description ?? "";
       // Safely get question_type, handling both enum and string formats
@@ -102,10 +102,10 @@ const QuestionsTab = ({ campaignId }: Props) => {
             description,
             placeholder: "",
             questionId: question.id,
-            originalCommon: question.common,
-            originalRoles: JSON.stringify(question.roles),
+            common: question.common,
+            roles: JSON.stringify(question.roles),
           },
-        } as PartialBlock;
+        };
       }
 
       const options = question.data?.options ?? [];
@@ -124,10 +124,10 @@ const QuestionsTab = ({ campaignId }: Props) => {
             description,
             options: serializedOptions,
             questionId: question.id,
-            originalCommon: question.common,
-            originalRoles: JSON.stringify(question.roles),
+            common: question.common,
+            roles: JSON.stringify(question.roles),
           },
-        } as PartialBlock;
+        };
       }
 
       if (questionType === "MultiSelect") {
@@ -139,10 +139,10 @@ const QuestionsTab = ({ campaignId }: Props) => {
             description,
             options: serializedOptions,
             questionId: question.id,
-            originalCommon: question.common,
-            originalRoles: JSON.stringify(question.roles),
+            common: question.common,
+            roles: JSON.stringify(question.roles),
           },
-        } as PartialBlock;
+        };
       }
 
       if (questionType === "DropDown") {
@@ -154,10 +154,10 @@ const QuestionsTab = ({ campaignId }: Props) => {
             description,
             options: serializedOptions,
             questionId: question.id,
-            originalCommon: question.common,
-            originalRoles: JSON.stringify(question.roles),
+            common: question.common,
+            roles: JSON.stringify(question.roles),
           },
-        } as PartialBlock;
+        };
       }
 
       if (questionType === "Ranking") {
@@ -169,10 +169,10 @@ const QuestionsTab = ({ campaignId }: Props) => {
             description,
             options: serializedOptions,
             questionId: question.id,
-            originalCommon: question.common,
-            originalRoles: JSON.stringify(question.roles),
+            common: question.common,
+            roles: JSON.stringify(question.roles),
           },
-        } as PartialBlock;
+        };
       }
 
       console.warn("Unknown question type:", questionType, question);
@@ -184,10 +184,10 @@ const QuestionsTab = ({ campaignId }: Props) => {
   }, []);
 
   const buildBlocksFromQuestions = useCallback(
-    (questionList: QuestionResponse[]): PartialBlock[] => {
+    (questionList: QuestionResponse[]): unknown[] => {
       const blocks = questionList
         .map((question) => questionToBlock(question))
-        .filter((block): block is PartialBlock => block !== null);
+        .filter((block): block is unknown => block !== null);
       if (blocks.length === 0) {
         return blocks;
       }
@@ -204,14 +204,14 @@ const QuestionsTab = ({ campaignId }: Props) => {
               styles: {},
             },
           ],
-        } as PartialBlock,
+        },
       ];
     },
     [questionToBlock]
   );
 
   const fetchQuestionsForTab = useCallback(
-    async (common: boolean, roleId: string | null): Promise<PartialBlock[]> => {
+    async (common: boolean, roleId: string | null): Promise<unknown[]> => {
       try {
         let questions: QuestionResponse[] = [];
         
@@ -299,7 +299,8 @@ const QuestionsTab = ({ campaignId }: Props) => {
 
   // Convert BlockNote block to backend format
   const convertBlockToQuestion = useCallback((block: Block): any | null => {
-    const { type, props } = block;
+    const anyBlock = block as unknown as { type: string; props: Record<string, any> };
+    const { type, props } = anyBlock;
     
     // For existing questions, use their original common/roles status
     // For new questions, use the current tab's status
@@ -311,10 +312,10 @@ const QuestionsTab = ({ campaignId }: Props) => {
     
     if (isExistingQuestion) {
       // Use original question's status
-      questionCommon = (props.originalCommon as boolean | undefined) ?? isCommon;
+      questionCommon = (props.common as boolean | undefined) ?? isCommon;
       let originalRoles: string[] = [];
       try {
-        const rolesProp = props.originalRoles as string | undefined;
+        const rolesProp = props.roles as string | undefined;
         if (rolesProp) {
           originalRoles = typeof rolesProp === 'string' ? JSON.parse(rolesProp) : rolesProp;
         }
@@ -489,7 +490,7 @@ const QuestionsTab = ({ campaignId }: Props) => {
       }
     }
 
-    const questionId = block.props.questionId as string | undefined;
+    const questionId = (block as unknown as { props: Record<string, any> }).props.questionId as string | undefined;
     const isUpdate = !!questionId;
 
     try {
@@ -555,18 +556,14 @@ const QuestionsTab = ({ campaignId }: Props) => {
   }, [campaignId, convertBlockToQuestion, currentTabKey, ensureTabContent, isCommon, selectedRoleId]);
 
   const handleDeleteQuestion = useCallback(async (block: Block) => {
-    const questionId = block.props.questionId as string | undefined;
+    const questionId = (block as unknown as { props: Record<string, any> }).props.questionId as string | undefined;
     
     if (!questionId) {
       pushToast("Error", "Cannot delete question: question ID not found", "error");
       return;
     }
 
-    // Confirm deletion
-    if (!window.confirm("Are you sure you want to delete this question? This action cannot be undone.")) {
-      return;
-    }
-
+    // Note: Confirmation is already handled by AlertDialog in QuestionEditor
     try {
       await deleteQuestion(campaignId, questionId);
       pushToast("Success", "Question deleted successfully", "success");

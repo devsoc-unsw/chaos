@@ -5,7 +5,6 @@ import QuestionEditor from "components/QuestionEditor/QuestionEditor";
  * @returns {JSX.Element}
  */
 export default function CreateQuestion() {
-    // Example page - no save functionality
     return (
         <div className="h-screen w-full p-4">
             <div className="h-full max-w-4xl mx-auto">

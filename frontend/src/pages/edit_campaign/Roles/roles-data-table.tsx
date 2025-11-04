@@ -93,21 +93,27 @@ const columns = (
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
               <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
+              <span className="inline-flex h-4 w-4 items-center">
+                <MoreHorizontal size={16} />
+              </span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onEdit(role)}>
-              <Pencil className="mr-2 h-4 w-4" />
+              <span className="mr-2 inline-flex h-4 w-4 items-center">
+                <Pencil size={16} />
+              </span>
               Edit
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => onDelete(role.id)}
               className="text-destructive"
             >
-              <Trash2 className="mr-2 h-4 w-4" />
+              <span className="mr-2 inline-flex h-4 w-4 items-center">
+                <Trash2 size={16} />
+              </span>
               Delete
             </DropdownMenuItem>
           </DropdownMenuContent>

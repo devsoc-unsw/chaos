@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 type AddRoleDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: { name: string; description: string }) => void;
+  onSubmit: (data: {name: string, description: string, min_available: number, max_available: number, finalised: boolean}) => void;
   isLoading?: boolean;
 };
 
@@ -29,15 +29,30 @@ export function AddRoleDialog({
 }: AddRoleDialogProps) {
   const [name, setName] = React.useState("");
   const [description, setDescription] = React.useState("");
+  const [minAvailable, setMinAvailable] = React.useState(1);
+  const [maxAvailable, setMaxAvailable] = React.useState(1);
+  const [finalised, setFinalised] = React.useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
       return;
     }
-    onSubmit({ name: name.trim(), description: description.trim() });
+    if (minAvailable > maxAvailable) {
+      return;
+    }
+    onSubmit({
+      name: name.trim(),
+      description: description.trim(),
+      min_available: minAvailable,
+      max_available: maxAvailable,
+      finalised,
+    });
     setName("");
     setDescription("");
+    setMinAvailable(1);
+    setMaxAvailable(1);
+    setFinalised(false);
   };
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -46,6 +61,9 @@ export function AddRoleDialog({
       if (!newOpen) {
         setName("");
         setDescription("");
+        setMinAvailable(1);
+        setMaxAvailable(1);
+        setFinalised(false);
       }
     }
   };
@@ -83,6 +101,45 @@ export function AddRoleDialog({
                 rows={4}
               />
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="min-available">Min Available</Label>
+                <Input
+                  id="min-available"
+                  type="number"
+                  value={minAvailable}
+                  onChange={(e) => setMinAvailable(Number(e.target.value))}
+                  min={1}
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="max-available">Max Available</Label>
+                <Input
+                  id="max-available"
+                  type="number"
+                  value={maxAvailable}
+                  onChange={(e) => setMaxAvailable(Number(e.target.value))}
+                  min={1}
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="finalised"
+                checked={finalised}
+                onChange={(e) => setFinalised(e.target.checked)}
+                disabled={isLoading}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <Label htmlFor="finalised" className="cursor-pointer">
+                Finalised
+              </Label>
+            </div>
           </div>
           <DialogFooter>
             <Button
@@ -93,7 +150,15 @@ export function AddRoleDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading || !name.trim()} className="border-2 border-transparent hover:bg-white hover:text-black hover:border-black">
+            <Button
+              type="submit"
+              disabled={
+                isLoading ||
+                !name.trim() ||
+                minAvailable > maxAvailable
+              }
+              className="border-2 border-transparent hover:bg-white hover:text-black hover:border-black"
+            >
               {isLoading ? "Saving..." : "Save changes"}
             </Button>
           </DialogFooter>
