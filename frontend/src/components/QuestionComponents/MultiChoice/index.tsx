@@ -36,7 +36,10 @@ const MultiChoice: React.FC<MultiChoiceProps> = ({
   const [selectedOption, setSelectedOption] = useState<string | number | undefined>(defaultValue);
 
   const handleChange = (value: string) => {
-    const optionId = isNaN(Number(value)) ? value : Number(value);
+    // IMPORTANT: Option IDs are 64-bit integers represented as strings.
+    // Never coerce to Number or precision will be lost. Preserve original type.
+    const originalOption = options.find(opt => opt.id.toString() === value);
+    const optionId = originalOption ? originalOption.id : value;
     setSelectedOption(optionId);
 
     if (onChange) onChange(optionId);

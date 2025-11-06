@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createReactBlockSpec } from "@blocknote/react";
 import type { Block } from "@blocknote/core";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
@@ -46,6 +46,8 @@ export const rankingQuestionBlock = createReactBlockSpec(
             const isExistingQuestion = !!(block.props.questionId as string);
             const isSavingThis = savingBlockId === block.id;
             const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+            const [hasUserEdited, setHasUserEdited] = useState(false);
+            const [lockAfterSave, setLockAfterSave] = useState(false);
             let parsedOptions = JSON.parse(block.props.options);
 
             // Migrate old options that don't have IDs
@@ -59,13 +61,52 @@ export const rankingQuestionBlock = createReactBlockSpec(
                 editor.updateBlock(block, {
                     props: { ...block.props, question: newQuestion },
                 });
+                setHasUserEdited(true);
             };
 
             const updateDescription = (newDescription: string) => {
                 editor.updateBlock(block, {
                     props: { ...block.props, description: newDescription },
                 });
+                setHasUserEdited(true);
             };
+
+            // Track original snapshot to detect changes for existing questions
+            const initialSnapshotRef = useRef<string | null>(null);
+            const currentSnapshot = useMemo(() => {
+                // Use the raw options JSON string to capture any change including reordering
+                const rawOptions = (block.props.options as string) || "[]";
+                return JSON.stringify({
+                    question: (block.props.question as string) || "",
+                    description: (block.props.description as string) || "",
+                    options: rawOptions,
+                });
+            }, [block.props.description, block.props.question, block.props.options]);
+            // Ensure snapshot is established BEFORE treating the block as dirty
+            let hasSnapshot = initialSnapshotRef.current !== null;
+            if (!hasSnapshot && isExistingQuestion) {
+                initialSnapshotRef.current = currentSnapshot;
+                hasSnapshot = true;
+            }
+            const isDirty = isExistingQuestion ? (hasSnapshot ? initialSnapshotRef.current !== currentSnapshot : false) : true;
+
+            // After this block finishes saving, reset snapshot so button locks out
+            const lastSavingThisRef = useRef(false);
+            useEffect(() => {
+                if (lastSavingThisRef.current && !isSavingThis) {
+                    if (isExistingQuestion) {
+                        initialSnapshotRef.current = currentSnapshot;
+                    }
+                }
+                lastSavingThisRef.current = isSavingThis;
+            }, [isSavingThis, isExistingQuestion, currentSnapshot]);
+
+            // If user makes another edit, clear the post-save lock
+            useEffect(() => {
+                if (isDirty) {
+                    setLockAfterSave(false);
+                }
+            }, [isDirty]);
 
             const updateOption = (optionId: string, key: keyof Option, value: string | boolean) => {
                 const newOptions = options.map(option =>
@@ -76,6 +117,7 @@ export const rankingQuestionBlock = createReactBlockSpec(
                 editor.updateBlock(block, {
                     props: { ...block.props, options: JSON.stringify(newOptions) },
                 });
+                setHasUserEdited(true);
             };
 
             const addOption = () => {
@@ -84,6 +126,7 @@ export const rankingQuestionBlock = createReactBlockSpec(
                 editor.updateBlock(block, {
                     props: { ...block.props, options: JSON.stringify(newOptions) },
                 });
+                setHasUserEdited(true);
             };
 
             const handleOptionFocus = (optionId: string, currentValue: string) => {
@@ -99,6 +142,7 @@ export const rankingQuestionBlock = createReactBlockSpec(
                     editor.updateBlock(block, {
                         props: { ...block.props, options: JSON.stringify(newOptions) },
                     });
+                    setHasUserEdited(true);
                 }
             };
 
@@ -112,6 +156,7 @@ export const rankingQuestionBlock = createReactBlockSpec(
                 editor.updateBlock(block, {
                     props: { ...block.props, options: JSON.stringify(newOptions) },
                 });
+                setHasUserEdited(true);
             };
 
             const handleDeleteClick = () => {
@@ -247,8 +292,22 @@ export const rankingQuestionBlock = createReactBlockSpec(
                     {/* Save/Edit Button */}
                     <div className="mt-4 flex justify-end items-center gap-2">
                         <button
-                            onClick={() => void onSaveQuestion?.(block as unknown as Block)}
-                            disabled={isSavingThis || !block.props.question}
+                            onClick={async () => {
+                                if (onSaveQuestion) {
+                                    await onSaveQuestion(block as unknown as Block);
+                                    // Optimistically reset snapshot after successful save to lock the button
+                                    if (isExistingQuestion) {
+                                        initialSnapshotRef.current = currentSnapshot;
+                                        setLockAfterSave(true);
+                                        setHasUserEdited(false);
+                                    }
+                                }
+                            }}
+                            disabled={
+                                isSavingThis ||
+                                !block.props.question ||
+                                (isExistingQuestion && (!isDirty || lockAfterSave))
+                            }
                             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isSavingThis ? "Saving..." : isExistingQuestion ? "Edit Question" : "Create Question"}

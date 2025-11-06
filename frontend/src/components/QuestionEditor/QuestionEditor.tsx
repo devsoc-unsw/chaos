@@ -132,6 +132,47 @@ export default function QuestionEditor({ campaignId: _campaignId, roleId: _roleI
         initialContent,
     });
 
+    // Workaround for BlockNote suggestion menu not selecting first item on initial open
+    // We keep track of whether the slash menu is open and the latest items it displays.
+    const isSlashMenuOpenRef = useRef(false);
+    const latestSlashItemsRef = useRef<any[]>([]);
+    const userNavigatedMenuRef = useRef(false);
+
+    // Key handling to select the first item when Enter is pressed immediately after '/'
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (!isSlashMenuOpenRef.current) return;
+
+            if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                userNavigatedMenuRef.current = true;
+                return; // let the menu handle navigation
+            }
+
+            if (e.key === "Escape") {
+                isSlashMenuOpenRef.current = false;
+                userNavigatedMenuRef.current = false;
+                return;
+            }
+
+            if (e.key === "Enter" && !e.shiftKey) {
+                // If user hasn't navigated yet, manually trigger the first item
+                if (!userNavigatedMenuRef.current && latestSlashItemsRef.current.length > 0) {
+                    e.preventDefault();
+                    const first = latestSlashItemsRef.current[0];
+                    if (first && typeof first.onItemClick === "function") {
+                        first.onItemClick();
+                        // After inserting, close our tracking
+                        isSlashMenuOpenRef.current = false;
+                        userNavigatedMenuRef.current = false;
+                    }
+                }
+            }
+        };
+
+        document.addEventListener("keydown", handleKeyDown, { capture: true });
+        return () => document.removeEventListener("keydown", handleKeyDown, { capture: true } as any);
+    }, []);
+
     // Override removeBlocks to intercept deletions and show confirmation for existing questions
     useEffect(() => {
         // Store the original function BEFORE we override it
@@ -299,12 +340,15 @@ export default function QuestionEditor({ campaignId: _campaignId, roleId: _roleI
                     >
                         <SuggestionMenuController
                             triggerCharacter="/"
-                            onItemClick={(item: any) => {
-                                item.onItemClick();
+                            getItems={async (query) => {
+                                // Mark menu as open and capture latest items for Enter handling
+                                isSlashMenuOpenRef.current = true;
+                                const items = filterSuggestionItems(getQuestionSlashMenuItems(editor), query);
+                                latestSlashItemsRef.current = items;
+                                // Reset navigation tracking when query changes
+                                userNavigatedMenuRef.current = false;
+                                return items;
                             }}
-                            getItems={async (query) =>
-                                filterSuggestionItems(getQuestionSlashMenuItems(editor), query)
-                            }
                         />
                     </BlockNoteView>
                 </div>

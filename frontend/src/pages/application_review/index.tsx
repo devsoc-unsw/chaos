@@ -275,6 +275,10 @@ const ApplicationReview: React.FC = () => {
       console.log("➕ This is a CREATE operation for new answer");
     }
 
+    // Prepare outside try so we can use in catch for recovery
+    let apiAnswerType: string = "ShortAnswer";
+    let apiAnswerData: unknown = "";
+
     try {
       // Check if the answer should be deleted (empty/blank)
       const shouldDelete =
@@ -311,8 +315,6 @@ const ApplicationReview: React.FC = () => {
       }
 
       // Determine the answer type for the API
-      let apiAnswerType: string;
-      let apiAnswerData: unknown;
       
       switch (questionType) {
         case "ShortAnswer":
@@ -322,12 +324,14 @@ const ApplicationReview: React.FC = () => {
         case "MultiChoice":
         case "DropDown":
           apiAnswerType = questionType;
-          apiAnswerData = value;
+          // Backend expects i64s serialized as strings
+          apiAnswerData = String(value);
           break;
         case "MultiSelect":
         case "Ranking":
           apiAnswerType = questionType;
-          apiAnswerData = Array.isArray(value) ? value : [];
+          // Convert each id to string to preserve precision
+          apiAnswerData = Array.isArray(value) ? value.map((v) => String(v)) : [];
           break;
         default:
           apiAnswerType = "ShortAnswer";
@@ -378,14 +382,54 @@ const ApplicationReview: React.FC = () => {
       }
     } catch (error) {
       console.error('❌ Failed to submit answer:', error);
-      
-      // Check if it's an ApplicationClosed error
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const e: any = error;
+
+      // If creating failed with a server error, we might already have an existing answer
+      // due to a unique constraint (application_id, question_id). Try to recover by updating.
+      if (!answerId && e?.status === 500) {
+        try {
+          // First try from local state
+          let existingId = getAnswerId(questionId);
+          // If not found, fetch from server (common + each selected role)
+          if (!existingId && applicationId) {
+            const [common, ...roleAnsArrays] = await Promise.all([
+              getCommonApplicationAnswers(applicationId),
+              ...selectedRoleIds.map((rid) => getApplicationAnswers(applicationId, rid)),
+            ]);
+            const allAnswers = [
+              ...common,
+              ...roleAnsArrays.flat(),
+            ];
+            const found = allAnswers.find((a) => String(a.question_id) === String(questionId));
+            if (found) existingId = found.id;
+          }
+          if (existingId) {
+            console.warn('Recovering from create error by updating existing answer:', existingId);
+            await updateAnswer(existingId, questionId, apiAnswerType as any, apiAnswerData as any);
+            return;
+          }
+        } catch (recoveryErr) {
+          console.error('Recovery update attempt failed:', recoveryErr);
+        }
+      }
+
+      // Surfacing structured server error info when available
+      const serverMsg = e?.data?.message ?? e?.data?.error ?? e?.statusText;
+
+      if (e?.status === 400 || e?.status === 422) {
+        setValidationError(`Failed to save answer: ${serverMsg ?? 'Bad request'}`);
+        return;
+      }
+
       if (error instanceof Error && error.message.includes('Application closed')) {
         setValidationError('Cannot update answers: Application has been submitted or campaign has ended.');
       } else if (error instanceof Error && error.message.includes('Failed to fetch')) {
         setValidationError('Network error: Failed to connect to server. Please check if the backend is running.');
+      } else if (e?.status === 500) {
+        setValidationError(`Server error while saving answer. ${serverMsg ? `Details: ${serverMsg}` : ''}`.trim());
       } else {
-        setValidationError(`Failed to save answer: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        setValidationError(`Failed to save answer${serverMsg ? `: ${serverMsg}` : ''}`);
       }
     }
   };

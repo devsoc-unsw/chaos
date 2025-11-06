@@ -1,6 +1,6 @@
 import { createReactBlockSpec } from "@blocknote/react";
 import type { Block } from "@blocknote/core";
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useQuestionSave } from "@/components/QuestionEditor/QuestionSaveContext";
 import {
     AlertDialog,
@@ -35,6 +35,31 @@ export const shortTextBlock = createReactBlockSpec(
             const isExistingQuestion = !!(block.props.questionId as string);
             const isSavingThis = savingBlockId === block.id;
             const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+            // Track original snapshot to detect changes for existing questions
+            const initialSnapshotRef = useRef<string | null>(null);
+            const currentSnapshot = useMemo(() => {
+                return JSON.stringify({
+                    question: (block.props.question as string) || "",
+                    description: (block.props.description as string) || "",
+                    placeholder: (block.props.placeholder as string) || "",
+                });
+            }, [block.props.description, block.props.placeholder, block.props.question]);
+            if (initialSnapshotRef.current === null && isExistingQuestion) {
+                initialSnapshotRef.current = currentSnapshot;
+            }
+            const isDirty = isExistingQuestion ? initialSnapshotRef.current !== currentSnapshot : true;
+
+            // After this block finishes saving, reset snapshot so button locks out
+            const lastSavingThisRef = useRef(false);
+            useEffect(() => {
+                if (lastSavingThisRef.current && !isSavingThis) {
+                    if (isExistingQuestion) {
+                        initialSnapshotRef.current = currentSnapshot;
+                    }
+                }
+                lastSavingThisRef.current = isSavingThis;
+            }, [isSavingThis, isExistingQuestion, currentSnapshot]);
 
             const updateQuestion = (newQuestion: string) => {
                 editor.updateBlock(block, {
@@ -112,7 +137,7 @@ export const shortTextBlock = createReactBlockSpec(
                     <div className="mt-4 flex justify-end items-center gap-2">
                         <button
                             onClick={() => void onSaveQuestion?.(block as unknown as Block)}
-                            disabled={isSavingThis || !block.props.question}
+                            disabled={isSavingThis || !block.props.question || (isExistingQuestion && !isDirty)}
                             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isSavingThis ? "Saving..." : isExistingQuestion ? "Edit Question" : "Create Question"}
