@@ -280,7 +280,9 @@ where
             .map_err(|_| ChaosError::BadRequest)?;
 
         let mut tx = app_state.db.begin().await?;
-        user_is_application_admin(user_id, application_id, &mut tx).await?;
+        if !user_is_application_admin(user_id, application_id, &mut tx).await? {
+            return Err(ChaosError::BadRequest);
+        }
         tx.commit().await?;
 
         Ok(ApplicationAdmin { user_id })
@@ -354,7 +356,9 @@ where
             .map_err(|_| ChaosError::BadRequest)?;
 
         let mut tx = app_state.db.begin().await?;
-        user_is_application_owner(user_id, application_id, &mut tx).await?;
+        if !user_is_application_owner(user_id, application_id, &mut tx).await? {
+            return Err(ChaosError::Unauthorized);
+        }
         tx.commit().await;
 
         Ok(ApplicationCreatorGivenApplicationId { user_id })
@@ -507,7 +511,9 @@ where
         let application_id = ids.get("application_id").ok_or(ChaosError::BadRequest)?.clone();
 
         let mut tx = app_state.db.begin().await?;
-        user_is_application_owner(user_id, application_id, &mut tx).await?;
+        if !user_is_application_owner(user_id, application_id, &mut tx).await? {
+            return Err(ChaosError::Unauthorized);
+        }
         tx.commit().await?;
 
         Ok(ApplicationOwner { user_id })
@@ -548,6 +554,52 @@ where
         tx.commit().await?;
 
         Ok(AnswerOwner { user_id })
+    }
+}
+
+/// Application owner or a reviewer (member of organisation that application was for).
+///
+/// Contains the user ID of a user who owns a specific application.
+pub struct ApplicationOwnerOrReviewer {
+    /// ID of the application owner
+    pub user_id: i64,
+}
+
+/// Extractor for application owners.
+///
+/// This extractor is used in route handlers to ensure that the request
+/// comes from the owner of a specific application.
+#[async_trait]
+impl<S> FromRequestParts<S> for ApplicationOwnerOrReviewer
+where
+    AppState: FromRef<S>,
+    S: Send + Sync,
+{
+    type Rejection = ChaosError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let app_state = AppState::from_ref(state);
+        let user_id = extract_user_id_from_request(parts, &app_state).await?;
+
+        let Path(ids) = parts
+            .extract::<Path<HashMap<String, i64>>>()
+            .await
+            .map_err(|_| ChaosError::BadRequest)?;
+
+        let application_id = ids.get("application_id").ok_or(ChaosError::BadRequest)?.clone();
+
+        let mut tx = app_state.db.begin().await?;
+
+        if
+            !user_is_application_owner(user_id, application_id, &mut tx).await? &&
+            !assert_user_is_organisation_member(user_id, application_id, &mut tx).await?
+        {
+            println!("Lol");
+            return Err(ChaosError::Unauthorized);
+        }
+        tx.commit().await?;
+
+        Ok(ApplicationOwnerOrReviewer { user_id })
     }
 }
 
