@@ -12,7 +12,7 @@ use crate::service::auth::{assert_is_super_user, extract_user_id_from_request};
 use crate::service::campaign::user_is_campaign_admin;
 use crate::service::email_template::user_is_email_template_admin;
 use crate::service::offer::{assert_user_is_offer_admin, assert_user_is_offer_recipient};
-use crate::service::organisation::assert_user_is_organisation_admin;
+use crate::service::organisation::{assert_user_is_organisation_admin, assert_user_is_organisation_admin_or_super_user};
 use crate::service::question::user_is_question_admin;
 use crate::service::rating::{
     assert_user_is_application_reviewer_given_rating_id, assert_user_is_organisation_member,
@@ -169,6 +169,45 @@ where
         tx.commit().await?;
 
         Ok(OrganisationAdmin { user_id })
+    }
+}
+
+/// Organisation admin or super user information
+/// 
+/// Contains the user ID of a user that may either be an organisation admin or a super user.
+pub struct OrganisationAdminOrSuperUser {
+    /// ID of the superuser or org admin
+    pub user_id: i64,
+}
+
+/// Extractor for organization administrators or superusers, for when a certain action can be done by both.
+/// 
+/// This extractor is used in route handlers to ensure that the request
+/// comes from a user with organization administrator privileges.
+#[async_trait]
+impl<S> FromRequestParts<S> for OrganisationAdminOrSuperUser
+where
+    AppState: FromRef<S>,
+    S: Send + Sync,
+{
+    type Rejection = ChaosError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let app_state = AppState::from_ref(state);
+        let user_id = extract_user_id_from_request(parts, &app_state).await?;
+
+        let organisation_id = *parts
+            .extract::<Path<HashMap<String, i64>>>()
+            .await
+            .map_err(|_| ChaosError::BadRequest)?
+            .get("organisation_id")
+            .ok_or(ChaosError::BadRequest)?;
+
+        let mut tx = app_state.db.begin().await?;
+        assert_user_is_organisation_admin_or_super_user(user_id, organisation_id, &mut tx).await?;
+        tx.commit().await?;
+
+        Ok(OrganisationAdminOrSuperUser { user_id })
     }
 }
 

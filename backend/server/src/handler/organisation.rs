@@ -8,7 +8,7 @@
 //! - Logo image handling
 
 use crate::models::app::AppState;
-use crate::models::auth::SuperUser;
+use crate::models::auth::{OrganisationAdminOrSuperUser, SuperUser};
 use crate::models::auth::{AuthUser, OrganisationAdmin};
 use crate::models::campaign::{Campaign, NewCampaign};
 use crate::models::email_template::{EmailTemplate, NewEmailTemplate};
@@ -17,7 +17,7 @@ use crate::models::organisation::{
     AdminToRemove, AdminUpdateList, NewOrganisation, Organisation, SlugCheck, EmailRoleBody, IdRoleBody, IdBody
 };
 use crate::service::user::{user_exists_by_email};
-use crate::service::organisation::{assert_user_is_in_organisation};
+use crate::service::organisation::{assert_user_is_not_in_organisation};
 use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
@@ -208,7 +208,7 @@ impl OrganisationHandler {
     pub async fn get_members(
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
-        _admin: OrganisationAdmin,
+        _admin: OrganisationAdminOrSuperUser,
     ) -> Result<impl IntoResponse, ChaosError> {
         let members = Organisation::get_members(id, &mut transaction.tx).await?;
 
@@ -500,14 +500,14 @@ impl OrganisationHandler {
     }
 
     pub async fn add_member(
-        _user: OrganisationAdmin,
+        _user: OrganisationAdminOrSuperUser,
         mut transaction: DBTransaction<'_>,
         Path(org_id): Path<i64>,
         Json(req): Json<EmailRoleBody>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let tx = &mut transaction.tx;
         let user_id = user_exists_by_email(req.email, tx).await?;
-        assert_user_is_in_organisation(user_id, org_id, tx).await.is_err();
+        assert_user_is_not_in_organisation(user_id, org_id, tx).await?;
         Organisation::add_member_or_admin_to_organisation(org_id, user_id, req.role.clone(), tx).await?;
 
         transaction.tx.commit().await?;
@@ -515,6 +515,7 @@ impl OrganisationHandler {
     }
 
     pub async fn update_member_role(
+        _user: OrganisationAdmin,
         mut transaction: DBTransaction<'_>,
         Path(org_id): Path<i64>,
         Json(req): Json<IdRoleBody>,
