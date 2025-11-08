@@ -46,134 +46,120 @@ export const rankingQuestionBlock = createReactBlockSpec(
             const isExistingQuestion = !!(block.props.questionId as string);
             const isSavingThis = savingBlockId === block.id;
             const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-            const [hasUserEdited, setHasUserEdited] = useState(false);
             const [lockAfterSave, setLockAfterSave] = useState(false);
-            let parsedOptions = JSON.parse(block.props.options);
 
-            // Migrate old options that don't have IDs
-            const options: Option[] = parsedOptions.map((option: any, index: number) => ({
-                id: option.id || `migrated-${index}-${Date.now()}`,
-                text: option.text,
-                correct: option.correct || false,
-            }));
+            // Created a temporary state of options
+            const [OptionsState, setOptionsState] = useState<Option[] | null>(null);
+            
+            const blockOptions: Option[] = useMemo(() => {
+                try {
+                    const parsed = JSON.parse((block.props.options as string) || "[]");
+                    return parsed.map((opt: any, i: number) => ({
+                        id: opt.id || `opt-${block.id}-${i}`,
+                        text: opt.text || "",
+                        correct: opt.correct || false,
+                    }));
+                } catch {
+                    return [];
+                }
+            }, [block.props.options, block.id]);
+
+            const options = OptionsState || blockOptions;
+
+            useEffect(() => {
+                if (OptionsState && JSON.stringify(blockOptions) === JSON.stringify(OptionsState)) {
+                    setOptionsState(null);
+                }
+            }, [blockOptions, OptionsState]);
 
             const updateQuestion = (newQuestion: string) => {
-                editor.updateBlock(block, {
-                    props: { ...block.props, question: newQuestion },
-                });
-                setHasUserEdited(true);
+                editor.updateBlock(block, { props: { ...block.props, question: newQuestion } });
             };
 
             const updateDescription = (newDescription: string) => {
-                editor.updateBlock(block, {
-                    props: { ...block.props, description: newDescription },
-                });
-                setHasUserEdited(true);
+                editor.updateBlock(block, { props: { ...block.props, description: newDescription } });
             };
 
-            // Track original snapshot to detect changes for existing questions
-            const initialSnapshotRef = useRef<string | null>(null);
-            const currentSnapshot = useMemo(() => {
-                // Use the raw options JSON string to capture any change including reordering
-                const rawOptions = (block.props.options as string) || "[]";
+            // Track previous answer info to current answer info to detect changes for edit button lockout
+            // ISSUE: When user reorder/updates the options, the currentAnswerInfo will not be updated so the edit button will not be locked out
+            const initialAnswerInfo = useRef<string | null>(null);
+            const currentAnswerInfo = useMemo(() => {
+                const normalized = options.map(opt => ({
+                    id: opt.id || "",
+                    text: (opt.text || "").trim(),
+                    correct: opt.correct || false,
+                }));
                 return JSON.stringify({
-                    question: (block.props.question as string) || "",
-                    description: (block.props.description as string) || "",
-                    options: rawOptions,
+                    question: ((block.props.question as string) || "").trim(),
+                    description: ((block.props.description as string) || "").trim(),
+                    options: normalized,
                 });
-            }, [block.props.description, block.props.question, block.props.options]);
-            // Ensure snapshot is established BEFORE treating the block as dirty
-            let hasSnapshot = initialSnapshotRef.current !== null;
-            if (!hasSnapshot && isExistingQuestion) {
-                initialSnapshotRef.current = currentSnapshot;
-                hasSnapshot = true;
-            }
-            const isDirty = isExistingQuestion ? (hasSnapshot ? initialSnapshotRef.current !== currentSnapshot : false) : true;
+            }, [block.props.question, block.props.description, options]);
 
-            // After this block finishes saving, reset snapshot so button locks out
-            const lastSavingThisRef = useRef(false);
             useEffect(() => {
-                if (lastSavingThisRef.current && !isSavingThis) {
-                    if (isExistingQuestion) {
-                        initialSnapshotRef.current = currentSnapshot;
-                    }
+                if (isExistingQuestion && !initialAnswerInfo.current) {
+                    initialAnswerInfo.current = currentAnswerInfo;
                 }
-                lastSavingThisRef.current = isSavingThis;
-            }, [isSavingThis, isExistingQuestion, currentSnapshot]);
+            }, [isExistingQuestion, currentAnswerInfo]);
 
-            // If user makes another edit, clear the post-save lock
+            const isEdited = isExistingQuestion 
+                ? (initialAnswerInfo.current !== null && initialAnswerInfo.current !== currentAnswerInfo)
+                : true;
+
+            const lastSavingRef = useRef(false);
             useEffect(() => {
-                if (isDirty) {
-                    setLockAfterSave(false);
+                if (lastSavingRef.current && !isSavingThis && isExistingQuestion) {
+                    initialAnswerInfo.current = currentAnswerInfo;
+                    setOptionsState(null);
+                    setLockAfterSave(true);
                 }
-            }, [isDirty]);
+                lastSavingRef.current = isSavingThis;
+            }, [isSavingThis, isExistingQuestion, currentAnswerInfo]);
+
+            useEffect(() => {
+                if (isEdited) setLockAfterSave(false);
+            }, [isEdited]);
+
+            const updateOptions = (newOptions: Option[]) => {
+                setOptionsState(newOptions);
+                editor.updateBlock(block, { props: { ...block.props, options: JSON.stringify(newOptions) } });
+            };
 
             const updateOption = (optionId: string, key: keyof Option, value: string | boolean) => {
-                const newOptions = options.map(option =>
-                    option.id === optionId
-                        ? { ...option, [key]: value }
-                        : option
-                );
-                editor.updateBlock(block, {
-                    props: { ...block.props, options: JSON.stringify(newOptions) },
-                });
-                setHasUserEdited(true);
+                updateOptions(options.map(opt => opt.id === optionId ? { ...opt, [key]: value } : opt));
             };
 
             const addOption = () => {
-                const newId = `opt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                const newOptions = [...options, { id: newId, text: "", correct: false }];
-                editor.updateBlock(block, {
-                    props: { ...block.props, options: JSON.stringify(newOptions) },
-                });
-                setHasUserEdited(true);
-            };
-
-            const handleOptionFocus = (optionId: string, currentValue: string) => {
-                // Clear placeholder-like text when user focuses
-                if (currentValue && currentValue.match(/^Option \d+$/)) {
-                    updateOption(optionId, "text", "");
-                }
+                updateOptions([...options, { id: `opt-${Date.now()}`, text: "", correct: false }]);
             };
 
             const removeOption = (optionId: string) => {
                 if (options.length > 1) {
-                    const newOptions = options.filter(option => option.id !== optionId);
-                    editor.updateBlock(block, {
-                        props: { ...block.props, options: JSON.stringify(newOptions) },
-                    });
-                    setHasUserEdited(true);
+                    updateOptions(options.filter(opt => opt.id !== optionId));
                 }
             };
 
             const handleDragEnd = (result: DropResult) => {
                 if (!result.destination) return;
-
                 const newOptions = Array.from(options);
-                const [reorderedItem] = newOptions.splice(result.source.index, 1);
-                newOptions.splice(result.destination.index, 0, reorderedItem);
+                const [reordered] = newOptions.splice(result.source.index, 1);
+                newOptions.splice(result.destination.index, 0, reordered);
+                updateOptions(newOptions);
+            };
 
-                editor.updateBlock(block, {
-                    props: { ...block.props, options: JSON.stringify(newOptions) },
-                });
-                setHasUserEdited(true);
+            const handleOptionFocus = (optionId: string, currentValue: string) => {
+                if (currentValue?.match(/^Option \d+$/)) {
+                    updateOption(optionId, "text", "");
+                }
             };
 
             const handleDeleteClick = () => {
-                if (isExistingQuestion) {
-                    // Show confirmation dialog for existing questions
-                    setShowDeleteDialog(true);
-                } else {
-                    // Directly delete uncreated questions
-                    editor.removeBlocks([block]);
-                }
+                isExistingQuestion ? setShowDeleteDialog(true) : editor.removeBlocks([block]);
             };
 
             const handleConfirmDelete = () => {
                 setShowDeleteDialog(false);
-                if (onDeleteQuestion) {
-                    void onDeleteQuestion(block as unknown as Block);
-                }
+                onDeleteQuestion?.(block as unknown as Block);
             };
 
             return (
@@ -182,27 +168,11 @@ export const rankingQuestionBlock = createReactBlockSpec(
                         <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">Ranking</span>
                     </div>
 
-                    <input
-                        type="text"
-                        value={block.props.question || ""}
-                        onChange={(e) => updateQuestion(e.target.value)}
-                        onFocus={(e) => {
-                            const val = e.target.value;
-                            if (val && (val.includes("Enter your") || val.includes("question..."))) {
-                                updateQuestion("");
-                            }
-                        }}
-                        className="w-full text-base font-medium border border-gray-400 bg-gray-50 p-2 rounded mb-3 text-black"
-                        placeholder="Enter your question..."
-                    />
+                    <input type="text" value={block.props.question || ""} onChange={e => updateQuestion(e.target.value)} 
+                    className="w-full text-base font-medium border border-gray-400 bg-gray-50 p-2 rounded mb-3 text-black" placeholder="Enter your question..." />
 
-                    <textarea
-                        value={block.props.description || ""}
-                        onChange={(e) => updateDescription(e.target.value)}
-                        className="w-full text-sm border border-gray-300 bg-gray-50 p-2 rounded mb-3 text-gray-600 resize-none"
-                        placeholder="Add a description (optional)..."
-                        rows={2}
-                    />
+                    <input type="text" value={block.props.description || ""} onChange={e => updateDescription(e.target.value)} 
+                    className="w-full text-sm border border-gray-300 bg-gray-50 p-2 rounded mb-3 text-gray-600" placeholder="Add a description (optional)..." />
 
                     <DragDropContext onDragEnd={handleDragEnd}>
                         <Droppable droppableId="ranking-options">
@@ -227,7 +197,6 @@ export const rankingQuestionBlock = createReactBlockSpec(
                                                         : "bg-gray-50 hover:bg-gray-100"
                                                         }`}
                                                 >
-                                                    {/* Drag Handle */}
                                                     <div
                                                         {...provided.dragHandleProps}
                                                         className="cursor-grab active:cursor-grabbing p-1"
@@ -247,12 +216,10 @@ export const rankingQuestionBlock = createReactBlockSpec(
                                                         </svg>
                                                     </div>
 
-                                                    {/* Ranking Number */}
                                                     <span className="bg-orange-200 text-orange-800 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium">
                                                         {index + 1}
                                                     </span>
 
-                                                    {/* Option Text */}
                                                     <input
                                                         type="text"
                                                         value={option.text}
@@ -262,7 +229,6 @@ export const rankingQuestionBlock = createReactBlockSpec(
                                                         placeholder={`Option ${index + 1}`}
                                                     />
 
-                                                    {/* Delete Option */}
                                                     {options.length > 1 && (
                                                         <button
                                                             onClick={() => removeOption(option.id)}
@@ -281,7 +247,6 @@ export const rankingQuestionBlock = createReactBlockSpec(
                         </Droppable>
                     </DragDropContext>
 
-                    {/* Add Option Button */}
                     <button
                         onClick={addOption}
                         className="w-full text-orange-600 hover:text-orange-800 border border-dashed border-orange-300 p-2 rounded mt-2"
@@ -289,24 +254,13 @@ export const rankingQuestionBlock = createReactBlockSpec(
                         + Add Option
                     </button>
 
-                    {/* Save/Edit Button */}
                     <div className="mt-4 flex justify-end items-center gap-2">
                         <button
-                            onClick={async () => {
-                                if (onSaveQuestion) {
-                                    await onSaveQuestion(block as unknown as Block);
-                                    // Optimistically reset snapshot after successful save to lock the button
-                                    if (isExistingQuestion) {
-                                        initialSnapshotRef.current = currentSnapshot;
-                                        setLockAfterSave(true);
-                                        setHasUserEdited(false);
-                                    }
-                                }
-                            }}
+                            onClick={() => onSaveQuestion?.(block as unknown as Block)}
                             disabled={
                                 isSavingThis ||
                                 !block.props.question ||
-                                (isExistingQuestion && (!isDirty || lockAfterSave))
+                                (isExistingQuestion && (!isEdited || lockAfterSave))
                             }
                             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                         >
@@ -314,7 +268,6 @@ export const rankingQuestionBlock = createReactBlockSpec(
                         </button>
                     </div>
 
-                    {/* Delete Confirmation Dialog */}
                     <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
                         <AlertDialogContent>
                             <AlertDialogHeader>

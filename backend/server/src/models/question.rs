@@ -8,6 +8,13 @@ use sqlx::types::Json;
 
 /// The `Question` type that will be sent in API responses.
 ///
+/// When deserializing (API input):
+/// - `id`, `created_at`, `updated_at` are skipped (use default values)
+/// - `roles` can be `null` or an array (null is converted to empty vec)
+///
+/// When serializing (API output):
+/// - All fields are included
+/// - IDs are serialized as strings
 ///
 /// With the chosen `serde` representation and the use of `#[serde(flatten)]`, the JSON for a
 /// `Question` will look like this:
@@ -40,36 +47,34 @@ use sqlx::types::Json;
 ///   "updated_at": "2024-06-30T12:14:12.458390190Z"
 /// }
 /// ```
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Question {
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    #[serde(skip_deserializing)]
+    #[serde(default)]
     pub id: i64,
     pub title: String,
     pub description: Option<String>,
     pub common: bool, // Common question are shown at the start
     #[serde(serialize_with = "crate::models::serde_string::serialize_vec")]
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize_option_vec_to_vec")]
     pub roles: Vec<i64>, // (Possibly empty) list of roles the question is for
     pub required: bool,
 
     #[serde(flatten)]
     pub question_data: QuestionData,
 
+    #[serde(skip_deserializing)]
+    #[serde(default)]
     pub created_at: DateTime<Utc>,
+    #[serde(skip_deserializing)]
+    #[serde(default)]
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Deserialize)]
-pub struct NewQuestion {
-    pub title: String,
-    pub description: Option<String>,
-    pub common: bool,
-    #[serde(deserialize_with = "crate::models::serde_string::deserialize_option_vec")]
-    pub roles: Option<Vec<i64>>,
-    pub required: bool,
-
-    #[serde(flatten)]
-    pub question_data: QuestionData,
-}
+/// Alias for Question to maintain backward compatibility
+/// NewQuestion is now just Question with DB fields skipped during deserialization
+pub type NewQuestion = Question;
 
 #[derive(Deserialize, sqlx::FromRow)]
 pub struct QuestionRawData {
@@ -93,7 +98,7 @@ impl Question {
         title: String,
         description: Option<String>,
         common: bool,
-        roles: Option<Vec<i64>>,
+        roles: Vec<i64>,
         required: bool,
         question_data: QuestionData,
         snowflake_generator: &mut SnowflakeIdGenerator,
@@ -126,7 +131,7 @@ impl Question {
             .await?;
 
         if !common {
-            for role in roles.expect("Should be !None if !common") {
+            for role in roles {
                 sqlx::query!(
                     "
                         INSERT INTO question_roles (question_id, role_id) VALUES ($1, $2)
@@ -411,7 +416,7 @@ impl Question {
         title: String,
         description: Option<String>,
         common: bool,
-        roles: Option<Vec<i64>>,
+        roles: Vec<i64>,
         required: bool,
         question_data: QuestionData,
         transaction: &mut Transaction<'_, Postgres>,
@@ -450,7 +455,7 @@ impl Question {
             .execute(transaction.deref_mut())
             .await?;
         if !common {
-            for role in roles.expect("Should be !None if !common") {
+            for role in roles {
                 sqlx::query!(
                     "
                         INSERT INTO question_roles (question_id, role_id) VALUES ($1, $2)
@@ -485,7 +490,7 @@ impl Question {
 /// Some question types are stored in memory and JSON using the same struct, and only differ
 /// in their implementation when inserting to the database and in their restrictions
 /// (e.g. max 1 answer allowed in multi-choice vs. many in multi-select)
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize)]
 #[serde(tag = "question_type", content = "data")]
 pub enum QuestionData {
     ShortAnswer,
@@ -524,7 +529,7 @@ impl QuestionType {
     }
 }
 
-#[derive(Deserialize, Serialize, Default, Debug)]
+#[derive(Deserialize, Serialize, Default)]
 pub struct MultiOptionData {
     pub options: Vec<MultiOptionQuestionOption>,
 }
@@ -532,7 +537,7 @@ pub struct MultiOptionData {
 /// Each of these structs represent a row in the `multi_option_question_options`
 /// table. For a `MultiChoice` question like "What is your favourite programming
 /// language?", there would be rows for "Rust", "Java" and "TypeScript".
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize)]
 pub struct MultiOptionQuestionOption {
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
@@ -586,10 +591,11 @@ impl QuestionData {
             | Self::MultiSelect(data)
             | Self::DropDown(data)
             | Self::Ranking(data) => {
-                if data.options.is_empty() {
-                    return Err(ChaosError::BadRequest);
-                }
-                Ok(())
+                if !data.options.is_empty() {
+                    return Ok(());
+                };
+
+                Err(ChaosError::BadRequest)
             }
         }
     }

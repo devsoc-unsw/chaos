@@ -47,6 +47,16 @@ where
     deserializer.deserialize_option(OptionVecVisitor)
 }
 
+/// Deserializes Option<Vec<i64>> but converts None to empty Vec<i64>
+/// This allows Question to accept null roles in input but always have Vec<i64> internally
+pub fn deserialize_option_vec_to_vec<'de, D>(deserializer: D) -> Result<Vec<i64>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let option = deserialize_option_vec(deserializer)?;
+    Ok(option.unwrap_or_default())
+}
+
 struct OptionVecVisitor;
 
 impl<'de> serde::de::Visitor<'de> for OptionVecVisitor {

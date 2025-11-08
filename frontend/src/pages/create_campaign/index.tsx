@@ -176,9 +176,12 @@ const CreateCampaign = () => {
   };
 
   const submitHandler = async () => {
-    // Validation
     if (campaignName.length === 0) {
       setError("Campaign name is required");
+      return;
+    }
+    if (description.length === 0) {
+      setError("Campaign description is required");
       return;
     }
     if (cover === null) {
@@ -189,6 +192,15 @@ const CreateCampaign = () => {
       setError("Start date must be before end date");
       return;
     }
+
+    // if (roles.length === 0 && !isDraft) {
+    //   setError("At least one role is required");
+    //   return;
+    // }
+    // if (questions.length === 0 && !isDraft) {
+    //   setError("At least one question is required");
+    //   return;
+    // }
     
     setError(null);
 
@@ -206,7 +218,7 @@ const CreateCampaign = () => {
       organisation_id: orgId,
       slug,
       name: campaignName,
-      description: description || undefined,
+      description: description,
       starts_at: startTimeDateString,
       ends_at: endTimeDateString,
     };
@@ -269,13 +281,41 @@ const CreateCampaign = () => {
   };
 
   return (
+    // <Tabs
+  //   value={tab}
+  //   onChange={(_e: React.ChangeEvent<HTMLInputElement>, val: number) => onTabChange(val)}
+  //   centered
+  //   style={{ paddingBottom: "30px", paddingTop: "15px" }}
+  // >
+  //   <Tab label="campaign" />
+  //   <Tab label="roles" />
+  //   <Tab label="review" />
+  // </Tabs>
+  // {tab === campaignTabIdx && <CampaignTab campaign={campaign} />}
+  // {tab === rolesTabIdx && <RolesTab campaign={campaign} />}
+  // {tab === reviewTabIdx && (
+  //   <ReviewTab
+  //     campaign={campaign}
+  //     onSubmit={(e) => void submitHandler(e)}
+  //   />
+  // )}
+  // {(tab === campaignTabIdx || tab === rolesTabIdx) && (
+  //   <NextWrapper>
+  //     <CreateButton
+  //       variant="contained"
+  //       onClick={() => void submitHandler(false)}
+  //     >
+  //       Create Campaign
+  //     </CreateButton>
+  //   </NextWrapper>
+  // )}
     <Container style={{ marginTop: "60px", marginBottom: "60px" }}>
       <CampaignTab campaign={campaign} />
       <NextWrapper style={{ marginTop: "60px" }}>
         <CreateButton
           variant="contained"
           onClick={() => void submitHandler()}
-          disabled={isLoading || campaignName.trim().length === 0 || cover === null}
+          disabled={isLoading || campaignName.trim().length === 0 || description.trim().length === 0 || cover === null}
         >
           {isLoading ? "Creating Campaign..." : "Create Campaign"}
         </CreateButton>

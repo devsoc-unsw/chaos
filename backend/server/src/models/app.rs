@@ -256,7 +256,7 @@ pub async fn app() -> Result<Router, ChaosError> {
         )
         .route(
             "/api/v1/campaign/:campaign_id/publish",
-            post(CampaignHandler::publish),
+            patch(CampaignHandler::publish),
         )
         .route(
             "/api/v1/organisation/slug/:organisation_slug/campaign/slug/:campaign_slug",

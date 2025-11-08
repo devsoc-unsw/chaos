@@ -42,9 +42,9 @@ export const mcqQuestionBlock = createReactBlockSpec(
             const options: Option[] = JSON.parse(block.props.options);
             const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-            // Track original snapshot to detect changes for existing questions
-            const initialSnapshotRef = useRef<string | null>(null);
-            const currentSnapshot = useMemo(() => {
+            // Track previous answer info to current answer info to detect changes for edit button lockout
+            const initialAnswerInfo = useRef<string | null>(null);
+            const currentAnswerInfo = useMemo(() => {
                 const normalizedOptions = options.map((o) => ({ text: (o.text || "").trim(), correct: !!o.correct }));
                 return JSON.stringify({
                     question: (block.props.question as string) || "",
@@ -52,21 +52,21 @@ export const mcqQuestionBlock = createReactBlockSpec(
                     options: normalizedOptions,
                 });
             }, [block.props.description, block.props.question, options]);
-            if (initialSnapshotRef.current === null && isExistingQuestion) {
-                initialSnapshotRef.current = currentSnapshot;
+            if (initialAnswerInfo.current === null && isExistingQuestion) {
+                initialAnswerInfo.current = currentAnswerInfo;
             }
-            const isDirty = isExistingQuestion ? initialSnapshotRef.current !== currentSnapshot : true;
+            const isDirty = isExistingQuestion ? initialAnswerInfo.current !== currentAnswerInfo : true;
 
-            // After this block finishes saving, reset snapshot so button locks out
+            // After update, then it will make the "edit" button accessible
             const lastSavingThisRef = useRef(false);
             useEffect(() => {
                 if (lastSavingThisRef.current && !isSavingThis) {
                     if (isExistingQuestion) {
-                        initialSnapshotRef.current = currentSnapshot;
+                        initialAnswerInfo.current = currentAnswerInfo;
                     }
                 }
                 lastSavingThisRef.current = isSavingThis;
-            }, [isSavingThis, isExistingQuestion, currentSnapshot]);
+            }, [isSavingThis, isExistingQuestion, currentAnswerInfo]);
 
             const updateQuestion = (newQuestion: string) => {
                 editor.updateBlock(block, {

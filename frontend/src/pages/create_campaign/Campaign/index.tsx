@@ -75,7 +75,6 @@ const CampaignTab = ({ campaign }: Props) => {
         {({ getRootProps, getInputProps }) => (
           <section>
             <CampaignDropzone {...getRootProps()}>
-              {/* eslint-disable-next-line react/jsx-props-no-spreading -- this *should* be fine here */}
               <input {...getInputProps()} />
               {cover === null && (
                 <p>
@@ -98,12 +97,13 @@ const CampaignTab = ({ campaign }: Props) => {
         required
       />
       <CampaignTextField
-        label="Campaign Description"
+        label="Campaign Description *"
         variant="outlined"
         multiline
         rows={10}
         value={description}
         onChange={(e) => setDescription(e.target.value)}
+        required
       />
       <CampaignRowDiv>
         <LocalizationProvider dateAdapter={AdapterDateFns}>

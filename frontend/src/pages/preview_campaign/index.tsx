@@ -63,24 +63,8 @@ const ReviewTab = ({ campaignId }: Props) => {
         </InfoText>
       </InfoTextBox>
       <CampaignCardLayout>
-        <CampaignCard
-          title={campaign.name}
-          appliedFor={[]}
-          positions={roles.map((r) => ({
-            id: r.id,
-            number: r.max_available,
-            name: r.name,
-          }))}
-          startDate={new Date(campaign.starts_at)}
-          endDate={new Date(campaign.ends_at)}
-          organisationLogo={undefined}
-          campaigns={[]}
-          setCampaigns={() => {}}
-          img=""
-        />
+        <CampaignCard {...{ title: campaign.name, appliedFor: [], positions: roles.map(r => ({ id: r.id, number: r.max_available, name: r.name })), startDate: new Date(campaign.starts_at), endDate: new Date(campaign.ends_at), organisationLogo: undefined, campaigns: [], setCampaigns: () => {}, img: "" }} />
       </CampaignCardLayout>
-      {/* TODO: display campaign description */}
-      {/* TODO: allow admins to preview the application form */}
       <SubmitWrapper>
         <ActionButton onClick={() => void handlePublish()} color="primary" disabled={isLoading}>
           {isLoading ? "Publishing..." : "Publish Campaign"}

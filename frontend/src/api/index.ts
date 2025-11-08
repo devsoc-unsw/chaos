@@ -443,7 +443,7 @@ export const setCampaignCoverImage = (campaignId: string, cover_image: File) =>
 
 export const publishCampaign = (campaignId: string) =>
   authenticatedRequest<void>({
-    method: "POST",
+    method: "PATCH",
     path: `/v1/campaign/${campaignId}/publish`,
     jsonResp: false,
   });

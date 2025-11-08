@@ -93,50 +93,20 @@ export function EditRoleDialog({
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="edit-name">Name</Label>
-              <Input
-                id="edit-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Role name"
-                required
-                disabled={isLoading}
-              />
+              <Input id="edit-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Role name" required disabled={isLoading} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="edit-description">Description</Label>
-              <Textarea
-                id="edit-description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Role description (optional)"
-                disabled={isLoading}
-                rows={4}
-              />
+              <Textarea id="edit-description" value={description} onChange={e => setDescription(e.target.value)} placeholder="Role description (optional)" disabled={isLoading} rows={4} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="edit-min">Min Available</Label>
-                <Input
-                  id="edit-min"
-                  type="number"
-                  value={minAvailable}
-                  onChange={(e) => setMinAvailable(Number(e.target.value))}
-                  min={1}
-                  required
-                  disabled={isLoading}
-                />
+                <Input id="edit-min" type="number" value={minAvailable} onChange={(e) => setMinAvailable(Number(e.target.value))} min={1} required disabled={isLoading} />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="edit-max">Max Available</Label>
-                <Input
-                  id="edit-max"
-                  type="number"
-                  value={maxAvailable}
-                  onChange={(e) => setMaxAvailable(Number(e.target.value))}
-                  min={1}
-                  required
-                  disabled={isLoading}
-                />
+                <Input id="edit-max" type="number" value={maxAvailable} onChange={e => setMaxAvailable(Number(e.target.value))} min={1} required disabled={isLoading} />
               </div>
             </div>
             <div className="flex items-center gap-2">

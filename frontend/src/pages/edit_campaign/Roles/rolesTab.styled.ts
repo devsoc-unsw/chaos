@@ -58,6 +58,55 @@ export const RoleListItemButton = styled(ListItemButton)`
   height: 100%;
 `;
 
+// export const QuestionsDisplay = styled("div")`
+//   position: relative;
+//   overflow: auto;
+//   width: 90%;
+//   height: 80%;
+// `;
+
+// export const QuestionsDiv = styled("div")`
+//   display: flex;
+//   flex-direction: column;
+//   align-items: center;
+//   height: 600px;
+//   width: 60%;
+//   min-width: 400px;
+// `;
+
+// export const QuestionsHeader = styled(ListItem)`
+//   width: 90%;
+//   justify-content: center;
+//   padding: 0px;
+//   height: 50px;
+//   margin-bottom: 15px;
+// `;
+
+// export const AddQuestionButton = styled(Button)`
+//   width: 35%;
+//   margin-right: 5px;
+//   border-radius: 12px;
+// `;
+
+// export const SelectFromExistingButton = styled(Button)`
+//   width: 65%;
+//   margin-left: 5px;
+//   border-radius: 12px;
+// `;
+
+// export const QuestionTitle = styled("h4")`
+//   margin: 5px;
+//   margin-bottom: 0px;
+//   padding-left: 40px;
+//   font-weight: normal;
+// `;
+
+// export const QuestionContent = styled("div")`
+//   display: flex;
+//   padding-top: 10px;
+//   padding-bottom: 10px;
+// `;
+
 export const CreateRoleFormControl = styled(FormControl)`
   width: 100%;
   position: absolute;

@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { pushToast } from "utils";
 import type { Role } from "types/api";
 
-import { AddRoleDialog } from "./add-role-dialog";
-import { EditRoleDialog } from "./edit-role-dialog";
-import { RolesDataTable } from "./roles-data-table";
+import { AddRoleDialog } from "./AddRole";
+import { EditRoleDialog } from "./EditRole";
+import { RolesDataTable } from "./RolesTable";
 
 type Props = {
   campaignId: string;

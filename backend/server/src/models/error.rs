@@ -105,12 +105,7 @@ impl IntoResponse for ChaosError {
             ChaosError::ForbiddenOperation => {
                 (StatusCode::FORBIDDEN, "Forbidden operation").into_response()
             }
-            ChaosError::BadRequest => {
-                (StatusCode::BAD_REQUEST, Json(json!({"error": "Bad request", "message": "Invalid request data or validation failed"}))).into_response()
-            },
-            ChaosError::BadRequestWithMessage(msg) => {
-                (StatusCode::BAD_REQUEST, Json(json!({"error": "Bad request", "message": msg}))).into_response()
-            },
+            ChaosError::BadRequest => (StatusCode::BAD_REQUEST, "Bad request").into_response(),
             ChaosError::ApplicationClosed => (StatusCode::BAD_REQUEST, "Application closed").into_response(),
             ChaosError::CampaignClosed => (StatusCode::BAD_REQUEST, "Campaign closed").into_response(),
             ChaosError::DatabaseError(db_error) => match db_error {

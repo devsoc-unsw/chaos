@@ -101,7 +101,7 @@ export default function QuestionEditor({ campaignId: _campaignId, roleId: _roleI
     const [pendingDeleteBlocks, setPendingDeleteBlocks] = useState<Block[]>([]);
     const isConfirmedDeleteRef = useRef(false);
     const deletingBlockIdsRef = useRef<Set<string>>(new Set());
-    const originalRemoveBlocksRef = useRef<((blocksToRemove: any) => any) | null>(null);
+    const RemoveBlocksRef = useRef<((blocksToRemove: any) => any) | null>(null);
     const lastDocumentKeyRef = useRef<string | undefined>();
     const latestInitialBlocksRef = useRef<unknown[] | undefined>(initialBlocks);
 
@@ -118,7 +118,8 @@ export default function QuestionEditor({ campaignId: _campaignId, roleId: _roleI
         },
     });
 
-    const initialContent = useMemo<PartialBlock[]>(() => {
+    // Attempt to load existing question info from DB
+    const existingContent = useMemo<PartialBlock[]>(() => {
         if (initialBlocks && initialBlocks.length > 0) {
             return initialBlocks as PartialBlock[];
         }
@@ -129,23 +130,22 @@ export default function QuestionEditor({ campaignId: _campaignId, roleId: _roleI
     // Creates a new editor instance with the custom schema
     const editor = useCreateBlockNote({
         schema,
-        initialContent,
+        existingContent,
     });
 
-    // Workaround for BlockNote suggestion menu not selecting first item on initial open
-    // We keep track of whether the slash menu is open and the latest items it displays.
     const isSlashMenuOpenRef = useRef(false);
     const latestSlashItemsRef = useRef<any[]>([]);
     const userNavigatedMenuRef = useRef(false);
 
-    // Key handling to select the first item when Enter is pressed immediately after '/'
+    // Issue: When the slash menu is open, the first item is not selected when Enter is pressed
+    // Solution: We keep track of whether the slash menu is open and the latest items it displays.
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (!isSlashMenuOpenRef.current) return;
 
             if (e.key === "ArrowDown" || e.key === "ArrowUp") {
                 userNavigatedMenuRef.current = true;
-                return; // let the menu handle navigation
+                return;
             }
 
             if (e.key === "Escape") {
@@ -155,13 +155,11 @@ export default function QuestionEditor({ campaignId: _campaignId, roleId: _roleI
             }
 
             if (e.key === "Enter" && !e.shiftKey) {
-                // If user hasn't navigated yet, manually trigger the first item
                 if (!userNavigatedMenuRef.current && latestSlashItemsRef.current.length > 0) {
                     e.preventDefault();
                     const first = latestSlashItemsRef.current[0];
                     if (first && typeof first.onItemClick === "function") {
                         first.onItemClick();
-                        // After inserting, close our tracking
                         isSlashMenuOpenRef.current = false;
                         userNavigatedMenuRef.current = false;
                     }
@@ -173,15 +171,11 @@ export default function QuestionEditor({ campaignId: _campaignId, roleId: _roleI
         return () => document.removeEventListener("keydown", handleKeyDown, { capture: true } as any);
     }, []);
 
-    // Override removeBlocks to intercept deletions and show confirmation for existing questions
     useEffect(() => {
-        // Store the original function BEFORE we override it
-        const originalRemoveBlocks = editor.removeBlocks;
-        originalRemoveBlocksRef.current = originalRemoveBlocks;
+        const removeBlocks = editor.removeBlocks;
+        RemoveBlocksRef.current = removeBlocks;
         
-        // Override the function
         (editor as any).removeBlocks = (blocksToRemove: any) => {
-            // Convert BlockIdentifier[] to Block[] for checking
             const blocks = blocksToRemove.map((idOrBlock: any) => {
                 if (typeof idOrBlock === 'string') {
                     return editor.document.find((b) => b.id === idOrBlock);
@@ -189,67 +183,57 @@ export default function QuestionEditor({ campaignId: _campaignId, roleId: _roleI
                 return idOrBlock;
             }).filter(Boolean) as Block[];
 
-            // Check if any of these blocks are already being deleted (via confirmed delete flow)
             const blockIds = blocks.map(b => b.id);
             const isAlreadyDeleting = blockIds.some(id => deletingBlockIdsRef.current.has(id));
             
-            // If this is a confirmed delete or blocks are already being deleted, bypass interception
             if (isConfirmedDeleteRef.current || isAlreadyDeleting) {
-                // Clear the flag after processing
                 if (isConfirmedDeleteRef.current) {
                     isConfirmedDeleteRef.current = false;
                 }
-                // Note: Don't clear deletingBlockIdsRef here - let handleConfirmDelete clear it after completion
-                return originalRemoveBlocks.call(editor, blocksToRemove);
+                return removeBlocks.call(editor, blocksToRemove);
             }
 
-            // Check if any of the blocks being deleted are existing questions
             const existingQuestionBlocks = blocks.filter((block) => {
                 const blockProps = (block as any).props || {};
                 return !!(blockProps.questionId as string);
             });
 
-            // If there are existing questions, show confirmation dialog
             if (existingQuestionBlocks.length > 0 && onDeleteQuestion) {
                 setPendingDeleteBlocks(blocks);
                 setShowDeleteDialog(true);
-                return []; // Return empty array to prevent deletion
+                return [];
             }
 
-            // For uncreated questions or if no onDeleteQuestion handler, delete directly using original
-            return originalRemoveBlocks.call(editor, blocksToRemove);
+            return removeBlocks.call(editor, blocksToRemove);
         };
     }, [editor, onDeleteQuestion]);
 
+    // When popup appears and user click delete
     const handleConfirmDelete = async () => {
         setShowDeleteDialog(false);
         if (pendingDeleteBlocks.length > 0) {
-            // Track which blocks are being deleted to prevent duplicate confirmations
             const blockIds = pendingDeleteBlocks.map(b => b.id);
             blockIds.forEach(id => deletingBlockIdsRef.current.add(id));
             
-            // Set flag to bypass interception when handler calls removeBlocks
             isConfirmedDeleteRef.current = true;
             
-            // Delete each existing question block via the handler if provided
             if (onDeleteQuestion) {
                 for (const block of pendingDeleteBlocks) {
                     await onDeleteQuestion(block);
                 }
             } else {
-                // If no handler, just remove from editor directly
-                if (originalRemoveBlocksRef.current) {
+                if (RemoveBlocksRef.current) {
                     isConfirmedDeleteRef.current = true;
-                    originalRemoveBlocksRef.current.call(editor, pendingDeleteBlocks.map(b => b.id));
+                    RemoveBlocksRef.current.call(editor, pendingDeleteBlocks.map(b => b.id));
                 }
             }
             
-            // Clear tracking after deletion completes
             blockIds.forEach(id => deletingBlockIdsRef.current.delete(id));
             setPendingDeleteBlocks([]);
         }
     };
-
+    
+    // When popup appears and user click cancel
     const handleCancelDelete = () => {
         setShowDeleteDialog(false);
         setPendingDeleteBlocks([]);
@@ -264,7 +248,6 @@ export default function QuestionEditor({ campaignId: _campaignId, roleId: _roleI
             return;
         }
 
-        // Update ref with latest initialBlocks before checking documentKey
         latestInitialBlocksRef.current = initialBlocks;
 
         if (lastDocumentKeyRef.current === undefined) {
@@ -273,7 +256,6 @@ export default function QuestionEditor({ campaignId: _campaignId, roleId: _roleI
         }
 
         if (documentKey !== lastDocumentKeyRef.current) {
-            // Use the latest initialBlocks (which should already be set above)
             const content =
                 Array.isArray(initialBlocks) && initialBlocks.length > 0
                     ? (initialBlocks as PartialBlock[])
@@ -281,7 +263,6 @@ export default function QuestionEditor({ campaignId: _campaignId, roleId: _roleI
                         ? (latestInitialBlocksRef.current as PartialBlock[])
                         : (JSON.parse(JSON.stringify(DEFAULT_INITIAL_CONTENT)) as PartialBlock[]));
             
-            // Defer replaceBlocks to avoid flushSync warning
             setTimeout(() => {
                 const blocksToRemove = editor.document.map((block) => block.id);
                 editor.replaceBlocks(blocksToRemove, content as any);
@@ -290,6 +271,7 @@ export default function QuestionEditor({ campaignId: _campaignId, roleId: _roleI
         }
     }, [documentKey, editor, initialBlocks]);
 
+    // When user edited a question, it calls this to save the updated question 
     const handleSaveQuestion = async (block: Block) => {
         if (!onSaveQuestion) return;
         
@@ -341,11 +323,9 @@ export default function QuestionEditor({ campaignId: _campaignId, roleId: _roleI
                         <SuggestionMenuController
                             triggerCharacter="/"
                             getItems={async (query) => {
-                                // Mark menu as open and capture latest items for Enter handling
                                 isSlashMenuOpenRef.current = true;
                                 const items = filterSuggestionItems(getQuestionSlashMenuItems(editor), query);
                                 latestSlashItemsRef.current = items;
-                                // Reset navigation tracking when query changes
                                 userNavigatedMenuRef.current = false;
                                 return items;
                             }}

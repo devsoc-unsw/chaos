@@ -276,7 +276,7 @@ const ApplicationReview: React.FC = () => {
     }
 
     // Prepare outside try so we can use in catch for recovery
-    let apiAnswerType: string = "ShortAnswer";
+    let apiAnswerType: string = "";
     let apiAnswerData: unknown = "";
 
     try {
@@ -324,14 +324,12 @@ const ApplicationReview: React.FC = () => {
         case "MultiChoice":
         case "DropDown":
           apiAnswerType = questionType;
-          // Backend expects i64s serialized as strings
-          apiAnswerData = String(value);
+          apiAnswerData = value;
           break;
         case "MultiSelect":
         case "Ranking":
           apiAnswerType = questionType;
-          // Convert each id to string to preserve precision
-          apiAnswerData = Array.isArray(value) ? value.map((v) => String(v)) : [];
+          apiAnswerData = Array.isArray(value) ? value : [];
           break;
         default:
           apiAnswerType = "ShortAnswer";
@@ -382,11 +380,9 @@ const ApplicationReview: React.FC = () => {
       }
     } catch (error) {
       console.error('❌ Failed to submit answer:', error);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const e: any = error;
 
-      // If creating failed with a server error, we might already have an existing answer
-      // due to a unique constraint (application_id, question_id). Try to recover by updating.
+      // Trying to fix MCQ Bad request error
       if (!answerId && e?.status === 500) {
         try {
           // First try from local state
@@ -414,7 +410,6 @@ const ApplicationReview: React.FC = () => {
         }
       }
 
-      // Surfacing structured server error info when available
       const serverMsg = e?.data?.message ?? e?.data?.error ?? e?.statusText;
 
       if (e?.status === 400 || e?.status === 422) {
@@ -429,7 +424,7 @@ const ApplicationReview: React.FC = () => {
       } else if (e?.status === 500) {
         setValidationError(`Server error while saving answer. ${serverMsg ? `Details: ${serverMsg}` : ''}`.trim());
       } else {
-        setValidationError(`Failed to save answer${serverMsg ? `: ${serverMsg}` : ''}`);
+        setValidationError(`Failed to save answer: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
   };
@@ -468,8 +463,7 @@ const ApplicationReview: React.FC = () => {
       case "MultiSelect":
       case "Ranking":
         if (Array.isArray(answer)) {
-          const selectedOptions = (question.data?.options ?? [])
-            .filter(opt => answer.includes(opt.id))
+          const selectedOptions = (question.data?.options?.filter(opt => answer.includes(opt.id)) ?? [])
             .map(opt => opt.text);
           return selectedOptions.length > 0 ? selectedOptions.join(", ") : "No selections";
         }
