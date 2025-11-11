@@ -1,5 +1,4 @@
 import {
-  Button,
   FormControl,
   FormGroup,
   ListItem,
@@ -19,9 +18,8 @@ export const RolesDiv = styled("div")`
   flex-direction: column;
   align-items: center;
   height: 600px;
-  width: 40%;
+  width: 100%;
   min-width: 400px;
-  float: left;
 `;
 
 export const SectionTitle = styled("h2")`
@@ -44,20 +42,70 @@ export const RoleQuantity = styled(ListItemText)`
 `;
 
 export const RolesListContainer = styled("div")`
-  height: 472px;
+  height: 530px;
   position: relative;
   overflow: scroll;
 `;
 
 export const RoleListItemContent = styled(ListItem)`
   padding: 0px;
-  height: 70px;
+  height: auto;
+  min-height: 70px;
 `;
 
 export const RoleListItemButton = styled(ListItemButton)`
   padding: 0%;
   height: 100%;
 `;
+
+// export const QuestionsDisplay = styled("div")`
+//   position: relative;
+//   overflow: auto;
+//   width: 90%;
+//   height: 80%;
+// `;
+
+// export const QuestionsDiv = styled("div")`
+//   display: flex;
+//   flex-direction: column;
+//   align-items: center;
+//   height: 600px;
+//   width: 60%;
+//   min-width: 400px;
+// `;
+
+// export const QuestionsHeader = styled(ListItem)`
+//   width: 90%;
+//   justify-content: center;
+//   padding: 0px;
+//   height: 50px;
+//   margin-bottom: 15px;
+// `;
+
+// export const AddQuestionButton = styled(Button)`
+//   width: 35%;
+//   margin-right: 5px;
+//   border-radius: 12px;
+// `;
+
+// export const SelectFromExistingButton = styled(Button)`
+//   width: 65%;
+//   margin-left: 5px;
+//   border-radius: 12px;
+// `;
+
+// export const QuestionTitle = styled("h4")`
+//   margin: 5px;
+//   margin-bottom: 0px;
+//   padding-left: 40px;
+//   font-weight: normal;
+// `;
+
+// export const QuestionContent = styled("div")`
+//   display: flex;
+//   padding-top: 10px;
+//   padding-bottom: 10px;
+// `;
 
 export const CreateRoleFormControl = styled(FormControl)`
   width: 100%;
@@ -93,51 +141,12 @@ export const Name = styled("input")`
   border-radius: 12px;
 `;
 
-export const QuestionsDisplay = styled("div")`
-  position: relative;
-  overflow: auto;
-  width: 90%;
-  height: 80%;
-`;
 
-export const QuestionsDiv = styled("div")`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 600px;
-  width: 60%;
-  min-width: 400px;
-`;
 
-export const QuestionsHeader = styled(ListItem)`
-  width: 90%;
-  justify-content: center;
-  padding: 0px;
-  height: 50px;
-  margin-bottom: 15px;
-`;
 
-export const AddQuestionButton = styled(Button)`
-  width: 35%;
-  margin-right: 5px;
-  border-radius: 12px;
-`;
 
-export const SelectFromExistingButton = styled(Button)`
-  width: 65%;
-  margin-left: 5px;
-  border-radius: 12px;
-`;
 
-export const QuestionTitle = styled("h4")`
-  margin: 5px;
-  margin-bottom: 0px;
-  padding-left: 40px;
-  font-weight: normal;
-`;
 
-export const QuestionContent = styled("div")`
-  display: flex;
-  padding-top: 10px;
-  padding-bottom: 10px;
-`;
+
+
+

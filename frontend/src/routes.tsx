@@ -27,6 +27,7 @@ const AdminApplicationDashboard = lazy(
   () => import("./pages/admin_application_dashboard")
 );
 const CampaignLandingPage = lazy(() => import("./pages/campaign"));
+const EditCampaign = lazy(() => import("./pages/edit_campaign"));
 
 const routes = [
   <Route key="dashboard" path="/dashboard" element={<DashboardPage />} />,
@@ -47,6 +48,11 @@ const routes = [
     key="create-campaign"
     path="/admin/organisation/:orgId/campaign/create"
     element={<CampaignCreate />}
+  />,
+  <Route
+    key="edit-campaign"
+    path="/organisation/:orgId/campaign/:campaignId/edit"
+    element={<EditCampaign />}
   />,
   <Route
     key="ApplicationPage"

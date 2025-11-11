@@ -235,12 +235,10 @@ where
         let app_state = AppState::from_ref(state);
         let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
-        let role_id = *parts
-            .extract::<Path<HashMap<String, i64>>>()
+        let Path(role_id) = parts
+            .extract::<Path<i64>>()
             .await
-            .map_err(|_| ChaosError::BadRequest)?
-            .get("role_id")
-            .ok_or(ChaosError::BadRequest)?;
+            .map_err(|_| ChaosError::BadRequest)?;
 
         let mut tx = app_state.db.begin().await?;
         user_is_role_admin(user_id, role_id, &mut tx).await?;
@@ -464,10 +462,12 @@ where
         let app_state = AppState::from_ref(state);
         let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
-        let Path(question_id) = parts
-            .extract::<Path<i64>>()
+        let question_id = *parts
+            .extract::<Path<HashMap<String, i64>>>()
             .await
-            .map_err(|_| ChaosError::BadRequest)?;
+            .map_err(|_| ChaosError::BadRequest)?
+            .get("id")
+            .ok_or(ChaosError::BadRequest)?;
 
         let mut tx = app_state.db.begin().await?;
         user_is_question_admin(user_id, question_id, &mut tx).await?;
