@@ -27,7 +27,7 @@ const AdminApplicationDashboard = lazy(
   () => import("./pages/admin_application_dashboard")
 );
 const CampaignLandingPage = lazy(() => import("./pages/campaign"));
-
+const Profile = lazy(() => import("./pages/profile/index"))
 const routes = [
   <Route key="dashboard" path="/dashboard" element={<DashboardPage />} />,
   <Route key="auth" path="/auth/callback" element={<AuthSuccess />} />,
@@ -93,6 +93,11 @@ const routes = [
     path="/create-question"
     element={<CreateQuestion />}
   />,
+  <Route
+    key="profile"
+    path="/profile"
+    element={<Profile/>}
+  />
 ];
 
 export default routes;

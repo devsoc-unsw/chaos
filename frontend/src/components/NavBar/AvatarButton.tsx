@@ -1,9 +1,8 @@
 import { Popover } from "@headlessui/react";
 import { ArrowRightOnRectangleIcon } from "@heroicons/react/20/solid";
 import { Fragment } from "react";
-import { useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import tw, { styled } from "twin.macro";
-
 import Transition from "components/Transition";
 
 const ToggleButton = styled(Popover.Button, {
@@ -41,6 +40,10 @@ const AvatarButton = () => {
           leaveTo={tw`translate-y-0.5 opacity-0`}
         >
           <Popover.Panel tw="absolute right-0 top-11 flex w-max flex-col overflow-hidden rounded bg-white shadow-md">
+            <div tw="flex gap-1 px-2 py-2 text-gray-600">
+              <NavLink to="/profile">Profile</NavLink>
+              {/* <NavButton to="/dashboard">Profile</NavButton> */}
+            </div>
             <div tw="bg-gray-50 px-4 py-2 text-gray-500">
               Logged in as <span tw="text-indigo-600">{name}</span>
             </div>
