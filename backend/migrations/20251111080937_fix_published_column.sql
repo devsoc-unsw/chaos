@@ -1,0 +1,1 @@
+-- No-op: published column creation and constraints handled by 20251031161000_fix_published_not_null.sql
