@@ -275,6 +275,10 @@ const ApplicationReview: React.FC = () => {
       console.log("➕ This is a CREATE operation for new answer");
     }
 
+    // Prepare outside try so we can use in catch for recovery
+    let apiAnswerType: string = "";
+    let apiAnswerData: unknown = "";
+
     try {
       // Check if the answer should be deleted (empty/blank)
       const shouldDelete =
@@ -311,8 +315,6 @@ const ApplicationReview: React.FC = () => {
       }
 
       // Determine the answer type for the API
-      let apiAnswerType: string;
-      let apiAnswerData: unknown;
       
       switch (questionType) {
         case "ShortAnswer":
@@ -378,12 +380,49 @@ const ApplicationReview: React.FC = () => {
       }
     } catch (error) {
       console.error('❌ Failed to submit answer:', error);
-      
-      // Check if it's an ApplicationClosed error
+      const e: any = error;
+
+      // Trying to fix MCQ Bad request error
+      if (!answerId && e?.status === 500) {
+        try {
+          // First try from local state
+          let existingId = getAnswerId(questionId);
+          // If not found, fetch from server (common + each selected role)
+          if (!existingId && applicationId) {
+            const [common, ...roleAnsArrays] = await Promise.all([
+              getCommonApplicationAnswers(applicationId),
+              ...selectedRoleIds.map((rid) => getApplicationAnswers(applicationId, rid)),
+            ]);
+            const allAnswers = [
+              ...common,
+              ...roleAnsArrays.flat(),
+            ];
+            const found = allAnswers.find((a) => String(a.question_id) === String(questionId));
+            if (found) existingId = found.id;
+          }
+          if (existingId) {
+            console.warn('Recovering from create error by updating existing answer:', existingId);
+            await updateAnswer(existingId, questionId, apiAnswerType as any, apiAnswerData as any);
+            return;
+          }
+        } catch (recoveryErr) {
+          console.error('Recovery update attempt failed:', recoveryErr);
+        }
+      }
+
+      const serverMsg = e?.data?.message ?? e?.data?.error ?? e?.statusText;
+
+      if (e?.status === 400 || e?.status === 422) {
+        setValidationError(`Failed to save answer: ${serverMsg ?? 'Bad request'}`);
+        return;
+      }
+
       if (error instanceof Error && error.message.includes('Application closed')) {
         setValidationError('Cannot update answers: Application has been submitted or campaign has ended.');
       } else if (error instanceof Error && error.message.includes('Failed to fetch')) {
         setValidationError('Network error: Failed to connect to server. Please check if the backend is running.');
+      } else if (e?.status === 500) {
+        setValidationError(`Server error while saving answer. ${serverMsg ? `Details: ${serverMsg}` : ''}`.trim());
       } else {
         setValidationError(`Failed to save answer: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
@@ -418,14 +457,13 @@ const ApplicationReview: React.FC = () => {
         if (answer === NO_ANSWER_VALUE) {
           return "No answer provided";
         }
-        const selectedOption = question.data.options.find(opt => opt.id === answer);
+        const selectedOption = question.data?.options?.find(opt => opt.id === answer);
         return selectedOption ? selectedOption.text : String(answer);
       
       case "MultiSelect":
       case "Ranking":
         if (Array.isArray(answer)) {
-          const selectedOptions = question.data.options
-            .filter(opt => answer.includes(opt.id))
+          const selectedOptions = (question.data?.options?.filter(opt => answer.includes(opt.id)) ?? [])
             .map(opt => opt.text);
           return selectedOptions.length > 0 ? selectedOptions.join(", ") : "No selections";
         }
@@ -512,7 +550,7 @@ const ApplicationReview: React.FC = () => {
 
   const renderQuestion = (q: QuestionResponse) => {
     const options = (q.question_type === "MultiChoice" || q.question_type === "MultiSelect" || q.question_type === "DropDown" || q.question_type === "Ranking")
-      ? (q.data.options.map((o) => ({ id: o.id, label: o.text })) ?? [])
+      ? ((q.data?.options ?? []).map((o) => ({ id: o.id, label: o.text })) ?? [])
       : [];
     const idStr = String(q.id);
 

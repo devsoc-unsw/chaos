@@ -6,6 +6,8 @@
 
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Redirect, Response};
+use axum::Json;
+use serde_json::json;
 
 /// Custom error enum for Chaos.
 ///
@@ -30,6 +32,10 @@ pub enum ChaosError {
     /// Invalid request parameters or data
     #[error("Bad request")]
     BadRequest,
+    
+    /// Invalid request parameters or data with detailed message
+    #[error("Bad request: {0}")]
+    BadRequestWithMessage(String),
 
     /// Application period has ended
     #[error("Application closed")]

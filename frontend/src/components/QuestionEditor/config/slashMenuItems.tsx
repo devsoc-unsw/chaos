@@ -10,7 +10,7 @@ export const getQuestionSlashMenuItems = (editor: any): DefaultReactSuggestionIt
                     {
                         type: "mcqQuestion",
                         props: {
-                            question: "Enter your multiple choice question...",
+                            question: "",
                         },
                     },
                 ],
