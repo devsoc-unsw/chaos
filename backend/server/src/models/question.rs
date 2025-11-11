@@ -98,7 +98,7 @@ impl Question {
         title: String,
         description: Option<String>,
         common: bool,
-        roles: Vec<i64>,
+        roles: Option<Vec<i64>>,
         required: bool,
         question_data: QuestionData,
         snowflake_generator: &mut SnowflakeIdGenerator,
@@ -131,7 +131,7 @@ impl Question {
             .await?;
 
         if !common {
-            for role in roles {
+            for role in roles.unwrap_or_default() {
                 sqlx::query!(
                     "
                         INSERT INTO question_roles (question_id, role_id) VALUES ($1, $2)

@@ -46,7 +46,7 @@ impl QuestionHandler {
             data.title,
             data.description,
             data.common,
-            data.roles,
+            Some(data.roles),
             data.required,
             data.question_data,
             &mut state.snowflake_generator,
