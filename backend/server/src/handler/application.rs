@@ -253,7 +253,6 @@ impl ApplicationHandler {
     /// 
     /// * `Result<impl IntoResponse, ChaosError>` - Rating or error
     pub async fn get_rating_by_current_user(
-        State(mut state): State<AppState>,
         Path(application_id): Path<i64>,
         admin: ApplicationReviewerGivenApplicationId,
         mut transaction: DBTransaction<'_>,
@@ -298,7 +297,6 @@ impl ApplicationHandler {
     }
 
     pub async fn update_rating(
-        State(mut state): State<AppState>,
         Path(application_id): Path<i64>,
         admin: ApplicationReviewerGivenApplicationId,
         mut transaction: DBTransaction<'_>,

@@ -8,7 +8,7 @@ use crate::models::error::ChaosError;
 use chrono::{DateTime, Local, Utc};
 use handlebars::Handlebars;
 use serde::{Deserialize, Serialize};
-use sqlx::{Pool, Postgres, Transaction};
+use sqlx::{Postgres, Transaction};
 use std::collections::HashMap;
 use std::ops::DerefMut;
 

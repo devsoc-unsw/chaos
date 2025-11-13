@@ -222,7 +222,7 @@ const CampaignLandingPage = () => {
             </div>
             <Button asChild className="w-full bg-purple-600 hover:bg-purple-700">
               <Link to={loggedIn ? `/campaign/${campaign.id}/apply` : `${import.meta.env.VITE_OAUTH_CALLBACK_URL as string}?to=${encodeURIComponent(`/campaign/${campaign.id}/apply`)}`}>
-                {loggedIn && hasExistingApplication ? "Resume application" : "Apply for this Campaign"}
+                {loggedIn && hasExistingApplication ? "Continue application" : "Apply for this Campaign"}
               </Link>
             </Button>
           </Card>

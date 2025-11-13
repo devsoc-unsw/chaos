@@ -6,7 +6,7 @@
 
 use chrono::Utc;
 use crate::models::error::ChaosError;
-use sqlx::{Pool, Postgres, Transaction};
+use sqlx::{Postgres, Transaction};
 use std::ops::DerefMut;
 
 /// Verifies if a user has admin privileges for a campaign.

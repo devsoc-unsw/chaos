@@ -1,0 +1,15 @@
+{
+    "common": {
+        "organisation": "Organisation"
+    },
+    "dashboard": {
+        "sidebar": {
+            "campaigns": "Campaigns",
+            "email_templates": "Email Templates",
+            "members": "Members",
+            "settings": "Settings",
+            "create_organisation": "Create Organisation",
+            "profile": "Profile"
+        }
+    }
+}

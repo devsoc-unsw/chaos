@@ -6,8 +6,6 @@
 
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Redirect, Response};
-use axum::Json;
-use serde_json::json;
 
 /// Custom error enum for Chaos.
 ///
@@ -100,8 +98,8 @@ pub enum ChaosError {
 impl IntoResponse for ChaosError {
     fn into_response(self) -> Response {
         match self {
-            ChaosError::NotLoggedIn => Redirect::temporary("/auth/google").into_response(),
-            ChaosError::Unauthorized => (StatusCode::UNAUTHORIZED, "Unauthorized").into_response(),
+            ChaosError::NotLoggedIn => (StatusCode::UNAUTHORIZED, "Not logged in").into_response(), // User is not logged in
+            ChaosError::Unauthorized => (StatusCode::FORBIDDEN, "Unauthorized").into_response(), // Unauthorized to complete the action
             ChaosError::ForbiddenOperation => {
                 (StatusCode::FORBIDDEN, "Forbidden operation").into_response()
             }

@@ -6,7 +6,7 @@
 //! - Validating rating creator status
 
 use crate::models::error::ChaosError;
-use sqlx::{Pool, Postgres, Transaction};
+use sqlx::{Postgres, Transaction};
 use std::ops::DerefMut;
 
 /// Verifies if a user can review an application based on a rating ID.

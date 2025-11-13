@@ -4,12 +4,11 @@
 //! including creation, updates, and retrieval of campaign information.
 //! It also handles campaign banner management and campaign status tracking.
 
-use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 use s3::Bucket;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Transaction};
-use sqlx::{Pool, Postgres};
+use sqlx::{Postgres};
 use std::ops::DerefMut;
 use axum::{async_trait, RequestPartsExt};
 use axum::extract::{FromRef, FromRequestParts, Path};

@@ -10,7 +10,7 @@ use crate::models::user::UserDetails;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
-use sqlx::{FromRow, Pool, Postgres, Transaction};
+use sqlx::{FromRow, Postgres, Transaction};
 use std::ops::DerefMut;
 use axum::{async_trait, RequestPartsExt};
 use axum::extract::{FromRef, FromRequestParts, Path};

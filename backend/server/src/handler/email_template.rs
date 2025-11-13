@@ -5,12 +5,11 @@
 //! - Updating templates
 //! - Deleting templates
 
-use crate::models::app::AppState;
 use crate::models::auth::EmailTemplateAdmin;
 use crate::models::email_template::EmailTemplate;
 use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
-use axum::extract::{Json, Path, State};
+use axum::extract::{Json, Path};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 

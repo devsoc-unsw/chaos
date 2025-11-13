@@ -10,7 +10,7 @@ use chrono::{DateTime, Utc};
 use s3::Bucket;
 use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
-use sqlx::{FromRow, Pool, Postgres, Transaction};
+use sqlx::{FromRow, Postgres, Transaction};
 use std::ops::DerefMut;
 use uuid::Uuid;
 
