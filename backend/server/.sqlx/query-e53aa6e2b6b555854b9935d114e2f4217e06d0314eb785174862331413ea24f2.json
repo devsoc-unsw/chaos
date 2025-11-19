@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE organisation_members SET role = $3 WHERE user_id = $1 AND organisation_id = $2\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        {
+          "Custom": {
+            "name": "organisation_role",
+            "kind": {
+              "Enum": [
+                "User",
+                "Admin"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e53aa6e2b6b555854b9935d114e2f4217e06d0314eb785174862331413ea24f2"
+}

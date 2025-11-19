@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT id, application_id, campaign_role_id, preference\n                FROM application_roles\n                WHERE application_id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "application_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "campaign_role_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "preference",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "e02eb91beef068d314dfa138a4486e27fc0ba4ccfd131d354254cf78298c2be5"
+}

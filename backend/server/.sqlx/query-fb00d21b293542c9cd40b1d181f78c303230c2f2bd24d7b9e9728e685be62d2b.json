@@ -1,0 +1,41 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT a.application_id, q.question_type AS \"question_type: QuestionType\"\n                    FROM answers a\n                    JOIN questions q ON a.question_id = q.id\n                    WHERE a.id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "application_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "question_type: QuestionType",
+        "type_info": {
+          "Custom": {
+            "name": "question_type",
+            "kind": {
+              "Enum": [
+                "ShortAnswer",
+                "MultiChoice",
+                "MultiSelect",
+                "DropDown",
+                "Ranking"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "fb00d21b293542c9cd40b1d181f78c303230c2f2bd24d7b9e9728e685be62d2b"
+}

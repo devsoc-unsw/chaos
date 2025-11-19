@@ -8,6 +8,7 @@ use crate::handler::organisation::OrganisationHandler;
 use crate::handler::question::QuestionHandler;
 use crate::handler::rating::RatingHandler;
 use crate::handler::role::RoleHandler;
+use crate::handler::storage::StorageHandler;
 use crate::handler::user::UserHandler;
 use crate::models::email::{ChaosEmail, EmailCredentials};
 use crate::models::error::ChaosError;
@@ -146,6 +147,14 @@ pub async fn app() -> Result<Router, ChaosError> {
         .route("/api/v1/user/gender", patch(UserHandler::update_gender))
         .route("/api/v1/user/zid", patch(UserHandler::update_zid))
         .route("/api/v1/user/degree", patch(UserHandler::update_degree))
+        .route(
+            "/api/v1/user/:user_id/image/:image_id",
+            get(StorageHandler::get_image_url),
+        )
+        .route(
+            "/api/v1/user/:user_id/image/:image_id/upload",
+            get(StorageHandler::get_image_upload_url),
+        )
         .route(
             "/api/v1/user/applications",
             get(ApplicationHandler::get_from_curr_user),

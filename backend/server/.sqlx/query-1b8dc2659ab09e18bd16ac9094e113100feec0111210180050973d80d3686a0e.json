@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM multi_option_answer_options WHERE answer_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1b8dc2659ab09e18bd16ac9094e113100feec0111210180050973d80d3686a0e"
+}

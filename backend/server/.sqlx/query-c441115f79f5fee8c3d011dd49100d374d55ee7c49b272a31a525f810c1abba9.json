@@ -1,0 +1,27 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE offers SET status = $2 WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        {
+          "Custom": {
+            "name": "offer_status",
+            "kind": {
+              "Enum": [
+                "Draft",
+                "Sent",
+                "Accepted",
+                "Declined"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c441115f79f5fee8c3d011dd49100d374d55ee7c49b272a31a525f810c1abba9"
+}

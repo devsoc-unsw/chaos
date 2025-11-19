@@ -1,0 +1,80 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT id, email, zid, name, pronouns, gender, degree_name,\n            degree_starting_year, role AS \"role!: UserRole\"\n            FROM users WHERE id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "email",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "zid",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "pronouns",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "gender",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "degree_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "degree_starting_year",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 8,
+        "name": "role!: UserRole",
+        "type_info": {
+          "Custom": {
+            "name": "user_role",
+            "kind": {
+              "Enum": [
+                "User",
+                "SuperUser"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "a877a6203efddf712da8e7deb01f652ef05681a8cea23078de006cd1e6350686"
+}

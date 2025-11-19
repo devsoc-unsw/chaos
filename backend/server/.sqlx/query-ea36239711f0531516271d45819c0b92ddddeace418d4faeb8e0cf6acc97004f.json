@@ -1,0 +1,58 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT id, campaign_id, name, description, min_available, max_available, finalised\n                FROM campaign_roles\n                WHERE id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "campaign_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "min_available",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 5,
+        "name": "max_available",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "finalised",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "ea36239711f0531516271d45819c0b92ddddeace418d4faeb8e0cf6acc97004f"
+}

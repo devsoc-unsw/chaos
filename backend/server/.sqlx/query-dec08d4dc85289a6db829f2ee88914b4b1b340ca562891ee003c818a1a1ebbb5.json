@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO organisation_members (organisation_id, user_id, role)\n                VALUES ($1, $2, $3)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        {
+          "Custom": {
+            "name": "organisation_role",
+            "kind": {
+              "Enum": [
+                "User",
+                "Admin"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "dec08d4dc85289a6db829f2ee88914b4b1b340ca562891ee003c818a1a1ebbb5"
+}

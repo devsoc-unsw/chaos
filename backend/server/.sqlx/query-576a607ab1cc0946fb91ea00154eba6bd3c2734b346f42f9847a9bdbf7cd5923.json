@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT r.id, rater_id, u.name as rater_name, r.rating, r.comment, r.updated_at\n                FROM application_ratings r\n                JOIN users u ON u.id = r.rater_id\n                WHERE r.application_id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "rater_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "rater_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "rating",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "comment",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "576a607ab1cc0946fb91ea00154eba6bd3c2734b346f42f9847a9bdbf7cd5923"
+}

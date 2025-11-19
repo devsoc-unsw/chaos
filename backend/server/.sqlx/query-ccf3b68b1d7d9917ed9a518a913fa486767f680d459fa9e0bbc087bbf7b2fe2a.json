@@ -1,0 +1,27 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                UPDATE campaigns\n                SET slug = $1, name = $2, description = $3, starts_at = $4, ends_at = $5\n                WHERE id = $6 RETURNING id\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Timestamptz",
+        "Timestamptz",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "ccf3b68b1d7d9917ed9a518a913fa486767f680d459fa9e0bbc087bbf7b2fe2a"
+}

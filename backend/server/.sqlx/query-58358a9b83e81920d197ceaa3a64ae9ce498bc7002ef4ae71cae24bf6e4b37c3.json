@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                UPDATE campaigns\n                SET cover_image = $1, updated_at = $2\n                WHERE id = $3 RETURNING id\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Timestamptz",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "58358a9b83e81920d197ceaa3a64ae9ce498bc7002ef4ae71cae24bf6e4b37c3"
+}

@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM organisation_members WHERE organisation_id = $1 AND role = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        {
+          "Custom": {
+            "name": "organisation_role",
+            "kind": {
+              "Enum": [
+                "User",
+                "Admin"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0017980ccaa0a274a4669402a2e6d4da4237b48a2f13eea1010c20262e80798e"
+}

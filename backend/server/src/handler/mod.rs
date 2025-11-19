@@ -14,6 +14,7 @@
 //! - `question`: Handles question-related requests
 //! - `rating`: Processes rating-related requests
 //! - `role`: Handles role-related requests
+//! - `storage`: Handles storage-related requests (upload/download URLs)
 //! - `user`: Processes user-related requests
 
 pub mod answer;
@@ -26,4 +27,5 @@ pub mod organisation;
 pub mod question;
 pub mod rating;
 pub mod role;
+pub mod storage;
 pub mod user;

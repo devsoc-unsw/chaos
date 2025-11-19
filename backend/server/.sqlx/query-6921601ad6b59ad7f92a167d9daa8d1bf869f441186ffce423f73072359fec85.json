@@ -1,0 +1,89 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT\n                    q.id,\n                    q.title,\n                    q.description,\n                    q.common,\n                    COALESCE(array_remove(array_agg(qr.role_id), NULL), '{}') AS \"roles!: Vec<i64>\",\n                    q.required,\n                    q.question_type AS \"question_type: QuestionType\",\n                    q.created_at,\n                    q.updated_at,\n                    to_jsonb(\n                        array_agg(\n                            jsonb_build_object(\n                                'id', mod.id,\n                                'display_order', mod.display_order,\n                                'text', mod.text\n                            ) ORDER BY mod.display_order\n                        ) FILTER (WHERE mod.id IS NOT NULL)\n                    ) AS \"multi_option_data: Json<Vec<MultiOptionQuestionOption>>\"\n                FROM\n                    questions q\n                        LEFT JOIN\n                    question_roles qr ON q.id = qr.question_id\n                        LEFT JOIN\n                    multi_option_question_options mod ON q.id = mod.question_id\n                        AND q.question_type IN ('MultiChoice', 'MultiSelect', 'DropDown', 'Ranking')\n                WHERE q.campaign_id = $1 AND q.common = true\n                GROUP BY\n                    q.id\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "title",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "common",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 4,
+        "name": "roles!: Vec<i64>",
+        "type_info": "Int8Array"
+      },
+      {
+        "ordinal": 5,
+        "name": "required",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 6,
+        "name": "question_type: QuestionType",
+        "type_info": {
+          "Custom": {
+            "name": "question_type",
+            "kind": {
+              "Enum": [
+                "ShortAnswer",
+                "MultiChoice",
+                "MultiSelect",
+                "DropDown",
+                "Ranking"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 8,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 9,
+        "name": "multi_option_data: Json<Vec<MultiOptionQuestionOption>>",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      null,
+      false,
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "6921601ad6b59ad7f92a167d9daa8d1bf869f441186ffce423f73072359fec85"
+}

@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT EXISTS(\n                SELECT 1 FROM (\n                    SELECT FROM answers ans\n                     JOIN applications app ON ans.application_id = app.id\n                     WHERE ans.id = $1 AND app.user_id = $2\n                ) sub\n            )\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "exists",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "eff605423529dd1c2cc624d4f97621a76a4cc89b7ee7858f70ab7f94370a4dbb"
+}

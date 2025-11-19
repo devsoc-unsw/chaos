@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO applications (id, campaign_id, user_id)\n                VALUES ($1, $2, $3)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2a1fbdf9fac90bd5f077b5136c12152aa1aa8f8b468e1cc6201fafb3d15c30ee"
+}

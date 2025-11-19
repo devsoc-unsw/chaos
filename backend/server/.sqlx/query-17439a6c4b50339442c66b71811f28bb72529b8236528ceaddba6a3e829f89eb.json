@@ -1,0 +1,78 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT\n                    a.id,\n                    a.question_id,\n                    q.question_type AS \"question_type: QuestionType\",\n                    a.created_at,\n                    a.updated_at,\n                    COALESCE(saa.text, '') AS short_answer_answer,\n                    array_remove(array_agg(\n                        moao.option_id\n                    ), NULL) AS multi_option_answers,\n                    array_remove(array_agg(\n                        rar.option_id ORDER BY rar.rank\n                    ), NULL) AS ranking_answers\n                FROM\n                    answers a\n                    JOIN questions q ON a.question_id = q.id\n                    JOIN question_roles qr ON q.id = qr.question_id\n                        LEFT JOIN\n                    multi_option_answer_options moao ON moao.answer_id = a.id\n                        AND q.question_type IN ('MultiChoice', 'MultiSelect', 'DropDown')\n\n                        LEFT JOIN\n                    short_answer_answers saa ON saa.answer_id = a.id\n                        AND q.question_type = 'ShortAnswer'\n\n                        LEFT JOIN\n                    ranking_answer_rankings rar ON rar.answer_id = a.id\n                        AND q.question_type = 'Ranking'\n                WHERE a.application_id = $1 AND qr.role_id = $2 AND q.common = false\n                GROUP BY\n                    a.id, q.question_type, saa.text\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "question_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "question_type: QuestionType",
+        "type_info": {
+          "Custom": {
+            "name": "question_type",
+            "kind": {
+              "Enum": [
+                "ShortAnswer",
+                "MultiChoice",
+                "MultiSelect",
+                "DropDown",
+                "Ranking"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 4,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 5,
+        "name": "short_answer_answer",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "multi_option_answers",
+        "type_info": "Int8Array"
+      },
+      {
+        "ordinal": 7,
+        "name": "ranking_answers",
+        "type_info": "Int8Array"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "17439a6c4b50339442c66b71811f28bb72529b8236528ceaddba6a3e829f89eb"
+}

@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT application_roles.campaign_role_id,\n                application_roles.preference, campaign_roles.name AS role_name\n                FROM application_roles\n                    JOIN campaign_roles\n                    ON application_roles.campaign_role_id = campaign_roles.id\n                WHERE application_id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "campaign_role_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "preference",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "role_name",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "093eff27eedaacceeb6c6fc9d09b257825655ea0184d5aa7923dc9966aac50f8"
+}

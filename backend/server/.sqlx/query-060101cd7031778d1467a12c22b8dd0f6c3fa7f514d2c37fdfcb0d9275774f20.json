@@ -1,0 +1,54 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                UPDATE questions SET\n                    title = $2, description = $3, common = $4,\n                    required = $5, question_type = $6, updated_at = $7\n                WHERE id = $1\n                RETURNING question_type AS \"question_type: QuestionType\"\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "question_type: QuestionType",
+        "type_info": {
+          "Custom": {
+            "name": "question_type",
+            "kind": {
+              "Enum": [
+                "ShortAnswer",
+                "MultiChoice",
+                "MultiSelect",
+                "DropDown",
+                "Ranking"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text",
+        "Text",
+        "Bool",
+        "Bool",
+        {
+          "Custom": {
+            "name": "question_type",
+            "kind": {
+              "Enum": [
+                "ShortAnswer",
+                "MultiChoice",
+                "MultiSelect",
+                "DropDown",
+                "Ranking"
+              ]
+            }
+          }
+        },
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "060101cd7031778d1467a12c22b8dd0f6c3fa7f514d2c37fdfcb0d9275774f20"
+}

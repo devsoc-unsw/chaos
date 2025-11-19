@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT EXISTS(\n                SELECT 1 FROM (\n                    SELECT c.organisation_id FROM campaign_roles r\n                    JOIN campaigns c on r.campaign_id = c.id\n                    WHERE r.id = $1\n                ) cr\n                JOIN organisation_members m on cr.organisation_id = m.organisation_id\n                WHERE m.user_id = $2 AND m.role = 'Admin'\n            )\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "exists",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "50ef00dfdc89ce4c444be99e91580eeddbdd1f2f0c5b7da95141a107859a5a41"
+}

@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT EXISTS (\n            SELECT 1\n            FROM organisation_members om\n            JOIN campaigns c ON om.organisation_id = c.organisation_id\n            JOIN applications a ON a.campaign_id = c.id\n            -- Find the organisation that this application rating belongs to\n            -- (via the campaign the rating belongs to).\n            WHERE a.id = $1 AND a.submitted = true\n            -- Assert user is current member of the organisation that owns the\n            -- campaign this application belongs to.\n            AND om.user_id = $2\n        )\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "exists",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "071a8414c0f58082b285f6a202496648bd28498e28bf5c21f206a290abc8788e"
+}

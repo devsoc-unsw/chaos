@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM redirect_tokens WHERE token = $1 RETURNING redirect",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "redirect",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "14b26a681fe01d0f92b77af75cd1de6b47e8408c68d901575af26fae066f7f87"
+}

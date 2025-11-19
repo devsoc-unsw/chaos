@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM ranking_answer_rankings WHERE answer_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7116c8381e0925982620d41d1786d36b1a1a5b07e8ed7409d7cf4df806fd64e7"
+}

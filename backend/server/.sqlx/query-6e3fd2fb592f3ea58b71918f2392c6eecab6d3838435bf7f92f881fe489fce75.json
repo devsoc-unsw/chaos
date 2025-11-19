@@ -1,0 +1,110 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT a.id AS id, campaign_id, user_id, status AS \"status: ApplicationStatus\",\n                private_status AS \"private_status: ApplicationStatus\", u.email AS user_email,\n                u.zid AS user_zid, u.name AS user_name, u.gender AS user_gender,\n                u.pronouns AS user_pronouns, u.degree_name AS user_degree_name,\n                u.degree_starting_year AS user_degree_starting_year\n                FROM applications a\n                JOIN users u ON u.id = a.user_id\n                JOIN application_roles ar on ar.application_id = a.id\n                JOIN campaigns c on c.id = a.campaign_id\n                WHERE ar.campaign_role_id = $1 AND a.submitted = true\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "campaign_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "user_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "status: ApplicationStatus",
+        "type_info": {
+          "Custom": {
+            "name": "application_status",
+            "kind": {
+              "Enum": [
+                "Pending",
+                "Rejected",
+                "Successful"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "private_status: ApplicationStatus",
+        "type_info": {
+          "Custom": {
+            "name": "application_status",
+            "kind": {
+              "Enum": [
+                "Pending",
+                "Rejected",
+                "Successful"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "user_email",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "user_zid",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "user_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "user_gender",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 9,
+        "name": "user_pronouns",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 10,
+        "name": "user_degree_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 11,
+        "name": "user_degree_starting_year",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "6e3fd2fb592f3ea58b71918f2392c6eecab6d3838435bf7f92f881fe489fce75"
+}

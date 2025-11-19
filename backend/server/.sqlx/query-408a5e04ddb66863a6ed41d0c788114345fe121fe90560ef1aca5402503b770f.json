@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT app.submitted, c.ends_at FROM answers ans\n            JOIN applications app ON app.id = ans.application_id\n            JOIN campaigns c on c.id = app.campaign_id\n            WHERE ans.id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "submitted",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 1,
+        "name": "ends_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "408a5e04ddb66863a6ed41d0c788114345fe121fe90560ef1aca5402503b770f"
+}

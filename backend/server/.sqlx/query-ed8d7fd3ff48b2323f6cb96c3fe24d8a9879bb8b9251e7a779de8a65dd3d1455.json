@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT EXISTS(\n                SELECT 1 FROM email_templates et\n                JOIN organisation_members m on et.organisation_id = m.organisation_id\n                WHERE et.id = $1 AND m.user_id = $2 AND m.role = 'Admin'\n            )\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "exists",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "ed8d7fd3ff48b2323f6cb96c3fe24d8a9879bb8b9251e7a779de8a65dd3d1455"
+}

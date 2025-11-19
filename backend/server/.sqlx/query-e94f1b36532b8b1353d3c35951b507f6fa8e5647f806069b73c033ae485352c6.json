@@ -1,0 +1,112 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT\n                    off.id, off.campaign_id, off.application_id, off.email_template_id,\n                    off.role_id, off.expiry, off.created_at,\n                    off.status AS \"status!: OfferStatus\",\n                    c.name as campaign_name,\n                    o.name as organisation_name,\n                    u.id as user_id,\n                    u.name as user_name,\n                    u.email as user_email,\n                    r.name as role_name\n                FROM offers off\n                    JOIN campaigns c on c.id = off.campaign_id\n                    JOIN organisations o on o.id = c.organisation_id\n                    JOIN applications a ON a.id = off.application_id\n                    JOIN users u on u.id = a.user_id\n                    JOIN campaign_roles r on r.id = off.role_id\n                WHERE off.campaign_id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "campaign_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "application_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "email_template_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 4,
+        "name": "role_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 5,
+        "name": "expiry",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 6,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 7,
+        "name": "status!: OfferStatus",
+        "type_info": {
+          "Custom": {
+            "name": "offer_status",
+            "kind": {
+              "Enum": [
+                "Draft",
+                "Sent",
+                "Accepted",
+                "Declined"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "campaign_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 9,
+        "name": "organisation_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 10,
+        "name": "user_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 11,
+        "name": "user_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 12,
+        "name": "user_email",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 13,
+        "name": "role_name",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "e94f1b36532b8b1353d3c35951b507f6fa8e5647f806069b73c033ae485352c6"
+}

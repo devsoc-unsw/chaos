@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                UPDATE applications\n                SET status = $2\n                WHERE id = $1 RETURNING id\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        {
+          "Custom": {
+            "name": "application_status",
+            "kind": {
+              "Enum": [
+                "Pending",
+                "Rejected",
+                "Successful"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "1e0cd75a8fbcbdca172a8ae1c15daecd25246b2b7c25165f6a89f3936ebc329f"
+}

@@ -1,0 +1,44 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT organisation_members.user_id as id, organisation_members.role AS \"role: OrganisationRole\", users.name from organisation_members\n                JOIN users on users.id = organisation_members.user_id\n                WHERE organisation_members.organisation_id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "role: OrganisationRole",
+        "type_info": {
+          "Custom": {
+            "name": "organisation_role",
+            "kind": {
+              "Enum": [
+                "User",
+                "Admin"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "name",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "4fa021e8ac3784dab4a85292d9cf57d1cffd9af680e8b04040ba9b964d01b75a"
+}

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO redirect_tokens (token, redirect) VALUES ($1, $2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a7d712340da5a19b4772d8f9ad2fb161d57c2f62869b66beb39d2e57290f5b1d"
+}
