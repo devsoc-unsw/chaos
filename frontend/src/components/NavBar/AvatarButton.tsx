@@ -13,26 +13,17 @@ const ToggleButton = styled(Popover.Button, {
 const ItemButton = tw.button`flex items-center justify-end gap-1 rounded-md px-2 py-1 focus-within:outline-none focus-within:ring focus-within:ring-indigo-600/50 hover:bg-gray-50 hover:text-indigo-700`;
 
 const AvatarButton = () => {
-  const name = localStorage.getItem("name") ?? "";
-  const initials = name
-    .split(" ")
-    // this non-exhaustively matches other latin alphabets, not just enligh
-    // https://stackoverflow.com/a/32567789
-    .map((n) => [...n].find((c) => c.toLowerCase() !== c.toUpperCase()) ?? n[0])
-    .join("");
-
+  const name = "user"
   const navigate = useNavigate();
   const logout = () => {
-    ["name", "signup_token", "AUTH_TOKEN"].forEach((key) => {
-      localStorage.removeItem(key);
-      navigate("/");
-    });
-  };
+    navigate("/");
+  }
+  
 
   return (
     <Popover tw="relative">
       <>
-        <ToggleButton>{initials}</ToggleButton>
+        <ToggleButton>{<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-icon lucide-user"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}</ToggleButton>
         <Transition
           as={Fragment}
           enter={tw`transition duration-200 ease-out`}
