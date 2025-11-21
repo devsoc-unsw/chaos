@@ -617,16 +617,26 @@ impl Organisation {
         transaction: &mut Transaction<'_, Postgres>,
         storage_bucket: &Bucket,
     ) -> Result<String, ChaosError> {
-        let dt = Utc::now();
+        let current_logo = sqlx::query!(
+            "SELECT logo FROM organisations WHERE id = $1",
+            id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
 
-        let logo_id = Uuid::new_v4();
-        let current_time = dt;
-        _ = sqlx::query!(
+        let logo_id = current_logo.logo.unwrap_or_else(Uuid::new_v4);
+
+        println!("HELLLO logo_id: {}", logo_id);
+
+        let current_time = Utc::now();
+
+        println!("HELLLO id: {}", id);
+
+        sqlx::query!(
             "
             UPDATE organisations
                 SET logo = $2, updated_at = $3
-                WHERE id = $1 RETURNING id
-        ",
+                WHERE id = $1 RETURNING id",
             id,
             logo_id,
             current_time
@@ -634,8 +644,12 @@ impl Organisation {
         .fetch_one(transaction.deref_mut())
         .await?;
 
+        println!("HELLLO current_time: {}", current_time);
+
         let upload_url =
-            Storage::generate_put_url(format!("/logo/{id}/{logo_id}"), storage_bucket).await?;
+            Storage::generate_put_url(format!("organisations/{id}/images/{logo_id}"), storage_bucket).await?;
+
+        println!("HELLLO upload_url: {}", upload_url);
 
         Ok(upload_url)
     }
@@ -646,6 +660,7 @@ impl Organisation {
         transaction: &mut Transaction<'_, Postgres>,
         storage_bucket: &Bucket,
     ) -> Result<String, ChaosError> {
+        println!("HELLLO id: {}", id);
         let record = sqlx::query!(
             "SELECT logo FROM organisations WHERE id = $1",
             id
@@ -653,9 +668,13 @@ impl Organisation {
         .fetch_one(transaction.deref_mut())
         .await?;
 
+        println!("record: {:?}", record);
+
         let logo_id = record.logo.ok_or_else(|| {
             ChaosError::BadRequestWithMessage("Organisation does not have a logo".into())
         })?;
+
+        println!("logo_id: {}", logo_id);
 
         Storage::get_organisation_image_url(id, logo_id, storage_bucket).await
     }
