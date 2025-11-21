@@ -174,6 +174,10 @@ pub async fn app() -> Result<Router, ChaosError> {
             get(OrganisationHandler::get_by_slug),
         )
         .route(
+            "/api/v1/organisation/:organisation_id/logo",
+            get(OrganisationHandler::get_logo).patch(OrganisationHandler::update_logo),
+        )
+        .route(
             "/api/v1/organisation/:organisation_id/campaign",
             post(OrganisationHandler::create_campaign),
         )
@@ -192,10 +196,6 @@ pub async fn app() -> Result<Router, ChaosError> {
         .route(
             "/api/v1/organisation/:organisation_id/email_templates",
             get(OrganisationHandler::get_all_email_templates),
-        )
-        .route(
-            "/api/v1/organisation/:organisation_id/logo",
-            patch(OrganisationHandler::update_logo),
         )
         .route(
             "/api/v1/organisation/:organisation_id/members",

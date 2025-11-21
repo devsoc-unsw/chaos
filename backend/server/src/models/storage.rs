@@ -6,7 +6,9 @@
 use crate::models::error::ChaosError;
 use s3::creds::Credentials;
 use s3::{Bucket, Region};
+use serde::Serialize;
 use std::env;
+use uuid::Uuid;
 
 /// Storage service for handling S3-compatible storage operations.
 /// 
@@ -81,9 +83,34 @@ impl Storage {
     /// # Note
     /// The generated URL is valid for 1 hour (3600 seconds).
     pub async fn generate_put_url(path: String, bucket: &Bucket) -> Result<String, ChaosError> {
-        let url = bucket.presign_put(path, 3600, None).await?;
+        let url = bucket.presign_put(path, 3600 * 24, None).await?;
 
         Ok(url)
+    }
+
+    /// Generates a pre-signed URL for uploading an organisation image to S3.
+    ///
+    /// # Arguments
+    /// * `organisation_id` - The ID of the organisation that owns the image
+    /// * `image_id` - The ID of the image to upload
+    /// * `bucket` - A reference to the initialized S3 bucket
+    ///
+    /// # Returns
+    /// * `Ok(String)` - Presigned PUT URL valid for 24 hours
+    /// * `Err(ChaosError)` - If URL generation fails
+    pub async fn generate_organisation_image_upload_url(
+        organisation_id: i64,
+        image_id: Option<Uuid>,
+        bucket: &Bucket,
+    ) -> Result<OrganisationImageUploadUrl, ChaosError> {
+        let image_id = image_id.unwrap_or_else(Uuid::new_v4);
+        let path = format!("organisations/{}/images/{}", organisation_id, image_id);
+        let upload_url = bucket.presign_put(path, 3600 * 24, None).await?;
+
+        Ok(OrganisationImageUploadUrl {
+            image_id,
+            upload_url,
+        })
     }
 
     /// Generates a pre-signed URL for uploading a user image to S3.
@@ -139,49 +166,92 @@ impl Storage {
         image_id: i64,
         bucket: &Bucket,
     ) -> Result<String, ChaosError> {
-        // Base path without extension
-        let base_path = format!("/users/{}/images/{}", user_id, image_id);
-        
-        // First, try common image extensions directly
+        let base_path = format!("users/{}/images/{}", user_id, image_id);
+        Self::get_image_url_for_prefix(bucket, &base_path, || {
+            format!("Image not found at /users/{}/images/{}", user_id, image_id)
+        })
+        .await
+    }
+
+    /// Generates a pre-signed URL for retrieving an organisation image from S3.
+    ///
+    /// Looks for files stored under `/organisations/{organisation_id}/images/{image_id}`
+    /// and supports the same fallback strategy as user images.
+    pub async fn get_organisation_image_url(
+        organisation_id: i64,
+        image_id: Uuid,
+        bucket: &Bucket,
+    ) -> Result<String, ChaosError> {
+        let base_path = format!("organisations/{}/images/{}", organisation_id, image_id);
+        Self::get_image_url_for_prefix(bucket, &base_path, || {
+            format!(
+                "Image not found at /organisations/{}/images/{}",
+                organisation_id, image_id
+            )
+        })
+        .await
+    }
+}
+
+impl Storage {
+    async fn get_image_url_for_prefix(
+        bucket: &Bucket,
+        base_path: &str,
+        not_found_msg: impl FnOnce() -> String,
+    ) -> Result<String, ChaosError> {
+        if let Some(url) = Self::presign_if_object_exists(bucket, base_path).await {
+            return Ok(url);
+        }
+
         let common_extensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
         for ext in &common_extensions {
-            let path_with_ext = format!("{}{}", base_path, ext);
-            // Try to generate presigned URL - if it works, the file likely exists
-            if let Ok(url) = bucket.presign_get(path_with_ext.clone(), 86400, None).await {
+            let candidate = format!("{}{}", base_path, ext);
+            if let Some(url) = Self::presign_if_object_exists(bucket, &candidate).await {
                 return Ok(url);
             }
         }
-        
-        // If direct paths don't work, list objects in the directory (for files in subdirectory)
-        let prefix = format!("/users/{}/images/{}/", user_id, image_id);
+
+        let prefix = format!("{}/", base_path);
         let delimiter = Some("/".to_string());
-        
-        match bucket.list(prefix.clone(), delimiter).await {
-            Ok(list_result) => {
-                // Search through the listed objects
-                for page in list_result {
-                    for object in page.contents {
-                        let key = object.key;
-                        // Filter out thumbnails and find the first image file
-                        if !key.contains("thumbnail") {
-                            // Generate presigned URL valid for 24 hours (86400 seconds)
-                            let url = bucket.presign_get(key.clone(), 86400, None).await?;
-                            return Ok(url);
-                        }
+
+        if let Ok(list_result) = bucket.list(prefix.clone(), delimiter).await {
+            for page in list_result {
+                for object in page.contents {
+                    let key = object.key;
+                    if !key.contains("thumbnail") {
+                        let url = bucket.presign_get(key.clone(), 86400, None).await?;
+                        return Ok(url);
                     }
                 }
             }
-            Err(_) => {
-                // Listing failed, continue to try exact path
+        }
+
+        Err(ChaosError::BadRequestWithMessage(not_found_msg()))
+    }
+
+    async fn presign_if_object_exists(bucket: &Bucket, key: &str) -> Option<String> {
+        if Self::object_exists(bucket, key).await {
+            if let Ok(url) = bucket.presign_get(key.to_string(), 86400, None).await {
+                return Some(url);
             }
         }
-        
-        // Last resort: try the exact path without extension
-        match bucket.presign_get(base_path.clone(), 86400, None).await {
-            Ok(url) => Ok(url),
-            Err(_) => Err(ChaosError::BadRequestWithMessage(
-                format!("Image not found at /users/{}/images/{}", user_id, image_id)
-            )),
+        None
+    }
+
+    async fn object_exists(bucket: &Bucket, key: &str) -> bool {
+        match bucket.list(key.to_string(), None).await {
+            Ok(results) => results
+                .into_iter()
+                .flat_map(|page| page.contents.into_iter())
+                .any(|object| object.key == key),
+            Err(_) => false,
         }
     }
+}
+
+/// Response payload for organisation image uploads.
+#[derive(Serialize)]
+pub struct OrganisationImageUploadUrl {
+    pub image_id: Uuid,
+    pub upload_url: String,
 }

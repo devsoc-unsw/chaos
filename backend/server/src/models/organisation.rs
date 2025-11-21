@@ -598,6 +598,26 @@ impl Organisation {
         Ok(upload_url)
     }
 
+    /// Retrieves a presigned URL for the organisation's current logo.
+    pub async fn get_logo_url(
+        id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+        storage_bucket: &Bucket,
+    ) -> Result<String, ChaosError> {
+        let record = sqlx::query!(
+            "SELECT logo FROM organisations WHERE id = $1",
+            id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
+        let logo_id = record.logo.ok_or_else(|| {
+            ChaosError::BadRequestWithMessage("Organisation does not have a logo".into())
+        })?;
+
+        Storage::get_organisation_image_url(id, logo_id, storage_bucket).await
+    }
+
     pub async fn get_campaigns(
         organisation_id: i64,
         transaction: &mut Transaction<'_, Postgres>,

@@ -363,6 +363,25 @@ impl OrganisationHandler {
         Ok((StatusCode::OK, Json(logo_url)))
     }
 
+    /// Retrieves the current organisation logo as a presigned URL.
+    pub async fn get_logo(
+        State(state): State<AppState>,
+        mut transaction: DBTransaction<'_>,
+        Path(id): Path<i64>,
+        _user: AuthUser,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let url =
+            Organisation::get_logo_url(id, &mut transaction.tx, &state.storage_bucket).await?;
+        transaction.tx.commit().await?;
+
+        #[derive(Serialize)]
+        struct LogoResponse {
+            url: String,
+        }
+
+        Ok((StatusCode::OK, Json(LogoResponse { url })))
+    }
+
     /// Retrieves all campaigns for an organisation.
     /// 
     /// This handler allows any authenticated user to view organisation campaigns.
