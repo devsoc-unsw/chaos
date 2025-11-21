@@ -50,10 +50,10 @@ const InputPopup = ({
 }: Props) => {
   const [formValues, setFormValues] = useState({ [name]: "", ...defaultState });
   const setFormValue = (key: string, value: string) => {
-    setFormValues({
+    setFormValues((formValues) => ({
       ...formValues,
       [key]: value,
-    });
+    }));
   };
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -68,6 +68,9 @@ const InputPopup = ({
         vertical: "bottom",
         horizontal: "right",
       }}
+      disableEnforceFocus
+      disableAutoFocus
+      disableRestoreFocus
       transformOrigin={{
         vertical: "top",
         horizontal: "right",
@@ -86,12 +89,18 @@ const InputPopup = ({
               <Input.Label>
                 <Input.LabelText required>{label}</Input.LabelText>
                 <Input
+                  id="member-add-email"
                   required
                   value={formValues[name]}
                   onChange={handleInputChange}
+                  placeholder="lol"
                 />
               </Input.Label>
-              <Button type="submit">{submitText}</Button>
+              {/*
+                Had to manually add below as the button was showing up as white(should be primary right?)
+                This component only appears here I'll try to get to the bottom of that later, was just bugging me
+              */}
+              <Button type="submit" className="bg-brand-500 text-white ring-brand-500/40 hover:bg-brand-600 active:bg-brand-700">{submitText}</Button>
             </div>
             {typeof children === "function"
               ? children({ formValues, setFormValue, handleInputChange })

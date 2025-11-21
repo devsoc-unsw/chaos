@@ -3,6 +3,7 @@ import { DeleteForeverRounded } from "@mui/icons-material";
 import { Button, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { StyledEngineProvider } from "@mui/material/styles";
 
 import "twin.macro";
 
@@ -175,104 +176,106 @@ const AdminContent = ({
   };
 
   return (
-    <AdminContentContainer>
-      <ContentHeader>
-        <OrgInfo>
-          <OrgInfoImage src={icon} />
-          <OrgInfoName>{orgName}</OrgInfoName>
-        </OrgInfo>
-        <div tw="flex items-center gap-4">
-          <button
-            tw="text-gray-500 transition-colors hover:text-gray-800"
-            type="button"
-            onClick={() => setShowEditDialog(true)}
-          >
-            <PencilIcon tw="h-8 w-8" />
-          </button>
-          {/* have to add addition button here to create campaigns,
-          or maybe it should go in a more obvious spot? */}
-          <ToggleButtonContainer>
-            <ToggleButtonGroup
-              color="primary"
-              value={windowSelected}
-              size="large"
-              exclusive
-              onChange={handleWindowChange}
+    <StyledEngineProvider injectFirst>
+      <AdminContentContainer>
+        <ContentHeader>
+          <OrgInfo>
+            <OrgInfoImage src={icon} />
+            <OrgInfoName>{orgName}</OrgInfoName>
+          </OrgInfo>
+          <div tw="flex items-center gap-4">
+            <button
+              tw="text-gray-500 transition-colors hover:text-gray-800"
+              type="button"
+              onClick={() => setShowEditDialog(true)}
             >
-              <ToggleButton value="campaigns">Campaigns</ToggleButton>
-              <ToggleButton value="members">Members</ToggleButton>
-              <Button
-                variant="contained"
-                color="error"
-                disableElevation
-                onClick={() => setShowDeleteDialog(true)}
+              <PencilIcon tw="h-8 w-8" />
+            </button>
+            {/* have to add addition button here to create campaigns,
+            or maybe it should go in a more obvious spot? */}
+            <ToggleButtonContainer>
+              <ToggleButtonGroup
+                color="primary"
+                value={windowSelected}
+                size="large"
+                exclusive
+                onChange={handleWindowChange}
               >
-                <DeleteForeverRounded />
-              </Button>
-            </ToggleButtonGroup>
-          </ToggleButtonContainer>
-        </div>
-      </ContentHeader>
-      {windowSelected === "campaigns" && (
-        <AdminCampaignContent
-          campaigns={campaigns}
-          setCampaigns={setCampaigns}
-          orgLogo={icon}
-          orgId={id}
-        />
-      )}
-      {windowSelected === "members" && (
-        <ContentBody>
-          <AdminMembersContent
+                <ToggleButton value="campaigns">Campaigns</ToggleButton>
+                <ToggleButton value="members">Members</ToggleButton>
+                <Button
+                  variant="contained"
+                  color="error"
+                  disableElevation
+                  onClick={() => setShowDeleteDialog(true)}
+                >
+                  <DeleteForeverRounded />
+                </Button>
+              </ToggleButtonGroup>
+            </ToggleButtonContainer>
+          </div>
+        </ContentHeader>
+        {windowSelected === "campaigns" && (
+          <AdminCampaignContent
+            campaigns={campaigns}
+            setCampaigns={setCampaigns}
+            orgLogo={icon}
             orgId={id}
-            members={members}
-            setMembers={setMembers}
           />
-        </ContentBody>
-      )}
-
-      <Modal
-        open={showEditDialog}
-        closeModal={() => setShowEditDialog(false)}
-        title="Edit Organisation"
-        description={org?.orgName}
-        closeButton
-      >
-        <Dropzone onDrop={([file]) => setOrgLogo(file)}>
-          {orgLogo === undefined ? (
-            <p>
-              Drag and drop your organisation logo image, or click to select an
-              image
-            </p>
-          ) : (
-            <img
-              tw="max-h-full max-w-full"
-              src={imageSrc}
-              alt="campaign cover"
+        )}
+        {windowSelected === "members" && (
+          <ContentBody>
+            <AdminMembersContent
+              orgId={id}
+              members={members}
+              setMembers={setMembers}
             />
-          )}
-        </Dropzone>
-        <TwButton onClick={() => void uploadOrgLogo()} tw="ml-auto">
-          Update organisation logo
-        </TwButton>
-      </Modal>
+          </ContentBody>
+        )}
 
-      <Modal
-        open={showDeleteDialog}
-        closeModal={() => setShowDeleteDialog(false)}
-        title="Delete Organisation"
-        description={org?.orgName}
-        closeButton
-      >
-        <p>
-          Are you sure you want to delete this organisation?{" "}
-          <strong>This action is permanent and irreversible.</strong>
-        </p>
-        <TwButton color="danger" onClick={() => void handleDeletion()}>
-          Yes, delete this organisation
-        </TwButton>
-      </Modal>
-    </AdminContentContainer>
+        <Modal
+          open={showEditDialog}
+          closeModal={() => setShowEditDialog(false)}
+          title="Edit Organisation"
+          description={org?.orgName}
+          closeButton
+        >
+          <Dropzone onDrop={([file]) => setOrgLogo(file)}>
+            {orgLogo === undefined ? (
+              <p>
+                Drag and drop your organisation logo image, or click to select an
+                image
+              </p>
+            ) : (
+              <img
+                tw="max-h-full max-w-full"
+                src={imageSrc}
+                alt="campaign cover"
+              />
+            )}
+          </Dropzone>
+          <TwButton onClick={() => void uploadOrgLogo()} tw="ml-auto">
+            Update organisation logo
+          </TwButton>
+        </Modal>
+
+        <Modal
+          open={showDeleteDialog}
+          closeModal={() => setShowDeleteDialog(false)}
+          title="Delete Organisation"
+          description={org?.orgName}
+          closeButton
+        >
+          <p>
+            Are you sure you want to delete this organisation?{" "}
+            <strong>This action is permanent and irreversible.</strong>
+          </p>
+          <TwButton color="danger" onClick={() => void handleDeletion()}>
+            Yes, delete this organisation
+          </TwButton>
+        </Modal>
+      </AdminContentContainer>
+      </StyledEngineProvider>
   );
 };
 

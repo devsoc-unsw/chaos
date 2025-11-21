@@ -34,6 +34,7 @@ import {
   AnswerData,
   type ApplicationRoleUpdateInput,
   type ApplicationRole,
+  type OrganisationRole as OrgRoleType,
   type QuestionData,
 } from "../types/api";
 
@@ -287,7 +288,10 @@ export const setApplicationRating = (
     jsonResp: false,
   });
 
-export const createApplicationRating = (applicationId: string, rating: NewRating) =>
+export const createApplicationRating = (
+  applicationId: string,
+  rating: NewRating
+) =>
   authenticatedRequest({
     method: "POST",
     path: `/v1/application/${applicationId}/rating`,
@@ -580,3 +584,44 @@ export const getAnsweredApplicationQuestions = (
     })
   );
 };
+
+// Organisation members
+export const getOrganisationMembers = (organisationId: string) =>
+  authenticatedRequest<{ members: Member[] }>({
+    path: `/v1/organisation/${organisationId}/members`,
+  });
+
+export const addOrganisationMember = (
+  organisationId: string,
+  email: string,
+  role: OrgRoleType
+) =>
+  authenticatedRequest({
+    method: "POST",
+    path: `/v1/organisation/${organisationId}/member`,
+    body: { email, role },
+    jsonResp: false,
+  });
+
+export const removeOrganisationMember = (
+  organisationId: string,
+  user_id: string
+) =>
+  authenticatedRequest({
+    method: "DELETE",
+    path: `/v1/organisation/${organisationId}/member`,
+    body: { user_id },
+    jsonResp: false,
+  });
+
+export const updateOrganisationMemberRole = (
+  organisationId: string,
+  user_id: string,
+  role: OrgRoleType
+) =>
+  authenticatedRequest({
+    method: "PUT",
+    path: `/v1/organisation/${organisationId}/member`,
+    body: { user_id, role },
+    jsonResp: false,
+  });
