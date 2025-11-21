@@ -6,7 +6,6 @@
 use crate::models::error::ChaosError;
 use s3::creds::Credentials;
 use s3::{Bucket, Region};
-use serde::Serialize;
 use std::env;
 use uuid::Uuid;
 
@@ -88,31 +87,6 @@ impl Storage {
         Ok(url)
     }
 
-    /// Generates a pre-signed URL for uploading an organisation image to S3.
-    ///
-    /// # Arguments
-    /// * `organisation_id` - The ID of the organisation that owns the image
-    /// * `image_id` - The ID of the image to upload
-    /// * `bucket` - A reference to the initialized S3 bucket
-    ///
-    /// # Returns
-    /// * `Ok(String)` - Presigned PUT URL valid for 24 hours
-    /// * `Err(ChaosError)` - If URL generation fails
-    pub async fn generate_organisation_image_upload_url(
-        organisation_id: i64,
-        image_id: Option<Uuid>,
-        bucket: &Bucket,
-    ) -> Result<OrganisationImageUploadUrl, ChaosError> {
-        let image_id = image_id.unwrap_or_else(Uuid::new_v4);
-        let path = format!("organisations/{}/images/{}", organisation_id, image_id);
-        let upload_url = bucket.presign_put(path, 3600 * 24, None).await?;
-
-        Ok(OrganisationImageUploadUrl {
-            image_id,
-            upload_url,
-        })
-    }
-
     /// Generates a pre-signed URL for uploading a user image to S3.
     /// 
     /// # Arguments
@@ -191,6 +165,43 @@ impl Storage {
         })
         .await
     }
+
+    /// Generates a pre-signed URL for retrieving a campaign's banner image.
+    pub async fn get_campaign_image_url(
+        organisation_id: i64,
+        campaign_id: i64,
+        image_id: Uuid,
+        bucket: &Bucket,
+    ) -> Result<String, ChaosError> {
+        let primary_path = format!(
+            "organisations/{}/campaigns/{}/images/{}",
+            organisation_id, campaign_id, image_id
+        );
+        if let Ok(url) =
+            Self::get_image_url_for_prefix(bucket, &primary_path, || "".to_string()).await
+        {
+            return Ok(url);
+        }
+
+        let legacy_path = format!("banner/{}/{}", campaign_id, image_id);
+        if let Ok(url) =
+            Self::get_image_url_for_prefix(bucket, &legacy_path, || "".to_string()).await
+        {
+            return Ok(url);
+        }
+
+        let legacy_slash_path = format!("/banner/{}/{}", campaign_id, image_id);
+        if let Ok(url) =
+            Self::get_image_url_for_prefix(bucket, &legacy_slash_path, || "".to_string()).await
+        {
+            return Ok(url);
+        }
+
+        Err(ChaosError::BadRequestWithMessage(format!(
+            "Image not found for campaign {} in organisation {}",
+            campaign_id, organisation_id
+        )))
+    }
 }
 
 impl Storage {
@@ -249,9 +260,3 @@ impl Storage {
     }
 }
 
-/// Response payload for organisation image uploads.
-#[derive(Serialize)]
-pub struct OrganisationImageUploadUrl {
-    pub image_id: Uuid,
-    pub upload_url: String,
-}

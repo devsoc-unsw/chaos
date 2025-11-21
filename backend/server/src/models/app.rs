@@ -175,11 +175,16 @@ pub async fn app() -> Result<Router, ChaosError> {
         )
         .route(
             "/api/v1/organisation/:organisation_id/logo",
-            get(OrganisationHandler::get_logo).patch(OrganisationHandler::update_logo),
+            get(OrganisationHandler::get_logo)
+            .patch(OrganisationHandler::update_logo),
         )
         .route(
             "/api/v1/organisation/:organisation_id/campaign",
             post(OrganisationHandler::create_campaign),
+        )
+        .route(
+            "/api/v1/organisation/:organisation_id/campaign/:campaign_id/banner",
+            get(CampaignHandler::get_banner),
         )
         .route(
             "/api/v1/organisation/:organisation_id/campaign/slug_check",

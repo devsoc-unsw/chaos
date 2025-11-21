@@ -366,27 +366,75 @@ impl Campaign {
         transaction: &mut Transaction<'_, Postgres>,
         storage_bucket: &Bucket,
     ) -> Result<CampaignBannerUpdate, ChaosError> {
-        let dt = Utc::now();
-        let image_id = Uuid::new_v4();
-        let current_time = dt;
-
-        _ = sqlx::query!(
+        let current_banner = sqlx::query!(
             "
-                UPDATE campaigns
-                SET cover_image = $1, updated_at = $2
-                WHERE id = $3 RETURNING id
+                SELECT organisation_id, cover_image
+                FROM campaigns
+                WHERE id = $1
             ",
-            image_id,
-            current_time,
             id
         )
         .fetch_one(transaction.deref_mut())
         .await?;
 
-        let upload_url =
-            Storage::generate_put_url(format!("/banner/{id}/{image_id}"), storage_bucket).await?;
+        let image_id = current_banner
+            .cover_image
+            .unwrap_or_else(Uuid::new_v4);
+        let current_time = Utc::now();
+
+        sqlx::query!(
+            "
+                UPDATE campaigns
+                SET cover_image = $1, updated_at = $2
+                WHERE id = $3
+            ",
+            image_id,
+            current_time,
+            id
+        )
+        .execute(transaction.deref_mut())
+        .await?;
+
+        let upload_path = format!(
+            "organisations/{}/campaigns/{}/images/{}",
+            current_banner.organisation_id, id, image_id
+        );
+        let upload_url = Storage::generate_put_url(upload_path, storage_bucket).await?;
 
         Ok(CampaignBannerUpdate { upload_url })
+    }
+
+    /// Retrieves the current campaign banner URL for a given organisation and campaign.
+    pub async fn get_banner_url(
+        organisation_id: i64,
+        campaign_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+        storage_bucket: &Bucket,
+    ) -> Result<String, ChaosError> {
+        let record = sqlx::query!(
+            "
+                SELECT organisation_id, cover_image
+                FROM campaigns
+                WHERE id = $1
+            ",
+            campaign_id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
+        if record.organisation_id != organisation_id {
+            return Err(ChaosError::BadRequestWithMessage(
+                "Campaign does not belong to the specified organisation".into(),
+            ));
+        }
+
+        let image_id = record
+            .cover_image
+            .ok_or_else(|| {
+                ChaosError::BadRequestWithMessage("Campaign does not have a banner image".into())
+            })?;
+
+        Storage::get_campaign_image_url(organisation_id, campaign_id, image_id, storage_bucket).await
     }
 
     /// Deletes a campaign.

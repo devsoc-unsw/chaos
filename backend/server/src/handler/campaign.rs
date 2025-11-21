@@ -21,6 +21,7 @@ use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
+use serde::Serialize;
 
 /// Handler for campaign-related HTTP requests.
 pub struct CampaignHandler;
@@ -166,6 +167,26 @@ impl CampaignHandler {
             Campaign::update_banner(id, &mut transaction.tx, &state.storage_bucket).await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(banner_url)))
+    }
+
+    /// Retrieves the current banner image URL for a campaign.
+    pub async fn get_banner(
+        State(state): State<AppState>,
+        mut transaction: DBTransaction<'_>,
+        Path((organisation_id, campaign_id)): Path<(i64, i64)>,
+        _user: AuthUser,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let url =
+            Campaign::get_banner_url(organisation_id, campaign_id, &mut transaction.tx, &state.storage_bucket)
+                .await?;
+        transaction.tx.commit().await?;
+
+        #[derive(Serialize)]
+        struct BannerResponse {
+            url: String,
+        }
+
+        Ok((StatusCode::OK, Json(BannerResponse { url })))
     }
 
     /// Deletes a campaign.
