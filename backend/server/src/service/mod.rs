@@ -28,3 +28,4 @@ pub mod organisation;
 pub mod question;
 pub mod rating;
 pub mod role;
+pub mod user;

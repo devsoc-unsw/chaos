@@ -41,7 +41,6 @@ impl ApplicationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         let application_id = Application::create_or_get(campaign_id, user.user_id, &mut state.snowflake_generator, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
-
         Ok((StatusCode::OK, Json(json!({ "application_id": application_id.to_string() }))))
     }
 
