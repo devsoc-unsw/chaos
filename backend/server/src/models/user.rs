@@ -112,7 +112,6 @@ pub struct UserDegree {
 // Data structure for updating a user based on routes we already have
 #[derive(Deserialize, Serialize)]
 pub struct UserEditStruct {
-    pub id: i64,
     pub name: String,
     pub pronouns: String,
     pub gender: String,

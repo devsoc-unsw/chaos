@@ -45,10 +45,10 @@ impl UserHandler {
         Json(request_body): Json<UserEditStruct>
     ) -> Result<impl IntoResponse, ChaosError> {
         let user = User::update_user_details(
-            request_body.id,
-            request_body.name, 
-            request_body.gender, 
-            request_body.pronouns, 
+            user.user_id,
+            request_body.name,
+            request_body.gender,
+            request_body.pronouns,
             request_body.zid,
             &mut transaction.tx
         ).await?;
