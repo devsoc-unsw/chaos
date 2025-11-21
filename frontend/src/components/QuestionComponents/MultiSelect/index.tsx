@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -33,6 +33,10 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
   answerId,
 }) => {
   const [selectedOptions, setSelectedOptions] = useState<Array<string | number>>(defaultValue);
+
+  useEffect(() => {
+    setSelectedOptions(defaultValue ?? []);
+  }, [defaultValue]);
 
   const handleChange = (optionId: string | number, checked: boolean) => {
     let newSelectedOptions: Array<string | number> = [];

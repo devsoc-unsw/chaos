@@ -27,6 +27,13 @@ where
     s.parse::<i64>().map_err(Error::custom)
 }
 
+pub fn deserialize_string_or_number<'de, D>(deserializer: D) -> Result<i64, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    deserializer.deserialize_any(StringOrNumberVisitor)
+}
+
 pub fn deserialize_vec<'de, D>(deserializer: D) -> Result<Vec<i64>, D::Error>
 where
     D: Deserializer<'de>,
@@ -58,6 +65,8 @@ where
 }
 
 struct OptionVecVisitor;
+struct VecVisitor;
+struct StringOrNumberVisitor;
 
 impl<'de> serde::de::Visitor<'de> for OptionVecVisitor {
     type Value = Option<Vec<i64>>;
@@ -88,8 +97,6 @@ impl<'de> serde::de::Visitor<'de> for OptionVecVisitor {
     }
 }
 
-struct VecVisitor;
-
 impl<'de> serde::de::Visitor<'de> for VecVisitor {
     type Value = Vec<i64>;
 
@@ -113,5 +120,41 @@ impl<'de> serde::de::Visitor<'de> for VecVisitor {
             vec.push(parsed);
         }
         Ok(vec)
+    }
+}
+
+impl<'de> serde::de::Visitor<'de> for StringOrNumberVisitor {
+    type Value = i64;
+
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        formatter.write_str("a number or a numeric string")
+    }
+
+    fn visit_i64<E>(self, value: i64) -> Result<Self::Value, E>
+    where
+        E: Error,
+    {
+        Ok(value)
+    }
+
+    fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
+    where
+        E: Error,
+    {
+        i64::try_from(value).map_err(|_| Error::custom("number out of range for i64"))
+    }
+
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+    where
+        E: Error,
+    {
+        value.parse::<i64>().map_err(Error::custom)
+    }
+
+    fn visit_string<E>(self, value: String) -> Result<Self::Value, E>
+    where
+        E: Error,
+    {
+        value.parse::<i64>().map_err(Error::custom)
     }
 }

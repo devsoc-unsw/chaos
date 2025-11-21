@@ -141,7 +141,10 @@ export const rankingQuestionBlock = createReactBlockSpec(
 
             const handleDragEnd = (result: DropResult) => {
                 if (!result.destination) return;
-                const newOptions = Array.from(options);
+                if (result.destination.index === result.source.index) return;
+                
+                const currentOptions = OptionsState || blockOptions;
+                const newOptions = Array.from(currentOptions);
                 const [reordered] = newOptions.splice(result.source.index, 1);
                 newOptions.splice(result.destination.index, 0, reordered);
                 updateOptions(newOptions);

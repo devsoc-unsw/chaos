@@ -444,12 +444,21 @@ impl Question {
         .fetch_one(transaction.deref_mut())
         .await?;
 
-        let old_data = QuestionData::from_question_type(&question_type_parent.question_type);
-        old_data.delete_from_db(id, transaction).await?;
+        let previous_question_type = question_type_parent.question_type;
+        let new_question_type = QuestionType::from_question_data(&question_data);
 
-        question_data
-            .insert_into_db(id, transaction, snowflake_generator)
-            .await?;
+        if previous_question_type != new_question_type {
+            let old_data = QuestionData::from_question_type(&previous_question_type);
+            old_data.delete_from_db(id, transaction).await?;
+
+            question_data
+                .insert_into_db(id, transaction, snowflake_generator)
+                .await?;
+        } else {
+            question_data
+                .upsert_into_db(id, transaction, snowflake_generator)
+                .await?;
+        }
 
         sqlx::query!("DELETE FROM question_roles WHERE question_id = $1", id)
             .execute(transaction.deref_mut())
@@ -540,6 +549,7 @@ pub struct MultiOptionData {
 #[derive(Deserialize, Serialize)]
 pub struct MultiOptionQuestionOption {
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize_string_or_number")]
     pub id: i64,
     pub display_order: i32,
     pub text: String,
@@ -612,12 +622,18 @@ impl QuestionData {
             | Self::MultiSelect(data)
             | Self::DropDown(data)
             | Self::Ranking(data) => {
-                let mut query_builder =
-                    QueryBuilder::new("INSERT INTO multi_option_question_options (id, text, question_id, display_order)");
+                let mut query_builder = QueryBuilder::new(
+                    "INSERT INTO multi_option_question_options (id, text, question_id, display_order)",
+                );
 
                 query_builder.push_values(data.options, |mut b, option| {
-                    let id = snowflake_generator.real_time_generate();
-                    b.push_bind(id)
+                    let option_id = if option.id == 0 {
+                        snowflake_generator.real_time_generate()
+                    } else {
+                        option.id
+                    };
+
+                    b.push_bind(option_id)
                         .push_bind(option.text)
                         .push_bind(question_id)
                         .push_bind(option.display_order);
@@ -625,6 +641,107 @@ impl QuestionData {
 
                 let query = query_builder.build();
                 query.execute(transaction.deref_mut()).await?;
+
+                Ok(())
+            }
+        }
+    }
+
+    pub async fn upsert_into_db(
+        &self,
+        question_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+        snowflake_generator: &mut SnowflakeIdGenerator,
+    ) -> Result<(), ChaosError> {
+        match self {
+            Self::ShortAnswer => Ok(()),
+            Self::MultiChoice(data)
+            | Self::MultiSelect(data)
+            | Self::DropDown(data)
+            | Self::Ranking(data) => {
+                // Collect option IDs with normalized IDs (same pattern as insert_into_db)
+                let mut option_ids: Vec<i64> = Vec::with_capacity(data.options.len());
+                for option in &data.options {
+                    let option_id = if option.id == 0 {
+                        snowflake_generator.real_time_generate()
+                    } else {
+                        option.id
+                    };
+                    option_ids.push(option_id);
+                }
+
+                // Delete obsolete options first to avoid constraint issues
+                if option_ids.is_empty() {
+                    // If no options, delete all (same pattern as delete_from_db)
+                    sqlx::query!(
+                        "DELETE FROM multi_option_question_options WHERE question_id = $1",
+                        question_id
+                    )
+                    .execute(transaction.deref_mut())
+                    .await?;
+                } else {
+                    // Delete options not in the list
+                    let mut delete_builder = QueryBuilder::new(
+                        "DELETE FROM multi_option_question_options WHERE question_id = ",
+                    );
+                    delete_builder.push_bind(question_id);
+                    delete_builder.push(" AND id NOT IN (");
+                    {
+                        let mut separated = delete_builder.separated(", ");
+                        for id in &option_ids {
+                            separated.push_bind(*id);
+                        }
+                    }
+                    delete_builder.push(")");
+                    delete_builder
+                        .build()
+                        .execute(transaction.deref_mut())
+                        .await?;
+                }
+
+                // Set all remaining existing options to temporary negative display_order values
+                // to avoid unique constraint violations when reordering
+                sqlx::query!(
+                    r#"
+                        WITH numbered_options AS (
+                            SELECT id, -1000000 - row_number() OVER (ORDER BY id)::INTEGER AS temp_order
+                            FROM multi_option_question_options
+                            WHERE question_id = $1
+                        )
+                        UPDATE multi_option_question_options moqo
+                        SET display_order = no.temp_order
+                        FROM numbered_options no
+                        WHERE moqo.id = no.id AND moqo.question_id = $1
+                    "#,
+                    question_id
+                )
+                .execute(transaction.deref_mut())
+                .await?;
+
+                // Insert/update options with final values (similar pattern to insert_into_db)
+                for option in &data.options {
+                    let option_id = if option.id == 0 {
+                        snowflake_generator.real_time_generate()
+                    } else {
+                        option.id
+                    };
+
+                    sqlx::query!(
+                        r#"
+                            INSERT INTO multi_option_question_options (id, text, question_id, display_order)
+                            VALUES ($1, $2, $3, $4)
+                            ON CONFLICT (id) DO UPDATE
+                            SET text = EXCLUDED.text,
+                                display_order = EXCLUDED.display_order
+                        "#,
+                        option_id,
+                        option.text,
+                        question_id,
+                        option.display_order
+                    )
+                    .execute(transaction.deref_mut())
+                    .await?;
+                }
 
                 Ok(())
             }

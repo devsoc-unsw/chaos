@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 import { useParams } from "react-router-dom";
 import ShortAnswer from "components/QuestionComponents/ShortAnswer";
@@ -37,6 +37,22 @@ const ApplicationReview: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [commonAnswers, setCommonAnswers] = useState<Answer[]>([]);
   const [roleAnswers, setRoleAnswers] = useState<Record<string, Answer[]>>({});
+  const cleanupInProgress = useRef<Set<string>>(new Set());
+
+  
+  // Moved merging state of answers in hashamp into mergeAnswersIntoState
+  const extractAnswerValue = (answer: Answer): unknown =>
+    (answer as unknown as { answer_data?: unknown; data?: unknown }).answer_data ??
+    (answer as unknown as { answer_data?: unknown; data?: unknown }).data;
+
+  const mergeAnswersIntoState = (answerList: Answer[]) => {
+    const answerMap: Record<string, unknown> = {};
+    answerList.forEach((answer) => {
+      answerMap[answer.question_id] = extractAnswerValue(answer);
+    });
+
+    setAnswers((prev) => ({ ...prev, ...answerMap }));
+  };
 
   useEffect(() => {
     if (!campaignId) return;
@@ -68,17 +84,9 @@ const ApplicationReview: React.FC = () => {
     if (!applicationId) return;
     (async () => {
       try {
-        const answers = await getCommonApplicationAnswers(applicationId);
-        setCommonAnswers(answers);
-
-        // Pre-fill answers in the answers state
-        const answerMap: Record<string, unknown> = {};
-        answers.forEach(answer => {
-          // API returns `answer_data` field
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          answerMap[answer.question_id] = (answer as any).answer_data ?? (answer as any).data;
-        });
-        setAnswers(prev => ({ ...prev, ...answerMap }));
+        const fetchedAnswers = await getCommonApplicationAnswers(applicationId);
+        setCommonAnswers(fetchedAnswers);
+        mergeAnswersIntoState(fetchedAnswers);
       } catch (error) {
         console.error('Failed to load common answers:', error);
       }
@@ -131,14 +139,9 @@ const ApplicationReview: React.FC = () => {
       setRoleAnswers((prev) => ({ ...prev, ...roleAnswersUpdates }));
       
       // Pre-fill answers state with role-specific answers
-      const answerMap: Record<string, unknown> = {};
-      Object.values(roleAnswersUpdates).forEach(answers => {
-        answers.forEach(answer => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          answerMap[answer.question_id] = (answer as any).answer_data ?? (answer as any).data;
-        });
+      Object.values(roleAnswersUpdates).forEach((answerList) => {
+        mergeAnswersIntoState(answerList);
       });
-      setAnswers(prev => ({ ...prev, ...answerMap }));
     })();
   }, [selectedRoleIds, campaignId, questionsByRole, applicationId]);
 
@@ -247,6 +250,47 @@ const ApplicationReview: React.FC = () => {
     }
   };
 
+  // Refresh answer ID when answer is not found in the state
+  // Fixed the error of not loading answer state 
+  const refreshAnswerId = async (
+    questionId: string,
+    question: QuestionResponse,
+    questionRoleId: string | null
+  ): Promise<string | undefined> => {
+    if (!applicationId) {
+      return undefined;
+    }
+
+    try {
+      if (question.common) {
+        const latest = await getCommonApplicationAnswers(applicationId);
+        setCommonAnswers(latest);
+        mergeAnswersIntoState(latest);
+        const match = latest.find((answer) => answer.question_id === questionId);
+        return match?.id;
+      }
+
+      const roleId =
+        questionRoleId ??
+        Object.entries(questionsByRole).find(([, questions]) =>
+          questions.some((q) => String(q.id) === questionId)
+        )?.[0];
+
+      if (!roleId) {
+        return undefined;
+      }
+
+      const latest = await getApplicationAnswers(applicationId, roleId);
+      setRoleAnswers((prev) => ({ ...prev, [roleId]: latest }));
+      mergeAnswersIntoState(latest);
+      const match = latest.find((answer) => answer.question_id === questionId);
+      return match?.id;
+    } catch (error) {
+      console.error("Failed to refresh answer data for question:", questionId, error);
+      return undefined;
+    }
+  };
+
   const submitAnswer = async (questionId: string, value: unknown, questionType: string) => {
     if (isSubmitted) {
       setValidationError('Cannot modify answers: Application has already been submitted.');
@@ -255,15 +299,32 @@ const ApplicationReview: React.FC = () => {
     
     if (!applicationId) {
       console.error("No applicationId available for submitting answer");
+      setValidationError("Still preparing your application. Please wait a moment and try again.");
       return;
     }
 
-    const answerId = getAnswerId(questionId);
-    const question = [...commonQuestions, ...Object.values(questionsByRole).flat()].find(q => String(q.id) === questionId);
-    
+    let questionRoleId: string | null = null;
+    let question: QuestionResponse | undefined = commonQuestions.find((q) => String(q.id) === questionId);
+    if (!question) {
+      for (const [roleId, questions] of Object.entries(questionsByRole)) {
+        const roleQuestion = questions.find((q) => String(q.id) === questionId);
+        if (roleQuestion) {
+          question = roleQuestion;
+          questionRoleId = roleId;
+          break;
+        }
+      }
+    }
+
     if (!question) {
       console.error("Question not found:", questionId);
       return;
+    }
+
+    let answerId = getAnswerId(questionId);
+    
+    if (!answerId) {
+      answerId = await refreshAnswerId(questionId, question, questionRoleId);
     }
 
     console.log("🔄 Submitting answer:", { questionId, value, questionType, answerId, applicationId });
@@ -341,6 +402,7 @@ const ApplicationReview: React.FC = () => {
         console.log("📝 Updating existing answer:", { answerId, questionId, apiAnswerType, apiAnswerData });
         const result = await updateAnswer(answerId, questionId, apiAnswerType as any, apiAnswerData as any);
         console.log("✅ Answer updated successfully:", result);
+        updateStoredAnswerData(question, questionRoleId, answerId, apiAnswerData);
       } else {
         // Create new answer
         console.log("➕ Creating new answer:", { applicationId, questionId, apiAnswerType, apiAnswerData });
@@ -360,19 +422,19 @@ const ApplicationReview: React.FC = () => {
         } as Answer & { answer_data: unknown };
 
         // Add to appropriate state based on whether it's a common or role question
-        if (commonQuestions.find(q => String(q.id) === questionId)) {
-          setCommonAnswers(prev => [...prev, newAnswerObj]);
-        } else {
-          // Find which role this question belongs to
-          for (const [roleId, questions] of Object.entries(questionsByRole)) {
-            if (questions.find(q => String(q.id) === questionId)) {
-              setRoleAnswers(prev => ({
-                ...prev,
-                [roleId]: [...(prev[roleId] || []), newAnswerObj]
-              }));
-              break;
-            }
-          }
+        if (question.common) {
+          setCommonAnswers(prev => [
+            ...prev.filter((answer) => answer.question_id !== questionId),
+            newAnswerObj,
+          ]);
+        } else if (questionRoleId) {
+          setRoleAnswers(prev => ({
+            ...prev,
+            [questionRoleId]: [
+              ...(prev[questionRoleId] || []).filter((answer) => answer.question_id !== questionId),
+              newAnswerObj,
+            ],
+          }));
         }
 
         // Update the main answers state so the review modal shows the correct value
@@ -429,19 +491,210 @@ const ApplicationReview: React.FC = () => {
     }
   };
 
-  const getAnswerId = (questionId: string): string | undefined => {
-    // Check common answers first
-    const commonAnswer = commonAnswers.find(a => a.question_id === questionId);
-    if (commonAnswer) return commonAnswer.id;
-    
-    // Check role-specific answers
-    for (const [roleId, answers] of Object.entries(roleAnswers)) {
-      const roleAnswer = answers.find(a => a.question_id === questionId);
-      if (roleAnswer) return roleAnswer.id;
+  // Getting answer_id 
+  const getAnswerId = useCallback(
+    (questionId: string): string | undefined => {
+      // Check common answers first
+      const commonAnswer = commonAnswers.find((a) => a.question_id === questionId);
+      if (commonAnswer) return commonAnswer.id;
+
+      // Check role-specific answers
+      for (const answersForRole of Object.values(roleAnswers)) {
+        const roleAnswer = answersForRole.find((a) => a.question_id === questionId);
+        if (roleAnswer) return roleAnswer.id;
+      }
+
+      return undefined;
+    },
+    [commonAnswers, roleAnswers]
+  );
+
+  // Getting answer_data 
+  const getAnswerValue = useCallback(
+    (questionId: string): unknown => {
+      const commonAnswer = commonAnswers.find((a) => a.question_id === questionId);
+      if (commonAnswer) {
+        return extractAnswerValue(commonAnswer);
+      }
+
+      for (const answersForRole of Object.values(roleAnswers)) {
+        const roleAnswer = answersForRole.find((a) => a.question_id === questionId);
+        if (roleAnswer) {
+          return extractAnswerValue(roleAnswer);
+        }
+      }
+
+      return answers[questionId];
+    },
+    [answers, commonAnswers, roleAnswers]
+  );
+
+  // Replace answer Data in the list
+  const replaceAnswerDataInList = (
+    list: Answer[] | undefined,
+    targetAnswerId: string,
+    newValue: Answer["answer_data"]
+  ): Answer[] | undefined => {
+    if (!list) {
+      return list;
     }
-    
-    return undefined;
+
+    return list.map((answer) =>
+      answer.id === targetAnswerId ? ({ ...answer, answer_data: newValue } as Answer) : answer
+    );
   };
+
+  // Update stored answer data in the state
+  const updateStoredAnswerData = useCallback(
+    (
+      question: QuestionResponse,
+      questionRoleId: string | null,
+      answerId: string,
+      answerValue: unknown
+    ) => {
+      const questionId = String(question.id);
+      const nextValue = answerValue as Answer["answer_data"];
+
+      setAnswers((prev) => ({ ...prev, [questionId]: nextValue }));
+
+      if (question.common) {
+        setCommonAnswers(
+          (prev) => replaceAnswerDataInList(prev, answerId, nextValue) ?? prev
+        );
+        return;
+      }
+
+      if (questionRoleId) {
+        setRoleAnswers((prev) => {
+          const nextList = replaceAnswerDataInList(prev[questionRoleId], answerId, nextValue);
+          if (!nextList) {
+            return prev;
+          }
+          return { ...prev, [questionRoleId]: nextList };
+        });
+        return;
+      }
+
+      setRoleAnswers((prev) => {
+        const updated = { ...prev };
+        Object.keys(updated).forEach((rid) => {
+          const nextList = replaceAnswerDataInList(updated[rid], answerId, nextValue);
+          if (nextList) {
+            updated[rid] = nextList;
+          }
+        });
+        return updated;
+      });
+    },
+    [setAnswers, setCommonAnswers, setRoleAnswers]
+  );
+
+  // Remove answer for a question from the state (only do this when we remove an option from a question)
+  const removeAnswerForQuestion = useCallback(
+    async (question: QuestionResponse, roleId: string | null) => {
+      const questionId = String(question.id);
+      if (cleanupInProgress.current.has(questionId)) {
+        return;
+      }
+
+      cleanupInProgress.current.add(questionId);
+      const answerId = getAnswerId(questionId);
+
+      try {
+        if (answerId) {
+          await deleteAnswer(answerId);
+        }
+      } catch (error) {
+        console.error("Failed to delete invalid answer:", { questionId, error });
+      } finally {
+        setCommonAnswers((prev) =>
+          question.common ? prev.filter((answer) => answer.question_id !== questionId) : prev
+        );
+
+        if (!question.common) {
+          if (roleId) {
+            setRoleAnswers((prev) => ({
+              ...prev,
+              [roleId]: (prev[roleId] || []).filter((answer) => answer.question_id !== questionId),
+            }));
+          } else {
+            setRoleAnswers((prev) => {
+              const updated = { ...prev };
+              Object.keys(updated).forEach((rid) => {
+                updated[rid] = updated[rid].filter((answer) => answer.question_id !== questionId);
+              });
+              return updated;
+            });
+          }
+        }
+
+        setAnswers((prev) => {
+          if (question.question_type === "DropDown") {
+            return { ...prev, [questionId]: NO_ANSWER_VALUE };
+          }
+          if (!(questionId in prev)) {
+            return prev;
+          }
+          const next = { ...prev };
+          delete next[questionId];
+          return next;
+        });
+
+        cleanupInProgress.current.delete(questionId);
+      }
+    },
+    [getAnswerId, setCommonAnswers, setRoleAnswers, setAnswers]
+  );
+
+  useEffect(() => {
+    const shouldRemoveAnswer = (question: QuestionResponse, answerValue: unknown): boolean => {
+      if (!question.data?.options || question.data.options.length === 0) {
+        return false;
+      }
+
+      const validOptionIds = question.data.options.map((opt) => String(opt.id));
+
+      if (question.question_type === "MultiChoice") {
+        if (answerValue === undefined || answerValue === null) {
+          return false;
+        }
+        return !validOptionIds.includes(String(answerValue));
+      }
+
+      if (question.question_type === "MultiSelect") {
+        if (!Array.isArray(answerValue) || answerValue.length === 0) {
+          return false;
+        }
+        return (answerValue as Array<string | number>).some(
+          (value) => !validOptionIds.includes(String(value))
+        );
+      }
+
+      return false;
+    };
+
+    const checkQuestions = (questions: QuestionResponse[], roleId: string | null) => {
+      questions.forEach((question) => {
+        if (question.question_type !== "MultiChoice" && question.question_type !== "MultiSelect") {
+          return;
+        }
+
+        const questionId = String(question.id);
+        const existingAnswer = answers[questionId];
+
+        if (!shouldRemoveAnswer(question, existingAnswer)) {
+          return;
+        }
+
+        void removeAnswerForQuestion(question, roleId);
+      });
+    };
+
+    checkQuestions(commonQuestions, null);
+    Object.entries(questionsByRole).forEach(([roleId, qs]) => {
+      checkQuestions(qs ?? [], roleId);
+    });
+  }, [answers, commonQuestions, questionsByRole, removeAnswerForQuestion]);
 
   const formatAnswer = (question: QuestionResponse, answer: unknown): string => {
     if (answer === null || answer === undefined || answer === '') {
@@ -461,11 +714,23 @@ const ApplicationReview: React.FC = () => {
         return selectedOption ? selectedOption.text : String(answer);
       
       case "MultiSelect":
+        if (Array.isArray(answer)) {
+          const selectedOptions = (question.data?.options?.filter((opt) =>
+            answer.map((id) => id?.toString()).includes(opt.id?.toString())
+          ) ?? []).map((opt) => opt.text);
+          return selectedOptions.length > 0 ? selectedOptions.join(", ") : "No selections";
+        }
+        return String(answer);
+
       case "Ranking":
         if (Array.isArray(answer)) {
-          const selectedOptions = (question.data?.options?.filter(opt => answer.includes(opt.id)) ?? [])
-            .map(opt => opt.text);
-          return selectedOptions.length > 0 ? selectedOptions.join(", ") : "No selections";
+          const optionMap = new Map(
+            (question.data?.options ?? []).map((opt) => [opt.id?.toString(), opt.text])
+          );
+          const orderedLabels = answer
+            .map((id) => optionMap.get(id?.toString()) ?? id?.toString())
+            .filter((label): label is string => Boolean(label));
+          return orderedLabels.length > 0 ? orderedLabels.join(", ") : "No selections";
         }
         return String(answer);
       
@@ -548,11 +813,14 @@ const ApplicationReview: React.FC = () => {
     }
   };
 
+  const interactionDisabled = !applicationId || isSubmitted;
+
   const renderQuestion = (q: QuestionResponse) => {
     const options = (q.question_type === "MultiChoice" || q.question_type === "MultiSelect" || q.question_type === "DropDown" || q.question_type === "Ranking")
       ? ((q.data?.options ?? []).map((o) => ({ id: o.id, label: o.text })) ?? [])
       : [];
     const idStr = String(q.id);
+    const answerValue = getAnswerValue(idStr);
 
     switch (q.question_type) {
       case "ShortAnswer":
@@ -563,8 +831,9 @@ const ApplicationReview: React.FC = () => {
             question={q.title}
             description={q.description}
             required={q.required}
-            defaultValue={(answers[idStr] as string) ?? ""}
+            defaultValue={(answerValue as string) ?? ""}
             onSubmit={(qid, val) => submitAnswer(qid, val, q.question_type)}
+            disabled={interactionDisabled}
             answerId={getAnswerId(idStr)}
           />
         );
@@ -577,8 +846,9 @@ const ApplicationReview: React.FC = () => {
             description={q.description}
             required={q.required}
             options={options}
-            defaultValue={answers[idStr] as string | number | undefined}
+            defaultValue={answerValue as string | number | undefined}
             onSubmit={(qid, val) => submitAnswer(qid, val, q.question_type)}
+            disabled={interactionDisabled}
             answerId={getAnswerId(idStr)}
           />
         );
@@ -593,6 +863,7 @@ const ApplicationReview: React.FC = () => {
             options={options}
             defaultValue={answers[idStr] as string | number | undefined}
             onSubmit={(qid, val) => submitAnswer(qid, val, q.question_type)}
+            disabled={interactionDisabled}
             answerId={getAnswerId(idStr)}
           />
         );
@@ -605,8 +876,9 @@ const ApplicationReview: React.FC = () => {
             description={q.description}
             required={q.required}
             options={options}
-            defaultValue={(answers[idStr] as Array<string | number>) ?? []}
+            defaultValue={(answerValue as Array<string | number>) ?? []}
             onSubmit={(qid, val) => submitAnswer(qid, val, q.question_type)}
+            disabled={interactionDisabled}
             answerId={getAnswerId(idStr)}
           />
         );
@@ -619,8 +891,9 @@ const ApplicationReview: React.FC = () => {
             description={q.description}
             required={q.required}
             options={options}
-            defaultValue={(answers[idStr] as Array<string | number>) ?? []}
+            defaultValue={(answerValue as Array<string | number>) ?? []}
             onSubmit={(qid, val) => submitAnswer(qid, val, q.question_type)}
+            disabled={interactionDisabled}
             answerId={getAnswerId(idStr)}
           />
         );
@@ -629,12 +902,14 @@ const ApplicationReview: React.FC = () => {
     }
   };
 
-  if (loading || !campaign) {
+  if (loading || !campaign || !applicationId) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading campaign data...</p>
+          <p className="text-gray-600">
+            {!campaign ? "Loading campaign data..." : "Preparing your application..."}
+          </p>
         </div>
       </div>
     );

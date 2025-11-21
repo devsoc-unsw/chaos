@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -34,6 +34,10 @@ const MultiChoice: React.FC<MultiChoiceProps> = ({
   answerId,
 }) => {
   const [selectedOption, setSelectedOption] = useState<string | number | undefined>(defaultValue);
+
+  useEffect(() => {
+    setSelectedOption(defaultValue);
+  }, [defaultValue]);
 
   const handleChange = (value: string) => {
     const optionValue = options.find(opt => opt.id.toString() === value);

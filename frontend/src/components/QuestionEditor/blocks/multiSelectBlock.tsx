@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 type Option = {
+    id?: string;
     text: string;
     correct: boolean;
 };
@@ -24,7 +25,7 @@ export const multiSelectQuestionBlock = createReactBlockSpec(
         type: "multiSelectQuestion",
         propSchema: {
             question: { default: "" },
-            options: { default: JSON.stringify([{ text: "Option 1", correct: false }]) },
+            options: { default: JSON.stringify([{ id: "0", text: "Option 1", correct: false }]) },
             questionId: { default: "" }, 
             common: { default: false }, 
             roles: { default: JSON.stringify([]) },
@@ -37,7 +38,11 @@ export const multiSelectQuestionBlock = createReactBlockSpec(
             const { onSaveQuestion, onDeleteQuestion, isSaving, savingBlockId } = useQuestionSave();
             const isExistingQuestion = !!(block.props.questionId as string);
             const isSavingThis = savingBlockId === block.id;
-            const options: Option[] = JSON.parse(block.props.options);
+            const options: Option[] = JSON.parse(block.props.options).map((opt: Option) => ({
+                id: opt.id ?? "0",
+                text: opt.text ?? "",
+                correct: !!opt.correct,
+            }));
             const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
             // Track previous answer info to current answer info to detect changes for edit button lockout
@@ -80,7 +85,7 @@ export const multiSelectQuestionBlock = createReactBlockSpec(
             };
 
             const addOption = () => {
-                const newOptions = [...options, { text: "", correct: false }];
+                const newOptions = [...options, { id: "0", text: "", correct: false }];
                 editor.updateBlock(block, {
                     props: { ...block.props, options: JSON.stringify(newOptions) },
                 });

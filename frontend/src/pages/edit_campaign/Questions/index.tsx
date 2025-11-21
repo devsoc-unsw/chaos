@@ -111,8 +111,12 @@ const QuestionsTab = ({ campaignId }: Props) => {
       const options = question.data?.options ?? [];
       const serializedOptions = JSON.stringify(
         options.length > 0
-          ? options.map((option) => ({ text: option.text, correct: false }))
-          : [{ text: "Option 1", correct: false }]
+          ? options.map((option) => ({
+              id: option.id ?? "0",
+              text: option.text,
+              correct: false,
+            }))
+          : [{ id: "0", text: "Option 1", correct: false }]
       );
 
       if (questionType === "MultiChoice") {
@@ -301,6 +305,24 @@ const QuestionsTab = ({ campaignId }: Props) => {
   const convertBlockToQuestion = useCallback((block: Block): any | null => {
     const anyBlock = block as unknown as { type: string; props: Record<string, any> };
     const { type, props } = anyBlock;
+    const normalizeOptionId = (rawId: unknown): string | number => {
+      if (typeof rawId === "number") {
+        return Number.isFinite(rawId) && rawId > 0 ? rawId : 0;
+      }
+
+      if (typeof rawId === "string") {
+        const trimmed = rawId.trim();
+        if (!trimmed || trimmed === "0") {
+          return 0;
+        }
+        if (/^\d+$/.test(trimmed)) {
+          return trimmed.startsWith("0") ? trimmed.replace(/^0+/, "") || "0" : trimmed;
+        }
+        return 0;
+      }
+
+      return 0;
+    };
     
     // For existing questions, use their original common/roles status
     // For new questions, use the current tab's status
@@ -385,11 +407,13 @@ const QuestionsTab = ({ campaignId }: Props) => {
     }
 
     if (type === "mcqQuestion") {
-      const options = JSON.parse(props.options || JSON.stringify([{ text: "Option 1", correct: false }]));
+      const options = JSON.parse(
+        props.options || JSON.stringify([{ id: "0", text: "Option 1", correct: false }])
+      );
       const validOptions = options
         .filter((opt: any) => opt.text && opt.text.trim() !== "")
         .map((opt: any, idx: number) => ({
-          id: 0, // Backend will generate actual IDs
+          id: normalizeOptionId(opt.id),
           display_order: idx + 1,
           text: opt.text.trim(),
         }));
@@ -402,11 +426,13 @@ const QuestionsTab = ({ campaignId }: Props) => {
     }
 
     if (type === "multiSelectQuestion") {
-      const options = JSON.parse(props.options || JSON.stringify([{ text: "Option 1", correct: false }]));
+      const options = JSON.parse(
+        props.options || JSON.stringify([{ id: "0", text: "Option 1", correct: false }])
+      );
       const validOptions = options
         .filter((opt: any) => opt.text && opt.text.trim() !== "")
         .map((opt: any, idx: number) => ({
-          id: 0, // Backend will generate actual IDs
+          id: normalizeOptionId(opt.id),
           display_order: idx + 1,
           text: opt.text.trim(),
         }));
@@ -419,11 +445,13 @@ const QuestionsTab = ({ campaignId }: Props) => {
     }
 
     if (type === "dropDownQuestion") {
-      const options = JSON.parse(props.options || JSON.stringify([{ text: "Option 1", correct: false }]));
+      const options = JSON.parse(
+        props.options || JSON.stringify([{ id: "0", text: "Option 1", correct: false }])
+      );
       const validOptions = options
         .filter((opt: any) => opt.text && opt.text.trim() !== "")
         .map((opt: any, idx: number) => ({
-          id: 0, // Backend will generate actual IDs
+          id: normalizeOptionId(opt.id),
           display_order: idx + 1,
           text: opt.text.trim(),
         }));
@@ -436,11 +464,13 @@ const QuestionsTab = ({ campaignId }: Props) => {
     }
 
     if (type === "rankingQuestion") {
-      const options = JSON.parse(props.options || JSON.stringify([{ text: "Option 1", correct: false }]));
+      const options = JSON.parse(
+        props.options || JSON.stringify([{ id: "0", text: "Option 1", correct: false }])
+      );
       const validOptions = options
         .filter((opt: any) => opt.text && opt.text.trim() !== "")
         .map((opt: any, idx: number) => ({
-          id: 0, // Backend will generate actual IDs
+          id: normalizeOptionId(opt.id),
           display_order: idx + 1,
           text: opt.text.trim(),
         }));
