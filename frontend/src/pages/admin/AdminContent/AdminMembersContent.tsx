@@ -162,10 +162,10 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
 }
- 
-import { useEffect } from "react"
-import { getOrganisationMembers } from "@/api"
-import type { Member } from "@/types/api"
+
+import { useEffect, useState } from "react"
+import { getOrganisationMembers, getSelfInfo } from "@/api"
+import type { Member, User } from "@/types/api"
 
 type Props = {
   orgId: string
@@ -176,13 +176,16 @@ type Props = {
 export function AdminMembersContent(_: any) { return null }
 
 const AdminMembersContentImpl = ({ orgId, members, setMembers }: Props) => {
+  const [self, setSelf] = useState({})
   useEffect(() => {
     void (async () => {
+      const selfData = await getSelfInfo();
+      setSelf(selfData)
       const resp = await getOrganisationMembers(orgId)
       setMembers(resp.members)
     })()
   }, [orgId, setMembers])
-
+  console.log(self);
   return (
     <div className="overflow-hidden border-bottom-1">
       <Table>
@@ -206,10 +209,15 @@ const AdminMembersContentImpl = ({ orgId, members, setMembers }: Props) => {
               <TableCell>{m.email}</TableCell>
               <TableCell>{m.role}</TableCell>
               <TableCell className="text-right">
-                <EditMemberButton orgId={orgId} member={m} onChanged={async () => {
-                  const resp = await getOrganisationMembers(orgId)
-                  setMembers(resp.members)
-                }} />
+                {
+                  self.id != m.id ?
+                  <EditMemberButton orgId={orgId} member={m} onChanged={async () => {
+                    const resp = await getOrganisationMembers(orgId)
+                    setMembers(resp.members)
+                  }} />
+                  :
+                  <></>
+                }
               </TableCell>
             </TableRow>
           ))}

@@ -13,12 +13,12 @@ const ToggleButton = styled(Popover.Button, {
 const ItemButton = tw.button`flex items-center justify-end gap-1 rounded-md px-2 py-1 focus-within:outline-none focus-within:ring focus-within:ring-indigo-600/50 hover:bg-gray-50 hover:text-indigo-700`;
 
 const AvatarButton = () => {
-  const name = "user"
+  const name = "user";
   const navigate = useNavigate();
   const logout = () => {
     navigate("/");
   }
-  
+
 
   return (
     <Popover tw="relative">
