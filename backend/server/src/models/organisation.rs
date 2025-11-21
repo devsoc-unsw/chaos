@@ -668,13 +668,11 @@ impl Organisation {
         .fetch_one(transaction.deref_mut())
         .await?;
 
-        println!("record: {:?}", record);
 
         let logo_id = record.logo.ok_or_else(|| {
             ChaosError::BadRequestWithMessage("Organisation does not have a logo".into())
         })?;
 
-        println!("logo_id: {}", logo_id);
 
         Storage::get_organisation_image_url(id, logo_id, storage_bucket).await
     }

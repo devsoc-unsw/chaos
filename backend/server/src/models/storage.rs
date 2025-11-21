@@ -183,13 +183,14 @@ impl Storage {
         bucket: &Bucket,
     ) -> Result<String, ChaosError> {
         let base_path = format!("organisations/{}/images/{}", organisation_id, image_id);
-        Self::get_image_url_for_prefix(bucket, &base_path, || {
+        let url = Self::get_image_url_for_prefix(bucket, &base_path, || {
             format!(
                 "Image not found at /organisations/{}/images/{}",
                 organisation_id, image_id
             )
         })
-        .await
+        .await;
+        url
     }
 }
 
