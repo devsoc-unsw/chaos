@@ -45,14 +45,84 @@ const ApplicationReview: React.FC = () => {
     (answer as unknown as { answer_data?: unknown; data?: unknown }).answer_data ??
     (answer as unknown as { answer_data?: unknown; data?: unknown }).data;
 
-  const mergeAnswersIntoState = (answerList: Answer[]) => {
+  const delay = useCallback((ms: number) => new Promise(resolve => setTimeout(resolve, ms)), []);
+
+  const mergeAnswersIntoState = useCallback((answerList: Answer[]) => {
+    if (!answerList || answerList.length === 0) {
+      return;
+    }
+
     const answerMap: Record<string, unknown> = {};
     answerList.forEach((answer) => {
       answerMap[answer.question_id] = extractAnswerValue(answer);
     });
 
     setAnswers((prev) => ({ ...prev, ...answerMap }));
-  };
+  }, []);
+
+  useEffect(() => {
+    mergeAnswersIntoState(commonAnswers);
+  }, [commonAnswers, mergeAnswersIntoState]);
+
+  useEffect(() => {
+    Object.values(roleAnswers).forEach((answerList) => {
+      mergeAnswersIntoState(answerList ?? []);
+    });
+  }, [roleAnswers, mergeAnswersIntoState]);
+
+  const fetchCommonAnswers = useCallback(
+    async (retryCount = 1) => {
+      if (!applicationId) return [];
+      let attempt = 0;
+      let latest: Answer[] = [];
+      while (attempt <= retryCount) {
+        try {
+          const data = await getCommonApplicationAnswers(applicationId);
+          latest = data;
+          setCommonAnswers(data);
+          mergeAnswersIntoState(data);
+          if (data.length > 0 || attempt === retryCount) {
+            return data;
+          }
+          attempt += 1;
+          await delay(250);
+        } catch (error) {
+          console.error("Failed to fetch common answers:", error);
+          attempt += 1;
+          await delay(250);
+        }
+      }
+      return latest;
+    },
+    [applicationId, delay, mergeAnswersIntoState]
+  );
+
+  const fetchRoleAnswers = useCallback(
+    async (roleId: string, retryCount = 1) => {
+      if (!applicationId) return [];
+      let attempt = 0;
+      let latest: Answer[] = [];
+      while (attempt <= retryCount) {
+        try {
+          const data = await getApplicationAnswers(applicationId, roleId);
+          latest = data;
+          setRoleAnswers((prev) => ({ ...prev, [roleId]: data }));
+          mergeAnswersIntoState(data);
+          if (data.length > 0 || attempt === retryCount) {
+            return data;
+          }
+          attempt += 1;
+          await delay(250);
+        } catch (error) {
+          console.error(`Failed to fetch answers for role ${roleId}:`, error);
+          attempt += 1;
+          await delay(250);
+        }
+      }
+      return latest;
+    },
+    [applicationId, delay, mergeAnswersIntoState]
+  );
 
   useEffect(() => {
     if (!campaignId) return;
@@ -82,16 +152,8 @@ const ApplicationReview: React.FC = () => {
   // Load common answers when application ID is available
   useEffect(() => {
     if (!applicationId) return;
-    (async () => {
-      try {
-        const fetchedAnswers = await getCommonApplicationAnswers(applicationId);
-        setCommonAnswers(fetchedAnswers);
-        mergeAnswersIntoState(fetchedAnswers);
-      } catch (error) {
-        console.error('Failed to load common answers:', error);
-      }
-    })();
-  }, [applicationId]);
+    void fetchCommonAnswers(2);
+  }, [applicationId, fetchCommonAnswers]);
 
   // Load application roles when application ID is available
   useEffect(() => {
@@ -118,32 +180,20 @@ const ApplicationReview: React.FC = () => {
     if (missing.length === 0) return;
     (async () => {
       const updates: Record<string, QuestionResponse[]> = {};
-      const roleAnswersUpdates: Record<string, Answer[]> = {};
       
       await Promise.all(
         missing.map(async (rid) => {
-          const [questionsResp, answersResp] = await Promise.all([
-            getRoleQuestions(id, rid),
-            getApplicationAnswers(applicationId, rid)
-          ]);
-          
+          const questionsResp = await getRoleQuestions(id, rid);
           updates[rid] = Array.isArray(questionsResp)
             ? questionsResp
             : (questionsResp as unknown as { questions?: QuestionResponse[] }).questions ?? [];
-          
-          roleAnswersUpdates[rid] = answersResp;
+          await fetchRoleAnswers(rid, 1);
         })
       );
       
       setQuestionsByRole((prev) => ({ ...prev, ...updates }));
-      setRoleAnswers((prev) => ({ ...prev, ...roleAnswersUpdates }));
-      
-      // Pre-fill answers state with role-specific answers
-      Object.values(roleAnswersUpdates).forEach((answerList) => {
-        mergeAnswersIntoState(answerList);
-      });
     })();
-  }, [selectedRoleIds, campaignId, questionsByRole, applicationId]);
+  }, [selectedRoleIds, campaignId, questionsByRole, applicationId, fetchRoleAnswers]);
 
   const syncRoles = async (nextSelectedRoles: string[]) => {
     if (!applicationId) {
@@ -263,9 +313,7 @@ const ApplicationReview: React.FC = () => {
 
     try {
       if (question.common) {
-        const latest = await getCommonApplicationAnswers(applicationId);
-        setCommonAnswers(latest);
-        mergeAnswersIntoState(latest);
+        const latest = await fetchCommonAnswers(1);
         const match = latest.find((answer) => answer.question_id === questionId);
         return match?.id;
       }
@@ -280,9 +328,7 @@ const ApplicationReview: React.FC = () => {
         return undefined;
       }
 
-      const latest = await getApplicationAnswers(applicationId, roleId);
-      setRoleAnswers((prev) => ({ ...prev, [roleId]: latest }));
-      mergeAnswersIntoState(latest);
+      const latest = await fetchRoleAnswers(roleId, 1);
       const match = latest.find((answer) => answer.question_id === questionId);
       return match?.id;
     } catch (error) {
@@ -403,6 +449,11 @@ const ApplicationReview: React.FC = () => {
         const result = await updateAnswer(answerId, questionId, apiAnswerType as any, apiAnswerData as any);
         console.log("✅ Answer updated successfully:", result);
         updateStoredAnswerData(question, questionRoleId, answerId, apiAnswerData);
+        if (question.common) {
+          await fetchCommonAnswers(1);
+        } else if (questionRoleId) {
+          await fetchRoleAnswers(questionRoleId, 1);
+        }
       } else {
         // Create new answer
         console.log("➕ Creating new answer:", { applicationId, questionId, apiAnswerType, apiAnswerData });
@@ -420,7 +471,7 @@ const ApplicationReview: React.FC = () => {
           created_at: new Date(),
           updated_at: new Date()
         } as Answer & { answer_data: unknown };
-
+        console.log(newAnswerObj);
         // Add to appropriate state based on whether it's a common or role question
         if (question.common) {
           setCommonAnswers(prev => [
@@ -439,6 +490,11 @@ const ApplicationReview: React.FC = () => {
 
         // Update the main answers state so the review modal shows the correct value
         setAnswers(prev => ({ ...prev, [questionId]: apiAnswerData }));
+        if (question.common) {
+          await fetchCommonAnswers(1);
+        } else if (questionRoleId) {
+          await fetchRoleAnswers(questionRoleId, 1);
+        }
       }
     } catch (error) {
       console.error('❌ Failed to submit answer:', error);
