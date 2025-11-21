@@ -12,7 +12,7 @@ use crate::handler::user::UserHandler;
 use crate::models::email::{ChaosEmail, EmailCredentials};
 use crate::models::error::ChaosError;
 use crate::models::storage::Storage;
-use axum::routing::{delete, get, patch, post};
+use axum::routing::{delete, get, patch, post, put};
 use axum::Router;
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use reqwest::Client as ReqwestClient;
@@ -143,6 +143,7 @@ pub async fn app() -> Result<Router, ChaosError> {
         .route("/api/v1/user/gender", patch(UserHandler::update_gender))
         .route("/api/v1/user/zid", patch(UserHandler::update_zid))
         .route("/api/v1/user/degree", patch(UserHandler::update_degree))
+        .route("/api/v1/user/update", patch(UserHandler::update_user_details))
         .route(
             "/api/v1/user/applications",
             get(ApplicationHandler::get_from_curr_user),

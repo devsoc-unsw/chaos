@@ -7,7 +7,7 @@
 use crate::models::app::AppState;
 use crate::models::auth::AuthUser;
 use crate::models::error::ChaosError;
-use crate::models::user::{User, UserDegree, UserGender, UserName, UserPronouns, UserZid};
+use crate::models::user::{User, UserDegree, UserGender, UserName, UserPronouns, UserZid, UserEditStruct};
 use axum::extract::{Json, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -39,6 +39,25 @@ impl UserHandler {
         Ok((StatusCode::OK, Json(user)))
     }
 
+    pub async fn update_user_details(
+        mut transaction: DBTransaction<'_>,
+        user: AuthUser,
+        Json(request_body): Json<UserEditStruct>
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let user = User::update_user_details(
+            request_body.id,
+            request_body.name, 
+            request_body.gender, 
+            request_body.pronouns, 
+            request_body.zid,
+            &mut transaction.tx
+        ).await?;
+
+        transaction.tx.commit().await?;
+
+        Ok((StatusCode::OK, Json(user)))
+    }
+    
     /// Updates the user's name.
     /// 
     /// This handler allows users to update their name.

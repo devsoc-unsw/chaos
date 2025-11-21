@@ -109,6 +109,16 @@ pub struct UserDegree {
     pub degree_starting_year: i32,
 }
 
+// Data structure for updating a user based on routes we already have
+#[derive(Deserialize, Serialize)]
+pub struct UserEditStruct {
+    pub id: i64,
+    pub name: String,
+    pub pronouns: String,
+    pub gender: String,
+    pub zid: String,
+}
+
 impl User {
     /// Retrieves a user by their ID.
     /// 
@@ -280,6 +290,26 @@ impl User {
         Ok(())
     }
 
+    pub async fn update_user_details(
+        id: i64,
+        name: String,
+        gender: String,
+        pronouns: String,
+        zid: String,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
+        let _ = sqlx::query!(
+            "UPDATE users SET name = $1, gender = $2, pronouns = $3, zid = $4 WHERE id = $5",
+            name,
+            gender,
+            pronouns,
+            zid,
+            id
+        ).fetch_one(transaction.deref_mut())
+        .await?;
+
+        Ok(())
+    }
 
     /// Creates a User, This should only used for database seeding
     pub async fn create_user(
