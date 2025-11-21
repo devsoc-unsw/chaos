@@ -8,12 +8,16 @@
 //! - Logo image handling
 
 use crate::models::app::AppState;
-use crate::models::auth::SuperUser;
+use crate::models::auth::{OrganisationAdminOrSuperUser, SuperUser};
 use crate::models::auth::{AuthUser, OrganisationAdmin};
 use crate::models::campaign::{Campaign, NewCampaign};
 use crate::models::email_template::{EmailTemplate, NewEmailTemplate};
 use crate::models::error::ChaosError;
-use crate::models::organisation::{AdminToRemove, AdminUpdateList, NewOrganisation, Organisation, OrganisationDetails, SlugCheck};
+use crate::models::organisation::{
+    AdminToRemove, AdminUpdateList, NewOrganisation, Organisation, OrganisationDetails, SlugCheck, EmailRoleBody, IdRoleBody, IdBody
+};
+use crate::service::user::{user_exists_by_email};
+use crate::service::organisation::{assert_user_is_not_in_organisation};
 use crate::models::transaction::DBTransaction;
 use crate::service::auth::assert_is_super_user;
 use axum::extract::{Json, Path, State};
@@ -220,7 +224,7 @@ impl OrganisationHandler {
     pub async fn get_members(
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
-        _admin: OrganisationAdmin,
+        _admin: OrganisationAdminOrSuperUser,
     ) -> Result<impl IntoResponse, ChaosError> {
         let members = Organisation::get_members(id, &mut transaction.tx).await?;
 
@@ -327,9 +331,11 @@ impl OrganisationHandler {
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
         _admin: OrganisationAdmin,
-        Json(request_body): Json<AdminToRemove>,
+        Json(req): Json<IdBody>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Organisation::remove_member(id, request_body.user_id, &mut transaction.tx).await?;
+        let tx = &mut transaction.tx;
+        //let user_id = user_exists_by_email(req.email, tx).await?;
+        Organisation::remove_member(id, req.user_id, tx).await?;
 
         transaction.tx.commit().await?;
         Ok((
@@ -526,5 +532,38 @@ impl OrganisationHandler {
 
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(email_templates)))
+    }
+
+    pub async fn add_member(
+        _user: OrganisationAdminOrSuperUser,
+        mut transaction: DBTransaction<'_>,
+        Path(org_id): Path<i64>,
+        Json(req): Json<EmailRoleBody>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let tx = &mut transaction.tx;
+        let user_id = user_exists_by_email(req.email, tx).await?;
+        assert_user_is_not_in_organisation(user_id, org_id, tx).await?;
+        Organisation::add_member_or_admin_to_organisation(org_id, user_id, req.role.clone(), tx).await?;
+
+        transaction.tx.commit().await?;
+        Ok((StatusCode::OK, "Member added to organisation"))
+    }
+
+    pub async fn update_member_role(
+        _user: OrganisationAdmin,
+        mut transaction: DBTransaction<'_>,
+        Path(org_id): Path<i64>,
+        Json(req): Json<IdRoleBody>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let tx = &mut transaction.tx;
+        Organisation::change_member_role(
+            org_id,
+            req.user_id,
+            req.role,
+            tx
+        )
+        .await?;
+        transaction.tx.commit().await?;
+        Ok(StatusCode::OK)
     }
 }
