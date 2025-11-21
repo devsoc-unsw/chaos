@@ -186,6 +186,8 @@ const AdminMembersContentImpl = ({ orgId, members, setMembers }: Props) => {
     })()
   }, [orgId, setMembers])
   console.log(self);
+  const selfMember = members.find(m => m.id === self.id)
+  const otherMembers = members.filter(m => m.id !== self.id)
   return (
     <div className="overflow-hidden border-bottom-1">
       <Table>
@@ -203,24 +205,34 @@ const AdminMembersContentImpl = ({ orgId, members, setMembers }: Props) => {
           </TableRow>
         </TableHeader>
         <TableBody className="bg-white border-l-0 border-r-0">
-          {members.map((m) => (
+          {selfMember && (
+            <TableRow key={selfMember.id}>
+              <TableCell className="p-4">{selfMember.name} (You)</TableCell>
+              <TableCell>{selfMember.email}</TableCell>
+              <TableCell>{selfMember.role}</TableCell>
+              <TableCell className="text-right">
+              </TableCell>
+            </TableRow>
+          )}
+
+          {otherMembers.map((m) => (
             <TableRow key={m.id}>
               <TableCell className="p-4">{m.name}</TableCell>
               <TableCell>{m.email}</TableCell>
               <TableCell>{m.role}</TableCell>
               <TableCell className="text-right">
-                {
-                  self.id != m.id ?
-                  <EditMemberButton orgId={orgId} member={m} onChanged={async () => {
+                <EditMemberButton
+                  orgId={orgId}
+                  member={m}
+                  onChanged={async () => {
                     const resp = await getOrganisationMembers(orgId)
                     setMembers(resp.members)
-                  }} />
-                  :
-                  <></>
-                }
+                  }}
+                />
               </TableCell>
             </TableRow>
           ))}
+
         </TableBody>
       </Table>
     </div>
