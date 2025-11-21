@@ -7,7 +7,7 @@
 
 use crate::models::answer::{Answer, NewAnswer};
 use crate::models::app::AppState;
-use crate::models::auth::{AnswerOwner, ApplicationOwner};
+use crate::models::auth::{AnswerOwner, ApplicationOwner, ApplicationOwnerOrReviewer};
 use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
@@ -75,7 +75,7 @@ impl AnswerHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - List of answers or error
     pub async fn get_all_common_by_application(
         Path(application_id): Path<i64>,
-        _owner: ApplicationOwner,
+        _owner: ApplicationOwnerOrReviewer,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let answers =
@@ -102,7 +102,7 @@ impl AnswerHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - List of answers or error
     pub async fn get_all_by_application_and_role(
         Path((application_id, role_id)): Path<(i64, i64)>,
-        _owner: ApplicationOwner,
+        _owner: ApplicationOwnerOrReviewer,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let answers =

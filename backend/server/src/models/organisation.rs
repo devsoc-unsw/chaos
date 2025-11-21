@@ -305,6 +305,20 @@ impl Organisation {
         Ok(organisation)
     }
 
+    pub async fn get_all(transaction: &mut Transaction<'_, Postgres>,) -> Result<Vec<OrganisationDetails>, ChaosError> {
+        let organisations = sqlx::query_as!(
+            OrganisationDetails,
+            "
+            SELECT id, slug, name, logo, created_at
+                FROM organisations
+        ",
+        )
+        .fetch_all(transaction.deref_mut())
+        .await?;
+
+        Ok(organisations)
+    }
+
     /// Retrieves an organisation by its slug.
     /// 
     /// # Arguments
@@ -334,6 +348,16 @@ impl Organisation {
         Ok(organisation)
     }
 
+    /// Retrieves all organisations that a user is an administrator of.
+    /// 
+    /// # Arguments
+    /// * `user_id` - The ID of the user to retrieve organisations for
+    /// * `transaction` - A mutable reference to the database transaction
+    /// 
+    /// # Returns
+    /// Returns a `Result` containing either:
+    /// * `Ok(Vec<OrganisationDetails>)` - The requested organisations
+    /// * `Err(ChaosError)` - An error if retrieval fails
     pub async fn get_by_admin(
         user_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
@@ -623,7 +647,7 @@ impl Organisation {
         let campaigns = sqlx::query_as!(
             OrganisationCampaign,
             "
-                SELECT id, slug, name, cover_image, description, starts_at, ends_at
+                SELECT id, slug, name, cover_image, description, starts_at, ends_at, published
                 FROM campaigns
                 WHERE organisation_id = $1
             ",
@@ -653,8 +677,8 @@ impl Organisation {
 
         sqlx::query!(
             "
-            INSERT INTO campaigns (id, organisation_id, slug, name, description, starts_at, ends_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
+            INSERT INTO campaigns (id, organisation_id, slug, name, description, starts_at, ends_at, published)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, false)
         ",
             new_campaign_id,
             organisation_id,

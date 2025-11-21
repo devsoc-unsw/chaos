@@ -35,6 +35,7 @@ import {
   type ApplicationRoleUpdateInput,
   type ApplicationRole,
   type OrganisationRole as OrgRoleType,
+  type QuestionData,
 } from "../types/api";
 
 // todo: update to new route
@@ -189,6 +190,41 @@ export const getCampaignRoles = (campaignId: string) =>
     path: `/v1/campaign/${campaignId}/roles`,
   });
 
+export const createRole = (campaignId: string, roleData: {
+  name: string;
+  description?: string;
+  min_available: number;
+  max_available: number;
+  finalised: boolean;
+}) =>
+  authenticatedRequest({
+    method: "POST",
+    path: `/v1/campaign/${campaignId}/role`,
+    body: roleData,
+    jsonResp: false,
+  });
+
+export const updateRole = (roleId: string, roleData: {
+  name: string;
+  description?: string;
+  min_available: number;
+  max_available: number;
+  finalised: boolean;
+}) =>
+  authenticatedRequest({
+    method: "PATCH",
+    path: `/v1/role/${roleId}`,
+    body: roleData,
+    jsonResp: false,
+  });
+
+export const deleteRole = (roleId: string) =>
+  authenticatedRequest({
+    method: "DELETE",
+    path: `/v1/role/${roleId}`,
+    jsonResp: false,
+  });
+
 export const getRoleApplications = (roleId: string) =>
   authenticatedRequest<ApplicationDetails[]>({
     path: `/v1/role/${roleId}/applications`,
@@ -203,6 +239,36 @@ export const getRoleQuestions = (campaignId: string, roleId: string) =>
 export const getCommonQuestions = (campaignID: string) =>
   authenticatedRequest<QuestionResponse[]>({
     path: `/v1/campaign/${campaignID}/questions/common`,
+  });
+
+export const createQuestion = (campaignId: string, questionData: any) =>
+  authenticatedRequest<{ id: string }>({
+    method: "POST",
+    path: `/v1/campaign/${campaignId}/question`,
+    body: questionData,
+  });
+
+export const updateQuestion = (campaignId: string, questionId: string, questionData: {
+  title: string;
+  description?: string;
+  common: boolean;
+  roles?: string[];
+  required: boolean;
+  question_type: QuestionType;
+  data: QuestionData;
+}) =>
+  authenticatedRequest({
+    method: "PATCH",
+    path: `/v1/campaign/${campaignId}/question/${questionId}`,
+    body: questionData,
+    jsonResp: false,
+  });
+
+export const deleteQuestion = (campaignId: string, questionId: string) =>
+  authenticatedRequest({
+    method: "DELETE",
+    path: `/v1/campaign/${campaignId}/question/${questionId}`,
+    jsonResp: false,
   });
 
 export const createOrGetApplication = (campaignId: string) =>
@@ -378,6 +444,13 @@ export const setCampaignCoverImage = (campaignId: string, cover_image: File) =>
     body: cover_image,
     jsonBody: false,
   });
+
+export const publishCampaign = (campaignId: string) =>
+  authenticatedRequest<void>({
+    method: "PATCH",
+    path: `/v1/campaign/${campaignId}/publish`,
+    jsonResp: false,
+  });
 // todo: update to new route
 export const deleteCampaign = (id: string) =>
   authenticatedRequest({
@@ -462,7 +535,7 @@ export const getAnsweredApplicationQuestions = (
                 question.question_type === QuestionType.MultiChoice
             );
             answerMap[questionId] =
-              mcQuestion?.data.options.find((option) => option.id === data)
+              mcQuestion?.data?.options?.find((option) => option.id === data)
                 ?.text || "";
             break;
 
@@ -473,7 +546,7 @@ export const getAnsweredApplicationQuestions = (
                 question.question_type === QuestionType.MultiSelect
             );
             answerMap[questionId] =
-              msQuestion?.data.options
+              (msQuestion?.data?.options ?? [])
                 .filter(
                   (option) => Array.isArray(data) && data.includes(option.id)
                 )
@@ -487,7 +560,7 @@ export const getAnsweredApplicationQuestions = (
                 question.question_type === QuestionType.DropDown
             );
             answerMap[questionId] =
-              ddQuestion?.data.options.find((option) => option.id === data)
+              ddQuestion?.data?.options?.find((option) => option.id === data)
                 ?.text || "";
             break;
 
@@ -498,7 +571,7 @@ export const getAnsweredApplicationQuestions = (
                 question.question_type === QuestionType.Ranking
             );
             answerMap[questionId] =
-              rankQuestion?.data.options
+              (rankQuestion?.data?.options ?? [])
                 .filter(
                   (option) => Array.isArray(data) && data.includes(option.id)
                 )

@@ -14,11 +14,12 @@ use crate::models::campaign::{Campaign, NewCampaign};
 use crate::models::email_template::{EmailTemplate, NewEmailTemplate};
 use crate::models::error::ChaosError;
 use crate::models::organisation::{
-    AdminToRemove, AdminUpdateList, NewOrganisation, Organisation, SlugCheck, EmailRoleBody, IdRoleBody, IdBody
+    AdminToRemove, AdminUpdateList, NewOrganisation, Organisation, OrganisationDetails, SlugCheck, EmailRoleBody, IdRoleBody, IdBody
 };
 use crate::service::user::{user_exists_by_email};
 use crate::service::organisation::{assert_user_is_not_in_organisation};
 use crate::models::transaction::DBTransaction;
+use crate::service::auth::assert_is_super_user;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -158,11 +159,26 @@ impl OrganisationHandler {
     }
 
     /// Get all organisations that the logged in user is an Admin of
+    /// If user is Super User, get all organisations
     pub async fn get_by_admin(
         mut transaction: DBTransaction<'_>,
         user: AuthUser,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let orgs = Organisation::get_by_admin(user.user_id, &mut transaction.tx).await?;
+        let mut orgs = Vec::<OrganisationDetails>::new();
+        // Check if user is Super User
+        match assert_is_super_user(user.user_id, &mut transaction.tx).await {
+            Ok(_) => {
+                // Is Super User
+                orgs = Organisation::get_all(&mut transaction.tx).await?;
+            }
+            Err(ChaosError::Unauthorized) => {
+                // Not a Super User
+                orgs = Organisation::get_by_admin(user.user_id, &mut transaction.tx).await?;
+            }
+            Err(e) => {
+                return Err(e);
+            }
+        }
 
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(orgs)))

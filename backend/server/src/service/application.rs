@@ -28,7 +28,7 @@ pub async fn user_is_application_admin(
     user_id: i64,
     application_id: i64,
     transaction: &mut Transaction<'_, Postgres>,
-) -> Result<(), ChaosError> {
+) -> Result<bool, ChaosError> {
     let is_admin = sqlx::query!(
         "
             SELECT EXISTS(
@@ -50,10 +50,10 @@ pub async fn user_is_application_admin(
     .expect("`exists` should always exist in this query result");
 
     if !is_admin {
-        return Err(ChaosError::Unauthorized);
+        return Ok(false);
     }
 
-    Ok(())
+    Ok(true)
 }
 
 /// Verifies if a user is the owner of an application.
@@ -73,7 +73,7 @@ pub async fn user_is_application_owner(
     user_id: i64,
     application_id: i64,
     transaction: &mut Transaction<'_, Postgres>,
-) -> Result<(), ChaosError> {
+) -> Result<bool, ChaosError> {
     let is_owner = sqlx::query!(
         "
             SELECT EXISTS(
@@ -91,10 +91,10 @@ pub async fn user_is_application_owner(
     .expect("`exists` should always exist in this query result");
 
     if !is_owner {
-        return Err(ChaosError::Unauthorized);
+        return Ok(false);
     }
 
-    Ok(())
+    Ok(true)
 }
 
 /// Verifies if an application is still open for submissions.

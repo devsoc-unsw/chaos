@@ -1,4 +1,5 @@
 import CampaignCard from "./CampaignCard";
+import DevToolBar from "./DevToolBar";
 import LoadingIndicator from "./LoadingIndicator";
 import MarkChip from "./MarkChip";
 import MessagePopup from "./MessagePopup";
@@ -18,4 +19,5 @@ export {
   PrivateRoute,
   ReviewerStepper,
   Transition,
+  DevToolBar,
 };

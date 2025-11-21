@@ -8,7 +8,7 @@ export default function CreateQuestion() {
     return (
         <div className="h-screen w-full p-4">
             <div className="h-full max-w-4xl mx-auto">
-                <QuestionEditor />
+                <QuestionEditor campaignId="" roleId={null} isCommon={true} />
             </div>
         </div>
     );
