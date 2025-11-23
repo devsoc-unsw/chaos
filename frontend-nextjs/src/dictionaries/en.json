@@ -1,4 +1,7 @@
 {
+    "common": {
+        "organisation": "Organisation"
+    },
     "dashboard": {
         "sidebar": {
             "campaigns": "Campaigns",

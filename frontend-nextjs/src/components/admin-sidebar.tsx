@@ -73,7 +73,7 @@ export function AdminSidebar({ dict }: AdminSidebarProps) {
                   </div>
                   <div className="flex flex-1 flex-col gap-0.5 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">{selectedOrg}</span>
-                    <span className="truncate text-xs text-muted-foreground">Organization</span>
+                    <span className="truncate text-xs text-muted-foreground">{dict.common.organisation}</span>
                   </div>
                   <ChevronDown className="ml-auto size-4" />
                 </SidebarMenuButton>

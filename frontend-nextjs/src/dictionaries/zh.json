@@ -1,4 +1,7 @@
 {
+    "common": { 
+        "organisation": "组织"
+    },
     "dashboard": {
         "sidebar": {
             "campaigns": "活动",
