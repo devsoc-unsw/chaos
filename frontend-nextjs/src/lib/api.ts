@@ -1,6 +1,6 @@
 import { getAuthToken } from "./auth";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+const API_BASE_URL = process.env.NEXT_API_BASE_URL || "http://localhost:8080";
 
 export class ApiError extends Error {
   status: number;
@@ -25,7 +25,7 @@ type RequestOptions = {
  * Server-side API client that forwards auth_token cookie to backend
  * Use this in server components and server actions
  */
-export async function apiRequest<T>(
+export async function serverApiRequest<T>(
   path: string,
   options: RequestOptions = {}
 ): Promise<T> {

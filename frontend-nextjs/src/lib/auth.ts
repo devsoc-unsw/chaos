@@ -1,4 +1,7 @@
+import { User } from "@/models";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { serverApiRequest } from "./api";
 
 /**
  * Gets the auth token from HTTP-only cookies in server components
@@ -11,11 +14,29 @@ export async function getAuthToken(): Promise<string | undefined> {
 }
 
 /**
- * Checks if user is authenticated by verifying auth_token cookie exists
- * @returns True if user has valid auth token cookie
+ * Redirects to the login page
  */
-export async function isAuthenticated(): Promise<boolean> {
+function redirectToLogin() {
+  redirect(process.env.NEXT_OAUTH_CALLBACK_URL || "/login");
+}
+
+/**
+ * Gets the current authenticated user's profile
+ * Similar to cookies(), this is a server-side helper
+ * @returns The user profile or undefined if not authenticated
+ */
+export async function getCurrentUser(): Promise<User | undefined> {
   const token = await getAuthToken();
-  return !!token;
+  if (!token) redirectToLogin();
+
+  try {
+    const user = await serverApiRequest<User>("/api/v1/user", {
+      authToken: token,
+    });
+
+    return user;
+  } catch (error) {
+    redirectToLogin();
+  }
 }
 

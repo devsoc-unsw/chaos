@@ -1,5 +1,8 @@
 // Auth utilities
-export { getAuthToken, isAuthenticated } from "./auth";
+export {
+  getAuthToken,
+  getCurrentUser,
+} from "./auth";
 
 // API client
-export { apiRequest, ApiError } from "./api";
+export { serverApiRequest, ApiError } from "./api";
