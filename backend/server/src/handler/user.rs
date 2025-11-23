@@ -4,11 +4,10 @@
 //! - Retrieving user details
 //! - Updating user information (name, pronouns, gender, zid, degree)
 
-use crate::models::app::AppState;
 use crate::models::auth::AuthUser;
 use crate::models::error::ChaosError;
 use crate::models::user::{User, UserDegree, UserGender, UserName, UserPronouns, UserZid};
-use axum::extract::{Json, State};
+use axum::extract::{Json};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use crate::models::transaction::DBTransaction;

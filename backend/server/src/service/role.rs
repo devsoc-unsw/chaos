@@ -5,7 +5,7 @@
 
 use std::ops::DerefMut;
 use crate::models::error::ChaosError;
-use sqlx::{Pool, Postgres, Transaction};
+use sqlx::{Postgres, Transaction};
 
 /// Verifies if a user has admin privileges for a role.
 /// 

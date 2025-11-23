@@ -5,13 +5,12 @@
 //! - Updating and deleting roles
 //! - Managing role applications
 
-use crate::models::app::AppState;
 use crate::models::application::Application;
 use crate::models::auth::{AuthUser, RoleAdmin};
 use crate::models::error::ChaosError;
 use crate::models::role::{Role, RoleUpdate};
 use crate::models::transaction::DBTransaction;
-use axum::extract::{Json, Path, State};
+use axum::extract::{Json, Path};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 

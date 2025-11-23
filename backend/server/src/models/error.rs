@@ -6,8 +6,6 @@
 
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Redirect, Response};
-use axum::Json;
-use serde_json::json;
 
 /// Custom error enum for Chaos.
 ///

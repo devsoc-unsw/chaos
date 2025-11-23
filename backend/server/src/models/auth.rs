@@ -357,7 +357,7 @@ where
         if !user_is_application_owner(user_id, application_id, &mut tx).await? {
             return Err(ChaosError::Unauthorized);
         }
-        tx.commit().await;
+        tx.commit().await?;
 
         Ok(ApplicationCreatorGivenApplicationId { user_id })
     }
