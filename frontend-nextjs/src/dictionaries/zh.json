@@ -1,0 +1,13 @@
+{
+    "dashboard": {
+        "sidebar": {
+            "campaigns": "活动",
+            "email_templates": "邮件模板",
+            "members": "成员",
+            "settings": "设置",
+            "create_organisation": "创建组织",
+            "profile": "个人资料"
+        }
+    }
+}
+

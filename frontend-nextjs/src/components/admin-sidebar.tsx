@@ -18,32 +18,36 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useState } from "react"
 
+interface AdminSidebarProps {
+  dict: any;
+}
 
-const items = [
-  {
-    title: "Campaigns",
-    href: "campaigns",
-    icon: Megaphone,
-  },
-  {
-    title: "Email Templates",
-    href: "templates",
-    icon: Mail,
-  },
-  {
-    title: "Members",
-    href: "members",
-    icon: Users,
-  },
-  {
-    title: "Settings",
-    href: "settings",
-    icon: Settings,
-  },
-]
-
-export function AdminSidebar() {
+export function AdminSidebar({ dict }: AdminSidebarProps) {
   const [selectedOrg, setSelectedOrg] = useState<string>("DevSoc")
+
+  const items = [
+    {
+      title: dict.dashboard.sidebar.campaigns,
+      href: "campaigns",
+      icon: Megaphone,
+    },
+    {
+      title: dict.dashboard.sidebar.email_templates,
+      href: "templates",
+      icon: Mail,
+    },
+    {
+      title: dict.dashboard.sidebar.members,
+      href: "members",
+      icon: Users,
+    },
+    {
+      title: dict.dashboard.sidebar.settings,
+      href: "settings",
+      icon: Settings,
+    },
+  ]
+
 
   const orgs = [
     {
@@ -85,7 +89,7 @@ export function AdminSidebar() {
                 <DropdownMenuItem asChild>
                   <a href="/organisation/new">
                     <Plus className="mr-2 size-4" />
-                    <span>Create Organisation</span>
+                    <span>{dict.dashboard.sidebar.create_organisation}</span>
                   </a>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -118,7 +122,7 @@ export function AdminSidebar() {
                 <SidebarMenuButton asChild>
                   <a href="/dashboard/profile">
                     <User />
-                    <span>Profile</span>
+                    <span>{dict.dashboard.sidebar.profile}</span>
                   </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
