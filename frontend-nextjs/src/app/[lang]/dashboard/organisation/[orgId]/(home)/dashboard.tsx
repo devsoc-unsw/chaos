@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 
 export default function Dashboard() {
     const { data } = useQuery({
-        queryKey: ['dashboard'],
+        queryKey: ['user'],
         queryFn: getCurrentUser,
     });
 

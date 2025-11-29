@@ -1,22 +1,12 @@
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from '@tanstack/react-query';
-import { getCurrentUser } from '@/lib/auth';
-import Dashboard from './dashboard';
+import { redirect } from "next/navigation";
+import { getAllOrganisations } from "@/models/organisation";
 
-export default async function Home() {
-  const queryClient = new QueryClient();
+export default async function DashboardRedirect({ params }: { params: { lang: string } }) {
+  const orgs = await getAllOrganisations();
 
-  await queryClient.prefetchQuery({
-    queryKey: ['dashboard'],
-    queryFn: getCurrentUser,
-  });
-  
-  return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-        <Dashboard />
-    </HydrationBoundary>
-  );
+  if (orgs.length === 0) {
+    redirect(`/dashboard/join`);
+  }
+
+  redirect(`/dashboard/organisation/${orgs[0].id}`);
 }

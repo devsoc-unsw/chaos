@@ -306,7 +306,7 @@ impl Organisation {
         Ok(organisation)
     }
 
-    /// Retrieves all organisations that a user is an administrator of.
+    /// Retrieves all organisations that a user is a member of.
     /// 
     /// # Arguments
     /// * `user_id` - The ID of the user to retrieve organisations for
@@ -316,7 +316,7 @@ impl Organisation {
     /// Returns a `Result` containing either:
     /// * `Ok(Vec<OrganisationDetails>)` - The requested organisations
     /// * `Err(ChaosError)` - An error if retrieval fails
-    pub async fn get_by_admin(
+    pub async fn get_by_member(
         user_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<OrganisationDetails>, ChaosError> {

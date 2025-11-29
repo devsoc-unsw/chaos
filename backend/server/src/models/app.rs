@@ -147,7 +147,7 @@ pub async fn app() -> Result<Router, ChaosError> {
             "/api/v1/user/applications",
             get(ApplicationHandler::get_from_curr_user),
         )
-        .route("/api/v1/user/organisations", get(OrganisationHandler::get_by_admin))
+        .route("/api/v1/user/organisations", get(OrganisationHandler::get_all_for_user))
         .route("/api/v1/organisation", post(OrganisationHandler::create))
         .route(
             "/api/v1/organisation/slug_check",

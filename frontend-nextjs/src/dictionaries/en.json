@@ -3,6 +3,7 @@
         "organisation": "Organisation"
     },
     "dashboard": {
+        "dashboard": "Dashboard",
         "sidebar": {
             "campaigns": "Campaigns",
             "email_templates": "Email Templates",

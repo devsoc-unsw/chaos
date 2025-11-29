@@ -1,0 +1,33 @@
+import { apiRequest } from "@/lib/api";
+
+export type OrganisationDetails = {
+    id: string,
+    slug: string,
+    name: string,
+    logo: string | null,
+    created_at: string,
+};
+
+export async function getAllOrganisations(): Promise<OrganisationDetails[]> {
+    return await apiRequest<OrganisationDetails[]>("/api/v1/user/organisations");
+}
+
+export async function getOrganisationById(orgId: string): Promise<OrganisationDetails> {
+    return await apiRequest<OrganisationDetails>(`/api/v1/organisation/${orgId}`);
+}
+
+export type OrganisationCampaign = {
+    /// Unique identifier for the campaign
+    id: string,
+    slug: string,
+    name: string,
+    cover_image: string | null,
+    description: string | null,
+    starts_at: string,
+    ends_at: string,
+    published: boolean,
+}
+
+export async function getOrganisationCampaigns(orgId: string): Promise<OrganisationCampaign[]> {
+    return await apiRequest<OrganisationCampaign[]>(`/api/v1/organisation/${orgId}/campaigns`);
+}
