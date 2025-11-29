@@ -506,4 +506,15 @@ impl OrganisationHandler {
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(email_templates)))
     }
+
+    pub async fn get_user_role(
+        user: AuthUser,
+        Path(id): Path<i64>,
+        mut transaction: DBTransaction<'_>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let role = Organisation::get_user_role(id, user.user_id, &mut transaction.tx).await?;
+
+        transaction.tx.commit().await?;
+        Ok((StatusCode::OK, Json(json!({ "role": role }))))
+    }
 }

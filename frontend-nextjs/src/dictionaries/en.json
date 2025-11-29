@@ -8,7 +8,9 @@
         "dashboard": "Dashboard",
         "profile": "Profile",
         "campaigns": "Campaigns",
-        "settings": "Settings"
+        "settings": "Settings",
+        "roles": "Roles",
+        "description": "Description"
     },
     "dashboard": {
         "email_templates": "Email Templates",
@@ -17,9 +19,18 @@
             "create_organisation": "Create Organisation"
         },
         "campaigns": {
-            "copy_campaign_id": "Copy Campaign ID",
+            "copy_campaign_id": "Copy ID",
             "copy_campaign_link": "Copy Campaign Link",
-            "edit_campaign": "Edit Campaign"
+            "edit_campaign": "Edit Campaign",
+            "share_link": "Share Link",
+            "review_applications": "Review Applications",
+            "roles": {
+                "number_of_positions": "Number of Positions"
+            }
+        },
+        "actions": {
+            "edit": "Edit",
+            "delete": "Delete"
         }
     }
 }

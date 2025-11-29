@@ -8,7 +8,9 @@
         "dashboard": "仪表盘",
         "profile": "个人资料",
         "campaigns": "活动",
-        "settings": "设置"
+        "settings": "设置",
+        "roles": "角色",
+        "description": "描述"
     },
     "dashboard": {
         "email_templates": "邮件模板",
@@ -17,9 +19,18 @@
             "create_organisation": "创建组织"
         },
         "campaigns": {
-            "copy_campaign_id": "复制活动 ID",
+            "copy_campaign_id": "复制 ID",
             "copy_campaign_link": "复制活动链接",
-            "edit_campaign": "编辑活动"
+            "edit_campaign": "编辑活动",
+            "share_link": "分享链接",
+            "review_applications": "审核申请",
+            "roles": {
+                "number_of_positions": "职位数量"
+            }
+        },
+        "actions": {
+            "edit": "编辑",
+            "delete": "删除"
         }
     }
 }

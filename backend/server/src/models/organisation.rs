@@ -682,4 +682,32 @@ impl Organisation {
 
         Ok(id)
     }
+
+    pub async fn get_user_role(
+        organisation_id: i64,
+        user_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Option<OrganisationRole>, ChaosError> {
+        let possible_member = sqlx::query_as!(
+            Member,
+            "
+                SELECT
+                    organisation_members.user_id as id,
+                    organisation_members.role AS \"role: OrganisationRole\",
+                    users.name from organisation_members
+                JOIN users on users.id = organisation_members.user_id
+                WHERE organisation_members.organisation_id = $1 AND organisation_members.user_id = $2
+            ",
+            organisation_id,
+            user_id
+        )
+            .fetch_optional(transaction.deref_mut())
+            .await?;
+
+        if let Some(member) = possible_member {
+            return Ok(Some(member.role));
+        }
+
+        Ok(None)
+    }
 }

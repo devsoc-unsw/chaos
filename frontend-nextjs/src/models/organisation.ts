@@ -33,3 +33,13 @@ export type OrganisationCampaign = {
 export async function getOrganisationCampaigns(orgId: string): Promise<OrganisationCampaign[]> {
     return await apiRequest<OrganisationCampaign[]>(`/api/v1/organisation/${orgId}/campaigns`);
 }
+
+export type OrganisationRole = "User" | "Admin";
+
+export type OrganisationUserRole = {
+    role: OrganisationRole | null,
+}
+
+export async function getOrganisationUserRole(orgId: string): Promise<OrganisationUserRole> {
+    return await apiRequest<OrganisationUserRole>(`/api/v1/organisation/${orgId}/role`);
+}

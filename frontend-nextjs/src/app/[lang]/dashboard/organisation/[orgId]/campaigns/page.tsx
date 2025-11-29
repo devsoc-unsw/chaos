@@ -20,7 +20,6 @@ import { getDictionary } from '@/app/[lang]/dictionaries';
     
     return (
       <HydrationBoundary state={dehydrate(queryClient)}>
-          <h1 className="text-2xl font-bold my-2">{dict.common.campaigns}</h1>
           <Campaigns orgId={orgId} dict={dict} />
       </HydrationBoundary>
     );

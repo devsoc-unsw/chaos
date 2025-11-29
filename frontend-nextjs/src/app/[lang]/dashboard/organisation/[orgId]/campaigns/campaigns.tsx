@@ -16,6 +16,7 @@ export default function Campaigns({ orgId, dict }: { orgId: string, dict: any })
 
     return (
         <div>
+            <h1 className="text-2xl font-bold my-2">{dict.common.campaigns}</h1>
             <DataTable columns={columns} data={data ?? []} />
         </div>
     );

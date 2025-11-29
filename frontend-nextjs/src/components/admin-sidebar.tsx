@@ -16,16 +16,17 @@ import {
 } from "@/components/ui/sidebar"
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { getAllOrganisations } from "@/models/organisation"
+import { getAllOrganisations, OrganisationUserRole } from "@/models/organisation"
 import { useQuery } from "@tanstack/react-query"
 import { redirect, useParams, useRouter } from "next/navigation"
 import { APP_VERSION } from "@/lib/const"
 
 interface AdminSidebarProps {
+  userRole: OrganisationUserRole;
   dict: any;
 }
 
-export function AdminSidebar({ dict }: AdminSidebarProps) {
+export function AdminSidebar({ userRole, dict }: AdminSidebarProps) {
   const router = useRouter();
   const { orgId } = useParams();
 
@@ -49,8 +50,11 @@ export function AdminSidebar({ dict }: AdminSidebarProps) {
       title: dict.common.campaigns,
       href: "campaigns",
       icon: Megaphone,
-    },
-    {
+    }
+  ]
+
+  if (userRole.role === "Admin") {
+    items.push(...[{
       title: dict.dashboard.email_templates,
       href: "templates",
       icon: Mail,
@@ -64,8 +68,8 @@ export function AdminSidebar({ dict }: AdminSidebarProps) {
       title: dict.common.settings,
       href: "settings",
       icon: Settings,
-    },
-  ]
+    },]);
+  }
 
   return (
     <Sidebar>
