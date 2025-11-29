@@ -110,7 +110,7 @@ export function AdminSidebar({ dict }: AdminSidebarProps) {
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <a href={`/dashboard/${orgId}/${item.href}`}>
+                    <a href={`/dashboard/organisation/${orgId}/${item.href}`}>
                       <item.icon />
                       <span>{item.title}</span>
                     </a>

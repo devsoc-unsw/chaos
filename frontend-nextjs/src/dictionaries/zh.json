@@ -3,6 +3,7 @@
         "organisation": "组织"
     },
     "dashboard": {
+        "dashboard": "仪表盘",
         "sidebar": {
             "campaigns": "活动",
             "email_templates": "邮件模板",
