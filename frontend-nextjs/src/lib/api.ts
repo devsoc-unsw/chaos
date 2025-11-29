@@ -1,6 +1,6 @@
-import { getAuthToken } from "./auth";
-
 const API_BASE_URL = process.env.NEXT_API_BASE_URL || "http://localhost:8080";
+
+const isServer = typeof window === "undefined";
 
 export class ApiError extends Error {
   status: number;
@@ -18,50 +18,72 @@ type RequestOptions = {
   method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
   body?: unknown;
   headers?: Record<string, string>;
-  authToken?: string; // Optional token override
+  okRequiredOtherwiseLogin?: boolean; // if the response.status is not 200, redirect to login
 };
 
 /**
- * Server-side API client that forwards auth_token cookie to backend
- * Use this in server components and server actions
+ * Universal API client that works on both server and client
+ * - Server: Reads cookies via next/headers and forwards them
+ * - Client: Uses credentials: 'include' to send cookies
  */
-export async function serverApiRequest<T>(
+export async function apiRequest<T>(
   path: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const { method = "GET", body, headers = {}, authToken } = options;
+  const { method = "GET", body, headers = {}, okRequiredOtherwiseLogin = false } = options;
 
-  // Get auth token from cookies if not provided
-  const token = authToken || (await getAuthToken());
+  const requestHeaders: Record<string, string> = { ...headers };
 
-  // Build request headers
-  const requestHeaders: Record<string, string> = {
-    ...headers,
-  };
-
-  // Add cookie header with auth_token if available
-  if (token) {
-    requestHeaders.Cookie = `auth_token=${token}`;
-  }
-
-  // Add content-type for JSON requests
   if (body) {
     requestHeaders["Content-Type"] = "application/json";
   }
 
-  // Clean path and build URL
   const cleanPath = path.startsWith("/") ? path.slice(1) : path;
   const url = `${API_BASE_URL}/${cleanPath}`;
+  
+  let fetchOptions: RequestInit;
 
-  // Make request
-  const response = await fetch(url, {
-    method,
-    headers: requestHeaders,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  if (isServer) {
+    // Server-side: forward cookies manually
+    const { cookies } = await import("next/headers");
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get("auth_token");
 
-  // Handle errors
+    if (authToken?.value) {
+      requestHeaders.Cookie = `auth_token=${authToken.value}`;
+    }
+
+    fetchOptions = {
+      method,
+      headers: requestHeaders,
+      body: body ? JSON.stringify(body) : undefined,
+    };
+  } else {
+    // Client-side: use credentials include
+    fetchOptions = {
+      method,
+      headers: requestHeaders,
+      body: body ? JSON.stringify(body) : undefined,
+      credentials: "include",
+    };
+  }
+
+  const response = await fetch(url, fetchOptions);
+
   if (!response.ok) {
+    if (response.status === 401 || okRequiredOtherwiseLogin) {
+      if (isServer) {
+        const { redirect } = await import("next/navigation");
+        const { headers } = await import("next/headers");
+        const headersList = await headers();
+        const pathname = headersList.get("x-pathname") || "/";
+
+        redirect(`/login?to=${encodeURIComponent(pathname)}`);
+      } else {
+        window.location.href = `/login?to=${encodeURIComponent(window.location.pathname)}`;
+      }
+    }
+    
     throw new ApiError(
       response.status,
       response.statusText,
@@ -69,11 +91,9 @@ export async function serverApiRequest<T>(
     );
   }
 
-  // Parse response
   if (response.status === 204 || response.headers.get("content-length") === "0") {
     return undefined as T;
   }
 
   return (await response.json()) as T;
 }
-

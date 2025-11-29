@@ -22,7 +22,13 @@ export function proxy(request: NextRequest) {
 
   // Redirect to the locale path (e.g. /about -> /zh-CN/about)
   request.nextUrl.pathname = `/${locale}${pathname}`;
-  return NextResponse.rewrite(request.nextUrl);
+  
+  const response = NextResponse.rewrite(request.nextUrl);
+
+  // Inject the current pathname into a header for server-side access
+  response.headers.set("x-pathname", request.nextUrl.pathname);
+
+  return response;
 }
 
 export const config = {
