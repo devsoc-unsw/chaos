@@ -19,7 +19,9 @@ export async function getOrganisationById(orgId: string): Promise<OrganisationDe
 export type OrganisationCampaign = {
     /// Unique identifier for the campaign
     id: string,
-    slug: string,
+    organisation_id: string,
+    campaign_slug: string,
+    organisation_slug: string,
     name: string,
     cover_image: string | null,
     description: string | null,

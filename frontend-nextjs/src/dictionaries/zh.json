@@ -1,16 +1,25 @@
 {
     "common": { 
-        "organisation": "组织"
+        "organisation": "组织",
+        "name": "名称",
+        "starts_at": "开始时间",
+        "ends_at": "结束时间",
+        "published": "发布",
+        "dashboard": "仪表盘",
+        "profile": "个人资料",
+        "campaigns": "活动",
+        "settings": "设置"
     },
     "dashboard": {
-        "dashboard": "仪表盘",
+        "email_templates": "邮件模板",
+        "members": "成员",
         "sidebar": {
-            "campaigns": "活动",
-            "email_templates": "邮件模板",
-            "members": "成员",
-            "settings": "设置",
-            "create_organisation": "创建组织",
-            "profile": "个人资料"
+            "create_organisation": "创建组织"
+        },
+        "campaigns": {
+            "copy_campaign_id": "复制活动 ID",
+            "copy_campaign_link": "复制活动链接",
+            "edit_campaign": "编辑活动"
         }
     }
 }

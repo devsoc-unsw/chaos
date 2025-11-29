@@ -1,16 +1,25 @@
 {
     "common": {
-        "organisation": "Organisation"
+        "organisation": "Organisation",
+        "name": "Name",
+        "starts_at": "Starts At",
+        "ends_at": "Ends At",
+        "published": "Published",
+        "dashboard": "Dashboard",
+        "profile": "Profile",
+        "campaigns": "Campaigns",
+        "settings": "Settings"
     },
     "dashboard": {
-        "dashboard": "Dashboard",
+        "email_templates": "Email Templates",
+        "members": "Members",
         "sidebar": {
-            "campaigns": "Campaigns",
-            "email_templates": "Email Templates",
-            "members": "Members",
-            "settings": "Settings",
-            "create_organisation": "Create Organisation",
-            "profile": "Profile"
+            "create_organisation": "Create Organisation"
+        },
+        "campaigns": {
+            "copy_campaign_id": "Copy Campaign ID",
+            "copy_campaign_link": "Copy Campaign Link",
+            "edit_campaign": "Edit Campaign"
         }
     }
 }

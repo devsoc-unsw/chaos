@@ -605,9 +605,13 @@ impl Organisation {
         let campaigns = sqlx::query_as!(
             OrganisationCampaign,
             "
-                SELECT id, slug, name, cover_image, description, starts_at, ends_at, published
-                FROM campaigns
+                SELECT
+                    c.id, c.organisation_id, c.slug as campaign_slug, c.name, c.cover_image,
+                    c.description, c.starts_at, c.ends_at, c.published, o.slug as organisation_slug
+                FROM campaigns c
+                LEFT JOIN organisations o on c.organisation_id = o.id
                 WHERE organisation_id = $1
+                ORDER BY starts_at DESC
             ",
             organisation_id
         )
