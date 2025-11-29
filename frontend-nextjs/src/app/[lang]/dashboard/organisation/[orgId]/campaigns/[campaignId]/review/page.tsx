@@ -3,7 +3,7 @@ import {
     HydrationBoundary,
     QueryClient,
   } from '@tanstack/react-query';
-import { getCampaign, getCampaignRoles } from '@/models/campaign';
+import { getCampaign, getCampaignApplications, getCampaignRoles } from '@/models/campaign';
 import { getDictionary } from '@/app/[lang]/dictionaries';
 import ReviewCampaignApplications from './review-applications';
   
@@ -20,6 +20,11 @@ import ReviewCampaignApplications from './review-applications';
     await queryClient.prefetchQuery({
       queryKey: [`${campaignId}-campaign-roles`],
       queryFn: () => getCampaignRoles(campaignId),
+    });
+
+    await queryClient.prefetchQuery({
+      queryKey: [`${campaignId}-campaign-applications`],
+      queryFn: () => getCampaignApplications(campaignId),
     });
     
     return (

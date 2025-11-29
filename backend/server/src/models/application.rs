@@ -471,6 +471,7 @@ impl Application {
         .fetch_all(transaction.deref_mut())
         .await?;
 
+        // TODO: Make this into one query
         let mut application_details_list = Vec::new();
         for application_data in application_data_list {
             let applied_roles = sqlx::query_as!(
