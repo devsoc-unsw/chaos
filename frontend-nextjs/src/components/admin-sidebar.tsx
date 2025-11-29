@@ -17,13 +17,31 @@ import {
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useState } from "react"
+import { getAllOrganisations } from "@/models/organisation"
+import { useQuery } from "@tanstack/react-query"
+import { redirect } from "next/navigation"
 
 interface AdminSidebarProps {
   dict: any;
 }
 
 export function AdminSidebar({ dict }: AdminSidebarProps) {
-  const [selectedOrg, setSelectedOrg] = useState<string>("DevSoc")
+  const { data: orgs } = useQuery({
+    queryKey: ['organisations'],
+    queryFn: getAllOrganisations,
+  });
+
+  if (orgs?.length === 0) {
+    return redirect("/dashboard/join");
+  }
+  
+  const [selectedOrgName, setSelectedOrgName] = useState<string>(orgs?.[0].name ?? "")
+  const [selectedOrgId, setSelectedOrgId] = useState<string>(orgs?.[0].id ?? "")
+
+  const setSelectedOrg = (name: string, id: string) => {
+    setSelectedOrgName(name)
+    setSelectedOrgId(id)
+  }
 
   const items = [
     {
@@ -48,18 +66,6 @@ export function AdminSidebar({ dict }: AdminSidebarProps) {
     },
   ]
 
-
-  const orgs = [
-    {
-      id: "1",
-      name: "DevSoc",
-    },
-    {
-      id: "2",
-      name: "CSESoc",
-    }
-  ]
-
   return (
     <Sidebar>
       <SidebarHeader>
@@ -72,22 +78,22 @@ export function AdminSidebar({ dict }: AdminSidebarProps) {
                     <Building2 className="size-4" />
                   </div>
                   <div className="flex flex-1 flex-col gap-0.5 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">{selectedOrg}</span>
+                    <span className="truncate font-semibold">{selectedOrgName}</span>
                     <span className="truncate text-xs text-muted-foreground">{dict.common.organisation}</span>
                   </div>
                   <ChevronDown className="ml-auto size-4" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-(--radix-dropdown-menu-trigger-width)" align="start">
-                {orgs.map((org) => (
-                  <DropdownMenuItem key={org.id} onSelect={() => setSelectedOrg(org.name)}>
+                {orgs?.map((org) => (
+                  <DropdownMenuItem key={org.id} onSelect={() => setSelectedOrg(org.name, org.id)}>
                     <Building2 className="mr-2 size-4" />
                     {org.name}
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <a href="/organisation/new">
+                  <a href="/dashboard/organisation/new">
                     <Plus className="mr-2 size-4" />
                     <span>{dict.dashboard.sidebar.create_organisation}</span>
                   </a>

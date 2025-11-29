@@ -6,17 +6,8 @@ import {
 import { getCurrentUser } from '@/lib/auth';
 import Dashboard from './dashboard';
 
-export default async function Home() {
-  const queryClient = new QueryClient();
-
-  await queryClient.prefetchQuery({
-    queryKey: ['dashboard'],
-    queryFn: getCurrentUser,
-  });
-  
+export default async function DashboardPage() {  
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-        <Dashboard />
-    </HydrationBoundary>
+    <Dashboard />
   );
 }

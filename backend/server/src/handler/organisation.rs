@@ -153,9 +153,9 @@ impl OrganisationHandler {
         Ok((StatusCode::OK, "Successfully deleted organisation"))
     }
 
-    /// Get all organisations that the logged in user is an Admin of
+    /// Get all organisations that the logged in user is a Member of
     /// If user is Super User, get all organisations
-    pub async fn get_by_admin(
+    pub async fn get_all_for_user(
         mut transaction: DBTransaction<'_>,
         user: AuthUser,
     ) -> Result<impl IntoResponse, ChaosError> {
@@ -163,16 +163,16 @@ impl OrganisationHandler {
         let orgs = match assert_is_super_user(user.user_id, &mut transaction.tx).await {
             Ok(_) => {
                 // Is Super User
-                Organisation::get_all(&mut transaction.tx).await?;
+                Ok(Organisation::get_all(&mut transaction.tx).await?)
             }
             Err(ChaosError::Unauthorized) => {
                 // Not a Super User
-                Organisation::get_by_admin(user.user_id, &mut transaction.tx).await?;
+                Ok(Organisation::get_by_member(user.user_id, &mut transaction.tx).await?)
             }
             Err(e) => {
-                return Err(e);
+                Err(e)
             }
-        };
+        }?;
 
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(orgs)))
