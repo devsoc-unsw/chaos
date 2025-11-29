@@ -1,13 +1,12 @@
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from '@tanstack/react-query';
-import { getCurrentUser } from '@/lib/auth';
-import Dashboard from './dashboard';
+import { redirect } from "next/navigation";
+import { getAllOrganisations } from "@/models/organisation";
 
-export default async function DashboardPage() {  
-  return (
-    <Dashboard />
-  );
+export default async function DashboardRedirect({ params }: { params: { lang: string } }) {
+  const orgs = await getAllOrganisations();
+
+  if (orgs.length === 0) {
+    redirect(`/dashboard/join`);
+  }
+
+  redirect(`/dashboard/organisation/${orgs[0].id}`);
 }

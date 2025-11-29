@@ -16,16 +16,18 @@ import {
 } from "@/components/ui/sidebar"
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { useState } from "react"
 import { getAllOrganisations } from "@/models/organisation"
 import { useQuery } from "@tanstack/react-query"
-import { redirect } from "next/navigation"
+import { redirect, useParams, useRouter } from "next/navigation"
 
 interface AdminSidebarProps {
   dict: any;
 }
 
 export function AdminSidebar({ dict }: AdminSidebarProps) {
+  const router = useRouter();
+  const { orgId } = useParams();
+
   const { data: orgs } = useQuery({
     queryKey: ['organisations'],
     queryFn: getAllOrganisations,
@@ -34,13 +36,11 @@ export function AdminSidebar({ dict }: AdminSidebarProps) {
   if (orgs?.length === 0) {
     return redirect("/dashboard/join");
   }
-  
-  const [selectedOrgName, setSelectedOrgName] = useState<string>(orgs?.[0].name ?? "")
-  const [selectedOrgId, setSelectedOrgId] = useState<string>(orgs?.[0].id ?? "")
 
-  const setSelectedOrg = (name: string, id: string) => {
-    setSelectedOrgName(name)
-    setSelectedOrgId(id)
+  const selectedOrg = orgs?.find((org) => org.id === orgId) ?? orgs?.[0];
+
+  const handleOrgChange = (newOrgId: string) => {
+    router.push(`/dashboard/organisation/${newOrgId}`);
   }
 
   const items = [
@@ -78,7 +78,7 @@ export function AdminSidebar({ dict }: AdminSidebarProps) {
                     <Building2 className="size-4" />
                   </div>
                   <div className="flex flex-1 flex-col gap-0.5 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">{selectedOrgName}</span>
+                    <span className="truncate font-semibold">{selectedOrg?.name}</span>
                     <span className="truncate text-xs text-muted-foreground">{dict.common.organisation}</span>
                   </div>
                   <ChevronDown className="ml-auto size-4" />
@@ -86,7 +86,7 @@ export function AdminSidebar({ dict }: AdminSidebarProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-(--radix-dropdown-menu-trigger-width)" align="start">
                 {orgs?.map((org) => (
-                  <DropdownMenuItem key={org.id} onSelect={() => setSelectedOrg(org.name, org.id)}>
+                  <DropdownMenuItem key={org.id} onSelect={() => handleOrgChange(org.id)}>
                     <Building2 className="mr-2 size-4" />
                     {org.name}
                   </DropdownMenuItem>
@@ -110,7 +110,7 @@ export function AdminSidebar({ dict }: AdminSidebarProps) {
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <a href={`/dashboard/${item.href}`}>
+                    <a href={`/dashboard/${orgId}/${item.href}`}>
                       <item.icon />
                       <span>{item.title}</span>
                     </a>
@@ -126,7 +126,7 @@ export function AdminSidebar({ dict }: AdminSidebarProps) {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <a href="/dashboard/profile">
+                  <a href={`/dashboard/${orgId}/profile`}>
                     <User />
                     <span>{dict.dashboard.sidebar.profile}</span>
                   </a>
