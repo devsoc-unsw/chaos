@@ -1,5 +1,5 @@
 import { apiRequest } from "@/lib/api";
-import { UserDetails } from "./user";
+import { ApplicationDetails } from "./application";
 
 export interface CampaignDetails {
     /// Unique identifier for the campaign
@@ -32,23 +32,6 @@ export interface CampaignRole {
 
 export async function getCampaignRoles(campaignId: string): Promise<CampaignRole[]> {
     return await apiRequest<CampaignRole[]>(`/api/v1/campaign/${campaignId}/roles`);
-}
-
-export interface ApplicationDetails {
-    id: string;
-    campaign_id: string;
-    user: UserDetails;
-    status: ApplicationStatus;
-    private_status: ApplicationStatus;
-    applied_roles: ApplicationAppliedRoleDetails[];
-}
-
-export type ApplicationStatus = "Pending" | "Rejected" | "Successful";
-
-export interface ApplicationAppliedRoleDetails {
-    campaign_role_id: string;
-    role_name: string;
-    preference: number;
 }
 
 export async function getCampaignApplications(campaignId: string): Promise<ApplicationDetails[]> {
