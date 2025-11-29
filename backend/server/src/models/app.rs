@@ -318,7 +318,7 @@ pub async fn app() -> Result<Router, ChaosError> {
             post(AnswerHandler::create),
         )
         .route(
-            "/api/v1/application/:application_id/answers/role/:role_id",
+            "/api/v1/application/:application_id/role/:role_id/answers",
             get(AnswerHandler::get_all_by_application_and_role),
         )
         .route(

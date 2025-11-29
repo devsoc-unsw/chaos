@@ -1,3 +1,4 @@
+import { apiRequest } from "@/lib";
 import { UserDetails } from "./user";
 
 export interface ApplicationDetails {
@@ -15,4 +16,8 @@ export interface ApplicationAppliedRoleDetails {
     campaign_role_id: string;
     role_name: string;
     preference: number;
+}
+
+export async function getApplication(applicationId: string): Promise<ApplicationDetails> {
+    return await apiRequest<ApplicationDetails>(`/api/v1/application/${applicationId}`);
 }

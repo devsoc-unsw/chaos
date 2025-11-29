@@ -2,15 +2,20 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getCampaign, getCampaignApplications, getCampaignRoles } from "@/models/campaign";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { Search, Filter } from "lucide-react";
 import { dateToString, cn } from "@/lib/utils";
 import { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ApplicationDetails } from "@/models/campaign";
+import { ApplicationDetails } from "@/models/application";
 import ApplicationDetailsComponent from "./application-details";
+import {
+    Empty,
+    EmptyContent,
+    EmptyDescription,
+    EmptyHeader,
+    EmptyMedia,
+    EmptyTitle,
+  } from "@/components/ui/empty"
+import { Form } from "lucide-react";
 
 export default function ReviewCampaignApplications({ campaignId, orgId, dict }: { campaignId: string, orgId: string, dict: any }) {
     const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
@@ -40,13 +45,16 @@ export default function ReviewCampaignApplications({ campaignId, orgId, dict }: 
                 </div>
             </div>
 
-            <div className="flex w-full min-h-[50vh] rounded-lg border">
+            <div className="flex w-full min-h-[50vh] rounded-lg border overflow-hidden">
                 <div className="w-1/3 border-r">
                     <ScrollArea className="h-full">
                         {applications?.map((application: ApplicationDetails) => (
                             <div
                                 key={application.id}
-                                className="p-2 border-b hover:cursor-pointer hover:bg-muted"
+                                className={cn(
+                                    "p-2 border-b hover:cursor-pointer hover:bg-muted",
+                                    selectedAppId === application.id && "bg-muted"
+                                )}
                                 onClick={() => setSelectedAppId(application.id)}
                             >
                                 <p className="text-xs text-gray-500 font-mono">#{application.id}</p>
@@ -57,7 +65,19 @@ export default function ReviewCampaignApplications({ campaignId, orgId, dict }: 
                     </ScrollArea>
                 </div>
                 <div className="w-full p-2">
-                    <ApplicationDetailsComponent applicationId={selectedAppId} />
+                    {selectedAppId ? (
+                        <ApplicationDetailsComponent applicationId={selectedAppId} campaignId={campaignId} dict={dict} />
+                    ) : (
+                        <Empty>
+                        <EmptyHeader>
+                          <EmptyMedia variant="icon">
+                            <Form />
+                          </EmptyMedia>
+                          <EmptyTitle>{dict.dashboard.campaigns.application_review_page.no_application_selected}</EmptyTitle>
+                          <EmptyDescription>{dict.dashboard.campaigns.application_review_page.click_on_application_to_view}</EmptyDescription>
+                        </EmptyHeader>
+                      </Empty>
+                    )}
                 </div>
             </div>
 

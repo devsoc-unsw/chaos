@@ -340,6 +340,7 @@ impl Application {
                     JOIN campaign_roles
                     ON application_roles.campaign_role_id = campaign_roles.id
                 WHERE application_id = $1
+                ORDER BY campaign_roles.id
             ",
             id
         )
@@ -409,6 +410,7 @@ impl Application {
                         JOIN campaign_roles
                         ON application_roles.campaign_role_id = campaign_roles.id
                     WHERE application_id = $1
+                    ORDER BY campaign_roles.id
                 ",
                 application_data.id
             )
@@ -483,6 +485,7 @@ impl Application {
                         JOIN campaign_roles
                         ON application_roles.campaign_role_id = campaign_roles.id
                     WHERE application_id = $1
+                    ORDER BY campaign_roles.id
                 ",
                 application_data.id
             )
@@ -554,6 +557,7 @@ impl Application {
                         JOIN campaign_roles
                         ON application_roles.campaign_role_id = campaign_roles.id
                     WHERE application_id = $1
+                    ORDER BY campaign_roles.id
                 ",
                 application_data.id
             )
@@ -672,6 +676,7 @@ impl Application {
                 SELECT id, application_id, campaign_role_id, preference
                 FROM application_roles
                 WHERE application_id = $1
+                ORDER BY campaign_role_id
             ",
             id
         )

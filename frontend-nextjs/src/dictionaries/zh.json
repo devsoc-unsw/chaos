@@ -10,7 +10,9 @@
         "campaigns": "活动",
         "settings": "设置",
         "roles": "角色",
-        "description": "描述"
+        "description": "描述",
+        "questions": "问题",
+        "common_questions": "通用问题"
     },
     "dashboard": {
         "email_templates": "邮件模板",
@@ -26,6 +28,14 @@
             "review_applications": "审核申请",
             "roles": {
                 "number_of_positions": "职位数量"
+            },
+            "application_review_page": {
+                "no_application_selected": "没有选择申请",
+                "click_on_application_to_view": "点击左侧的申请来查看它",
+                "application_rating": "申请评分",
+                "review_score": "评分",
+                "review_comment": "评论 (可选)",
+                "write_your_review_here": "在这里写下你的评论..."
             }
         },
         "actions": {
