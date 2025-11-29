@@ -1,6 +1,6 @@
 "use client";
 
-import { OrganisationCampaign } from "@/models/organisation";
+import { getOrganisationUserRole, OrganisationCampaign } from "@/models/organisation";
 import { getColumns } from "./columns";
 import { useQuery } from "@tanstack/react-query";
 import { getOrganisationCampaigns } from "@/models/organisation";
@@ -12,7 +12,12 @@ export default function Campaigns({ orgId, dict }: { orgId: string, dict: any })
         queryFn: () => getOrganisationCampaigns(orgId),
     });
 
-    const columns = getColumns(dict);
+    const { data: userRole } = useQuery({
+        queryKey: [`${orgId}-organisation-user-role`],
+        queryFn: () => getOrganisationUserRole(orgId),
+    });
+
+    const columns = getColumns(userRole ?? { role: "User" }, dict);
 
     return (
         <div>
