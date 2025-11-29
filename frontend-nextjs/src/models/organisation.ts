@@ -19,7 +19,9 @@ export async function getOrganisationById(orgId: string): Promise<OrganisationDe
 export type OrganisationCampaign = {
     /// Unique identifier for the campaign
     id: string,
-    slug: string,
+    organisation_id: string,
+    campaign_slug: string,
+    organisation_slug: string,
     name: string,
     cover_image: string | null,
     description: string | null,
@@ -30,4 +32,14 @@ export type OrganisationCampaign = {
 
 export async function getOrganisationCampaigns(orgId: string): Promise<OrganisationCampaign[]> {
     return await apiRequest<OrganisationCampaign[]>(`/api/v1/organisation/${orgId}/campaigns`);
+}
+
+export type OrganisationRole = "User" | "Admin";
+
+export type OrganisationUserRole = {
+    role: OrganisationRole | null,
+}
+
+export async function getOrganisationUserRole(orgId: string): Promise<OrganisationUserRole> {
+    return await apiRequest<OrganisationUserRole>(`/api/v1/organisation/${orgId}/role`);
 }

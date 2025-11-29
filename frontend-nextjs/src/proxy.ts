@@ -34,6 +34,6 @@ export function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     // Skip all internal paths (_next)
-    "/((?!_next|api|favicon.ico).*)",
+    "/((?!_next|api|favicon.ico|placeholder.svg).*)",
   ],
 };

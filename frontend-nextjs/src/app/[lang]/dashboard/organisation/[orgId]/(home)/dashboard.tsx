@@ -11,7 +11,7 @@ export default function Dashboard() {
 
     return (
         <div>
-            <h1>{data?.name}</h1>
+            <h1>Logged in as: {data?.name}</h1>
         </div>
     );
 }

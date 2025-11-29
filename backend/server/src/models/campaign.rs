@@ -94,8 +94,13 @@ pub struct OrganisationCampaign {
     /// Unique identifier for the campaign
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
+    /// ID of the organization running the campaign
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub organisation_id: i64,
     /// URL-friendly identifier for the campaign
-    pub slug: String,
+    pub campaign_slug: String,
+    /// URL-friendly identifier for the organization
+    pub organisation_slug: String,
     /// Display name of the campaign
     pub name: String,
     /// Optional UUID of the campaign's cover image

@@ -2,12 +2,15 @@ import {
     dehydrate,
     HydrationBoundary,
     QueryClient,
+    useQuery,
   } from '@tanstack/react-query';
 import Campaigns from './campaigns';
 import { getOrganisationCampaigns } from '@/models/organisation';
+import { getDictionary } from '@/app/[lang]/dictionaries';
   
-  export default async function CampaignsPage({ params }: { params: { orgId: string } }) {
-    const { orgId } = await params;
+  export default async function CampaignsPage({ params }: { params: { orgId: string, lang: string } }) {
+    const { orgId, lang } = await params;
+    const dict = await getDictionary(lang);
     const queryClient = new QueryClient();
   
     await queryClient.prefetchQuery({
@@ -17,7 +20,7 @@ import { getOrganisationCampaigns } from '@/models/organisation';
     
     return (
       <HydrationBoundary state={dehydrate(queryClient)}>
-          <Campaigns orgId={orgId} />
+          <Campaigns orgId={orgId} dict={dict} />
       </HydrationBoundary>
     );
   }
