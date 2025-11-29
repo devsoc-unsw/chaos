@@ -19,7 +19,9 @@ import {
 import Link from "next/link";
 import { getOrganisationUserRole } from "@/models/organisation";
 
-export default function CampaignDetails({ campaignId, descriptionHtml, orgId, dict }: { campaignId: string, descriptionHtml: string, orgId: string, dict: any }) {
+export default function CampaignDetails({ campaignId, descriptionHtml, orgId, dict }: { campaignId: string, descriptionHtml: string, orgId: string, dict: any }) {    
+    const editingMode = true;
+    
     const { data: campaign } = useQuery({
         queryKey: [`${campaignId}-campaign-details`],
         queryFn: () => getCampaign(campaignId),
@@ -38,10 +40,6 @@ export default function CampaignDetails({ campaignId, descriptionHtml, orgId, di
     return (
         <div className="flex flex-col gap-3">
             <img className="w-full max-h-42 object-cover rounded-md" src={"/placeholder.svg"} alt={`${campaign?.name} cover image`} />
-            <div className="flex flex-col gap-1">
-                <h1 className="text-2xl font-bold">{campaign?.name}</h1>
-                <p className="text-sm text-gray-500">{dateToString(campaign?.starts_at ?? "")} - {dateToString(campaign?.ends_at ?? "")}</p>
-            </div>
             <div className="flex items-center gap-2">
                 <ButtonGroup>
                     <ButtonGroup>
@@ -66,6 +64,10 @@ export default function CampaignDetails({ campaignId, descriptionHtml, orgId, di
                         </Button>
                     </ButtonGroup>
                 </ButtonGroup>
+            </div>
+            <div className="flex flex-col gap-1">
+                <h1 className="text-2xl font-bold">{campaign?.name}</h1>
+                <p className="text-sm text-gray-500">{dateToString(campaign?.starts_at ?? "")} - {dateToString(campaign?.ends_at ?? "")}</p>
             </div>
 
             <div className="max-w-[500px]">

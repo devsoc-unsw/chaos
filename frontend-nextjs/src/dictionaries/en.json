@@ -10,7 +10,11 @@
         "campaigns": "Campaigns",
         "settings": "Settings",
         "roles": "Roles",
-        "description": "Description"
+        "description": "Description",
+        "questions": "Questions",
+        "common_questions": "Common Questions",
+        "back": "Back",
+        "application": "Application"
     },
     "dashboard": {
         "email_templates": "Email Templates",
@@ -26,6 +30,15 @@
             "review_applications": "Review Applications",
             "roles": {
                 "number_of_positions": "Number of Positions"
+            },
+            "application_review_page": {
+                "no_application_selected": "No application selected",
+                "click_on_application_to_view": "Click on an application on the left to view it",
+                "application_rating": "Application rating",
+                "review_score": "Score",
+                "review_comment": "Comments (optional)",
+                "write_your_review_here": "Write your review here...",
+                "application_not_rated": "Application not rated"
             }
         },
         "actions": {

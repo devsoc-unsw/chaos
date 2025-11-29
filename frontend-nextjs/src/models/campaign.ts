@@ -1,4 +1,5 @@
 import { apiRequest } from "@/lib/api";
+import { ApplicationDetails } from "./application";
 
 export interface CampaignDetails {
     /// Unique identifier for the campaign
@@ -31,4 +32,8 @@ export interface CampaignRole {
 
 export async function getCampaignRoles(campaignId: string): Promise<CampaignRole[]> {
     return await apiRequest<CampaignRole[]>(`/api/v1/campaign/${campaignId}/roles`);
+}
+
+export async function getCampaignApplications(campaignId: string): Promise<ApplicationDetails[]> {
+    return await apiRequest<ApplicationDetails[]>(`/api/v1/campaign/${campaignId}/applications`);
 }
