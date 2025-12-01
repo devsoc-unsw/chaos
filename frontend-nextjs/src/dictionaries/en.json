@@ -12,7 +12,9 @@
         "roles": "Roles",
         "description": "Description",
         "questions": "Questions",
-        "common_questions": "Common Questions"
+        "common_questions": "Common Questions",
+        "back": "Back",
+        "application": "Application"
     },
     "dashboard": {
         "email_templates": "Email Templates",

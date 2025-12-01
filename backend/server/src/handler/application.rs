@@ -82,10 +82,10 @@ impl ApplicationHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Application details or error
     pub async fn get(
         Path(application_id): Path<i64>,
-        _admin: ApplicationAdmin,
+        admin: ApplicationAdmin,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let application = Application::get(application_id, &mut transaction.tx).await?;
+        let application = Application::get(application_id, admin.user_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(application)))
     }
@@ -156,7 +156,7 @@ impl ApplicationHandler {
         user: AuthUser,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let applications = Application::get_from_user_id(user.user_id, &mut transaction.tx).await?;
+        let applications = Application::get_from_user_id(user.user_id, user.user_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(applications)))
     }
@@ -257,7 +257,7 @@ impl ApplicationHandler {
         admin: ApplicationReviewerGivenApplicationId,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let rating = Rating::get_rating_by_rater_id(admin.user_id, &mut transaction.tx).await?;
+        let rating = Rating::get_rating_by_rater_id(application_id, admin.user_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(rating)))
     }
@@ -302,7 +302,7 @@ impl ApplicationHandler {
         mut transaction: DBTransaction<'_>,
         Json(updated_rating): Json<NewRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let rating = Rating::get_rating_by_rater_id(admin.user_id, &mut transaction.tx).await?;
+        let rating = Rating::get_rating_by_rater_id(application_id, admin.user_id, &mut transaction.tx).await?;
 
         Rating::update(rating.id, updated_rating, &mut transaction.tx).await?;
         transaction.tx.commit().await?;

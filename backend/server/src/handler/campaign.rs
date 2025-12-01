@@ -292,10 +292,10 @@ impl CampaignHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - List of applications or error
     pub async fn get_applications(
         Path(id): Path<i64>,
-        _admin: CampaignAdmin,
+        admin: CampaignAdmin,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let applications = Application::get_from_campaign_id(id, &mut transaction.tx).await?;
+        let applications = Application::get_from_campaign_id(id, admin.user_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(applications)))
     }

@@ -1,7 +1,7 @@
 "use client";
 
-import { useQueries, useQuery } from "@tanstack/react-query";
-import { getApplication } from "@/models/application";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createApplicationRating, getApplication, getApplicationRating, updateApplicationRating } from "@/models/application";
 import { getAllCommonAnswers, getAllRoleAnswers } from "@/models/answer";
 import { getAllCommonQuestions, getAllRoleQuestions, linkQuestionsAndAnswers } from "@/models/question";
 import { Separator } from "@/components/ui/separator";
@@ -16,8 +16,11 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label"
+import { useState, useEffect } from "react";
 
 export default function ApplicationDetailsComponent({ applicationId, campaignId, dict }: { applicationId: string, campaignId: string, dict: any }) {
+    const queryClient = useQueryClient();
+    
     const { data: application } = useQuery({
         queryKey: [`${applicationId}-application-details`],
         queryFn: () => getApplication(applicationId),
@@ -52,6 +55,48 @@ export default function ApplicationDetailsComponent({ applicationId, campaignId,
         }))
     });
 
+    const { data: applicationRating } = useQuery({
+        queryKey: [`${applicationId}-application-rating`],
+        queryFn: () => getApplicationRating(applicationId),
+    });
+
+    const originalRating = applicationRating?.rating;
+    const originalComment = applicationRating?.comment;
+
+    const hasRated = applicationRating?.rating !== undefined;
+    const [rating, setRating] = useState<number | undefined>(undefined);
+    const [comment, setComment] = useState<string | undefined>(undefined);
+
+    useEffect(() => {
+        setRating(undefined);
+        setComment(undefined);
+    }, [applicationId]);
+
+    const handleSubmitRating = async () => {
+        if (!rating && !comment) return;
+
+        let sendingRating = rating;
+        let sendingComment = comment;
+
+        if (!rating) {
+            sendingRating = originalRating;
+        }
+
+        if (!comment) {
+            sendingComment = originalComment ?? undefined;
+        }
+        
+        if (hasRated) {
+            await updateApplicationRating(applicationId, sendingRating, sendingComment);
+        } else {
+            await createApplicationRating(applicationId, sendingRating, sendingComment);
+        }
+
+        await queryClient.invalidateQueries({ queryKey: [`${applicationId}-application-rating`] });
+        await queryClient.invalidateQueries({ queryKey: [`${applicationId}-application-details`] });
+        await queryClient.invalidateQueries({ queryKey: [`${campaignId}-campaign-applications`] });
+    };
+
     const rolesQuestionsAnswers = roles.map((role, index) => {
         return {
             id: role.campaign_role_id,
@@ -70,10 +115,12 @@ export default function ApplicationDetailsComponent({ applicationId, campaignId,
     });
 
     return (
-        <div>
-            <ScrollArea className="h-full">
-                <p className="text-sm text-gray-500 font-mono">#{application?.id}</p>
-                <h1 className="text-2xl font-medium">{application?.user.name}</h1>
+        <ScrollArea className="h-full">
+            <p className="text-xs text-gray-500 font-mono">{dict.common.application} #{application?.id}</p>
+            <h1 className="text-2xl font-medium">{application?.user.name}</h1>
+
+            {/* User answers */}
+            <ScrollArea className="h-96 overflow-y-auto" type="auto">
                 <div className="flex flex-col gap-3">
                     <div className="flex flex-col gap-1">
                         <p className="text-lg font-semibold">{dict.common.common_questions}</p>
@@ -89,7 +136,7 @@ export default function ApplicationDetailsComponent({ applicationId, campaignId,
 
                     <div className="flex flex-col gap-3">
                         {linkedRolesQuestionsAnswers.map((data, index) => (
-                            <div className="flex flex-col gap-1">
+                            <div key={data?.id} className="flex flex-col gap-1">
                                 {index > 0 && <Separator className="my-1" />}
                                 <p className="text-lg font-semibold">{data?.roleName} {dict.common.questions}</p>
                                 {data?.questions.map((question) => (
@@ -102,31 +149,38 @@ export default function ApplicationDetailsComponent({ applicationId, campaignId,
                         ))}
                     </div>
                 </div>
-
-                <Separator className="my-4" />
-
-                <div className="flex flex-col gap-2">
-                    <p className="text-lg font-semibold">{dict.dashboard.campaigns.application_review_page.application_rating}</p>
-                    
-                    <Label htmlFor="reviewScore">{dict.dashboard.campaigns.application_review_page.review_score}</Label>
-                    <Select>
-                        <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder={dict.dashboard.campaigns.application_review_page.review_score} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
-                                <SelectItem value={`${value}`}>{value}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-
-                    <Label htmlFor="reviewComment">{dict.dashboard.campaigns.application_review_page.review_comment}</Label>
-                    <Textarea className="min-h-[100px]" id="reviewComment" placeholder={dict.dashboard.campaigns.application_review_page.write_your_review_here} />
-                    <div>
-                    <Button>Submit</Button>
-                    </div>
-                </div>
             </ScrollArea>
-        </div>
+
+            <Separator className="my-4" />
+
+            {/* Rating form */}
+            <div className="flex flex-col gap-2">
+                <p className="text-lg font-semibold">{dict.dashboard.campaigns.application_review_page.application_rating}</p>
+
+                <Label htmlFor="reviewScore">{dict.dashboard.campaigns.application_review_page.review_score}</Label>
+                <Select value={rating?.toString() ?? originalRating?.toString() ?? undefined} onValueChange={(value) => setRating(Number(value))}>
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder={dict.dashboard.campaigns.application_review_page.review_score} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
+                            <SelectItem key={value} value={`${value}`}>{value}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
+                <Label htmlFor="reviewComment">{dict.dashboard.campaigns.application_review_page.review_comment}</Label>
+                <Textarea
+                    className="min-h-[100px]" id="reviewComment"
+                    placeholder={dict.dashboard.campaigns.application_review_page.write_your_review_here}
+                    value={comment ? comment : (originalComment ?? "")}
+                    onChange={(e) => setComment(e.target.value)}
+                />
+                <div>
+                    <Button disabled={rating === undefined && comment === undefined} onClick={handleSubmitRating}>Submit</Button>
+                </div>
+            </div>
+
+        </ScrollArea>
     );
 }

@@ -12,7 +12,9 @@
         "roles": "角色",
         "description": "描述",
         "questions": "问题",
-        "common_questions": "通用问题"
+        "common_questions": "通用问题",
+        "back": "返回",
+        "application": "申请"
     },
     "dashboard": {
         "email_templates": "邮件模板",
