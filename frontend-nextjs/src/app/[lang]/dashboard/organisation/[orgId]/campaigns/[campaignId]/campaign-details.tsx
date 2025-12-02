@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getCampaign, getCampaignRoles } from "@/models/campaign";
 import { Button } from "@/components/ui/button";
-import { Copy, Pencil, Trash, Share, BookOpenCheck } from "lucide-react";
+import { Copy, Pencil, Trash, Share, BookOpenCheck, FormIcon, CircleCheck } from "lucide-react";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { dateToString } from "@/lib/utils";
 import {
@@ -19,9 +19,9 @@ import {
 import Link from "next/link";
 import { getOrganisationUserRole } from "@/models/organisation";
 
-export default function CampaignDetails({ campaignId, descriptionHtml, orgId, dict }: { campaignId: string, descriptionHtml: string, orgId: string, dict: any }) {    
+export default function CampaignDetails({ campaignId, descriptionHtml, orgId, dict }: { campaignId: string, descriptionHtml: string, orgId: string, dict: any }) {
     const editingMode = true;
-    
+
     const { data: campaign } = useQuery({
         queryKey: [`${campaignId}-campaign-details`],
         queryFn: () => getCampaign(campaignId),
@@ -51,18 +51,27 @@ export default function CampaignDetails({ campaignId, descriptionHtml, orgId, di
                         <Button variant="outline" onClick={() => navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_APP_URL}/campaign/${campaign?.organisation_slug}/${campaign?.campaign_slug}`)}>
                             <Share className="w-4 h-4" /> {dict.dashboard.campaigns.share_link}
                         </Button>
-                    </ButtonGroup>
-                    {userRole?.role === "Admin" && (
-                    <ButtonGroup>
-                        <Button variant="outline"><Pencil className="w-4 h-4" /> {dict.dashboard.actions.edit}</Button>
-                        <Button variant="outline"><Trash className="w-4 h-4" /> {dict.dashboard.actions.delete}</Button>
-                    </ButtonGroup>
-                    )}
-                    <ButtonGroup>
                         <Button variant="outline" onClick={() => navigator.clipboard.writeText(campaignId)}>
                             <Copy className="w-4 h-4" /> {dict.dashboard.campaigns.copy_campaign_id}
                         </Button>
                     </ButtonGroup>
+                    {userRole?.role === "Admin" && (
+                        <ButtonGroup>
+                            <Button variant="outline"><Pencil className="w-4 h-4" /> {dict.dashboard.actions.edit}</Button>
+                            <Button variant="outline"><Trash className="w-4 h-4" /> {dict.dashboard.actions.delete}</Button>
+                        </ButtonGroup>
+                    )}
+                    {
+                        !campaign?.published && (
+                            <Link href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}/questions`}>
+                                <Button variant="outline"><FormIcon className="w-4 h-4" /> {dict.dashboard.campaigns.manage_questions}</Button>
+                            </Link>
+                        )
+                    }
+                    <ButtonGroup>
+                        <Button variant="outline"><CircleCheck className="w-4 h-4 text-green-500" /> {dict.dashboard.campaigns.publish}</Button>
+                    </ButtonGroup>
+
                 </ButtonGroup>
             </div>
             <div className="flex flex-col gap-1">
