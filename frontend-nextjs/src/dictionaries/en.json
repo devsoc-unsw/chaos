@@ -37,7 +37,8 @@
                 "application_rating": "Application rating",
                 "review_score": "Score",
                 "review_comment": "Comments (optional)",
-                "write_your_review_here": "Write your review here..."
+                "write_your_review_here": "Write your review here...",
+                "application_not_rated": "Application not rated"
             }
         },
         "actions": {

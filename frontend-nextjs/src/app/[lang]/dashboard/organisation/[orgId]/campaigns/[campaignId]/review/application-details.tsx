@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label"
 import { useState, useEffect } from "react";
 
-export default function ApplicationDetailsComponent({ applicationId, campaignId, dict }: { applicationId: string, campaignId: string, dict: any }) {
+export default function ApplicationDetailsComponent({ applicationId, campaignId, dict, ratedApplications, setRatedApplications }: { applicationId: string, campaignId: string, dict: any, ratedApplications: Record<string, boolean>, setRatedApplications: (ratedApplications: Record<string, boolean>) => void }) {
     const queryClient = useQueryClient();
     
     const { data: application } = useQuery({
@@ -60,8 +60,8 @@ export default function ApplicationDetailsComponent({ applicationId, campaignId,
         queryFn: () => getApplicationRating(applicationId),
     });
 
-    const originalRating = applicationRating?.rating;
-    const originalComment = applicationRating?.comment;
+    let originalRating = applicationRating?.rating;
+    let originalComment = applicationRating?.comment;
 
     const hasRated = applicationRating?.rating !== undefined;
     const [rating, setRating] = useState<number | undefined>(undefined);
@@ -72,18 +72,12 @@ export default function ApplicationDetailsComponent({ applicationId, campaignId,
         setComment(undefined);
     }, [applicationId]);
 
-    const handleSubmitRating = async () => {
-        if (!rating && !comment) return;
-
+    const handleSubmitRating = async () => {       
         let sendingRating = rating;
         let sendingComment = comment;
-
+        
         if (!rating) {
             sendingRating = originalRating;
-        }
-
-        if (!comment) {
-            sendingComment = originalComment ?? undefined;
         }
         
         if (hasRated) {
@@ -91,6 +85,14 @@ export default function ApplicationDetailsComponent({ applicationId, campaignId,
         } else {
             await createApplicationRating(applicationId, sendingRating, sendingComment);
         }
+
+        setRating(undefined);
+        setComment(undefined);
+        setRatedApplications({
+            ...ratedApplications,
+            [applicationId]: true,
+        });
+
 
         await queryClient.invalidateQueries({ queryKey: [`${applicationId}-application-rating`] });
         await queryClient.invalidateQueries({ queryKey: [`${applicationId}-application-details`] });
@@ -158,7 +160,7 @@ export default function ApplicationDetailsComponent({ applicationId, campaignId,
                 <p className="text-lg font-semibold">{dict.dashboard.campaigns.application_review_page.application_rating}</p>
 
                 <Label htmlFor="reviewScore">{dict.dashboard.campaigns.application_review_page.review_score}</Label>
-                <Select value={rating?.toString() ?? originalRating?.toString() ?? undefined} onValueChange={(value) => setRating(Number(value))}>
+                <Select value={rating?.toString() ?? originalRating?.toString() ?? ""} onValueChange={(value) => setRating(Number(value))}>
                     <SelectTrigger className="w-[180px]">
                         <SelectValue placeholder={dict.dashboard.campaigns.application_review_page.review_score} />
                     </SelectTrigger>
@@ -173,7 +175,7 @@ export default function ApplicationDetailsComponent({ applicationId, campaignId,
                 <Textarea
                     className="min-h-[100px]" id="reviewComment"
                     placeholder={dict.dashboard.campaigns.application_review_page.write_your_review_here}
-                    value={comment ? comment : (originalComment ?? "")}
+                    value={(comment || comment == "") ? comment : (originalComment ?? "")}
                     onChange={(e) => setComment(e.target.value)}
                 />
                 <div>

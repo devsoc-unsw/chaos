@@ -6,7 +6,7 @@
 //! - Submitting applications
 //! - Managing application ratings
 
-use crate::models::app::AppState;
+use crate::models::app::{AppMessage, AppState};
 use crate::models::application::{Application, ApplicationRoleUpdate, ApplicationStatus, OpenApplicationByApplicationId};
 use crate::models::auth::{ApplicationAdmin, ApplicationOwner, ApplicationOwnerOrReviewer, ApplicationReviewerGivenApplicationId, AuthUser};
 use crate::models::error::ChaosError;
@@ -293,7 +293,7 @@ impl ApplicationHandler {
         )
             .await?;
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully created rating"))
+        Ok(AppMessage::OkMessage("Successfully created rating"))
     }
 
     pub async fn update_rating(
@@ -306,7 +306,7 @@ impl ApplicationHandler {
 
         Rating::update(rating.id, updated_rating, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully updated rating"))
+        Ok(AppMessage::OkMessage("Successfully updated rating"))
     }
 
     /// Retrieves all ratings for an application.
