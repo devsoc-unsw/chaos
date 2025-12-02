@@ -28,6 +28,8 @@
             "edit_campaign": "Edit Campaign",
             "share_link": "Share Link",
             "review_applications": "Review Applications",
+            "manage_questions": "Manage Questions",
+            "publish": "Publish",
             "roles": {
                 "number_of_positions": "Number of Positions"
             },
