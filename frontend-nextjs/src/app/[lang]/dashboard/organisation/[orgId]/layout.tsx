@@ -54,9 +54,9 @@ export default async function Layout({ children, params }: { children: React.Rea
     <HydrationBoundary state={dehydrate(queryClient)}>
       <SidebarProvider>
         <AdminSidebar userRole={userRole} dict={dict} />
-        <main className="w-full">
+        <main className="w-full h-screen">
           <SidebarTrigger />
-          <div className="px-2 max-w-[1500px] mx-auto overflow-y-auto">
+          <div className="px-2 max-w-[1500px] mx-auto overflow-y-auto min-h-[calc(100vh-100px)]">
             {children}
           </div>
         </main>

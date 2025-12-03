@@ -398,6 +398,10 @@ pub async fn app() -> Result<Router, ChaosError> {
                 .delete(EmailTemplateHandler::delete),
         )
         .route(
+            "/api/v1/email_template/:template_id/duplicate",
+            post(EmailTemplateHandler::duplicate)
+        )
+        .route(
             "/api/v1/offer/:offer_id",
             get(OfferHandler::get)
                 .delete(OfferHandler::delete)
