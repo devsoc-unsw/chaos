@@ -14,7 +14,8 @@
         "questions": "Questions",
         "common_questions": "Common Questions",
         "back": "Back",
-        "application": "Application"
+        "application": "Application",
+        "status": "Status"
     },
     "dashboard": {
         "email_templates": "Email Templates",
@@ -30,6 +31,8 @@
             "review_applications": "Review Applications",
             "manage_questions": "Manage Questions",
             "publish": "Publish",
+            "published": "Published",
+            "draft": "Draft",
             "roles": {
                 "number_of_positions": "Number of Positions"
             },
@@ -43,9 +46,22 @@
                 "application_not_rated": "Application not rated"
             }
         },
+        "email": {
+            "name": "Name",
+            "subject": "Subject",
+            "body": "Body",
+            "delete_confirmation": "This will permanently delete the email template and cannot be undone.",
+            "edit_template": "Edit Template"
+        },
         "actions": {
+            "new": "New",
             "edit": "Edit",
-            "delete": "Delete"
+            "delete": "Delete",
+            "preview": "Preview",
+            "duplicate": "Duplicate",
+            "cancel": "Cancel",
+            "save": "Save",
+            "destructive_confirm": "Are you absolutely sure?"
         }
     }
 }

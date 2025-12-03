@@ -14,7 +14,8 @@
         "questions": "问题",
         "common_questions": "通用问题",
         "back": "返回",
-        "application": "申请"
+        "application": "申请",
+        "status": "状态"
     },
     "dashboard": {
         "email_templates": "邮件模板",
@@ -30,6 +31,8 @@
             "review_applications": "审核申请",
             "manage_questions": "管理问题",
             "publish": "发布",
+            "published": "已发布",
+            "draft": "草稿",
             "roles": {
                 "number_of_positions": "职位数量"
             },
@@ -43,9 +46,22 @@
                 "application_not_rated": "未评分"
             }
         },
+        "email": {
+            "name": "名称",
+            "subject": "主题",
+            "body": "正文",
+            "delete_confirmation": "这将永久删除邮件模板并无法撤销",
+            "edit_template": "编辑模板"
+        },
         "actions": {
+            "new": "新建",
             "edit": "编辑",
-            "delete": "删除"
+            "delete": "删除",
+            "preview": "预览",
+            "duplicate": "复制",
+            "cancel": "取消",
+            "save": "保存",
+            "destructive_confirm": "你确定吗"
         }
     }
 }

@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/table"
 import Link from "next/link";
 import { getOrganisationUserRole } from "@/models/organisation";
+import CopyButton from "@/components/copy-button";
 
 export default function CampaignDetails({ campaignId, descriptionHtml, orgId, dict }: { campaignId: string, descriptionHtml: string, orgId: string, dict: any }) {
     const editingMode = true;
@@ -48,12 +49,12 @@ export default function CampaignDetails({ campaignId, descriptionHtml, orgId, di
                         </Link>
                     </ButtonGroup>
                     <ButtonGroup>
-                        <Button variant="outline" onClick={() => navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_APP_URL}/campaign/${campaign?.organisation_slug}/${campaign?.campaign_slug}`)}>
+                        <CopyButton value={`${process.env.NEXT_PUBLIC_APP_URL}/campaign/${campaign?.organisation_slug}/${campaign?.campaign_slug}`}>
                             <Share className="w-4 h-4" /> {dict.dashboard.campaigns.share_link}
-                        </Button>
-                        <Button variant="outline" onClick={() => navigator.clipboard.writeText(campaignId)}>
+                        </CopyButton>
+                        <CopyButton value={campaignId}>
                             <Copy className="w-4 h-4" /> {dict.dashboard.campaigns.copy_campaign_id}
-                        </Button>
+                        </CopyButton>
                     </ButtonGroup>
                     {userRole?.role === "Admin" && (
                         <ButtonGroup>

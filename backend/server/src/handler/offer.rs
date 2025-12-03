@@ -5,7 +5,7 @@
 //! - Replying to offers
 //! - Previewing and sending offer emails
 
-use crate::models::app::AppState;
+use crate::models::app::{AppMessage, AppState};
 use crate::models::auth::{OfferAdmin, OfferRecipient};
 use crate::models::error::ChaosError;
 use crate::models::offer::{Offer, OfferReply};
@@ -63,7 +63,7 @@ impl OfferHandler {
         Offer::delete(id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, "Successfully deleted offer"))
+        Ok(AppMessage::OkMessage("Successfully deleted offer"))
     }
 
     /// Allows a recipient to reply to an offer.
@@ -89,7 +89,7 @@ impl OfferHandler {
         Offer::reply(id, reply.accept, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, "Successfully accepted offer"))
+        Ok(AppMessage::OkMessage("Successfully accepted offer"))
     }
 
     /// Previews the email that will be sent for an offer.
@@ -139,6 +139,6 @@ impl OfferHandler {
         Offer::send_offer(id, &mut transaction.tx, state.email_credentials).await?;
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, "Successfully sent offer"))
+        Ok(AppMessage::OkMessage("Successfully sent offer"))
     }
 }

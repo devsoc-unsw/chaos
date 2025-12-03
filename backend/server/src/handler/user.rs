@@ -10,6 +10,7 @@ use crate::models::user::{User, UserDegree, UserGender, UserName, UserPronouns, 
 use axum::extract::{Json};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
+use crate::models::app::AppMessage;
 use crate::models::transaction::DBTransaction;
 
 /// Handler for user-related HTTP requests.
@@ -59,7 +60,7 @@ impl UserHandler {
         User::update_name(user.user_id, request_body.name, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Updated username"))
+        Ok(AppMessage::OkMessage("Updated username"))
     }
 
     /// Updates the user's pronouns.
@@ -83,7 +84,7 @@ impl UserHandler {
         User::update_pronouns(user.user_id, request_body.pronouns, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Updated pronouns"))
+        Ok(AppMessage::OkMessage("Updated pronouns"))
     }
 
     /// Updates the user's gender.
@@ -107,7 +108,7 @@ impl UserHandler {
         User::update_gender(user.user_id, request_body.gender, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Updated gender"))
+        Ok(AppMessage::OkMessage("Updated gender"))
     }
 
     /// Updates the user's zid.
@@ -131,7 +132,7 @@ impl UserHandler {
         User::update_zid(user.user_id, request_body.zid, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Updated zid"))
+        Ok(AppMessage::OkMessage("Updated zid"))
     }
 
     /// Updates the user's degree information.
@@ -161,6 +162,6 @@ impl UserHandler {
         .await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Updated user degree"))
+        Ok(AppMessage::OkMessage("Updated user degree"))
     }
 }

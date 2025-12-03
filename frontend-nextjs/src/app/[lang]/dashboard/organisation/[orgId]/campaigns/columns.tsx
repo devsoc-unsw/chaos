@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link";
 import { getDictionary } from "@/app/[lang]/dictionaries";
+import { Badge } from "@/components/ui/badge";
 
 export function getColumns(userRole: OrganisationUserRole, dict: any): ColumnDef<OrganisationCampaign>[] {
     return [
@@ -42,8 +43,15 @@ export function getColumns(userRole: OrganisationUserRole, dict: any): ColumnDef
             },
         },
         {
-            header: dict.common.published,
+            header: dict.common.status,
             accessorKey: "published",
+            cell: ({ row }) => {
+                return (row.original.published ? (
+                    <Badge className="bg-green-500">{dict.dashboard.campaigns.published}</Badge>
+                ) : (
+                    <Badge className="bg-yellow-500">{dict.dashboard.campaigns.draft}</Badge>
+                ));
+            },
         },
         {
             id: "actions",

@@ -8,7 +8,7 @@
 //! - Banner image handling
 
 use crate::models;
-use crate::models::app::AppState;
+use crate::models::app::{AppMessage, AppState};
 use crate::models::application::Application;
 use crate::models::application::NewApplication;
 use crate::models::auth::AuthUser;
@@ -116,7 +116,7 @@ impl CampaignHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Campaign::update(id, request_body, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully updated campaign"))
+        Ok(AppMessage::OkMessage("Successfully updated campaign"))
     }
 
     /// Publishes a campaign by setting its published field to true.
@@ -139,7 +139,7 @@ impl CampaignHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Campaign::publish(id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully published campaign"))
+        Ok(AppMessage::OkMessage("Successfully published campaign"))
     }
 
     /// Updates a campaign's banner image.
@@ -188,7 +188,7 @@ impl CampaignHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Campaign::delete(id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully deleted campaign"))
+        Ok(AppMessage::OkMessage("Successfully deleted campaign"))
     }
 
     /// Creates a new role in a campaign.
@@ -215,7 +215,7 @@ impl CampaignHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Role::create(id, data, &mut transaction.tx, &mut state.snowflake_generator).await?;
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully created role"))
+        Ok(AppMessage::OkMessage("Successfully created role"))
     }
 
     /// Retrieves all roles in a campaign.
@@ -274,7 +274,7 @@ impl CampaignHandler {
         )
         .await?;
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully created application"))
+        Ok(AppMessage::OkMessage("Successfully created application"))
     }
 
     /// Retrieves all applications for a campaign.
@@ -334,7 +334,7 @@ impl CampaignHandler {
         .await?;
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, "Successfully created offer"))
+        Ok(AppMessage::OkMessage("Successfully created offer"))
     }
 
     /// Retrieves all offers for a campaign.
