@@ -79,6 +79,10 @@ export default function ApplicationDetailsComponent({ applicationId, campaignId,
         if (!rating) {
             sendingRating = originalRating;
         }
+
+        if (!comment) {
+            sendingComment = originalComment ?? "";
+        }
         
         if (hasRated) {
             await updateApplicationRating(applicationId, sendingRating, sendingComment);

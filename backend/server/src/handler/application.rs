@@ -112,7 +112,7 @@ impl ApplicationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Application::set_status(application_id, data, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Status successfully updated"))
+        Ok(AppMessage::OkMessage("Status successfully updated"))
     }
 
     /// Updates the private status of an application.
@@ -137,7 +137,7 @@ impl ApplicationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Application::set_private_status(application_id, data, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Private Status successfully updated"))
+        Ok(AppMessage::OkMessage("Private Status successfully updated"))
     }
 
     /// Retrieves all applications for the current user.
@@ -209,7 +209,7 @@ impl ApplicationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Application::update_roles(application_id, data.roles, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully updated application roles"))
+        Ok(AppMessage::OkMessage("Successfully updated application roles"))
     }
 
     /// Submits an application for review.
@@ -235,7 +235,7 @@ impl ApplicationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Application::submit(application_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully submitted application"))
+        Ok(AppMessage::OkMessage("Successfully submitted application"))
     }
 
     /// Retrieves the rating for an application given by the current user.

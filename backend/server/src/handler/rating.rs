@@ -5,7 +5,7 @@
 //! - Retrieving rating details
 //! - Deleting ratings
 
-use crate::models::app::AppState;
+use crate::models::app::{AppMessage, AppState};
 use crate::models::auth::{
     ApplicationReviewerGivenApplicationId, ApplicationReviewerGivenRatingId, RatingCreator,
 };
@@ -36,7 +36,7 @@ impl RatingHandler {
         )
         .await?;
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully created rating"))
+        Ok(AppMessage::OkMessage("Successfully created rating"))
     }
 
     /// Updates an existing rating.
@@ -63,7 +63,7 @@ impl RatingHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Rating::update(rating_id, updated_rating, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully updated rating"))
+        Ok(AppMessage::OkMessage("Successfully updated rating"))
     }
 
     /// Retrieves the details of a specific rating.
@@ -113,6 +113,6 @@ impl RatingHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Rating::delete(rating_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully deleted rating"))
+        Ok(AppMessage::OkMessage("Successfully deleted rating"))
     }
 }

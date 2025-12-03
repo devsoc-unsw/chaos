@@ -325,14 +325,16 @@ pub async fn seed_database(mut seeder: Seeder) {
         .await.expect("Failed seeding Rating 3");
     
     let template = 
-    "Hello {{name}},
+    "
+Hello {{name}},
 
-    Congratulations! You have been selected for the role of {{role}} at {{organisation_name}} for our {{campaign_name}}.
+Congratulations! You have been selected for the role of {{role}} at {{organisation_name}} for our {{campaign_name}}.
 
-    Please confirm your acceptance by {{expiry_date}}.
+Please confirm your acceptance by {{expiry_date}}.
 
-    Best regards,  
-    The {{organisation_name}} Team".to_string();
+Best regards,
+The {{organisation_name}} Team
+    ".to_string();
 
 
     let email_template_id = Organisation::create_email_template(
