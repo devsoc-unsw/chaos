@@ -3,7 +3,7 @@ import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query
 import TemplateNewForm from "./new-template";
 
 
-export default async function TemplateNewPage({ params }: { params: { orgId: string, lang: string } }) {
+export default async function TemplateNewPage({ params }: { params: Promise<{ orgId: string, lang: string }> }) {
   const { orgId, lang } = await params;
   const dict = await getDictionary(lang);
   const queryClient = new QueryClient();

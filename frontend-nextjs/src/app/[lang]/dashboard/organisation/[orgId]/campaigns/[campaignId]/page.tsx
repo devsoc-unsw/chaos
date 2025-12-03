@@ -10,7 +10,7 @@ import CampaignDetails from './campaign-details';
 import { remark } from 'remark';
 import html from 'remark-html';
   
-  export default async function CampaignDetailsPage({ params }: { params: { campaignId: string, lang: string } }) {
+  export default async function CampaignDetailsPage({ params }: { params: Promise<{ campaignId: string, lang: string }> }) {
     const { campaignId, lang } = await params;
     const dict = await getDictionary(lang);
     const queryClient = new QueryClient();

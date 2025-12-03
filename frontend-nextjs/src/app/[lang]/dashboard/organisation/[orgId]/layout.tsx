@@ -24,7 +24,7 @@ export async function generateMetadata(
   }
 }
 
-export default async function Layout({ children, params }: { children: React.ReactNode, params: { orgId: string,lang: string } }) {
+export default async function Layout({ children, params }: { children: React.ReactNode, params: Promise<{ orgId: string,lang: string }> }) {
   const { orgId, lang } = await params;
   const dict = await getDictionary(lang);
   
