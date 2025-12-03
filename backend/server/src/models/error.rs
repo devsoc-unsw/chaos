@@ -98,7 +98,6 @@ pub enum ChaosError {
 /// errors from external dependencies.
 impl IntoResponse for ChaosError {
     fn into_response(self) -> Response {
-        println!("{:?}", self);
         // Don't leak real error, only return a generic error message
         match self {
             ChaosError::NotLoggedIn => AppMessage::NotLoggedInMessage("Not logged in").into_response(), // User is not logged in
