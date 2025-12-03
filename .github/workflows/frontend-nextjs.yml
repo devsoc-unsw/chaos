@@ -3,8 +3,14 @@ name: Frontend (Next.js)
 on:
   pull_request:
     branches: [main, "renovate/*", "CHAOS-224-KHAOS-rewrite", "CHAOS-571-integrate-be-fe", "CHAOS-598-nextjs"]
+    paths:
+      - "frontend-nextjs/**"
+      - ".github/workflows/frontend-nextjs.yml"
   push:
     branches: ["renovate/*"]
+    paths:
+      - "frontend-nextjs/**"
+      - ".github/workflows/frontend-nextjs.yml"
 
 jobs:
   build:
