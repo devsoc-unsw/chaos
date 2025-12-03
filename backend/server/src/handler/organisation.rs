@@ -13,7 +13,7 @@ use crate::models::auth::{AuthUser, OrganisationAdmin};
 use crate::models::campaign::{Campaign, NewCampaign};
 use crate::models::email_template::{EmailTemplate, NewEmailTemplate};
 use crate::models::error::ChaosError;
-use crate::models::organisation::{AdminToRemove, AdminUpdateList, NewOrganisation, Organisation, SlugCheck};
+use crate::models::organisation::{MemberToRemove, AdminUpdateList, NewOrganisation, Organisation, SlugCheck, MemberToInvite};
 use crate::models::transaction::DBTransaction;
 use crate::service::auth::assert_is_super_user;
 use axum::extract::{Json, Path, State};
@@ -202,6 +202,30 @@ impl OrganisationHandler {
         Ok((StatusCode::OK, Json(members)))
     }
 
+    /// Retrieves all users (role) of an organisation.
+    ///
+    /// This handler allows organisation admins to view all members with the role "User".
+    ///
+    /// # Arguments
+    ///
+    /// * `state` - The application state
+    /// * `id` - The ID of the organisation
+    /// * `_admin` - The authenticated user (must be an organisation admin)
+    ///
+    /// # Returns
+    ///
+    /// * `Result<impl IntoResponse, ChaosError>` - List of members or error
+    pub async fn get_users(
+        mut transaction: DBTransaction<'_>,
+        Path(id): Path<i64>,
+        _admin: OrganisationAdmin,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let members = Organisation::get_users(id, &mut transaction.tx).await?;
+
+        transaction.tx.commit().await?;
+        Ok((StatusCode::OK, Json(members)))
+    }
+
     /// Retrieves all members of an organisation.
     /// 
     /// This handler allows organisation admins to view all members.
@@ -296,20 +320,17 @@ impl OrganisationHandler {
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
         _super_user: SuperUser,
-        Json(request_body): Json<AdminToRemove>,
+        Json(request_body): Json<MemberToRemove>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Organisation::remove_admin(id, request_body.user_id, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((
-            StatusCode::OK,
-            "Successfully removed member from organisation",
-        ))
+        Ok(AppMessage::OkMessage("Successfully removed member from organisation"))
     }
 
-    /// Removes a member from an organisation.
+    /// Removes a user from an organisation.
     /// 
-    /// This handler allows organisation admins to remove members.
+    /// This handler allows organisation admins to remove members with role "User".
     /// 
     /// # Arguments
     /// 
@@ -321,19 +342,29 @@ impl OrganisationHandler {
     /// # Returns
     /// 
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
-    pub async fn remove_member(
+    pub async fn remove_user(
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
         _admin: OrganisationAdmin,
-        Json(request_body): Json<AdminToRemove>,
+        Json(request_body): Json<MemberToRemove>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Organisation::remove_member(id, request_body.user_id, &mut transaction.tx).await?;
+        Organisation::remove_user(id, request_body.user_id, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((
-            StatusCode::OK,
-            "Successfully removed member from organisation",
-        ))
+        Ok(AppMessage::OkMessage("Successfully removed member from organisation"))
+    }
+
+    pub async fn invite_user(
+        mut transaction: DBTransaction<'_>,
+        Path(id): Path<i64>,
+        _admin: OrganisationAdmin,
+        State(state): State<AppState>,
+        Json(request_body): Json<MemberToInvite>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        Organisation::invite_user(id, request_body.email, state.email_credentials, &mut transaction.tx).await?;
+
+        transaction.tx.commit().await?;
+        Ok(AppMessage::OkMessage("Successfully invited user to organisation"))
     }
 
     /// Updates an organisation's logo.

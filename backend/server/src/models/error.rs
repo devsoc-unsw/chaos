@@ -105,6 +105,7 @@ impl IntoResponse for ChaosError {
                 AppMessage::UnauthorizedMessage("Forbidden operation").into_response()
             }
             ChaosError::BadRequest => AppMessage::BadRequestMessage("Bad request").into_response(),
+            ChaosError::BadRequestWithMessage(msg) => AppMessage::BadRequestMessage(msg).into_response(),
             ChaosError::ApplicationClosed => AppMessage::BadRequestMessage("Application closed").into_response(),
             ChaosError::CampaignClosed => AppMessage::BadRequestMessage("Campaign closed").into_response(),
             ChaosError::DatabaseError(db_error) => match db_error {

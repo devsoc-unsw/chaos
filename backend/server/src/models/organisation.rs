@@ -13,6 +13,8 @@ use snowflake::SnowflakeIdGenerator;
 use sqlx::{FromRow, Postgres, Transaction};
 use std::ops::DerefMut;
 use uuid::Uuid;
+use crate::models::email::EmailCredentials;
+use crate::models::user::User;
 
 /// Represents an organisation in the database.
 /// 
@@ -97,18 +99,10 @@ pub struct Member {
     pub id: i64,
     /// Name of the user
     pub name: String,
+    /// Email of the user
+    pub email: String,
     /// User's role in the organisation
     pub role: OrganisationRole,
-}
-
-/// Collection of organisation members.
-/// 
-/// This struct represents all members of an organisation,
-/// used for API responses.
-#[derive(Deserialize, Serialize)]
-pub struct MemberList {
-    /// List of members in the organisation
-    pub members: Vec<Member>,
 }
 
 /// Data structure for updating organisation administrators.
@@ -125,10 +119,16 @@ pub struct AdminUpdateList {
 /// 
 /// This struct contains the ID of the user to remove
 /// from the administrator role.
-#[derive(Deserialize, Serialize)]
-pub struct AdminToRemove {
+#[derive(Deserialize)]
+pub struct MemberToRemove {
     /// ID of the user to remove as administrator
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
     pub user_id: i64,
+}
+
+#[derive(Deserialize)]
+pub struct MemberToInvite {
+    pub email: String,
 }
 
 /// Data structure for checking slug availability.
@@ -373,13 +373,14 @@ impl Organisation {
     pub async fn get_admins(
         organisation_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<MemberList, ChaosError> {
+    ) -> Result<Vec<Member>, ChaosError> {
         let admin_list = sqlx::query_as!(
         Member,
         "
-            SELECT organisation_members.user_id as id, organisation_members.role AS \"role: OrganisationRole\", users.name from organisation_members
+            SELECT organisation_members.user_id as id, organisation_members.role AS \"role: OrganisationRole\", users.name, users.email from organisation_members
                 JOIN users on users.id = organisation_members.user_id
                 WHERE organisation_members.organisation_id = $1 AND organisation_members.role = $2
+                ORDER BY organisation_members.id
         ",
         organisation_id,
             OrganisationRole::Admin as OrganisationRole
@@ -387,9 +388,38 @@ impl Organisation {
             .fetch_all(transaction.deref_mut())
             .await?;
 
-        Ok(MemberList {
-            members: admin_list,
-        })
+        Ok(admin_list)
+    }
+
+    /// Retrieves all users of an organisation.
+    ///
+    /// # Arguments
+    /// * `organisation_id` - The ID of the organisation
+    /// * `pool` - A reference to the database connection pool
+    ///
+    /// # Returns
+    /// Returns a `Result` containing either:
+    /// * `Ok(MemberList)` - List of all members with role "User"
+    /// * `Err(ChaosError)` - An error if retrieval fails
+    pub async fn get_users(
+        organisation_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<Member>, ChaosError> {
+        let admin_list = sqlx::query_as!(
+        Member,
+        "
+            SELECT organisation_members.user_id as id, organisation_members.role AS \"role: OrganisationRole\", users.name, users.email from organisation_members
+                JOIN users on users.id = organisation_members.user_id
+                WHERE organisation_members.organisation_id = $1 AND organisation_members.role = $2
+                ORDER BY organisation_members.id
+        ",
+        organisation_id,
+            OrganisationRole::User as OrganisationRole
+    )
+            .fetch_all(transaction.deref_mut())
+            .await?;
+
+        Ok(admin_list)
     }
 
     /// Retrieves all members of an organisation.
@@ -405,22 +435,21 @@ impl Organisation {
     pub async fn get_members(
         organisation_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<MemberList, ChaosError> {
+    ) -> Result<Vec<Member>, ChaosError> {
         let admin_list = sqlx::query_as!(
         Member,
         "
-            SELECT organisation_members.user_id as id, organisation_members.role AS \"role: OrganisationRole\", users.name from organisation_members
+            SELECT organisation_members.user_id as id, organisation_members.role AS \"role: OrganisationRole\", users.name, users.email from organisation_members
                 JOIN users on users.id = organisation_members.user_id
                 WHERE organisation_members.organisation_id = $1
+                ORDER BY organisation_members.id
         ",
         organisation_id
     )
             .fetch_all(transaction.deref_mut())
             .await?;
 
-        Ok(MemberList {
-            members: admin_list,
-        })
+        Ok(admin_list)
     }
 
     /// Updates the list of administrators for an organisation.
@@ -439,6 +468,16 @@ impl Organisation {
         admin_id_list: Vec<i64>,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
+        // TODO: If we allow admins to add other admins
+        // if !admin_id_list.contains(&current_user_id) {
+        //     return Err(
+        //         ChaosError::BadRequestWithMessage(
+        //             "Cannot have an admin list without current user. Ask another admin to remove yourself."
+        //             .to_string()
+        //         )
+        //     )
+        // }
+
         let _ = sqlx::query!(
             "SELECT id FROM organisations WHERE id = $1",
             organisation_id
@@ -545,7 +584,7 @@ impl Organisation {
         Ok(())
     }
 
-    pub async fn remove_member(
+    pub async fn remove_user(
         organisation_id: i64,
         user_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
@@ -559,13 +598,88 @@ impl Organisation {
 
         sqlx::query!(
             "
-            DELETE FROM organisation_members WHERE user_id = $1 AND organisation_id = $2
+            DELETE FROM organisation_members WHERE user_id = $1 AND organisation_id = $2 AND role = $3
         ",
             user_id,
-            organisation_id
+            organisation_id,
+            OrganisationRole::User as OrganisationRole
         )
         .execute(transaction.deref_mut())
         .await?;
+
+        Ok(())
+    }
+
+    pub async fn add_user(
+        organisation_id: i64,
+        user_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
+        let _ = sqlx::query!(
+            "SELECT id FROM organisations WHERE id = $1",
+            organisation_id
+        )
+            .fetch_one(transaction.deref_mut())
+            .await?;
+
+        sqlx::query!(
+            "
+                INSERT INTO organisation_members (organisation_id, user_id, role)
+                    VALUES ($1, $2, $3)
+            ",
+            organisation_id,
+            user_id,
+            OrganisationRole::User as OrganisationRole
+        )
+            .execute(transaction.deref_mut())
+            .await?;
+
+        Ok(())
+    }
+
+    async fn check_user_already_member(
+        organisation_id: i64,
+        user_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<bool, ChaosError> {
+        let possible_user = sqlx::query!(
+            "
+                SELECT id FROM organisation_members WHERE organisation_id = $1 AND user_id = $2
+            ",
+            organisation_id,
+            user_id
+        )
+            .fetch_optional(transaction.deref_mut())
+            .await?;
+
+        match possible_user {
+            Some(_) => Ok(true),
+            None => Ok(false),
+        }
+    }
+
+    pub async fn invite_user(
+        organisation_id: i64,
+        email: String,
+        email_credentials: EmailCredentials,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
+        let _ = sqlx::query!(
+            "SELECT id FROM organisations WHERE id = $1",
+            organisation_id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
+        let possible_user = User::find_by_email(email, transaction).await?;
+        if let Some(user) = possible_user {
+            if (Self::check_user_already_member(organisation_id, user.id, transaction).await?) {
+                return Err(ChaosError::BadRequestWithMessage("User already a member of organisation".to_string()))
+            }
+            Self::add_user(organisation_id, user.id, transaction).await?;
+        } else {
+            // TODO: email invite system
+        }
 
         Ok(())
     }
@@ -694,7 +808,8 @@ impl Organisation {
                 SELECT
                     organisation_members.user_id as id,
                     organisation_members.role AS \"role: OrganisationRole\",
-                    users.name from organisation_members
+                    users.name,
+                    users.email from organisation_members
                 JOIN users on users.id = organisation_members.user_id
                 WHERE organisation_members.organisation_id = $1 AND organisation_members.user_id = $2
             ",

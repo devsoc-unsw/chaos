@@ -1,6 +1,6 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, Row } from "@tanstack/react-table";
 import { OrganisationCampaign, OrganisationUserRole } from "@/models/organisation";
 import moment from "moment";
 
@@ -55,7 +55,7 @@ export function getColumns(userRole: OrganisationUserRole, dict: any): ColumnDef
         },
         {
             id: "actions",
-            cell: ({ row }) => {
+            cell: ({ row }: { row: Row<OrganisationCampaign> }) => {
                 const campaign = row.original;
 
                 return <div>

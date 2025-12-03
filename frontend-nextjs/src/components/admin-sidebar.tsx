@@ -61,7 +61,7 @@ export function AdminSidebar({ userRole, dict }: AdminSidebarProps) {
       icon: Mail,
     },
     {
-      title: dict.dashboard.members,
+      title: dict.dashboard.members.members,
       href: "members",
       icon: Users,
     },
