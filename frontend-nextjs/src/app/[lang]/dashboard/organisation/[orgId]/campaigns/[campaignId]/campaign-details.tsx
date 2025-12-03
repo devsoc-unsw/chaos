@@ -115,8 +115,6 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
     const [newRoleId, setNewRoleId] = useState<number>(0);
     const [hoveredDeleteIndex, setHoveredDeleteIndex] = useState<number | null>(null);
     const [descriptionHtmlState, setDescriptionHtmlState] = useState<string>("");
-    const [headerError, setHeaderError] = useState<boolean>(false);
-    const [descriptionError, setDescriptionError] = useState<boolean>(false);
     const [dateError, setDateError] = useState<boolean>(false);
     const [roleNameError, setRoleNameError] = useState<{ [key: number]: boolean }>(
         clientRoles.reduce((acc, role) => ({ ...acc, [role.id]: false }), {})
@@ -225,14 +223,12 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
         if (updatedCampaignDetails.campaignName) {
             if (updatedCampaignDetails.campaignName.length > parseInt(process.env.NEXT_PUBLIC_EDIT_CAMPAIGN_HEADER_MAX_CHARS!)) {
                 validationWarnings.push(`Campaign name must be less than ${parseInt(process.env.NEXT_PUBLIC_EDIT_CAMPAIGN_HEADER_MAX_CHARS!)} characters`);
-                setHeaderError(true);
             }
         }
 
         if (updatedCampaignDetails.description) {
             if (updatedCampaignDetails.description.length > parseInt(process.env.NEXT_PUBLIC_EDIT_CAMPAIGN_DESCRIPTION_MAX_CHARS!)) {
                 validationWarnings.push(`Campaign description must be less than ${parseInt(process.env.NEXT_PUBLIC_EDIT_CAMPAIGN_DESCRIPTION_MAX_CHARS!)} characters`);
-                setDescriptionError(true);
             }
         }
 
