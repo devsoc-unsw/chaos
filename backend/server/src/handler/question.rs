@@ -5,7 +5,7 @@
 //! - Updating and deleting questions
 //! - Managing role-specific and common questions
 
-use crate::models::app::AppState;
+use crate::models::app::{AppMessage, AppState};
 use crate::models::auth::{AuthUser, CampaignAdmin, QuestionAdmin};
 use crate::models::error::ChaosError;
 use crate::models::question::{NewQuestion, Question};
@@ -159,7 +159,7 @@ impl QuestionHandler {
 
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, "Successfully updated question"))
+        Ok(AppMessage::OkMessage("Successfully updated question"))
     }
 
     /// Deletes a question.
@@ -185,6 +185,6 @@ impl QuestionHandler {
 
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, "Successfully deleted question"))
+        Ok(AppMessage::OkMessage("Successfully deleted question"))
     }
 }

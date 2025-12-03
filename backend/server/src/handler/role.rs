@@ -13,6 +13,7 @@ use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
+use crate::models::app::AppMessage;
 
 /// Handler for role-related HTTP requests.
 pub struct RoleHandler;
@@ -63,7 +64,7 @@ impl RoleHandler {
         Role::delete(id, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully deleted role"))
+        Ok(AppMessage::OkMessage("Successfully deleted role"))
     }
 
     /// Updates a role.
@@ -89,7 +90,7 @@ impl RoleHandler {
         Role::update(id, data, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully updated role"))
+        Ok(AppMessage::OkMessage("Successfully updated role"))
     }
 
     /// Retrieves all applications for a specific role.

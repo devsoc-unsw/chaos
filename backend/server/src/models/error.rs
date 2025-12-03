@@ -4,8 +4,7 @@
 //! It provides a unified error handling system that covers both application-specific
 //! errors and errors from external dependencies.
 
-use axum::http::StatusCode;
-use axum::response::{IntoResponse, Redirect, Response};
+use axum::response::{IntoResponse, Response};
 use crate::models::app::AppMessage;
 
 /// Custom error enum for Chaos.

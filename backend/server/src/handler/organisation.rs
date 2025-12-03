@@ -55,7 +55,7 @@ impl OrganisationHandler {
         .await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully created organisation"))
+        Ok(AppMessage::OkMessage("Successfully created organisation"))
     }
 
     /// Checks if an organisation slug is available.
@@ -79,7 +79,7 @@ impl OrganisationHandler {
         Organisation::check_slug_availability(data.slug, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Organisation slug is available"))
+        Ok(AppMessage::OkMessage("Organisation slug is available"))
     }
 
     /// Retrieves an organisation by its ID.
@@ -150,7 +150,7 @@ impl OrganisationHandler {
         Organisation::delete(id, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully deleted organisation"))
+        Ok(AppMessage::OkMessage("Successfully deleted organisation"))
     }
 
     /// Get all organisations that the logged in user is a Member of
@@ -249,7 +249,7 @@ impl OrganisationHandler {
         Organisation::update_admins(id, request_body.members, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully updated organisation members"))
+        Ok(AppMessage::OkMessage("Successfully updated organisation members"))
     }
 
     /// Updates the member list of an organisation.
@@ -275,7 +275,7 @@ impl OrganisationHandler {
         Organisation::update_members(id, request_body.members, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully updated organisation members"))
+        Ok(AppMessage::OkMessage("Successfully updated organisation members"))
     }
 
     /// Removes an admin from an organisation.
@@ -445,7 +445,7 @@ impl OrganisationHandler {
         Campaign::check_slug_availability(organisation_id, data.slug, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Campaign slug is available"))
+        Ok(AppMessage::OkMessage("Campaign slug is available"))
     }
 
     /// Creates a new email template for an organisation.
