@@ -3,7 +3,7 @@
 import type { EmailTemplate } from "@/models/email"
 import { useState } from "react"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { Copy, Eye, Pencil, Trash } from "lucide-react"
+import { Copy, Eye, Pencil, Plus, Trash } from "lucide-react"
 import { deleteEmailTemplate, duplicateEmailTemplate, getOrganisationEmailTemplates, templateVariables } from "@/models/email"
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -26,8 +26,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function EmailTemplates({ orgId, dict }: { orgId: string, dict: any }) {
+  const router = useRouter();
+  
   let { data: templates } = useQuery({
     queryKey: [`${orgId}-email-templates`],
     queryFn: () => getOrganisationEmailTemplates(orgId),
@@ -37,13 +40,16 @@ export default function EmailTemplates({ orgId, dict }: { orgId: string, dict: a
 
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold my-2">{dict.dashboard.email_templates}</h1>
-
+    <div className="flex flex-col gap-2">
+      <h1 className="text-2xl font-bold">{dict.dashboard.email_templates}</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
         {templates.map((template) => {
           return <EmailCard key={template.id} template={template} dict={dict} />
         })}
+        <Card className="flex items-center justify-center gap-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 cursor-pointer" onClick={() => router.push(`/dashboard/organisation/${orgId}/templates/new`)}>
+          <Plus className="w-10 h-10" />
+          <p className="text-xl font-semibold">{dict.dashboard.actions.new}</p>
+        </Card>
       </div>
 
     </div>
@@ -162,13 +168,13 @@ function EmailTemplatePreview({ template, dict }: { template: EmailTemplate, dic
           </DialogHeader>
           <div className="grid gap-2">
             <div className="flex flex-col">
-            <p className="text-sm font-semibold text-gray-700">{dict.dashboard.email.subject}:</p>
-            <p className="whitespace-pre-wrap">{template.template_subject}</p>
+              <p className="text-sm font-semibold text-gray-700">{dict.dashboard.email.subject}:</p>
+              <p className="whitespace-pre-wrap">{template.template_subject}</p>
             </div>
 
             <div className="flex flex-col">
-            <p className="text-sm font-semibold text-gray-700">{dict.dashboard.email.body}:</p>
-            <p className="whitespace-pre-wrap">{template.template_body}</p>
+              <p className="text-sm font-semibold text-gray-700">{dict.dashboard.email.body}:</p>
+              <p className="whitespace-pre-wrap">{template.template_body}</p>
             </div>
           </div>
         </DialogContent>

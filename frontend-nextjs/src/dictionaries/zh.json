@@ -54,6 +54,7 @@
             "edit_template": "编辑模板"
         },
         "actions": {
+            "new": "新建",
             "edit": "编辑",
             "delete": "删除",
             "preview": "预览",

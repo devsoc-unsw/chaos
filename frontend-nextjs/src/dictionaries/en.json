@@ -54,6 +54,7 @@
             "edit_template": "Edit Template"
         },
         "actions": {
+            "new": "New",
             "edit": "Edit",
             "delete": "Delete",
             "preview": "Preview",

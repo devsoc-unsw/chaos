@@ -7,7 +7,7 @@
 //! - Email template management
 //! - Logo image handling
 
-use crate::models::app::AppState;
+use crate::models::app::{AppMessage, AppState};
 use crate::models::auth::SuperUser;
 use crate::models::auth::{AuthUser, OrganisationAdmin};
 use crate::models::campaign::{Campaign, NewCampaign};
@@ -480,7 +480,7 @@ impl OrganisationHandler {
         .await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully created email template"))
+        Ok(AppMessage::OkMessage("Successfully created email template"))
     }
 
     /// Retrieves all email templates for an organisation.
