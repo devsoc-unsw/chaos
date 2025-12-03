@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
 use sqlx::{FromRow, Postgres, Transaction};
 use std::ops::DerefMut;
+use std::env;
 
 /// Represents a role in a recruitment campaign.
 /// 
@@ -99,6 +100,7 @@ impl Role {
         transaction: &mut Transaction<'_, Postgres>,
         snowflake_generator: &mut SnowflakeIdGenerator,
     ) -> Result<i64, ChaosError> {
+        role_data.validate()?;
         let id = snowflake_generator.real_time_generate();
 
         sqlx::query!(
@@ -185,6 +187,8 @@ impl Role {
         role_data: RoleUpdate,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
+        role_data.validate()?;
+
         let _ = sqlx::query!(
             "
                 UPDATE campaign_roles
@@ -231,5 +235,35 @@ impl Role {
         .await?;
 
         Ok(roles)
+    }
+}
+
+impl RoleUpdate {
+    pub fn validate(&self) -> Result<(), ChaosError> {
+        let role_name_max_chars = env::var("ROLE_NAME_MAX_CHARS")
+            .expect("Error getting ROLE_NAME_MAX_CHARS")
+            .to_string().parse::<usize>().map_err(|_| ChaosError::InternalServerError)?;
+        let role_description_max_chars = env::var("ROLE_DESCRIPTION_MAX_CHARS")
+            .expect("Error getting ROLE_DESCRIPTION_MAX_CHARS")
+            .to_string().parse::<usize>().map_err(|_| ChaosError::InternalServerError)?;
+        let role_positions_available_max = env::var("ROLE_POSITIONS_AVAILABLE_MAX")
+            .expect("Error getting ROLE_POSITIONS_AVAILABLE_MAX")
+            .to_string().parse::<i32>().map_err(|_| ChaosError::InternalServerError)?;
+
+        if self.name.is_empty() || 
+            self.min_available < 1 || 
+            self.max_available < 1 || 
+            self.min_available > self.max_available ||
+            self.name.len() > role_name_max_chars ||
+            self.min_available > role_positions_available_max ||
+            self.max_available > role_positions_available_max {
+            return Err(ChaosError::BadRequest);
+        }
+
+        if self.description.is_some() && self.description.as_ref().unwrap().len() > role_description_max_chars {
+            return Err(ChaosError::BadRequest);
+        }
+
+        Ok(())
     }
 }

@@ -25,11 +25,13 @@
             "share_link": "Share Link",
             "review_applications": "Review Applications",
             "roles": {
-                "number_of_positions": "Number of Positions"
+                "number_of_positions": "Number of Positions",
+                "add_role": "Add Role"
             }
         },
         "actions": {
             "edit": "Edit",
+            "save": "Save",
             "delete": "Delete"
         }
     }

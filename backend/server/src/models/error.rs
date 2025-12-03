@@ -88,6 +88,10 @@ pub enum ChaosError {
     /// SMTP transport failed
     #[error("SMTP transport error")]
     SmtpTransportError(#[from] lettre::transport::smtp::Error),
+
+    // not covered by any other error
+    #[error("Internal server error")]
+    InternalServerError,
 }
 
 /// Implementation for converting errors into HTTP responses.

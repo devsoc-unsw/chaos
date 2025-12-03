@@ -25,11 +25,13 @@
             "share_link": "分享链接",
             "review_applications": "审核申请",
             "roles": {
-                "number_of_positions": "职位数量"
+                "number_of_positions": "职位数量",
+                "add_role": "添加角色"
             }
         },
         "actions": {
             "edit": "编辑",
+            "save": "保存",
             "delete": "删除"
         }
     }
