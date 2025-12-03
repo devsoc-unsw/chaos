@@ -84,7 +84,7 @@ function EmailCard({ template, dict }: { template: EmailTemplate, dict: any }) {
           <p className="text-2xl line-clamp-1">{template.name}</p>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col gap-2 mt-auto">
+      <CardContent className="flex flex-col gap-2">
         <div>
           <p className="text-sm font-semibold text-gray-700">{dict.dashboard.email.subject}:</p>
           <p className="line-clamp-2">{template.template_subject}</p>
@@ -94,7 +94,7 @@ function EmailCard({ template, dict }: { template: EmailTemplate, dict: any }) {
           <p className="line-clamp-4 whitespace-pre-wrap">{template.template_body}</p>
         </div>
       </CardContent>
-      <CardFooter className="flex gap-1 justify-end">
+      <CardFooter className="flex gap-1 justify-end mt-auto">
         <EmailTemplatePreview template={template} dict={dict} />
         <Tooltip>
           <TooltipTrigger asChild>
