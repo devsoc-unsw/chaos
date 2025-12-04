@@ -37,3 +37,8 @@ export async function getCampaignRoles(campaignId: string): Promise<CampaignRole
 export async function getCampaignApplications(campaignId: string): Promise<ApplicationDetails[]> {
     return await apiRequest<ApplicationDetails[]>(`/api/v1/campaign/${campaignId}/applications`);
 }
+
+export async function getCampaignDetails(orgSlug: string, campaignSlug: string): Promise<CampaignDetails> {
+    // return await apiRequest<CampaignDetails>(`/api/v1/campaign/${orgSlug}/${campaignSlug}`);
+    return await apiRequest<CampaignDetails>(`/api/v1/organisation/slug/${orgSlug}/campaign/slug/${campaignSlug}`);
+}
