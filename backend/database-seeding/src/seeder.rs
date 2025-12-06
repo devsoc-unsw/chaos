@@ -29,20 +29,20 @@ pub async fn init() -> Seeder {
         seeder
     }
 
-pub async fn seed_database(mut seeder: Seeder) {
+pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
     let mut tx = seeder.app_state.db.begin().await.expect("Error beginning DB transaction");
 
     // Super User
     let users = vec![
         User {
             id: 1,
-            email: "example.superuser@chaos.devsoc.app".to_string(),
-            zid: Some("z5555555".to_string()),
-            name: "Francis Urquhart".to_string(),
-            pronouns: Some("Ze/Za".to_string()),
-            gender: Some("Otter".to_string()),
-            degree_name: Some("Bachelor of Arts".to_string()),
-            degree_starting_year: Some(1900),
+            email: dev_email,
+            zid: Some("z5555558".to_string()),
+            name: "Chaos Developer".to_string(),
+            pronouns: None,
+            gender: None,
+            degree_name: Some("Bachelor of Chaos Development (Honours)".to_string()),
+            degree_starting_year: Some(2024),
             role: UserRole::SuperUser,
         },
         User {
@@ -66,14 +66,26 @@ pub async fn seed_database(mut seeder: Seeder) {
             degree_name: Some("Bachelor of Social Work (Honours)".to_string()),
             degree_starting_year: Some(2024),
             role: UserRole::User,
-        }
+        },
+        User {
+            id: 4,
+            email: "example.superuser@chaos.devsoc.app".to_string(),
+            zid: Some("z5555555".to_string()),
+            name: "Francis Urquhart".to_string(),
+            pronouns: Some("Ze/Za".to_string()),
+            gender: Some("Otter".to_string()),
+            degree_name: Some("Bachelor of Arts".to_string()),
+            degree_starting_year: Some(1900),
+            role: UserRole::SuperUser,
+        },
     ];
 
     for user in users {
         User::create_user(user, &mut tx).await.expect("Failed seeding Root User");
     }
 
-    let org_id = Organisation::create(1, 
+    let org_id = Organisation::create(
+        1, // User number 1, i.e. Developer
         "devsoc".to_string(), 
         "UNSW DevSoc".to_string(),
         "contact@devsoc.app".to_string(),
