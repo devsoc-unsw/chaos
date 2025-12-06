@@ -1,5 +1,7 @@
 import { apiRequest } from "@/lib/api";
 import { ApplicationDetails } from "./application";
+import { AppMessage } from "./app";
+
 
 export interface CampaignDetails {
     /// Unique identifier for the campaign
@@ -17,6 +19,16 @@ export interface CampaignDetails {
     published: boolean;
 }
 
+export interface NewCampaign {
+    name: string;
+    slug: string;
+    /// Optional description of the campaign
+    description: string | null;
+    starts_at: string;
+    organisation_id: string;
+    ends_at: string;
+}
+
 export async function getCampaign(campaignId: string): Promise<CampaignDetails> {
     return await apiRequest<CampaignDetails>(`/api/v1/campaign/${campaignId}`);
 }
@@ -28,6 +40,14 @@ export interface CampaignRole {
     min_available: number;
     max_available: number;
     finalised: boolean;
+}
+
+export async function createCampaign(campaign: NewCampaign, organisationId: string): Promise<{id: string}> {
+    return await apiRequest<{id: string}>(`/api/v1/organisation/${organisationId}/campaign`, {method: "POST", body: campaign });
+}
+
+export async function setCampaignCoverImage(campaignId: string): Promise<AppMessage> {
+    return await apiRequest<AppMessage>(`/api/v1/campaign/${campaignId}/banner`, {method: "PATCH"});
 }
 
 export async function getCampaignRoles(campaignId: string): Promise<CampaignRole[]> {
