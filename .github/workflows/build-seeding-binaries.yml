@@ -14,8 +14,17 @@ on:
 
 jobs:
   build:
-    name: Build for ${{ matrix.os }}
+    name: Build database seeding binary for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: chaos
+        ports:
+          - 5432:5432
     strategy:
       matrix:
         include:
@@ -61,6 +70,25 @@ jobs:
           echo "SMTP_PASSWORD=test_password" >> backend/.env
           echo "SMTP_HOST=smtp.example.com" >> backend/.env
 
+      - name: Setup cargo cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            backend/server/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Migrate DB
+        working-directory: backend
+        run: |
+          which sqlx || cargo install sqlx-cli --no-default-features --features native-tls,postgres
+          sqlx database create
+          sqlx migrate run
+
       - name: Build
         working-directory: backend/database-seeding
         run: cargo build --release --target ${{ matrix.target }}
@@ -101,5 +129,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add bin/
-          git diff --staged --quiet || git commit -m "chore: update binaries [skip ci]"
+          git diff --staged --quiet || git commit -m "chore: update database seeding binaries [skip ci]"
           git push
