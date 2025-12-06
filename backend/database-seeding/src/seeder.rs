@@ -76,6 +76,8 @@ pub async fn seed_database(mut seeder: Seeder) {
     let org_id = Organisation::create(1, 
         "devsoc".to_string(), 
         "UNSW DevSoc".to_string(),
+        "contact@devsoc.app".to_string(),
+        Some("https://devsoc.app".to_string()),
         &mut seeder.app_state.snowflake_generator, 
         &mut tx).await.expect("Failed seeding Organisation");
 
@@ -97,6 +99,20 @@ pub async fn seed_database(mut seeder: Seeder) {
                 chrono::NaiveDate::from_ymd_opt(2040, 1, 1).unwrap().and_hms_milli_opt(0, 0, 0, 0).unwrap(),
                 Utc,
             ),
+            Some(DateTime::<Utc>::from_naive_utc_and_offset(
+                chrono::NaiveDate::from_ymd_opt(2041, 1, 1).unwrap().and_hms_milli_opt(0, 0, 0, 0).unwrap(),
+                Utc,
+            )),
+            Some(DateTime::<Utc>::from_naive_utc_and_offset(
+                chrono::NaiveDate::from_ymd_opt(2042, 1, 1).unwrap().and_hms_milli_opt(0, 0, 0, 0).unwrap(),
+                Utc,
+            )),
+            Some("in-person".to_string()),
+            Some(DateTime::<Utc>::from_naive_utc_and_offset(
+                chrono::NaiveDate::from_ymd_opt(2043, 1, 1).unwrap().and_hms_milli_opt(0, 0, 0, 0).unwrap(),
+                Utc,
+            )),
+            Some("Resume required".to_string()),
             &mut tx,
             &mut seeder.app_state.snowflake_generator,
         )
