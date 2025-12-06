@@ -1,0 +1,105 @@
+name: Build and Commit Seeding Binaries
+
+on:
+  pull_request:
+    branches: [main, "renovate/*", "CHAOS-224-KHAOS-rewrite", "CHAOS-571-integrate-be-fe", "CHAOS-598-nextjs"]
+    paths:
+      - "backend/**"
+      - ".github/workflows/rust.yml"
+  push:
+    branches: ["renovate/*"]
+    paths:
+      - "backend/**"
+      - ".github/workflows/rust.yml"
+
+jobs:
+  build:
+    name: Build for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_name: myapp
+            asset_name: myapp-linux-amd64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: myapp.exe
+            asset_name: myapp-windows-amd64.exe
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact_name: myapp
+            asset_name: myapp-macos-amd64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact_name: myapp
+            asset_name: myapp-macos-arm64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Setup env file
+        run: |
+          echo "DATABASE_URL=postgres://postgres:password@localhost:5432/chaos" >> backend/.env
+          echo "JWT_SECRET=test_secret" >> backend/.env
+          echo "GOOGLE_CLIENT_ID=test" >> backend/.env
+          echo "GOOGLE_CLIENT_SECRET=test" >> backend/.env
+          echo "GOOGLE_REDIRECT_URI=http://localhost:3000/auth/callback" >> backend/.env
+          echo "S3_BUCKET_NAME=chaos-storage" >> backend/.env
+          echo "S3_ACCESS_KEY=test_access_key" >> backend/.env
+          echo "S3_SECRET_KEY=test_secret_key" >> backend/.env
+          echo "S3_ENDPOINT=https://chaos-storage.s3.ap-southeast-1.amazonaws.com" >> backend/.env
+          echo "S3_REGION_NAME=ap-southeast-1" >> backend/.env
+          echo "DEV_ENV=dev" >> backend/.env
+          echo "SMTP_USERNAME=test_username" >> backend/.env
+          echo "SMTP_PASSWORD=test_password" >> backend/.env
+          echo "SMTP_HOST=smtp.example.com" >> backend/.env
+
+      - name: Build
+        working-directory: backend/database-seeding
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Rename binary
+        working-directory: backend
+        shell: bash
+        run: |
+          mkdir -p binaries
+          cp database-seeding/target/${{ matrix.target }}/release/${{ matrix.artifact_name }} binaries/${{ matrix.asset_name }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: backend/binaries/${{ matrix.asset_name }}
+
+  commit:
+    name: Commit binaries to repo
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: binaries-temp
+
+      - name: Organize binaries
+        run: |
+          mkdir -p bin
+          find binaries-temp -type f -exec cp {} bin/ \;
+          chmod +x bin/database-seeding-*
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add bin/
+          git diff --staged --quiet || git commit -m "chore: update binaries [skip ci]"
+          git push
