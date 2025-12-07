@@ -83,6 +83,10 @@ pub struct CampaignDetails {
     pub organisation_slug: String,
     /// Name of the organization running the campaign
     pub organisation_name: String,
+    /// The organisation's contact email (e.g. contact@devsoc.app)
+    pub contact_email: String,
+    /// The organisations website link (e.g. https://devsoc.app)
+    pub website_url: Option<String>,
     /// Optional UUID of the campaign's cover image
     pub cover_image: Option<Uuid>,
     /// Optional description of the campaign
@@ -253,7 +257,8 @@ impl Campaign {
             CampaignDetails,
             "
                 SELECT c.id, c.slug AS campaign_slug, c.name, c.organisation_id,
-                o.slug AS organisation_slug, o.name as organisation_name, c.cover_image,
+                o.slug AS organisation_slug, o.name as organisation_name, 
+                o.contact_email, o.website_url, c.cover_image,
                 c.description, c.starts_at, c.ends_at, c.published, c.interview_period_starts_at, 
                 c.interview_period_ends_at, c.interview_format, c.outcomes_released_at, 
                 c.application_requirements
@@ -328,10 +333,11 @@ impl Campaign {
             CampaignDetails,
             "
                 SELECT c.id, c.slug AS campaign_slug, c.name, c.organisation_id,
-                o.slug AS organisation_slug, o.name as organisation_name, c.cover_image,
-                c.description, c.starts_at, c.ends_at, c.published, c.interview_period_starts_at, 
-                c.interview_period_ends_at, c.interview_format, c.outcomes_released_at, 
-                c.application_requirements
+                o.slug AS organisation_slug, o.name as organisation_name, 
+                o.contact_email, o.website_url, c.cover_image, 
+                c.description, c.starts_at, c.ends_at, c.published, 
+                c.interview_period_starts_at, c.interview_period_ends_at, c.interview_format, 
+                c.outcomes_released_at, c.application_requirements
                 FROM campaigns c
                 JOIN organisations o on c.organisation_id = o.id
                 WHERE c.slug = $1 AND o.slug = $2
