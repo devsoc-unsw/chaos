@@ -34,7 +34,8 @@
             "published": "Published",
             "draft": "Draft",
             "roles": {
-                "number_of_positions": "Number of Positions"
+                "number_of_positions": "Number of Positions",
+                "add_role": "Add Role"
             },
             "application_review_page": {
                 "no_application_selected": "No application selected",

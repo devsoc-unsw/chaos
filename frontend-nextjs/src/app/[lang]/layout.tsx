@@ -1,6 +1,7 @@
 import Providers from "@/app/providers";
 import type { Metadata } from "next";
 import "@/app/globals.css";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "Chaos - Recruitment drives, without the chaos",
@@ -22,7 +23,8 @@ export default async function RootLayout({
   return (
     <html lang={lang}>
       <body>
-        <Providers>{children}</Providers>        
+        <Providers>{children}</Providers> 
+        <Toaster />
       </body>
     </html>
   );
