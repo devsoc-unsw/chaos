@@ -4,6 +4,7 @@ use crate::models::error::ChaosError;
 mod handler;
 mod models;
 mod service;
+pub(crate) mod constants;
 
 #[tokio::main]
 async fn main() -> Result<(), ChaosError> {

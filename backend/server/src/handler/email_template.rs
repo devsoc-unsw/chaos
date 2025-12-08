@@ -9,9 +9,10 @@ use crate::models::auth::EmailTemplateAdmin;
 use crate::models::email_template::EmailTemplate;
 use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
-use axum::extract::{Json, Path};
+use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
+use crate::models::app::{AppMessage, AppState};
 
 /// Handler for email template-related HTTP requests.
 pub struct EmailTemplateHandler;
@@ -70,7 +71,7 @@ impl EmailTemplateHandler {
         .await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully updated email template"))
+        Ok(AppMessage::OkMessage("Successfully updated email template"))
     }
 
     /// Deletes an email template.
@@ -94,6 +95,31 @@ impl EmailTemplateHandler {
         EmailTemplate::delete(id, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully delete email template"))
+        Ok(AppMessage::OkMessage("Successfully deleted email template"))
+    }
+
+    /// Duplicates an email template.
+    ///
+    /// This handler allows email template admins to duplicate templates.
+    ///
+    /// # Arguments
+    ///
+    /// * `_user` - The authenticated user (must be an email template admin)
+    /// * `id` - The ID of the template to delete
+    /// * `state` - The application state
+    ///
+    /// # Returns
+    ///
+    /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
+    pub async fn duplicate(
+        _user: EmailTemplateAdmin,
+        Path(id): Path<i64>,
+        State(mut state): State<AppState>,
+        mut transaction: DBTransaction<'_>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        EmailTemplate::duplicate(id, &mut transaction.tx, &mut state.snowflake_generator).await?;
+
+        transaction.tx.commit().await?;
+        Ok(AppMessage::OkMessage("Successfully duplicated email template"))
     }
 }

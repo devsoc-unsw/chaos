@@ -4,8 +4,8 @@
 //! It provides a unified error handling system that covers both application-specific
 //! errors and errors from external dependencies.
 
-use axum::http::StatusCode;
-use axum::response::{IntoResponse, Redirect, Response};
+use axum::response::{IntoResponse, Response};
+use crate::models::app::AppMessage;
 
 /// Custom error enum for Chaos.
 ///
@@ -101,21 +101,22 @@ pub enum ChaosError {
 /// errors from external dependencies.
 impl IntoResponse for ChaosError {
     fn into_response(self) -> Response {
+        // Don't leak real error, only return a generic error message
         match self {
-            ChaosError::NotLoggedIn => (StatusCode::UNAUTHORIZED, "Not logged in").into_response(), // User is not logged in
-            ChaosError::Unauthorized => (StatusCode::FORBIDDEN, "Unauthorized").into_response(), // Unauthorized to complete the action
+            ChaosError::NotLoggedIn => AppMessage::NotLoggedInMessage("Not logged in").into_response(), // User is not logged in
+            ChaosError::Unauthorized => AppMessage::UnauthorizedMessage("Unauthorized").into_response(), // Unauthorized to complete the action
             ChaosError::ForbiddenOperation => {
-                (StatusCode::FORBIDDEN, "Forbidden operation").into_response()
+                AppMessage::UnauthorizedMessage("Forbidden operation").into_response()
             }
-            ChaosError::BadRequest => (StatusCode::BAD_REQUEST, "Bad request").into_response(),
-            ChaosError::ApplicationClosed => (StatusCode::BAD_REQUEST, "Application closed").into_response(),
-            ChaosError::CampaignClosed => (StatusCode::BAD_REQUEST, "Campaign closed").into_response(),
+            ChaosError::BadRequest => AppMessage::BadRequestMessage("Bad request").into_response(),
+            ChaosError::ApplicationClosed => AppMessage::BadRequestMessage("Application closed").into_response(),
+            ChaosError::CampaignClosed => AppMessage::BadRequestMessage("Campaign closed").into_response(),
             ChaosError::DatabaseError(db_error) => match db_error {
                 // We only care about the RowNotFound error, as others are miscellaneous DB errors.
-                sqlx::Error::RowNotFound => (StatusCode::NOT_FOUND, "Not found").into_response(),
-                _ => (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response(),
+                sqlx::Error::RowNotFound => AppMessage::NotFoundMessage("Not found").into_response(),
+                _ => AppMessage::ErrorMessage("Internal server error").into_response(),
             },
-            _ => (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response(),
+            _ => AppMessage::ErrorMessage("Internal server error").into_response(),
         }
     }
 }

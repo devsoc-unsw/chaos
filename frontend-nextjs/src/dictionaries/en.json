@@ -10,7 +10,12 @@
         "campaigns": "Campaigns",
         "settings": "Settings",
         "roles": "Roles",
-        "description": "Description"
+        "description": "Description",
+        "questions": "Questions",
+        "common_questions": "Common Questions",
+        "back": "Back",
+        "application": "Application",
+        "status": "Status"
     },
     "dashboard": {
         "email_templates": "Email Templates",
@@ -24,15 +29,40 @@
             "edit_campaign": "Edit Campaign",
             "share_link": "Share Link",
             "review_applications": "Review Applications",
+            "manage_questions": "Manage Questions",
+            "publish": "Publish",
+            "published": "Published",
+            "draft": "Draft",
             "roles": {
                 "number_of_positions": "Number of Positions",
                 "add_role": "Add Role"
+            },
+            "application_review_page": {
+                "no_application_selected": "No application selected",
+                "click_on_application_to_view": "Click on an application on the left to view it",
+                "application_rating": "Application rating",
+                "review_score": "Score",
+                "review_comment": "Comments (optional)",
+                "write_your_review_here": "Write your review here...",
+                "application_not_rated": "Application not rated"
             }
         },
+        "email": {
+            "name": "Name",
+            "subject": "Subject",
+            "body": "Body",
+            "delete_confirmation": "This will permanently delete the email template and cannot be undone.",
+            "edit_template": "Edit Template"
+        },
         "actions": {
+            "new": "New",
             "edit": "Edit",
+            "delete": "Delete",
+            "preview": "Preview",
+            "duplicate": "Duplicate",
+            "cancel": "Cancel",
             "save": "Save",
-            "delete": "Delete"
+            "destructive_confirm": "Are you absolutely sure?"
         }
     }
 }

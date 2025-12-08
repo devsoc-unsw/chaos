@@ -13,7 +13,7 @@ use crate::models::email::{ChaosEmail, EmailCredentials};
 use crate::models::error::ChaosError;
 use crate::models::storage::Storage;
 use axum::routing::{delete, get, patch, post};
-use axum::Router;
+use axum::{Json, Router};
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use reqwest::Client as ReqwestClient;
 use s3::Bucket;
@@ -21,10 +21,68 @@ use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 use std::env;
-use axum::http::{header, Method};
+use axum::http::{header, Method, StatusCode};
+use axum::response::IntoResponse;
 use oauth2::basic::BasicClient;
+use serde::Serialize;
 use tower_http::cors::CorsLayer;
 use crate::service::oauth2::build_oauth_client;
+
+#[derive(Serialize)]
+pub enum AppMessage<T: Serialize> {
+    OkMessage(T),
+    BadRequestMessage(T),
+    NotFoundMessage(T),
+    ErrorMessage(T),
+    NotLoggedInMessage(T),
+    UnauthorizedMessage(T),
+}
+
+#[derive(Serialize)]
+pub struct MessageWrapper<T: Serialize> {
+    message: T,
+}
+
+#[derive(Serialize)]
+pub struct ErrorMessageWrapper<T: Serialize> {
+    error: T,
+}
+
+impl<T: Serialize> IntoResponse for AppMessage<T> {
+    fn into_response(self) -> axum::response::Response {
+        match self {
+            Self::OkMessage(value) => {
+                (StatusCode::OK, Json(MessageWrapper { message: value })).into_response()
+            }
+            Self::BadRequestMessage(value) => (
+                StatusCode::BAD_REQUEST,
+                Json(ErrorMessageWrapper { error: value }),
+            )
+                .into_response(),
+            Self::NotFoundMessage(value) => (
+                StatusCode::NOT_FOUND,
+                Json(ErrorMessageWrapper { error: value }),
+            )
+                .into_response(),
+            Self::ErrorMessage(value) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorMessageWrapper { error: value }),
+            )
+                .into_response(),
+            Self::NotLoggedInMessage(value) => (
+                StatusCode::UNAUTHORIZED,
+                Json(ErrorMessageWrapper { error: value }),
+            )
+                .into_response(),
+            Self::UnauthorizedMessage(value) => (
+                StatusCode::FORBIDDEN,
+                Json(ErrorMessageWrapper { error: value }),
+            )
+                .into_response(),
+        }
+    }
+}
+
 
 #[derive(Clone)]
 pub struct AppState {
@@ -318,7 +376,7 @@ pub async fn app() -> Result<Router, ChaosError> {
             post(AnswerHandler::create),
         )
         .route(
-            "/api/v1/application/:application_id/answers/role/:role_id",
+            "/api/v1/application/:application_id/role/:role_id/answers",
             get(AnswerHandler::get_all_by_application_and_role),
         )
         .route(
@@ -338,6 +396,10 @@ pub async fn app() -> Result<Router, ChaosError> {
             get(EmailTemplateHandler::get)
                 .patch(EmailTemplateHandler::update)
                 .delete(EmailTemplateHandler::delete),
+        )
+        .route(
+            "/api/v1/email_template/:template_id/duplicate",
+            post(EmailTemplateHandler::duplicate)
         )
         .route(
             "/api/v1/offer/:offer_id",

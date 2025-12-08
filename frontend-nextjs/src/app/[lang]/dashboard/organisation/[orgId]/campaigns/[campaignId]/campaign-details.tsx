@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CampaignUpdate, createCampaignRole, getCampaign, getCampaignRoles, updateCampaign } from "@/models/campaign";
 import { Button } from "@/components/ui/button";
-import { Copy, Pencil, Trash, Share, BookOpenCheck, Check, Plus } from "lucide-react";
+import { Copy, Pencil, Trash, Share, BookOpenCheck, Check, Plus, FormIcon, CircleCheck } from "lucide-react";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { cn } from "@/lib/utils";
 import {
@@ -24,6 +24,7 @@ import { RoleUpdate, deleteRole, updateRole } from "@/models/role";
 import { toast } from "sonner";
 import { remark } from "remark";
 import html from "remark-html";
+import CopyButton from "@/components/copy-button";
 
 interface ClientRole extends CampaignRole {
     deleting: boolean;
@@ -369,9 +370,12 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                         </Link>
                     </ButtonGroup>
                     <ButtonGroup>
-                        <Button variant="outline" onClick={() => navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_NEXT_PUBLIC_APP_URL}/campaign/${campaign?.organisation_slug}/${campaign?.campaign_slug}`)}>
+                        <CopyButton value={`${process.env.NEXT_PUBLIC_APP_URL}/campaign/${campaign?.organisation_slug}/${campaign?.campaign_slug}`}>
                             <Share className="w-4 h-4" /> {dict.dashboard.campaigns.share_link}
-                        </Button>
+                        </CopyButton>
+                        <CopyButton value={campaignId}>
+                            <Copy className="w-4 h-4" /> {dict.dashboard.campaigns.copy_campaign_id}
+                        </CopyButton>
                     </ButtonGroup>
                     {userRole?.role === "Admin" && (
                         <ButtonGroup>
@@ -385,11 +389,17 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                             <Button variant="outline"><Trash className="w-4 h-4" /> {dict.dashboard.actions.delete}</Button>
                         </ButtonGroup>
                     )}
+                    {
+                        !campaign?.published && (
+                            <Link href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}/questions`}>
+                                <Button variant="outline"><FormIcon className="w-4 h-4" /> {dict.dashboard.campaigns.manage_questions}</Button>
+                            </Link>
+                        )
+                    }
                     <ButtonGroup>
-                        <Button variant="outline" onClick={() => navigator.clipboard.writeText(campaignId)}>
-                            <Copy className="w-4 h-4" /> {dict.dashboard.campaigns.copy_campaign_id}
-                        </Button>
+                        <Button variant="outline"><CircleCheck className="w-4 h-4 text-green-500" /> {dict.dashboard.campaigns.publish}</Button>
                     </ButtonGroup>
+
                 </ButtonGroup>
             </div>
             <div className="flex flex-col gap-1">

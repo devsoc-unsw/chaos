@@ -24,7 +24,7 @@ export async function generateMetadata(
   }
 }
 
-export default async function Layout({ children, params }: { children: React.ReactNode, params: { orgId: string,lang: string } }) {
+export default async function Layout({ children, params }: { children: React.ReactNode, params: Promise<{ orgId: string,lang: string }> }) {
   const { orgId, lang } = await params;
   const dict = await getDictionary(lang);
   
@@ -54,9 +54,9 @@ export default async function Layout({ children, params }: { children: React.Rea
     <HydrationBoundary state={dehydrate(queryClient)}>
       <SidebarProvider>
         <AdminSidebar userRole={userRole} dict={dict} />
-        <main className="w-full">
+        <main className="w-full h-screen">
           <SidebarTrigger />
-          <div className="px-2 max-w-7xl mx-auto">
+          <div className="px-2 max-w-[1500px] mx-auto overflow-y-auto min-h-[calc(100vh-100px)]">
             {children}
           </div>
         </main>

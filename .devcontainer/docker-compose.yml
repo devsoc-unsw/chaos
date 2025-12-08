@@ -1,0 +1,29 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ..:/workspaces/chaos:cached
+    # Overrides default command so things don't shut down after the process ends.
+    command: sleep infinity
+    # Use the same network as the db service to access it via localhost
+    network_mode: service:db
+
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: chaos
+    volumes:
+      - chaos-postgres-data:/var/lib/postgresql/data
+    # Forward ports: 5432 (db), 3000 (frontend), 8080 (backend)
+    ports:
+      - "5433:5432"
+      - "3000:3000"
+      - "8080:8080"
+
+volumes:
+  chaos-postgres-data:
