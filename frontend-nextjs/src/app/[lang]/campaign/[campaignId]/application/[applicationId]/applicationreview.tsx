@@ -49,7 +49,10 @@ export default function ApplicationReview({
 
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
 
-  
+  const updateRoles = (nextSelectedRoles: string[]) => {
+    setSelectedRoleIds(nextSelectedRoles)
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 w-full">
       <div className="w-full mx-auto p-8">
@@ -62,7 +65,7 @@ export default function ApplicationReview({
           </h3>
         </div>
         <div className="flex gap-8 w-full">
-          <RoleSelector roles={roles} selectedRoleIds={selectedRoleIds} onChangeSelectedRoles={setSelectedRoleIds}/>
+          <RoleSelector roles={roles} selectedRoleIds={selectedRoleIds} onChangeSelectedRoles={updateRoles} dict={dict}/>
         </div>
       </div>
     </div>

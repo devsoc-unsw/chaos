@@ -15,7 +15,18 @@
         "common_questions": "通用问题",
         "back": "返回",
         "application": "申请",
-        "status": "状态"
+        "status": "状态",
+        "select": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "selected": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "submit": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;"
+    },
+    "applicationpage": {
+        "emptyselectedroles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "emptyavailableroles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "dragtoreorder": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "selectedroles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "availableroles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "norolespecificqs": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;"
     },
     "dashboard": {
         "email_templates": "邮件模板",

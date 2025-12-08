@@ -15,7 +15,18 @@
         "common_questions": "Common Questions",
         "back": "Back",
         "application": "Application",
-        "status": "Status"
+        "status": "Status",
+        "select": "Select",
+        "selected": "Selected",
+        "submit": "Submit"
+    },
+    "applicationpage": {
+        "emptyselectedroles": "Drag a role from below to apply",
+        "dragtoreorder": "Drag to reorder based on preference",
+        "emptyavailableroles": "All roles selected",
+        "selectedroles": "Selected Roles",
+        "availableroles": "Available Roles",
+        "norolespecificqs": "No role-specific questions"
     },
     "dashboard": {
         "email_templates": "Email Templates",
