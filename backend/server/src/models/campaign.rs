@@ -17,6 +17,7 @@ use uuid::Uuid;
 use crate::models::app::AppState;
 use crate::service::campaign::assert_campaign_is_open;
 use super::{error::ChaosError, storage::Storage};
+use std::env;
 
 /// Represents a campaign in the system.
 /// 
@@ -307,6 +308,8 @@ impl Campaign {
         update: CampaignUpdate,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
+        update.validate()?;
+
         _ = sqlx::query!(
             "
                 UPDATE campaigns
@@ -446,5 +449,28 @@ where
         tx.commit().await?;
 
         Ok(OpenCampaign)
+    }
+}
+
+
+impl CampaignUpdate {
+    pub fn validate(&self) -> Result<(), ChaosError> {
+        let campaign_name_max_chars = env::var("CAMPAIGN_NAME_MAX_CHARS")
+            .expect("Error getting CAMPAIGN_NAME_MAX_CHARS")
+            .to_string().parse::<usize>().map_err(|_| ChaosError::InternalServerError)?;
+        let campaign_description_max_chars = env::var("CAMPAIGN_DESCRIPTION_MAX_CHARS")
+            .expect("Error getting CAMPAIGN_DESCRIPTION_MAX_CHARS")
+            .to_string().parse::<usize>().map_err(|_| ChaosError::InternalServerError)?;
+        
+        if self.name.len() > campaign_name_max_chars || 
+              self.description.len() > campaign_description_max_chars ||
+              self.name.is_empty() || 
+              self.slug.is_empty() ||
+              self.starts_at >= self.ends_at {
+            return Err(ChaosError::BadRequest);
+        }
+
+        // TODO: update to ensure one day apart min to match frontend
+        Ok(())
     }
 }

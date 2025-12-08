@@ -34,7 +34,8 @@
             "published": "已发布",
             "draft": "草稿",
             "roles": {
-                "number_of_positions": "职位数量"
+                "number_of_positions": "职位数量",
+                "add_role": "添加角色"
             },
             "application_review_page": {
                 "no_application_selected": "未选择要评估的申请",
@@ -56,6 +57,7 @@
         "actions": {
             "new": "新建",
             "edit": "编辑",
+            "save": "保存",
             "delete": "删除",
             "preview": "预览",
             "duplicate": "复制",
