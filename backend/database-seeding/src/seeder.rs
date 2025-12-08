@@ -107,7 +107,7 @@ pub async fn seed_database(mut seeder: Seeder) {
         campaign_id,
         RoleUpdate {
             name: "Chaos".to_string(),
-            description: Some("We are looking for a passionate Rust developer to join our team.".to_string()),
+            description: Some("The DevSoc Rust project".to_string()),
             min_available: 1,
             max_available: 10,
             finalised: false,
