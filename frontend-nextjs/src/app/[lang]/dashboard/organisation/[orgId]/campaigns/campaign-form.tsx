@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, ImageUp } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,6 +17,7 @@ export default function NewCampaignForm({campaign, orgId, dict, submitData} : { 
     const [description, setDescription] = useState(campaign?.campaign_slug ?? "");
     const [startDate, setStartDate] = useState(campaign?.starts_at ?? "");
     const [endDate, setEndDate] = useState(campaign?.ends_at ?? "");
+    const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
     const [saving, setSaving] = useState(false);
 
@@ -40,7 +41,7 @@ export default function NewCampaignForm({campaign, orgId, dict, submitData} : { 
                 </div>
             </div>
             <div className="flex flex-col gap-3">
-                <ImageUpload />
+                <ImageUpload selectedImage={selectedImage} onImageChange={setSelectedImage} />
                 <div className="flex flex-col gap-1">
                     <Label>{dict.common.name}</Label>
                     <Input className="max-w-[300px]" type="text" value={name} onChange={(e) => setName(e.target.value)} />
@@ -52,7 +53,7 @@ export default function NewCampaignForm({campaign, orgId, dict, submitData} : { 
                 <DatePicker label={dict.common.starts_at} value={startDate} onChange={(value) => setStartDate(value)} />
                 <DatePicker label={dict.common.ends_at} value={endDate} onChange={(value) => setEndDate(value)} />
                 <div>
-                    <Button disabled={!name || !ImageUpload || !startDate || !endDate || saving} onClick={async () => await handleSave()}>{dict.dashboard.actions.save}</Button>
+                    <Button disabled={!name || !selectedImage || !startDate || !endDate || saving} onClick={async () => await handleSave()}>{dict.dashboard.actions.save}</Button>
                 </div>
             </div>
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useCallback } from "react";
 import Dropzone, { useDropzone } from "react-dropzone";
 import {
@@ -27,46 +27,41 @@ import {
 
 
   interface ImageUploadProps {
-    // onUploadComplete?: (url: string) => void;
-    onImageChange?: (hasImage: boolean) => void;
+    selectedImage: File | null;
+    onImageChange: (image: File | null) => void;
   }
 
-  const ImageUpload: React.FC<ImageUploadProps> = ({ onImageChange }) => {
+  const ImageUpload: React.FC<ImageUploadProps> = ({ selectedImage, onImageChange }) => {
     const [loading, setLoading] = useState<boolean>(false);
-    const [selectedImage, setSelectedImage] = useState<File | null>(null);
     const [uploadedImagePath, setUploadedImagePath] = useState<string | null>(
       null
     );
+
+    useEffect(() => {
+      if (selectedImage) {
+        const preview = URL.createObjectURL(selectedImage);
+        setUploadedImagePath(preview);
+        return () => URL.revokeObjectURL(preview);
+      } else {
+        setUploadedImagePath(null);
+      }
+    }, [selectedImage]);
   
     const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
       if (event.target.files?.length) {
-        const image = event.target.files[0];
-        console.log("Image: ", image);
-    
-        setSelectedImage(image);
-    
-        const preview = URL.createObjectURL(image);
-        setUploadedImagePath(preview);
-        onImageChange?.(true);
-    
-        console.log("Selected image (new): ", image);
+        onImageChange(event.target.files[0]);
       }
     };
   
     const removeSelectedImage = () => {
       setLoading(false);
       setUploadedImagePath(null);
-      setSelectedImage(null);
-      onImageChange?.(false);
+      onImageChange(null);
     };
   
     const onDrop = useCallback(async (acceptedFiles: File[]) => {
       if (acceptedFiles.length > 0) {
-        const image = acceptedFiles[0];
-        setSelectedImage(image);
-        const preview = URL.createObjectURL(image);
-        setUploadedImagePath(preview);
-        onImageChange?.(true);
+        onImageChange(acceptedFiles[0]);
       }
     }, [onImageChange]);
   
