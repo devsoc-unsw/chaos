@@ -18,7 +18,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { getAllOrganisations, OrganisationUserRole } from "@/models/organisation"
 import { useQuery } from "@tanstack/react-query"
-import { redirect, useParams, useRouter } from "next/navigation"
+import { redirect, useParams, usePathname, useRouter } from "next/navigation"
 import { APP_VERSION } from "@/lib/const"
 
 interface AdminSidebarProps {
@@ -29,6 +29,7 @@ interface AdminSidebarProps {
 export function AdminSidebar({ userRole, dict }: AdminSidebarProps) {
   const router = useRouter();
   const { orgId } = useParams();
+  const pathname = usePathname();
 
   const { data: orgs } = useQuery({
     queryKey: ['organisations'],
@@ -114,7 +115,7 @@ export function AdminSidebar({ userRole, dict }: AdminSidebarProps) {
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild isActive={pathname.includes(`/dashboard/organisation/${orgId}/${item.href}`)}>
                     <a href={`/dashboard/organisation/${orgId}/${item.href}`}>
                       <item.icon />
                       <span>{item.title}</span>

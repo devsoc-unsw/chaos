@@ -97,6 +97,8 @@ pub struct ApplicationDetails {
     pub private_status: ApplicationStatus,
     /// List of roles the user has applied for, with details
     pub applied_roles: Vec<ApplicationAppliedRoleDetails>,
+    /// Whether the current logged-in user has rated this application
+    pub current_user_rated: bool,
 }
 
 /// Raw application data from the database.
@@ -132,6 +134,8 @@ pub struct ApplicationData {
     pub status: ApplicationStatus,
     /// Private status of the application (visible only to admins)
     pub private_status: ApplicationStatus,
+    /// Whether the current logged-in user has rated this application
+    pub current_user_rated: bool,
 }
 
 /// Details about a role that has been applied for.
@@ -311,6 +315,7 @@ impl Application {
     /// * `Result<ApplicationDetails, ChaosError>` - Application details or error
     pub async fn get(
         id: i64,
+        current_user: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<ApplicationDetails, ChaosError> {
         let application_data = sqlx::query_as!(
@@ -320,13 +325,16 @@ impl Application {
                 private_status AS \"private_status: ApplicationStatus\", u.email AS user_email,
                 u.zid AS user_zid, u.name AS user_name, u.gender AS user_gender,
                 u.pronouns AS user_pronouns, u.degree_name AS user_degree_name,
-                u.degree_starting_year AS user_degree_starting_year
+                u.degree_starting_year AS user_degree_starting_year,
+                (ar.id IS NOT NULL) AS \"current_user_rated!: bool\"
                 FROM applications a
                 JOIN users u ON u.id = a.user_id
                 JOIN campaigns c ON c.id = a.campaign_id
+                LEFT JOIN application_ratings ar ON ar.application_id = a.id AND ar.application_id = $2
                 WHERE a.id = $1 AND a.submitted = true
             ",
-            id
+            id,
+            current_user
         )
         .fetch_one(transaction.deref_mut())
         .await?;
@@ -340,6 +348,7 @@ impl Application {
                     JOIN campaign_roles
                     ON application_roles.campaign_role_id = campaign_roles.id
                 WHERE application_id = $1
+                ORDER BY campaign_roles.id
             ",
             id
         )
@@ -352,6 +361,7 @@ impl Application {
             status: application_data.status,
             private_status: application_data.private_status,
             applied_roles,
+            current_user_rated: application_data.current_user_rated,
             user: UserDetails {
                 id: application_data.user_id,
                 email: application_data.user_email,
@@ -377,6 +387,7 @@ impl Application {
     /// * `Result<Vec<ApplicationDetails>, ChaosError>` - List of applications or error
     pub async fn get_from_role_id(
         role_id: i64,
+        current_user: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<ApplicationDetails>, ChaosError> {
         let application_data_list = sqlx::query_as!(
@@ -386,14 +397,17 @@ impl Application {
                 private_status AS \"private_status: ApplicationStatus\", u.email AS user_email,
                 u.zid AS user_zid, u.name AS user_name, u.gender AS user_gender,
                 u.pronouns AS user_pronouns, u.degree_name AS user_degree_name,
-                u.degree_starting_year AS user_degree_starting_year
+                u.degree_starting_year AS user_degree_starting_year,
+                (arating.id IS NOT NULL) AS \"current_user_rated!: bool\"
                 FROM applications a
                 JOIN users u ON u.id = a.user_id
                 JOIN application_roles ar on ar.application_id = a.id
                 JOIN campaigns c on c.id = a.campaign_id
+                LEFT JOIN application_ratings arating ON arating.application_id = a.id AND arating.rater_id = $2
                 WHERE ar.campaign_role_id = $1 AND a.submitted = true
             ",
-            role_id
+            role_id,
+            current_user
         )
             .fetch_all(transaction.deref_mut())
             .await?;
@@ -409,6 +423,7 @@ impl Application {
                         JOIN campaign_roles
                         ON application_roles.campaign_role_id = campaign_roles.id
                     WHERE application_id = $1
+                    ORDER BY campaign_roles.id
                 ",
                 application_data.id
             )
@@ -421,6 +436,7 @@ impl Application {
                 status: application_data.status,
                 private_status: application_data.private_status,
                 applied_roles,
+                current_user_rated: application_data.current_user_rated,
                 user: UserDetails {
                     id: application_data.user_id,
                     email: application_data.user_email,
@@ -451,6 +467,7 @@ impl Application {
     /// * `Result<Vec<ApplicationDetails>, ChaosError>` - List of applications or error
     pub async fn get_from_campaign_id(
         campaign_id: i64,
+        current_user: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<ApplicationDetails>, ChaosError> {
         let application_data_list = sqlx::query_as!(
@@ -460,13 +477,16 @@ impl Application {
                 private_status AS \"private_status: ApplicationStatus\", u.email AS user_email,
                 u.zid AS user_zid, u.name AS user_name, u.gender AS user_gender,
                 u.pronouns AS user_pronouns, u.degree_name AS user_degree_name,
-                u.degree_starting_year AS user_degree_starting_year
+                u.degree_starting_year AS user_degree_starting_year,
+                (ar.id IS NOT NULL) AS \"current_user_rated!: bool\"
                 FROM applications a
                 JOIN users u ON u.id = a.user_id
                 JOIN campaigns c ON c.id = a.campaign_id
+                LEFT JOIN application_ratings ar ON ar.application_id = a.id AND ar.rater_id = $2
                 WHERE a.campaign_id = $1 AND a.submitted = true
             ",
-            campaign_id
+            campaign_id,
+            current_user
         )
         .fetch_all(transaction.deref_mut())
         .await?;
@@ -483,6 +503,7 @@ impl Application {
                         JOIN campaign_roles
                         ON application_roles.campaign_role_id = campaign_roles.id
                     WHERE application_id = $1
+                    ORDER BY campaign_roles.id
                 ",
                 application_data.id
             )
@@ -495,6 +516,7 @@ impl Application {
                 status: application_data.status,
                 private_status: application_data.private_status,
                 applied_roles,
+                current_user_rated: application_data.current_user_rated,
                 user: UserDetails {
                     id: application_data.user_id,
                     email: application_data.user_email,
@@ -524,7 +546,8 @@ impl Application {
     /// 
     /// * `Result<Vec<ApplicationDetails>, ChaosError>` - List of applications or error
     pub async fn get_from_user_id(
-        user_id: i64,
+        applicant_id: i64,
+        current_user: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<ApplicationDetails>, ChaosError> {
         let application_data_list = sqlx::query_as!(
@@ -534,11 +557,14 @@ impl Application {
                 private_status AS \"private_status: ApplicationStatus\", u.email AS user_email,
                 u.zid AS user_zid, u.name AS user_name, u.gender AS user_gender,
                 u.pronouns AS user_pronouns, u.degree_name AS user_degree_name,
-                u.degree_starting_year AS user_degree_starting_year
+                u.degree_starting_year AS user_degree_starting_year,
+                (ar.id IS NOT NULL) AS \"current_user_rated!: bool\"
                 FROM applications a JOIN users u ON u.id = a.user_id
+                LEFT JOIN application_ratings ar ON ar.application_id = a.id AND ar.rater_id = $2
                 WHERE a.user_id = $1
             ",
-            user_id
+            applicant_id,
+            current_user
         )
         .fetch_all(transaction.deref_mut())
         .await?;
@@ -554,6 +580,7 @@ impl Application {
                         JOIN campaign_roles
                         ON application_roles.campaign_role_id = campaign_roles.id
                     WHERE application_id = $1
+                    ORDER BY campaign_roles.id
                 ",
                 application_data.id
             )
@@ -567,6 +594,7 @@ impl Application {
                 // To reuse struct, do not show use private status
                 private_status: application_data.status,
                 applied_roles,
+                current_user_rated: application_data.current_user_rated,
                 user: UserDetails {
                     id: application_data.user_id,
                     email: application_data.user_email,
@@ -672,6 +700,7 @@ impl Application {
                 SELECT id, application_id, campaign_role_id, preference
                 FROM application_roles
                 WHERE application_id = $1
+                ORDER BY campaign_role_id
             ",
             id
         )

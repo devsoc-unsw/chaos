@@ -11,6 +11,10 @@ use serde::{Deserialize, Serialize};
 use sqlx::{Postgres, Transaction};
 use std::collections::HashMap;
 use std::ops::DerefMut;
+use nanoid::nanoid;
+use snowflake::SnowflakeIdGenerator;
+use crate::models::organisation::Organisation;
+use crate::constants::NANOID_ALPHABET;
 
 /// Represents an email template in the database.
 /// 
@@ -23,10 +27,10 @@ use std::ops::DerefMut;
 #[derive(Deserialize, Serialize)]
 pub struct EmailTemplate {
     /// Unique identifier for the template
-    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    #[serde(serialize_with = "crate::models::serde_string::serialize", deserialize_with = "crate::models::serde_string::deserialize")]
     pub id: i64,
     /// ID of the organisation that owns this template
-    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    #[serde(serialize_with = "crate::models::serde_string::serialize", deserialize_with = "crate::models::serde_string::deserialize")]
     pub organisation_id: i64,
     /// Display name of the template
     pub name: String,
@@ -92,7 +96,7 @@ impl EmailTemplate {
     ) -> Result<Vec<EmailTemplate>, ChaosError> {
         let templates = sqlx::query_as!(
             EmailTemplate,
-            "SELECT * FROM email_templates WHERE organisation_id = $1",
+            "SELECT * FROM email_templates WHERE organisation_id = $1 ORDER BY id",
             organisation_id
         )
         .fetch_all(transaction.deref_mut())
@@ -150,6 +154,33 @@ impl EmailTemplate {
         let _ = sqlx::query!("DELETE FROM email_templates WHERE id = $1 RETURNING id", id)
             .fetch_one(transaction.deref_mut())
             .await?;
+
+        Ok(())
+    }
+
+    /// Duplicates an email template.
+    ///
+    /// # Arguments
+    /// * `id` - The ID of the template to duplicate
+    /// * `pool` - A reference to the database connection pool
+    ///
+    /// # Returns
+    /// Returns a `Result` containing either:
+    /// * `Ok(())` - If the deletion was successful
+    /// * `Err(ChaosError)` - An error if the deletion fails
+    pub async fn duplicate(id: i64, transaction: &mut Transaction<'_, Postgres>, snowflake_generator: &mut SnowflakeIdGenerator,) -> Result<(), ChaosError> {
+        let template = EmailTemplate::get(id, transaction).await?;
+
+        let duplicate_prevention_id = nanoid!(6, &NANOID_ALPHABET);
+        let new_template_name = format!("{} (Copy {})", template.name, duplicate_prevention_id);
+        Organisation::create_email_template(
+            template.organisation_id,
+            new_template_name,
+            template.template_subject,
+            template.template_body,
+            transaction,
+            snowflake_generator
+        ).await?;
 
         Ok(())
     }
