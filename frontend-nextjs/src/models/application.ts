@@ -56,3 +56,4 @@ export async function updateApplicationRating(applicationId: string, rating?: nu
         },
     });
 }
+
