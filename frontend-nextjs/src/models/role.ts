@@ -1,4 +1,5 @@
 import { apiRequest } from "@/lib/api";
+import { AppMessage } from "./app";
 
 export interface RoleUpdate {
     name: string;
@@ -8,15 +9,15 @@ export interface RoleUpdate {
     finalised: boolean;
 }
 
-export async function updateRole(roleId: string, role: RoleUpdate): Promise<void> {
-    return await apiRequest<void>(`/api/v1/role/${roleId}`, {
+export async function updateRole(roleId: string, role: RoleUpdate): Promise<AppMessage> {
+    return await apiRequest<AppMessage>(`/api/v1/role/${roleId}`, {
         method: "PATCH",
         body: role,
     });
 }
 
-export async function deleteRole(roleId: string): Promise<void> {
-    return await apiRequest<void>(`/api/v1/role/${roleId}`, {
+export async function deleteRole(roleId: string): Promise<AppMessage> {
+    return await apiRequest<AppMessage>(`/api/v1/role/${roleId}`, {
         method: "DELETE",
     });
 }
