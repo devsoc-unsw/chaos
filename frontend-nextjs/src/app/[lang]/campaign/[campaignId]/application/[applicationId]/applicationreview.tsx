@@ -49,17 +49,21 @@ export default function ApplicationReview({
 
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
 
-
+  
   return (
-    <div className="w-full mx-auto p-8">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          {campaign?.name}
-        </h1>
-        <h3 className="text-xl text-gray-500">
-          {formatDate(campaign?.starts_at)} - {formatDate(campaign?.ends_at)}
-        </h3>
-        <RoleSelector roles={roles} selectedRoleIds={selectedRoleIds} onChangeSelectedRoles={setSelectedRoleIds}/>
+    <div className="min-h-screen bg-gray-50 w-full">
+      <div className="w-full mx-auto p-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            {campaign?.name}
+          </h1>
+          <h3 className="text-xl text-gray-500">
+            {formatDate(campaign?.starts_at)} - {formatDate(campaign?.ends_at)}
+          </h3>
+        </div>
+        <div className="flex gap-8 w-full">
+          <RoleSelector roles={roles} selectedRoleIds={selectedRoleIds} onChangeSelectedRoles={setSelectedRoleIds}/>
+        </div>
       </div>
     </div>
   );
