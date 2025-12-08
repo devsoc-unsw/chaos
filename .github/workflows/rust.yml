@@ -42,7 +42,7 @@ jobs:
           echo "CAMPAIGN_NAME_MAX_CHARS=50" >> backend/.env
           echo "CAMPAIGN_DESCRIPTION_MAX_ChARS=500" >> backend/.env
           echo "ROLE_NAME_MAX_CHARS=20" >> backend/.env
-          echo "ROLE_DESCRIPTION_MAX_CHARS=30" >> backend/.env
+          echo "ROLE_DESCRIPTION_MAX_CHARS=50" >> backend/.env
           echo "ROLE_POSITIONS_AVAILABLE_MAX=20" >> backend/.env
       # selecting a toolchain either by action or manual `rustup` calls should happen
       # before the plugin, as it uses the current rustc version as its cache key
