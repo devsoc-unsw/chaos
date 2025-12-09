@@ -117,8 +117,8 @@ CREATE TABLE ranking_answer_rankings (
             ON UPDATE CASCADE
 );
 
-CREATE INDEX IDX_multi_option_answer_options_question_option on multi_option_answer_options(option_id);
-CREATE INDEX IDX_multi_option_answer_options_answer on multi_option_answer_options(answer_id);
+CREATE INDEX IDX_ranking_answer_rankings_question_option on multi_option_answer_options(option_id);
+CREATE INDEX IDX_ranking_answer_rankings_answer on multi_option_answer_options(answer_id);
 
 CREATE TABLE application_ratings (
     id BIGINT PRIMARY KEY,
