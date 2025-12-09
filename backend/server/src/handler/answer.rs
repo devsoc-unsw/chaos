@@ -6,7 +6,7 @@
 //! - Managing role-specific answers
 
 use crate::models::answer::{Answer, NewAnswer};
-use crate::models::app::{AppMessage, AppState};
+use crate::models::app::{AppMessage, AppState, IdMessage};
 use crate::models::auth::{AnswerOwner, ApplicationOwner, ApplicationOwnerOrReviewer};
 use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
@@ -57,7 +57,7 @@ impl AnswerHandler {
 
         transaction.tx.commit().await?;
 
-        Ok(( Json(json!({"id": id}))))
+        Ok((StatusCode::OK, Json(IdMessage { id })))
     }
 
     /// Retrieves all common answers for an application.

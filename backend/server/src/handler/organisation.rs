@@ -7,7 +7,7 @@
 //! - Email template management
 //! - Logo image handling
 
-use crate::models::app::{AppMessage, AppState};
+use crate::models::app::{AppMessage, AppState, IdMessage};
 use crate::models::auth::SuperUser;
 use crate::models::auth::{AuthUser, OrganisationAdmin};
 use crate::models::campaign::{Campaign, NewCampaign};
@@ -450,7 +450,7 @@ impl OrganisationHandler {
         .await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, Json(json!({ "id": new_campaign_id }))))
+        Ok((StatusCode::OK, Json(IdMessage { id: new_campaign_id })))
     }
 
     /// Checks if a campaign slug is available.

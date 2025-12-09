@@ -15,8 +15,9 @@ use axum::extract::{FromRef, FromRequestParts, Path};
 use axum::http::request::Parts;
 use uuid::Uuid;
 use crate::models::app::AppState;
-use crate::service::campaign::assert_campaign_is_open;
+use crate::service::campaign::{assert_campaign_is_open, create_proper_slug};
 use super::{error::ChaosError, storage::Storage};
+use std::env;
 
 /// Represents a campaign in the system.
 /// 
@@ -230,12 +231,14 @@ impl Campaign {
     /// * `Result<(), ChaosError>` - Success if slug is available, error if not
     pub async fn check_slug_availability(
         organisation_id: i64,
-        slug: String,
+        mut slug: String,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         if !slug.is_ascii() {
             return Err(ChaosError::BadRequest);
         }
+
+        slug = create_proper_slug(&slug);
 
         let exists = sqlx::query!(
             "
@@ -307,6 +310,8 @@ impl Campaign {
         update: CampaignUpdate,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
+        update.validate()?;
+
         _ = sqlx::query!(
             "
                 UPDATE campaigns
@@ -446,5 +451,28 @@ where
         tx.commit().await?;
 
         Ok(OpenCampaign)
+    }
+}
+
+
+impl CampaignUpdate {
+    pub fn validate(&self) -> Result<(), ChaosError> {
+        let campaign_name_max_chars = env::var("CAMPAIGN_NAME_MAX_CHARS")
+            .expect("Error getting CAMPAIGN_NAME_MAX_CHARS")
+            .to_string().parse::<usize>().map_err(|_| ChaosError::InternalServerError)?;
+        let campaign_description_max_chars = env::var("CAMPAIGN_DESCRIPTION_MAX_CHARS")
+            .expect("Error getting CAMPAIGN_DESCRIPTION_MAX_CHARS")
+            .to_string().parse::<usize>().map_err(|_| ChaosError::InternalServerError)?;
+        
+        if self.name.len() > campaign_name_max_chars || 
+              self.description.len() > campaign_description_max_chars ||
+              self.name.is_empty() || 
+              self.slug.is_empty() ||
+              self.starts_at >= self.ends_at {
+            return Err(ChaosError::BadRequest);
+        }
+
+        // TODO: update to ensure one day apart min to match frontend
+        Ok(())
     }
 }
