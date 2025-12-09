@@ -17,6 +17,9 @@ CREATE TABLE campaigns (
     UNIQUE (organisation_id, slug)
 );
 
+CREATE UNIQUE INDEX IDX_campaigns_organisation on campaigns(organisation_id);
+CREATE UNIQUE INDEX IDX_campaigns_slug on campaigns(slug);
+
 CREATE TABLE campaign_roles (
     id BIGINT PRIMARY KEY,
     campaign_id BIGINT NOT NULL,

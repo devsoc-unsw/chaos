@@ -30,3 +30,8 @@ CREATE TABLE offers (
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
+
+CREATE UNIQUE INDEX IDX_offers_campaign on offers(campaign_id);
+CREATE UNIQUE INDEX IDX_offers_application on offers(application_id);
+CREATE UNIQUE INDEX IDX_offers_email_template on offers(email_template_id);
+CREATE UNIQUE INDEX IDX_offers_role on offers(role_id);

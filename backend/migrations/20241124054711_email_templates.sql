@@ -11,3 +11,5 @@ CREATE TABLE email_templates (
             ON UPDATE CASCADE,
     UNIQUE (organisation_id, name)
 );
+
+CREATE UNIQUE INDEX IDX_email_templates_organisation on email_templates(organisation_id);
