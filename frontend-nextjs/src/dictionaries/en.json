@@ -2,6 +2,7 @@
     "common": {
         "organisation": "Organisation",
         "name": "Name",
+        "slug": "Slug",
         "starts_at": "Starts At",
         "ends_at": "Ends At",
         "published": "Published",
@@ -20,6 +21,9 @@
     "dashboard": {
         "email_templates": "Email Templates",
         "members": "Members",
+        "slug_tooltip": "User-friendly URL alias for the campaign",
+        "suggested_slug": "Suggested slug",
+        "slug_not_available": "Slug not available",
         "sidebar": {
             "create_organisation": "Create Organisation"
         },

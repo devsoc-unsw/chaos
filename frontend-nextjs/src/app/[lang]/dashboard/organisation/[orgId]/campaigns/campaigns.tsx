@@ -28,9 +28,9 @@ export default function Campaigns({ orgId, dict }: { orgId: string, dict: any })
     return (
         <div>
             <div className="flex items-center justify-between my-2">
-            <h1 className="text-2xl font-bold">{dict.common.campaigns}</h1>
-                <Button className="bg-white border border-black flex items-center justify-center gap-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 cursor-pointer" onClick={() => router.push(`/dashboard/organisation/${orgId}/campaigns/new`)}>
-            <Plus className="w-10 h-10" />
+                <h1 className="text-2xl font-bold">{dict.common.campaigns}</h1>
+                <Button className="cursor-pointer" onClick={() => router.push(`/dashboard/organisation/${orgId}/campaigns/new`)}>
+                    <Plus className="w-10 h-10" />
                     <p className="text-xl font-semibold">{dict.dashboard.actions.new}</p>
                 </Button>
             </div>

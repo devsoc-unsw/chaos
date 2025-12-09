@@ -15,7 +15,7 @@ use axum::extract::{FromRef, FromRequestParts, Path};
 use axum::http::request::Parts;
 use uuid::Uuid;
 use crate::models::app::AppState;
-use crate::service::campaign::assert_campaign_is_open;
+use crate::service::campaign::{assert_campaign_is_open, create_proper_slug};
 use super::{error::ChaosError, storage::Storage};
 use std::env;
 
@@ -231,12 +231,14 @@ impl Campaign {
     /// * `Result<(), ChaosError>` - Success if slug is available, error if not
     pub async fn check_slug_availability(
         organisation_id: i64,
-        slug: String,
+        mut slug: String,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         if !slug.is_ascii() {
             return Err(ChaosError::BadRequest);
         }
+
+        slug = create_proper_slug(&slug);
 
         let exists = sqlx::query!(
             "

@@ -2,6 +2,7 @@
     "common": { 
         "organisation": "组织",
         "name": "名称",
+        "slug": "别名",
         "starts_at": "开始时间",
         "ends_at": "结束时间",
         "published": "已发布",
@@ -20,6 +21,9 @@
     "dashboard": {
         "email_templates": "邮件模板",
         "members": "成员",
+        "slug_tooltip": "[NOT PROVIDED]",
+        "suggested_slug": "建议别名",
+        "slug_not_available": "别名不可用",
         "sidebar": {
             "create_organisation": "创建组织"
         },

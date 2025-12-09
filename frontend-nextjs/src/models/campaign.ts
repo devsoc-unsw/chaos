@@ -2,6 +2,7 @@ import { apiRequest } from "@/lib/api";
 import { ApplicationDetails } from "./application";
 import { RoleUpdate } from "@/models/role";
 import { AppMessage } from "./app";
+import { createProperSlug } from "./slug";
 
 export interface CampaignDetails {
     /// Unique identifier for the campaign
@@ -58,12 +59,41 @@ export interface CampaignRole {
     finalised: boolean;
 }
 
-export async function createCampaign(campaign: NewCampaign, organisationId: string): Promise<{id: string}> {
-    return await apiRequest<{id: string}>(`/api/v1/organisation/${organisationId}/campaign`, {method: "POST", body: campaign });
+export async function createCampaign(name: string, description: string, startsAt: string, endsAt: string, organisationId: string, slug?: string): Promise<{ id: string }> {
+    if (!slug) {
+        slug = createProperSlug(name);
+    }
+    
+    return await apiRequest<{ id: string }>(`/api/v1/organisation/${organisationId}/campaign`, {
+        method: "POST", body: {
+            slug,
+            name,
+            description,
+            starts_at: startsAt,
+            ends_at: endsAt,
+        }
+    });
 }
 
-export async function setCampaignCoverImage(campaignId: string): Promise<AppMessage> {
-    return await apiRequest<AppMessage>(`/api/v1/campaign/${campaignId}/banner`, {method: "PATCH"});
+export interface SlugCheck {
+    slug: string,
+}
+
+export async function checkCampaignSlugAvailability(orgId: string, slug: string): Promise<AppMessage> {
+    return await apiRequest<AppMessage>(`/api/v1/organisation/${orgId}/campaign/slug_check`, {
+        method: "POST",
+        body: {
+            slug,
+        }
+    });
+}
+
+export interface CampaignBannerUpdate {
+    upload_url: string,
+}
+
+export async function setCampaignCoverImage(campaignId: string): Promise<CampaignBannerUpdate> {
+    return await apiRequest<CampaignBannerUpdate>(`/api/v1/campaign/${campaignId}/banner`, { method: "PATCH" });
 }
 
 export async function getCampaignRoles(campaignId: string): Promise<CampaignRole[]> {
