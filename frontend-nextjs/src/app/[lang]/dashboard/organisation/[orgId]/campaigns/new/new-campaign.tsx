@@ -67,7 +67,7 @@ export default function CampaignNewForm({ orgId, dict }: { orgId: string, dict: 
             setSlugAvailable(false);
         }
 
-        setSlug(createProperSlug(slug));
+        setSlug(slug);
     }
 
     return (
