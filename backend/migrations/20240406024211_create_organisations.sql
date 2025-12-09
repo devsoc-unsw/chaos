@@ -8,7 +8,7 @@ CREATE TABLE organisations (
 );
 
 CREATE TYPE organisation_role AS ENUM ('User', 'Admin');
-CREATE INDEX IDX_organisations_slug on organisations(slug);
+CREATE UNIQUE INDEX IDX_organisations_slug on organisations(slug);
 
 CREATE TABLE organisation_members (
     id BIGSERIAL PRIMARY KEY,

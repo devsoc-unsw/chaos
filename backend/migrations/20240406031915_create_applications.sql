@@ -18,7 +18,8 @@ CREATE TABLE applications (
         FOREIGN KEY(user_id)
             REFERENCES users(id)
             ON DELETE CASCADE
-            ON UPDATE CASCADE
+            ON UPDATE CASCADE,
+    UNIQUE(user_id, campaign_id)
 );
 
 CREATE INDEX IDX_applications_campaign on applications(campaign_id);
