@@ -83,7 +83,7 @@ impl AnswerHandler {
 
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, Json(answers)))
+        Ok(( Json(answers)))
     }
 
     /// Retrieves all answers for a specific role in an application.
@@ -111,7 +111,7 @@ impl AnswerHandler {
 
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, Json(answers)))
+        Ok(( Json(answers)))
     }
 
     /// Updates an existing answer.
