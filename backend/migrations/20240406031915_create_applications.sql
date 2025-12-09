@@ -21,8 +21,8 @@ CREATE TABLE applications (
             ON UPDATE CASCADE
 );
 
-CREATE UNIQUE INDEX IDX_applications_campaign on applications(campaign_id);
-CREATE UNIQUE INDEX IDX_applications_user on applications(user_id);
+CREATE INDEX IDX_applications_campaign on applications(campaign_id);
+CREATE INDEX IDX_applications_user on applications(user_id);
 
 CREATE TABLE application_roles (
     id BIGSERIAL PRIMARY KEY,
@@ -96,8 +96,8 @@ CREATE TABLE multi_option_answer_options (
             ON UPDATE CASCADE
 );
 
-CREATE UNIQUE INDEX IDX_multi_option_answer_options_question_option on multi_option_answer_options(option_id);
-CREATE UNIQUE INDEX IDX_multi_option_answer_options_answer on multi_option_answer_options(answer_id);
+CREATE INDEX IDX_multi_option_answer_options_question_option on multi_option_answer_options(option_id);
+CREATE INDEX IDX_multi_option_answer_options_answer on multi_option_answer_options(answer_id);
 
 CREATE TABLE ranking_answer_rankings (
     id BIGSERIAL PRIMARY KEY,

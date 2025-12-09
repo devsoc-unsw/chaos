@@ -17,7 +17,7 @@ CREATE TABLE questions (
            ON UPDATE CASCADE
 );
 
-CREATE UNIQUE INDEX IDX_questions_campaign on questions(campaign_id);
+CREATE INDEX IDX_questions_campaign on questions(campaign_id);
 
 CREATE TABLE multi_option_question_options (
     id BIGINT PRIMARY KEY,
