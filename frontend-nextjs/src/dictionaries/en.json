@@ -26,7 +26,8 @@
         "emptyavailableroles": "All roles selected",
         "selectedroles": "Selected Roles",
         "availableroles": "Available Roles",
-        "norolespecificqs": "No role-specific questions"
+        "norolespecificqs": "No role-specific questions",
+        "youranswer": "Your answer"
     },
     "dashboard": {
         "email_templates": "Email Templates",

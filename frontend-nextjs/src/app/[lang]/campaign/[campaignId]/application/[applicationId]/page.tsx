@@ -27,11 +27,6 @@ async function ApplicationPage({
         queryFn: () => getCampaignRoles(campaignId),
     });
 
-    await queryClient.prefetchQuery({
-      queryKey: [`${applicationId}-application`],
-      queryFn: () => getApplication(applicationId),
-    });
-
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
         <ApplicationReview

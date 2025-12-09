@@ -14,6 +14,7 @@ export interface Question {
     updated_at: string,
 }
 
+
 export type QuestionType = "ShortAnswer" | "MultiChoice" | "MultiSelect" | "DropDown" | "Ranking"
 
 export type QuestionData = MultiOptionData;
@@ -28,6 +29,15 @@ export interface MultiOptionQuestionOption {
     text: string,
 }
 
+export interface QuestionAndAnswer {
+    question_id: string
+    answer_id: string,
+    text: string,
+    answer: string | MultiOptionQuestionOption
+    question_type: QuestionType,
+    required: boolean,
+}
+
 export async function getAllCommonQuestions(campaignId: string): Promise<Question[]> {
     return await apiRequest<Question[]>(`/api/v1/campaign/${campaignId}/questions/common`);
 }
@@ -36,7 +46,7 @@ export async function getAllRoleQuestions(campaignId: string, roleId: string): P
     return await apiRequest<Question[]>(`/api/v1/campaign/${campaignId}/role/${roleId}/questions`);
 }
 
-export function linkQuestionsAndAnswers(questions: Question[], answers: Answer[]) {
+export function linkQuestionsAndAnswers(questions: Question[], answers: Answer[]): QuestionAndAnswer[] {
     return questions.map((question) => {
         const answer = answers?.find((answer) => answer.question_id === question.id);
         
@@ -46,6 +56,8 @@ export function linkQuestionsAndAnswers(questions: Question[], answers: Answer[]
                 answer_id: answer?.id,
                 text: question.title,
                 answer: answer?.answer_data ?? "[No Answer Provided]",
+                question_type: question.question_type,
+                required: question.required
             };
         } else if (question.question_type === "MultiChoice" || question.question_type === "DropDown") {
             const answerData = answer?.answer_data;
@@ -56,6 +68,8 @@ export function linkQuestionsAndAnswers(questions: Question[], answers: Answer[]
                 answer_id: answer?.id,
                 text: question.title,
                 answer: selectedOption?.text ?? "[No Answer Provided]",
+                question_type: question.question_type,
+                required: question.required
             };
         } else if (question.question_type === "MultiSelect") {
             const answerData = answer?.answer_data ?? [] as string[];
@@ -71,6 +85,8 @@ export function linkQuestionsAndAnswers(questions: Question[], answers: Answer[]
                 answer_id: answer?.id,
                 text: question.title,
                 answer: answerText,
+                question_type: question.question_type,
+                required: question.required
             };
         } else if (question.question_type === "Ranking") {
             const answerData = answer?.answer_data ?? [] as string[];
@@ -86,6 +102,8 @@ export function linkQuestionsAndAnswers(questions: Question[], answers: Answer[]
                 answer_id: answer?.id,
                 text: question.title,
                 answer: answerText,
+                question_type: question.question_type,
+                required: question.required
             }
         }
     });
