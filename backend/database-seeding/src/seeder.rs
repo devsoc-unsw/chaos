@@ -226,7 +226,7 @@ pub async fn seed_database(mut seeder: Seeder) {
 
     let application_id_1 = Application::create(
         campaign_id,
-        3,
+        2,
         NewApplication {
             applied_roles: vec![
                 ApplicationRole {
