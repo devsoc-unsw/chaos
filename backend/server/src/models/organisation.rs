@@ -13,6 +13,7 @@ use snowflake::SnowflakeIdGenerator;
 use sqlx::{FromRow, Postgres, Transaction};
 use std::ops::DerefMut;
 use uuid::Uuid;
+use crate::service::campaign::create_proper_slug;
 
 /// Represents an organisation in the database.
 /// 
@@ -160,7 +161,7 @@ impl Organisation {
     /// The slug must be ASCII-only.
     pub async fn create(
         admin_id: i64,
-        slug: String,
+        mut slug: String,
         name: String,
         snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
@@ -168,6 +169,8 @@ impl Organisation {
         if !slug.is_ascii() {
             return Err(ChaosError::BadRequest);
         }
+
+        slug = create_proper_slug(&slug);
 
         let id = snowflake_generator.real_time_generate();
 
@@ -212,12 +215,14 @@ impl Organisation {
     /// # Note
     /// The slug must be ASCII-only.
     pub async fn check_slug_availability(
-        slug: String,
+        mut slug: String,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         if !slug.is_ascii() {
             return Err(ChaosError::BadRequest);
         }
+
+        slug = create_proper_slug(&slug);
 
         let exists = sqlx::query!(
             "
@@ -623,7 +628,7 @@ impl Organisation {
 
     pub async fn create_campaign(
         organisation_id: i64,
-        slug: String,
+        mut slug: String,
         name: String,
         description: Option<String>,
         starts_at: DateTime<Utc>,
@@ -634,6 +639,8 @@ impl Organisation {
         if !slug.is_ascii() {
             return Err(ChaosError::BadRequest);
         }
+
+        slug = create_proper_slug(&slug);
 
         let new_campaign_id = snowflake_id_generator.real_time_generate();
 
