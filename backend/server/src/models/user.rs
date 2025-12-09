@@ -135,6 +135,22 @@ impl User {
         Ok(user)
     }
 
+    pub async fn find_by_email(email: String, transaction: &mut Transaction<'_, Postgres>) -> Result<Option<User>, ChaosError> {
+        let possible_user = sqlx::query_as!(
+            User,
+            r#"
+            SELECT id, email, zid, name, pronouns, gender, degree_name,
+            degree_starting_year, role AS "role!: UserRole"
+            FROM users WHERE email = $1
+        "#,
+            email
+        )
+            .fetch_optional(transaction.deref_mut())
+            .await?;
+
+        Ok(possible_user)
+    }
+
     /// Updates a user's name.
     /// 
     /// # Arguments
