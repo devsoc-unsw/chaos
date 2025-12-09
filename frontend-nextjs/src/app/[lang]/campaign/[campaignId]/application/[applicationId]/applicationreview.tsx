@@ -6,6 +6,7 @@ import { getApplication } from "@/models/application";
 import { useState, useEffect } from "react";
 import { type DropResult } from "@hello-pangea/dnd";
 import RoleSelector from "./roleselector";
+import RoleTabs from "./roletabs";
 
 interface ApplicationReviewProps {
   campaignId: string;
@@ -48,7 +49,7 @@ export default function ApplicationReview({
   });
 
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
-
+  const [activeTab, setActiveTab] = useState<"general" | string>("general");
   const updateRoles = (nextSelectedRoles: string[]) => {
     setSelectedRoleIds(nextSelectedRoles)
   }
@@ -64,8 +65,12 @@ export default function ApplicationReview({
             {formatDate(campaign?.starts_at)} - {formatDate(campaign?.ends_at)}
           </h3>
         </div>
+        <div></div>
         <div className="flex gap-8 w-full">
           <RoleSelector roles={roles} selectedRoleIds={selectedRoleIds} onChangeSelectedRoles={updateRoles} dict={dict}/>
+          <div>
+            <RoleTabs roles={roles} selectedRoleIds={selectedRoleIds} activeTab={activeTab} onChangeActiveTab={setActiveTab}/>
+          </div>
         </div>
       </div>
     </div>
