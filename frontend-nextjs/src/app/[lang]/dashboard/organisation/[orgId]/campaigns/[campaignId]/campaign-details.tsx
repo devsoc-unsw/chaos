@@ -18,7 +18,7 @@ import Link from "next/link";
 import { getOrganisationUserRole } from "@/models/organisation";
 import EditDetail from "./edit-detail";
 import { useEffect, useState } from "react";
-import { CampaignRole } from "@/models/campaign";
+import { RoleDetails } from "@/models/campaign";
 import CampaignDates from "./campaign-dates";
 import { RoleUpdate, deleteRole, updateRole } from "@/models/role";
 import { toast } from "sonner";
@@ -26,7 +26,7 @@ import { remark } from "remark";
 import html from "remark-html";
 import CopyButton from "@/components/copy-button";
 
-interface ClientRole extends CampaignRole {
+interface ClientRole extends RoleDetails {
     deleting: boolean;
     new: boolean;
 }
@@ -41,7 +41,7 @@ interface CampaignDetailsData {
 
 export type CampaignUpdateKeys = keyof CampaignDetailsData | "roleName" | "roleMinAvailable" | "roleMaxAvailable";
 
-function compareCampaignRoles(roles: CampaignRole[], clientRoles: ClientRole[]): boolean {
+function compareCampaignRoles(roles: RoleDetails[], clientRoles: ClientRole[]): boolean {
     if (roles.length !== clientRoles.length) return false;
     return roles.every(
         (role, index) => role.id === clientRoles[index].id && 
@@ -78,7 +78,7 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
     });
 
     const { mutateAsync: mutateCreateCampaignRole } = useMutation({
-        mutationFn: (data: CampaignRole) => createCampaignRole(campaignId, data),
+        mutationFn: (data: RoleDetails) => createCampaignRole(campaignId, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [`${campaignId}-campaign-roles`] });
         },
@@ -113,14 +113,14 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
     });
 
     const [clientRoles, setClientRoles] = useState<ClientRole[]>([]);
-    const [newRoleId, setNewRoleId] = useState<number>(0);
+    const [newRoleId, setNewRoleId] = useState<string>("0");
     const [hoveredDeleteIndex, setHoveredDeleteIndex] = useState<number | null>(null);
     const [descriptionHtmlState, setDescriptionHtmlState] = useState<string>("");
     const [dateError, setDateError] = useState<boolean>(false);
-    const [roleNameError, setRoleNameError] = useState<{ [key: number]: boolean }>(
+    const [roleNameError, setRoleNameError] = useState<{ [key: string]: boolean }>(
         clientRoles.reduce((acc, role) => ({ ...acc, [role.id]: false }), {})
     );
-    const [rolePositionError, setRolePositionError] = useState<{ [key: number]: boolean }>(
+    const [rolePositionError, setRolePositionError] = useState<{ [key: string]: boolean }>(
         clientRoles.reduce((acc, role) => ({ ...acc, [role.id]: false }), {})
     );
     const [updatedCampaignDetails, setUpdatedCampaignDetails] = useState<CampaignDetailsData | null>(null);
@@ -142,6 +142,7 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
         setClientRoles([...clientRoles, {
             // temp id for table row key
             id: newRoleId,
+            campaign_id: campaignId,
             name: "New Role",
             description: "",
             min_available: 1,
@@ -153,7 +154,7 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
         setNewRoleId(newRoleId + 1);
     };
 
-    const handleDeleteRole = (roleId: number) => {
+    const handleDeleteRole = (roleId: string) => {
         if (!editingMode) return;
         const deletingRole = clientRoles.find((r) => r.id === roleId);
 
@@ -306,6 +307,7 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                 } else if (role.new === true) {
                     return mutateCreateCampaignRole({
                         id: role.id,
+                        campaign_id: campaignId,
                         name: role.name,
                         description: role.description ?? undefined,
                         min_available: role.min_available,
@@ -339,7 +341,7 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
             await mutationResult;
             setUpdatedCampaignDetails(null);
             setEditingMode(false);
-            setNewRoleId(0);
+            setNewRoleId("0");
         } catch (err) {
             setClientRoles(roles?.map((role) => ({ ...role, deleting: false, new: false })) ?? []);
         }
