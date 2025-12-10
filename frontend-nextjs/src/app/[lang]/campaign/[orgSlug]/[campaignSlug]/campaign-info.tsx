@@ -23,7 +23,7 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
     });
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
             {/* Hero Section */}
             <div className="relative h-[400px] bg-gradient-to-br from-primary/20 to-primary/5 overflow-hidden">
                 <img
@@ -31,7 +31,7 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
                     alt="Campaign cover"
                     className="absolute inset-0 w-full h-full object-cover opacity-30"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent"></div>
 
                 <div className="relative h-full max-w-5xl mx-auto px-6 flex flex-col justify-end pb-12">
                     <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">
@@ -52,15 +52,15 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
                     {/* Left Column */}
                     <div className="lg:w-2/3">
                         {/* Main Content Container with unified card */}
-                        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                             {/* Campaign Description */}
                             {campaignData.description && (
                                 <div className="p-6">
-                                    <h2 className="text-2xl font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-1">
+                                    <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center gap-1">
                                         <Info className="w-6 h-6" />
                                         {dict.common.about}
                                     </h2>
-                                    <p className="text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
+                                    <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">
                                         {campaignData.description}
                                     </p>
                                 </div>
@@ -68,7 +68,7 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
 
                             {/* Divider */}
                             {campaignData.description && campaignData.application_requirements && (
-                                <hr className="border-slate-200 dark:border-slate-700" />
+                                <hr className="border-gray-200" />
                             )}
 
                             {/* Application Requirements */}
@@ -78,7 +78,7 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
                                         <FileText className="w-5 h-5" />
                                         {dict.common.application_requirements}
                                     </h3>
-                                    <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                                    <p className="text-gray-600 leading-relaxed">
                                         {campaignData.application_requirements}
                                     </p>
                                 </div>
@@ -86,34 +86,34 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
 
                             {/* Divider */}
                             {(campaignData.application_requirements || campaignData.description) && campaignData.interview_format && (
-                                <hr className="border-slate-200 dark:border-slate-700" />
+                                <hr className="border-gray-200" />
                             )}
 
                             {/* Interview Information */}
                             {campaignData.interview_format && (
                                 <div className="p-6">
-                                    <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-1">
+                                    <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-1">
                                         <Video className="w-5 h-5" />
                                         {dict.common.interview_details}
                                     </h3>
                                     <div className="space-y-3 grid grid-cols-3">
                                         <div className="flex flex-col justify-start gap-3">
-                                            <span className="text-sm font-medium text-slate-900 dark:text-white min-w-24">
+                                            <span className="text-sm font-medium text-gray-900 min-w-24">
                                                 {dict.common.interview_format}
                                             </span>
                                             {campaignData.interview_period_starts_at && campaignData.interview_period_ends_at && (
-                                                <span className="text-sm font-medium text-slate-900 dark:text-white min-w-24">
+                                                <span className="text-sm font-medium text-gray-900 min-w-24">
                                                     {dict.common.interview_period}
                                                 </span>
                                             )}
 
                                         </div>
                                         <div className="flex flex-col justify-start gap-3 col-span-2">
-                                            <span className="text-sm text-slate-600 dark:text-slate-300 capitalize">
+                                            <span className="text-sm text-gray-600 capitalize">
                                                 {campaignData.interview_format}
                                             </span>
                                             {campaignData.interview_period_starts_at && campaignData.interview_period_ends_at && (
-                                                <span className="text-sm text-slate-600 dark:text-slate-300">
+                                                <span className="text-sm text-gray-600">
                                                     {dateToString(campaignData.interview_period_starts_at.toString())} - {dateToString(campaignData.interview_period_ends_at.toString())}
                                                 </span>
                                             )}
@@ -123,11 +123,11 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
                             )}
 
                             {/* Divider */}
-                            <hr className="border-slate-200 dark:border-slate-700" />
+                            <hr className="border-gray-200" />
 
                             {/* Available Roles */}
                             <div className="p-6">
-                                <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-1">
+                                <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-1">
                                     <Briefcase className="w-5 h-5" />
                                     {dict.common.available_roles}
                                 </h3>
@@ -135,10 +135,10 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
                                     {roleData?.map(role => (
                                         <div
                                             key={role.id}
-                                            className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700"
+                                            className="p-4 bg-gray-50 rounded-lg border border-gray-200"
                                         >
                                             <div className="flex justify-between mb-2">
-                                                <h4 className="text-lg font-semibold text-slate-900 dark:text-white">
+                                                <h4 className="text-lg font-semibold text-gray-900">
                                                     {role.name}
                                                 </h4>
                                                 <span className="flex gap-1 items-center px-3 py-1 text-sm font-medium rounded-full">
@@ -146,14 +146,14 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
                                                 </span>
                                             </div>
                                             {role.description && (
-                                                <p className="text-sm text-slate-600 dark:text-slate-400">
+                                                <p className="text-sm text-gray-600">
                                                     {role.description}
                                                 </p>
                                             )}
                                         </div>
                                     ))}
                                     {roleData?.length === 0 && (
-                                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                                        <p className="text-sm text-gray-600">
                                             No roles available for this campaign.
                                         </p>
                                     )}
@@ -161,11 +161,11 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
                             </div>
 
                             {/* Divider */}
-                            <hr className="border-slate-200 dark:border-slate-700" />
+                            <hr className="border-gray-200" />
 
                             {/* Timeline Section */}
                             <div className="p-6">
-                                <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-1">
+                                <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-1">
                                     <Clock className="w-5 h-5" />
                                     {dict.common.recruitment_timeline}
                                 </h3>
@@ -175,13 +175,13 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
                                     <div className="flex gap-3">
                                         <div className="flex flex-col items-center">
                                             <div className="w-2 h-2 rounded-full bg-primary"></div>
-                                            <div className="w-px h-full bg-slate-200 dark:bg-slate-700"></div>
+                                            <div className="w-px h-full bg-gray-200"></div>
                                         </div>
                                         <div className="flex-1 pb-4">
-                                            <p className="text-sm font-medium text-slate-900 dark:text-white">
+                                            <p className="text-sm font-medium text-gray-900">
                                                 {dict.common.applications_open}
                                             </p>
-                                            <p className="text-xs text-slate-500">
+                                            <p className="text-xs text-gray-500">
                                                 {dateToString(campaignData.starts_at)}
                                             </p>
                                         </div>
@@ -190,14 +190,14 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
                                     {/* Applications Close */}
                                     <div className="flex gap-3">
                                         <div className="flex flex-col items-center">
-                                            <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600"></div>
-                                            <div className="w-px h-full bg-slate-200 dark:bg-slate-700"></div>
+                                            <div className="w-2 h-2 rounded-full bg-gray-300"></div>
+                                            <div className="w-px h-full bg-gray-200"></div>
                                         </div>
                                         <div className="flex-1 pb-4">
-                                            <p className="text-sm font-medium text-slate-900 dark:text-white">
+                                            <p className="text-sm font-medium text-gray-900">
                                                 {dict.common.applications_close}
                                             </p>
-                                            <p className="text-xs text-slate-500">
+                                            <p className="text-xs text-gray-500">
                                                 {dateToString(campaignData.ends_at)}
                                             </p>
                                         </div>
@@ -207,14 +207,14 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
                                     {campaignData.interview_period_starts_at && campaignData.interview_period_ends_at && (
                                         <div className="flex gap-3">
                                             <div className="flex flex-col items-center">
-                                                <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600"></div>
-                                                <div className="w-px h-full bg-slate-200 dark:bg-slate-700"></div>
+                                                <div className="w-2 h-2 rounded-full bg-gray-300"></div>
+                                                <div className="w-px h-full bg-gray-200"></div>
                                             </div>
                                             <div className="flex-1 pb-4">
-                                                <p className="text-sm font-medium text-slate-900 dark:text-white">
+                                                <p className="text-sm font-medium text-gray-900">
                                                     {dict.common.interviews}
                                                 </p>
-                                                <p className="text-xs text-slate-500">
+                                                <p className="text-xs text-gray-500">
                                                     {dateToString(campaignData.interview_period_starts_at.toString())} - {dateToString(campaignData.interview_period_ends_at.toString())}
                                                 </p>
                                             </div>
@@ -225,13 +225,13 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
                                     {campaignData.outcomes_released_at && (
                                         <div className="flex gap-3">
                                             <div className="flex flex-col items-center">
-                                                <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600"></div>
+                                                <div className="w-2 h-2 rounded-full bg-gray-300"></div>
                                             </div>
                                             <div className="flex-1">
-                                                <p className="text-sm font-medium text-slate-900 dark:text-white">
+                                                <p className="text-sm font-medium text-gray-900">
                                                     {dict.common.results_announced}
                                                 </p>
-                                                <p className="text-xs text-slate-500">
+                                                <p className="text-xs text-gray-500">
                                                     {dateToString(campaignData.outcomes_released_at.toString())}
                                                 </p>
                                             </div>
@@ -241,11 +241,11 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
                             </div>
 
                             {/* Divider */}
-                            <hr className="border-slate-200 dark:border-slate-700" />
+                            <hr className="border-gray-200" />
 
                             {/* Contact Information Section */}
                             <div className="pt-6 ml-6 mb-6">
-                                <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-1">
+                                <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-1">
                                     <Phone className="w-5 h-5" />
                                     {dict.common.contact_information}
                                 </h3>
@@ -253,7 +253,7 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
                                 <div className="space-y-4">
                                     {campaignData.website_url && (
                                         <div className="flex items-center gap-3">
-                                            <ExternalLink className="text-slate-400 w-5 h-5 flex-shrink-0" />
+                                            <ExternalLink className="text-gray-400 w-5 h-5 flex-shrink-0" />
                                             <div>
                                                 <a
                                                     href={campaignData.website_url}
@@ -267,7 +267,7 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
 
                                     {campaignData.contact_email && (
                                         <div className="flex items-center gap-3">
-                                            <Mail className="text-slate-400 w-5 h-5 flex-shrink-0" />
+                                            <Mail className="text-gray-400 w-5 h-5 flex-shrink-0" />
                                             <div>
                                                 <a
                                                     href={`mailto:${campaignData.contact_email}?subject=[Chaos Application Query] ${campaignData.organisation_name} ${campaignData.name}`}
@@ -287,19 +287,19 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
                     <div className="lg:w-1/3">
                         <div className="sticky top-6">
                             {/* Apply Card */}
-                            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm p-6 border border-slate-200 dark:border-slate-700">
-                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+                            <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+                                <h3 className="text-lg font-semibold text-gray-900 mb-4">
                                     {dict.common.apply_now}
                                 </h3>
 
                                 <div className="space-y-4 mb-6">
                                     <div className="flex items-start gap-3">
-                                        <Calendar className="text-slate-400 mt-0.5 w-5 h-5" />
+                                        <Calendar className="text-gray-400 mt-0.5 w-5 h-5" />
                                         <div className="flex-1">
-                                            <p className="text-sm font-medium text-slate-900 dark:text-white">
+                                            <p className="text-sm font-medium text-gray-900">
                                                 {dict.common.application_deadline}
                                             </p>
-                                            <p className="text-sm text-slate-600 dark:text-slate-300">
+                                            <p className="text-sm text-gray-600">
                                                 {dateToString(campaignData.ends_at)}
                                             </p>
                                         </div>
@@ -307,12 +307,12 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
 
                                     {campaignData.outcomes_released_at && (
                                         <div className="flex items-start gap-3">
-                                            <Calendar className="text-slate-400 mt-0.5 w-5 h-5" />
+                                            <Calendar className="text-gray-400 mt-0.5 w-5 h-5" />
                                             <div className="flex-1">
-                                                <p className="text-sm font-medium text-slate-900 dark:text-white">
+                                                <p className="text-sm font-medium text-gray-900">
                                                     {dict.common.results_announced}
                                                 </p>
-                                                <p className="text-sm text-slate-600 dark:text-slate-300">
+                                                <p className="text-sm text-gray-600">
                                                     {dateToString(campaignData.outcomes_released_at.toString())}
                                                 </p>
                                             </div>
