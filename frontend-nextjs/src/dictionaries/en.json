@@ -11,10 +11,30 @@
         "settings": "Settings",
         "roles": "Roles",
         "description": "Description",
+        "about": "About",
         "questions": "Questions",
         "common_questions": "Common Questions",
         "back": "Back",
         "application": "Application",
+        "application_requirements": "Application Requirements",
+        "interview_details": "Interview Details",
+        "interview_format": "Interview Format",
+        "interview_period": "Interview Period",
+        "available_roles": "Available Roles",
+        "recruitment_timeline": "Recruitment Timeline",
+
+        "applications_open": "Applications Open",
+        "applications_close": "Applications Close",
+        "interviews": "Interviews",
+        "results_announced": "Results Announced",
+
+        "contact_information": "Contact Information",
+        "visit_website": "Visit Website",
+
+        "apply_now": "Apply Now",
+        "application_deadline": "Application Deadline",
+        "apply": "Apply",
+        
         "status": "Status"
     },
     "dashboard": {

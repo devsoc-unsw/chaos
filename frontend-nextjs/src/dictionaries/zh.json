@@ -11,10 +11,30 @@
         "settings": "设置",
         "roles": "角色",
         "description": "详细描述",
+        "about": "关于",
         "questions": "问题",
         "common_questions": "通用问题",
         "back": "返回",
         "application": "申请",
+        "application_requirements": "申请要求",
+        "interview_details": "面试详情",
+        "interview_format": "面试格式",
+        "interview_period": "面试周期",
+        "available_roles": "可用的角色",
+        "recruitment_timeline": "招聘时间线",
+
+        "applications_open": "申请开放",
+        "applications_close": "申请关闭",
+        "interviews": "面试",
+        "results_announced": "结果公布",
+
+        "contact_information": "联系信息",
+        "visit_website": "访问网站",
+
+        "apply_now": "立即申请",
+        "application_deadline": "申请截止日期",
+        "apply": "申请",
+
         "status": "状态"
     },
     "dashboard": {
