@@ -3,7 +3,7 @@ import { ApplicationDetails } from "./application";
 
 export interface CampaignDetails {
     /// Unique identifier for the campaign
-    id: number;
+    id: string;
     campaign_slug: string;
     name: string;
     organisation_id: string;
@@ -28,17 +28,18 @@ export async function getCampaign(campaignId: string): Promise<CampaignDetails> 
     return await apiRequest<CampaignDetails>(`/api/v1/campaign/${campaignId}`);
 }
 
-export interface CampaignRole {
-    id: number;
+export interface RoleDetails {
+    id: string;
+    campaign_id: string;
     name: string;
-    description: string;
+    description?: string;
     min_available: number;
     max_available: number;
     finalised: boolean;
 }
 
-export async function getCampaignRoles(campaignId: number): Promise<CampaignRole[]> {
-    return await apiRequest<CampaignRole[]>(`/api/v1/campaign/${campaignId}/roles`);
+export async function getCampaignRoles(campaignId: string): Promise<RoleDetails[]> {
+    return await apiRequest<RoleDetails[]>(`/api/v1/campaign/${campaignId}/roles`);
 }
 
 export async function getCampaignApplications(campaignId: string): Promise<ApplicationDetails[]> {
