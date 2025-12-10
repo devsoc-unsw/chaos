@@ -42,7 +42,7 @@ impl ApplicationHandler {
         let application_id = Application::create_or_get(campaign_id, user.user_id, &mut state.snowflake_generator, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, Json(json!({ "application_id": application_id.to_string() }))))
+        Ok(Json(json!({ "application_id": application_id.to_string() })))
     }
 
     /// Checks if an application exists for a given campaign and user.
@@ -64,7 +64,7 @@ impl ApplicationHandler {
         let application_exists = Application::check_application_exists(campaign_id, user.user_id, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, Json(json!({ "application_exists": application_exists }))))
+        Ok(Json(json!({ "application_exists": application_exists })))
     }
 
     /// Retrieves the details of a specific application.
@@ -87,7 +87,7 @@ impl ApplicationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         let application = Application::get(application_id, admin.user_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, Json(application)))
+        Ok(Json(application))
     }
 
     /// Updates the status of an application.
@@ -158,7 +158,7 @@ impl ApplicationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         let applications = Application::get_from_user_id(user.user_id, user.user_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, Json(applications)))
+        Ok(Json(applications))
     }
 
     /// Retrieves all roles associated with a specific application.
@@ -183,7 +183,7 @@ impl ApplicationHandler {
         let roles = Application::get_roles(application_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, Json(roles)))
+        Ok(Json(roles))
     }
 
     /// Updates the roles associated with an application.

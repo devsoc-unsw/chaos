@@ -1,6 +1,3 @@
-use std::fmt::Error;
-use server::handler::application;
-use server::models::app;
 use server::models::app::init_app_state;
 use server::models::app::AppState;
 use server::models::offer::Offer;
@@ -10,8 +7,6 @@ use server::models::organisation::{Organisation};
 use server::models::role::{Role, RoleUpdate};
 use server::models::question::*;
 use server::models::answer::*;
-use server::models::offer::*;
-use server::models::email_template::*;
 use server::models::application::{Application, NewApplication, ApplicationRole};
 use chrono::{DateTime, Utc};
 
@@ -135,7 +130,7 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
         campaign_id,
         RoleUpdate {
             name: "Chaos".to_string(),
-            description: Some("We are looking for a passionate Rust developer to join our team.".to_string()),
+            description: Some("The DevSoc Rust project".to_string()),
             min_available: 1,
             max_available: 10,
             finalised: false,
@@ -151,7 +146,7 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
             name: "Notangles".to_string(),
             description: Some("We hate tangles.".to_string()),
             min_available: 1,
-            max_available: 100,
+            max_available: 20,
             finalised: true,
         },
         &mut tx,
@@ -259,7 +254,7 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
 
     let application_id_1 = Application::create(
         campaign_id,
-        3,
+        2,
         NewApplication {
             applied_roles: vec![
                 ApplicationRole {
@@ -323,6 +318,23 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
         application_id_1,
         question_id_2,
         AnswerData::ShortAnswer("A Moand is a Monoid in the Category of Endofunctors, what else do you want?".to_string()),
+        &mut seeder.app_state.snowflake_generator,
+        &mut tx,
+    )
+    .await.expect("Failed seeding Answer 3");
+
+    let qtn_3_data = Question::get(question_id_3, &mut tx).await.expect("Failed getting Question 3");
+
+    let qtn_3_options = 
+        match qtn_3_data.question_data {
+            QuestionData::MultiSelect(options) => options.options,
+            _ => panic!("Question 3 is not a MultiSelect question"),
+        };
+
+    Answer::create(
+        application_id_1,
+        question_id_3,
+        AnswerData::MultiSelect(vec![qtn_3_options[0].id, qtn_3_options[1].id]),
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
