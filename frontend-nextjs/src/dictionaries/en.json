@@ -1,85 +1,105 @@
 {
-    "common": {
-        "organisation": "Organisation",
-        "name": "Name",
-        "slug": "Slug",
-        "starts_at": "Starts At",
-        "ends_at": "Ends At",
-        "published": "Published",
-        "dashboard": "Dashboard",
-        "profile": "Profile",
-        "campaigns": "Campaigns",
-        "settings": "Settings",
-        "roles": "Roles",
-        "description": "Description",
-        "questions": "Questions",
-        "common_questions": "Common Questions",
-        "back": "Back",
-        "application": "Application",
-        "status": "Status",
-        "email": "Email"
+  "common": {
+    "organisation": "Organisation",
+    "name": "Name",
+    "slug": "Slug",
+    "starts_at": "Starts At",
+    "ends_at": "Ends At",
+    "published": "Published",
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "campaigns": "Campaigns",
+    "settings": "Settings",
+    "roles": "Roles",
+    "description": "Description",
+    "about": "About",
+    "questions": "Questions",
+    "common_questions": "Common Questions",
+    "back": "Back",
+    "application": "Application",
+    "application_requirements": "Application Requirements",
+    "interview_details": "Interview Details",
+    "interview_format": "Interview Format",
+    "interview_period": "Interview Period",
+    "available_roles": "Available Roles",
+    "recruitment_timeline": "Recruitment Timeline",
+
+    "applications_open": "Applications Open",
+    "applications_close": "Applications Close",
+    "interviews": "Interviews",
+    "results_announced": "Results Announced",
+
+    "contact_information": "Contact Information",
+    "visit_website": "Visit Website",
+
+    "apply_now": "Apply Now",
+    "application_deadline": "Application Deadline",
+    "apply": "Apply",
+
+    "status": "Status",
+    "email": "Email"
+  },
+  "dashboard": {
+    "email_templates": "Email Templates",
+    "members": {
+      "role": "Role",
+      "members": "Members",
+      "admins": "Admins",
+      "users": "Users",
+      "remove_member": "Remove Member",
+      "add_member": "Add Member",
+      "invite_member": "Invite Member",
+      "admin_edit_block": "Cannot change admin members",
+      "admin_edit_block_description": "Admins cannot be changed in the dashboard. Please email admin@chaos.devsoc.app to update your admins list."
     },
-    "dashboard": {
-        "email_templates": "Email Templates",
-        "members": {
-            "role": "Role",
-            "members": "Members",
-            "admins": "Admins",
-            "users": "Users",
-            "remove_member": "Remove Member",
-            "add_member": "Add Member",
-            "invite_member": "Invite Member",
-            "admin_edit_block": "Cannot change admin members",
-            "admin_edit_block_description": "Admins cannot be changed in the dashboard. Please email admin@chaos.devsoc.app to update your admins list."
-        },
-        "slug_tooltip": "User-friendly URL alias for the campaign",
-        "suggested_slug": "Suggested slug",
-        "slug_not_available": "Slug not available",
-        "sidebar": {
-            "create_organisation": "Create Organisation"
-        },
-        "campaigns": {
-            "copy_campaign_id": "Copy ID",
-            "copy_campaign_link": "Copy Campaign Link",
-            "edit_campaign": "Edit Campaign",
-            "share_link": "Share Link",
-            "review_applications": "Review Applications",
-            "manage_questions": "Manage Questions",
-            "publish": "Publish",
-            "published": "Published",
-            "draft": "Draft",
-            "roles": {
-                "number_of_positions": "Number of Positions",
-                "add_role": "Add Role"
-            },
-            "application_review_page": {
-                "no_application_selected": "No application selected",
-                "click_on_application_to_view": "Click on an application on the left to view it",
-                "application_rating": "Application rating",
-                "review_score": "Score",
-                "review_comment": "Comments (optional)",
-                "write_your_review_here": "Write your review here...",
-                "application_not_rated": "Application not rated"
-            }
-        },
-        "email": {
-            "name": "Name",
-            "subject": "Subject",
-            "body": "Body",
-            "delete_confirmation": "This will permanently delete the email template and cannot be undone.",
-            "edit_template": "Edit Template"
-        },
-        "actions": {
-            "new": "New",
-            "edit": "Edit",
-            "delete": "Delete",
-            "preview": "Preview",
-            "duplicate": "Duplicate",
-            "cancel": "Cancel",
-            "save": "Save",
-            "destructive_confirm": "Are you absolutely sure?",
-            "confirm_understand": "Ok",
-            "invite": "Invite"
-        }
+    "slug_tooltip": "User-friendly URL alias for the campaign",
+    "suggested_slug": "Suggested slug",
+    "slug_not_available": "Slug not available",
+    "sidebar": {
+      "create_organisation": "Create Organisation"
+    },
+    "campaigns": {
+      "copy_campaign_id": "Copy ID",
+      "copy_campaign_link": "Copy Campaign Link",
+      "edit_campaign": "Edit Campaign",
+      "share_link": "Share Link",
+      "review_applications": "Review Applications",
+      "manage_questions": "Manage Questions",
+      "publish": "Publish",
+      "published": "Published",
+      "draft": "Draft",
+      "roles": {
+        "number_of_positions": "Number of Positions",
+        "add_role": "Add Role"
+      },
+      "application_review_page": {
+        "no_application_selected": "No application selected",
+        "click_on_application_to_view": "Click on an application on the left to view it",
+        "application_rating": "Application rating",
+        "review_score": "Score",
+        "review_comment": "Comments (optional)",
+        "write_your_review_here": "Write your review here...",
+        "application_not_rated": "Application not rated"
+      }
+    },
+    "email": {
+      "name": "Name",
+      "subject": "Subject",
+      "body": "Body",
+      "delete_confirmation": "This will permanently delete the email template and cannot be undone.",
+      "edit_template": "Edit Template"
+    },
+    "actions": {
+      "new": "New",
+      "edit": "Edit",
+      "delete": "Delete",
+      "preview": "Preview",
+      "duplicate": "Duplicate",
+      "cancel": "Cancel",
+      "save": "Save",
+      "destructive_confirm": "Are you absolutely sure?",
+      "confirm_understand": "Ok",
+      "invite": "Invite"
     }
+  }
 }

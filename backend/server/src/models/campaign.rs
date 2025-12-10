@@ -51,6 +51,16 @@ pub struct Campaign {
     pub created_at: DateTime<Utc>,
     /// When the campaign was last updated
     pub updated_at: DateTime<Utc>,
+    /// When interview period begins
+    pub interview_period_starts_at: Option<DateTime<Utc>>,
+    /// When interview period ends
+    pub interview_period_ends_at: Option<DateTime<Utc>>,
+    /// Interview format (e.g., "in-person", "online", "hybrid")
+    pub interview_format: Option<String>,
+    /// When applicants will be notified of outcomes
+    pub outcomes_released_at: Option<DateTime<Utc>>,
+    /// Additional application requirements (e.g., "Resume required", "No economics background needed")
+    pub application_requirements: Option<String>,
     /// Whether the campaign is published
     pub published: bool,
 }
@@ -74,6 +84,10 @@ pub struct CampaignDetails {
     pub organisation_slug: String,
     /// Name of the organization running the campaign
     pub organisation_name: String,
+    /// The organisation's contact email (e.g. contact@devsoc.app)
+    pub contact_email: String,
+    /// The organisations website link (e.g. https://devsoc.app)
+    pub website_url: Option<String>,
     /// Optional UUID of the campaign's cover image
     pub cover_image: Option<Uuid>,
     /// Optional description of the campaign
@@ -82,6 +96,16 @@ pub struct CampaignDetails {
     pub starts_at: DateTime<Utc>,
     /// When the campaign stops accepting applications
     pub ends_at: DateTime<Utc>,
+    /// When interview period begins
+    pub interview_period_starts_at: Option<DateTime<Utc>>,
+    /// When interview period ends
+    pub interview_period_ends_at: Option<DateTime<Utc>>,
+    /// Interview format (e.g., "in-person", "online", "hybrid")
+    pub interview_format: Option<String>,
+    /// When applicants will be notified of outcomes
+    pub outcomes_released_at: Option<DateTime<Utc>>,
+    /// Additional application requirements (e.g., "Resume required", "No economics background needed")
+    pub application_requirements: Option<String>,
     /// Whether the campaign is published
     pub published: bool,
 }
@@ -114,6 +138,16 @@ pub struct OrganisationCampaign {
     pub ends_at: DateTime<Utc>,
     /// Whether the campaign is published
     pub published: bool,
+    /// When interview period begins
+    pub interview_period_starts_at: Option<DateTime<Utc>>,
+    /// When interview period ends
+    pub interview_period_ends_at: Option<DateTime<Utc>>,
+    /// Interview format (e.g., "in-person", "online", "hybrid")
+    pub interview_format: Option<String>,
+    /// When applicants will be notified of outcomes
+    pub outcomes_released_at: Option<DateTime<Utc>>,
+    /// Additional application requirements (e.g., "Resume required", "No economics background needed")
+    pub application_requirements: Option<String>,
 }
 
 /// Data structure for creating a new campaign.
@@ -130,7 +164,17 @@ pub struct NewCampaign {
     /// When the campaign starts accepting applications
     pub starts_at: DateTime<Utc>,
     /// When the campaign stops accepting applications
-    pub ends_at: DateTime<Utc>
+    pub ends_at: DateTime<Utc>,
+    /// When interview period begins
+    pub interview_period_starts_at: Option<DateTime<Utc>>,
+    /// When interview period ends
+    pub interview_period_ends_at: Option<DateTime<Utc>>,
+    /// Interview format (e.g., "in-person", "online", "hybrid")
+    pub interview_format: Option<String>,
+    /// When applicants will be notified of outcomes
+    pub outcomes_released_at: Option<DateTime<Utc>>,
+    /// Additional application requirements (e.g., "Resume required", "No economics background needed")
+    pub application_requirements: Option<String>,
 }
 
 /// Data structure for updating an existing campaign.
@@ -148,6 +192,16 @@ pub struct CampaignUpdate {
     pub starts_at: DateTime<Utc>,
     /// When the campaign stops accepting applications
     pub ends_at: DateTime<Utc>,
+    /// When interview period begins
+    pub interview_period_starts_at: Option<DateTime<Utc>>,
+    /// When interview period ends
+    pub interview_period_ends_at: Option<DateTime<Utc>>,
+    /// Interview format (e.g., "in-person", "online", "hybrid")
+    pub interview_format: Option<String>,
+    /// When applicants will be notified of outcomes
+    pub outcomes_released_at: Option<DateTime<Utc>>,
+    /// Additional application requirements (e.g., "Resume required", "No economics background needed")
+    pub application_requirements: Option<String>,
 }
 
 /// Response structure for campaign banner updates.
@@ -204,8 +258,11 @@ impl Campaign {
             CampaignDetails,
             "
                 SELECT c.id, c.slug AS campaign_slug, c.name, c.organisation_id,
-                o.slug AS organisation_slug, o.name as organisation_name, c.cover_image,
-                c.description, c.starts_at, c.ends_at, c.published
+                o.slug AS organisation_slug, o.name as organisation_name, 
+                o.contact_email, o.website_url, c.cover_image,
+                c.description, c.starts_at, c.ends_at, c.published, c.interview_period_starts_at, 
+                c.interview_period_ends_at, c.interview_format, c.outcomes_released_at, 
+                c.application_requirements
                 FROM campaigns c
                 JOIN organisations o on c.organisation_id = o.id
                 WHERE c.id = $1
@@ -279,8 +336,11 @@ impl Campaign {
             CampaignDetails,
             "
                 SELECT c.id, c.slug AS campaign_slug, c.name, c.organisation_id,
-                o.slug AS organisation_slug, o.name as organisation_name, c.cover_image,
-                c.description, c.starts_at, c.ends_at, c.published
+                o.slug AS organisation_slug, o.name as organisation_name, 
+                o.contact_email, o.website_url, c.cover_image, 
+                c.description, c.starts_at, c.ends_at, c.published, 
+                c.interview_period_starts_at, c.interview_period_ends_at, c.interview_format, 
+                c.outcomes_released_at, c.application_requirements
                 FROM campaigns c
                 JOIN organisations o on c.organisation_id = o.id
                 WHERE c.slug = $1 AND o.slug = $2
@@ -315,14 +375,21 @@ impl Campaign {
         _ = sqlx::query!(
             "
                 UPDATE campaigns
-                SET slug = $1, name = $2, description = $3, starts_at = $4, ends_at = $5
-                WHERE id = $6 RETURNING id
+                SET slug = $1, name = $2, description = $3, starts_at = $4, ends_at = $5,
+                interview_period_starts_at = $6, interview_period_ends_at = $7,
+                interview_format = $8, outcomes_released_at = $9, application_requirements = $10
+                WHERE id = $11 RETURNING id
             ",
             update.slug,
             update.name,
             update.description,
             update.starts_at,
             update.ends_at,
+            update.interview_period_starts_at,
+            update.interview_period_ends_at,
+            update.interview_format,
+            update.outcomes_released_at,
+            update.application_requirements,
             id
         )
         .fetch_one(transaction.deref_mut())

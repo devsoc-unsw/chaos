@@ -49,6 +49,8 @@ impl OrganisationHandler {
             data.admin,
             data.slug,
             data.name,
+            data.contact_email,
+            data.website_url,
             &mut state.snowflake_generator,
             &mut transaction.tx,
         )
@@ -444,6 +446,11 @@ impl OrganisationHandler {
             request_body.description,
             request_body.starts_at,
             request_body.ends_at,
+            request_body.interview_period_starts_at,
+            request_body.interview_period_ends_at,
+            request_body.interview_format,
+            request_body.outcomes_released_at,
+            request_body.application_requirements,
             &mut transaction.tx,
             &mut state.snowflake_generator,
         )

@@ -36,6 +36,10 @@ pub struct Organisation {
     pub created_at: DateTime<Utc>,
     /// When the organisation was last updated
     pub updated_at: DateTime<Utc>,
+    /// The organisation's contact email (e.g. contact@devsoc.app)
+    pub contact_email: String,
+    /// The organisations website link (e.g. https://devsoc.app)
+    pub website_url: Option<String>,
     /// List of campaigns run by this organisation
     pub campaigns: Vec<OrganisationCampaign>, // Awaiting Campaign to be complete - remove comment once done
     /// List of user IDs who are administrators of this organisation
@@ -55,6 +59,10 @@ pub struct NewOrganisation {
     pub name: String,
     /// ID of the user who will be the initial administrator
     pub admin: i64,
+    /// The organisation's contact email (e.g. contact@devsoc.app)
+    pub contact_email: String,
+    /// The organisations website link (e.g. https://devsoc.app)
+    pub website_url: Option<String>,
 }
 
 /// Detailed view of an organisation's information.
@@ -74,6 +82,10 @@ pub struct OrganisationDetails {
     pub logo: Option<Uuid>,
     /// When the organisation was created
     pub created_at: DateTime<Utc>,
+    /// The organisation's contact email (e.g. contact@devsoc.app)
+    pub contact_email: String,
+    /// The organisations website link (e.g. https://devsoc.app)
+    pub website_url: Option<String>,
 }
 
 /// Possible roles for organisation members.
@@ -163,6 +175,8 @@ impl Organisation {
         admin_id: i64,
         mut slug: String,
         name: String,
+        contact_email: String,
+        website_url: Option<String>,
         snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<i64, ChaosError> {
@@ -176,12 +190,14 @@ impl Organisation {
 
         sqlx::query!(
             "
-            INSERT INTO organisations (id, slug, name)
-                VALUES ($1, $2, $3)
+            INSERT INTO organisations (id, slug, name, contact_email, website_url)
+                VALUES ($1, $2, $3, $4, $5)
         ",
             id,
             slug.to_lowercase(),
-            name
+            name,
+            contact_email, 
+            website_url
         )
         .execute(transaction.deref_mut())
         .await?;
@@ -256,7 +272,7 @@ impl Organisation {
         let organisation = sqlx::query_as!(
             OrganisationDetails,
             "
-            SELECT id, slug, name, logo, created_at
+            SELECT id, slug, name, logo, created_at, website_url, contact_email
                 FROM organisations
                 WHERE id = $1
         ",
@@ -272,7 +288,7 @@ impl Organisation {
         let organisations = sqlx::query_as!(
             OrganisationDetails,
             "
-            SELECT id, slug, name, logo, created_at
+            SELECT id, slug, name, logo, created_at, website_url, contact_email
                 FROM organisations
         ",
         )
@@ -299,7 +315,7 @@ impl Organisation {
         let organisation = sqlx::query_as!(
             OrganisationDetails,
             "
-            SELECT id, slug, name, logo, created_at
+            SELECT id, slug, name, logo, created_at, website_url, contact_email
                 FROM organisations
                 WHERE slug = $1
         ",
@@ -328,7 +344,7 @@ impl Organisation {
         let orgs = sqlx::query_as!(
             OrganisationDetails,
             "
-                SELECT o.id, o.slug, o.name, o.logo, o.created_at
+            SELECT o.id, o.slug, o.name, o.logo, o.created_at, o.website_url, o.contact_email
                     FROM organisations o
                     JOIN organisation_members om
                     ON o.id = om.organisation_id 
@@ -726,7 +742,9 @@ impl Organisation {
             "
                 SELECT
                     c.id, c.organisation_id, c.slug as campaign_slug, c.name, c.cover_image,
-                    c.description, c.starts_at, c.ends_at, c.published, o.slug as organisation_slug
+                    c.description, c.starts_at, c.ends_at, c.published, o.slug as organisation_slug, 
+                    c.interview_period_starts_at, c.interview_period_ends_at, c.interview_format,
+                    c.outcomes_released_at, c.application_requirements
                 FROM campaigns c
                 LEFT JOIN organisations o on c.organisation_id = o.id
                 WHERE organisation_id = $1
@@ -747,6 +765,11 @@ impl Organisation {
         description: Option<String>,
         starts_at: DateTime<Utc>,
         ends_at: DateTime<Utc>,
+        interview_period_starts_at: Option<DateTime<Utc>>,
+        interview_period_ends_at: Option<DateTime<Utc>>,
+        interview_format: Option<String>,
+        outcomes_released_at: Option<DateTime<Utc>>,
+        application_requirements: Option<String>,
         transaction: &mut Transaction<'_, Postgres>,
         snowflake_id_generator: &mut SnowflakeIdGenerator,
     ) -> Result<i64, ChaosError> {
@@ -760,8 +783,8 @@ impl Organisation {
 
         sqlx::query!(
             "
-            INSERT INTO campaigns (id, organisation_id, slug, name, description, starts_at, ends_at, published)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, false)
+            INSERT INTO campaigns (id, organisation_id, slug, name, description, starts_at, ends_at, published, interview_period_starts_at, interview_period_ends_at, interview_format, outcomes_released_at, application_requirements)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, false, $8, $9, $10, $11, $12)
         ",
             new_campaign_id,
             organisation_id,
@@ -769,7 +792,12 @@ impl Organisation {
             name,
             description,
             starts_at,
-            ends_at
+            ends_at,
+            interview_period_starts_at,
+            interview_period_ends_at,
+            interview_format,
+            outcomes_released_at,
+            application_requirements,
         )
         .execute(transaction.deref_mut())
         .await?;

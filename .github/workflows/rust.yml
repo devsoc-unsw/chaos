@@ -80,4 +80,4 @@ jobs:
         working-directory: backend/database-seeding
         run: |
           cargo build
-          cargo run
+          cargo run -- --email me@example.com

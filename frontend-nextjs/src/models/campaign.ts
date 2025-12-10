@@ -6,18 +6,25 @@ import { createProperSlug } from "./slug";
 
 export interface CampaignDetails {
     /// Unique identifier for the campaign
-    id: number;
+    id: string;
     campaign_slug: string;
     name: string;
     organisation_id: string;
     organisation_slug: string;
     organisation_name: string;
+    contact_email: string,
+    website_url: string,
     cover_image: string | null;
     /// Optional description of the campaign
     description: string | null;
     starts_at: string;
     ends_at: string;
     published: boolean;
+    interview_period_starts_at: Date | null,
+    interview_period_ends_at: Date | null,
+    interview_format: string | null,
+    outcomes_released_at: Date | null,
+    application_requirements: string | null,
 }
 
 export interface NewCampaign {
@@ -38,7 +45,6 @@ export interface CampaignUpdate {
     ends_at: string;
 }
 
-
 export async function getCampaign(campaignId: string): Promise<CampaignDetails> {
     return await apiRequest<CampaignDetails>(`/api/v1/campaign/${campaignId}`);
 }
@@ -50,10 +56,11 @@ export async function updateCampaign(campaignId: string, campaign: CampaignUpdat
     });
 }
 
-export interface CampaignRole {
-    id: number;
+export interface RoleDetails {
+    id: string;
+    campaign_id: string;
     name: string;
-    description: string;
+    description?: string;
     min_available: number;
     max_available: number;
     finalised: boolean;
@@ -96,8 +103,8 @@ export async function setCampaignCoverImage(campaignId: string): Promise<Campaig
     return await apiRequest<CampaignBannerUpdate>(`/api/v1/campaign/${campaignId}/banner`, { method: "PATCH" });
 }
 
-export async function getCampaignRoles(campaignId: string): Promise<CampaignRole[]> {
-    return await apiRequest<CampaignRole[]>(`/api/v1/campaign/${campaignId}/roles`);
+export async function getCampaignRoles(campaignId: string): Promise<RoleDetails[]> {
+    return await apiRequest<RoleDetails[]>(`/api/v1/campaign/${campaignId}/roles`);
 }
 
 export async function createCampaignRole(campaignId: string, role: RoleUpdate): Promise<AppMessage> {
@@ -111,7 +118,7 @@ export async function getCampaignApplications(campaignId: string): Promise<Appli
     return await apiRequest<ApplicationDetails[]>(`/api/v1/campaign/${campaignId}/applications`);
 }
 
-export async function getCampaignDetails(orgSlug: string, campaignSlug: string): Promise<CampaignDetails> {
+export async function getCampaignBySlugs(orgSlug: string, campaignSlug: string): Promise<CampaignDetails> {
     // return await apiRequest<CampaignDetails>(`/api/v1/campaign/${orgSlug}/${campaignSlug}`);
     return await apiRequest<CampaignDetails>(`/api/v1/organisation/slug/${orgSlug}/campaign/slug/${campaignSlug}`);
 }
