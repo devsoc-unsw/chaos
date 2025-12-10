@@ -82,3 +82,23 @@ pub async fn assert_campaign_is_open(
 
     Ok(())
 }
+
+pub fn create_proper_slug(input: &str) -> String {
+    let mut result = String::new();
+    let mut last_char_was_hyphen = false; // To handle consecutive non-alphanumeric chars
+
+    for c in input.chars() {
+        if c.is_alphanumeric() {
+            result.push(c);
+            last_char_was_hyphen = false;
+        } else {
+            if !last_char_was_hyphen {
+                result.push('-');
+                last_char_was_hyphen = true;
+            }
+        }
+    }
+
+    // Remove leading and trailing hyphens if necessary (optional, depending on desired behavior)
+    result.trim_matches('-').to_string().to_lowercase()
+}

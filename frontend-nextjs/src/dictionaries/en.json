@@ -2,6 +2,7 @@
     "common": {
         "organisation": "Organisation",
         "name": "Name",
+        "slug": "Slug",
         "starts_at": "Starts At",
         "ends_at": "Ends At",
         "published": "Published",
@@ -15,11 +16,25 @@
         "common_questions": "Common Questions",
         "back": "Back",
         "application": "Application",
-        "status": "Status"
+        "status": "Status",
+        "email": "Email"
     },
     "dashboard": {
         "email_templates": "Email Templates",
-        "members": "Members",
+        "members": {
+            "role": "Role",
+            "members": "Members",
+            "admins": "Admins",
+            "users": "Users",
+            "remove_member": "Remove Member",
+            "add_member": "Add Member",
+            "invite_member": "Invite Member",
+            "admin_edit_block": "Cannot change admin members",
+            "admin_edit_block_description": "Admins cannot be changed in the dashboard. Please email admin@chaos.devsoc.app to update your admins list."
+        },
+        "slug_tooltip": "User-friendly URL alias for the campaign",
+        "suggested_slug": "Suggested slug",
+        "slug_not_available": "Slug not available",
         "sidebar": {
             "create_organisation": "Create Organisation"
         },
@@ -34,7 +49,8 @@
             "published": "Published",
             "draft": "Draft",
             "roles": {
-                "number_of_positions": "Number of Positions"
+                "number_of_positions": "Number of Positions",
+                "add_role": "Add Role"
             },
             "application_review_page": {
                 "no_application_selected": "No application selected",
@@ -61,7 +77,9 @@
             "duplicate": "Duplicate",
             "cancel": "Cancel",
             "save": "Save",
-            "destructive_confirm": "Are you absolutely sure?"
+            "destructive_confirm": "Are you absolutely sure?",
+            "confirm_understand": "Ok",
+            "invite": "Invite"
         }
     }
 }

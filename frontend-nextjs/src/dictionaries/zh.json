@@ -2,6 +2,7 @@
     "common": { 
         "organisation": "组织",
         "name": "名称",
+        "slug": "别名",
         "starts_at": "开始时间",
         "ends_at": "结束时间",
         "published": "已发布",
@@ -15,11 +16,25 @@
         "common_questions": "通用问题",
         "back": "返回",
         "application": "申请",
-        "status": "状态"
+        "status": "状态",
+        "email": "邮箱"
     },
     "dashboard": {
         "email_templates": "邮件模板",
-        "members": "成员",
+        "members": {
+            "role": "角色",
+            "members": "成员",
+            "admins": "管理员",
+            "users": "用户",
+            "remove_member": "移除成员",
+            "add_member": "添加成员",
+            "invite_member": "邀请成员",
+            "admin_edit_block": "无法更改管理员",
+            "admin_edit_block_description": "管理员无法在仪表盘更改。请发送邮件至 admin@chaos.devsoc.app 更新管理员列表。"
+        },
+        "slug_tooltip": "[NOT PROVIDED]",
+        "suggested_slug": "建议别名",
+        "slug_not_available": "别名不可用",
         "sidebar": {
             "create_organisation": "创建组织"
         },
@@ -34,7 +49,8 @@
             "published": "已发布",
             "draft": "草稿",
             "roles": {
-                "number_of_positions": "职位数量"
+                "number_of_positions": "职位数量",
+                "add_role": "添加角色"
             },
             "application_review_page": {
                 "no_application_selected": "未选择要评估的申请",
@@ -56,12 +72,15 @@
         "actions": {
             "new": "新建",
             "edit": "编辑",
+            "save": "保存",
             "delete": "删除",
             "preview": "预览",
             "duplicate": "复制",
             "cancel": "取消",
             "save": "保存",
-            "destructive_confirm": "你确定吗"
+            "destructive_confirm": "你确定吗",
+            "confirm_understand": "确定",
+            "invite": "邀请"
         }
     }
 }

@@ -18,8 +18,12 @@ CREATE TABLE applications (
         FOREIGN KEY(user_id)
             REFERENCES users(id)
             ON DELETE CASCADE
-            ON UPDATE CASCADE
+            ON UPDATE CASCADE,
+    UNIQUE(user_id, campaign_id)
 );
+
+CREATE INDEX IDX_applications_campaign on applications(campaign_id);
+CREATE INDEX IDX_applications_user on applications(user_id);
 
 CREATE TABLE application_roles (
     id BIGSERIAL PRIMARY KEY,
@@ -38,8 +42,8 @@ CREATE TABLE application_roles (
             ON UPDATE CASCADE
 );
 
-CREATE INDEX IDX_application_roles_applications on application_roles (application_id);
-CREATE INDEX IDX_application_roles_campaign_roles on application_roles (campaign_role_id);
+CREATE INDEX IDX_application_roles_application on application_roles(application_id);
+CREATE INDEX IDX_application_roles_campaign_role on application_roles(campaign_role_id);
 
 CREATE TABLE answers (
   id BIGINT PRIMARY KEY,
@@ -60,8 +64,8 @@ CREATE TABLE answers (
       DEFERRABLE INITIALLY DEFERRED
 );
 
-CREATE INDEX IDX_answers_applications on answers (application_id);
-CREATE INDEX IDX_answers_questions on answers (question_id);
+CREATE INDEX IDX_answers_application on answers(application_id);
+CREATE INDEX IDX_answers_question on answers(question_id);
 
 CREATE TABLE short_answer_answers (
     id BIGSERIAL PRIMARY KEY,
@@ -74,7 +78,7 @@ CREATE TABLE short_answer_answers (
             ON UPDATE CASCADE
 );
 
-CREATE INDEX IDX_short_answer_answers_answers on short_answer_answers (answer_id);
+CREATE INDEX IDX_short_answer_answers_answer on short_answer_answers(answer_id);
 
 CREATE TABLE multi_option_answer_options (
     id BIGSERIAL PRIMARY KEY,
@@ -92,6 +96,9 @@ CREATE TABLE multi_option_answer_options (
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
+
+CREATE INDEX IDX_multi_option_answer_options_question_option on multi_option_answer_options(option_id);
+CREATE INDEX IDX_multi_option_answer_options_answer on multi_option_answer_options(answer_id);
 
 CREATE TABLE ranking_answer_rankings (
     id BIGSERIAL PRIMARY KEY,
@@ -111,8 +118,8 @@ CREATE TABLE ranking_answer_rankings (
             ON UPDATE CASCADE
 );
 
-CREATE INDEX IDX_multi_option_answer_options_question_options on multi_option_answer_options(option_id);
-CREATE INDEX IDX_multi_option_answer_options_answers on multi_option_answer_options(answer_id);
+CREATE INDEX IDX_ranking_answer_rankings_question_option on multi_option_answer_options(option_id);
+CREATE INDEX IDX_ranking_answer_rankings_answer on multi_option_answer_options(answer_id);
 
 CREATE TABLE application_ratings (
     id BIGINT PRIMARY KEY,
@@ -134,5 +141,5 @@ CREATE TABLE application_ratings (
             ON UPDATE CASCADE
 );
 
-CREATE INDEX IDX_application_ratings_applications on application_ratings(application_id);
-CREATE INDEX IDX_application_ratings_users on application_ratings(rater_id);
+CREATE INDEX IDX_application_ratings_application on application_ratings(application_id);
+CREATE INDEX IDX_application_ratings_user on application_ratings(rater_id);

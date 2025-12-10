@@ -83,6 +83,11 @@ impl<T: Serialize> IntoResponse for AppMessage<T> {
     }
 }
 
+#[derive(Serialize)]
+pub struct IdMessage {
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub id: i64,
+}
 
 #[derive(Clone)]
 pub struct AppState {
@@ -250,8 +255,8 @@ pub async fn app() -> Result<Router, ChaosError> {
                 .put(OrganisationHandler::update_members)
         )
         .route(
-            "/api/v1/organisation/:organisation_id/member",
-                delete(OrganisationHandler::remove_member),
+            "/api/v1/organisation/:organisation_id/user",
+            post(OrganisationHandler::invite_user).delete(OrganisationHandler::remove_user),
         )
         .route(
             "/api/v1/organisation/:organisation_id/admins",
@@ -261,6 +266,10 @@ pub async fn app() -> Result<Router, ChaosError> {
         .route(
             "/api/v1/organisation/:organisation_id/admin",
                 delete(OrganisationHandler::remove_admin),
+        )
+        .route(
+            "/api/v1/organisation/:organisation_id/users",
+            get(OrganisationHandler::get_users)
         )
         .route(
             "/api/v1/rating/:rating_id",
