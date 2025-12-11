@@ -74,12 +74,12 @@ export default function Ranking({
                             ref={provided.innerRef}
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
-                            className="flex items-center p-3 bg-white border-1 border"
+                            className="flex items-center p-3 bg-card border-1"
                             >
-                            <span className="bg-gray-200 text-gray-800 rounded-full w-8 h-8 flex items-center justify-center font-semibold mr-3 text-sm">
+                            <span className="bg-primary-foreground text-foreground rounded-full w-8 h-8 flex items-center justify-center font-semibold mr-3 text-sm">
                                 {option.display_order}
                             </span>
-                            <span className="text-gray-800 flex-1">{option.text}</span>
+                            <span className="text-foreground flex-1">{option.text}</span>
                             </div>
                         )}
                         </Draggable>

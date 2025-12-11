@@ -30,8 +30,8 @@ export default function Multichoice({
     return (
     <div className="mb-6">
     <div className="flex items-center mb-2">
-        <Label className='text-black'>{question.text}</Label>
-        {question.required && <span className="ml-1 text-red-500">*</span>}
+        <Label className='text-foreground'>{question.text}</Label>
+        {question.required && <span className="ml-1 text-destructive">*</span>}
     </div>
 
       {question.description && (

@@ -28,7 +28,7 @@ export default function ShortAnswer({
         <div className="mb-6 w-full">
             <div className="mb-2 flex">
                 <Label>{question.text}</Label>
-                {question.required && <span className="ml-1 text-red-500">*</span>}
+                {question.required && <span className="ml-1 text-destructive">*</span>}
             </div>
             {question.description && (
                 <p className="mb-4 text-sm text-muted-foreground">{question.description}</p>
@@ -37,8 +37,8 @@ export default function ShortAnswer({
                 value={value}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                placeholder={question ? dict.applicationpage.youranswer : "Your answer"} 
-                className={`w-full resize-y transition-all duration-200 hover:border-blue-400 focus:border-blue-500 max-w-4xl`}
+                placeholder={question ? dict.applicationpage.youranswer : "Your answer"}
+                className={`w-full resize-y transition-all duration-200 hover:border-primary focus:border-primary max-w-4xl`}
             />
         </div>
     )

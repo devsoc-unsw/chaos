@@ -35,46 +35,41 @@ export default function Dropdown({
         const optionId = originalOption ? originalOption.id : selectedValue;
 
         setValue(optionId);
-        console.log(optionId)
     };
 
     return (
         <div className="mb-6 w-full max-w-sm">
-        <div className="mb-4 flex">
-            <Label>{question.text}</Label>
-            {question.required && <span className="ml-1 text-red-500">*</span>}
-        </div>
-
-        <Select
-            key={options.length + '-' + value}
-            value={value}
-            onValueChange={handleSelect}
-        >
-            <SelectTrigger>
-            <SelectValue placeholder={placeholder}>
-                {question.answer ? question.answer : ""}
-            </SelectValue>
-            </SelectTrigger>
-
-            <SelectContent>
-            {/* "No Answer" option for clearing the selection */}
-            <SelectItem
-                key={NO_ANSWER_VALUE}
-                value={NO_ANSWER_VALUE}
+            <div className="mb-4 flex">
+                <Label>{question.text}</Label>
+                {question.required && <span className="ml-1 text-destructive">*</span>}
+            </div>
+            <Select
+                key={options.length + '-' + value}
+                value={value}
+                onValueChange={handleSelect}
             >
-                {noAnswerLabel}
-            </SelectItem>
-
-            {options.map((option) => (
-                <SelectItem
-                key={option.id}
-                value={option.id.toString()}
-                >
-                {option.text}
-                </SelectItem>
-            ))}
-            </SelectContent>
-        </Select>
+                <SelectTrigger>
+                    <SelectValue placeholder={placeholder}>
+                        {question.answer ? question.answer : ""}
+                    </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem
+                        key={NO_ANSWER_VALUE}
+                        value={NO_ANSWER_VALUE}
+                    >
+                        {noAnswerLabel}
+                    </SelectItem>
+                    {options.map((option) => (
+                        <SelectItem
+                        key={option.id}
+                        value={option.id.toString()}
+                        >
+                        {option.text}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
         </div>
     );
 }

@@ -2,7 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getCampaign, getCampaignRoles } from "@/models/campaign";
-import { getApplication } from "@/models/application";
+import { getUnsubmittedApplication } from "@/models/application";
+import { updateApplicationRoles } from "@/models/answer";
 import { useState, useEffect } from "react";
 import RoleSelector from "../../../../../../components/applicationanswer/roleselector";
 import RoleTabs from "../../../../../../components/applicationanswer/roletabs";
@@ -41,15 +42,59 @@ export default function ApplicationReview({
 
   const { data: application } = useQuery({
     queryKey: [`application-${applicationId}`],
-    queryFn: () => getApplication(applicationId),
+    queryFn: () => getUnsubmittedApplication(applicationId),
   });
 
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<"general" | string>("general");
 
-  const updateRoles = (nextSelectedRoles: string[]) => {
+  const buildUpdatedRolesPayload = (orderedIds: string[]) => {
+    if (!application?.applied_roles || application.applied_roles.length === 0) {
+      return orderedIds.map((campaignRoleId, index) => ({
+        campaign_role_id: campaignRoleId,
+        preference: index
+      }));
+    }
+
+    return orderedIds.map((campaignRoleId, index) => {
+      const existing = application.applied_roles.find(
+        r => String(r.campaign_role_id) === String(campaignRoleId)
+      );
+
+      if (!existing) {
+        return {
+          campaign_role_id: campaignRoleId,
+          preference: index
+        };
+      }
+
+      return {
+        campaign_role_id: existing.campaign_role_id,
+        preference: index
+      };
+    });
+  };
+
+  const updateRoles = async (nextSelectedRoles: string[]) => {
     setSelectedRoleIds(nextSelectedRoles)
+    console.log(nextSelectedRoles)
+    try {
+      const payload = {
+        roles: buildUpdatedRolesPayload(nextSelectedRoles),
+      };
+      console.log(payload.roles)
+      await updateApplicationRoles(applicationId, payload.roles);
+
+    } catch (err) {
+      console.error("Failed to update roles:", err);
+    }
   }
+
+  useEffect(() => {
+    if (application?.applied_roles) {
+      setSelectedRoleIds(application.applied_roles.map(r => String(r.campaign_role_id)));
+    }
+  }, [application]);
 
   return (
     <div className="min-h-screen bg-background w-full">
@@ -64,7 +109,7 @@ export default function ApplicationReview({
         </div>
         <div></div>
         <div className="flex gap-8 w-full">
-          <RoleSelector roles={roles} selectedRoleIds={selectedRoleIds} onChangeSelectedRoles={updateRoles} dict={dict}/>
+          <RoleSelector roles={roles} selectedRoleIds={selectedRoleIds} onChangeSelectedRoles={updateRoles} applicationId={applicationId} dict={dict}/>
           <div className="flex-1">
             <RoleTabs roles={roles} selectedRoleIds={selectedRoleIds} activeTab={activeTab} onChangeActiveTab={setActiveTab}/>
             <MainContent campaignId={campaignId} applicationId={applicationId} activeTab={activeTab} dict={dict}/>

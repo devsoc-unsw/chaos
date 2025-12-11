@@ -52,7 +52,7 @@ export default function MultiSelect({
         <div className="mb-6">
         <div className="flex items-center mb-2">
             <Label className="text-lg font-medium">{question.text}</Label>
-            {question.required && <span className="ml-1 text-red-500">*</span>}
+            {question.required && <span className="ml-1 text-destructive">*</span>}
         </div>
 
         {question.description && (
@@ -66,7 +66,6 @@ export default function MultiSelect({
                 id={`option-${question.id}-${option.id}`}
                 checked={selectedOptions.includes(option.id)}
                 onCheckedChange={(checked) => handleChange(option.id, !!checked)}
-                // disabled={disabled}
                 />
                 <Label
                 htmlFor={`option-${question.id}-${option.id}`}

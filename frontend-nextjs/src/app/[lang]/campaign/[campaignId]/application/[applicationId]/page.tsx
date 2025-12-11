@@ -3,7 +3,7 @@ import {
   dehydrate,
   HydrationBoundary,
 } from "@tanstack/react-query";
-import ApplicationReview from "./applicationreview";
+import ApplicationReview from "./applicationanswer";
 import { getDictionary } from "@/app/[lang]/dictionaries";
 import { getCampaignRoles, getCampaign } from "@/models/campaign";
 import { getApplication } from "@/models/application";

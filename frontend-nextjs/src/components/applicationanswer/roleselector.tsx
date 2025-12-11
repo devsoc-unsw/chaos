@@ -7,20 +7,31 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { RoleCard } from "./rolecard";
+import { updateApplicationRoles } from "@/models/answer";
 
 export default function RoleSelector({
   roles,
   selectedRoleIds,
   onChangeSelectedRoles,
+  applicationId,
   dict
 }: {
   roles: CampaignRole[] | undefined;
   selectedRoleIds: string[];
   onChangeSelectedRoles: (next: string[]) => void;
+  applicationId: string;
   dict: any;
 }) {
 
-    const handleDragEnd = ({ source, destination, draggableId }: DropResult) => {
+    const updateRoles = async (newOrder: string[]) => {
+      try {
+        await updateApplicationRoles(applicationId, newOrder);
+      } catch (err) {
+        console.error("Failed to update roles:", err);
+      }
+    }
+
+    const handleDragEnd = async ({ source, destination, draggableId }: DropResult) => {
       if (!destination) return;
       const to = destination.droppableId;
       const from = source.droppableId;
