@@ -1,0 +1,82 @@
+import React, { useState, useEffect, ChangeEvent } from 'react';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { MultiOptionQuestionOption } from '@/models/question';
+
+// Special value to represent "No Answer" selection
+export const NO_ANSWER_VALUE = '__NO_ANSWER__';
+
+export default function MultiSelect({
+  question,
+  dict
+}: {
+    question: any;
+    dict: any
+}){
+    const options: MultiOptionQuestionOption[] =
+        (question as any).options ?? [];
+
+    function deriveIdsFromAnswerString(answerString: string, options: MultiOptionQuestionOption[]) {
+        if (!answerString) return [];
+            const labels = answerString
+                .split(",")
+                .map(s => s.trim())
+                .filter(Boolean);
+
+            return labels
+                .map(label => {
+                const opt = options.find(o => o.text === label);
+                return opt ? String(opt.id) : null;
+                })
+                .filter(Boolean) as string[];
+    }
+
+    const [selectedOptions, setSelectedOptions] = useState<Array<string | number>>(deriveIdsFromAnswerString(question.answer, options));
+
+    useEffect(() => {
+        setSelectedOptions(deriveIdsFromAnswerString(question.answer, options))
+    }, [question.answer])
+
+    const handleChange = (optionId: string | number, checked: boolean) => {
+        setSelectedOptions(prev => {
+            if (checked) {
+                return [...prev, optionId];
+            } else {
+                return prev.filter(id => id !== optionId);
+            }
+        });
+            //call onchange and onsubmit here
+    };
+
+    return (
+        <div className="mb-6">
+        <div className="flex items-center mb-2">
+            <Label className="text-lg font-medium">{question.text}</Label>
+            {question.required && <span className="ml-1 text-red-500">*</span>}
+        </div>
+
+        {question.description && (
+            <p className="mb-4 text-sm text-muted-foreground">{question.description}</p>
+        )}
+
+        <div className="space-y-3">
+            {options.map((option) => (
+            <div key={option.id} className="flex items-center space-x-2">
+                <Checkbox
+                id={`option-${question.id}-${option.id}`}
+                checked={selectedOptions.includes(option.id)}
+                onCheckedChange={(checked) => handleChange(option.id, !!checked)}
+                // disabled={disabled}
+                />
+                <Label
+                htmlFor={`option-${question.id}-${option.id}`}
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                {option.text}
+                </Label>
+            </div>
+            ))}
+        </div>
+        </div>
+    );
+}

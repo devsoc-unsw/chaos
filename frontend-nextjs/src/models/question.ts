@@ -36,6 +36,8 @@ export interface QuestionAndAnswer {
     answer: string | MultiOptionQuestionOption
     question_type: QuestionType,
     required: boolean,
+    options: MultiOptionQuestionOption[],
+    description: string | null,
 }
 
 export async function getAllCommonQuestions(campaignId: string): Promise<Question[]> {
@@ -57,7 +59,9 @@ export function linkQuestionsAndAnswers(questions: Question[], answers: Answer[]
                 text: question.title,
                 answer: answer?.answer_data ?? "[No Answer Provided]",
                 question_type: question.question_type,
-                required: question.required
+                required: question.required,
+                options: question.data?.options,
+                description: question?.description
             };
         } else if (question.question_type === "MultiChoice" || question.question_type === "DropDown") {
             const answerData = answer?.answer_data;
@@ -69,7 +73,9 @@ export function linkQuestionsAndAnswers(questions: Question[], answers: Answer[]
                 text: question.title,
                 answer: selectedOption?.text ?? "[No Answer Provided]",
                 question_type: question.question_type,
-                required: question.required
+                required: question.required,
+                options: question.data?.options,
+                description: question?.description
             };
         } else if (question.question_type === "MultiSelect") {
             const answerData = answer?.answer_data ?? [] as string[];
@@ -86,7 +92,9 @@ export function linkQuestionsAndAnswers(questions: Question[], answers: Answer[]
                 text: question.title,
                 answer: answerText,
                 question_type: question.question_type,
-                required: question.required
+                required: question.required,
+                options: question.data?.options,
+                description: question?.description
             };
         } else if (question.question_type === "Ranking") {
             const answerData = answer?.answer_data ?? [] as string[];
@@ -103,7 +111,9 @@ export function linkQuestionsAndAnswers(questions: Question[], answers: Answer[]
                 text: question.title,
                 answer: answerText,
                 question_type: question.question_type,
-                required: question.required
+                required: question.required,
+                options: question.data?.options,
+                description: question?.description
             }
         }
     });

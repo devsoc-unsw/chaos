@@ -4,11 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { getCampaign, getCampaignRoles } from "@/models/campaign";
 import { getApplication } from "@/models/application";
 import { useState, useEffect } from "react";
-import { type DropResult } from "@hello-pangea/dnd";
 import RoleSelector from "../../../../../../components/applicationanswer/roleselector";
 import RoleTabs from "../../../../../../components/applicationanswer/roletabs";
 import MainContent from "../../../../../../components/applicationanswer/maincontent";
-
 interface ApplicationReviewProps {
   campaignId: string;
   applicationId: string;
@@ -31,19 +29,16 @@ export default function ApplicationReview({
   applicationId,
   dict,
 }: ApplicationReviewProps) {
-  // —— Load hydrated campaign info ——
   const { data: campaign } = useQuery({
     queryKey: [`${campaignId}-campaign-info`],
     queryFn: () => getCampaign(campaignId),
   });
 
-  // —— Load hydrated roles ——
   const { data: roles } = useQuery({
     queryKey: [`${campaignId}-campaign-roles`],
     queryFn: () => getCampaignRoles(campaignId),
   });
 
-  // —— Load hydrated application ——
   const { data: application } = useQuery({
     queryKey: [`application-${applicationId}`],
     queryFn: () => getApplication(applicationId),
@@ -51,17 +46,19 @@ export default function ApplicationReview({
 
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<"general" | string>("general");
+
   const updateRoles = (nextSelectedRoles: string[]) => {
     setSelectedRoleIds(nextSelectedRoles)
   }
+
   return (
-    <div className="min-h-screen bg-gray-50 w-full">
+    <div className="min-h-screen bg-background w-full">
       <div className="w-full mx-auto p-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
             {campaign?.name}
           </h1>
-          <h3 className="text-xl text-gray-500">
+          <h3 className="text-xl text-muted-foreground">
             {formatDate(campaign?.starts_at)} - {formatDate(campaign?.ends_at)}
           </h3>
         </div>

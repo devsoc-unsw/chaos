@@ -5,6 +5,11 @@ import { getAllRoleAnswers, getAllCommonAnswers  } from "@/models/answer";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
 import ShortAnswer from "./questions/shortanswer";
+import Dropdown from "./questions/dropdown";
+import MultiC from "./questions/dropdown";
+import Multichoice from "./questions/multichoice";
+import MultiSelect from "./questions/multiselect";
+import Ranking from "./questions/ranking";
 
 export default function MainContent({
   campaignId,
@@ -43,6 +48,7 @@ export default function MainContent({
         return linkQuestionsAndAnswers(questions, answers);
     }, [questions, answers]);
 
+    console.log(questionsAndAnswers);
     const renderQuestion = (q:any, idx:number) => {
       // const options = (q.question_type === "MultiChoice" || q.question_type === "MultiSelect" || q.question_type === "DropDown" || q.question_type === "Ranking")
       //   ? ((q.data?.options ?? []).map((o) => ({ id: o.id, label: o.text })) ?? [])
@@ -57,64 +63,40 @@ export default function MainContent({
               dict={dict}
             />
           );
-        // case "DropDown":
-        //   return (
-        //     <Dropdown
-        //       key={idStr}
-        //       id={idStr}
-        //       question={q.title}
-        //       description={q.description}
-        //       required={q.required}
-        //       options={options}
-        //       defaultValue={answers[idStr] as string | number | undefined}
-        //       onSubmit={(qid, val) => submitAnswer(qid, val, q.question_type)}
-        //       answerId={getAnswerId(idStr)}
-        //     />
-        //   );
-        // case "MultiChoice":
-        //   return (
-        //     <MultiChoice
-        //       key={idStr}
-        //       id={idStr}
-        //       question={q.title}
-        //       description={q.description}
-        //       required={q.required}
-        //       options={options}
-        //       defaultValue={answers[idStr] as string | number | undefined}
-        //       onSubmit={(qid, val) => submitAnswer(qid, val, q.question_type)}
-        //       answerId={getAnswerId(idStr)}
-        //     />
-        //   );
-        // case "MultiSelect":
-        //   return (
-        //     <MultiSelect
-        //       key={idStr}
-        //       id={idStr}
-        //       question={q.title}
-        //       description={q.description}
-        //       required={q.required}
-        //       options={options}
-        //       defaultValue={(answers[idStr] as Array<string | number>) ?? []}
-        //       onSubmit={(qid, val) => submitAnswer(qid, val, q.question_type)}
-        //       answerId={getAnswerId(idStr)}
-        //     />
-        //   );
-        // case "Ranking":
-        //   return (
-        //     <Ranking
-        //       key={idStr}
-        //       id={idStr}
-        //       question={q.title}
-        //       description={q.description}
-        //       required={q.required}
-        //       options={options}
-        //       defaultValue={(answers[idStr] as Array<string | number>) ?? []}
-        //       onSubmit={(qid, val) => submitAnswer(qid, val, q.question_type)}
-        //       answerId={getAnswerId(idStr)}
-        //     />
-        //   );
+        case "DropDown":
+          return (
+            <Dropdown
+              question={q}
+              dict={dict}
+            />
+          );
+        case "MultiChoice":
+          return (
+            <Multichoice
+              question={q}
+              dict={dict}
+            />
+          );
+        case "MultiSelect":
+          return (
+            <MultiSelect
+              question={q}
+              dict={dict}
+            />
+          );
+        case "Ranking":
+          return (
+            <Ranking
+              question={q}
+              dict={dict}
+            />
+          );
         default:
-          return null;
+          return (
+            <p>
+              {JSON.stringify(q, null, 2)}
+            </p>
+          );
       }
     };
 
