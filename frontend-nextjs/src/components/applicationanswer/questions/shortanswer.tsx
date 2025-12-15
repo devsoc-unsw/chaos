@@ -2,27 +2,40 @@ import React, { useState, useEffect, ChangeEvent } from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Question } from '@/models/question';
+import { updateAnswer } from '@/models/answer';
+import { buildAnswerPayload } from '@/lib/utils';
 
-export default function ShortAnswer({
+export default function  ShortAnswer({
   question,
+  applicationId,
+  answerId,
+  submitAnswer,
   dict
 }: {
-    question: any;
-    dict: any
-}){
+  question: any;
+  applicationId: string;
+  answerId?: string;
+  submitAnswer: (question: any, value: any, applicationId: string, answerId?: string) => Promise<void>;
+  dict: any;
+}) {
     const [value, setValue] = useState(question.answer);
+
     useEffect(() => {
         setValue(question.answer);
     }, [question.answer]);
 
     const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
         setValue(e.target.value);
-        console.log(value)
     }
 
-    const handleBlur = () => {
-        console.log("SENT: ", value);
-    }
+    const handleBlur = async () => {
+        try {
+            await submitAnswer(question, value, applicationId, answerId)
+        } catch (err) {
+            console.error("Short answer update failed:", err);
+        }
+    };
+
     //write onsubmit
     return (
         <div className="mb-6 w-full">

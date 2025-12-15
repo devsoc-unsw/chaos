@@ -8,14 +8,26 @@ export const NO_ANSWER_VALUE = '__NO_ANSWER__';
 
 export default function MultiSelect({
   question,
-  dict
+  applicationId,
+  answerId,
+  submitAnswer,
+  dict,
 }: {
-    question: any;
-    dict: any
-}){
+  question: any;
+  applicationId: string;
+  answerId?: string;
+  submitAnswer: (
+    question: any,
+    value: any,
+    applicationId: string,
+    answerId?: string
+  ) => Promise<void>;
+  dict: any;
+}) {
     const options: MultiOptionQuestionOption[] =
         (question as any).options ?? [];
 
+    // vibed this i cbf lowk mb lmk if I should rewrite
     function deriveIdsFromAnswerString(answerString: string, options: MultiOptionQuestionOption[]) {
         if (!answerString) return [];
             const labels = answerString
@@ -39,13 +51,10 @@ export default function MultiSelect({
 
     const handleChange = (optionId: string | number, checked: boolean) => {
         setSelectedOptions(prev => {
-            if (checked) {
-                return [...prev, optionId];
-            } else {
-                return prev.filter(id => id !== optionId);
-            }
+            const next = checked ? [...prev, optionId] : prev.filter(id => id !== optionId);
+            submitAnswer(question, next, applicationId, answerId);
+            return next;
         });
-            //call onchange and onsubmit here
     };
 
     return (
@@ -61,19 +70,19 @@ export default function MultiSelect({
 
         <div className="space-y-3">
             {options.map((option) => (
-            <div key={option.id} className="flex items-center space-x-2">
-                <Checkbox
-                id={`option-${question.id}-${option.id}`}
-                checked={selectedOptions.includes(option.id)}
-                onCheckedChange={(checked) => handleChange(option.id, !!checked)}
-                />
-                <Label
-                htmlFor={`option-${question.id}-${option.id}`}
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                {option.text}
-                </Label>
-            </div>
+                <div key={option.id} className="flex items-center space-x-2">
+                    <Checkbox
+                    id={`option-${question.id}-${option.id}`}
+                    checked={selectedOptions.includes(option.id)}
+                    onCheckedChange={(checked) => handleChange(option.id, !!checked)}
+                    />
+                        <Label
+                        htmlFor={`option-${question.id}-${option.id}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                            {option.text}
+                        </Label>
+                </div>
             ))}
         </div>
         </div>

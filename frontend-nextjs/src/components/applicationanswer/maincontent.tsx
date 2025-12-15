@@ -1,7 +1,7 @@
 import { CampaignRole } from "@/models/campaign";
-import { Question } from "@/models/question";
+import { Question, QuestionAndAnswer } from "@/models/question";
 import { getAllCommonQuestions, getAllRoleQuestions, linkQuestionsAndAnswers } from "@/models/question";
-import { getAllRoleAnswers, getAllCommonAnswers  } from "@/models/answer";
+import { getAllRoleAnswers, getAllCommonAnswers, updateAnswer, createAnswer  } from "@/models/answer";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
 import ShortAnswer from "./questions/shortanswer";
@@ -10,6 +10,7 @@ import MultiC from "./questions/dropdown";
 import Multichoice from "./questions/multichoice";
 import MultiSelect from "./questions/multiselect";
 import Ranking from "./questions/ranking";
+import { buildAnswerPayload } from "@/lib/utils";
 
 export default function MainContent({
   campaignId,
@@ -43,23 +44,37 @@ export default function MainContent({
         : getAllRoleAnswers(applicationId, activeTab),
     });
 
+    const submitAnswer = async (
+      question: any,
+      value: unknown,
+      applicationId: string,
+      answerId: string | undefined
+    ):Promise<any>  =>  {
+      const payload = buildAnswerPayload(question, value);
+      console.log(payload)
+      if (answerId) {
+        return updateAnswer(answerId, payload);
+      }
+
+      return createAnswer(applicationId, payload);
+    }
     const questionsAndAnswers = useMemo(() => {
         if (!questions || !answers) return [];
         return linkQuestionsAndAnswers(questions, answers);
     }, [questions, answers]);
 
     console.log(questionsAndAnswers);
-    const renderQuestion = (q:any, idx:number) => {
-      // const options = (q.question_type === "MultiChoice" || q.question_type === "MultiSelect" || q.question_type === "DropDown" || q.question_type === "Ranking")
-      //   ? ((q.data?.options ?? []).map((o) => ({ id: o.id, label: o.text })) ?? [])
-      //   : [];
-      // const idStr = String(q.id);
+
+    const renderQuestion = (q:QuestionAndAnswer, idx:number) => {
 
       switch (q.question_type) {
         case "ShortAnswer":
           return (
             <ShortAnswer
               question={q}
+              applicationId={applicationId}
+              answerId={q.answer_id}
+              submitAnswer={submitAnswer}
               dict={dict}
             />
           );
@@ -67,6 +82,9 @@ export default function MainContent({
           return (
             <Dropdown
               question={q}
+              applicationId={applicationId}
+              answerId={q.answer_id}
+              submitAnswer={submitAnswer}
               dict={dict}
             />
           );
@@ -74,6 +92,9 @@ export default function MainContent({
           return (
             <Multichoice
               question={q}
+              applicationId={applicationId}
+              answerId={q.answer_id}
+              submitAnswer={submitAnswer}
               dict={dict}
             />
           );
@@ -81,6 +102,9 @@ export default function MainContent({
           return (
             <MultiSelect
               question={q}
+              applicationId={applicationId}
+              answerId={q.answer_id}
+              submitAnswer={submitAnswer}
               dict={dict}
             />
           );

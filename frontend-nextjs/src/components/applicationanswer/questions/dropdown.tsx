@@ -14,14 +14,25 @@ export const NO_ANSWER_VALUE = '__NO_ANSWER__';
 
 export default function Dropdown({
   question,
+  applicationId,
+  answerId,
+  submitAnswer,
   dict
 }: {
-    question: any;
-    dict: any
-}){
-
+  question: any;
+  applicationId: string;
+  answerId?: string;
+  submitAnswer: (
+    question: any,
+    value: any,
+    applicationId: string,
+    answerId?: string
+  ) => Promise<void>;
+  dict: any;
+}) {
     const [value, setValue] = useState(question.answer_id ? question.answer_id : "")
-    const placeholder = dict?.placeholder ?? 'Select an option';
+    const [answer, setAnswer] = useState(question.answer ? question.answer : "")
+    const placeholder = question.answer ? question.answer : ""
     const noAnswerLabel = dict?.noAnswerLabel ?? 'No Answer';
     const options: MultiOptionQuestionOption[] =
     (question as any).options ?? [];
@@ -30,11 +41,18 @@ export default function Dropdown({
         setValue(question.answer_id);
     }, [question.answer_id]);
 
-    const handleSelect = (selectedValue: string) => {
-        const originalOption = options.find(opt => opt.id.toString() === selectedValue);
-        const optionId = originalOption ? originalOption.id : selectedValue;
+    const handleSelect = async (selectedValue: string) => {
+        const option = options.find(opt => opt.id.toString() === selectedValue);
+        const optionId = option ? option.id : selectedValue;
+        const optionText = option ? option.text : "";
 
         setValue(optionId);
+        setAnswer(optionText);
+        try {
+            await submitAnswer(question,optionId, applicationId, answerId)
+        } catch (err) {
+            console.error("Short answer update failed:", err);
+        }
     };
 
     return (
@@ -50,7 +68,7 @@ export default function Dropdown({
             >
                 <SelectTrigger>
                     <SelectValue placeholder={placeholder}>
-                        {question.answer ? question.answer : ""}
+                        {answer}
                     </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
