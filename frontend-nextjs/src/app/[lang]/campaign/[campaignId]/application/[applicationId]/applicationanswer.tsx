@@ -92,10 +92,13 @@ export default function ApplicationReview({
 
   useEffect(() => {
     if (application?.applied_roles) {
-      setSelectedRoleIds(application.applied_roles.map(r => String(r.campaign_role_id)));
+      setSelectedRoleIds(
+        [...application.applied_roles]
+          .sort((a, b) => a.preference - b.preference)
+          .map(r => String(r.campaign_role_id))
+      );
     }
   }, [application]);
-
   return (
     <div className="min-h-screen bg-background w-full">
       <div className="w-full mx-auto p-8">
