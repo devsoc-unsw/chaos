@@ -14,35 +14,78 @@ export interface RankedOption {
 
 export default function Ranking({
   question,
-  dict
+  applicationId,
+  answerId,
+  submitAnswer,
+  dict,
 }: {
     question: any;
     dict: any
+    applicationId: string;
+    answerId?: string;
+    submitAnswer: (question: any, value: any, applicationId: string, answerId?: string) => Promise<void>;
 }){
-    const options: MultiOptionQuestionOption[] =
-    (question as any).options ?? [];
+  function mapIndicesToDisplayOrder<T extends { id: string }>(
+  items: T[]
+  ): Array<{ id: string; display_order: number }> {
+    return items.map((item, index) => ({
+      id: item.id,
+      display_order: index + 1,
+    }));
+  }
 
-    const [rankedOptions, setRankedOptions] = useState<RankedOption[]>(options);
+  const options: MultiOptionQuestionOption[] =
+  (question as any).options ?? [];
+  console.log(question.answer)
+
+  //vibed this bcoz i cbf
+  function reorderOptionsFromRankingString(
+    answer: string,
+    options: MultiOptionQuestionOption[]
+  ): MultiOptionQuestionOption[] {
+    const labelsInOrder = answer
+      .split(",")
+      .map(part => part.trim())
+      .map(part => {
+        const dot = part.indexOf(".");
+        return dot === -1 ? part : part.slice(dot + 1).trim();
+      });
+
+    const ordered: MultiOptionQuestionOption[] = [];
+    const used = new Set<string>();
+
+    for (const label of labelsInOrder) {
+      const opt = options.find(o => o.text === label);
+      if (opt) {
+        ordered.push(opt);
+        used.add(opt.id);
+      }
+    }
+
+    // Append any options not present in the answer (defensive)
+    const remaining = options.filter(o => !used.has(o.id));
+
+    return [...ordered, ...remaining];
+  }
+
+  useEffect(() => {
+    setRankedOptions(reorderOptionsFromRankingString(question.answer, options));
+  }, [question.answer]);
+
+  const [rankedOptions, setRankedOptions] = useState<RankedOption[]>(options);
 
   const handleDragEnd = (result: any) => {
-    if (!result.destination) {
-      return;
-    }
+    if (!result.destination) return;
 
-    if (result.destination.index === result.source.index) {
-      return;
-    }
+    const items = Array.from(rankedOptions);
+    const [moved] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, moved);
 
-    const updatedOptions = rankedOptions.map((opt, idx) => ({
-      ...opt,
-      rank: idx + 1
-    }));
-
-    setRankedOptions(updatedOptions);
-    const orderedIds = updatedOptions.map(opt => opt.id);
-    // if (onChange) onChange(orderedIds);
-    // if (onSubmit) onSubmit(id, orderedIds);
+    setRankedOptions(items);
+    submitAnswer(question, items.map(opt => String(opt.id)), applicationId, answerId);
   };
+
+
     return (
         <div className="mb-6 w-full">
             <div className="flex items-center mb-1">
@@ -77,7 +120,7 @@ export default function Ranking({
                             className="flex items-center p-3 bg-card border-1"
                             >
                             <span className="bg-primary-foreground text-foreground rounded-full w-8 h-8 flex items-center justify-center font-semibold mr-3 text-sm">
-                                {option.display_order}
+                                { index + 1 }
                             </span>
                             <span className="text-foreground flex-1">{option.text}</span>
                             </div>

@@ -51,22 +51,20 @@ export default function MainContent({
       answerId: string | undefined
     ):Promise<any>  =>  {
       const payload = buildAnswerPayload(question, value);
-      console.log(payload)
+      console.log(JSON.stringify(payload));
       if (answerId) {
         return updateAnswer(answerId, payload);
       }
 
       return createAnswer(applicationId, payload);
     }
+
     const questionsAndAnswers = useMemo(() => {
         if (!questions || !answers) return [];
         return linkQuestionsAndAnswers(questions, answers);
     }, [questions, answers]);
 
-    console.log(questionsAndAnswers);
-
     const renderQuestion = (q:QuestionAndAnswer, idx:number) => {
-
       switch (q.question_type) {
         case "ShortAnswer":
           return (
@@ -112,6 +110,9 @@ export default function MainContent({
           return (
             <Ranking
               question={q}
+              applicationId={applicationId}
+              answerId={q.answer_id}
+              submitAnswer={submitAnswer}
               dict={dict}
             />
           );

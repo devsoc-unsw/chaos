@@ -97,12 +97,21 @@ export function linkQuestionsAndAnswers(questions: Question[], answers: Answer[]
                 description: question?.description
             };
         } else if (question.question_type === "Ranking") {
-            const answerData = answer?.answer_data ?? [] as string[];
-            const selectedOptions = question.data?.options?.filter((option) => answerData.includes(option.id));
-            
+            console.log(answer)
+            const answerData = (answer?.answer_data ?? []) as string[];
+
             let answerText = "[No Answer Provided]";
-            if (selectedOptions.length > 0) {
-                answerText = selectedOptions.map((option, index) => `${index + 1}. ${option.text}`).join(", ");
+
+            if (answerData.length > 0 && question.data?.options) {
+                answerText = answerData
+                    .map((id, index) => {
+                        const option = question.data!.options!.find(
+                            opt => opt.id === id
+                        );
+                        return option ? `${index + 1}. ${option.text}` : null;
+                    })
+                    .filter(Boolean)
+                    .join(", ");
             }
 
             return {
