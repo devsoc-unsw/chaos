@@ -2103,6 +2103,34 @@ paths:
         "401":
           $ref: "#/components/responses/NotLoggedIn"
 
+  /application/{application_id}/avg_ratings:
+    get:
+      operationId: getApplicationAvgRatings
+      parameters:
+        - name: application_id
+          in: path
+          description: Application ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns average ratings grouped by user for the specified application
+      tags:
+        - Application
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserAvgApplicationRating"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+
   /offer/{offer_id}:
     get:
       operationId: getOffer
@@ -3041,6 +3069,29 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/RatingDetails"
+
+    UserAvgApplicationRating:
+      type: object
+      properties:
+        id:
+          type: string
+          description: User ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        name:
+          type: string
+          description: User's full name
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "john.doe@example.com"
+        avg_rating:
+          type: number
+          format: double
+          nullable: false
+          description: Average rating for this user (can never be null since it is calculated from the non empty ratings)
+          example: 4.5
 
     RatingUpdate:
       type: object

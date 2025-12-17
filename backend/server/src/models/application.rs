@@ -173,6 +173,20 @@ pub enum ApplicationStatus {
     Successful,
 }
 
+/// User average rating data
+#[derive(Deserialize, Serialize, FromRow)]
+pub struct UserAvgApplicationRating {
+    /// User ID
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub id: i64,
+    /// User's name
+    pub name: String,
+    /// User's email
+    pub email: String,
+    /// Average rating for this user's applications
+    pub avg_rating: f64,
+}
+
 impl Application {
     /// Creates a new application if it doesn't exist, otherwise returns the existing application ID.
     /// 
@@ -302,6 +316,7 @@ impl Application {
 
         Ok(id)
     }
+    
 
     /// Retrieves an application by its ID.
     /// 
@@ -533,6 +548,31 @@ impl Application {
         }
 
         Ok(application_details_list)
+    }
+
+    pub async fn get_users_avg_rating_from_application(
+        application_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<UserAvgApplicationRating>, ChaosError> {
+        let application_users_avg_ratings = sqlx::query_as!(
+            UserAvgApplicationRating,
+            "
+                SELECT users.id, users.name, users.email, AVG(application_ratings.rating) AS avg_rating
+                FROM users
+                JOIN applications
+                ON users.id = applications.user_id
+                JOIN application_ratings
+                ON applications.id = application_ratings.application_id
+                WHERE applications.id = $1
+                AND application_ratings.rating IS NOT NULL
+                GROUP BY users.id, users.name, users.email
+            ",
+            application_id,
+        )
+        .fetch_all(transaction.deref_mut())
+        .await?;
+
+        Ok(application_users_avg_ratings)
     }
 
     /// Retrieves all applications submitted by a specific user.

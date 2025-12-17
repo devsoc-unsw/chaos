@@ -335,4 +335,28 @@ impl ApplicationHandler {
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(ratings)))
     }
+
+    /// Retrieves the average ratings for all users in an application.
+    /// 
+    /// This handler allows application reviewers to view the average ratings for all users in an application.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `_user` - The authenticated user (must be an application reviewer)
+    /// * `application_id` - The ID of the application
+    /// * `transaction` - Database transaction
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - List of average ratings or error
+    pub async fn get_avg_applications_ratings(
+        _user: ApplicationOwnerOrReviewer,
+        Path(application_id): Path<i64>,
+        mut transaction: DBTransaction<'_>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let avg_applications_ratings = Application::get_users_avg_rating_from_application(application_id, &mut transaction.tx).await?;
+        transaction.tx.commit().await?;
+
+        Ok(Json(avg_applications_ratings))
+    }
 }
