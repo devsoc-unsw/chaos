@@ -2103,13 +2103,13 @@ paths:
         "401":
           $ref: "#/components/responses/NotLoggedIn"
 
-  /application/{application_id}/avg_ratings:
+  /campaign/{campaign_id}/avg_ratings:
     get:
       operationId: getApplicationAvgRatings
       parameters:
-        - name: application_id
+        - name: campaign_id
           in: path
-          description: Application ID
+          description: Campaign ID
           required: true
           schema:
             type: integer
@@ -3089,8 +3089,8 @@ components:
         avg_rating:
           type: number
           format: double
-          nullable: false
-          description: Average rating for this user (can never be null since it is calculated from the non empty ratings)
+          nullable: true
+          description: Average rating for this user (typically not null, but can be null in edge cases)
           example: 4.5
 
     RatingUpdate:

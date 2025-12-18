@@ -57,3 +57,16 @@ export async function updateApplicationRating(applicationId: string, rating?: nu
         },
     });
 }
+
+export interface UserAvgApplicationRating {
+    application_id: string;
+    campaign_role_id: string;
+    campaign_role_name: string;
+    user_name: string;
+    user_email: string;
+    avg_rating: number | null;
+}
+
+export async function getApplicationAvgRatings(campaignId: string): Promise<UserAvgApplicationRating[]> {
+    return await apiRequest<UserAvgApplicationRating[]>(`/api/v1/campaign/${campaignId}/avg_ratings`);
+}

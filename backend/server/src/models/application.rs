@@ -173,18 +173,26 @@ pub enum ApplicationStatus {
     Successful,
 }
 
-/// User average rating data
+/// User average rating data for a specific application and role.
+///
+/// Each row represents the average rating for a single applicant in a given role
+/// within a specific application.
 #[derive(Deserialize, Serialize, FromRow)]
 pub struct UserAvgApplicationRating {
-    /// User ID
+    /// Application ID
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
-    pub id: i64,
+    pub application_id: i64,
+    /// Role ID within the campaign
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub campaign_role_id: i64,
+    /// Name of the campaign role
+    pub campaign_role_name: String,
     /// User's name
-    pub name: String,
+    pub user_name: String,
     /// User's email
-    pub email: String,
-    /// Average rating for this user's applications
-    pub avg_rating: f64,
+    pub user_email: String,
+    /// Average rating for this user's application in the given role
+    pub avg_rating: Option<f64>,
 }
 
 impl Application {
@@ -551,23 +559,30 @@ impl Application {
     }
 
     pub async fn get_users_avg_rating_from_application(
-        application_id: i64,
+        campaign_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<UserAvgApplicationRating>, ChaosError> {
         let application_users_avg_ratings = sqlx::query_as!(
             UserAvgApplicationRating,
             "
-                SELECT users.id, users.name, users.email, AVG(application_ratings.rating) AS avg_rating
+                SELECT applications.id AS application_id, campaign_roles.id AS campaign_role_id, campaign_roles.name AS campaign_role_name, users.name AS user_name, users.email AS user_email, AVG(application_ratings.rating)::double precision AS avg_rating
                 FROM users
                 JOIN applications
                 ON users.id = applications.user_id
+                JOIN campaigns
+                ON campaigns.id = applications.campaign_id
+                JOIN application_roles
+                ON applications.id = application_roles.application_id
+                JOIN campaign_roles
+                ON application_roles.campaign_role_id = campaign_roles.id
                 JOIN application_ratings
                 ON applications.id = application_ratings.application_id
-                WHERE applications.id = $1
+                WHERE campaigns.id = $1
                 AND application_ratings.rating IS NOT NULL
-                GROUP BY users.id, users.name, users.email
+                GROUP BY applications.id, campaign_roles.id, campaign_roles.name, users.name, users.email
+                ORDER BY applications.created_at ASC
             ",
-            application_id,
+            campaign_id,
         )
         .fetch_all(transaction.deref_mut())
         .await?;
