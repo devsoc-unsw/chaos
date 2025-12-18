@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CampaignUpdate, createCampaignRole, getCampaign, getCampaignRoles, updateCampaign } from "@/models/campaign";
 import { Button } from "@/components/ui/button";
-import { Copy, Pencil, Trash, Share, BookOpenCheck, Check, Plus, FormIcon, CircleCheck } from "lucide-react";
+import { Copy, Pencil, Trash, Share, BookOpenCheck, Check, Plus, FormIcon, CircleCheck, BarChart } from "lucide-react";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { cn } from "@/lib/utils";
 import {
@@ -372,8 +372,8 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                         </Link>
                     </ButtonGroup>
                     <ButtonGroup>
-                        <Link href={`/dashboard/organisation/${campaign?.organisation_id}/campaigns/${campaignId}/review`}>
-                            <Button><BookOpenCheck className="w-4 h-4" /> {dict.dashboard.campaigns.review_applications}</Button>
+                        <Link href={`/dashboard/organisation/${campaign?.organisation_id}/campaigns/${campaignId}/application-avg-ratings-review`}>
+                            <Button><BarChart className="w-4 h-4" /> {dict.dashboard.campaigns.review_application_avg_ratings}</Button>
                         </Link>
                     </ButtonGroup>
                     <ButtonGroup>
