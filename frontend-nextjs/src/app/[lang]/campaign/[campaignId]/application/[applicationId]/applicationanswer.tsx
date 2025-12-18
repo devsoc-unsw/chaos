@@ -99,6 +99,7 @@ export default function ApplicationReview({
       );
     }
   }, [application]);
+
   return (
     <div className="min-h-screen bg-background w-full">
       <div className="w-full mx-auto p-8">

@@ -51,7 +51,7 @@ export async function getAllRoleQuestions(campaignId: string, roleId: string): P
 export function linkQuestionsAndAnswers(questions: Question[], answers: Answer[]): QuestionAndAnswer[] {
     return questions.map((question) => {
         const answer = answers?.find((answer) => answer.question_id === question.id);
-        
+
         if (question.question_type === "ShortAnswer") {
             return {
                 question_id: question.id,
@@ -66,7 +66,7 @@ export function linkQuestionsAndAnswers(questions: Question[], answers: Answer[]
         } else if (question.question_type === "MultiChoice" || question.question_type === "DropDown") {
             const answerData = answer?.answer_data;
             const selectedOption = question.data?.options?.find((option) => option.id === answerData);
-            
+
             return {
                 question_id: question.id,
                 answer_id: answer?.id,

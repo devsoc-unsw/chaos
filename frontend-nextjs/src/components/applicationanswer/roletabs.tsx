@@ -12,10 +12,10 @@ export default function RoleTabs({
   onChangeActiveTab: (next: string) => void;
 }) {
     return (
-        <div className="flex border-b border-gray-200 mb-6 gap-2">
+        <div className="flex border-b border-accent mb-6 gap-2">
               <button
                 className={`px-4 py-2 font-medium ${
-                  activeTab === "general" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-gray-700"
+                  activeTab === "general" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"
                 }`}
                 onClick={() => onChangeActiveTab("general")}
               >
@@ -25,7 +25,7 @@ export default function RoleTabs({
                 <button
                   key={rid}
                   className={`px-4 py-2 font-medium ${
-                    activeTab === rid ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-gray-700"
+                    activeTab === rid ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"
                   }`}
                   onClick={() => onChangeActiveTab(rid)}
                 >
