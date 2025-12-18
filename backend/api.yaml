@@ -3073,24 +3073,34 @@ components:
     UserAvgApplicationRating:
       type: object
       properties:
-        id:
+        application_id:
           type: string
-          description: User ID (as string to preserve large integer precision)
+          description: Application ID (as string to preserve large integer precision)
           example: "1541815603606036480"
-        name:
+        campaign_role_id:
+          type: string
+          description: Role ID within the campaign (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        campaign_role_name:
+          type: string
+          description: Name of the campaign role
+          example: "Software Engineer"
+        user_name:
           type: string
           description: User's full name
           example: "John Doe"
-        email:
+        user_email:
           type: string
           format: email
           description: User's email address
           example: "john.doe@example.com"
+        status:
+          $ref: "#/components/schemas/ApplicationStatus"
         avg_rating:
           type: number
           format: double
           nullable: true
-          description: Average rating for this user (typically not null, but can be null in edge cases)
+          description: Average rating for this user's application in the given role (null if no ratings exist)
           example: 4.5
 
     RatingUpdate:

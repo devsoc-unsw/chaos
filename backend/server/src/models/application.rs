@@ -191,6 +191,8 @@ pub struct UserAvgApplicationRating {
     pub user_name: String,
     /// User's email
     pub user_email: String,
+    /// Status of the application
+    pub status: ApplicationStatus,
     /// Average rating for this user's application in the given role
     pub avg_rating: Option<f64>,
 }
@@ -565,7 +567,7 @@ impl Application {
         let application_users_avg_ratings = sqlx::query_as!(
             UserAvgApplicationRating,
             "
-                SELECT applications.id AS application_id, campaign_roles.id AS campaign_role_id, campaign_roles.name AS campaign_role_name, users.name AS user_name, users.email AS user_email, AVG(application_ratings.rating)::double precision AS avg_rating
+                SELECT applications.id AS application_id, campaign_roles.id AS campaign_role_id, campaign_roles.name AS campaign_role_name, users.name AS user_name, users.email AS user_email, applications.status AS \"status: ApplicationStatus\", AVG(application_ratings.rating)::double precision AS avg_rating
                 FROM users
                 JOIN applications
                 ON users.id = applications.user_id
@@ -579,7 +581,7 @@ impl Application {
                 ON applications.id = application_ratings.application_id
                 WHERE campaigns.id = $1
                 AND application_ratings.rating IS NOT NULL
-                GROUP BY applications.id, campaign_roles.id, campaign_roles.name, users.name, users.email
+                GROUP BY applications.id, campaign_roles.id, campaign_roles.name, users.name, users.email, applications.status
                 ORDER BY applications.created_at ASC
             ",
             campaign_id,

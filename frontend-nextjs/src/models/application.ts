@@ -64,6 +64,7 @@ export interface UserAvgApplicationRating {
     campaign_role_name: string;
     user_name: string;
     user_email: string;
+    status: ApplicationStatus;
     avg_rating: number | null;
 }
 

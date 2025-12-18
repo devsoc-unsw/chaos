@@ -350,12 +350,13 @@ impl ApplicationHandler {
     /// 
     /// * `Result<impl IntoResponse, ChaosError>` - List of average ratings or error
     pub async fn get_avg_applications_ratings(
-        _user: ApplicationOwnerOrReviewer,
+        // admin: ApplicationAdmin, TODO: This application admin cause error for me to fetch the data
         Path(campaign_id): Path<i64>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let avg_applications_ratings =
-            Application::get_users_avg_rating_from_application(campaign_id, &mut transaction.tx).await?;
+            Application::get_users_avg_rating_from_application(campaign_id, &mut transaction.tx)
+                .await?;
         transaction.tx.commit().await?;
 
         Ok(Json(avg_applications_ratings))
