@@ -41,7 +41,7 @@ export function DataTable<TData>({ columns, data, roles }: DataTableProps<TData>
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 justify-between">
         <Input
           placeholder="Filter emails..."
           value={(table.getColumn("user_email")?.getFilterValue() as string) ?? ""}
@@ -51,24 +51,28 @@ export function DataTable<TData>({ columns, data, roles }: DataTableProps<TData>
           className="max-w-sm"
         />
         {roles && roles.length > 0 && (
-          <Select
-            value={(table.getColumn("campaign_role_id")?.getFilterValue() as string) ?? ""}
-            onValueChange={(value) =>
-              table.getColumn("campaign_role_id")?.setFilterValue(value === "all" ? undefined : value)
-            }
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All roles</SelectItem>
-              {roles.map((role) => (
-                <SelectItem key={role.id} value={role.id}>
-                  {role.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="ml-auto">
+            <Select
+              value={(table.getColumn("campaign_role_id")?.getFilterValue() as string) || "all"}
+              onValueChange={(value) =>
+                table.getColumn("campaign_role_id")?.setFilterValue(
+                  value === "all" ? undefined : value,
+                )
+              }
+            >
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Filter by role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All roles</SelectItem>
+                {roles.map((role) => (
+                  <SelectItem key={role.id} value={role.id}>
+                    {role.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         )}
       </div>
       <div className="rounded-md border">
