@@ -13,7 +13,7 @@ use snowflake::SnowflakeIdGenerator;
 use sqlx::{FromRow, Postgres, Transaction};
 use std::ops::DerefMut;
 use uuid::Uuid;
-use crate::models::email::EmailCredentials;
+use crate::models::email::{ChaosEmail, EmailCredentials};
 use crate::models::user::User;
 use crate::service::campaign::create_proper_slug;
 
@@ -692,15 +692,28 @@ impl Organisation {
         .fetch_one(transaction.deref_mut())
         .await?;
 
-        let possible_user = User::find_by_email(email, transaction).await?;
+        let possible_user = User::find_by_email(email.clone(), transaction).await?;
         if let Some(user) = possible_user {
             if (Self::check_user_already_member(organisation_id, user.id, transaction).await?) {
                 return Err(ChaosError::BadRequestWithMessage("User already a member of organisation".to_string()))
             }
             Self::add_user(organisation_id, user.id, transaction).await?;
         } else {
+        
             // TODO: email invite system
+            // TODO: generate an invite code, there will be a page, /dashboard/invite/[code], 
+            // where it says sign up with this code credential and u will get added
+
+            ChaosEmail::send_message(
+                "random name test".to_string(),
+                email.clone(),
+                "Testing email sending".to_string(),
+                "You have been invited to join an organisation".to_string(),
+                email_credentials,
+            )
+            .await?;
         }
+
 
         Ok(())
     }
