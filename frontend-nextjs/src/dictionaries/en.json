@@ -90,7 +90,10 @@
         "filter_by_role": "Filter by role",
         "all_roles": "All roles",
         "individual_ratings": "Individual Ratings:",
-        "no_results": "No results."
+        "no_results": "No results.",
+        "show_more": "...more",
+        "show_less": "...less",
+        "loading": "Loading..."
       }
     },
     "email": {

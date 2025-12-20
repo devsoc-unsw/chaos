@@ -82,7 +82,7 @@ export default function ApplicationAvgRatingsApplicants({ campaignId, orgId, dic
     }));
   }, [data]);
 
-  if (isLoading || !data) return <div>Loading...</div>;
+  if (isLoading || !data) return <div>{dict.dashboard.campaigns.application_avg_ratings_table.loading}</div>;
 
   const roleOptions = roles?.map(role => ({
     id: role.id,

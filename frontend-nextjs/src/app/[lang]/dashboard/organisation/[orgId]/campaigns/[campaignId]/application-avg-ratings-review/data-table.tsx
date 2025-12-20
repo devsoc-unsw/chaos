@@ -29,7 +29,7 @@ type DataTableProps<TData> = {
   dict: any;
 };
 
-function CommentText({ comment, ratingIndex }: { comment: string | null; ratingIndex: number }) {
+function CommentText({ comment, ratingIndex, dict }: { comment: string | null; ratingIndex: number; dict: any }) {
   const [isExpanded, setIsExpanded] = React.useState(false);
   const textRef = React.useRef<HTMLParagraphElement>(null);
   const [isOverflowing, setIsOverflowing] = React.useState(false);
@@ -80,7 +80,7 @@ function CommentText({ comment, ratingIndex }: { comment: string | null; ratingI
           onClick={() => setIsExpanded(!isExpanded)}
           className="text-sm text-primary hover:underline mt-1"
         >
-          {isExpanded ? "...less" : "...more"}
+          {isExpanded ? dict.dashboard.campaigns.application_avg_ratings_table.show_less : dict.dashboard.campaigns.application_avg_ratings_table.show_more}
         </button>
       )}
     </div>
@@ -213,7 +213,7 @@ export function DataTable<TData extends AggregatedApplicationRating>({ columns, 
                                 onMouseLeave={() => setHoveredRatingIndex(null)}
                               >
                                 <TableCell colSpan={columns.length} className="pb-2 px-2 pt-0 border-t-0 border-b">
-                                  <CommentText comment={rating.comment} ratingIndex={index} />
+                                  <CommentText comment={rating.comment} ratingIndex={index} dict={dict} />
                                 </TableCell>
                               </TableRow>
                             )}
