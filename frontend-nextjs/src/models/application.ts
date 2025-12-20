@@ -65,7 +65,10 @@ export interface UserAvgApplicationRating {
     user_name: string;
     user_email: string;
     status: ApplicationStatus;
-    avg_rating: number | null;
+    updated_at: string;
+    rater_name: string;
+    comment: string | null;
+    rating: number;
 }
 
 export async function getApplicationAvgRatings(campaignId: string): Promise<UserAvgApplicationRating[]> {

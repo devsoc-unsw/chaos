@@ -1,25 +1,39 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import type { UserAvgApplicationRating, ApplicationStatus } from "@/models/application";
+import type { ApplicationStatus } from "@/models/application";
+import { ChevronDown, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-export const columns: ColumnDef<UserAvgApplicationRating>[] = [
-//   {
-//     accessorKey: "application_id",
-//     header: "Application ID",
-//   },
-{
+export interface AggregatedApplicationRating {
+  application_id: string;
+  campaign_role_id: string;
+  campaign_role_name: string;
+  user_name: string;
+  user_email: string;
+  status: ApplicationStatus;
+  avg_rating: number;
+  individual_ratings: Array<{
+    rater_name: string;
+    comment: string | null;
+    rating: number;
+    updated_at: string;
+  }>;
+}
+
+export const createColumns = (dict: any): ColumnDef<AggregatedApplicationRating>[] => [
+  {
     accessorKey: "user_name",
-    header: "Name",
+    header: dict.dashboard.campaigns.application_avg_ratings_table.applicant_name,
   },
   {
     accessorKey: "user_email",
-    header: "Email",
+    header: dict.common.email,
     enableColumnFilter: true,
   },
   {
     accessorKey: "campaign_role_id",
-    header: "Role",
+    header: dict.dashboard.members.role,
     enableColumnFilter: true,
     cell: ({ row }) => {
       return <span>{row.original.campaign_role_name}</span>;
@@ -27,16 +41,31 @@ export const columns: ColumnDef<UserAvgApplicationRating>[] = [
   },
   {
     accessorKey: "avg_rating",
-    // accessorKey: "application_id",
-    header: "Avg rating",
-    cell: ({ row }) => {
-      const value = row.getValue<number | null>("avg_rating");
-      return <span>{value != null ? value.toFixed(2) : "-"}</span>;
+    header: dict.dashboard.campaigns.application_avg_ratings_table.avg_rating,
+    cell: ({ row, table }) => {
+      const application = row.original;
+      const isOpen = (table.options.meta as any)?.expandedRows?.[application.application_id] || false;
+      const toggleExpanded = (table.options.meta as any)?.toggleExpanded;
+      
+      return (
+        <Button 
+          variant="link" 
+          className="h-auto p-0 font-normal -ml-2"
+          onClick={() => toggleExpanded?.(application.application_id, !isOpen)}
+        >
+          <span className="underline font-semibold">{application.avg_rating.toFixed(1)}</span>
+          {isOpen ? (
+            <ChevronDown className="w-4 h-4 ml-1 inline" />
+          ) : (
+            <ChevronRight className="w-4 h-4 ml-1 inline" />
+          )}
+        </Button>
+      );
     },
   },
   {
     accessorKey: "status",
-    header: "Status",
+    header: dict.common.status,
     cell: ({ row }) => {
       const value = row.getValue<ApplicationStatus>("status");
       return <span>{value}</span>;

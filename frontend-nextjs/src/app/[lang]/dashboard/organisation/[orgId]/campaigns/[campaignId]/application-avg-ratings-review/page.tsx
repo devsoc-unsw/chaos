@@ -1,7 +1,7 @@
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import { getDictionary } from "@/app/[lang]/dictionaries";
 import { getApplicationAvgRatings } from "@/models/application";
-import ApplicationAvgRatingsClient from "./applicaton-avg-details";
+import ApplicationAvgRatingsApplicants from "./applicaton-avg-details";
 
 export default async function ApplicationAvgRatingsPage({ params }: { params: Promise<{ campaignId: string, orgId: string, lang: string }>; }) {
     const { lang, campaignId, orgId } = await params;
@@ -16,7 +16,7 @@ export default async function ApplicationAvgRatingsPage({ params }: { params: Pr
 
     return (
         <HydrationBoundary state={dehydrate(queryClient)}>
-        <ApplicationAvgRatingsClient campaignId={campaignId} orgId={orgId} dict={dict} />
+        <ApplicationAvgRatingsApplicants campaignId={campaignId} orgId={orgId} dict={dict} />
         </HydrationBoundary>
     );
 }

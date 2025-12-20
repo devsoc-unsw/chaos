@@ -82,6 +82,15 @@
         "review_comment": "Comments (optional)",
         "write_your_review_here": "Write your review here...",
         "application_not_rated": "Application not rated"
+      },
+      "application_avg_ratings_table": {
+        "applicant_name": "Applicant Name",
+        "avg_rating": "Avg Rating",
+        "filter_emails": "Filter emails...",
+        "filter_by_role": "Filter by role",
+        "all_roles": "All roles",
+        "individual_ratings": "Individual Ratings:",
+        "no_results": "No results."
       }
     },
     "email": {

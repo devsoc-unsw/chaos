@@ -18,15 +18,85 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { dateToString } from "@/lib/utils";
+import type { AggregatedApplicationRating } from "./columns";
 
 type DataTableProps<TData> = {
   columns: ColumnDef<TData, any>[];
   data: TData[];
   roles?: Array<{ id: string; name: string }>;
+  dict: any;
 };
 
-export function DataTable<TData>({ columns, data, roles }: DataTableProps<TData>) {
+function CommentText({ comment, ratingIndex }: { comment: string | null; ratingIndex: number }) {
+  const [isExpanded, setIsExpanded] = React.useState(false);
+  const textRef = React.useRef<HTMLParagraphElement>(null);
+  const [isOverflowing, setIsOverflowing] = React.useState(false);
+
+  React.useEffect(() => {
+    if (textRef.current && comment && comment !== "-") {
+      const computedStyle = window.getComputedStyle(textRef.current);
+      const lineHeightStr = computedStyle.lineHeight;
+      let lineHeight: number;
+      
+      if (lineHeightStr === 'normal') {
+        // Fallback: use font-size * 1.2 as typical line-height
+        const fontSize = parseFloat(computedStyle.fontSize);
+        lineHeight = fontSize * 1.2;
+      } else {
+        lineHeight = parseFloat(lineHeightStr);
+      }
+      
+      // Check if content is more than one line (with some tolerance)
+      const isOverflow = textRef.current.scrollHeight > lineHeight * 1.5;
+      setIsOverflowing(isOverflow);
+    } else {
+      setIsOverflowing(false);
+    }
+  }, [comment, isExpanded]);
+
+  if (!comment || comment === "-") {
+    return <p className="text-sm text-muted-foreground mt-1">-</p>;
+  }
+
+  return (
+    <div>
+      <p 
+        ref={textRef}
+        className={`text-sm text-muted-foreground mt-1 break-words w-full min-w-0 max-w-full ${!isExpanded ? 'line-clamp-1' : ''}`}
+        style={{ 
+          wordWrap: 'break-word', 
+          overflowWrap: 'break-word',
+          wordBreak: 'break-word',
+          whiteSpace: 'pre-wrap', // Preserves spaces and line breaks like textarea
+          overflow: isExpanded ? 'visible' : 'hidden'
+        }}
+      >
+        {comment}
+      </p>
+      {isOverflowing && (
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="text-sm text-primary hover:underline mt-1"
+        >
+          {isExpanded ? "...less" : "...more"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+export function DataTable<TData extends AggregatedApplicationRating>({ columns, data, roles, dict }: DataTableProps<TData>) {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [expandedRows, setExpandedRows] = React.useState<Record<string, boolean>>({});
+
+  const toggleExpanded = React.useCallback((applicationId: string, open: boolean) => {
+    setExpandedRows(prev => ({
+      ...prev,
+      [applicationId]: open,
+    }));
+  }, []);
 
   const table = useReactTable({
     data,
@@ -37,13 +107,17 @@ export function DataTable<TData>({ columns, data, roles }: DataTableProps<TData>
     state: {
       columnFilters,
     },
+    meta: {
+      expandedRows,
+      toggleExpanded,
+    },
   });
 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4 justify-between">
         <Input
-          placeholder="Filter emails..."
+          placeholder={dict.dashboard.campaigns.application_avg_ratings_table.filter_emails}
           value={(table.getColumn("user_email")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("user_email")?.setFilterValue(event.target.value)
@@ -61,10 +135,10 @@ export function DataTable<TData>({ columns, data, roles }: DataTableProps<TData>
               }
             >
               <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Filter by role" />
+                <SelectValue placeholder={dict.dashboard.campaigns.application_avg_ratings_table.filter_by_role} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All roles</SelectItem>
+                <SelectItem value="all">{dict.dashboard.campaigns.application_avg_ratings_table.all_roles}</SelectItem>
                 {roles.map((role) => (
                   <SelectItem key={role.id} value={role.id}>
                     {role.name}
@@ -75,39 +149,78 @@ export function DataTable<TData>({ columns, data, roles }: DataTableProps<TData>
           </div>
         )}
       </div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map(headerGroup => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
-                  <TableHead key={header.id} className="font-semibold">
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map(row => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map(cell => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
+      <div className="rounded-md border overflow-hidden">
+        <div className="w-full overflow-x-auto">
+          <Table className="w-full" style={{ tableLayout: 'fixed' }}>
+            <TableHeader>
+              {table.getHeaderGroups().map(headerGroup => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map(header => (
+                    <TableHead key={header.id} className="font-semibold">
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                    </TableHead>
                   ))}
                 </TableRow>
-              ))
+              ))}
+            </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows.length > 0 ? (
+              table.getRowModel().rows.map(row => {
+                const application = row.original as AggregatedApplicationRating;
+                const isExpanded = expandedRows[application.application_id] || false;
+                
+                return (
+                  <React.Fragment key={row.id}>
+                    <TableRow>
+                      {row.getVisibleCells().map(cell => (
+                        <TableCell key={cell.id}>
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                    {isExpanded && application.individual_ratings.length > 0 && (
+                      <>
+                        {application.individual_ratings.map((rating, index) => (
+                          <React.Fragment key={index}>
+                            <TableRow>
+                              <TableCell>
+                                <span className="font-medium text-green-600 dark:text-green-400">{rating.rater_name}</span>
+                              </TableCell>
+                              <TableCell></TableCell>
+                              <TableCell></TableCell>
+                              <TableCell>
+                                <span className="text-green-600 dark:text-green-400">{rating.rating.toFixed(1)}</span>
+                              </TableCell>
+                              <TableCell>
+                                <span className="text-sm text-muted-foreground">
+                                  {dateToString(rating.updated_at)}
+                                </span>
+                              </TableCell>
+                            </TableRow>
+                            {rating.comment && (
+                              <TableRow>
+                                <TableCell colSpan={columns.length}>
+                                  <CommentText comment={rating.comment} ratingIndex={index} />
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </>
+                    )}
+                  </React.Fragment>
+                );
+              })
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results.
+                  {dict.dashboard.campaigns.application_avg_ratings_table.no_results}
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
     </div>
   );
