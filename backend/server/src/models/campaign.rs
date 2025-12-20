@@ -52,6 +52,8 @@ pub struct Campaign {
     pub updated_at: DateTime<Utc>,
     /// Whether the campaign is published
     pub published: bool,
+    /// Max amount of roles an applicant can apply for
+    pub max_roles_per_application: Option<i32>
 }
 
 /// Detailed view of a campaign.
@@ -83,6 +85,8 @@ pub struct CampaignDetails {
     pub ends_at: DateTime<Utc>,
     /// Whether the campaign is published
     pub published: bool,
+    /// Max amount of roles an applicant can apply for
+    pub max_roles_per_application: Option<i32>
 }
 
 /// Simplified view of a campaign for organization listings.
@@ -204,7 +208,7 @@ impl Campaign {
             "
                 SELECT c.id, c.slug AS campaign_slug, c.name, c.organisation_id,
                 o.slug AS organisation_slug, o.name as organisation_name, c.cover_image,
-                c.description, c.starts_at, c.ends_at, c.published
+                c.description, c.starts_at, c.ends_at, c.published, c.max_roles_per_application
                 FROM campaigns c
                 JOIN organisations o on c.organisation_id = o.id
                 WHERE c.id = $1
@@ -277,7 +281,7 @@ impl Campaign {
             "
                 SELECT c.id, c.slug AS campaign_slug, c.name, c.organisation_id,
                 o.slug AS organisation_slug, o.name as organisation_name, c.cover_image,
-                c.description, c.starts_at, c.ends_at, c.published
+                c.description, c.starts_at, c.ends_at, c.published, c.max_roles_per_application
                 FROM campaigns c
                 JOIN organisations o on c.organisation_id = o.id
                 WHERE c.slug = $1 AND o.slug = $2

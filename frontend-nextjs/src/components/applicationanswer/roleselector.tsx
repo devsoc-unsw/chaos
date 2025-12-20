@@ -11,26 +11,19 @@ import { updateApplicationRoles } from "@/models/answer";
 
 export default function RoleSelector({
   roles,
+  maxRolesPerApplication,
   selectedRoleIds,
   onChangeSelectedRoles,
   applicationId,
   dict
 }: {
   roles: CampaignRole[] | undefined;
+  maxRolesPerApplication: number | null | undefined,
   selectedRoleIds: string[];
   onChangeSelectedRoles: (next: string[]) => void;
   applicationId: string;
   dict: any;
 }) {
-
-    const updateRoles = async (newOrder: string[]) => {
-      try {
-        await updateApplicationRoles(applicationId, newOrder);
-      } catch (err) {
-        console.error("Failed to update roles:", err);
-      }
-    }
-
     const handleDragEnd = async ({ source, destination, draggableId }: DropResult) => {
       if (!destination) return;
       const to = destination.droppableId;
@@ -45,6 +38,7 @@ export default function RoleSelector({
       }
 
       if (to === "selected-roles" && from === "available-roles") {
+        if (maxRolesPerApplication && selectedRoleIds.length + 1 > maxRolesPerApplication) return;
         newOrder.splice(destination.index, 0, draggableId);
         onChangeSelectedRoles(newOrder);
         return;
@@ -63,8 +57,14 @@ export default function RoleSelector({
 
     return (
     <div className="w-80">
-      <h2 className="text-xl font-semibold mb-4">{dict.common.roles}</h2>
-
+      <div className="flex items-center">
+        <h2 className="text-xl font-semibold mb-4">{dict.common.roles}</h2>
+        {
+          maxRolesPerApplication && (
+            <p className="text-m text-muted-foreground mb-4">(max {maxRolesPerApplication} roles)</p>
+          )
+        }
+      </div>
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="space-y-6">
           {/* Selected roles (draggable & reorderable) */}

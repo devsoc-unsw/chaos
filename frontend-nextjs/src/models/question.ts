@@ -31,7 +31,7 @@ export interface MultiOptionQuestionOption {
 
 export interface QuestionAndAnswer {
     question_id: string
-    answer_id: string,
+    answer_id: string | undefined,
     text: string,
     answer: string | MultiOptionQuestionOption
     question_type: QuestionType,

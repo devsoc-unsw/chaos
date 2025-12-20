@@ -48,6 +48,24 @@ pub struct Answer {
     updated_at: DateTime<Utc>,
 }
 
+/// A view type which collects an answer in the system along with it's
+/// associated role.
+#[derive(Deserialize, Serialize)]
+pub struct AnswerWithRole {
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    id: i64,
+    /// ID of the question this answer is for
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    question_id: i64,
+
+    /// The actual answer data, flattened in serialization
+    #[serde(flatten)]
+    data: AnswerData,
+
+    // role ID
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    role_id: i64
+}
 /// Data structure for creating a new answer.
 /// 
 /// Contains the question ID and the answer data.

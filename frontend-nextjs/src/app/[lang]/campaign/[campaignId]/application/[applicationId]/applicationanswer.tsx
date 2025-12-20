@@ -8,6 +8,8 @@ import { useState, useEffect } from "react";
 import RoleSelector from "../../../../../../components/applicationanswer/roleselector";
 import RoleTabs from "../../../../../../components/applicationanswer/roletabs";
 import MainContent from "../../../../../../components/applicationanswer/maincontent";
+import ReviewCard from "@/components/applicationanswer/reviewcard";
+import { QuestionAndAnswer } from "@/models/question";
 interface ApplicationReviewProps {
   campaignId: string;
   applicationId: string;
@@ -47,7 +49,44 @@ export default function ApplicationReview({
 
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<"general" | string>("general");
+  const [qaByRole, setQAByRole] = useState<Map<String,QuestionAndAnswer[]>>(new Map());
+  const [hydratedRoles, setHydratedRoles] = useState<Set<string>>(new Set());
 
+  // hydrate a specific role, needed because on refresh of a new application frontend
+  // may not be unaware of all roles type beat.(might remove/refactor soon)
+  const hydrateRole = (roleId: string, qa: QuestionAndAnswer[]) => {
+    // make new map add to role
+    setQAByRole(prev => {
+      if (prev.has(roleId)) return prev;
+      const newRoleMap = new Map(prev);
+      newRoleMap.set(roleId, qa);
+      return newRoleMap;
+    })
+    // register role as having been hydrated
+    console.log("hydrated");
+    setHydratedRoles(prev => new Set(prev).add(roleId));
+  }
+
+  const updateRoleAnswers = (roleId: string, newQA: QuestionAndAnswer) => {
+    setQAByRole(prev => {
+      const newQAMap = new Map(prev);
+      const questions = newQAMap.get(roleId)
+      if (!questions) return prev;
+
+      newQAMap.set(
+        roleId,
+          questions.map(q =>
+            q.question_id === newQA.question_id
+              ? newQA
+              : q
+          )
+        );
+      console.log(newQAMap);
+      return newQAMap;
+    })
+  }
+
+  // format roles to match what backend expects
   const buildUpdatedRolesPayload = (orderedIds: string[]) => {
     if (!application?.applied_roles || application.applied_roles.length === 0) {
       return orderedIds.map((campaignRoleId, index) => ({
@@ -75,9 +114,9 @@ export default function ApplicationReview({
     });
   };
 
+  // update roles in backend
   const updateRoles = async (nextSelectedRoles: string[]) => {
     setSelectedRoleIds(nextSelectedRoles)
-    console.log(nextSelectedRoles)
     try {
       const payload = {
         roles: buildUpdatedRolesPayload(nextSelectedRoles),
@@ -113,10 +152,11 @@ export default function ApplicationReview({
         </div>
         <div></div>
         <div className="flex gap-8 w-full">
-          <RoleSelector roles={roles} selectedRoleIds={selectedRoleIds} onChangeSelectedRoles={updateRoles} applicationId={applicationId} dict={dict}/>
+          <RoleSelector roles={roles} maxRolesPerApplication={campaign?.max_roles_per_application} selectedRoleIds={selectedRoleIds} onChangeSelectedRoles={updateRoles} applicationId={applicationId} dict={dict}/>
           <div className="flex-1">
             <RoleTabs roles={roles} selectedRoleIds={selectedRoleIds} activeTab={activeTab} onChangeActiveTab={setActiveTab}/>
-            <MainContent campaignId={campaignId} applicationId={applicationId} activeTab={activeTab} dict={dict}/>
+            <MainContent campaignId={campaignId} applicationId={applicationId} activeTab={activeTab} dict={dict} hydrateRole={hydrateRole} updateRoleAnswers={updateRoleAnswers}/>
+            {/* <ReviewCard/> */}
           </div>
         </div>
       </div>

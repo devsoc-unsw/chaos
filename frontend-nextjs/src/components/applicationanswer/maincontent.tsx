@@ -3,7 +3,7 @@ import { Question, QuestionAndAnswer } from "@/models/question";
 import { getAllCommonQuestions, getAllRoleQuestions, linkQuestionsAndAnswers } from "@/models/question";
 import { getAllRoleAnswers, getAllCommonAnswers, updateAnswer, createAnswer  } from "@/models/answer";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import ShortAnswer from "./questions/shortanswer";
 import Dropdown from "./questions/dropdown";
 import MultiC from "./questions/dropdown";
@@ -11,19 +11,27 @@ import Multichoice from "./questions/multichoice";
 import MultiSelect from "./questions/multiselect";
 import Ranking from "./questions/ranking";
 import { buildAnswerPayload } from "@/lib/utils";
+import ReviewCard from "./reviewcard"
 
 export default function MainContent({
   campaignId,
   applicationId,
   activeTab,
-  dict
+  dict,
+  hydrateRole,
+  updateRoleAnswers
 }: {
   campaignId: string;
   applicationId: string;
   activeTab: string;
   dict: any;
+  hydrateRole: (roleId:string, qa:QuestionAndAnswer[]) => void;
+  updateRoleAnswers: (roleId:string, newQA:QuestionAndAnswer) => void;
 //   activeRoleId: string;
 }) {
+    const [questionsAndAnswers, setQuestionsAndAnswers] =
+    useState<QuestionAndAnswer[]>([]);
+
     const generalTab = activeTab === "general"
     const { data: questions } = useQuery({
     queryKey: generalTab
@@ -44,14 +52,20 @@ export default function MainContent({
         : getAllRoleAnswers(applicationId, activeTab),
     });
 
+    // submits answer to a question
     const submitAnswer = async (
       question: any,
       value: unknown,
       applicationId: string,
       answerId: string | undefined
     ):Promise<any>  =>  {
+      const updatedQA: QuestionAndAnswer = {
+        ...question,
+        answer: value,
+      };
+
+      updateRoleAnswers(activeTab, updatedQA);
       const payload = buildAnswerPayload(question, value);
-      console.log(JSON.stringify(payload));
       if (answerId) {
         return updateAnswer(answerId, payload);
       }
@@ -59,9 +73,11 @@ export default function MainContent({
       return createAnswer(applicationId, payload);
     }
 
-    const questionsAndAnswers = useMemo(() => {
-        if (!questions || !answers) return [];
-        return linkQuestionsAndAnswers(questions, answers);
+    useEffect(() => {
+      if (!questions || !answers) return;
+      const linked = linkQuestionsAndAnswers(questions, answers)
+      setQuestionsAndAnswers(linked);
+      hydrateRole(activeTab, linked)
     }, [questions, answers]);
 
     const renderQuestion = (q:QuestionAndAnswer, idx:number) => {
@@ -125,7 +141,6 @@ export default function MainContent({
       }
     };
 
-    console.log(applicationId, activeTab)
     return (
         <div className="border-b border-gray-200 mb-6 gap-2">
             <div>
@@ -139,9 +154,6 @@ export default function MainContent({
                 ))
               )}
             </div>
-            {/* <pre>
-              {JSON.stringify(questionsAndAnswers, null, 2)}
-            </pre> */}
         </div>
     )
 }

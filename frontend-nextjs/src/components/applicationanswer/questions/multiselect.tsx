@@ -50,11 +50,9 @@ export default function MultiSelect({
     }, [question.answer])
 
     const handleChange = (optionId: string | number, checked: boolean) => {
-        setSelectedOptions(prev => {
-            const next = checked ? [...prev, optionId] : prev.filter(id => id !== optionId);
-            submitAnswer(question, next, applicationId, answerId);
-            return next;
-        });
+        const next = checked ? [...selectedOptions, optionId] : selectedOptions.filter(id => id !== optionId);
+        setSelectedOptions(next);
+        submitAnswer(question, next, applicationId, answerId);
     };
 
     return (

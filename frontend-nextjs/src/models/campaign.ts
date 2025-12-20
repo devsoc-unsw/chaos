@@ -15,6 +15,7 @@ export interface CampaignDetails {
     starts_at: string;
     ends_at: string;
     published: boolean;
+    max_roles_per_application: number | null;
 }
 
 export async function getCampaign(campaignId: string): Promise<CampaignDetails> {

@@ -6,7 +6,7 @@ export interface Answer {
     answer_type: AnswerType,
     answer_data: AnswerData,
     created_at: string,
-    updated_at: string,
+    updated_at: string
 }
 
 export type AnswerType = "ShortAnswer" | "MultiChoice" | "MultiSelect" | "DropDown" | "Ranking";
