@@ -48,18 +48,21 @@ export const createColumns = (dict: any): ColumnDef<AggregatedApplicationRating>
       const toggleExpanded = (table.options.meta as any)?.toggleExpanded;
       
       return (
-        <Button 
-          variant="link" 
-          className="h-auto p-0 font-normal -ml-2"
-          onClick={() => toggleExpanded?.(application.application_id, !isOpen)}
-        >
-          <span className="underline font-semibold">{application.avg_rating.toFixed(1)}</span>
-          {isOpen ? (
-            <ChevronDown className="w-4 h-4 ml-1 inline" />
-          ) : (
-            <ChevronRight className="w-4 h-4 ml-1 inline" />
-          )}
-        </Button>
+        <div className="flex items-center gap-2 justify-left">
+          <span>{application.avg_rating.toFixed(2)}</span>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            className="h-6 w-6 p-0"
+            onClick={() => toggleExpanded?.(application.application_id, !isOpen)}
+          >
+            {isOpen ? (
+              <ChevronDown className="w-4 h-4" />
+            ) : (
+              <ChevronRight className="w-4 h-4" />
+            )}
+          </Button>
+        </div>
       );
     },
   },

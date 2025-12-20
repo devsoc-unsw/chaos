@@ -61,10 +61,10 @@ function CommentText({ comment, ratingIndex }: { comment: string | null; ratingI
   }
 
   return (
-    <div>
+    <div className="mt-1">
       <p 
         ref={textRef}
-        className={`text-sm text-muted-foreground mt-1 break-words w-full min-w-0 max-w-full ${!isExpanded ? 'line-clamp-1' : ''}`}
+        className={`text-sm text-muted-foreground break-words w-full min-w-0 max-w-full ${!isExpanded ? 'line-clamp-1' : ''}`}
         style={{ 
           wordWrap: 'break-word', 
           overflowWrap: 'break-word',
@@ -90,6 +90,7 @@ function CommentText({ comment, ratingIndex }: { comment: string | null; ratingI
 export function DataTable<TData extends AggregatedApplicationRating>({ columns, data, roles, dict }: DataTableProps<TData>) {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [expandedRows, setExpandedRows] = React.useState<Record<string, boolean>>({});
+  const [hoveredRatingIndex, setHoveredRatingIndex] = React.useState<number | null>(null);
 
   const toggleExpanded = React.useCallback((applicationId: string, open: boolean) => {
     setExpandedRows(prev => ({
@@ -182,24 +183,36 @@ export function DataTable<TData extends AggregatedApplicationRating>({ columns, 
                       <>
                         {application.individual_ratings.map((rating, index) => (
                           <React.Fragment key={index}>
-                            <TableRow>
-                              <TableCell>
+                            <TableRow 
+                              className={rating.comment ? `border-b-0 ${hoveredRatingIndex === index ? 'bg-muted/50' : ''}` : ""}
+                              onMouseEnter={() => setHoveredRatingIndex(index)}
+                              onMouseLeave={() => setHoveredRatingIndex(null)}
+                            >
+                              <TableCell className="align-top">
                                 <span className="font-medium text-green-600 dark:text-green-400">{rating.rater_name}</span>
                               </TableCell>
-                              <TableCell></TableCell>
-                              <TableCell></TableCell>
-                              <TableCell>
-                                <span className="text-green-600 dark:text-green-400">{rating.rating.toFixed(1)}</span>
+                              <TableCell className="align-top">
+                                <span></span>
                               </TableCell>
-                              <TableCell>
-                                <span className="text-sm text-muted-foreground">
-                                  {dateToString(rating.updated_at)}
-                                </span>
+                              <TableCell className="align-top">
+                                <span></span>
+                              </TableCell>
+                              <TableCell className="align-top">
+                                <div className="flex items-center gap-2 justify-left">
+                                  <span className="text-green-600 dark:text-green-400">{rating.rating.toFixed(2)}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="align-top">
+                                <span>{dateToString(rating.updated_at)}</span>
                               </TableCell>
                             </TableRow>
                             {rating.comment && (
-                              <TableRow>
-                                <TableCell colSpan={columns.length}>
+                              <TableRow 
+                                className={`border-t-0 [&>td]:border-t-0 [&>td]:pt-0 ${hoveredRatingIndex === index ? 'bg-muted/50' : ''}`}
+                                onMouseEnter={() => setHoveredRatingIndex(index)}
+                                onMouseLeave={() => setHoveredRatingIndex(null)}
+                              >
+                                <TableCell colSpan={columns.length} className="pb-2 px-2 pt-0 border-t-0 border-b">
                                   <CommentText comment={rating.comment} ratingIndex={index} />
                                 </TableCell>
                               </TableRow>

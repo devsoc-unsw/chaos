@@ -77,7 +77,7 @@ export default function ApplicationAvgRatingsApplicants({ campaignId, orgId, dic
       user_name: app.user_name,
       user_email: app.user_email,
       status: app.status as any,
-      avg_rating: app.ratings.reduce((sum, r) => sum + r.rating, 0) / app.ratings.length,
+      avg_rating: Math.round((app.ratings.reduce((sum, r) => sum + r.rating, 0) / app.ratings.length) * 100) / 100,
       individual_ratings: app.ratings,
     }));
   }, [data]);
