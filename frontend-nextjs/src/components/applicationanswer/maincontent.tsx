@@ -18,14 +18,12 @@ export default function MainContent({
   applicationId,
   activeTab,
   dict,
-  hydrateRole,
   updateRoleAnswers
 }: {
   campaignId: string;
   applicationId: string;
   activeTab: string;
   dict: any;
-  hydrateRole: (roleId:string, qa:QuestionAndAnswer[]) => void;
   updateRoleAnswers: (roleId:string, newQA:QuestionAndAnswer) => void;
 //   activeRoleId: string;
 }) {
@@ -77,7 +75,6 @@ export default function MainContent({
       if (!questions || !answers) return;
       const linked = linkQuestionsAndAnswers(questions, answers)
       setQuestionsAndAnswers(linked);
-      hydrateRole(activeTab, linked)
     }, [questions, answers]);
 
     const renderQuestion = (q:QuestionAndAnswer, idx:number) => {

@@ -1,15 +1,15 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCampaign, getCampaignRoles } from "@/models/campaign";
 import { getUnsubmittedApplication } from "@/models/application";
-import { updateApplicationRoles } from "@/models/answer";
+import { Answer, updateApplicationRoles } from "@/models/answer";
 import { useState, useEffect } from "react";
 import RoleSelector from "../../../../../../components/applicationanswer/roleselector";
 import RoleTabs from "../../../../../../components/applicationanswer/roletabs";
 import MainContent from "../../../../../../components/applicationanswer/maincontent";
 import ReviewCard from "@/components/applicationanswer/reviewcard";
-import { QuestionAndAnswer } from "@/models/question";
+import { linkQuestionsAndAnswers, Question, QuestionAndAnswer } from "@/models/question";
 interface ApplicationReviewProps {
   campaignId: string;
   applicationId: string;
@@ -49,22 +49,33 @@ export default function ApplicationReview({
 
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<"general" | string>("general");
-  const [qaByRole, setQAByRole] = useState<Map<String,QuestionAndAnswer[]>>(new Map());
-  const [hydratedRoles, setHydratedRoles] = useState<Set<string>>(new Set());
+  const [qaByRole, setQAByRole] = useState<Map<string,QuestionAndAnswer[]>>(new Map());
+  const queryClient = useQueryClient()
 
-  // hydrate a specific role, needed because on refresh of a new application frontend
-  // may not be unaware of all roles type beat.(might remove/refactor soon)
-  const hydrateRole = (roleId: string, qa: QuestionAndAnswer[]) => {
-    // make new map add to role
+  const populateQAByRole = (roleIds:string[], campaignId: string, applicationId: string) => {
     setQAByRole(prev => {
-      if (prev.has(roleId)) return prev;
-      const newRoleMap = new Map(prev);
-      newRoleMap.set(roleId, qa);
-      return newRoleMap;
+      const newQAMap = new Map(prev);
+      if (!newQAMap.has('general')) {
+        const generalQs: Question[] | undefined = queryClient.getQueryData(['common-questions', applicationId]);
+        const generalAnswers: Answer[] | undefined = queryClient.getQueryData(['common-answers', applicationId]);
+        if (generalQs && generalAnswers) {
+          const linkedGeneral = linkQuestionsAndAnswers(generalQs, generalAnswers);
+          newQAMap.set('general', linkedGeneral)
+        }
+      }
+
+      for (const roleId of roleIds) {
+        if (newQAMap.has(roleId)) continue;
+        const roleQs: Question[] | undefined  = queryClient.getQueryData(['role-questions', campaignId, roleId])
+        const roleAnswers: Answer[] | undefined = queryClient.getQueryData(['role-answers', applicationId, roleId])
+        if (roleQs && roleAnswers) {
+          const linked = linkQuestionsAndAnswers(roleQs, roleAnswers);
+          newQAMap.set(roleId, linked);
+        }
+      }
+
+      return newQAMap
     })
-    // register role as having been hydrated
-    console.log("hydrated");
-    setHydratedRoles(prev => new Set(prev).add(roleId));
   }
 
   const updateRoleAnswers = (roleId: string, newQA: QuestionAndAnswer) => {
@@ -139,6 +150,10 @@ export default function ApplicationReview({
     }
   }, [application]);
 
+  useEffect(() => {
+    populateQAByRole(selectedRoleIds,campaignId, applicationId)
+  }, [selectedRoleIds]);
+
   return (
     <div className="min-h-screen bg-background w-full">
       <div className="w-full mx-auto p-8">
@@ -155,7 +170,7 @@ export default function ApplicationReview({
           <RoleSelector roles={roles} maxRolesPerApplication={campaign?.max_roles_per_application} selectedRoleIds={selectedRoleIds} onChangeSelectedRoles={updateRoles} applicationId={applicationId} dict={dict}/>
           <div className="flex-1">
             <RoleTabs roles={roles} selectedRoleIds={selectedRoleIds} activeTab={activeTab} onChangeActiveTab={setActiveTab}/>
-            <MainContent campaignId={campaignId} applicationId={applicationId} activeTab={activeTab} dict={dict} hydrateRole={hydrateRole} updateRoleAnswers={updateRoleAnswers}/>
+            <MainContent campaignId={campaignId} applicationId={applicationId} activeTab={activeTab} dict={dict} updateRoleAnswers={updateRoleAnswers}/>
             {/* <ReviewCard/> */}
           </div>
         </div>
