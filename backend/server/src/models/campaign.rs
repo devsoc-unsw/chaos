@@ -17,6 +17,7 @@ use uuid::Uuid;
 use crate::models::app::AppState;
 use crate::service::campaign::{assert_campaign_is_open, create_proper_slug};
 use super::{error::ChaosError, storage::Storage};
+use snowflake::SnowflakeIdGenerator;
 use std::env;
 
 /// Represents a campaign in the system.
@@ -211,6 +212,66 @@ pub struct CampaignUpdate {
 pub struct CampaignBannerUpdate {
     /// URL where the new banner image can be uploaded
     pub upload_url: String,
+}
+
+/// Represents a campaign attachment (role document).
+/// 
+/// A campaign attachment is a file associated with a campaign, typically
+/// used to store role documents or other campaign-related files.
+#[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
+pub struct CampaignAttachment {
+    /// Unique identifier for the attachment
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub id: i64,
+    /// ID of the campaign this attachment belongs to
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub campaign_id: i64,
+    /// Original filename of the uploaded file
+    pub file_name: String,
+    /// Size of the file in bytes
+    pub file_size: i64,
+}
+
+/// Response structure for role document retrieval.
+/// 
+/// Contains the attachment metadata and a pre-signed URL for downloading the file.
+#[derive(Serialize)]
+pub struct AttachmentResponse {
+    /// Unique identifier for the attachment
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub id: i64,
+    /// ID of the campaign this attachment belongs to
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub campaign_id: i64,
+    /// Original filename of the uploaded file
+    pub file_name: String,
+    /// Size of the file in bytes
+    pub file_size: i64,
+    /// Pre-signed URL for downloading the file (valid for 1 hour)
+    pub download_url: String,
+}
+
+/// Request structure for uploading a role document.
+/// 
+/// Contains the file metadata needed to create a new attachment.
+#[derive(Deserialize)]
+pub struct NewAttachment {
+    /// Original filename of the file
+    pub file_name: String,
+    /// Size of the file in bytes
+    pub file_size: i64,
+}
+
+/// Response structure for role document upload.
+/// 
+/// Contains the pre-signed URL where the file can be uploaded.
+#[derive(Serialize)]
+pub struct AttachmentUpload {
+    /// Pre-signed URL for uploading the file
+    pub upload_url: String,
+    /// ID of the created attachment record
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub attachment_id: i64,
 }
 
 impl Campaign {
@@ -492,6 +553,164 @@ impl Campaign {
     }
 }
 
+impl CampaignAttachment {
+    /// Retrieves the attachments for a campaign.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `campaign_id` - ID of the campaign
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<Vec<CampaignAttachment>, ChaosError>` - The attachments or None if not found
+    pub async fn get_by_campaign(
+        campaign_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<CampaignAttachment>, ChaosError> {
+        let attachments = sqlx::query_as!(
+            CampaignAttachment,
+            "
+                SELECT id, campaign_id, file_name, file_size
+                FROM campaign_attachments
+                WHERE campaign_id = $1
+            ",
+            campaign_id
+        )
+        .fetch_all(transaction.deref_mut())
+        .await?;
+
+        Ok(attachments)
+    }
+
+    /// Retrieves an attachment by its ID.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `attachment_id` - ID of the attachment
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<CampaignAttachment, ChaosError>` - The attachment or error if not found
+    pub async fn get_by_id(
+        attachment_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<CampaignAttachment, ChaosError> {
+        let attachment = sqlx::query_as!(
+            CampaignAttachment,
+            "
+                SELECT id, campaign_id, file_name, file_size
+                FROM campaign_attachments
+                WHERE id = $1
+            ",
+            attachment_id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
+        Ok(attachment)
+    }
+
+    /// Creates or updates multiple attachments for a campaign.
+    /// 
+    /// If an attachment already exists for the campaign, it will be updated.
+    /// Otherwise, a new attachment will be created for each file.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `campaign_id` - ID of the campaign
+    /// * `files` - List of files to upload
+    /// * `transaction` - Database transaction to use
+    /// * `snowflake_generator` - Generator for creating unique IDs
+    /// * `storage_bucket` - S3 bucket for storing the file
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<AttachmentUpload, ChaosError>` - Upload URL and attachment ID
+    pub async fn create_or_update_multiple(
+        campaign_id: i64,
+        files: Vec<NewAttachment>,
+        transaction: &mut Transaction<'_, Postgres>,
+        snowflake_generator: &mut SnowflakeIdGenerator,
+        storage_bucket: &Bucket,
+    ) -> Result<Vec<AttachmentUpload>, ChaosError> {
+        // Check if attachment already exists
+        let existing = Self::get_by_campaign(campaign_id, transaction).await?;
+
+        let mut attachment_ids = Vec::new();
+        for file in files {
+            let mut attachment_id = None;
+            for existing_attachment in &existing {
+                if existing_attachment.file_name == file.file_name {
+                    attachment_id = Some(existing_attachment.id);
+                    break;
+                }
+            }
+
+            let attachment_id = if let Some(id) = attachment_id {
+                id
+            } else {
+                // Create new attachment
+                let new_id = snowflake_generator.real_time_generate();
+                sqlx::query!(
+                    "
+                        INSERT INTO campaign_attachments (id, campaign_id, file_name, file_size)
+                        VALUES ($1, $2, $3, $4)
+                        RETURNING id
+                    ",
+                    new_id,
+                    campaign_id,
+                    file.file_name,
+                    file.file_size
+                )
+                .fetch_one(transaction.deref_mut())
+                .await?.id
+            };
+            attachment_ids.push(attachment_id);
+        }
+
+        let mut results = Vec::new();
+        for id in attachment_ids {
+            let upload_url = Storage::generate_put_url(
+                format!("/attachment/{}/{}", campaign_id, id),
+                storage_bucket,
+            )
+            .await?;
+            results.push(AttachmentUpload {
+                upload_url,
+                attachment_id: id,
+            });
+        }
+        Ok(results)
+    }
+
+    /// Deletes an attachment.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `attachment_id` - ID of the attachment to delete
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<i64, ChaosError>` - The ID of the deleted attachment or error if not found
+    pub async fn delete(
+        attachment_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
+        let id = sqlx::query!(
+            "
+                DELETE FROM campaign_attachments WHERE id = $1 RETURNING id
+            ",
+            attachment_id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
+        Ok(())
+    }
+}
 /// Extractor for ensuring a campaign is open.
 /// 
 /// This extractor is used in route handlers to ensure that the campaign

@@ -13,10 +13,11 @@ use crate::models::application::Application;
 use crate::models::application::NewApplication;
 use crate::models::auth::AuthUser;
 use crate::models::auth::CampaignAdmin;
-use crate::models::campaign::{Campaign, OpenCampaign};
+use crate::models::campaign::{Campaign, CampaignAttachment, NewAttachment, OpenCampaign};
 use crate::models::error::ChaosError;
 use crate::models::offer::Offer;
 use crate::models::role::{Role, RoleUpdate};
+use crate::models::storage::Storage;
 use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
@@ -359,5 +360,132 @@ impl CampaignHandler {
         transaction.tx.commit().await?;
 
         Ok((StatusCode::OK, Json(offers)))
+    }
+
+    /// Retrieves the attachments for a campaign.
+    /// 
+    /// This handler allows any authenticated user to view the attachments.
+    /// Returns an empty list if no documents exist.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `transaction` - Database transaction
+    /// * `state` - The application state
+    /// * `id` - The ID of the campaign
+    /// * `_user` - The authenticated user
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - List of attachments with download URLs
+    pub async fn get_attachments(
+        mut transaction: DBTransaction<'_>,
+        State(state): State<AppState>,
+        Path(id): Path<i64>,
+        _user: AuthUser,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let attachments = CampaignAttachment::get_by_campaign(id, &mut transaction.tx).await?;
+        transaction.tx.commit().await?;
+
+        // Generate download URLs for each attachment
+        let mut responses = Vec::new();
+        for attachment in attachments {
+            let download_url = Storage::generate_get_url(
+                format!("/attachment/{}/{}", attachment.campaign_id, attachment.id),
+                &state.storage_bucket,
+            )
+            .await?;
+
+            responses.push(models::campaign::AttachmentResponse {
+                id: attachment.id,
+                campaign_id: attachment.campaign_id,
+                file_name: attachment.file_name,
+                file_size: attachment.file_size,
+                download_url,
+            });
+        }
+
+        Ok((StatusCode::OK, Json(responses)))
+    }
+
+    /// Creates or updates an attachment for a campaign.
+    /// 
+    /// This handler allows campaign admins to upload role documents.
+    /// It generates a pre-signed URL for uploading the file to S3.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `transaction` - Database transaction
+    /// * `state` - The application state
+    /// * `id` - The ID of the campaign
+    /// * `_admin` - The authenticated user (must be a campaign admin)
+    /// * `data` - The file metadata (name and size)
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Upload URL and attachment ID
+    pub async fn upload_attachments(
+        mut transaction: DBTransaction<'_>,
+        State(mut state): State<AppState>,
+        Path(id): Path<i64>,
+        _admin: CampaignAdmin,
+        Json(data): Json<Vec<NewAttachment>>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let upload_results = CampaignAttachment::create_or_update_multiple(id, data, &mut transaction.tx, &mut state.snowflake_generator, &state.storage_bucket).await?;
+        transaction.tx.commit().await?;
+        Ok((StatusCode::OK, Json(upload_results)))
+    }
+
+    /// Deletes an attachment.
+    /// 
+    /// This handler allows campaign admins to delete attachments.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `transaction` - Database transaction
+    /// * `attachment_id` - The ID of the attachment to delete
+    /// * `_admin` - The authenticated user (must be a campaign admin)
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
+    /// Deletes an attachment.
+    /// 
+    /// This handler allows campaign admins to delete attachments.
+    /// Verifies that the admin has access to the campaign the attachment belongs to.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `transaction` - Database transaction
+    /// * `attachment_id` - The ID of the attachment to delete
+    /// * `admin` - The authenticated user (must be a campaign admin)
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
+    pub async fn delete_attachment(
+        mut transaction: DBTransaction<'_>,
+        State(state): State<AppState>,
+        Path(attachment_id): Path<i64>,
+        user: AuthUser,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        // Get the attachment to find its campaign_id
+        let attachment = CampaignAttachment::get_by_id(attachment_id, &mut transaction.tx).await?;
+        
+        // Verify the admin has access to this campaign
+        crate::service::campaign::user_is_campaign_admin(
+            user.user_id,
+            attachment.campaign_id,
+            &mut transaction.tx,
+        )
+        .await?;
+        
+        // Delete the file from S3 storage
+        let storage_path = format!("/attachment/{}/{}", attachment.campaign_id, attachment.id);
+        state.storage_bucket.delete_object(&storage_path).await?;
+        
+        // Delete the attachment from database
+        CampaignAttachment::delete(attachment_id, &mut transaction.tx).await?;
+        transaction.tx.commit().await?;
+        Ok(())
     }
 }
