@@ -164,6 +164,7 @@ export default function ApplicationDetailsComponent({ applicationId, campaignId,
                 <p className="text-lg font-semibold">{dict.dashboard.campaigns.application_review_page.application_rating}</p>
 
                 <Label htmlFor="reviewScore">{dict.dashboard.campaigns.application_review_page.review_score}</Label>
+                {/* TODO: Put into flexbox and dynamically add different columns for different categories */}
                 <Select value={rating?.toString() ?? originalRating?.toString() ?? ""} onValueChange={(value) => setRating(Number(value))}>
                     <SelectTrigger className="w-[180px]">
                         <SelectValue placeholder={dict.dashboard.campaigns.application_review_page.review_score} />

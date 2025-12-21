@@ -532,6 +532,7 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                     <div dangerouslySetInnerHTML={{ __html: descriptionHtmlState }} />
                 )}
             </div>
+            {/* TODO: Add in the column roles */}
         </div>
     );
 }

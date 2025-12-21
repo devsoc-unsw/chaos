@@ -10,23 +10,42 @@ use snowflake::SnowflakeIdGenerator;
 use sqlx::{FromRow, Postgres, Transaction};
 use std::ops::DerefMut;
 
-/// Represents a rating in the database.
+/// Represents a category rating in the database
+/// 
+/// Admin of a campaign can create category rating
+/// includes the name of the category, 
+#[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
+pub struct CategoryRating {
+    /// Unique identifier for the category
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub id: i64,
+    /// ID of the campaign where the category is being created 
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub campaign_id: i64,
+    /// Name of the category that it is being created for the campaign
+    pub name: String,
+}
+
+/// Data structure for creating a new Category Rating
+///
+/// Only creates a new category in a rating, NO RATING and NO Comments
+#[derive(Deserialize, Serialize)]
+pub struct NewCategoryRating {
+    /// Name of the category
+    pub name: String,
+}
+
 /// 
 /// A rating is an evaluation of an application by a reviewer,
-/// including a numerical score and optional comments.
+/// This covers the ApplicationRating part WITHOUT the numerical rating
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
-pub struct Rating {
+pub struct ApplicationRating {
     /// Unique identifier for the rating
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the application being rated
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub application_id: i64,
-    /// ID of the user who created the rating
-    #[serde(serialize_with = "crate::models::serde_string::serialize")]
-    pub rater_user_id: i64,
-    /// Numerical rating value
-    pub rating: i32,
     /// Optional comments about the application
     pub comment: Option<String>,
     /// When the rating was created
@@ -35,22 +54,58 @@ pub struct Rating {
     pub updated_at: DateTime<Utc>,
 }
 
-/// Data structure for creating a new rating.
+/// Data structure for creating a new Application Rating.
 /// 
-/// This struct contains the fields needed to create a new rating,
-/// excluding system-managed fields like IDs and timestamps.
+/// This struct contains the fields needed to create a new application_rating,
+/// ONLY covers the comment
+/// excluding Numerical rating and system generated fields.
 #[derive(Deserialize, Serialize)]
-pub struct NewRating {
-    /// Numerical rating value
-    pub rating: i32,
+pub struct NewApplicationRating {
     /// Optional comments about the application
     pub comment: Option<String>,
+}
+
+/// 
+/// A rating is an evaluation of an application by a reviewer,
+/// This covers the ApplicationCategoryRating part WITH the numerical rating
+/// BASED ON the category of the ratings
+#[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
+pub struct ApplicationCateogryRating {
+    /// Unique identifier for the rating
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub id: i64,
+    /// ID of the application_rating being rated under ApplicationRating
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub application_rating_id: i64,
+    /// ID of the category being rated under
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub campaign_rating_category_id: i64,
+    /// Numerical score based on the rating
+    pub rating: i32,
+    /// When the rating was created
+    pub created_at: DateTime<Utc>,
+    /// When the rating was last updated
+    pub updated_at: DateTime<Utc>,
+}
+
+/// Data structure for creating a new Application Rating.
+/// 
+/// This struct contains the fields needed to create a new application_rating,
+/// ONLY covers the comment
+/// excluding Numerical rating and system generated fields.
+#[derive(Deserialize, Serialize)]
+pub struct NewApplicationCateogryRating {
+    /// ID of the category being rated
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub campaign_rating_category_id: i64,
+    /// Numerical score based on the rating
+    pub rating: i32,
 }
 
 /// Detailed view of a rating's information.
 /// 
 /// This struct provides a complete view of a rating's details,
-/// including the rater's name, used primarily for API responses.
+/// includes the rater's name, used primarily for API responses.
 #[derive(Deserialize, Serialize)]
 pub struct RatingDetails {
     /// Unique identifier for the rating
@@ -61,12 +116,24 @@ pub struct RatingDetails {
     pub rater_id: i64,
     /// Name of the user who created the rating
     pub rater_name: String,
-    /// Numerical rating value
-    pub rating: i32,
     /// Optional comments about the application
     pub comment: Option<String>,
+    /// Category ratings for this application rating (IMPORTANT TO ADD FOR rating numerical score)
+    pub category_ratings: Vec<CategoryRatingDetail>,
     /// When the rating was last updated
     pub updated_at: DateTime<Utc>,
+}
+
+/// Detail of a single category rating
+#[derive(Deserialize, Serialize)]
+pub struct CategoryRatingDetail {
+    /// ID of the category
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub campaign_rating_category_id: i64,
+    /// Name of the category
+    pub category_name: String,
+    /// Numerical rating value
+    pub rating: i32,
 }
 
 /// Collection of ratings for an application.
@@ -80,6 +147,72 @@ pub struct ApplicationRatings {
 }
 
 impl Rating {
+    /// ----------------------- CateogoryRating Operations ---------------------------
+    /// Creates a new category for a campaign for rating
+    pub async fn create_category(
+        new_category: NewCategoryRating,
+        campaign_id: i64,
+        snowflake_generator: &mut SnowflakeIdGenerator,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<CategoryRating, ChaosError> {
+        let id = snowflake_generator.real_time_generate();
+
+        let category = sqlx::query_as!(
+            CategoryRating,
+            "
+            INSERT INTO campaign_rating_categories (id, name, campaign_id)
+                VALUES ($1, $2, $3)
+            ",
+            id,
+            new_category.name,
+            campaign_id
+        )
+        .execute(transaction.deref_mut())
+        .await?;
+
+        Ok(id)
+    }
+
+    /// Gets all categories for a campaign
+    pub async fn get_categories_by_campaign(
+        campaign_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<CategoryRating>, ChaosError> {
+        let categories = sqlx::query_as!(
+            CategoryRating,
+            "
+            SELECT id, name, campaign_id
+            FROM campaign_rating_categories
+            WHERE campaign_id = $1
+            ",
+            campaign_id
+        )
+        .fetch_all(transaction.deref_mut())
+        .await?;
+
+        Ok(categories)
+    }
+
+    /// Deletes a category
+    pub async fn delete_category(
+        category_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
+        let _ = sqlx::query!(
+            "
+            DELETE FROM campaign_rating_categories WHERE id = $1
+            RETURNING id
+            ",
+            category_id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
+        Ok(())
+    }
+
+    /// ------------------- ApplicationRating Operations ----------------
+
     /// Creates a new rating for an application.
     /// 
     /// # Arguments
