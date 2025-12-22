@@ -15,7 +15,7 @@ use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use serde_json::json;
-use crate::models::rating::{NewRating, Rating};
+use crate::models::rating::{NewRating, NewApplicationRating, Rating};
 
 /// Handler for application-related HTTP requests.
 pub struct ApplicationHandler;
@@ -257,7 +257,7 @@ impl ApplicationHandler {
         admin: ApplicationReviewerGivenApplicationId,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let rating = Rating::get_rating_by_rater_id(application_id, admin.user_id, &mut transaction.tx).await?;
+        let rating = Rating::get_rating_details(application_id, admin.user_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(rating)))
     }
@@ -284,27 +284,76 @@ impl ApplicationHandler {
         mut transaction: DBTransaction<'_>,
         Json(new_rating): Json<NewRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Rating::create(
-            new_rating,
+        let application_rating_id = Rating::create_application_rating(
+            NewApplicationRating {
+                comment: new_rating.comment,
+            },
             application_id,
             admin.user_id,
             &mut state.snowflake_generator,
             &mut transaction.tx,
         )
+        .await?;
+        
+        // Loop thru category rating in the given new_rating to create category ratings
+        for category_rating in new_rating.category_ratings {
+            Rating::create_category_rating(
+                category_rating,
+                application_rating_id,
+                &mut state.snowflake_generator,
+                &mut transaction.tx,
+            )
             .await?;
+        }
+
         transaction.tx.commit().await?;
         Ok(AppMessage::OkMessage("Successfully created rating"))
     }
 
     pub async fn update_rating(
+        State(mut state): State<AppState>,
         Path(application_id): Path<i64>,
         admin: ApplicationReviewerGivenApplicationId,
         mut transaction: DBTransaction<'_>,
         Json(updated_rating): Json<NewRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let rating = Rating::get_rating_by_rater_id(application_id, admin.user_id, &mut transaction.tx).await?;
+        let rating = Rating::get_rating_by_rater_id_and_application_id(
+            application_id,
+            admin.user_id,
+            &mut transaction.tx,
+        )
+        .await?;
 
-        Rating::update(rating.id, updated_rating, &mut transaction.tx).await?;
+        Rating::update_application_rating(
+            rating.id,
+            NewApplicationRating {
+                comment: updated_rating.comment,
+            },
+            &mut transaction.tx,
+        )
+        .await?;
+
+        // Get existing category ratings to delete them, then update them with the new category ratings in a loop
+        let existing_category_ratings = Rating::get_all_category_ratings_from_application_id(
+            rating.id,
+            &mut transaction.tx,
+        )
+        .await?;
+
+        for category_rating in existing_category_ratings {
+            Rating::delete_category_rating(category_rating.id, &mut transaction.tx).await?;
+        }
+
+        for category_rating in updated_rating.category_ratings {
+            Rating::create_category_rating(
+                category_rating,
+                rating.id,
+                &mut state.snowflake_generator,
+                &mut transaction.tx,
+            )
+            .await?;
+        }
+
         transaction.tx.commit().await?;
         Ok(AppMessage::OkMessage("Successfully updated rating"))
     }
