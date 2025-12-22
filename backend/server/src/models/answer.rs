@@ -396,7 +396,9 @@ impl Answer {
         data: AnswerData,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        data.validate()?;
+        if !data.is_empty() {
+            data.validate()?;
+        }
 
         let answer = sqlx::query_as!(
             AnswerTypeApplicationId,
@@ -414,7 +416,9 @@ impl Answer {
         let old_data = AnswerData::from_question_type(&answer.question_type);
         old_data.delete_from_db(id, transaction).await?;
 
-        data.insert_into_db(id, transaction).await?;
+        if !data.is_empty() {
+            data.insert_into_db(id, transaction).await?;
+        }
 
         sqlx::query!(
             "UPDATE applications SET updated_at = $1 WHERE id = $2",
@@ -535,6 +539,14 @@ impl AnswerData {
                 let options = ranking_answers.expect("Data should exist for Ranking variant");
                 AnswerData::Ranking(options)
             }
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        match self {
+            AnswerData::ShortAnswer(text) => text.is_empty(),
+            AnswerData::MultiSelect(options) | AnswerData::Ranking(options) => options.is_empty(),
+            AnswerData::MultiChoice(option_id) | AnswerData::DropDown(option_id) => false,
         }
     }
 

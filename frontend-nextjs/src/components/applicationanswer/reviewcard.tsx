@@ -30,7 +30,7 @@ export default function ReviewCard({
 
     function renderAnswerPreview(qa: QuestionAndAnswer): string {
         if (!qa.answer || qa.answer === "__NO_ANSWER__") {
-            return "No answer";
+            return "[No Answer Provided]";
         }
 
         switch (qa.question_type) {
@@ -126,7 +126,13 @@ export default function ReviewCard({
                                                 const answer = renderAnswerPreview(qa)
                                                 return (
                                                     <div key={qa.question_id} className="mb-2">
-                                                        <h4 className="text-l font-semibold">{qa.text}</h4>
+                                                        <div className="flex">
+                                                            <h4 className="text-l font-semibold">{qa.text}</h4>
+                                                            {qa.required && (
+                                                                <div className="text-destructive font-bold">*</div>
+                                                                )
+                                                            }
+                                                        </div>
                                                         <div className="mt-2 rounded bg-muted p-3 text-sm overflow-x-auto">
                                                             {answer}
                                                         </div>
