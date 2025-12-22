@@ -45,10 +45,6 @@ export default function MultiSelect({
 
     const [selectedOptions, setSelectedOptions] = useState<Array<string | number>>(deriveIdsFromAnswerString(question.answer, options));
 
-    useEffect(() => {
-        setSelectedOptions(deriveIdsFromAnswerString(question.answer, options))
-    }, [question.answer])
-
     const handleChange = (optionId: string | number, checked: boolean) => {
         const next = checked ? [...selectedOptions, optionId] : selectedOptions.filter(id => id !== optionId);
         setSelectedOptions(next);

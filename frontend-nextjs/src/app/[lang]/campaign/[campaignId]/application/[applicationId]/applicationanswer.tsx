@@ -56,8 +56,8 @@ export default function ApplicationReview({
     setQAByRole(prev => {
       const newQAMap = new Map(prev);
       if (!newQAMap.has('general')) {
-        const generalQs: Question[] | undefined = queryClient.getQueryData(['common-questions', applicationId]);
-        const generalAnswers: Answer[] | undefined = queryClient.getQueryData(['common-answers', applicationId]);
+        const generalQs: Question[] | undefined = queryClient.getQueryData([`${applicationId}-common-questions`]);
+        const generalAnswers: Answer[] | undefined = queryClient.getQueryData([`${applicationId}-common-answers`]);
         if (generalQs && generalAnswers) {
           const linkedGeneral = linkQuestionsAndAnswers(generalQs, generalAnswers);
           newQAMap.set('general', linkedGeneral)
@@ -66,8 +66,8 @@ export default function ApplicationReview({
 
       for (const roleId of roleIds) {
         if (newQAMap.has(roleId)) continue;
-        const roleQs: Question[] | undefined  = queryClient.getQueryData(['role-questions', campaignId, roleId])
-        const roleAnswers: Answer[] | undefined = queryClient.getQueryData(['role-answers', applicationId, roleId])
+        const roleQs: Question[] | undefined  = queryClient.getQueryData([`${campaignId}-${roleId}-role-questions`])
+        const roleAnswers: Answer[] | undefined = queryClient.getQueryData([`${applicationId}-${roleId}-role-answers`])
         if (roleQs && roleAnswers) {
           const linked = linkQuestionsAndAnswers(roleQs, roleAnswers);
           newQAMap.set(roleId, linked);
@@ -132,9 +132,7 @@ export default function ApplicationReview({
       const payload = {
         roles: buildUpdatedRolesPayload(nextSelectedRoles),
       };
-      console.log(payload.roles)
       await updateApplicationRoles(applicationId, payload.roles);
-
     } catch (err) {
       console.error("Failed to update roles:", err);
     }
@@ -152,6 +150,7 @@ export default function ApplicationReview({
 
   useEffect(() => {
     populateQAByRole(selectedRoleIds,campaignId, applicationId)
+    console.log(qaByRole)
   }, [selectedRoleIds]);
 
   return (
@@ -171,7 +170,7 @@ export default function ApplicationReview({
           <div className="flex-1">
             <RoleTabs roles={roles} selectedRoleIds={selectedRoleIds} activeTab={activeTab} onChangeActiveTab={setActiveTab}/>
             <MainContent campaignId={campaignId} applicationId={applicationId} activeTab={activeTab} dict={dict} updateRoleAnswers={updateRoleAnswers}/>
-            {/* <ReviewCard/> */}
+            <ReviewCard questionsAndAnswersByRole={qaByRole} roles={roles}/>
           </div>
         </div>
       </div>
