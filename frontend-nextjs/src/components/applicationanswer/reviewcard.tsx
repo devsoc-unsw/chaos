@@ -26,7 +26,26 @@ export default function ReviewCard({
     roles: CampaignRole[] | undefined;
 }) {
     const [open, setOpen] = useState(false)
-    const [requiredUnanswered, setRequiredUnanswered] = useState(false);
+    const requiredUnanswered = Array.from(
+        questionsAndAnswersByRole.values()
+    )
+    .flat()
+    .some((qa) => {
+        if (!qa.required) return false;
+
+        if (qa.answer == null) return true;
+        if (qa.answer === "__NO_ANSWER__") return true;
+
+        if (typeof qa.answer === "string") {
+        return qa.answer.trim() === "";
+        }
+
+        if (Array.isArray(qa.answer)) {
+        return qa.answer.length === 0;
+        }
+
+        return false;
+    });
 
     function renderAnswerPreview(qa: QuestionAndAnswer): string {
         if (!qa.answer || qa.answer === "__NO_ANSWER__") {
@@ -151,7 +170,7 @@ export default function ReviewCard({
                                 <TooltipTrigger asChild>
                                     <span className="inline-block w-full">
                                     <Button
-                                        className="w-full"
+                                        className="w-full bg-background text-primary border border-primary transition-colors cursor-pointer hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground focus-visible:bg-primary focus-visible:text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed"
                                         type="button"
                                         disabled={requiredUnanswered}
                                         onClick={() => handleSubmit()}

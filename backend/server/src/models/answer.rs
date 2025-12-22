@@ -546,7 +546,8 @@ impl AnswerData {
         match self {
             AnswerData::ShortAnswer(text) => text.is_empty(),
             AnswerData::MultiSelect(options) | AnswerData::Ranking(options) => options.is_empty(),
-            AnswerData::MultiChoice(option_id) | AnswerData::DropDown(option_id) => false,
+            AnswerData::MultiChoice(option_id) => false,
+            AnswerData::DropDown(option_id) => *option_id == 0
         }
     }
 

@@ -48,8 +48,18 @@ export default function Dropdown({
 
         setValue(optionId);
         setAnswer(optionText);
+        // this breaks the code. Will explain more later.
+        // if (selectedValue === NO_ANSWER_VALUE) {
+        //     setAnswer("");
+        //     try {
+        //         await submitAnswer(question, "0", applicationId, answerId);
+        //     } catch (err) {
+        //         console.error("Dropdown update failed:", err);
+        //     }
+        //     return;
+        // }
         try {
-            await submitAnswer(question,optionId, applicationId, answerId)
+            await submitAnswer(question, optionId, applicationId, answerId)
         } catch (err) {
             console.error("Short answer update failed:", err);
         }
