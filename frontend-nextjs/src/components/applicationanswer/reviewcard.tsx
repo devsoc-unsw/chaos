@@ -14,13 +14,16 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState } from "react";
 import { CampaignRole } from "@/models/campaign";
-
+import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { submitApplication } from "@/models/application";
 export default function ReviewCard({
     questionsAndAnswersByRole,
+    applicationId,
     roles
 }: {
     questionsAndAnswersByRole: Map<string, QuestionAndAnswer[]>;
-    roles: CampaignRole[] | undefined
+    applicationId: string;
+    roles: CampaignRole[] | undefined;
 }) {
     const [open, setOpen] = useState(false)
     const [requiredUnanswered, setRequiredUnanswered] = useState(false);
@@ -83,6 +86,10 @@ export default function ReviewCard({
         }
     }
 
+    const handleSubmit = async () => {
+        submitApplication(applicationId)
+    }
+
     return (
         <>
         <button
@@ -131,6 +138,30 @@ export default function ReviewCard({
                                 );
                             }
                         )}
+                    </div>
+                    <div className="sticky bottom-0 z-10 bg-background border-t p-4">
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <span className="inline-block w-full">
+                                    <Button
+                                        className="w-full"
+                                        type="button"
+                                        disabled={requiredUnanswered}
+                                        onClick={() => handleSubmit()}
+                                    >
+                                        Submit Application
+                                    </Button>
+                                    </span>
+                                </TooltipTrigger>
+
+                                {requiredUnanswered && (
+                                    <TooltipContent>
+                                    Please answer all required questions before submitting.
+                                    </TooltipContent>
+                                )}
+                            </Tooltip>
+                        </TooltipProvider>
                     </div>
                 </DialogContent>
             </Dialog>

@@ -170,7 +170,7 @@ export default function ApplicationReview({
           <div className="flex-1">
             <RoleTabs roles={roles} selectedRoleIds={selectedRoleIds} activeTab={activeTab} onChangeActiveTab={setActiveTab}/>
             <MainContent campaignId={campaignId} applicationId={applicationId} activeTab={activeTab} dict={dict} updateRoleAnswers={updateRoleAnswers}/>
-            <ReviewCard questionsAndAnswersByRole={qaByRole} roles={roles}/>
+            <ReviewCard questionsAndAnswersByRole={qaByRole} roles={roles} applicationId={applicationId}/>
           </div>
         </div>
       </div>

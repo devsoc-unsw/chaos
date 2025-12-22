@@ -61,3 +61,9 @@ export async function updateApplicationRating(applicationId: string, rating?: nu
     });
 }
 
+export async function submitApplication(applicationId: string) {
+    return await apiRequest<void>(`/api/v1/application/${applicationId}/submit`, {
+        method: "POST"
+    });
+}
+
