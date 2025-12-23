@@ -78,24 +78,22 @@ export default function ApplicationReview({
     })
   }
 
-  const updateRoleAnswers = (roleId: string, newQA: QuestionAndAnswer) => {
+  const updateQuestionAnswer = (newQA: QuestionAndAnswer) => {
     setQAByRole(prev => {
       const newQAMap = new Map(prev);
-      const questions = newQAMap.get(roleId)
-      if (!questions) return prev;
 
-      newQAMap.set(
-        roleId,
+      for (const [roleId, questions] of newQAMap.entries()) {
+        newQAMap.set(
+          roleId,
           questions.map(q =>
-            q.question_id === newQA.question_id
-              ? newQA
-              : q
+            q.question_id === newQA.question_id ? newQA : q
           )
         );
-      console.log(newQAMap);
+      }
+
       return newQAMap;
-    })
-  }
+    });
+};
 
   // format roles to match what backend expects
   const buildUpdatedRolesPayload = (orderedIds: string[]) => {
@@ -169,7 +167,7 @@ export default function ApplicationReview({
           <RoleSelector roles={roles} maxRolesPerApplication={campaign?.max_roles_per_application} selectedRoleIds={selectedRoleIds} onChangeSelectedRoles={updateRoles} applicationId={applicationId} dict={dict}/>
           <div className="flex-1">
             <RoleTabs roles={roles} selectedRoleIds={selectedRoleIds} activeTab={activeTab} onChangeActiveTab={setActiveTab}/>
-            <MainContent campaignId={campaignId} applicationId={applicationId} activeTab={activeTab} dict={dict} updateRoleAnswers={updateRoleAnswers}/>
+            <MainContent campaignId={campaignId} applicationId={applicationId} activeTab={activeTab} dict={dict} updateRoleAnswers={updateQuestionAnswer}/>
             <ReviewCard questionsAndAnswersByRole={qaByRole} roles={roles} applicationId={applicationId}/>
           </div>
         </div>

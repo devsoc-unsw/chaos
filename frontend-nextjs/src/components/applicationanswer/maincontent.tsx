@@ -24,7 +24,7 @@ export default function MainContent({
   applicationId: string;
   activeTab: string;
   dict: any;
-  updateRoleAnswers: (roleId:string, newQA:QuestionAndAnswer) => void;
+  updateRoleAnswers: (newQA:QuestionAndAnswer) => void;
 //   activeRoleId: string;
 }) {
     const [questionsAndAnswers, setQuestionsAndAnswers] =
@@ -62,7 +62,7 @@ export default function MainContent({
         answer: value,
       };
 
-      updateRoleAnswers(activeTab, updatedQA);
+      updateRoleAnswers(updatedQA);
       const payload = buildAnswerPayload(question, value);
       if (answerId) {
         return updateAnswer(answerId, payload);
