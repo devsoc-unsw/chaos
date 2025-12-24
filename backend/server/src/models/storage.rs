@@ -82,7 +82,39 @@ impl Storage {
     /// The generated URL is valid for 1 hour (3600 seconds).
     pub async fn generate_put_url(path: String, bucket: &Bucket) -> Result<String, ChaosError> {
         let url = bucket.presign_put(path, 3600, None).await?;
-
         Ok(url)
+    }
+
+    /// Generates a pre-signed URL for downloading/retrieving a file from S3.
+    /// 
+    /// # Arguments
+    /// * `path` - The path where the file is stored in the bucket
+    /// * `bucket` - A reference to the initialized S3 bucket
+    /// 
+    /// # Returns
+    /// Returns a `Result` containing either:
+    /// * `Ok(String)` - The pre-signed URL for downloading
+    /// * `Err(ChaosError)` - An error if URL generation fails
+    /// 
+    /// # Note
+    /// The generated URL is valid for 1 hour (3600 seconds).
+    pub async fn generate_get_url(path: String, bucket: &Bucket) -> Result<String, ChaosError> {
+        let url = bucket.presign_get(path, 3600, None).await?;
+        Ok(url)
+    }
+
+    /// Deletes a file from S3 storage.
+    /// 
+    /// # Arguments
+    /// * `path` - The path where the file is stored in the bucket
+    /// * `bucket` - A reference to the initialized S3 bucket
+    /// 
+    /// # Returns
+    /// Returns a `Result` containing either:
+    /// * `Ok(())` - If the file was deleted successfully
+    /// * `Err(ChaosError)` - An error if deletion fails
+    pub async fn delete_file(path: String, bucket: &Bucket) -> Result<(), ChaosError> {
+        bucket.delete_object(path).await?;
+        Ok(())
     }
 }

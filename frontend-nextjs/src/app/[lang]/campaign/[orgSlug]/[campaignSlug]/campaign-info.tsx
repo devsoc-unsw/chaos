@@ -1,10 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getCampaignBySlugs, getCampaignRoles } from "@/models/campaign";
+import { getCampaignBySlugs, getCampaignAttachments, getCampaignRoles } from "@/models/campaign";
 
-import { Calendar, ExternalLink, Mail, FileText, Video, Clock, Users, Briefcase, Info, Phone } from "lucide-react";
-import { dateToString } from "@/lib/utils";
+import { Calendar, ExternalLink, Mail, FileText, Video, Clock, Users, Briefcase, Info, Phone, SquareUserRound } from "lucide-react";
+import { dateToString } from "@/lib/utils"; 
 import { Button } from "@/components/ui/button";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -21,6 +21,11 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
         queryKey: [`${campaignData?.id}-campaign-roles`],
         queryFn: () => getCampaignRoles(campaignData!.id)
     });
+
+    const { data: attachmentsData } = useQuery({
+        queryKey: [`${campaignData?.id}-campaign-attachments`],
+        queryFn: () => getCampaignAttachments(campaignData!.id)
+    })
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -157,6 +162,32 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
                                             No roles available for this campaign.
                                         </p>
                                     )}
+                                </div>
+                            </div>
+
+                            {/* Divider */}
+                            <hr className="border-gray-200" />
+
+                            {/* Attachments */}
+                            <div className="p-6">
+                                <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-1">
+                                    <SquareUserRound className="w-5 h-5" />
+                                    {dict.common.attachments}
+                                </h3>
+                                <div>
+                                    {attachmentsData && attachmentsData.length > 0 && attachmentsData.map(attachment => (
+                                        <div>
+                                            <a 
+                                                href={attachment.download_url} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                className="text-blue-600 hover:text-blue-800 underline flex items-center gap-2"
+                                            >
+                                                <FileText className="w-4 h-4" />
+                                                    {attachment.file_name} ({(attachment.file_size / 1024).toFixed(2)} KB)
+                                            </a>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
 
