@@ -267,11 +267,11 @@ pub struct NewAttachment {
 /// Contains the pre-signed URL where the file can be uploaded.
 #[derive(Serialize)]
 pub struct AttachmentUpload {
-    /// Pre-signed URL for uploading the file
-    pub upload_url: String,
     /// ID of the created attachment record
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub attachment_id: i64,
+    /// Pre-signed URL for uploading the file
+    pub upload_url: String,
 }
 
 impl Campaign {
@@ -637,6 +637,7 @@ impl CampaignAttachment {
     ) -> Result<Vec<AttachmentUpload>, ChaosError> {
         // Check if attachment already exists
         let existing = Self::get_by_campaign(campaign_id, transaction).await?;
+        let campaign = Campaign::get(campaign_id, transaction).await?;
 
         let mut attachment_ids = Vec::new();
         for file in files {
@@ -673,15 +674,17 @@ impl CampaignAttachment {
         let mut results = Vec::new();
         for id in attachment_ids {
             let upload_url = Storage::generate_put_url(
-                format!("/attachment/{}/{}", campaign_id, id),
+                format!("/organisation/{}/campaign/{}/attachment/{}", campaign.organisation_id, campaign.id, id),
                 storage_bucket,
             )
             .await?;
+
             results.push(AttachmentUpload {
                 upload_url,
                 attachment_id: id,
             });
         }
+        
         Ok(results)
     }
 

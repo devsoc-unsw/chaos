@@ -13,7 +13,7 @@ use crate::models::application::Application;
 use crate::models::application::NewApplication;
 use crate::models::auth::AuthUser;
 use crate::models::auth::CampaignAdmin;
-use crate::models::campaign::{Campaign, CampaignAttachment, NewAttachment, OpenCampaign};
+use crate::models::campaign::{AttachmentResponse, Campaign, CampaignAttachment, NewAttachment, OpenCampaign};
 use crate::models::error::ChaosError;
 use crate::models::offer::Offer;
 use crate::models::role::{Role, RoleUpdate};
@@ -383,19 +383,19 @@ impl CampaignHandler {
         Path(id): Path<i64>,
         _user: AuthUser,
     ) -> Result<impl IntoResponse, ChaosError> {
+        let campaign = Campaign::get(id, &mut transaction.tx).await?;
         let attachments = CampaignAttachment::get_by_campaign(id, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
 
         // Generate download URLs for each attachment
         let mut responses = Vec::new();
         for attachment in attachments {
             let download_url = Storage::generate_get_url(
-                format!("/attachment/{}/{}", attachment.campaign_id, attachment.id),
+                format!("/organisation/{}/campaign/{}/attachment/{}", campaign.organisation_id, campaign.id, attachment.id),
                 &state.storage_bucket,
             )
             .await?;
 
-            responses.push(models::campaign::AttachmentResponse {
+            responses.push(AttachmentResponse {
                 id: attachment.id,
                 campaign_id: attachment.campaign_id,
                 file_name: attachment.file_name,
@@ -404,6 +404,7 @@ impl CampaignHandler {
             });
         }
 
+        transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(responses)))
     }
 
@@ -470,6 +471,7 @@ impl CampaignHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         // Get the attachment to find its campaign_id
         let attachment = CampaignAttachment::get_by_id(attachment_id, &mut transaction.tx).await?;
+        let campaign = Campaign::get(attachment.campaign_id, &mut transaction.tx).await?;
         
         // Verify the admin has access to this campaign
         crate::service::campaign::user_is_campaign_admin(
@@ -479,12 +481,13 @@ impl CampaignHandler {
         )
         .await?;
         
-        // Delete the file from S3 storage
-        let storage_path = format!("/attachment/{}/{}", attachment.campaign_id, attachment.id);
-        state.storage_bucket.delete_object(&storage_path).await?;
-        
         // Delete the attachment from database
         CampaignAttachment::delete(attachment_id, &mut transaction.tx).await?;
+
+        // Delete the file from S3 storage
+        let storage_path = format!("/organisation/{}/campaign/{}/attachment/{}", campaign.organisation_id, campaign.id, attachment.id);
+        Storage::delete_file(storage_path, &state.storage_bucket).await?;
+        
         transaction.tx.commit().await?;
         Ok(())
     }
