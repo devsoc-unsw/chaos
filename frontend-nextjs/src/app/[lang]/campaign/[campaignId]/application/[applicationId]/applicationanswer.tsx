@@ -2,7 +2,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCampaign, getCampaignRoles } from "@/models/campaign";
-import { getUnsubmittedApplication } from "@/models/application";
+import { getInProgressApplication, submitApplication } from "@/models/application";
 import { Answer, updateApplicationRoles } from "@/models/answer";
 import { useState, useEffect } from "react";
 import RoleSelector from "../../../../../../components/applicationanswer/roleselector";
@@ -10,6 +10,7 @@ import RoleTabs from "../../../../../../components/applicationanswer/roletabs";
 import MainContent from "../../../../../../components/applicationanswer/maincontent";
 import ReviewCard from "@/components/applicationanswer/reviewcard";
 import { linkQuestionsAndAnswers, Question, QuestionAndAnswer } from "@/models/question";
+import { redirect } from "next/navigation";
 interface ApplicationReviewProps {
   campaignId: string;
   applicationId: string;
@@ -44,7 +45,7 @@ export default function ApplicationReview({
 
   const { data: application } = useQuery({
     queryKey: [`application-${applicationId}`],
-    queryFn: () => getUnsubmittedApplication(applicationId),
+    queryFn: () => getInProgressApplication(applicationId),
   });
 
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
@@ -146,6 +147,14 @@ export default function ApplicationReview({
     }
   }, [application]);
 
+  const handleApplicationSubmit = async () => {
+      submitApplication(applicationId)
+      queryClient.clear();
+      redirect(
+        `/campaign/${campaignId}/finish`
+      );
+  }
+
   useEffect(() => {
     populateQAByRole(selectedRoleIds,campaignId, applicationId)
     console.log(qaByRole)
@@ -168,7 +177,7 @@ export default function ApplicationReview({
           <div className="flex-1">
             <RoleTabs roles={roles} selectedRoleIds={selectedRoleIds} activeTab={activeTab} onChangeActiveTab={setActiveTab}/>
             <MainContent campaignId={campaignId} applicationId={applicationId} activeTab={activeTab} dict={dict} updateRoleAnswers={updateQuestionAnswer}/>
-            <ReviewCard questionsAndAnswersByRole={qaByRole} roles={roles} applicationId={applicationId}/>
+            <ReviewCard questionsAndAnswersByRole={qaByRole} roles={roles} applicationId={applicationId} handleSubmit={handleApplicationSubmit}/>
           </div>
         </div>
       </div>

@@ -7,9 +7,10 @@ import ApplicationReview from "./applicationanswer";
 import { ApplicationDetails } from "@/models/application";
 import { getDictionary } from "@/app/[lang]/dictionaries";
 import { getCampaignRoles, getCampaign } from "@/models/campaign";
-import { getUnsubmittedApplication } from "@/models/application";
+import { getInProgressApplication } from "@/models/application";
 import { getAllRoleQuestions, getAllCommonQuestions } from "@/models/question";
 import { getAllRoleAnswers, getAllCommonAnswers} from "@/models/answer";
+import { redirect } from "next/navigation";
 async function ApplicationPage({
   params,
 }: {
@@ -19,13 +20,15 @@ async function ApplicationPage({
     const queryClient = new QueryClient();
     const dict = await getDictionary(lang);
 
-    await queryClient.prefetchQuery({
-      queryKey: [`application-${applicationId}`],
-      queryFn: () => getUnsubmittedApplication(applicationId),
-    });
+  await queryClient.prefetchQuery({
+    queryKey: [`application-${applicationId}`],
+    queryFn: () => getInProgressApplication(applicationId)
+  })
 
     const application: ApplicationDetails | undefined = queryClient.getQueryData([`application-${applicationId}`]);
-
+    if (!application) {
+      redirect(`/campaign/${campaignId}/finish`);
+    }
     const QApromises = [];
     // how do you make this part faster idrk(could not find anything on Reddit so decided to ask cursor 4 suggestions)
     for (const role of application?.applied_roles ?? []) {
@@ -35,6 +38,7 @@ async function ApplicationPage({
           queryFn: () => getAllRoleQuestions(campaignId, role.campaign_role_id),
         })
       );
+
       QApromises.push(
         queryClient.prefetchQuery({
           queryKey: [`${applicationId}-${role.campaign_role_id}-role-answers`],
@@ -69,7 +73,8 @@ async function ApplicationPage({
         queryFn: () => getCampaignRoles(campaignId),
     });
 
-  return (
+    //redirect upon submitted application
+    return (
     <HydrationBoundary state={dehydrate(queryClient)}>
         <ApplicationReview
         campaignId={campaignId}

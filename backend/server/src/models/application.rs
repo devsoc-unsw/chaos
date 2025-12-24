@@ -399,11 +399,29 @@ impl Application {
     /// # Returns
     /// 
     /// * `Result<ApplicationDetails, ChaosError>` - Application details or error
-    pub async fn get_unsubmitted(
+    pub async fn get_in_progress(
         id: i64,
         current_user: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<ApplicationDetails, ChaosError> {
+
+        let submitted = sqlx::query_scalar!(
+            r#"
+            SELECT submitted
+            FROM applications
+            WHERE id = $1
+            AND user_id = $2
+            "#,
+            id,
+            current_user
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
+        if submitted {
+            return Err(ChaosError::BadRequest);
+        }
+
         let application_data = sqlx::query_as!(
             ApplicationData,
             "

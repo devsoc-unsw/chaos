@@ -19,13 +19,16 @@ import { submitApplication } from "@/models/application";
 export default function ReviewCard({
     questionsAndAnswersByRole,
     applicationId,
+    handleSubmit,
     roles
 }: {
     questionsAndAnswersByRole: Map<string, QuestionAndAnswer[]>;
     applicationId: string;
+    handleSubmit: () => void;
     roles: CampaignRole[] | undefined;
 }) {
     const [open, setOpen] = useState(false)
+    // vibed this
     const requiredUnanswered = Array.from(
         questionsAndAnswersByRole.values()
     )
@@ -103,10 +106,6 @@ export default function ReviewCard({
             default:
                 return String(qa.answer);
         }
-    }
-
-    const handleSubmit = async () => {
-        submitApplication(applicationId)
     }
 
     return (

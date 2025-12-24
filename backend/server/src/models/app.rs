@@ -350,8 +350,8 @@ pub async fn app() -> Result<Router, ChaosError> {
             get(ApplicationHandler::get),
         )
         .route(
-            "/api/v1/application/:application_id/unsubmitted",
-            get(ApplicationHandler::get_unsubmitted),
+            "/api/v1/application/:application_id/inprogress",
+            get(ApplicationHandler::get_in_progress),
         )
         .route(
             "/api/v1/application/:application_id/rating",

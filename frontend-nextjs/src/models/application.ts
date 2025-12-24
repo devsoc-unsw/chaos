@@ -23,8 +23,8 @@ export async function getApplication(applicationId: string): Promise<Application
     return await apiRequest<ApplicationDetails>(`/api/v1/application/${applicationId}`);
 }
 
-export async function getUnsubmittedApplication(applicationId: string): Promise<ApplicationDetails> {
-    return await apiRequest<ApplicationDetails>(`/api/v1/application/${applicationId}/unsubmitted`);
+export async function getInProgressApplication(applicationId: string): Promise<ApplicationDetails> {
+    return await apiRequest<ApplicationDetails>(`/api/v1/application/${applicationId}/inprogress`);
 }
 
 export interface RatingDetails {

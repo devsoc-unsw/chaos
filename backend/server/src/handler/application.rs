@@ -103,15 +103,16 @@ impl ApplicationHandler {
     /// # Returns
     /// 
     /// * `Result<impl IntoResponse, ChaosError>` - Application details or error
-    pub async fn get_unsubmitted(
+    pub async fn get_in_progress(
         Path(application_id): Path<i64>,
         user: AuthUser,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let application = Application::get_unsubmitted(application_id, user.user_id, &mut transaction.tx).await?;
+        let application = Application::get_in_progress(application_id, user.user_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(application)))
     }
+
     /// Updates the status of an application.
     /// 
     /// This handler allows application admins to update the application's status.
