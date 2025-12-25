@@ -173,20 +173,19 @@ pub enum ApplicationStatus {
     Successful,
 }
 
-/// Individual rating data for a specific application and role.
+// TODO: Change this model to have all ratings for specific application as a child vector
+/// Individual rating data for a specific application.
 ///
 /// Each row represents an individual rating for a single applicant in a given role
 /// within a specific application, including reviewer information.
 #[derive(Deserialize, Serialize, FromRow)]
-pub struct UserAvgApplicationRating {
+pub struct ApplicationRating {
     /// Application ID
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub application_id: i64,
-    /// Role ID within the campaign
-    #[serde(serialize_with = "crate::models::serde_string::serialize")]
-    pub campaign_role_id: i64,
-    /// Name of the campaign role
-    pub campaign_role_name: String,
+    /// Role IDs application is for
+    #[serde(serialize_with = "crate::models::serde_string::serialize_vec")]
+    pub applied_roles: Vec<i64>,
     /// User's name (applicant)
     pub user_name: String,
     /// User's email (applicant)
@@ -200,7 +199,7 @@ pub struct UserAvgApplicationRating {
     /// Optional comment/description from the reviewer
     pub comment: Option<String>,
     /// Individual rating value
-    pub rating: f64,
+    pub rating: i32,
 }
 
 impl Application {
@@ -332,7 +331,6 @@ impl Application {
 
         Ok(id)
     }
-    
 
     /// Retrieves an application by its ID.
     /// 
@@ -566,31 +564,28 @@ impl Application {
         Ok(application_details_list)
     }
 
-    pub async fn get_users_avg_rating_from_application(
+    pub async fn get_application_ratings_summary(
         campaign_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<Vec<UserAvgApplicationRating>, ChaosError> {
+    ) -> Result<Vec<ApplicationRating>, ChaosError> {
         let application_users_avg_ratings = sqlx::query_as!(
-            UserAvgApplicationRating,
+            ApplicationRating,
             "
-                SELECT applications.id AS application_id, campaign_roles.id AS campaign_role_id, campaign_roles.name AS campaign_role_name, users.name AS user_name, users.email AS user_email, applications.status AS \"status: ApplicationStatus\", application_ratings.updated_at AS updated_at,
-                reviewers.name AS rater_name, application_ratings.comment AS comment, application_ratings.rating::double precision AS \"rating!: f64\"
-                FROM users
-                JOIN applications
-                ON users.id = applications.user_id
-                JOIN campaigns
-                ON campaigns.id = applications.campaign_id
-                JOIN application_roles
-                ON applications.id = application_roles.application_id
-                JOIN campaign_roles
-                ON application_roles.campaign_role_id = campaign_roles.id
-                JOIN application_ratings
-                ON applications.id = application_ratings.application_id
-                JOIN users AS reviewers
-                ON reviewers.id = application_ratings.rater_id
-                WHERE campaigns.id = $1
-                AND application_ratings.rating IS NOT NULL
-                ORDER BY campaign_roles.id, applications.id ASC
+                SELECT
+                    a.id AS application_id,
+                    ARRAY_AGG(applied_roles.campaign_role_id) AS \"applied_roles!: Vec<i64>\",
+                    u.name AS user_name, u.email AS user_email,
+                    a.status AS \"status: ApplicationStatus\", a.updated_at,
+                    reviewer.name AS rater_name, ar.comment, ar.rating
+                FROM applications a
+                JOIN application_roles applied_roles ON applied_roles.application_id = a.id
+                JOIN campaign_roles ON campaign_roles.id = applied_roles.campaign_role_id
+                JOIN application_ratings ar on ar.application_id = a.id
+                JOIN users u ON u.id = a.user_id
+                JOIN users AS reviewer ON reviewer.id = ar.rater_id
+                WHERE a.campaign_id = $1
+                GROUP BY a.id, u.name, u.email, a.status, a.updated_at, reviewer.name, ar.comment, ar.rating
+                ORDER BY a.id ASC
             ",
             campaign_id,
         )

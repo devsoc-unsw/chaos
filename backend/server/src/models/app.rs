@@ -289,7 +289,7 @@ pub async fn app() -> Result<Router, ChaosError> {
         )
         .route(
             "/api/v1/campaign/:campaign_id/avg_ratings",
-            get(ApplicationHandler::get_avg_applications_ratings),
+            get(ApplicationHandler::get_application_ratings_summary),
         )
         .route(
             "/api/v1/campaign/:campaign_id/role",
