@@ -89,7 +89,7 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
         &mut tx).await.expect("Failed seeding Organisation");
 
     Organisation::update_admins(org_id, 
-        vec![2], 
+        vec![1, 2],
         &mut tx).await.expect("Failed updating Organisation Admin");
 
     let campaign_id = Organisation::create_campaign(
