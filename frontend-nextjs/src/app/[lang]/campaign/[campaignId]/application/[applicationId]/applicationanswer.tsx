@@ -11,6 +11,7 @@ import MainContent from "../../../../../../components/applicationanswer/maincont
 import ReviewCard from "@/components/applicationanswer/reviewcard";
 import { linkQuestionsAndAnswers, Question, QuestionAndAnswer } from "@/models/question";
 import { redirect } from "next/navigation";
+
 interface ApplicationReviewProps {
   campaignId: string;
   applicationId: string;
@@ -148,11 +149,15 @@ export default function ApplicationReview({
   }, [application]);
 
   const handleApplicationSubmit = async () => {
-      submitApplication(applicationId)
-      queryClient.clear();
-      redirect(
-        `/campaign/${campaignId}/finish`
-      );
+      try {
+        submitApplication(applicationId)
+        queryClient.invalidateQueries({ queryKey: [`application-${applicationId}`] });
+        redirect(
+          `/campaign/${campaignId}/finish`
+        );
+      } catch (e) {
+        console.error("Submission failed: ", e);
+      }
   }
 
   useEffect(() => {

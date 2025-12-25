@@ -1,9 +1,7 @@
-import React, { useState, useEffect, ChangeEvent } from 'react';
+import { useState, useEffect, ChangeEvent } from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Question } from '@/models/question';
-import { updateAnswer } from '@/models/answer';
-import { buildAnswerPayload } from '@/lib/utils';
+import { AnswerValue, MultiOptionQuestionOption, QuestionAndAnswer } from '@/models/question';
 
 export default function  ShortAnswer({
   question,
@@ -15,7 +13,7 @@ export default function  ShortAnswer({
   question: any;
   applicationId: string;
   answerId?: string;
-  submitAnswer: (question: any, value: any, applicationId: string, answerId?: string) => Promise<void>;
+  submitAnswer: (question: QuestionAndAnswer, value: AnswerValue, applicationId: string, answerId?: string) => Promise<void>;
   dict: any;
 }) {
     const [value, setValue] = useState(question.answer);

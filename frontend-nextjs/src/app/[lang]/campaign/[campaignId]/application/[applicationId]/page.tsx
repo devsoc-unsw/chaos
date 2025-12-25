@@ -11,6 +11,7 @@ import { getInProgressApplication } from "@/models/application";
 import { getAllRoleQuestions, getAllCommonQuestions } from "@/models/question";
 import { getAllRoleAnswers, getAllCommonAnswers} from "@/models/answer";
 import { redirect } from "next/navigation";
+
 async function ApplicationPage({
   params,
 }: {
@@ -73,7 +74,6 @@ async function ApplicationPage({
         queryFn: () => getCampaignRoles(campaignId),
     });
 
-    //redirect upon submitted application
     return (
     <HydrationBoundary state={dehydrate(queryClient)}>
         <ApplicationReview

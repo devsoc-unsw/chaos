@@ -1,17 +1,14 @@
-import { CampaignRole } from "@/models/campaign";
-import { Question, QuestionAndAnswer } from "@/models/question";
+import { AnswerValue, MultiOptionQuestionOption, QuestionAndAnswer } from "@/models/question";
 import { getAllCommonQuestions, getAllRoleQuestions, linkQuestionsAndAnswers } from "@/models/question";
 import { getAllRoleAnswers, getAllCommonAnswers, updateAnswer, createAnswer  } from "@/models/answer";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import ShortAnswer from "./questions/shortanswer";
 import Dropdown from "./questions/dropdown";
-import MultiC from "./questions/dropdown";
 import Multichoice from "./questions/multichoice";
 import MultiSelect from "./questions/multiselect";
 import Ranking from "./questions/ranking";
 import { buildAnswerPayload } from "@/lib/utils";
-import ReviewCard from "./reviewcard"
 
 export default function MainContent({
   campaignId,
@@ -31,6 +28,7 @@ export default function MainContent({
     useState<QuestionAndAnswer[]>([]);
 
     const generalTab = activeTab === "general"
+
     const { data: questions } = useQuery({
     queryKey: generalTab
       ? [`${campaignId}-common-questions`]
@@ -40,6 +38,7 @@ export default function MainContent({
         ? getAllCommonQuestions(campaignId)
         : getAllRoleQuestions(campaignId, activeTab),
     });
+
     const { data: answers } = useQuery({
     queryKey: generalTab
       ? [`${applicationId}-common-answers`]
@@ -52,23 +51,28 @@ export default function MainContent({
 
     // submits answer to a question
     const submitAnswer = async (
-      question: any,
-      value: unknown,
+      question: QuestionAndAnswer,
+      value: AnswerValue,
       applicationId: string,
       answerId: string | undefined
-    ):Promise<any>  =>  {
+    ):Promise<void>  =>  {
       const updatedQA: QuestionAndAnswer = {
         ...question,
         answer: value,
       };
 
       updateRoleAnswers(updatedQA);
-      const payload = buildAnswerPayload(question, value);
-      if (answerId) {
-        return updateAnswer(answerId, payload);
-      }
+      try {
+        const payload = buildAnswerPayload(question, value);
 
-      return createAnswer(applicationId, payload);
+        if (answerId) {
+          await updateAnswer(answerId, payload);
+        } else {
+          await createAnswer(applicationId, payload);
+        }
+      } catch (err) {
+        console.error("Failed to submit answer", err);
+      }
     }
 
     useEffect(() => {
@@ -77,7 +81,7 @@ export default function MainContent({
       setQuestionsAndAnswers(linked);
     }, [questions, answers]);
 
-    const renderQuestion = (q:QuestionAndAnswer, idx:number) => {
+    const renderQuestion = (q:QuestionAndAnswer) => {
       switch (q.question_type) {
         case "ShortAnswer":
           return (
@@ -144,9 +148,9 @@ export default function MainContent({
               {questionsAndAnswers.length === 0 ? (
                 <p>No questions</p>
               ) : (
-                questionsAndAnswers.map((qa, idx) => (
+                questionsAndAnswers.map((qa) => (
                   <div key={qa.question_id}>
-                    {renderQuestion(qa, idx)}
+                    {renderQuestion(qa)}
                   </div>
                 ))
               )}

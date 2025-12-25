@@ -1,4 +1,4 @@
-import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
+import { DraggableProvided} from "@hello-pangea/dnd";
 import { CampaignRole } from "@/models/campaign";
 import { Info } from "lucide-react";
 import {
@@ -19,7 +19,7 @@ export function RoleCard({
   role: CampaignRole;
   index?: number;
   selected: boolean;
-  drag?: any;
+  drag?: DraggableProvided;
   dict: any;
   onClick?: () => void;
 }) {

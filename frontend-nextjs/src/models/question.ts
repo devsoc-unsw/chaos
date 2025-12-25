@@ -16,7 +16,7 @@ export interface Question {
 
 
 export type QuestionType = "ShortAnswer" | "MultiChoice" | "MultiSelect" | "DropDown" | "Ranking"
-
+export type AnswerValue = string | string[] | MultiOptionQuestionOption | number
 export type QuestionData = MultiOptionData;
 
 export interface MultiOptionData {
@@ -33,7 +33,7 @@ export interface QuestionAndAnswer {
     question_id: string
     answer_id: string | undefined,
     text: string,
-    answer: string | MultiOptionQuestionOption
+    answer: AnswerValue,
     question_type: QuestionType,
     required: boolean,
     options: MultiOptionQuestionOption[],
@@ -125,5 +125,16 @@ export function linkQuestionsAndAnswers(questions: Question[], answers: Answer[]
                 description: question?.description
             }
         }
+
+        return {
+            question_id: question.id,
+            answer_id: answer?.id,
+            text: question.title,
+            answer: "[No Answer Provided]",
+            question_type: question.question_type,
+            required: question.required,
+            options: question.data?.options,
+            description: question?.description,
+        };
     });
 }

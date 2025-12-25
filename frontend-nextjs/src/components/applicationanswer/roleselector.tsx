@@ -1,13 +1,6 @@
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 import { CampaignRole } from "@/models/campaign";
-import { Info } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 import { RoleCard } from "./rolecard";
-import { updateApplicationRoles } from "@/models/answer";
 
 export default function RoleSelector({
   roles,

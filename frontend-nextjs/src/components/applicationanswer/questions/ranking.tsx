@@ -1,7 +1,6 @@
-import React, { useState, useEffect, ChangeEvent } from 'react';
-import { Label } from '@/components/ui/label';
+import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { MultiOptionQuestionOption } from '@/models/question';
+import { AnswerValue, MultiOptionQuestionOption, QuestionAndAnswer } from '@/models/question';
 
 // Special value to represent "No Answer" selection
 export const NO_ANSWER_VALUE = '__NO_ANSWER__';
@@ -23,22 +22,11 @@ export default function Ranking({
     dict: any
     applicationId: string;
     answerId?: string;
-    submitAnswer: (question: any, value: any, applicationId: string, answerId?: string) => Promise<void>;
+    submitAnswer: (question: QuestionAndAnswer, value: AnswerValue, applicationId: string, answerId?: string) => Promise<void>;
 }){
-  function mapIndicesToDisplayOrder<T extends { id: string }>(
-  items: T[]
-  ): Array<{ id: string; display_order: number }> {
-    return items.map((item, index) => ({
-      id: item.id,
-      display_order: index + 1,
-    }));
-  }
+  const options: MultiOptionQuestionOption[] = (question as any).options ?? [];
 
-  const options: MultiOptionQuestionOption[] =
-  (question as any).options ?? [];
-  console.log(question.answer)
-
-  //vibed this bcoz i cbf
+  //vibed this
   function reorderOptionsFromRankingString(
     answer: string,
     options: MultiOptionQuestionOption[]
@@ -62,9 +50,7 @@ export default function Ranking({
       }
     }
 
-    // Append any options not present in the answer (defensive)
     const remaining = options.filter(o => !used.has(o.id));
-
     return [...ordered, ...remaining];
   }
 

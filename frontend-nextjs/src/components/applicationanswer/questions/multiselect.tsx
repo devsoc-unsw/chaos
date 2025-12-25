@@ -1,28 +1,23 @@
-import React, { useState, useEffect, ChangeEvent } from 'react';
+import React, { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { MultiOptionQuestionOption } from '@/models/question';
+import { AnswerValue, MultiOptionQuestionOption, QuestionAndAnswer } from '@/models/question';
 
 // Special value to represent "No Answer" selection
 export const NO_ANSWER_VALUE = '__NO_ANSWER__';
 
 export default function MultiSelect({
-  question,
-  applicationId,
-  answerId,
-  submitAnswer,
-  dict,
+    question,
+    applicationId,
+    answerId,
+    submitAnswer,
+    dict,
 }: {
-  question: any;
-  applicationId: string;
-  answerId?: string;
-  submitAnswer: (
-    question: any,
-    value: any,
-    applicationId: string,
-    answerId?: string
-  ) => Promise<void>;
-  dict: any;
+    question: any;
+    applicationId: string;
+    answerId?: string;
+    submitAnswer: (question: QuestionAndAnswer, value: AnswerValue, applicationId: string, answerId?: string) => Promise<void>;
+    dict: any;
 }) {
     const options: MultiOptionQuestionOption[] =
         (question as any).options ?? [];
@@ -43,10 +38,16 @@ export default function MultiSelect({
                 .filter(Boolean) as string[];
     }
 
-    const [selectedOptions, setSelectedOptions] = useState<Array<string | number>>(deriveIdsFromAnswerString(question.answer, options));
+    const [selectedOptions, setSelectedOptions] =
+    useState<string[]>(deriveIdsFromAnswerString(question.answer, options));
 
     const handleChange = (optionId: string | number, checked: boolean) => {
-        const next = checked ? [...selectedOptions, optionId] : selectedOptions.filter(id => id !== optionId);
+        const id = String(optionId);
+
+        const next = checked
+            ? [...selectedOptions, id]
+            : selectedOptions.filter(existingId => existingId !== id);
+
         setSelectedOptions(next);
         submitAnswer(question, next, applicationId, answerId);
     };
@@ -66,16 +67,16 @@ export default function MultiSelect({
             {options.map((option) => (
                 <div key={option.id} className="flex items-center space-x-2">
                     <Checkbox
-                    id={`option-${question.id}-${option.id}`}
-                    checked={selectedOptions.includes(option.id)}
-                    onCheckedChange={(checked) => handleChange(option.id, !!checked)}
+                        id={`option-${question.id}-${option.id}`}
+                        checked={selectedOptions.includes(option.id)}
+                        onCheckedChange={(checked) => handleChange(option.id, !!checked)}
                     />
-                        <Label
+                    <Label
                         htmlFor={`option-${question.id}-${option.id}`}
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                            {option.text}
-                        </Label>
+                    >
+                        {option.text}
+                    </Label>
                 </div>
             ))}
         </div>

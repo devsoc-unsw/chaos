@@ -2,20 +2,14 @@ import { QuestionAndAnswer } from "@/models/question";
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { useState } from "react";
 import { CampaignRole } from "@/models/campaign";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { submitApplication } from "@/models/application";
 export default function ReviewCard({
     questionsAndAnswersByRole,
     applicationId,
@@ -77,6 +71,7 @@ export default function ReviewCard({
 
             case "Ranking":
                 // vibed this too cause lowk didn't know how to map it in the best way
+                // Backend always returns rankings in string form, so we have to split it up to render nicely
                 if (
                     typeof qa.answer === "string" &&
                     /^\s*\d+\.\s+/.test(qa.answer)

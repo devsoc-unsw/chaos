@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { MultiOptionQuestionOption, Question } from '@/models/question';
+import { AnswerValue, MultiOptionQuestionOption, Question, QuestionAndAnswer } from '@/models/question';
 
 // Special value to represent "No Answer" selection
 export const NO_ANSWER_VALUE = '__NO_ANSWER__';
@@ -22,12 +22,7 @@ export default function Dropdown({
   question: any;
   applicationId: string;
   answerId?: string;
-  submitAnswer: (
-    question: any,
-    value: any,
-    applicationId: string,
-    answerId?: string
-  ) => Promise<void>;
+  submitAnswer: (question: QuestionAndAnswer, value: AnswerValue, applicationId: string, answerId?: string) => Promise<void>;
   dict: any;
 }) {
     const [value, setValue] = useState(question.answer_id ? question.answer_id : "")
@@ -48,7 +43,7 @@ export default function Dropdown({
 
         setValue(optionId);
         setAnswer(optionText);
-        // this breaks the code. Will explain more later.
+        // this breaks the code. Will have to refactor the backend so that the backend handles dropdown deletion.
         // if (selectedValue === NO_ANSWER_VALUE) {
         //     setAnswer("");
         //     try {

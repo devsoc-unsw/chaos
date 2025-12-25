@@ -1,22 +1,22 @@
-import React, { useState, useEffect, ChangeEvent } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { MultiOptionQuestionOption, Question, QuestionAndAnswer} from '@/models/question';
+import { AnswerValue, MultiOptionQuestionOption, Question, QuestionAndAnswer} from '@/models/question';
 
 // Special value to represent "No Answer" selection
 export const NO_ANSWER_VALUE = '__NO_ANSWER__';
 
-export default function ShortAnswer({
+export default function MultiChoice({
   question,
   applicationId,
   answerId,
   submitAnswer,
   dict
 }: {
-  question: any;
+  question: QuestionAndAnswer;
   applicationId: string;
   answerId?: string;
-  submitAnswer: (question: any, value: any, applicationId: string, answerId?: string) => Promise<void>;
+  submitAnswer: (question: QuestionAndAnswer, value: AnswerValue, applicationId: string, answerId?: string) => Promise<void>;
   dict: any;
 }) {
     //extract option from text
@@ -28,18 +28,14 @@ export default function ShortAnswer({
     }
 
     const [value, setValue] = useState(getOptionFromText(question))
-    const options: MultiOptionQuestionOption[] =
-    (question as any).options ?? [];
+    const options: MultiOptionQuestionOption[] = question.options ?? [];
 
     useEffect(() => {
         setValue(getOptionFromText(question));
     }, [question.answer])
 
     const handleChange = async (value: string) => {
-        const optionValue = options.find(opt => opt.id.toString() === value);
-        const optionId = optionValue ? optionValue.id : value;
-        setValue(optionId);
-
+        setValue(value);
         try {
             await submitAnswer(question, value, applicationId, answerId)
         } catch (err) {
@@ -48,7 +44,7 @@ export default function ShortAnswer({
     }
 
     return (
-    <div className="mb-6" key={question.answer}>
+    <div className="mb-6">
       <div className="flex items-center mb-2">
           <Label className='text-foreground'>{question.text}</Label>
           {question.required && <span className="ml-1 text-destructive">*</span>}
@@ -66,10 +62,10 @@ export default function ShortAnswer({
             <div key={option.id} className="flex items-center space-x-2">
               <RadioGroupItem
                 value={option.id}
-                id={`option-${question.id}-${option.id}`}
+                id={`option-${question.question_id}-${option.id}`}
               />
               <Label
-                htmlFor={`option-${question.id}-${option.id}`}
+                htmlFor={`option-${question.question_id}-${option.id}`}
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
                 {option.text}
