@@ -383,7 +383,7 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
 
     Rating::create_category_rating(
         NewApplicationCategoryRating {
-            campaign_rating_category_id: category_id_2.id,
+            campaign_rating_category_id: rating_category_id_2,
             rating: 10,
         },
         app_rating_id_1,
@@ -394,7 +394,7 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
 
     Rating::create_category_rating(
         NewApplicationCategoryRating {
-            campaign_rating_category_id: category_id_3.id,
+            campaign_rating_category_id: rating_category_id_3,
             rating: 100,
         },
         app_rating_id_1,
@@ -416,10 +416,10 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
 
     Rating::create_category_rating(
         NewApplicationCategoryRating {
-            campaign_rating_category_id: category_id_1.id,
+            campaign_rating_category_id: rating_category_id_1,
             rating: 95,
         },
-        rating_id_2,
+        app_rating_id_2,
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
@@ -427,10 +427,10 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
 
     Rating::create_category_rating(
         NewApplicationCategoryRating {
-            campaign_rating_category_id: category_id_2.id,
+            campaign_rating_category_id: rating_category_id_2,
             rating: 100,
         },
-        rating_id_2,
+        app_rating_id_2,
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
@@ -438,10 +438,10 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
 
     Rating::create_category_rating(
         NewApplicationCategoryRating {
-            campaign_rating_category_id: category_id_3.id,
+            campaign_rating_category_id: rating_category_id_3,
             rating: 100,
         },
-        rating_id_2,
+        app_rating_id_2,
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
@@ -460,7 +460,7 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
 
     Rating::create_category_rating(
         NewApplicationCategoryRating {
-            campaign_rating_category_id: category_id_1.id,
+            campaign_rating_category_id: rating_category_id_1,
             rating: 100,
         },
         app_rating_id_3,
@@ -471,10 +471,10 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
 
     Rating::create_category_rating(
         NewApplicationCategoryRating {
-            campaign_rating_category_id: category_id_2.id,
+            campaign_rating_category_id: rating_category_id_2,
             rating: 95,
         },
-        rating_id_3,
+        app_rating_id_3,
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
@@ -482,10 +482,10 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
 
     Rating::create_category_rating(
         NewApplicationCategoryRating {
-            campaign_rating_category_id: category_id_3.id,
+            campaign_rating_category_id: rating_category_id_3,
             rating: 5,
         },
-        rating_id_3,
+        app_rating_id_3,
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )

@@ -770,80 +770,82 @@ paths:
           $ref: "#/components/responses/NotLoggedIn"
 
   /rating/{id}:
-    get:
-      operationId: getRatingById
-      description: Returns info about specified rating
-      tags:
-        - Rating
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/RatingDetails"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
-        "401":
-          $ref: "#/components/responses/NotOrganisationMember"
-    delete:
-      operationId: deleteRatingById
-      description: Delete specified rating
-      tags:
-        - Rating
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully deleted rating
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
-        "401":
-          description: User is not original rating creator
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Unauthorized
-    put:
-      operationId: updateRatingById
-      description: Update specified rating
-      tags:
-        - Rating
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/NewRating"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully updated rating
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
-        "401":
-          description: User is not original rating creator
-          content:
-            application/json:
-              schema:
-                properties:
-                  error:
-                    type: string
-                    example: Unauthorized
+    
+  # /rating/{id}:
+  #   get:
+  #     operationId: getRatingById
+  #     description: Returns info about specified rating
+  #     tags:
+  #       - Rating
+  #     responses:
+  #       "200":
+  #         description: OK
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: "#/components/schemas/RatingDetails"
+  #       "307":
+  #         $ref: "#/components/responses/NotLoggedIn"
+  #       "401":
+  #         $ref: "#/components/responses/NotOrganisationMember"
+  #   delete:
+  #     operationId: deleteRatingById
+  #     description: Delete specified rating
+  #     tags:
+  #       - Rating
+  #     responses:
+  #       "200":
+  #         description: OK
+  #         content:
+  #           application/json:
+  #             schema:
+  #               properties:
+  #                 message:
+  #                   type: string
+  #                   example: Successfully deleted rating
+  #       "307":
+  #         $ref: "#/components/responses/NotLoggedIn"
+  #       "401":
+  #         description: User is not original rating creator
+  #         content:
+  #           application/json:
+  #             schema:
+  #               properties:
+  #                 error:
+  #                   type: string
+  #                   example: Unauthorized
+  #   put:
+  #     operationId: updateRatingById
+  #     description: Update specified rating
+  #     tags:
+  #       - Rating
+  #     requestBody:
+  #       required: true
+  #       content:
+  #         application/json:
+  #           schema:
+  #             $ref: "#/components/schemas/NewRating"
+  #     responses:
+  #       "200":
+  #         description: OK
+  #         content:
+  #           application/json:
+  #             schema:
+  #               properties:
+  #                 message:
+  #                   type: string
+  #                   example: Successfully updated rating
+  #       "307":
+  #         $ref: "#/components/responses/NotLoggedIn"
+  #       "401":
+  #         description: User is not original rating creator
+  #         content:
+  #           application/json:
+  #             schema:
+  #               properties:
+  #                 error:
+  #                   type: string
+  #                   example: Unauthorized
   /campaign:
     get:
       operationId: getAllCampaigns
@@ -1287,208 +1289,208 @@ paths:
         "307":
           $ref: "#/components/responses/NotLoggedIn"
 
-  /campaign/{id}/application/{application_id}/rating:
-    post:
-      operationId: createRating
-      parameters:
-        - name: id
-          in: path
-          description: Campaign ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: application_id
-          in: path
-          description: Application ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Create a new rating for specified application
-      tags:
-        - Campaign
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/NewRating"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully created rating
-        "401":
-          $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
+  # /campaign/{id}/application/{application_id}/rating:
+  #   post:
+  #     operationId: createRating
+  #     parameters:
+  #       - name: id
+  #         in: path
+  #         description: Campaign ID
+  #         required: true
+  #         schema:
+  #           type: integer
+  #           format: int64
+  #       - name: application_id
+  #         in: path
+  #         description: Application ID
+  #         required: true
+  #         schema:
+  #           type: integer
+  #           format: int64
+  #     description: Create a new rating for specified application
+  #     tags:
+  #       - Campaign
+  #     requestBody:
+  #       required: true
+  #       content:
+  #         application/json:
+  #           schema:
+  #             $ref: "#/components/schemas/NewRating"
+  #     responses:
+  #       "200":
+  #         description: OK
+  #         content:
+  #           application/json:
+  #             schema:
+  #               properties:
+  #                 message:
+  #                   type: string
+  #                   example: Successfully created rating
+  #       "401":
+  #         $ref: "#/components/responses/NotOrganisationAdmin"
+  #       "307":
+  #         $ref: "#/components/responses/NotLoggedIn"
 
-  /campaign/{id}/application/{application_id}/ratings:
-    get:
-      operationId: getApplicationRatings
-      parameters:
-        - name: id
-          in: path
-          description: Campaign ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: application_id
-          in: path
-          description: Application ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Returns all ratings for specified application
-      tags:
-        - Campaign
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApplicationRatings"
-        "401":
-          $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
+  # /campaign/{id}/application/{application_id}/ratings:
+  #   get:
+  #     operationId: getApplicationRatings
+  #     parameters:
+  #       - name: id
+  #         in: path
+  #         description: Campaign ID
+  #         required: true
+  #         schema:
+  #           type: integer
+  #           format: int64
+  #       - name: application_id
+  #         in: path
+  #         description: Application ID
+  #         required: true
+  #         schema:
+  #           type: integer
+  #           format: int64
+  #     description: Returns all ratings for specified application
+  #     tags:
+  #       - Campaign
+  #     responses:
+  #       "200":
+  #         description: OK
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: "#/components/schemas/ApplicationRatings"
+  #       "401":
+  #         $ref: "#/components/responses/NotOrganisationAdmin"
+  #       "307":
+  #         $ref: "#/components/responses/NotLoggedIn"
 
-  /campaign/{id}/application/{application_id}/rating/{rating_id}:
-    get:
-      operationId: getRatingById
-      parameters:
-        - name: id
-          in: path
-          description: Campaign ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: application_id
-          in: path
-          description: Application ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: rating_id
-          in: path
-          description: Rating ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Returns info about specified rating
-      tags:
-        - Campaign
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/RatingDetails"
-        "401":
-          $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
-    patch:
-      operationId: updateRating
-      parameters:
-        - name: id
-          in: path
-          description: Campaign ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: application_id
-          in: path
-          description: Application ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: rating_id
-          in: path
-          description: Rating ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Updates specified rating
-      tags:
-        - Campaign
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/RatingUpdate"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully updated rating
-        "401":
-          $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
-    delete:
-      operationId: deleteRating
-      parameters:
-        - name: id
-          in: path
-          description: Campaign ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: application_id
-          in: path
-          description: Application ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: rating_id
-          in: path
-          description: Rating ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Deletes specified rating
-      tags:
-        - Campaign
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully deleted rating
-        "401":
-          $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
+  # /campaign/{id}/application/{application_id}/rating/{rating_id}:
+  #   get:
+  #     operationId: getRatingById
+  #     parameters:
+  #       - name: id
+  #         in: path
+  #         description: Campaign ID
+  #         required: true
+  #         schema:
+  #           type: integer
+  #           format: int64
+  #       - name: application_id
+  #         in: path
+  #         description: Application ID
+  #         required: true
+  #         schema:
+  #           type: integer
+  #           format: int64
+  #       - name: rating_id
+  #         in: path
+  #         description: Rating ID
+  #         required: true
+  #         schema:
+  #           type: integer
+  #           format: int64
+  #     description: Returns info about specified rating
+  #     tags:
+  #       - Campaign
+  #     responses:
+  #       "200":
+  #         description: OK
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: "#/components/schemas/RatingDetails"
+  #       "401":
+  #         $ref: "#/components/responses/NotOrganisationAdmin"
+  #       "307":
+  #         $ref: "#/components/responses/NotLoggedIn"
+  #   patch:
+  #     operationId: updateRating
+  #     parameters:
+  #       - name: id
+  #         in: path
+  #         description: Campaign ID
+  #         required: true
+  #         schema:
+  #           type: integer
+  #           format: int64
+  #       - name: application_id
+  #         in: path
+  #         description: Application ID
+  #         required: true
+  #         schema:
+  #           type: integer
+  #           format: int64
+  #       - name: rating_id
+  #         in: path
+  #         description: Rating ID
+  #         required: true
+  #         schema:
+  #           type: integer
+  #           format: int64
+  #     description: Updates specified rating
+  #     tags:
+  #       - Campaign
+  #     requestBody:
+  #       required: true
+  #       content:
+  #         application/json:
+  #           schema:
+  #             $ref: "#/components/schemas/RatingUpdate"
+  #     responses:
+  #       "200":
+  #         description: OK
+  #         content:
+  #           application/json:
+  #             schema:
+  #               properties:
+  #                 message:
+  #                   type: string
+  #                   example: Successfully updated rating
+  #       "401":
+  #         $ref: "#/components/responses/NotOrganisationAdmin"
+  #       "307":
+  #         $ref: "#/components/responses/NotLoggedIn"
+  #   delete:
+  #     operationId: deleteRating
+  #     parameters:
+  #       - name: id
+  #         in: path
+  #         description: Campaign ID
+  #         required: true
+  #         schema:
+  #           type: integer
+  #           format: int64
+  #       - name: application_id
+  #         in: path
+  #         description: Application ID
+  #         required: true
+  #         schema:
+  #           type: integer
+  #           format: int64
+  #       - name: rating_id
+  #         in: path
+  #         description: Rating ID
+  #         required: true
+  #         schema:
+  #           type: integer
+  #           format: int64
+  #     description: Deletes specified rating
+  #     tags:
+  #       - Campaign
+  #     responses:
+  #       "200":
+  #         description: OK
+  #         content:
+  #           application/json:
+  #             schema:
+  #               properties:
+  #                 message:
+  #                   type: string
+  #                   example: Successfully deleted rating
+  #       "401":
+  #         $ref: "#/components/responses/NotOrganisationAdmin"
+  #       "307":
+  #         $ref: "#/components/responses/NotLoggedIn"
 
   /campaign/{id}/application/{application_id}/offer:
     post:
@@ -2855,47 +2857,47 @@ components:
           type: string
           example: 2024-02-15T18:25:43.511Z
 
-    RatingDetails:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-          example: 1541815603606036480
-        application_id:
-          type: integer
-          format: int64
-          example: 1541815603606036480
-        user_id:
-          type: integer
-          format: int64
-          example: 1541815603606036480
-        rating:
-          type: integer
-          format: int32
-          example: 9
-        comment:
-          type: string
-          nullable: true
-          example: Good answer to this question
-        created_at:
-          type: string
-          example: 2024-03-15T18:25:43.511Z
-        updated_at:
-          type: string
-          example: 2024-03-15T18:25:43.511Z
+    # RatingDetails:
+    #   type: object
+    #   properties:
+    #     id:
+    #       type: integer
+    #       format: int64
+    #       example: 1541815603606036480
+    #     application_id:
+    #       type: integer
+    #       format: int64
+    #       example: 1541815603606036480
+    #     user_id:
+    #       type: integer
+    #       format: int64
+    #       example: 1541815603606036480
+    #     rating:
+    #       type: integer
+    #       format: int32
+    #       example: 9
+    #     comment:
+    #       type: string
+    #       nullable: true
+    #       example: Good answer to this question
+    #     created_at:
+    #       type: string
+    #       example: 2024-03-15T18:25:43.511Z
+    #     updated_at:
+    #       type: string
+    #       example: 2024-03-15T18:25:43.511Z
 
-    NewRating:
-      type: object
-      properties:
-        rating:
-          type: integer
-          format: int32
-          example: 9
-        comment:
-          type: string
-          nullable: true
-          example: Good answer to this question
+    # NewRating:
+    #   type: object
+    #   properties:
+    #     rating:
+    #       type: integer
+    #       format: int32
+    #       example: 9
+    #     comment:
+    #       type: string
+    #       nullable: true
+    #       example: Good answer to this question
 
     EmailTemplate:
       type: object
@@ -3042,17 +3044,17 @@ components:
           items:
             $ref: "#/components/schemas/RatingDetails"
 
-    RatingUpdate:
-      type: object
-      properties:
-        rating:
-          type: integer
-          format: int32
-          example: 9
-        comment:
-          type: string
-          nullable: true
-          example: Good answer to this question
+    # RatingUpdate:
+    #   type: object
+    #   properties:
+    #     rating:
+    #       type: integer
+    #       format: int32
+    #       example: 9
+    #     comment:
+    #       type: string
+    #       nullable: true
+    #       example: Good answer to this question
 
     OfferDetails:
       type: object

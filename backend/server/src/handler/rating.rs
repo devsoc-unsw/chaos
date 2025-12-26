@@ -21,8 +21,7 @@ use axum::response::IntoResponse;
 pub struct RatingHandler;
 
 impl RatingHandler {
-    /// ---------------------- CategoryRating Operations ----------------------
-
+    /// ----------------------- CateogoryRating Operations ---------------------------
     
     /// Creates a new rating category for a campaign.
     /// 
@@ -72,6 +71,28 @@ impl RatingHandler {
         Ok((StatusCode::OK, Json(categories)))
     }
 
+    /// Updates a category's name.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `campaign_id` - The ID of the campaign
+    /// * `category_id` - The ID of the category to update
+    /// * `_admin` - The Campaign admin (must be creator of the camapaign)
+    /// * `transaction` - Database transaction
+    /// * `data` - The updated rating comment
+    pub async fn update_category(
+        Path((_campaign_id, category_id)): Path<(i64, i64)>,
+        _admin: CampaignAdmin ,
+        mut transaction: DBTransaction<'_>,
+        Json(data): Json<NewCategoryRating>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        Rating::update_category(category_id, data, &mut transaction.tx).await?;
+
+        transaction.tx.commit().await?;
+
+        Ok(AppMessage::OkMessage("Successfully updated category name."))
+    }
+
     /// Deletes a rating category from a campaign.
     /// 
     /// # Arguments
@@ -92,7 +113,11 @@ impl RatingHandler {
         Ok(AppMessage::OkMessage("Successfully deleted category"))
     }
 
+    /// ------------------- ApplicationRating Operations ----------------
+
     /// Creates a new rating with comment and category scores.
+    /// Done this by calling 2 functions in models to first create application_rating first with commnet
+    /// Followed by a for loop to create each category rating
     /// 
     /// # Arguments
     /// 
@@ -119,7 +144,7 @@ impl RatingHandler {
         )
         .await?;
 
-        for category_rating in data.category_ratings {
+        for category_rating in new_rating.category_ratings {
             Rating::create_category_rating(
                 category_rating,
                 application_rating_id,
@@ -131,27 +156,27 @@ impl RatingHandler {
 
         transaction.tx.commit().await?;
 
-        Ok(AppMessage::OkMessage("Successfully created rating"))
+        Ok(AppMessage::OkMessage("Successfully created application rating together with all category ratings."))
     }
 
-    /// Retrieves a specific rating with all category scores.
-    /// 
-    /// # Arguments
-    /// 
-    /// * `rating_id` - The ID of the rating to retrieve
-    /// * `_admin` - The authenticated user (must be an application reviewer)
-    /// * `transaction` - Database transaction
-    pub async fn get(
-        Path(rating_id): Path<i64>,
-        _admin: ApplicationReviewerGivenRatingId,
-        mut transaction: DBTransaction<'_>,
-    ) -> Result<impl IntoResponse, ChaosError> {
-        let rating = Rating::get_rating(rating_id, &mut transaction.tx).await?;
+    // /// Retrieves a specific rating with all category scores.
+    // /// 
+    // /// # Arguments
+    // /// 
+    // /// * `rating_id` - The ID of the rating to retrieve
+    // /// * `_admin` - The authenticated user (must be an application reviewer)
+    // /// * `transaction` - Database transaction
+    // pub async fn get(
+    //     Path(rating_id): Path<i64>,
+    //     _admin: ApplicationReviewerGivenRatingId,
+    //     mut transaction: DBTransaction<'_>,
+    // ) -> Result<impl IntoResponse, ChaosError> {
+    //     let rating = Rating::get_rating(rating_id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+    //     transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, Json(rating)))
-    }
+    //     Ok((StatusCode::OK, Json(rating)))
+    // }
 
     /// Retrieves all ratings for an application.
     /// 

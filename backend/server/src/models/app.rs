@@ -271,22 +271,56 @@ pub async fn app() -> Result<Router, ChaosError> {
             "/api/v1/organisation/:organisation_id/users",
             get(OrganisationHandler::get_users)
         )
+        // .route(
+        //     "/api/v1/rating/:rating_id",
+        //     get(RatingHandler::get)
+        //         .delete(RatingHandler::delete)
+        //         .put(RatingHandler::update),
+        // )
+        // .route(
+        //     "/api/v1/application/:application_id/rating",
+        //     get(ApplicationHandler::get_rating_by_current_user)
+        //         .post(ApplicationHandler::create_rating)
+        //         .put(ApplicationHandler::update_rating),
+        // )
+        // .route(
+        //     "/api/v1/application/:application_id/ratings",
+        //     get(ApplicationHandler::get_ratings),
+        // )
+
+        // Campaign Rating Categories
         .route(
-            "/api/v1/rating/:rating_id",
-            get(RatingHandler::get)
-                .delete(RatingHandler::delete)
-                .put(RatingHandler::update),
+            "/api/v1/campaign/:campaign_id/rating_category",
+            post(RatingHandler::create_category),
         )
+        .route(
+            "/api/v1/campaign/:campaign_id/rating_categories",
+            get(RatingHandler::get_categories_by_campaign),
+        )
+        .route(
+            "/api/v1/campaign/:campaign_id/rating_category/:category_id",
+            patch(RatingHandler::update_category)
+                .delete(RatingHandler::delete_category),
+        )
+
+        // Application Ratings (with comment and category scores)
         .route(
             "/api/v1/application/:application_id/rating",
-            get(ApplicationHandler::get_rating_by_current_user)
-                .post(ApplicationHandler::create_rating)
-                .put(ApplicationHandler::update_rating),
+            post(RatingHandler::create)
+                .get(RatingHandler::get_all_by_application),
         )
         .route(
-            "/api/v1/application/:application_id/ratings",
-            get(ApplicationHandler::get_ratings),
+            "/api/v1/rating/:rating_id",
+            patch(RatingHandler::update_comment)
+                .delete(RatingHandler::delete),
         )
+        .route(
+            "/api/v1/rating/:rating_id/category/:category_rating_id",
+            patch(RatingHandler::update_category_rating)
+                .delete(RatingHandler::delete_category_rating),
+        )
+
+
         .route(
             "/api/v1/campaign/:campaign_id/role",
             post(CampaignHandler::create_role),

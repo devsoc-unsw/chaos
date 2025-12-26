@@ -37,7 +37,7 @@ pub struct NewCategoryRating {
 
 /// 
 /// A rating is an evaluation of an application by a reviewer,
-/// This covers the ApplicationRating part WITHOUT the numerical rating
+/// This covers the ApplicationRating part WITHOUT the numerical rating, only the OPTIONAL COMMENT
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct ApplicationRating {
     /// Unique identifier for the rating
@@ -65,21 +65,12 @@ pub struct NewApplicationRating {
     pub comment: Option<String>,
 }
 
-/// Data structure for creating a complete rating with comment and category scores.
-#[derive(Deserialize, Serialize)]
-pub struct NewRating {
-    /// Optional comments about the application
-    pub comment: Option<String>,
-    /// Category ratings with numerical scores
-    pub category_ratings: Vec<NewApplicationCategoryRating>,
-}
-
 /// 
 /// A rating is an evaluation of an application by a reviewer,
 /// This covers the ApplicationCategoryRating part WITH the numerical rating
 /// BASED ON the category of the ratings
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
-pub struct ApplicationCateogryRating {
+pub struct ApplicationCategoryRating {
     /// Unique identifier for the rating
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
@@ -103,12 +94,22 @@ pub struct ApplicationCateogryRating {
 /// ONLY covers the comment
 /// excluding Numerical rating and system generated fields.
 #[derive(Deserialize, Serialize)]
-pub struct NewApplicationCateogryRating {
+pub struct NewApplicationCategoryRating {
     /// ID of the category being rated
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_rating_category_id: i64,
     /// Numerical score based on the rating
     pub rating: i32,
+}
+
+/// DEFINITIVE ADD NEW RATING
+/// Data structure for creating a complete rating with comment and category scores.
+#[derive(Deserialize, Serialize)]
+pub struct NewRating {
+    /// Optional comments about the application
+    pub comment: Option<String>,
+    /// Category ratings with numerical scores
+    pub category_ratings: Vec<NewApplicationCategoryRating>,
 }
 
 /// Detailed view of a rating's information.
@@ -128,7 +129,8 @@ pub struct RatingDetails {
     /// Optional comments about the application
     pub comment: Option<String>,
     /// Category ratings for this application rating (IMPORTANT TO ADD FOR rating numerical score)
-    pub category_ratings: Vec<CategoryRatingDetail>,
+    #[serde(flatten)] 
+    pub category_ratings: sqlx::types::Json<Vec<CategoryRatingDetail>>,
     /// When the rating was last updated
     pub updated_at: DateTime<Utc>,
 }
@@ -155,20 +157,33 @@ pub struct ApplicationRatings {
     pub ratings: Vec<RatingDetails>,
 }
 
+pub struct Rating;
+
 impl Rating {
     /// ----------------------- CateogoryRating Operations ---------------------------
 
     /// Creates a new category for a campaign for rating
+    /// 
+    /// # Arguments
+    /// * `new_category` - The category name that is created
+    /// * `campaign_id` - Campaign that is adding the new category for ratings
+    /// * `snowflake_generator` - A generator for creating unique IDs
+    /// * `transaction` - A mutable reference to the database transaction
+    /// 
+    /// # Returns
+    /// Returns a `Result` containing either:
+    /// * `Ok(())` - If the category of a campaign was created successfully
+    /// * `Err(ChaosError)` - An error if creation fails
+    /// 
     pub async fn create_category(
         new_category: NewCategoryRating,
         campaign_id: i64,
         snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<CategoryRating, ChaosError> {
+    ) -> Result<i64, ChaosError> {
         let id = snowflake_generator.real_time_generate();
 
-        let category = sqlx::query_as!(
-            CategoryRating,
+        sqlx::query!(
             "
             INSERT INTO campaign_rating_categories (id, name, campaign_id)
                 VALUES ($1, $2, $3)
@@ -184,6 +199,15 @@ impl Rating {
     }
 
     /// Gets all categories for a campaign
+    /// 
+    /// # Arguments
+    /// 
+    /// * 
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<Vec<Campaign>, ChaosError>` - List of campaigns or error
     pub async fn get_categories_by_campaign(
         campaign_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
@@ -201,6 +225,40 @@ impl Rating {
         .await?;
 
         Ok(categories)
+    }
+
+    /// Updates an existing category name by category.
+    /// 
+    /// # Arguments
+    /// * `category_id` - The ID of the category to update
+    /// * `updated_category` - The new category (ONLY INCLUDES NAME)
+    /// * `transaction` - A mutable reference to the database transaction
+    /// 
+    /// # Returns
+    /// Returns a `Result` containing either:
+    /// * `Ok(())` - If the category was updated successfully
+    /// * `Err(ChaosError)` - An error if update fails
+    pub async fn update_category(
+        category_id: i64,
+        updated_category: NewCategoryRating,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
+        let name = updated_category.name;
+
+        let _ = sqlx::query!(
+            "
+            UPDATE campaign_rating_categories
+            SET name = $2
+            WHERE id = $1
+            RETURNING id
+        ",
+            category_id,
+            name,
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
+        Ok(())
     }
 
     /// Deletes a category
@@ -227,7 +285,7 @@ impl Rating {
     /// Ensures that the application rating must be unique for rater_id and application_id
     /// 
     /// # Arguments
-    /// * `new_rating` - The rating data to create
+    /// * `new_rating` - The rating data to create (ONLY HAVE THE COMMENT)
     /// * `application_id` - The ID of the application being rated
     /// * `rater_id` - The ID of the user creating the rating
     /// * `snowflake_generator` - A generator for creating unique IDs
@@ -263,7 +321,7 @@ impl Rating {
         Ok(rating_id)
     }
 
-    /// Updates an existing application_rating.
+    /// Updates an existing application_rating ONLY THRU COMMENT.
     /// 
     /// # Arguments
     /// * `rating_id` - The ID of the rating to update
@@ -299,69 +357,6 @@ impl Rating {
         Ok(())
     }
 
-    /// Retrieves a rating by its ID.
-    /// 
-    /// # Arguments
-    /// * `rating_id` - The ID of the rating to retrieve
-    /// * `transaction` - A mutable reference to the database transaction
-    /// 
-    /// # Returns
-    /// Returns a `Result` containing either:
-    /// * `Ok(RatingDetails)` - The requested rating details
-    /// * `Err(ChaosError)` - An error if retrieval fails
-    pub async fn get_rating(
-        rating_id: i64,
-        transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<RatingDetails, ChaosError> {
-        let rating = sqlx::query_as!(
-            RatingDetails,
-            "
-            SELECT r.id, rater_id, u.name as rater_name, r.comment, r.updated_at
-                FROM application_ratings r
-                JOIN users u ON u.id = r.rater_id
-                WHERE r.id = $1
-        ",
-            rating_id
-        )
-        .fetch_one(transaction.deref_mut())
-        .await?;
-
-        Ok(rating)
-    }
-
-    /// Retrieves a rating by its rater_ID and application_ID.
-    /// 
-    /// # Arguments
-    /// * `application_id` - The ID of the application the rating is for
-    /// * `rater_id` - The ID of the rater
-    /// * `transaction` - A mutable reference to the database transaction
-    /// 
-    /// # Returns
-    /// Returns a `Result` containing either:
-    /// * `Ok(RatingDetails)` - The requested rating details
-    /// * `Err(ChaosError)` - An error if retrieval fails
-    pub async fn get_rating_by_rater_id_and_application_id(
-        application_id: i64,
-        rater_id: i64,
-        transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<RatingDetails, ChaosError> {
-        let rating = sqlx::query_as!(
-            RatingDetails,
-            "
-            SELECT r.id, rater_id, u.name as rater_name, r.comment, r.updated_at
-                FROM application_ratings r
-                JOIN users u ON u.id = r.rater_id
-                WHERE r.application_id = $1 AND r.rater_id = $2
-        ",
-            application_id,
-            rater_id
-        )
-        .fetch_one(transaction.deref_mut())
-        .await?;
-
-        Ok(rating)
-    }
-
     /// Deletes an application_rating.
     /// 
     /// # Arguments
@@ -390,9 +385,200 @@ impl Rating {
         Ok(())
     }
 
-    /// ------------------- ApplicationCateogryRating Operations ----------------
+    // /// -------------- GET requests for ApplicationRating: ONLY COMMENT ----------------------
+    /////  ============================ NOT NEEDED (COMMNET IS IN ANOTHER FUNCTION ALR)===================
+
+    // /// Retrieves a rating by its ID, able to see which application is being rated,
+    // /// ONLY THE COMMENT IS VIEWED, 
+    // /// NOT Vector of numerical scores
+    // /// 
+    // /// # Arguments
+    // /// * `rating_id` - The ID of the rating to retrieve
+    // /// * `transaction` - A mutable reference to the database transaction
+    // /// 
+    // /// # Returns
+    // /// Returns a `Result` containing either:
+    // /// * `Ok(RatingDetails)` - The requested rating details
+    // /// * `Err(ChaosError)` - An error if retrieval fails
+    // pub async fn get_comment_rating(
+    //     rating_id: i64,
+    //     transaction: &mut Transaction<'_, Postgres>,
+    // ) -> Result<RatingDetails, ChaosError> {
+    //     let rating = sqlx::query_as!(
+    //         RatingDetails,
+    //         "
+    //         SELECT r.id, rater_id, u.name as rater_name, r.comment, r.updated_at
+    //             FROM application_ratings r
+    //             JOIN users u ON u.id = r.rater_id
+    //             WHERE r.id = $1
+    //     ",
+    //         rating_id
+    //     )
+    //     .fetch_one(transaction.deref_mut())
+    //     .await?;
+
+    //     Ok(rating)
+    // }
+
+    // /// Retrieves a rating by application_ID.  (UNCONFIRMED: Want it to be seperate?)
+    // /// ONLY THE COMMENT IS VIEWED, 
+    // /// NOT Vector of numerical scores
+    // /// 
+    // /// # Arguments
+    // /// * `application_id` - The ID of the application the rating is for
+    // /// * `rater_id` - The ID of the rater
+    // /// * `transaction` - A mutable reference to the database transaction
+    // /// 
+    // /// # Returns
+    // /// Returns a `Result` containing either:
+    // /// * `Ok(RatingDetails)` - The requested rating details
+    // /// * `Err(ChaosError)` - An error if retrieval fails
+    // pub async fn get_comment_rating_by_application_id(
+    //     application_id: i64,
+    //     transaction: &mut Transaction<'_, Postgres>,
+    // ) -> Result<RatingDetails, ChaosError> {
+    //     let rating = sqlx::query_as!(
+    //         RatingDetails,
+    //         "
+    //         SELECT r.id, rater_id, u.name as rater_name, r.comment, r.updated_at
+    //             FROM application_ratings r
+    //             JOIN users u ON u.id = r.rater_id
+    //             WHERE r.application_id = $1
+    //     ",
+    //         application_id,
+    //     )
+    //     .fetch_one(transaction.deref_mut())
+    //     .await?;
+
+    //     Ok(rating)
+    // }
+
+    // ------------------- GET requests for ApplicationRating: Get Rating Details -------------------
+
+    /// Retrieves detailed rating information with 
+    // all category ratings given application and rater
+    ///
+    /// # Arguments
+    /// * `application_id` - The ID of the application
+    /// * `rater_id` - The ID of the rater
+    /// * `transaction` - A mutable reference to the database transaction
+    /// 
+    /// # Returns
+    /// Returns a `Result` containing either:
+    /// * `Ok(RatingDetails)` - The detailed rating information
+    /// * `Err(ChaosError)` - An error if retrieval fails
+    pub async fn get_rating_details(
+        application_id: i64,
+        rater_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<RatingDetails, ChaosError> {
+        let rating_details = sqlx::query_as!(
+            RatingDetails,
+            r#"
+            SELECT ar.id, ar.rater_id, u.name as rater_name, ar.comment, ar.updated_at,
+                COALESCE(jsonb_agg(jsonb_build_object('campaign_rating_category_id', arc.campaign_rating_category_id, 
+                'category_name', crc.name,
+                'rating', arc.rating)
+                ) FILTER (WHERE arc.id IS NOT NULL),
+                '[]'::jsonb
+            ) as "category_ratings!: sqlx::types::Json<Vec<CategoryRatingDetail>>"
+            FROM application_ratings ar
+            JOIN users u ON u.id = ar.rater_id
+            LEFT JOIN application_rating_category_ratings arc ON arc.application_rating_id = ar.id
+            LEFT JOIN campaign_rating_categories crc ON crc.id = arc.campaign_rating_category_id
+            WHERE ar.application_id = $1 AND ar.rater_id = $2
+            GROUP BY ar.id, u.name
+            "#,
+            application_id,
+            rater_id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
+        Ok(rating_details)
+    }
+
+    /// Retrieves all ratings for an application with all category ratings included
+    ///
+    /// # Arguments
+    /// * `application_id` - The ID of the application
+    /// * `transaction` - A mutable reference to the database transaction
+    /// 
+    /// # Returns
+    /// Returns a `Result` containing either:
+    /// * `Ok(Vec<RatingDetails>)` - All ratings for the application
+    /// * `Err(ChaosError)` - An error if retrieval fails
+    pub async fn get_all_ratings_from_application_id(
+        application_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<RatingDetails>, ChaosError> {
+        let ratings = sqlx::query_as!(
+            RatingDetails,
+            r#"
+            SELECT ar.id, ar.rater_id, u.name as rater_name, ar.comment, ar.updated_at,
+                COALESCE(jsonb_agg(jsonb_build_object('campaign_rating_category_id', arc.campaign_rating_category_id, 
+                'category_name', crc.name,
+                'rating', arc.rating)
+                ) FILTER (WHERE arc.id IS NOT NULL),
+                '[]'::jsonb
+            ) as "category_ratings!: sqlx::types::Json<Vec<CategoryRatingDetail>>"
+            FROM application_ratings ar
+            JOIN users u ON u.id = ar.rater_id
+            LEFT JOIN application_rating_category_ratings arc ON arc.application_rating_id = ar.id
+            LEFT JOIN campaign_rating_categories crc ON crc.id = arc.campaign_rating_category_id
+            WHERE ar.application_id = $1
+            GROUP BY ar.id, u.name
+            "#,
+            application_id
+        )
+        .fetch_all(transaction.deref_mut())
+        .await?;
+
+        Ok(ratings)
+    }
+
+    /// Retrieves all ratings that user/admin has rated with all category ratings included
+    ///
+    /// # Arguments
+    /// * `rater_id` - The ID of the rater
+    /// * `transaction` - A mutable reference to the database transaction
+    /// 
+    /// # Returns
+    /// Returns a `Result` containing either:
+    /// * `Ok(Vec<RatingDetails>)` - All ratings from the rater
+    /// * `Err(ChaosError)` - An error if retrieval fails
+    pub async fn get_all_ratings_from_rater_id(
+        rater_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<RatingDetails>, ChaosError> {
+        let ratings = sqlx::query_as!(
+            RatingDetails,
+            r#"
+            SELECT ar.id, ar.rater_id, u.name as rater_name, ar.comment, ar.updated_at,
+                COALESCE(jsonb_agg(jsonb_build_object('campaign_rating_category_id', arc.campaign_rating_category_id, 
+                'category_name', crc.name,
+                'rating', arc.rating)
+                ) FILTER (WHERE arc.id IS NOT NULL),
+                '[]'::jsonb
+            ) as "category_ratings!: sqlx::types::Json<Vec<CategoryRatingDetail>>"
+            FROM application_ratings ar
+            JOIN users u ON u.id = ar.rater_id
+            LEFT JOIN application_rating_category_ratings arc ON arc.application_rating_id = ar.id
+            LEFT JOIN campaign_rating_categories crc ON crc.id = arc.campaign_rating_category_id
+            WHERE ar.rater_id = $1
+            GROUP BY ar.id, u.name
+            "#,
+            rater_id
+        )
+        .fetch_all(transaction.deref_mut())
+        .await?;
+
+        Ok(ratings)
+    }
+
+    /// ------------------- ApplicationCateogryRatings Operations ----------------
     
-    /// Creates a new application category rating in ApplicationCateogryRating WITH numerical rating score
+    /// Creates a new application category rating in ApplicationCategoryRating WITH numerical rating score
     /// Ensures that the application category rating must be unique for application_rating_id and campaign_rating_category_id
     /// 
     /// # Arguments
@@ -416,7 +602,7 @@ impl Rating {
         sqlx::query_as!(
             ApplicationCategoryRating,
             "
-            INSERT INTO application_rating_category_rating 
+            INSERT INTO application_rating_category_ratings 
                 (id, application_rating_id, campaign_rating_category_id, rating)
                 VALUES ($1, $2, $3, $4)
             ",
@@ -451,7 +637,7 @@ impl Rating {
 
         let _ = sqlx::query!(
             "
-            UPDATE application_rating_category_rating
+            UPDATE application_rating_category_ratings
             SET rating = $2, updated_at = $3
             WHERE id = $1
             RETURNING id
@@ -466,17 +652,17 @@ impl Rating {
         Ok(())
     }
     
-    // Gets all category ratings for an application rating ID
+    // Gets all category ratings for an application rating ID, from application_ratrings
     /// 
     /// # Arguments
-    /// * `application_id` - The ID of the application to get ratings for
+    /// * `application_rating_id` - The ID of the application rating to get all category ratings for
     /// * `transaction` - A mutable reference to the database transaction
     /// 
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(ApplicationRatings)` - All ratings for the application
     /// * `Err(ChaosError)` - An error if retrieval fails
-    pub async fn get_all_category_ratings_from_application_id(
+    pub async fn get_all_category_ratings_from_application_rating_id(
         application_rating_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<ApplicationCategoryRating>, ChaosError> {
@@ -484,7 +670,7 @@ impl Rating {
             ApplicationCategoryRating,
             "
             SELECT arc.id, arc.application_rating_id, arc.campaign_rating_category_id, arc.rating, arc.created_at, arc.updated_at
-                FROM application_rating_category_rating arc
+                FROM application_rating_category_ratings arc
                 WHERE arc.application_rating_id = $1
         ",
         application_rating_id
@@ -498,7 +684,7 @@ impl Rating {
     /// Deletes an application category rating.
     /// 
     /// # Arguments
-    /// * `category_rating_id` - The ID of the category rating to delete
+    /// * `application_category_rating_id` - The ID of the application category rating to delete
     /// * `transaction` - A mutable reference to the database transaction
     /// 
     /// # Returns
@@ -506,104 +692,19 @@ impl Rating {
     /// * `Ok(())` - If the category rating was deleted successfully
     /// * `Err(ChaosError)` - An error if deletion fails
     pub async fn delete_category_rating(
-        category_rating_id: i64,
+        application_category_rating_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         let _ = sqlx::query!(
             "
-            DELETE FROM application_rating_category_rating WHERE id = $1
+            DELETE FROM application_rating_category_ratings WHERE id = $1
             RETURNING id
         ",
-        category_rating_id
+        application_category_rating_id
         )
         .fetch_one(transaction.deref_mut())
         .await?;
 
         Ok(())
-    }
-
-    // ------------------- Get Rating Details -------------------
-
-    /// Retrieves detailed rating infromation with all category ratings
-    ///
-    /// # Arguments
-    /// * `application_id` - The ID of the application
-    /// * `rater_id` - The ID of the rater
-    /// * `transaction` - A mutable reference to the database transaction
-    /// 
-    /// # Returns
-    /// Returns a `Result` containing either:
-    /// * `Ok(RatingDetails)` - The detailed rating information
-    /// * `Err(ChaosError)` - An error if retrieval fails
-    pub async fn get_rating_details(
-        application_id: i64,
-        rater_id: i64,
-        transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<RatingDetails, ChaosError> {
-        let rating_details = sqlx::query_as!(
-            RatingDetails,
-            "
-            SELECT ar.id, ar.rater_id, u.name as rater_name, ar.comment, ar.updated_at,
-            to_jsonb(array_agg(jsonb_build_object(
-            'campaign_rating_category_id', arc.campaign_rating_category_id,
-            'category_name', crc.name,
-            'rating', arc.rating
-            )) FILTER (WHERE arc.campaign_rating_category_id IS NOT NULL AND acr.id IS NOT NULL)
-             AS "category_ratings: sqlx::types::Json<Vec<CategoryRatingData>>"
-            FROM application_ratings ar
-            JOIN users u ON u.id = ar.rater_id
-            LEFT JOIN application_rating_category_rating arc ON arc.application_rating_id = ar.id
-            LEFT JOIN campaign_rating_categories crc ON crc.id = arc.campaign_rating_category_id
-            WHERE ar.application_id = $1 AND ar.rater_id = $2
-            GROUP BY
-                ar.id, u.name
-            ",
-            application_id,
-            rater_id
-        )
-        .fetch_one(transaction.deref_mut())
-        .await?;
-
-        Ok(rating_details)
-    }
-
-    /// Retrieves all ratings for a specific application with all cateogry ratings included
-    ///
-    /// # Arguments
-    /// * `application_id` - The ID of the application
-    /// * `transaction` - A mutable reference to the database transaction
-    /// 
-    /// # Returns
-    /// Returns a `Result` containing either:
-    /// * `Ok(ApplicationRatings)` - All ratings for the application
-    /// * `Err(ChaosError)` - An error if retrieval fails
-    pub async fn get_all_ratings_from_application_id(
-        application_id: i64,
-        transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<ApplicationRatings, ChaosError> {
-        let ratings = sqlx::query_as!(
-            ApplicationRatings,
-            "
-            SELECT ar.id, ar.rater_id, u.name as rater_name, ar.comment, ar.updated_at,
-            to_jsonb(array_agg(jsonb_build_object(
-            'campaign_rating_category_id', arc.campaign_rating_category_id,
-            'category_name', crc.name,
-            'rating', arc.rating
-            )) FILTER (WHERE arc.campaign_rating_category_id IS NOT NULL AND acr.id IS NOT NULL)
-             AS "category_ratings: sqlx::types::Json<Vec<CategoryRatingData>>"
-            FROM application_ratings ar
-            JOIN users u ON u.id = ar.rater_id
-            LEFT JOIN application_rating_category_rating arc ON arc.application_rating_id = ar.id
-            LEFT JOIN campaign_rating_categories crc ON crc.id = arc.campaign_rating_category_id
-            WHERE ar.application_id = $1
-            GROUP BY
-                ar.id, u.name
-            ",
-            application_id
-        )
-        .fetch_all(transaction.deref_mut())
-        .await?;
-
-        Ok(ratings)
-    }
+    } 
 }
