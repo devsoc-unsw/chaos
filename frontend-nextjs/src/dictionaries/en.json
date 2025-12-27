@@ -21,13 +21,23 @@
         "submit": "Submit"
     },
     "applicationpage": {
-        "emptyselectedroles": "Drag a role from below to apply",
-        "dragtoreorder": "Drag to reorder based on preference",
-        "emptyavailableroles": "All roles selected",
-        "selectedroles": "Selected Roles",
-        "availableroles": "Available Roles",
-        "norolespecificqs": "No role-specific questions",
-        "youranswer": "Your answer"
+        "roles": "roles",
+        "max_roles": "(max {roles} roles)",
+        "empty_selected_roles": "Drag a role from below to apply",
+        "drag_to_reorder": "Drag to reorder based on preference",
+        "empty_available_roles": "All roles selected",
+        "selected_roles": "Selected Roles",
+        "available_roles": "Available Roles",
+        "no_role_specific_qs": "No role-specific questions",
+        "your_answer": "Your answer",
+        "no_answer": "No answer",
+        "no_questions": "No questions",
+        "general": "General",
+        "submit_answers": "Submit Answers",
+        "review_answers": "Review answers",
+        "review_answers_desc": "Review your answers before submission. Unanswered required questions will block submission.",
+        "submit_application": "Submit Application",
+        "submit_application_tooltip": "Please answer all required questions before submitting."
     },
     "dashboard": {
         "email_templates": "Email Templates",

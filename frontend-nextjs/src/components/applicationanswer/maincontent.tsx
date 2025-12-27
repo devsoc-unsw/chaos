@@ -146,7 +146,7 @@ export default function MainContent({
         <div className="border-b border-gray-200 mb-6 gap-2">
             <div>
               {questionsAndAnswers.length === 0 ? (
-                <p>No questions</p>
+                <p>{dict.applicationpage.no_questions}</p>
               ) : (
                 questionsAndAnswers.map((qa) => (
                   <div key={qa.question_id}>

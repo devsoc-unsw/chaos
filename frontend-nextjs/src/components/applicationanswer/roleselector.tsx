@@ -54,7 +54,12 @@ export default function RoleSelector({
         <h2 className="text-xl font-semibold mb-4">{dict.common.roles}</h2>
         {
           maxRolesPerApplication && (
-            <p className="text-m text-muted-foreground mb-4">(max {maxRolesPerApplication} roles)</p>
+            <p className="text-m text-muted-foreground mb-4">
+                {dict.applicationpage.max_roles.replace(
+                  "{roles}",
+                  String(maxRolesPerApplication)
+                )}
+            </p>
           )
         }
       </div>

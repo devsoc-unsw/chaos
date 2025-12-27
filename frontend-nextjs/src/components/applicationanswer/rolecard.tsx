@@ -64,7 +64,7 @@ export function RoleCard({
                 : "bg-muted text-muted-foreground"
             }`}
           >
-            {selected ? "Selected" : "Select"}
+            {selected ? dict.common.selected : dict.common.select}
           </span>
         </div>
       </div>

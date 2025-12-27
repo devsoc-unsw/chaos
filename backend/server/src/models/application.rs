@@ -390,7 +390,7 @@ impl Application {
     }
 
     /// Retrieves an application by its ID regardless of submission status.
-    /// 
+    /// This handler allows regular applicants to view application details in the answer screen.
     /// # Arguments
     /// 
     /// * `id` - ID of the application to retrieve
@@ -404,25 +404,7 @@ impl Application {
         current_user: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<ApplicationDetails, ChaosError> {
-
-        let submitted = sqlx::query_scalar!(
-            r#"
-            SELECT submitted
-            FROM applications
-            WHERE id = $1
-            AND user_id = $2
-            "#,
-            id,
-            current_user
-        )
-        .fetch_one(transaction.deref_mut())
-        .await?;
-
-        if submitted {
-            return Err(ChaosError::BadRequest);
-        }
-
-        let application_data = sqlx::query_as!(
+        let application_data = match sqlx::query_as!(
             ApplicationData,
             "
                 SELECT a.id AS id, campaign_id, user_id, status AS \"status: ApplicationStatus\",
@@ -435,13 +417,19 @@ impl Application {
                 JOIN users u ON u.id = a.user_id
                 JOIN campaigns c ON c.id = a.campaign_id
                 LEFT JOIN application_ratings ar ON ar.application_id = a.id AND ar.application_id = $2
-                WHERE a.id = $1
+                WHERE a.id = $1 AND a.submitted = false
             ",
             id,
             current_user
         )
         .fetch_one(transaction.deref_mut())
-        .await?;
+        .await {
+            Ok(application) => application,
+            Err(sqlx::Error::RowNotFound) => {
+                return Err(ChaosError::BadRequest);
+            },
+            Err(e) => return Err(e.into()),
+        };
 
         let applied_roles = sqlx::query_as!(
             ApplicationAppliedRoleDetails,

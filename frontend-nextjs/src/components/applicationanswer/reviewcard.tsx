@@ -14,12 +14,14 @@ export default function ReviewCard({
     questionsAndAnswersByRole,
     applicationId,
     handleSubmit,
-    roles
+    roles,
+    dict
 }: {
     questionsAndAnswersByRole: Map<string, QuestionAndAnswer[]>;
     applicationId: string;
     handleSubmit: () => void;
     roles: CampaignRole[] | undefined;
+    dict: any;
 }) {
     const [open, setOpen] = useState(false)
     // vibed this
@@ -110,17 +112,17 @@ export default function ReviewCard({
             onClick={() => setOpen(true)}
             className="fixed bottom-6 right-6 z-50 rounded-md border border-primary px-4 py-2 text-primary transition-colors cursor-pointer hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground focus-visible:bg-primary focus-visible:text-primary-foreground"
         >
-            Submit Answers
+            {dict.applicationpage.submit_answers}
         </button>
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="!max-w-none !w-[40vw] max-h-[80vh] overflow-y-auto flex flex-col">
                    <div className="sticky top-0 z-10 bg-background">
                         <DialogHeader>
                             <DialogTitle>
-                                Review answers
+                                {dict.applicationpage.review_answers}
                             </DialogTitle>
                             <DialogDescription>
-                                Review your answers before submission. Unanswered required questions will block submission.
+                                {dict.applicationpage.review_answers_desc}
                             </DialogDescription>
                         </DialogHeader>
                     </div>
@@ -169,14 +171,14 @@ export default function ReviewCard({
                                         disabled={requiredUnanswered}
                                         onClick={() => handleSubmit()}
                                     >
-                                        Submit Application
+                                        {dict.applicationpage.submit_application}
                                     </Button>
                                     </span>
                                 </TooltipTrigger>
 
                                 {requiredUnanswered && (
                                     <TooltipContent>
-                                    Please answer all required questions before submitting.
+                                        {dict.appliationpage.submit_application_tooltip}
                                     </TooltipContent>
                                 )}
                             </Tooltip>

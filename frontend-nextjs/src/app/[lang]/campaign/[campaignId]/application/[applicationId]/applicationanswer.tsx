@@ -180,9 +180,9 @@ export default function ApplicationReview({
         <div className="flex gap-8 w-full">
           <RoleSelector roles={roles} maxRolesPerApplication={campaign?.max_roles_per_application} selectedRoleIds={selectedRoleIds} onChangeSelectedRoles={updateRoles} applicationId={applicationId} dict={dict}/>
           <div className="flex-1">
-            <RoleTabs roles={roles} selectedRoleIds={selectedRoleIds} activeTab={activeTab} onChangeActiveTab={setActiveTab}/>
+            <RoleTabs roles={roles} selectedRoleIds={selectedRoleIds} activeTab={activeTab} onChangeActiveTab={setActiveTab} dict={dict}/>
             <MainContent campaignId={campaignId} applicationId={applicationId} activeTab={activeTab} dict={dict} updateRoleAnswers={updateQuestionAnswer}/>
-            <ReviewCard questionsAndAnswersByRole={qaByRole} roles={roles} applicationId={applicationId} handleSubmit={handleApplicationSubmit}/>
+            <ReviewCard questionsAndAnswersByRole={qaByRole} roles={roles} applicationId={applicationId} handleSubmit={handleApplicationSubmit} dict={dict}/>
           </div>
         </div>
       </div>

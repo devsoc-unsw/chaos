@@ -1,15 +1,18 @@
+"use client"
 import { CampaignRole } from "@/models/campaign";
 
 export default function RoleTabs({
   roles,
   selectedRoleIds,
   activeTab,
-  onChangeActiveTab
+  onChangeActiveTab,
+  dict
 }: {
   roles: CampaignRole[] | undefined;
   selectedRoleIds: string[];
   activeTab: string;
   onChangeActiveTab: (next: string) => void;
+  dict: any;
 }) {
     return (
         <div className="flex border-b border-accent mb-6 gap-2">
@@ -19,7 +22,7 @@ export default function RoleTabs({
                 }`}
                 onClick={() => onChangeActiveTab("general")}
               >
-                General
+                {dict.applicationpage.general}
               </button>
               {selectedRoleIds.map((rid) => (
                 <button

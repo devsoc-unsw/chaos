@@ -28,7 +28,7 @@ export default function Dropdown({
     const [value, setValue] = useState(question.answer_id ? question.answer_id : "")
     const [answer, setAnswer] = useState(question.answer ? question.answer : "")
     const placeholder = question.answer ? question.answer : ""
-    const noAnswerLabel = dict?.noAnswerLabel ?? 'No Answer';
+    const noAnswerLabel = dict?.no_answer ?? 'No Answer';
     const options: MultiOptionQuestionOption[] =
     (question as any).options ?? [];
 

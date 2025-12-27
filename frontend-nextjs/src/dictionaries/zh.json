@@ -21,13 +21,14 @@
         "submit": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;"
     },
     "applicationpage": {
-        "emptyselectedroles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
-        "emptyavailableroles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
-        "dragtoreorder": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
-        "selectedroles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
-        "availableroles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
-        "norolespecificqs": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
-        "youranswer": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;"
+        "empty_selected_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "drag_to_reorder": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "empty_available_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "selected_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "available_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "no_role_specific_qs": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "your_answer": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "no_answer": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;"
     },
     "dashboard": {
         "email_templates": "邮件模板",

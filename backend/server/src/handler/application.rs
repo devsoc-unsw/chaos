@@ -92,7 +92,7 @@ impl ApplicationHandler {
 
     /// Retrieves the details of a specific application regardless of submission status.
     /// 
-    /// This handler allows application admins to view application details.
+    /// This handler allows regular applicants to view application details in the answer screen.
     /// 
     /// # Arguments
     /// 
