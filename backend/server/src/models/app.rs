@@ -357,6 +357,15 @@ pub async fn app() -> Result<Router, ChaosError> {
             patch(CampaignHandler::update_banner),
         )
         .route(
+            "/api/v1/campaign/:campaign_id/attachments",
+            get(CampaignHandler::get_attachments)
+                .patch(CampaignHandler::upload_attachments),
+        )
+        .route(
+            "/api/v1/campaign/attachment/:attachment_id",
+            delete(CampaignHandler::delete_attachment),
+        )
+        .route(
             "/api/v1/campaign/:campaign_id/application",
             post(CampaignHandler::create_application),
         )

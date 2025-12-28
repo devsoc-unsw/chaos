@@ -45,6 +45,53 @@ export interface CampaignUpdate {
     ends_at: string;
 }
 
+export interface CampaignAttachment {
+    id: number;
+    campaign_id: string;
+    file_name: string;
+    file_size: number;
+    download_url: string;
+}
+
+export interface AttachmentUpload {
+    upload_url: string;
+    attachment_id: string;
+}
+
+export interface NewAttachment {
+    file_name: string;
+    file_size: number;
+}
+
+export async function getCampaignAttachments(campaignId: string): Promise<CampaignAttachment[] | null> {
+    try {
+        const result = await apiRequest<CampaignAttachment[] | null>(`/api/v1/campaign/${campaignId}/attachments`);
+        // Backend returns null if document doesn't exist (200 OK with null body)
+        return result;
+    } catch (error) {
+        // Fallback error handling - return null to prevent UI breaking
+        console.error("Error fetching attachments:", error);
+        return null;
+    }
+}
+
+export async function uploadAttachments(campaignId: string, files: File[]): Promise<AttachmentUpload[]> {
+    const uploadData: NewAttachment[] = files.map(file => ({
+        file_name: file.name,
+        file_size: file.size,
+    }));    
+    return await apiRequest<AttachmentUpload[]>(`/api/v1/campaign/${campaignId}/attachments`, {
+        method: "PATCH",
+        body: uploadData,
+    });
+}
+
+export async function deleteCampaignAttachment(attachmentId: number): Promise<void> {
+    await apiRequest<void>(`/api/v1/campaign/attachment/${attachmentId}`, {
+        method: "DELETE",
+    });
+}
+
 export async function getCampaign(campaignId: string): Promise<CampaignDetails> {
     return await apiRequest<CampaignDetails>(`/api/v1/campaign/${campaignId}`);
 }

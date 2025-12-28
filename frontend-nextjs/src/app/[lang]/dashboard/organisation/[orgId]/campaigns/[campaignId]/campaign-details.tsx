@@ -1,9 +1,9 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CampaignUpdate, createCampaignRole, getCampaign, getCampaignRoles, updateCampaign } from "@/models/campaign";
+import { CampaignUpdate, createCampaignRole, getCampaign, getCampaignRoles, updateCampaign, getCampaignAttachments, uploadAttachments, deleteCampaignAttachment } from "@/models/campaign";
 import { Button } from "@/components/ui/button";
-import { Copy, Pencil, Trash, Share, BookOpenCheck, Check, Plus, FormIcon, CircleCheck, BarChart } from "lucide-react";
+import { Copy, Pencil, Trash, Share, BookOpenCheck, Check, Plus, FormIcon, CircleCheck, Upload, X, FileText } from "lucide-react";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { cn } from "@/lib/utils";
 import {
@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { remark } from "remark";
 import html from "remark-html";
 import CopyButton from "@/components/copy-button";
+import { uploadFile } from "@/models/file";
 
 interface ClientRole extends RoleDetails {
     deleting: boolean;
@@ -112,6 +113,29 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
         queryFn: () => getOrganisationUserRole(orgId),
     });
 
+    const { data: attachments } = useQuery({
+        queryKey: [`${campaignId}-attachments`],
+        queryFn: () => getCampaignAttachments(campaignId),
+        retry: false, 
+    });
+
+    const { mutateAsync: mutateUploadAttachments } = useMutation({
+        mutationFn: (files: File[]) => uploadAttachments(campaignId, files),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [`${campaignId}-attachments`] });
+        },
+    });
+
+    const { mutateAsync: mutateDeleteAttachment } = useMutation({
+        mutationFn: (attachmentId: number) => deleteCampaignAttachment(attachmentId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [`${campaignId}-attachments`] });
+        },
+        onError: () => {
+            queryClient.invalidateQueries({ queryKey: [`${campaignId}-attachments`] });
+        },
+    })
+
     const [clientRoles, setClientRoles] = useState<ClientRole[]>([]);
     const [newRoleId, setNewRoleId] = useState<string>("0");
     const [hoveredDeleteIndex, setHoveredDeleteIndex] = useState<number | null>(null);
@@ -132,6 +156,61 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
     const toggleEditingMode = () => {
         setEditingMode(true);
     };
+
+    const handleUploadAttachments = async () => {
+        try {
+            // Open file picker
+            const fileHandles = await (window as any).showOpenFilePicker({
+                multiple: true,
+                types: [
+                    {
+                        description: "PDF files",
+                        accept: {
+                            "application/pdf": [".pdf"],
+                        },
+                    },
+                ],
+            });
+            
+            const files = await Promise.all(fileHandles.map(async (fileHandle: any) => await fileHandle.getFile()));
+
+            // Get pre-signed upload URLs from backend
+            const uploadResults = await mutateUploadAttachments(files);
+            
+            // Upload each file to S3 using the pre-signed URLs
+            // Match files to upload URLs by index (backend processes in order)
+            await Promise.all(
+                uploadResults.map((result, index) => {
+                    if (index >= files.length) {
+                        throw new Error("Mismatch between upload URLs and files");
+                    }
+                    return uploadFile(result.upload_url, files[index]);
+                })
+            );
+            
+            // Refresh attachments list
+            queryClient.invalidateQueries({ queryKey: [`${campaignId}-attachments`] });
+            
+            toast.success(`${uploadResults.length} attachments uploaded successfully`);
+        } catch (error) {
+            // User cancelled file picker - handle gracefully, no error needed
+            if ((error as any).name === 'AbortError' || (error as any).code === 20) {
+                return;
+            }
+            toast.error("Failed to upload attachments");
+            console.error("Upload error:", error);
+        }
+    }
+
+    const handleDeleteAttachment = async (attachmentId: number) => {
+        try {
+            await mutateDeleteAttachment(attachmentId);
+            toast.success("Attachment deleted successfully");
+        } catch (error) {
+            toast.error("Failed to delete attachment");
+            console.error("Delete error:", error);
+        }
+    }
 
     const addNewRoleRow = () => {
         if (!editingMode) return;
@@ -388,12 +467,12 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                         <ButtonGroup>
                             {
                                 editingMode ? (
-                                    <Button variant="outline" onClick={saveUpdatedCampaignDetails}><Check className="w-4 h-4" /> {dict.dashboard.actions.save}</Button>
+                                    <Button variant="outline" onClick={saveUpdatedCampaignDetails} className="cursor-pointer"><Check className="w-4 h-4" /> {dict.dashboard.actions.save}</Button>
                                 ) : (
-                                    <Button variant="outline" onClick={toggleEditingMode}><Pencil className="w-4 h-4" /> {dict.dashboard.actions.edit}</Button>
+                                    <Button variant="outline" onClick={toggleEditingMode} className="cursor-pointer"><Pencil className="w-4 h-4" /> {dict.dashboard.actions.edit}</Button>
                                 )
                             }
-                            <Button variant="outline"><Trash className="w-4 h-4" /> {dict.dashboard.actions.delete}</Button>
+                            <Button variant="outline" className="cursor-pointer"><Trash className="w-4 h-4" /> {dict.dashboard.actions.delete}</Button>
                         </ButtonGroup>
                     )}
                     {
@@ -535,6 +614,34 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                     />
                 ) : (
                     <div dangerouslySetInnerHTML={{ __html: descriptionHtmlState }} />
+                )}
+            </div>
+            <div>
+                <h2 className="text-xl font-bold">{dict.common.attachments}</h2>
+                {editingMode && (
+                    <Button variant="outline" onClick={handleUploadAttachments} className="cursor-pointer mt-3 p-6 w-[25%]">
+                        <Upload className="w-4 h-4" /> {dict.dashboard.campaigns.roles.upload_attachments}
+                    </Button>
+                )}
+                {attachments && attachments.length > 0 && (
+                    <div className="mt-3">
+                        {attachments.map(attachment => (
+                            <div className="flex items-center gap-2" key={attachment.id}>
+                                <a 
+                                    href={attachment.download_url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-sm text-blue-600 hover:text-blue-800 underline flex items-center gap-2"
+                                >
+                                <FileText className="w-4 h-4" />
+                                    {attachment.file_name}
+                                </a>
+                                {editingMode && (
+                                    <X className="w-4 h-4 cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-200" onClick={() => handleDeleteAttachment(attachment.id)} />
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 )}
             </div>
         </div>
