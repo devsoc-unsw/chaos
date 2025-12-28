@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/tooltip"
 import { getOrganisationById } from "@/models/organisation";
 import { uploadFile } from "@/models/file";
+import { createCategory } from "@/models/rating";
 
 export default function CampaignNewForm({ orgId, dict }: { orgId: string, dict: any }) {
     const queryClient = useQueryClient();
@@ -49,6 +50,7 @@ export default function CampaignNewForm({ orgId, dict }: { orgId: string, dict: 
         uploadFile(bannerUpdate.upload_url, selectedImage);
 
         await queryClient.invalidateQueries({ queryKey: [`${orgId}-campaigns`] });
+        await createCategory('general', campaignId);
         setSaving(false);
         redirect(`/dashboard/organisation/${orgId}/campaigns/${campaignId}`);
     }
