@@ -570,38 +570,51 @@ impl Application {
             ApplicationRatingSummary,
             "
                 SELECT
-                    a.id AS application_id,
-                    ARRAY_AGG(DISTINCT applied_roles.campaign_role_id) AS \"applied_roles!: Vec<i64>\",
-                    u.name AS user_name, u.email AS user_email,
-                    a.status AS \"status: ApplicationStatus\", a.updated_at,
+                a.id AS application_id,
+                ARRAY_AGG(DISTINCT applied_roles.campaign_role_id) AS \"applied_roles!: Vec<i64>\",
+                u.name AS user_name, u.email AS user_email,
+                a.status AS \"status: ApplicationStatus\", a.updated_at,
 
-                    to_jsonb(
-                        coalesce(
-                            array_remove(
-                                array_agg(
-                                    jsonb_build_object(
-                                        'id', ar.id,
-                                        'rater_id', reviewer.id,
-                                        'rater_name', reviewer.name,
-                                        'rating', ar.rating,
-                                        'comment', ar.comment,
-                                        'updated_at', ar.updated_at
-                                    ) ORDER BY ar.updated_at DESC
-                                ) FILTER (WHERE ar.id IS NOT NULL),
-                                NULL
-                            ),
-                            '{}'
+                to_jsonb(
+                    coalesce(
+                        array_remove(
+                            array_agg(
+                                jsonb_build_object(
+                                    'id', ar.id,
+                                    'rater_id', reviewer.id,
+                                    'rater_name', reviewer.name,
+                                    'category_ratings', COALESCE(cat_ratings.ratings, '[]'::jsonb),
+                                    'comment', ar.comment,
+                                    'updated_at', ar.updated_at
+                                ) ORDER BY ar.updated_at DESC
+                            ) FILTER (WHERE ar.id IS NOT NULL),
+                            NULL
+                        ),
+                        '{}'
+                    )
+                ) AS \"ratings: Json<Vec<RatingDetails>>\"
+            FROM applications a
+            JOIN application_roles applied_roles ON applied_roles.application_id = a.id
+            JOIN campaign_roles ON campaign_roles.id = applied_roles.campaign_role_id
+            LEFT JOIN application_ratings ar on ar.application_id = a.id
+            LEFT JOIN (
+                SELECT arc.application_rating_id,
+                    jsonb_agg(
+                        jsonb_build_object(
+                            'campaign_rating_category_id', arc.campaign_rating_category_id,
+                            'category_name', crc.name,
+                            'rating', arc.rating
                         )
-                    ) AS \"ratings: Json<Vec<RatingDetails>>\"
-                FROM applications a
-                JOIN application_roles applied_roles ON applied_roles.application_id = a.id
-                JOIN campaign_roles ON campaign_roles.id = applied_roles.campaign_role_id
-                LEFT JOIN application_ratings ar on ar.application_id = a.id
-                JOIN users u ON u.id = a.user_id
-                LEFT JOIN users AS reviewer ON reviewer.id = ar.rater_id
-                WHERE a.campaign_id = $1 AND a.submitted = true
-                GROUP BY a.id, u.name, u.email, a.status, a.updated_at
-                ORDER BY a.id ASC
+                    ) as ratings
+                FROM application_rating_category_ratings arc
+                LEFT JOIN campaign_rating_categories crc ON crc.id = arc.campaign_rating_category_id
+                GROUP BY arc.application_rating_id
+            ) cat_ratings on cat_ratings.application_rating_id = ar.id
+            JOIN users u ON u.id = a.user_id
+            LEFT JOIN users AS reviewer ON reviewer.id = ar.rater_id
+            WHERE a.campaign_id = $1 AND a.submitted = true
+            GROUP BY a.id, u.name, u.email, a.status, a.updated_at
+            ORDER BY a.id ASC
             ",
             campaign_id,
         )
