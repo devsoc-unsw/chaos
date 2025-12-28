@@ -11,11 +11,14 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
 use sqlx::{FromRow, Postgres, Transaction};
+use sqlx::types::Json;
 use std::ops::DerefMut;
 use axum::{async_trait, RequestPartsExt};
 use axum::extract::{FromRef, FromRequestParts, Path};
 use axum::http::request::Parts;
 use crate::models::app::AppState;
+use crate::models::question::MultiOptionQuestionOption;
+use crate::models::rating::RatingDetails;
 use crate::service::answer::assert_answer_application_is_open;
 use crate::service::application::{assert_application_is_open};
 
@@ -171,6 +174,30 @@ pub enum ApplicationStatus {
     Rejected,
     /// Application has been successful
     Successful,
+}
+
+/// Individual rating data for a specific application.
+///
+/// Each row represents an individual rating for a single applicant in a given role
+/// within a specific application, including reviewer information.
+#[derive(Deserialize, Serialize, FromRow)]
+pub struct ApplicationRatingSummary {
+    /// Application ID
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub application_id: i64,
+    /// Role IDs application is for
+    #[serde(serialize_with = "crate::models::serde_string::serialize_vec")]
+    pub applied_roles: Vec<i64>,
+    /// User's name (applicant)
+    pub user_name: String,
+    /// User's email (applicant)
+    pub user_email: String,
+    /// Status of the application
+    pub status: ApplicationStatus,
+    /// When the rating was last updated
+    pub updated_at: DateTime<Utc>,
+    /// All ratings the application has received
+    pub ratings: Option<sqlx::types::Json<Vec<RatingDetails>>>,
 }
 
 impl Application {
@@ -533,6 +560,65 @@ impl Application {
         }
 
         Ok(application_details_list)
+    }
+
+    pub async fn get_application_ratings_summary(
+        campaign_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<ApplicationRatingSummary>, ChaosError> {
+        let application_users_avg_ratings = sqlx::query_as!(
+            ApplicationRatingSummary,
+            "
+                SELECT
+                    a.id AS application_id,
+                    ARRAY_AGG(DISTINCT applied_roles.campaign_role_id) AS \"applied_roles!: Vec<i64>\",
+                    u.name AS user_name, u.email AS user_email,
+                    a.status AS \"status: ApplicationStatus\", a.updated_at,
+
+                    to_jsonb(
+                        coalesce(
+                            array_remove(
+                                array_agg(
+                                    jsonb_build_object(
+                                        'id', ar.id,
+                                        'rater_id', reviewer.id,
+                                        'rater_name', reviewer.name,
+                                        'rating', ar.rating,
+                                        'comment', ar.comment,
+                                        'updated_at', ar.updated_at
+                                    ) ORDER BY ar.updated_at DESC
+                                ) FILTER (WHERE ar.id IS NOT NULL),
+                                NULL
+                            ),
+                            '{}'
+                        )
+                    ) AS \"ratings: Json<Vec<RatingDetails>>\"
+                FROM applications a
+                JOIN application_roles applied_roles ON applied_roles.application_id = a.id
+                JOIN campaign_roles ON campaign_roles.id = applied_roles.campaign_role_id
+                LEFT JOIN application_ratings ar on ar.application_id = a.id
+                JOIN users u ON u.id = a.user_id
+                LEFT JOIN users AS reviewer ON reviewer.id = ar.rater_id
+                WHERE a.campaign_id = $1 AND a.submitted = true
+                GROUP BY a.id, u.name, u.email, a.status, a.updated_at
+                ORDER BY a.id ASC
+            ",
+            campaign_id,
+        )
+        .fetch_all(transaction.deref_mut())
+        .await?;
+
+        // to_jsonb(
+        //     array_agg(
+        //         jsonb_build_object(
+        //             'id', mod.id,
+        //             'display_order', mod.display_order,
+        //             'text', mod.text
+        //         ) ORDER BY mod.display_order
+        //     ) FILTER (WHERE mod.id IS NOT NULL)
+        // ) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
+
+        Ok(application_users_avg_ratings)
     }
 
     /// Retrieves all applications submitted by a specific user.

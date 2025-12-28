@@ -65,6 +65,8 @@
       "edit_campaign": "编辑活动",
       "share_link": "分享链接",
       "review_applications": "查看",
+      "application_summary": "申请总结",
+      "application_avg_ratings": "申请平均评分",
       "manage_questions": "管理问题",
       "publish": "发布",
       "published": "已发布",
@@ -81,6 +83,20 @@
         "review_comment": "评论 (可选)",
         "write_your_review_here": "在这里写下你的评论...",
         "application_not_rated": "未评估"
+      },
+      "application_summary_page": {
+        "applicant_name": "申请人姓名",
+        "avg_rating": "平均评分",
+        "filter_emails": "筛选邮箱...",
+        "filter_by_role": "按角色筛选",
+        "all_roles": "所有角色",
+        "individual_ratings": "个人评分:",
+        "no_results": "无结果。",
+        "show_more": "...更多",
+        "show_less": "...收起",
+        "loading": "加载中...",
+        "no_ratings": "暂无评分",
+        "no_comment": "暂无评论"
       }
     },
     "email": {

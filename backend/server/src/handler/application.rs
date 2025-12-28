@@ -8,7 +8,7 @@
 
 use crate::models::app::{AppMessage, AppState};
 use crate::models::application::{Application, ApplicationRoleUpdate, ApplicationStatus, OpenApplicationByApplicationId};
-use crate::models::auth::{ApplicationAdmin, ApplicationOwner, ApplicationOwnerOrReviewer, ApplicationReviewerGivenApplicationId, AuthUser};
+use crate::models::auth::{ApplicationAdmin, ApplicationOwner, ApplicationOwnerOrReviewer, ApplicationReviewerGivenApplicationId, AuthUser, CampaignAdmin, CampaignOrgMember};
 use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
@@ -334,5 +334,31 @@ impl ApplicationHandler {
                 .await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(ratings)))
+    }
+
+    /// Retrieves the average ratings for all users in an application.
+    /// 
+    /// This handler allows application reviewers to view the average ratings for all users in an application.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `_user` - The authenticated user (must be an application reviewer)
+    /// * `application_id` - The ID of the application
+    /// * `transaction` - Database transaction
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - List of average ratings or error
+    pub async fn get_application_ratings_summary(
+        _: CampaignOrgMember,
+        Path(campaign_id): Path<i64>,
+        mut transaction: DBTransaction<'_>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let avg_applications_ratings =
+            Application::get_application_ratings_summary(campaign_id, &mut transaction.tx)
+                .await?;
+        transaction.tx.commit().await?;
+
+        Ok(Json(avg_applications_ratings))
     }
 }

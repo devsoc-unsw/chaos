@@ -50,6 +50,34 @@ pub async fn user_is_campaign_admin(
     Ok(())
 }
 
+pub async fn user_is_campaign_org_member(
+    user_id: i64,
+    campaign_id: i64,
+    transaction: &mut Transaction<'_, Postgres>,
+) -> Result<(), ChaosError> {
+    let is_admin = sqlx::query!(
+        "
+            SELECT EXISTS(
+                SELECT 1 FROM campaigns c
+                JOIN organisation_members m on c.organisation_id = m.organisation_id
+                WHERE c.id = $1 AND m.user_id = $2
+            )
+        ",
+        campaign_id,
+        user_id
+    )
+        .fetch_one(transaction.deref_mut())
+        .await?
+        .exists
+        .expect("`exists` should always exist in this query result");
+
+    if !is_admin {
+        return Err(ChaosError::Unauthorized);
+    }
+
+    Ok(())
+}
+
 /// Verifies if a campaign is still open for applications.
 /// 
 /// This function checks if the campaign deadline has not passed.

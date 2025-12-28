@@ -57,3 +57,17 @@ export async function updateApplicationRating(applicationId: string, rating?: nu
         },
     });
 }
+
+export interface ApplicationRatingSummary {
+    application_id: string;
+    applied_roles: string[];
+    user_name: string;
+    user_email: string;
+    status: ApplicationStatus;
+    updated_at: string;
+    ratings: RatingDetails[];
+}
+
+export async function getApplicationRatingsSummary(campaignId: string): Promise<ApplicationRatingSummary[]> {
+    return await apiRequest<ApplicationRatingSummary[]>(`/api/v1/campaign/${campaignId}/avg_ratings`);
+}
