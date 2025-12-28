@@ -48,12 +48,26 @@ export async function getApplication(applicationId: string): Promise<Application
 //     });
 // }
 
-// export async function updateApplicationRating(applicationId: string, rating?: number, comment?: string): Promise<AppMessage> {
-//     return await apiRequest<AppMessage>(`/api/v1/application/${applicationId}/rating`, {
-//         method: "PUT",
-//         body: {
-//             rating,
-//             comment,
-//         },
-//     });
-// }
+export async function updateApplicationRating(applicationId: string, rating?: number, comment?: string): Promise<AppMessage> {
+    return await apiRequest<AppMessage>(`/api/v1/application/${applicationId}/rating`, {
+        method: "PUT",
+        body: {
+            rating,
+            comment,
+        },
+    });
+}
+
+export interface ApplicationRatingSummary {
+    application_id: string;
+    applied_roles: string[];
+    user_name: string;
+    user_email: string;
+    status: ApplicationStatus;
+    updated_at: string;
+    ratings: RatingDetails[];
+}
+
+export async function getApplicationRatingsSummary(campaignId: string): Promise<ApplicationRatingSummary[]> {
+    return await apiRequest<ApplicationRatingSummary[]>(`/api/v1/campaign/${campaignId}/avg_ratings`);
+}

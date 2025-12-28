@@ -320,7 +320,16 @@ pub async fn app() -> Result<Router, ChaosError> {
                 .delete(RatingHandler::delete_category_rating),
         )
 
+        .route(
+            "/api/v1/campaign/:campaign_id/avg_ratings",
+            get(ApplicationHandler::get_application_ratings_summary),
+        )
 
+
+        .route(
+            "/api/v1/campaign/:campaign_id/avg_ratings",
+            get(ApplicationHandler::get_application_ratings_summary),
+        )
         .route(
             "/api/v1/campaign/:campaign_id/role",
             post(CampaignHandler::create_role),
@@ -385,6 +394,15 @@ pub async fn app() -> Result<Router, ChaosError> {
         .route(
             "/api/v1/campaign/:campaign_id/banner",
             patch(CampaignHandler::update_banner),
+        )
+        .route(
+            "/api/v1/campaign/:campaign_id/attachments",
+            get(CampaignHandler::get_attachments)
+                .patch(CampaignHandler::upload_attachments),
+        )
+        .route(
+            "/api/v1/campaign/attachment/:attachment_id",
+            delete(CampaignHandler::delete_attachment),
         )
         .route(
             "/api/v1/campaign/:campaign_id/application",
