@@ -341,7 +341,7 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
     .await.expect("Failed seeding Answer 3");
 
     Rating::create(
-        NewRating { rating: 69, comment: Some("This guy does not know what they are talking about!".to_string()) }, 
+        NewRating { rating: 7, comment: Some("This guy does not know what they are talking about!".to_string()) }, 
         application_id_1, 
         2,
         &mut seeder.app_state.snowflake_generator, 
@@ -349,7 +349,7 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
         .await.expect("Failed seeding Rating 1");
 
     Rating::create(
-        NewRating { rating: 100, comment: None }, 
+        NewRating { rating: 10, comment: None }, 
         application_id_2, 
         2,
         &mut seeder.app_state.snowflake_generator, 
@@ -357,7 +357,7 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
         .await.expect("Failed seeding Rating 2");
 
     Rating::create(
-        NewRating { rating: 100, comment: Some("My cousin's restaurant could use a janitor".to_string()) },
+        NewRating { rating: 1, comment: Some("My cousin's restaurant could use a janitor".to_string()) },
         application_id_2, 
         1,
         &mut seeder.app_state.snowflake_generator,
