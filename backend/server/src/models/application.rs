@@ -11,11 +11,14 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
 use sqlx::{FromRow, Postgres, Transaction};
+use sqlx::types::Json;
 use std::ops::DerefMut;
 use axum::{async_trait, RequestPartsExt};
 use axum::extract::{FromRef, FromRequestParts, Path};
 use axum::http::request::Parts;
 use crate::models::app::AppState;
+use crate::models::question::MultiOptionQuestionOption;
+use crate::models::rating::RatingDetails;
 use crate::service::answer::assert_answer_application_is_open;
 use crate::service::application::{assert_application_is_open};
 
@@ -173,13 +176,12 @@ pub enum ApplicationStatus {
     Successful,
 }
 
-// TODO: Change this model to have all ratings for specific application as a child vector
 /// Individual rating data for a specific application.
 ///
 /// Each row represents an individual rating for a single applicant in a given role
 /// within a specific application, including reviewer information.
 #[derive(Deserialize, Serialize, FromRow)]
-pub struct ApplicationRating {
+pub struct ApplicationRatingSummary {
     /// Application ID
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub application_id: i64,
@@ -194,12 +196,8 @@ pub struct ApplicationRating {
     pub status: ApplicationStatus,
     /// When the rating was last updated
     pub updated_at: DateTime<Utc>,
-    /// Name of the reviewer who gave this rating
-    pub rater_name: String,
-    /// Optional comment/description from the reviewer
-    pub comment: Option<String>,
-    /// Individual rating value
-    pub rating: i32,
+    /// All ratings the application has received
+    pub ratings: Option<sqlx::types::Json<Vec<RatingDetails>>>,
 }
 
 impl Application {
@@ -567,30 +565,58 @@ impl Application {
     pub async fn get_application_ratings_summary(
         campaign_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<Vec<ApplicationRating>, ChaosError> {
+    ) -> Result<Vec<ApplicationRatingSummary>, ChaosError> {
         let application_users_avg_ratings = sqlx::query_as!(
-            ApplicationRating,
+            ApplicationRatingSummary,
             "
                 SELECT
                     a.id AS application_id,
-                    ARRAY_AGG(applied_roles.campaign_role_id) AS \"applied_roles!: Vec<i64>\",
+                    ARRAY_AGG(DISTINCT applied_roles.campaign_role_id) AS \"applied_roles!: Vec<i64>\",
                     u.name AS user_name, u.email AS user_email,
                     a.status AS \"status: ApplicationStatus\", a.updated_at,
-                    reviewer.name AS rater_name, ar.comment, ar.rating
+
+                    to_jsonb(
+                        coalesce(
+                            array_remove(
+                                array_agg(
+                                    jsonb_build_object(
+                                        'id', ar.id,
+                                        'rater_id', reviewer.id,
+                                        'rater_name', reviewer.name,
+                                        'rating', ar.rating,
+                                        'comment', ar.comment,
+                                        'updated_at', ar.updated_at
+                                    ) ORDER BY ar.updated_at DESC
+                                ) FILTER (WHERE ar.id IS NOT NULL),
+                                NULL
+                            ),
+                            '{}'
+                        )
+                    ) AS \"ratings: Json<Vec<RatingDetails>>\"
                 FROM applications a
                 JOIN application_roles applied_roles ON applied_roles.application_id = a.id
                 JOIN campaign_roles ON campaign_roles.id = applied_roles.campaign_role_id
-                JOIN application_ratings ar on ar.application_id = a.id
+                LEFT JOIN application_ratings ar on ar.application_id = a.id
                 JOIN users u ON u.id = a.user_id
-                JOIN users AS reviewer ON reviewer.id = ar.rater_id
-                WHERE a.campaign_id = $1
-                GROUP BY a.id, u.name, u.email, a.status, a.updated_at, reviewer.name, ar.comment, ar.rating
+                LEFT JOIN users AS reviewer ON reviewer.id = ar.rater_id
+                WHERE a.campaign_id = $1 AND a.submitted = true
+                GROUP BY a.id, u.name, u.email, a.status, a.updated_at
                 ORDER BY a.id ASC
             ",
             campaign_id,
         )
         .fetch_all(transaction.deref_mut())
         .await?;
+
+        // to_jsonb(
+        //     array_agg(
+        //         jsonb_build_object(
+        //             'id', mod.id,
+        //             'display_order', mod.display_order,
+        //             'text', mod.text
+        //         ) ORDER BY mod.display_order
+        //     ) FILTER (WHERE mod.id IS NOT NULL)
+        // ) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
 
         Ok(application_users_avg_ratings)
     }

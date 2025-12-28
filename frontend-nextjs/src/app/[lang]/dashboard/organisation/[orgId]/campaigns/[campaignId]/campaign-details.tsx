@@ -372,8 +372,8 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                         </Link>
                     </ButtonGroup>
                     <ButtonGroup>
-                        <Link href={`/dashboard/organisation/${campaign?.organisation_id}/campaigns/${campaignId}/application-avg-ratings-review`}>
-                            <Button><BarChart className="w-4 h-4" /> {dict.dashboard.campaigns.review_application_avg_ratings}</Button>
+                        <Link href={`/dashboard/organisation/${campaign?.organisation_id}/campaigns/${campaignId}/applications`}>
+                            <Button><BarChart className="w-4 h-4" /> {dict.dashboard.campaigns.application_summary}</Button>
                         </Link>
                     </ButtonGroup>
                     <ButtonGroup>

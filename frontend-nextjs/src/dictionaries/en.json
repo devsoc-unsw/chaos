@@ -64,7 +64,7 @@
       "edit_campaign": "Edit Campaign",
       "share_link": "Share Link",
       "review_applications": "Review Applications",
-      "review_application_avg_ratings": "Average Ratings",
+      "application_summary": "Application Summary",
       "application_avg_ratings": "Application Average Ratings",
       "manage_questions": "Manage Questions",
       "publish": "Publish",
@@ -83,7 +83,7 @@
         "write_your_review_here": "Write your review here...",
         "application_not_rated": "Application not rated"
       },
-      "application_avg_ratings_table": {
+      "application_summary_page": {
         "applicant_name": "Applicant Name",
         "avg_rating": "Avg Rating",
         "filter_emails": "Filter emails...",
@@ -93,7 +93,9 @@
         "no_results": "No results.",
         "show_more": "...more",
         "show_less": "...less",
-        "loading": "Loading..."
+        "loading": "Loading...",
+        "no_ratings": "No ratings yet",
+        "no_comment": "No comment"
       }
     },
     "email": {
