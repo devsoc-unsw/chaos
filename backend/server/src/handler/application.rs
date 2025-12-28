@@ -8,7 +8,7 @@
 
 use crate::models::app::{AppMessage, AppState};
 use crate::models::application::{Application, ApplicationRoleUpdate, ApplicationStatus, OpenApplicationByApplicationId};
-use crate::models::auth::{ApplicationAdmin, ApplicationOwner, ApplicationOwnerOrReviewer, ApplicationReviewerGivenApplicationId, AuthUser};
+use crate::models::auth::{ApplicationAdmin, ApplicationOwner, ApplicationOwnerOrReviewer, ApplicationReviewerGivenApplicationId, AuthUser, CampaignAdmin, CampaignOrgMember};
 use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
@@ -350,7 +350,7 @@ impl ApplicationHandler {
     /// 
     /// * `Result<impl IntoResponse, ChaosError>` - List of average ratings or error
     pub async fn get_application_ratings_summary(
-        // admin: ApplicationAdmin, TODO: This application admin cause error for me to fetch the data
+        _: CampaignOrgMember,
         Path(campaign_id): Path<i64>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
