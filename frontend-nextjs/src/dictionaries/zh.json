@@ -89,6 +89,17 @@
       "delete_confirmation": "这将永久删除邮件模板并无法撤销",
       "edit_template": "编辑模板"
     },
+    "invite": {
+      "title": "You're invited",
+      "invited_by": "{org} has invited you to join their organisation on Chaos.",
+      "sent_to": "This invite was sent to",
+      "login_cta": "Click here to create a Chaos account",
+      "accept_cta": "Accept invite",
+      "used": "This invite has already been used.",
+      "expired": "This invite has expired.",
+      "accepted": "Invite accepted! You've been added to the organisation.",
+      "wrong_account": "This account was not invited, please logout and try again."
+    },
     "actions": {
       "new": "新建",
       "edit": "编辑",
