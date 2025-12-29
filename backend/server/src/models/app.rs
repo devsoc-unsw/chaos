@@ -8,6 +8,7 @@ use crate::handler::organisation::OrganisationHandler;
 use crate::handler::question::QuestionHandler;
 use crate::handler::rating::RatingHandler;
 use crate::handler::role::RoleHandler;
+use crate::handler::invite::InviteHandler;
 use crate::handler::user::UserHandler;
 use crate::models::email::{ChaosEmail, EmailCredentials};
 use crate::models::error::ChaosError;
@@ -27,6 +28,7 @@ use oauth2::basic::BasicClient;
 use serde::Serialize;
 use tower_http::cors::CorsLayer;
 use crate::service::oauth2::build_oauth_client;
+
 
 #[derive(Serialize)]
 pub enum AppMessage<T: Serialize> {
@@ -424,6 +426,32 @@ pub async fn app() -> Result<Router, ChaosError> {
             "/api/v1/offer/:offer_id/send",
             post(OfferHandler::send_offer),
         )
+
+        // Invite routes
+        .route(
+            "/api/v1/invite/:invite_id",
+            get(InviteHandler::get),
+        )
+        .route(
+            "/api/v1/invite/:invite_id/delete",
+            delete(InviteHandler::delete),
+        )
+        .route(
+            "/api/v1/invite/:invite_id/create",
+            post(InviteHandler::create),
+        )
+
+        .route(
+            "/api/v1/invite/:invite_id/use",
+            post(InviteHandler::use_invite),
+        )
+
+        .route(
+            "/api/v1/invite/:invite_id/get_code",
+            get(InviteHandler::get_code_by_id),
+        )
+
+        
         .layer(cors)
         .with_state(state))
 }

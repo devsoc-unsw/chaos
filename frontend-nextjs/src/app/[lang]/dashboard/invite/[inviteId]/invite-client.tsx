@@ -10,9 +10,10 @@ type Props = {
   code: string;
   invite: InviteDetails;
   dict: any;
+  mockMode?: boolean;
 };
 
-export default function InviteClient({ code, invite, dict }: Props) {
+export default function InviteClient({ code, invite, dict, mockMode = false }: Props) {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState<string | null>(null);
 
@@ -20,7 +21,9 @@ export default function InviteClient({ code, invite, dict }: Props) {
     setStatus("loading");
     setMessage(null);
     try {
-      await acceptInvite(code);
+      if (!mockMode) {
+        await acceptInvite(code);
+      }
       setStatus("success");
       setMessage(dict.dashboard.invite.accepted);
     } catch (err) {

@@ -1,6 +1,7 @@
 CREATE TABLE organisation_invites (
-    code TEXT PRIMARY KEY,
+    id BIGINT PRIMARY KEY,
     organisation_id BIGINT NOT NULL REFERENCES organisations(id) ON DELETE CASCADE,
+    code TEXT NOT NULL UNIQUE,
     email TEXT NOT NULL,
     expires_at TIMESTAMPTZ NOT NULL,
     used_at TIMESTAMPTZ,
@@ -9,5 +10,3 @@ CREATE TABLE organisation_invites (
 );
 
 CREATE INDEX IDX_organisation_invites_org_email ON organisation_invites (organisation_id, email);
-
-
