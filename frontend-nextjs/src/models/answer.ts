@@ -30,7 +30,7 @@ export async function updateApplicationRoles(applicationId: string, roles: any):
   });
 }
 
-export async function updateAnswer(answerId: string, body: any):  Promise<void> {
+export async function updateAnswer(answerId: string, body: any): Promise<void> {
   return await apiRequest<void>(`/api/v1/answer/${answerId}`, {
     method: "PATCH",
     body,
@@ -41,5 +41,11 @@ export function createAnswer(applicationId: string, body: any) {
   return apiRequest(`/api/v1/application/${applicationId}/answer`, {
     method: "POST",
     body,
+  });
+}
+
+export async function deleteAnswer(answerId: string): Promise<void> {
+  return await apiRequest<void>(`/api/v1/answer/${answerId}`, {
+    method: "DELETE",
   });
 }

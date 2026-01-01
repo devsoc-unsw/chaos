@@ -27,9 +27,11 @@ async function ApplicationPage({
   })
 
     const application: ApplicationDetails | undefined = queryClient.getQueryData([`application-${applicationId}`]);
+
     if (!application) {
       redirect(`/campaign/${campaignId}/finish`);
     }
+
     const QApromises = [];
     // how do you make this part faster idrk(could not find anything on Reddit so decided to ask cursor 4 suggestions)
     for (const role of application?.applied_roles ?? []) {

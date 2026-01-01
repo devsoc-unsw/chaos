@@ -101,6 +101,7 @@ export default function MainContent({
               answerId={q.answer_id}
               submitAnswer={submitAnswer}
               dict={dict}
+              activeTab={activeTab}
             />
           );
         case "MultiChoice":

@@ -159,7 +159,6 @@ export default function ApplicationReview({
         console.error("Submission failed: ", e);
       }
   }
-
   useEffect(() => {
     populateQAByRole(selectedRoleIds,campaignId, applicationId)
     console.log(qaByRole)

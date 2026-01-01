@@ -178,7 +178,7 @@ export default function ReviewCard({
 
                                 {requiredUnanswered && (
                                     <TooltipContent>
-                                        {dict.appliationpage.submit_application_tooltip}
+                                        {dict.applicationpage.submit_application_tooltip}
                                     </TooltipContent>
                                 )}
                             </Tooltip>

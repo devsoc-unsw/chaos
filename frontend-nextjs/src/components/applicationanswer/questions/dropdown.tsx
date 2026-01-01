@@ -8,6 +8,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { AnswerValue, MultiOptionQuestionOption, Question, QuestionAndAnswer } from '@/models/question';
+import { deleteAnswer } from '@/models/answer';
+import { useQueryClient } from '@tanstack/react-query';
 
 // Special value to represent "No Answer" selection
 export const NO_ANSWER_VALUE = '__NO_ANSWER__';
@@ -17,46 +19,76 @@ export default function Dropdown({
   applicationId,
   answerId,
   submitAnswer,
-  dict
+  dict,
+  activeTab
 }: {
   question: any;
   applicationId: string;
   answerId?: string;
   submitAnswer: (question: QuestionAndAnswer, value: AnswerValue, applicationId: string, answerId?: string) => Promise<void>;
   dict: any;
+  activeTab?: string;
 }) {
-    const [value, setValue] = useState(question.answer_id ? question.answer_id : "")
-    const [answer, setAnswer] = useState(question.answer ? question.answer : "")
-    const placeholder = question.answer ? question.answer : ""
+    const queryClient = useQueryClient();
     const noAnswerLabel = dict?.no_answer ?? 'No Answer';
     const options: MultiOptionQuestionOption[] =
     (question as any).options ?? [];
 
+    // Derive the actual option ID from the answer text
+    const getValueFromAnswer = (): string => {
+        if (!question.answer || question.answer === "[No Answer Provided]") {
+            return NO_ANSWER_VALUE;
+        }
+        const matchingOption = options.find(opt => opt.text === question.answer);
+        return matchingOption ? matchingOption.id.toString() : NO_ANSWER_VALUE;
+    };
+
+    const [value, setValue] = useState(getValueFromAnswer());
+    const [answer, setAnswer] = useState(question.answer ? question.answer : "")
+    const placeholder = question.answer ? question.answer : ""
+
     useEffect(() => {
-        setValue(question.answer_id);
-    }, [question.answer_id]);
+        const newValue = getValueFromAnswer();
+        setValue(newValue);
+        setAnswer(question.answer || "");
+    }, [question.answer, question.answer_id]);
 
     const handleSelect = async (selectedValue: string) => {
-        const option = options.find(opt => opt.id.toString() === selectedValue);
-        const optionId = option ? option.id : selectedValue;
-        const optionText = option ? option.text : "";
+        if (selectedValue === NO_ANSWER_VALUE) {
+            setValue(NO_ANSWER_VALUE);
+            setAnswer("");
+            // delete dropdown
+            if (answerId) {
+                try {
+                    await deleteAnswer(answerId);
+                    const generalTab = activeTab === "general" || !activeTab;
+                    if (generalTab) {
+                        await queryClient.invalidateQueries({ queryKey: [`${applicationId}-common-answers`] });
+                    } else {
+                        await queryClient.invalidateQueries({ queryKey: [`${applicationId}-${activeTab}-role-answers`] });
+                    }
+                } catch (err) {
+                    console.error("Error: ", err);
+                    const newValue = getValueFromAnswer();
+                    setValue(newValue);
+                    setAnswer(question.answer || "");
+                }
+            }
+            return;
+        }
 
-        setValue(optionId);
-        setAnswer(optionText);
-        // this breaks the code. Will have to refactor the backend so that the backend handles dropdown deletion.
-        // if (selectedValue === NO_ANSWER_VALUE) {
-        //     setAnswer("");
-        //     try {
-        //         await submitAnswer(question, "0", applicationId, answerId);
-        //     } catch (err) {
-        //         console.error("Dropdown update failed:", err);
-        //     }
-        //     return;
-        // }
+        const option = options.find(opt => opt.id.toString() === selectedValue);
+        if (!option) {
+            console.error("Selected option not found:", selectedValue);
+            return;
+        }
+
+        setValue(option.id.toString());
+        setAnswer(option.text);
         try {
-            await submitAnswer(question, optionId, applicationId, answerId)
+            await submitAnswer(question, option.id.toString(), applicationId, answerId);
         } catch (err) {
-            console.error("Short answer update failed:", err);
+            console.error("Dropdown update failed:", err);
         }
     };
 

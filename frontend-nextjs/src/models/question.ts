@@ -65,6 +65,19 @@ export function linkQuestionsAndAnswers(questions: Question[], answers: Answer[]
             };
         } else if (question.question_type === "MultiChoice" || question.question_type === "DropDown") {
             const answerData = answer?.answer_data;
+            if (answerData === "0" || answerData === "" || !answerData) {
+                return {
+                    question_id: question.id,
+                    answer_id: answer?.id,
+                    text: question.title,
+                    answer: "[No Answer Provided]",
+                    question_type: question.question_type,
+                    required: question.required,
+                    options: question.data?.options,
+                    description: question?.description
+                };
+            }
+
             const selectedOption = question.data?.options?.find((option) => option.id === answerData);
 
             return {
