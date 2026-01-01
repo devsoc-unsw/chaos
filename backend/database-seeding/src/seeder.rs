@@ -375,7 +375,7 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
             comment: Some("This guy has massive aura, but does not know how to vibe code".to_string()),
         },
         application_id_1,
-        2,
+        1,
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
@@ -383,113 +383,91 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
 
     Rating::create_category_rating(
         NewApplicationCategoryRating {
+            campaign_rating_category_id: rating_category_id_1,
+            rating: 5,
+        },
+        app_rating_id_1,
+        &mut seeder.app_state.snowflake_generator,
+        &mut tx,
+    )
+    .await.expect("Failed seeding Category Rating of Bedrotting");
+
+    Rating::create_category_rating(
+        NewApplicationCategoryRating {
             campaign_rating_category_id: rating_category_id_2,
+            rating: 1,
+        },
+        app_rating_id_1,
+        &mut seeder.app_state.snowflake_generator,
+        &mut tx,
+    )
+    .await.expect("Failed seeding Category Rating of Vibe Coding");
+
+    Rating::create_category_rating(
+        NewApplicationCategoryRating {
+            campaign_rating_category_id: rating_category_id_3,
             rating: 10,
         },
         app_rating_id_1,
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
-    .await.expect("Failed seeding Category Rating of Vibe Coding");
-
-    Rating::create_category_rating(
-        NewApplicationCategoryRating {
-            campaign_rating_category_id: rating_category_id_3,
-            rating: 100,
-        },
-        app_rating_id_1,
-        &mut seeder.app_state.snowflake_generator,
-        &mut tx,
-    )
     .await.expect("Failed seeding Category Rating of Rizzler");
 
-    let app_rating_id_2 = Rating::create_application_rating(
-        NewApplicationRating {
-            comment: None,
-        },
-        application_id_2,
-        2,
-        &mut seeder.app_state.snowflake_generator,
-        &mut tx,
-    )
-    .await.expect("Failed seeding Application Rating 2");
+    // let app_rating_id_2 = Rating::create_application_rating(
+    //     NewApplicationRating {
+    //         comment: Some("This guy knows how to vibe code and is a professional bedrotter, but has no aura".to_string()),
+    //     },
+    //     application_id_2,
+    //     2,
+    //     &mut seeder.app_state.snowflake_generator,
+    //     &mut tx,
+    // )
+    // .await.expect("Failed seeding Application Rating 2");
 
-    Rating::create_category_rating(
-        NewApplicationCategoryRating {
-            campaign_rating_category_id: rating_category_id_1,
-            rating: 95,
-        },
-        app_rating_id_2,
-        &mut seeder.app_state.snowflake_generator,
-        &mut tx,
-    )
-    .await.expect("Failed seeding Category Rating of Bedrotting");
+    // Rating::create_category_rating(
+    //     NewApplicationCategoryRating {
+    //         campaign_rating_category_id: rating_category_id_1,
+    //         rating: 9,
+    //     },
+    //     app_rating_id_2,
+    //     &mut seeder.app_state.snowflake_generator,
+    //     &mut tx,
+    // )
+    // .await.expect("Failed seeding Category Rating of Bedrotting");
 
-    Rating::create_category_rating(
-        NewApplicationCategoryRating {
-            campaign_rating_category_id: rating_category_id_2,
-            rating: 100,
-        },
-        app_rating_id_2,
-        &mut seeder.app_state.snowflake_generator,
-        &mut tx,
-    )
-    .await.expect("Failed seeding Category Rating of Vibe Coding");
+    // Rating::create_category_rating(
+    //     NewApplicationCategoryRating {
+    //         campaign_rating_category_id: rating_category_id_2,
+    //         rating: 10,
+    //     },
+    //     app_rating_id_2,
+    //     &mut seeder.app_state.snowflake_generator,
+    //     &mut tx,
+    // )
+    // .await.expect("Failed seeding Category Rating of Vibe Coding");
 
-    Rating::create_category_rating(
-        NewApplicationCategoryRating {
-            campaign_rating_category_id: rating_category_id_3,
-            rating: 100,
-        },
-        app_rating_id_2,
-        &mut seeder.app_state.snowflake_generator,
-        &mut tx,
-    )
-    .await.expect("Failed seeding Category Rating of Rizzler");
+    // Rating::create_category_rating(
+    //     NewApplicationCategoryRating {
+    //         campaign_rating_category_id: rating_category_id_3,
+    //         rating: 10,
+    //     },
+    //     app_rating_id_2,
+    //     &mut seeder.app_state.snowflake_generator,
+    //     &mut tx,
+    // )
+    // .await.expect("Failed seeding Category Rating of Rizzler");
 
-    let app_rating_id_3 = Rating::create_application_rating(
-        NewApplicationRating {
-            comment: Some("This guy knows how to vibe code and is a professional bedrotter, but has no aura".to_string()),
-        },
-        application_id_2,
-        1,
-        &mut seeder.app_state.snowflake_generator,
-        &mut tx,
-    )
-    .await.expect("Failed seeding Application Rating 3");
-
-    Rating::create_category_rating(
-        NewApplicationCategoryRating {
-            campaign_rating_category_id: rating_category_id_1,
-            rating: 100,
-        },
-        app_rating_id_3,
-        &mut seeder.app_state.snowflake_generator,
-        &mut tx,
-    )
-    .await.expect("Failed seeding Category Rating of Bedrotting");
-
-    Rating::create_category_rating(
-        NewApplicationCategoryRating {
-            campaign_rating_category_id: rating_category_id_2,
-            rating: 95,
-        },
-        app_rating_id_3,
-        &mut seeder.app_state.snowflake_generator,
-        &mut tx,
-    )
-    .await.expect("Failed seeding Category Rating of Vibe Coding");
-
-    Rating::create_category_rating(
-        NewApplicationCategoryRating {
-            campaign_rating_category_id: rating_category_id_3,
-            rating: 5,
-        },
-        app_rating_id_3,
-        &mut seeder.app_state.snowflake_generator,
-        &mut tx,
-    )
-    .await.expect("Failed seeding Category Rating of Rizzler");
+    // let app_rating_id_3 = Rating::create_application_rating(
+    //     NewApplicationRating {
+    //         comment: None,
+    //     },
+    //     application_id_2,
+    //     1,
+    //     &mut seeder.app_state.snowflake_generator,
+    //     &mut tx,
+    // )
+    // .await.expect("Failed seeding Application Rating 3");
     
     let template = 
     "

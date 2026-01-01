@@ -315,6 +315,10 @@ pub async fn app() -> Result<Router, ChaosError> {
                 .delete(RatingHandler::delete),
         )
         .route(
+            "/api/v1/rating/:rating_id/category",
+            post(RatingHandler::create_category_rating_from_existing_application_rating),
+        )
+        .route(
             "/api/v1/rating/:rating_id/category/:category_rating_id",
             patch(RatingHandler::update_category_rating)
                 .delete(RatingHandler::delete_category_rating),

@@ -96,8 +96,15 @@ pub struct ApplicationCategoryRating {
 #[derive(Deserialize, Serialize)]
 pub struct NewApplicationCategoryRating {
     /// ID of the category being rated
-    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
     pub campaign_rating_category_id: i64,
+    /// Numerical score based on the rating
+    pub rating: i32,
+}
+
+/// Data structure for updating a category rating score.
+#[derive(Deserialize, Serialize)]
+pub struct UpdateCategoryRating {
     /// Numerical score based on the rating
     pub rating: i32,
 }
@@ -129,7 +136,6 @@ pub struct RatingDetails {
     /// Optional comments about the application
     pub comment: Option<String>,
     /// Category ratings for this application rating (IMPORTANT TO ADD FOR rating numerical score)
-    #[serde(flatten)] 
     pub category_ratings: sqlx::types::Json<Vec<CategoryRatingDetail>>,
     /// When the rating was last updated
     pub updated_at: DateTime<Utc>,
@@ -138,7 +144,10 @@ pub struct RatingDetails {
 /// Detail of a single category rating
 #[derive(Deserialize, Serialize)]
 pub struct CategoryRatingDetail {
-    /// ID of the category
+    /// ID of the application category rating record <TODO: RELOOK INTO THIS>
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub id: i64,
+    /// ID of the campaign rating category
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_rating_category_id: i64,
     /// Name of the category
@@ -516,7 +525,8 @@ impl Rating {
             RatingDetails,
             r#"
             SELECT ar.id, ar.rater_id, u.name as rater_name, ar.comment, ar.updated_at,
-                COALESCE(jsonb_agg(jsonb_build_object('campaign_rating_category_id', arc.campaign_rating_category_id, 
+                COALESCE(jsonb_agg(jsonb_build_object('id', arc.id, 
+                'campaign_rating_category_id', arc.campaign_rating_category_id, 
                 'category_name', crc.name,
                 'rating', arc.rating)
                 ) FILTER (WHERE arc.id IS NOT NULL),
@@ -578,7 +588,7 @@ impl Rating {
 
     /// ------------------- ApplicationCateogryRatings Operations ----------------
     
-    /// Creates a new application category rating in ApplicationCategoryRating WITH numerical rating score
+    /// Creates an ENTIRELY new application category rating in ApplicationCategoryRating WITH numerical rating score
     /// Ensures that the application category rating must be unique for application_rating_id and campaign_rating_category_id
     /// 
     /// # Arguments
@@ -589,7 +599,7 @@ impl Rating {
     /// 
     /// # Returns
     /// Returns a `Result` containing either:
-    /// * `Ok(ApplicationCateogryRating)` - The created application category rating
+    /// * `Ok(i64)` - The ID of the created application category rating
     /// * `Err(ChaosError)` - An error if creation fails
     pub async fn create_category_rating(
         new_category_rating: NewApplicationCategoryRating,
@@ -599,8 +609,7 @@ impl Rating {
     ) -> Result<i64, ChaosError> {
         let category_rating_id = snowflake_generator.real_time_generate();
 
-        sqlx::query_as!(
-            ApplicationCategoryRating,
+        sqlx::query!(
             "
             INSERT INTO application_rating_category_ratings 
                 (id, application_rating_id, campaign_rating_category_id, rating)

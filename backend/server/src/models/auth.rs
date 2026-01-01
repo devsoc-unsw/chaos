@@ -457,10 +457,13 @@ where
         let app_state = AppState::from_ref(state);
         let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
-        let Path(rating_id) = parts
-            .extract::<Path<i64>>()
+        // TODO: <RELOOK INTO THIS>
+        let rating_id = *parts
+            .extract::<Path<HashMap<String, i64>>>()
             .await
-            .map_err(|_| ChaosError::BadRequest)?;
+            .map_err(|_| ChaosError::BadRequest)?
+            .get("rating_id")
+            .ok_or(ChaosError::BadRequest)?;
 
         let mut tx = app_state.db.begin().await?;
         assert_user_is_rating_creator_and_organisation_member(user_id, rating_id, &mut tx).await?;

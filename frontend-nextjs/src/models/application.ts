@@ -1,6 +1,8 @@
 import { apiRequest } from "@/lib";
 import { UserDetails } from "./user";
 import { AppMessage } from "./app";
+import { RatingDetails } from "./rating";
+
 
 export interface ApplicationDetails {
     id: string;

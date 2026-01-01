@@ -11,7 +11,7 @@ use crate::models::auth::{
     RatingCreator,
 };
 use crate::models::error::ChaosError;
-use crate::models::rating::{NewApplicationRating, NewCategoryRating, NewRating, Rating};
+use crate::models::rating::{NewApplicationCategoryRating, NewApplicationRating, NewCategoryRating, NewRating, Rating, UpdateCategoryRating};
 use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
@@ -218,6 +218,33 @@ impl RatingHandler {
         Ok(AppMessage::OkMessage("Successfully updated rating"))
     }
 
+    /// Creates a new category rating for an existing application rating.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `rating_id` - The ID of the application rating
+    /// * `_admin` - The authenticated user (must be the rating creator)
+    /// * `transaction` - Database transaction
+    /// * `data` - The new category rating data
+    pub async fn create_category_rating_from_existing_application_rating(
+        State(mut state): State<AppState>,
+        Path(rating_id): Path<i64>,
+        _admin: RatingCreator,
+        mut transaction: DBTransaction<'_>,
+        Json(data): Json<NewApplicationCategoryRating>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        Rating::create_category_rating(
+            data, 
+            rating_id, 
+            &mut state.snowflake_generator,
+            &mut transaction.tx
+        ).await?;
+        
+        transaction.tx.commit().await?;
+
+        Ok(AppMessage::OkMessage("Successfully created category rating for existing application rating"))
+    }
+
     /// Updates a specific category rating score.
     /// 
     /// # Arguments
@@ -231,9 +258,9 @@ impl RatingHandler {
         Path((_rating_id, category_rating_id)): Path<(i64, i64)>,
         _admin: RatingCreator,
         mut transaction: DBTransaction<'_>,
-        Json(rating): Json<i32>,
+        Json(data): Json<UpdateCategoryRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Rating::update_category_rating(category_rating_id, rating, &mut transaction.tx).await?;
+        Rating::update_category_rating(category_rating_id, data.rating, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
 

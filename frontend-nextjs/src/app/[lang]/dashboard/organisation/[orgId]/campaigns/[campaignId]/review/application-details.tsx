@@ -1,7 +1,9 @@
 "use client";
 
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createApplicationRating, getApplication, getApplicationRating, updateApplicationRating } from "@/models/application";
+import {getApplication } from "@/models/application";
+import { createRating, getCategoryRatingsByApplication, updateRatingComment, updateCategoryRating, 
+    getRatingCategories, deleteCategoryRating, deleteRating, NewCategoryRating, createCategoryRatingFromRating } from "@/models/rating";
 import { getAllCommonAnswers, getAllRoleAnswers } from "@/models/answer";
 import { getAllCommonQuestions, getAllRoleQuestions, linkQuestionsAndAnswers } from "@/models/question";
 import { Separator } from "@/components/ui/separator";
@@ -37,6 +39,11 @@ export default function ApplicationDetailsComponent({ applicationId, campaignId,
         queryFn: () => getAllCommonAnswers(applicationId),
     });
 
+    const { data: ratingCategories } = useQuery({
+        queryKey: [`${campaignId}-rating-categories`],
+        queryFn: () => getRatingCategories(campaignId),
+    });
+
     const linkedCommonQuestionsAnswers = linkQuestionsAndAnswers(commonQuestions ?? [], commonAnswers ?? []);
 
     const roles = application?.applied_roles ?? [];
@@ -57,40 +64,67 @@ export default function ApplicationDetailsComponent({ applicationId, campaignId,
 
     const { data: applicationRating } = useQuery({
         queryKey: [`${applicationId}-application-rating`],
-        queryFn: () => getApplicationRating(applicationId),
+        queryFn: () => getCategoryRatingsByApplication(applicationId),
     });
 
-    let originalRating = applicationRating?.rating;
-    let originalComment = applicationRating?.comment;
+    const originalRatings = applicationRating && applicationRating.length > 0 ? applicationRating[0] : undefined;
+    const hasRated = originalRatings !== undefined;
 
-    const hasRated = applicationRating?.rating !== undefined;
-    const [rating, setRating] = useState<number | undefined>(undefined);
+    const [categoryRatings, setCategoryRatings] = useState<Record<string, number>>({});
     const [comment, setComment] = useState<string | undefined>(undefined);
 
     useEffect(() => {
-        setRating(undefined);
-        setComment(undefined);
-    }, [applicationId]);
-
-    const handleSubmitRating = async () => {       
-        let sendingRating = rating;
-        let sendingComment = comment;
-        
-        if (!rating) {
-            sendingRating = originalRating;
-        }
-
-        if (!comment) {
-            sendingComment = originalComment ?? "";
-        }
-        
-        if (hasRated) {
-            await updateApplicationRating(applicationId, sendingRating, sendingComment);
+        if (applicationRating && applicationRating.length > 0 && applicationRating[0].category_ratings) {
+            const initialRatings: Record<string, number> = {};
+            applicationRating[0].category_ratings.forEach(cr => {
+                initialRatings[cr.campaign_rating_category_id] = cr.rating;
+            });
+            setCategoryRatings(initialRatings);
         } else {
-            await createApplicationRating(applicationId, sendingRating, sendingComment);
+            setCategoryRatings({});
+        }
+        setComment(undefined);
+    }, [applicationId, applicationRating]);
+
+    const handleSubmitRating = async () => {
+        const sendingComment = comment !== undefined ? comment : (originalRatings?.comment ?? null);
+        
+        const categoryRatingsArray: NewCategoryRating[] = Object.entries(categoryRatings).map(([categoryId, rating]) => {
+            return {
+                campaign_rating_category_id: categoryId,
+                rating: rating,
+            };
+        });
+        
+        if (hasRated && originalRatings) {
+            if (comment !== undefined) {
+                await updateRatingComment(originalRatings.id, sendingComment);
+            }
+            
+            // Update or create each category rating
+            for (const [categoryId, rating] of Object.entries(categoryRatings)) {
+                const existingCategoryRating = originalRatings.category_ratings.find(
+                    cr => cr.campaign_rating_category_id === categoryId
+                );
+                
+                if (existingCategoryRating && existingCategoryRating.id) {
+                    // update it if changed from existing
+                    if (existingCategoryRating.rating !== rating) {
+                        await updateCategoryRating(originalRatings.id, existingCategoryRating.id, rating);
+                    }
+                } else {
+                    // new category to rate for an existing campaign
+                    await createCategoryRatingFromRating(originalRatings.id, {
+                        campaign_rating_category_id: categoryId,
+                        rating: rating,
+                    });
+                }
+            }
+        } else {
+            await createRating(applicationId, sendingComment, categoryRatingsArray);
         }
 
-        setRating(undefined);
+        setCategoryRatings({});
         setComment(undefined);
         setRatedApplications({
             ...ratedApplications,
@@ -161,31 +195,59 @@ export default function ApplicationDetailsComponent({ applicationId, campaignId,
 
             {/* Rating form */}
             <div className="flex flex-col gap-2">
-                <p className="text-lg font-semibold">{dict.dashboard.campaigns.application_review_page.application_rating}</p>
+                    <p className="text-lg font-semibold">{dict.dashboard.campaigns.application_review_page.application_rating}</p>
 
-                <Label htmlFor="reviewScore">{dict.dashboard.campaigns.application_review_page.review_score}</Label>
-                {/* TODO: Put into flexbox and dynamically add different columns for different categories */}
-                <Select value={rating?.toString() ?? originalRating?.toString() ?? ""} onValueChange={(value) => setRating(Number(value))}>
-                    <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder={dict.dashboard.campaigns.application_review_page.review_score} />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
-                            <SelectItem key={value} value={`${value}`}>{value}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                    {ratingCategories && ratingCategories.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                            {ratingCategories.map((category) => {
+                                const currentRating = categoryRatings[category.id] ?? 
+                                originalRatings?.category_ratings?.find(cr => cr.campaign_rating_category_id === category.id)?.rating;
+                                
+                                return (
+                                    <div key={category.id} className="flex flex-col gap-2">
+                                        <Label htmlFor={`category-${category.id}`}>{category.name}</Label>
+                                    <Select 
+                                        value={currentRating?.toString() ?? ""} 
+                                        onValueChange={(value) => setCategoryRatings(prev => ({
+                                            ...prev,
+                                            [category.id]: Number(value)
+                                        }))}
+                                    >
+                                        <SelectTrigger className="w-[180px]" id={`category-${category.id}`}>
+                                            <SelectValue placeholder={dict.dashboard.campaigns.application_review_page.review_score} />
+                                        </SelectTrigger>
+                                            <SelectContent>
+                                                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
+                                                    <SelectItem key={value} value={`${value}`}>{value}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <p className="text-sm text-gray-500 mb-4">No rating categories configured for this campaign.</p>
+                    )}
 
-                <Label htmlFor="reviewComment">{dict.dashboard.campaigns.application_review_page.review_comment}</Label>
-                <Textarea
-                    className="min-h-[100px]" id="reviewComment"
-                    placeholder={dict.dashboard.campaigns.application_review_page.write_your_review_here}
-                    value={(comment || comment == "") ? comment : (originalComment ?? "")}
-                    onChange={(e) => setComment(e.target.value)}
-                />
-                <div>
-                    <Button disabled={rating === undefined && comment === undefined} onClick={handleSubmitRating}>Submit</Button>
-                </div>
+                    <div className="flex flex-col gap-2 mb-4">
+                        <Label htmlFor="reviewComment">{dict.dashboard.campaigns.application_review_page.review_comment}</Label>
+                        <Textarea
+                            className="min-h-[100px]" 
+                            id="reviewComment"
+                            placeholder={dict.dashboard.campaigns.application_review_page.write_your_review_here}
+                            value={(comment !== undefined) ? comment : (originalRatings?.comment ?? "")}
+                            onChange={(e) => setComment(e.target.value)}
+                        />
+                    </div>
+                    <div>
+                        <Button 
+                            disabled={Object.keys(categoryRatings).length === 0 && comment === undefined} 
+                            onClick={handleSubmitRating}
+                        >
+                            Submit
+                        </Button>
+                    </div>
             </div>
 
         </ScrollArea>
