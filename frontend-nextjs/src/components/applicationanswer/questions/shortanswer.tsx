@@ -19,7 +19,11 @@ export default function  ShortAnswer({
     const [value, setValue] = useState(question.answer);
 
     useEffect(() => {
-        setValue(question.answer);
+        if (question.answer === 'No Answer') {
+            setValue('')
+        } else {
+            setValue(question.answer);
+        }
     }, [question.answer]);
 
     const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {

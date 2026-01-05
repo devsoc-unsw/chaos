@@ -33,6 +33,7 @@ export default function ReviewCard({
         if (!qa.required) return false;
 
         if (qa.answer == null) return true;
+        if (qa.answer === "No Answer") return true;
         if (qa.answer === "__NO_ANSWER__") return true;
 
         if (typeof qa.answer === "string") {
@@ -62,14 +63,15 @@ export default function ReviewCard({
             }
 
             case "MultiSelect":
-                return Array.isArray(qa.answer)
-                    ? qa.answer
+                    if (!Array.isArray(qa.answer) || qa.answer.length === 0) {
+                        return "No Answer";
+                    }
+                    return qa.answer
                         .map(id => {
                         const opt = qa.options.find(o => o.id === id);
                         return opt ? opt.text : String(id);
                         })
-                        .join(", ")
-                    : String(qa.answer);
+                        .join(", ");
 
             case "Ranking":
                 // vibed this too cause lowk didn't know how to map it in the best way
