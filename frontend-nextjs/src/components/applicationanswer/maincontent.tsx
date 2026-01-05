@@ -1,6 +1,6 @@
 import { AnswerValue, MultiOptionQuestionOption, QuestionAndAnswer } from "@/models/question";
 import { getAllCommonQuestions, getAllRoleQuestions, linkQuestionsAndAnswers } from "@/models/question";
-import { getAllRoleAnswers, getAllCommonAnswers, updateAnswer, createAnswer  } from "@/models/answer";
+import { getAllRoleAnswers, getAllCommonAnswers, updateAnswer, createAnswer, deleteAnswer  } from "@/models/answer";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import ShortAnswer from "./questions/shortanswer";
@@ -66,6 +66,10 @@ export default function MainContent({
         const payload = buildAnswerPayload(question, value);
 
         if (answerId) {
+          if (payload.answer_data === null) {
+            await deleteAnswer(answerId);
+            return
+          }
           await updateAnswer(answerId, payload);
         } else {
           await createAnswer(applicationId, payload);

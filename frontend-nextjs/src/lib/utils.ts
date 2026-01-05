@@ -24,11 +24,17 @@ export function buildAnswerPayload(question: QuestionAndAnswer, value: unknown) 
   switch (question.question_type) {
     case "ShortAnswer":
       answerData = String(value);
+      if (answerData.trim() === '') {
+        answerData = null
+      }
       break;
 
     case "MultiChoice":
     case "DropDown":
       answerData = value;
+      if (answerData === 'NO_ANSWER') {
+        answerData = null
+      }
       break;
 
     case "MultiSelect":

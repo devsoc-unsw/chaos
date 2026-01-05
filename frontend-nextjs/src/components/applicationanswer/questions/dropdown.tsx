@@ -12,7 +12,7 @@ import { deleteAnswer } from '@/models/answer';
 import { useQueryClient } from '@tanstack/react-query';
 
 // Special value to represent "No Answer" selection
-export const NO_ANSWER_VALUE = '__NO_ANSWER__';
+export const NO_ANSWER_VALUE = 'NO_ANSWER';
 
 export default function Dropdown({
   question,
@@ -54,39 +54,25 @@ export default function Dropdown({
     }, [question.answer, question.answer_id]);
 
     const handleSelect = async (selectedValue: string) => {
+        let value = NO_ANSWER_VALUE
+        let answer = ''
         if (selectedValue === NO_ANSWER_VALUE) {
             setValue(NO_ANSWER_VALUE);
-            setAnswer("");
-            // REFACTOR TO ALSO DELETE EMPTY PAYLOADS FROM SHORTT ANSWER AND MULTISELECT
-            if (answerId) {
-                try {
-                    await deleteAnswer(answerId);
-                    const generalTab = activeTab === "general" || !activeTab;
-                    if (generalTab) {
-                        await queryClient.invalidateQueries({ queryKey: [`${applicationId}-common-answers`] });
-                    } else {
-                        await queryClient.invalidateQueries({ queryKey: [`${applicationId}-${activeTab}-role-answers`] });
-                    }
-                } catch (err) {
-                    console.error("Error: ", err);
-                    const newValue = getValueFromAnswer();
-                    setValue(newValue);
-                    setAnswer(question.answer || "");
-                }
+            setAnswer("No Answer");
+        } else {
+
+            const option = options.find(opt => opt.id.toString() === selectedValue);
+            if (!option) {
+                console.error("Selected option not found:", selectedValue);
+                return;
             }
-            return;
+            value = option.id.toString()
+            answer = option.text
         }
-
-        const option = options.find(opt => opt.id.toString() === selectedValue);
-        if (!option) {
-            console.error("Selected option not found:", selectedValue);
-            return;
-        }
-
-        setValue(option.id.toString());
-        setAnswer(option.text);
+        setValue(value);
+        setAnswer(answer);
         try {
-            await submitAnswer(question, option.id.toString(), applicationId, answerId);
+            await submitAnswer(question, value, applicationId, answerId);
         } catch (err) {
             console.error("Dropdown update failed:", err);
         }
