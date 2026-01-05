@@ -36,7 +36,7 @@ export default function Dropdown({
 
     // Derive the actual option ID from the answer text
     const getValueFromAnswer = (): string => {
-        if (!question.answer || question.answer === "[No Answer Provided]") {
+        if (!question.answer || question.answer === "No Answer") {
             return NO_ANSWER_VALUE;
         }
         const matchingOption = options.find(opt => opt.text === question.answer);
@@ -57,7 +57,7 @@ export default function Dropdown({
         if (selectedValue === NO_ANSWER_VALUE) {
             setValue(NO_ANSWER_VALUE);
             setAnswer("");
-            // delete dropdown
+            // REFACTOR TO ALSO DELETE EMPTY PAYLOADS FROM SHORTT ANSWER AND MULTISELECT
             if (answerId) {
                 try {
                     await deleteAnswer(answerId);

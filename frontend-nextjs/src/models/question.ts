@@ -57,7 +57,7 @@ export function linkQuestionsAndAnswers(questions: Question[], answers: Answer[]
                 question_id: question.id,
                 answer_id: answer?.id,
                 text: question.title,
-                answer: answer?.answer_data ?? "[No Answer Provided]",
+                answer: answer?.answer_data ?? "No Answer",
                 question_type: question.question_type,
                 required: question.required,
                 options: question.data?.options,
@@ -70,7 +70,7 @@ export function linkQuestionsAndAnswers(questions: Question[], answers: Answer[]
                     question_id: question.id,
                     answer_id: answer?.id,
                     text: question.title,
-                    answer: "[No Answer Provided]",
+                    answer: "No Answer",
                     question_type: question.question_type,
                     required: question.required,
                     options: question.data?.options,
@@ -84,7 +84,7 @@ export function linkQuestionsAndAnswers(questions: Question[], answers: Answer[]
                 question_id: question.id,
                 answer_id: answer?.id,
                 text: question.title,
-                answer: selectedOption?.text ?? "[No Answer Provided]",
+                answer: selectedOption?.text ?? "No Answer",
                 question_type: question.question_type,
                 required: question.required,
                 options: question.data?.options,
@@ -94,7 +94,7 @@ export function linkQuestionsAndAnswers(questions: Question[], answers: Answer[]
             const answerData = answer?.answer_data ?? [] as string[];
             const selectedOptions = question.data?.options?.filter((option) => answerData.includes(option.id));
             
-            let answerText = "[No Answer Provided]";
+            let answerText = "No Answer";
             if (selectedOptions.length > 0) {
                 answerText = selectedOptions.map((option) => option.text).join(", ");
             }
@@ -113,7 +113,7 @@ export function linkQuestionsAndAnswers(questions: Question[], answers: Answer[]
             console.log(answer)
             const answerData = (answer?.answer_data ?? []) as string[];
 
-            let answerText = "[No Answer Provided]";
+            let answerText = "No Answer";
 
             if (answerData.length > 0 && question.data?.options) {
                 answerText = answerData
@@ -143,7 +143,7 @@ export function linkQuestionsAndAnswers(questions: Question[], answers: Answer[]
             question_id: question.id,
             answer_id: answer?.id,
             text: question.title,
-            answer: "[No Answer Provided]",
+            answer: "No Answer",
             question_type: question.question_type,
             required: question.required,
             options: question.data?.options,

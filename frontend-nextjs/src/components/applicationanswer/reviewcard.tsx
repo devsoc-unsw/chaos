@@ -48,7 +48,7 @@ export default function ReviewCard({
 
     function renderAnswerPreview(qa: QuestionAndAnswer): string {
         if (!qa.answer || qa.answer === "__NO_ANSWER__") {
-            return "[No Answer Provided]";
+            return "No answer";
         }
 
         switch (qa.question_type) {
