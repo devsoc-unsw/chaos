@@ -60,7 +60,6 @@ export default function Dropdown({
             setValue(NO_ANSWER_VALUE);
             setAnswer("No Answer");
         } else {
-
             const option = options.find(opt => opt.id.toString() === selectedValue);
             if (!option) {
                 console.error("Selected option not found:", selectedValue);

@@ -1,7 +1,9 @@
+"use client"
+
 import { AnswerValue, MultiOptionQuestionOption, QuestionAndAnswer } from "@/models/question";
 import { getAllCommonQuestions, getAllRoleQuestions, linkQuestionsAndAnswers } from "@/models/question";
 import { getAllRoleAnswers, getAllCommonAnswers, updateAnswer, createAnswer, deleteAnswer  } from "@/models/answer";
-import { useQuery } from "@tanstack/react-query";
+import { QueryClient, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import ShortAnswer from "./questions/shortanswer";
 import Dropdown from "./questions/dropdown";
@@ -28,7 +30,7 @@ export default function MainContent({
     useState<QuestionAndAnswer[]>([]);
 
     const generalTab = activeTab === "general"
-
+    const queryClient = useQueryClient()
     const { data: questions } = useQuery({
     queryKey: generalTab
       ? [`${campaignId}-common-questions`]
@@ -48,7 +50,7 @@ export default function MainContent({
         ? getAllCommonAnswers(applicationId)
         : getAllRoleAnswers(applicationId, activeTab),
     });
-
+  
     // submits answer to a question
     const submitAnswer = async (
       question: QuestionAndAnswer,
@@ -61,19 +63,38 @@ export default function MainContent({
         answer: value,
       };
 
-      updateRoleAnswers(updatedQA);
       try {
         const payload = buildAnswerPayload(question, value);
 
-        if (answerId) {
-          if (payload.answer_data === null) {
+        // HANDLE EMPTY QUESTION
+        if (payload.answer_data === null) {
+          if (answerId) {
             await deleteAnswer(answerId);
-            return
+            if (generalTab) {
+              await queryClient.invalidateQueries({
+                queryKey: [`${applicationId}-common-answers`]
+              });
+            } else {
+              await queryClient.invalidateQueries({
+                queryKey: [`${applicationId}-${activeTab}-role-answers}`]
+              })
+            }
           }
-          await updateAnswer(answerId, payload);
+          const deletedQA: QuestionAndAnswer = {
+            ...question,
+            answer_id: undefined,
+            answer: "No Answer",
+          };
+          updateRoleAnswers(deletedQA);
+          return
         } else {
-          await createAnswer(applicationId, payload);
+          if (answerId) {
+            await updateAnswer(answerId, payload)
+          } else {
+            await createAnswer(applicationId, payload)
+          }
         }
+        updateRoleAnswers(updatedQA);
       } catch (err) {
         console.error("Failed to submit answer", err);
       }

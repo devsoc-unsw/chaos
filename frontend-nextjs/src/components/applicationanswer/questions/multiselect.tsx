@@ -41,7 +41,7 @@ export default function MultiSelect({
     const [selectedOptions, setSelectedOptions] =
     useState<string[]>(deriveIdsFromAnswerString(question.answer, options));
 
-    const handleChange = (optionId: string | number, checked: boolean) => {
+    const handleChange = async (optionId: string | number, checked: boolean) => {
         const id = String(optionId);
 
         const next = checked
@@ -49,37 +49,41 @@ export default function MultiSelect({
             : selectedOptions.filter(existingId => existingId !== id);
 
         setSelectedOptions(next);
-        submitAnswer(question, next, applicationId, answerId);
+        try {
+            await submitAnswer(question, next, applicationId, answerId);
+        } catch (e) {
+            console.error("erorr: ", e);
+        }
     };
 
     return (
         <div className="mb-6">
-        <div className="flex items-center mb-2">
-            <Label className="text-lg font-medium">{question.text}</Label>
-            {question.required && <span className="ml-1 text-destructive">*</span>}
-        </div>
+            <div className="flex items-center mb-2">
+                <Label className="text-lg font-medium">{question.text}</Label>
+                {question.required && <span className="ml-1 text-destructive">*</span>}
+            </div>
 
-        {question.description && (
-            <p className="mb-4 text-sm text-muted-foreground">{question.description}</p>
-        )}
+            {question.description && (
+                <p className="mb-4 text-sm text-muted-foreground">{question.description}</p>
+            )}
 
-        <div className="space-y-3">
-            {options.map((option) => (
-                <div key={option.id} className="flex items-center space-x-2">
-                    <Checkbox
-                        id={`option-${question.id}-${option.id}`}
-                        checked={selectedOptions.includes(option.id)}
-                        onCheckedChange={(checked) => handleChange(option.id, !!checked)}
-                    />
-                    <Label
-                        htmlFor={`option-${question.id}-${option.id}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                        {option.text}
-                    </Label>
-                </div>
-            ))}
-        </div>
+            <div className="space-y-3">
+                {options.map((option) => (
+                    <div key={option.id} className="flex items-center space-x-2">
+                        <Checkbox
+                            id={`option-${question.id}-${option.id}`}
+                            checked={selectedOptions.includes(option.id)}
+                            onCheckedChange={(checked) => handleChange(option.id, !!checked)}
+                        />
+                        <Label
+                            htmlFor={`option-${question.id}-${option.id}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                            {option.text}
+                        </Label>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }

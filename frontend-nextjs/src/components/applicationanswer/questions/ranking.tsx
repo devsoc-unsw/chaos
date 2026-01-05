@@ -54,11 +54,13 @@ export default function Ranking({
     return [...ordered, ...remaining];
   }
 
+  const [rankedOptions, setRankedOptions] = useState<RankedOption[]>(
+    reorderOptionsFromRankingString(question.answer || "", options)
+  );
   useEffect(() => {
     setRankedOptions(reorderOptionsFromRankingString(question.answer, options));
   }, [question.answer]);
 
-  const [rankedOptions, setRankedOptions] = useState<RankedOption[]>(options);
 
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
