@@ -1,5 +1,0 @@
-[env]
-# Disable sqlx compile-time query checking to prevent hangs when database is unavailable
-# Set to "false" if you want to enable compile-time checking (requires database connection)
-SQLX_OFFLINE = "true"
-
