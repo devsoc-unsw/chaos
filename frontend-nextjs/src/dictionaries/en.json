@@ -97,6 +97,34 @@
         "loading": "Loading...",
         "no_ratings": "No ratings yet",
         "no_comment": "No comment"
+      },
+      "questions": "Questions List",
+      "add_question_template": "Add Question Template",
+      "click_add_template": "Click 'Add Question Template' to create a new template",
+      "template_editor": {
+        "template_name_placeholder": "Template name",
+        "question_heading_placeholder": "Question heading",
+        "question_goes_here_placeholder": "Question goes here",
+        "cancel": "Cancel",
+        "save_template": "Save Template",
+        "delete": "Delete",
+        "template_name_required": "Please provide a template name",
+        "template_created_success": "Template created successfully",
+        "template_updated_success": "Template updated successfully",
+        "template_deleted_success": "Template deleted successfully",
+        "template_create_error": "Failed to create template",
+        "template_update_error": "Failed to update template",
+        "template_delete_error": "Failed to delete template",
+        "unknown_error": "Unknown error",
+        "select_template_message": "Click a template to view or edit, or click + to create a new one"
+      },
+      "template_instructions": {
+        "merge_cells": "Merge cells:",
+        "merge_cells_description": "Ctrl/Cmd + Click on a header cell, then click another header cell to merge",
+        "add_columns": "Add columns:",
+        "add_columns_description": "Click the + button in the top-right corner to add more question columns",
+        "resize_rows": "Resize rows:",
+        "resize_rows_description": "Hover over the bottom edge of any row and drag to resize vertically"
       }
     },
     "email": {
