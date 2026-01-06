@@ -97,6 +97,34 @@
         "loading": "加载中...",
         "no_ratings": "暂无评分",
         "no_comment": "暂无评论"
+      },
+      "questions": "问题列表",
+      "add_question_template": "添加问题模板",
+      "click_add_template": "点击 '添加问题模板' 创建新的问题模板",
+      "template_editor": {
+        "template_name_placeholder": "模板名称",
+        "question_heading_placeholder": "问题标题",
+        "question_goes_here_placeholder": "问题内容",
+        "cancel": "取消",
+        "save_template": "保存模板",
+        "delete": "删除",
+        "template_name_required": "请提供模板名称",
+        "template_created_success": "模板创建成功",
+        "template_updated_success": "模板更新成功",
+        "template_deleted_success": "模板删除成功",
+        "template_create_error": "创建模板失败",
+        "template_update_error": "更新模板失败",
+        "template_delete_error": "删除模板失败",
+        "unknown_error": "未知错误",
+        "select_template_message": "点击模板查看或编辑，或点击 + 创建新模板"
+      },
+      "template_instructions": {
+        "merge_cells": "合并单元格:",
+        "merge_cells_description": "Ctrl/Cmd + 点击标题单元格，然后点击另一个标题单元格进行合并",
+        "add_columns": "添加列:",
+        "add_columns_description": "点击右上角的 + 按钮添加更多问题列",
+        "resize_rows": "调整行大小:",
+        "resize_rows_description": "悬停在行的底部边缘并拖动以垂直调整大小"
       }
     },
     "email": {

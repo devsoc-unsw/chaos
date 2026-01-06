@@ -13,7 +13,7 @@ use crate::models::application::Application;
 use crate::models::application::NewApplication;
 use crate::models::auth::AuthUser;
 use crate::models::auth::CampaignAdmin;
-use crate::models::campaign::{AttachmentResponse, Campaign, CampaignAttachment, NewAttachment, OpenCampaign};
+use crate::models::campaign::{AttachmentResponse, Campaign, CampaignAttachment, NewAttachment, NewQuestionTemplate, OpenCampaign};
 use crate::models::error::ChaosError;
 use crate::models::offer::Offer;
 use crate::models::role::{Role, RoleUpdate};
@@ -490,5 +490,115 @@ impl CampaignHandler {
         
         transaction.tx.commit().await?;
         Ok(())
+    }
+
+    /// Retrieves all question templates by its campaign slug.
+    /// 
+    /// This handler allows the campaign admin to view the question templates using slugs.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `transaction` - Database transaction
+    /// * `campaign_slug` - The slug of the campaign
+    /// * `_admin` - The campaign admin
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Question template details or error
+    pub async fn get_question_templates(
+        mut transaction: DBTransaction<'_>,
+        Path(id): Path<i64>,
+        _admin: CampaignAdmin,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let question_template =
+            Campaign::get_all_templates(id, &mut transaction.tx).await?;
+        transaction.tx.commit().await?;
+        Ok((StatusCode::OK, Json(question_template)))
+    }
+
+    /// Creates a new question template for a campaign.
+    /// 
+    /// This handler allows campaign admins to create new question templates.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `transaction` - Database transaction
+    /// * `state` - The application state
+    /// * `id` - The ID of the campaign
+    /// * `_admin` - The authenticated user (must be a campaign admin)
+    /// * `template_data` - The template data to create
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
+    pub async fn upload_question_template(
+        mut transaction: DBTransaction<'_>,
+        State(mut state): State<AppState>,
+        Path(id): Path<i64>,
+        _admin: CampaignAdmin,
+        Json(template_data): Json<NewQuestionTemplate>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        _ = Campaign::create_question_template(
+            id,
+            template_data,
+            &mut state.snowflake_generator,
+            &mut transaction.tx,
+        )
+        .await?;
+        transaction.tx.commit().await?;
+        Ok((StatusCode::OK, Json(AppMessage::OkMessage("Template created successfully"))))
+    }
+
+    /// Updates a question template for a campaign.
+    /// 
+    /// This handler allows campaign admins to update question templates.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `transaction` - Database transaction
+    /// * `template_id` - The ID of the question template
+    /// * `_admin` - The authenticated user (must be a campaign admin)
+    /// * `template_data` - The template data to update
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
+    pub async fn update_question_template(
+        mut transaction: DBTransaction<'_>,
+        Path((_campaign_id, template_id)): Path<(i64, i64)>,
+        _admin: CampaignAdmin,
+        Json(template_data): Json<NewQuestionTemplate>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        _ = Campaign::update_template(
+            template_id,
+            template_data,
+            &mut transaction.tx,
+        )
+        .await?;
+        transaction.tx.commit().await?;
+        Ok((StatusCode::OK, Json(AppMessage::OkMessage("Template updated successfully"))))
+    }
+
+    /// Deletes a campaign's question template.
+    /// 
+    /// This handler allows campaign admins to delete question templates.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `transaction` - Database transaction
+    /// * `Path((campaign_id, template_id))` - The campaign ID and template ID from the path
+    /// * `_admin` - The authenticated user (must be a campaign admin)
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
+    pub async fn delete_question_template(
+        mut transaction: DBTransaction<'_>,
+        Path((_campaign_id, template_id)): Path<(i64, i64)>,
+        _admin: CampaignAdmin,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        Campaign::delete_template(template_id, &mut transaction.tx).await?;
+        transaction.tx.commit().await?;
+        Ok(AppMessage::OkMessage("Successfully deleted question template"))
     }
 }

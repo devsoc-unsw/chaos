@@ -9,6 +9,7 @@ use s3::Bucket;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Transaction};
 use sqlx::{Postgres};
+use sqlx::types::Json;
 use std::ops::DerefMut;
 use axum::{async_trait, RequestPartsExt};
 use axum::extract::{FromRef, FromRequestParts, Path};
@@ -272,6 +273,52 @@ pub struct AttachmentUpload {
     pub attachment_id: i64,
     /// Pre-signed URL for uploading the file
     pub upload_url: String,
+}
+
+/// Cell data structure for question templates.
+/// 
+/// Represents a single cell in the template grid with its value,
+/// column span, and merge status.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct CellData {
+    /// The text content of the cell
+    pub value: String,
+    /// Number of columns this cell spans
+    #[serde(rename = "colSpan")]
+    pub col_span: i32,
+    /// Whether this cell is part of a merged group
+    #[serde(rename = "isMerged")]
+    pub is_merged: bool,
+}
+
+/// Request structure for creating a new question template.
+#[derive(Deserialize)]
+pub struct NewQuestionTemplate {
+    /// Template name
+    pub name: String,
+    /// Header row cells containing question headings
+    #[serde(rename = "headerRow")]
+    pub header_row: Json<Vec<CellData>>,
+    /// Content row cells containing answer/interviewer note areas
+    #[serde(rename = "contentRow")]
+    pub content_row: Json<Vec<CellData>>,
+}
+
+/// Response structure for question template retrieval
+#[derive(Serialize, sqlx::FromRow)]
+pub struct QuestionTemplate {
+    /// ID of the created attachment record
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub template_id: i64,
+    /// ID of the campaign this attachment belongs to
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub campaign_id: i64,
+    /// Template name
+    pub template_name: String,
+    /// Header row cells containing question headings
+    pub header_row: Json<Vec<CellData>>,
+    /// Content row cells containing answer/interviewer note areas
+    pub content_row: Json<Vec<CellData>>,
 }
 
 impl Campaign {
@@ -547,6 +594,113 @@ impl Campaign {
             id
         )
         .fetch_one(transaction.deref_mut())
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn get_all_templates(
+        id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<QuestionTemplate>, ChaosError> {
+        let question_templates = sqlx::query_as!(
+            QuestionTemplate,
+            r#"
+                SELECT 
+                    qt.id AS template_id,
+                    qt.campaign_id,
+                    qt.template_name,
+                    qt.header_row AS "header_row: Json<Vec<CellData>>",
+                    qt.content_row AS "content_row: Json<Vec<CellData>>"
+                FROM question_template qt
+                WHERE qt.campaign_id = $1
+                ORDER BY qt.id
+            "#,
+            id
+        )
+        .fetch_all(transaction.deref_mut())
+        .await?;
+
+        Ok(question_templates)
+    }
+
+    /// Creates a new question template for a campaign.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `campaign_id` - ID of the campaign
+    /// * `template_data` - The template data to create
+    /// * `snowflake_generator` - Generator for creating unique IDs
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<i64, ChaosError>` - ID of the created template or error
+    pub async fn create_question_template(
+        campaign_id: i64,
+        template_data: NewQuestionTemplate,
+        snowflake_generator: &mut SnowflakeIdGenerator,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<i64, ChaosError> {
+        let template_id = snowflake_generator.real_time_generate();
+
+        // Convert Json wrapper to inner value for insertion
+        let header_row_value = template_data.header_row.0;
+        let content_row_value = template_data.content_row.0;
+
+        sqlx::query!(
+            r#"
+                INSERT INTO question_template (id, campaign_id, template_name, header_row, content_row)
+                VALUES ($1, $2, $3, $4::jsonb, $5::jsonb)
+            "#,
+            template_id,
+            campaign_id,
+            template_data.name,
+            sqlx::types::Json(header_row_value) as _,
+            sqlx::types::Json(content_row_value) as _,
+        )
+        .execute(transaction.deref_mut())
+        .await?;
+
+        Ok(template_id)
+    }
+
+    pub async fn update_template(
+        template_id: i64,
+        template_data: NewQuestionTemplate,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
+        let header_row_value = template_data.header_row.0;
+        let content_row_value = template_data.content_row.0;
+
+        sqlx::query!(
+            r#"
+                UPDATE question_template
+                SET template_name = $1, header_row = $2::jsonb, content_row = $3::jsonb
+                WHERE id = $4
+            "#,
+            template_data.name,
+            sqlx::types::Json(header_row_value) as _,
+            sqlx::types::Json(content_row_value) as _,
+            template_id,
+        )
+        .execute(transaction.deref_mut())
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn delete_template(
+        id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
+        sqlx::query!(
+            "
+                DELETE FROM question_template WHERE id = $1
+            ",
+            id
+        )
+        .execute(transaction.deref_mut())
         .await?;
 
         Ok(())

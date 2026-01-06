@@ -452,7 +452,7 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                     </ButtonGroup>
                     <ButtonGroup>
                         <Link href={`/dashboard/organisation/${campaign?.organisation_id}/campaigns/${campaignId}/applications`}>
-                            <Button><BarChart className="w-4 h-4" /> {dict.dashboard.campaigns.application_summary}</Button>
+                            <Button className="cursor-pointer"><BarChart className="w-4 h-4" /> {dict.dashboard.campaigns.application_summary}</Button>
                         </Link>
                     </ButtonGroup>
                     <ButtonGroup>
@@ -478,7 +478,7 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                     {
                         !campaign?.published && (
                             <Link href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}/questions`}>
-                                <Button variant="outline"><FormIcon className="w-4 h-4" /> {dict.dashboard.campaigns.manage_questions}</Button>
+                                <Button className="cursor-pointer" variant="outline"><FormIcon className="w-4 h-4" /> {dict.dashboard.campaigns.manage_questions}</Button>
                             </Link>
                         )
                     }

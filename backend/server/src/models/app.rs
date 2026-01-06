@@ -12,7 +12,7 @@ use crate::handler::user::UserHandler;
 use crate::models::email::{ChaosEmail, EmailCredentials};
 use crate::models::error::ChaosError;
 use crate::models::storage::Storage;
-use axum::routing::{delete, get, patch, post};
+use axum::routing::{delete, get, patch, post, put};
 use axum::{Json, Router};
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use reqwest::Client as ReqwestClient;
@@ -376,6 +376,16 @@ pub async fn app() -> Result<Router, ChaosError> {
         .route(
             "/api/v1/campaign/:campaign_id/offers",
             get(CampaignHandler::get_offers),
+        )
+        .route(
+            "/api/v1/campaign/:campaign_id/interview-questions",
+            get(CampaignHandler::get_question_templates)
+                .post(CampaignHandler::upload_question_template),
+        )
+        .route(
+            "/api/v1/campaign/:campaign_id/interview-questions/:template_id",
+            put(CampaignHandler::update_question_template)
+                .delete(CampaignHandler::delete_question_template),
         )
         .route(
             "/api/v1/application/:application_id",
