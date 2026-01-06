@@ -17,22 +17,32 @@ export default function  ShortAnswer({
   dict: any;
 }) {
     const [value, setValue] = useState(question.answer);
+    const [previousAnswer, setPreviousAnswer] = useState(question.answer === "No Answer" ? null : question.answer)    
 
     useEffect(() => {
         if (question.answer === 'No Answer') {
             setValue('')
+            setPreviousAnswer(null)
         } else {
             setValue(question.answer);
+            setPreviousAnswer(question.answer);
         }
-    }, [question.answer]);
+    }, [question.answer, question.answer_id]);
 
     const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
         setValue(e.target.value);
     }
 
     const handleBlur = async () => {
+        const trimmed = value.trim() === '' ? '' : value.trim()
+        const trimmedPrev = previousAnswer?.trim() === '' ? '' : previousAnswer?.trim()
+        if (trimmed === trimmedPrev) {
+            return
+        }
+
         try {
             await submitAnswer(question, value, applicationId, answerId)
+            setPreviousAnswer(trimmedPrev || null)
         } catch (err) {
             console.error("Short answer update failed:", err);
         }

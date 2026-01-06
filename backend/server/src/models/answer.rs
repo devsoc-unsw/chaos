@@ -136,6 +136,16 @@ impl Answer {
     ) -> Result<i64, ChaosError> {
         data.validate()?;
 
+        sqlx::query!(
+            "
+                DELETE FROM answers
+                WHERE application_id = $1 AND question_id = $2
+            ",
+            application_id,
+            question_id
+        )
+        .execute(transaction.deref_mut())
+        .await?;
         let id = snowflake_generator.real_time_generate();
 
         sqlx::query!(
