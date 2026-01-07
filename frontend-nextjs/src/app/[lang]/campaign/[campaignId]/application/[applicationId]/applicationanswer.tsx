@@ -128,6 +128,31 @@ export default function ApplicationReview({
   // update roles in backend
   const updateRoles = async (nextSelectedRoles: string[]) => {
     setSelectedRoleIds(nextSelectedRoles)
+    setQAByRole(prev => {
+      const newQAMap = new Map<string, QuestionAndAnswer[]>();
+
+      if (prev.has('general')) {
+        newQAMap.set('general', prev.get('general')!);
+      }
+
+      for (const roleId of nextSelectedRoles) {
+        if (prev.has(roleId)) {
+          newQAMap.set(roleId, prev.get(roleId)!);
+        } else {
+          const roleQs: Question[] | undefined = queryClient.getQueryData([`${campaignId}-${roleId}-role-questions`]);
+          const roleAnswers: Answer[] | undefined = queryClient.getQueryData([`${applicationId}-${roleId}-role-answers`]);
+          if (roleQs && roleAnswers) {
+            const linked = linkQuestionsAndAnswers(roleQs, roleAnswers);
+            newQAMap.set(roleId, linked);
+          } else {
+            newQAMap.set(roleId, []);
+          }
+        }
+      }
+
+      return newQAMap;
+    });
+
     try {
       const payload = {
         roles: buildUpdatedRolesPayload(nextSelectedRoles),

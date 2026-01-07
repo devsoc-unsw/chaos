@@ -1,4 +1,5 @@
 import { DraggableProvided} from "@hello-pangea/dnd";
+import { GripVertical } from "lucide-react"
 import { CampaignRole } from "@/models/campaign";
 import { Info } from "lucide-react";
 import {
@@ -19,15 +20,16 @@ export function RoleCard({
   role: CampaignRole;
   index?: number;
   selected: boolean;
-  drag?: DraggableProvided;
+  drag: DraggableProvided;
   dict: any;
   onClick?: () => void;
 }) {
   return (
     <div
       ref={drag?.innerRef}
-      {...drag?.draggableProps}
-      {...drag?.dragHandleProps}
+      {...drag.draggableProps}
+      {...drag.dragHandleProps}
+      title="draggable"
       onClick={onClick}
       className={`
         p-3 rounded-lg border-2 transition-all cursor-pointer bg-card
@@ -36,12 +38,15 @@ export function RoleCard({
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 min-w-0">
-          {selected && (
-            <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-semibold bg-primary text-primary-foreground rounded-full">
-              {index! + 1}
-            </span>
-          )}
-
+          <div
+            className="cursor-grab text-muted-foreground select-none"
+          >
+            {selected ? (
+              <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-semibold bg-primary text-primary-foreground rounded-full">
+                {index! + 1}
+              </span>
+            ) : <GripVertical/>}
+          </div>
           <h3 className="font-medium text-sm truncate">{role.name}</h3>
         </div>
 

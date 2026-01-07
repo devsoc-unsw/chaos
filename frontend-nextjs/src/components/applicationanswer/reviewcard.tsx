@@ -30,6 +30,7 @@ export default function ReviewCard({
     )
     .flat()
     .some((qa) => {
+        if (!qa) return false;
         if (!qa.required) return false;
 
         if (qa.answer == null) return true;
@@ -63,15 +64,19 @@ export default function ReviewCard({
             }
 
             case "MultiSelect":
-                    if (!Array.isArray(qa.answer) || qa.answer.length === 0) {
-                        return "No Answer";
-                    }
-                    return qa.answer
-                        .map(id => {
-                        const opt = qa.options.find(o => o.id === id);
-                        return opt ? opt.text : String(id);
-                        })
-                        .join(", ");
+                //ts so cooked, it expects string from backend but frontend needs conversions ;-;
+                if (typeof qa.answer === "string") {
+                    return qa.answer === "No Answer" ? "No Answer" : qa.answer;
+                }
+                if (!Array.isArray(qa.answer) || qa.answer.length === 0) {
+                    return "No Answer";
+                }
+                return qa.answer
+                    .map(id => {
+                    const opt = qa.options.find(o => o.id === id);
+                    return opt ? opt.text : String(id);
+                    })
+                    .join(", ");
 
             case "Ranking":
                 // vibed this too cause lowk didn't know how to map it in the best way
@@ -138,7 +143,9 @@ export default function ReviewCard({
                                         <h3 className="text-xl font-bold">
                                             {role?.name ?? "General"}
                                         </h3>
-                                        {
+                                        { !qas || qas.length === 0 ? (
+                                            <p>This role has no questions</p>
+                                        ) : (
                                             qas.map(qa => {
                                                 const answer = renderAnswerPreview(qa)
                                                 return (
@@ -156,7 +163,7 @@ export default function ReviewCard({
                                                     </div>
                                                 )
                                             })
-                                        }
+                                        )}
                                     </div>
                                 );
                             }

@@ -59,15 +59,21 @@ export default function Dropdown({
         if (selectedValue === NO_ANSWER_VALUE) {
             setValue(NO_ANSWER_VALUE);
             setAnswer("No Answer");
-        } else {
-            const option = options.find(opt => opt.id.toString() === selectedValue);
-            if (!option) {
-                console.error("Selected option not found:", selectedValue);
-                return;
+            try {
+                await submitAnswer(question, value, applicationId, answerId);
+            } catch (err) {
+                console.error("Dropdown update failed:", err);
             }
-            value = option.id.toString()
-            answer = option.text
+            return
         }
+
+        const option = options.find(opt => opt.id.toString() === selectedValue);
+        if (!option) {
+            console.error("Selected option not found:", selectedValue);
+            return;
+        }
+        value = option.id.toString()
+        answer = option.text
         setValue(value);
         setAnswer(answer);
         try {
