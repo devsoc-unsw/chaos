@@ -16,7 +16,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ orgSl
 
     return (
         <HydrationBoundary state={dehydrate(queryClient)}>
-            <CampaignInfo orgSlug={orgSlug} campaignSlug={campaignSlug} dict={dict} />
+            <CampaignInfo orgSlug={orgSlug} campaignSlug={campaignSlug} dict={dict} lang={lang}/>
         </HydrationBoundary>
     )
 

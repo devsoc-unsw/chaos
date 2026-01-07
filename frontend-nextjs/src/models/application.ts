@@ -19,6 +19,11 @@ export interface ApplicationAppliedRoleDetails {
     role_name: string;
     preference: number;
 }
+export async function createOrGetApplication(campaignId: string): Promise<{ application_id: string }> {
+    return await apiRequest<{ application_id: string }>(`/api/v1/campaign/${campaignId}/apply`, {
+      method: "POST",
+    });
+}
 
 export async function getApplication(applicationId: string): Promise<ApplicationDetails> {
     return await apiRequest<ApplicationDetails>(`/api/v1/application/${applicationId}`);

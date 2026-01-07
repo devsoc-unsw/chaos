@@ -6,10 +6,12 @@ import { getCampaignBySlugs, getCampaignAttachments, getCampaignRoles } from "@/
 import { Calendar, ExternalLink, Mail, FileText, Video, Clock, Users, Briefcase, Info, Phone, SquareUserRound } from "lucide-react";
 import { dateToString } from "@/lib/utils"; 
 import { Button } from "@/components/ui/button";
-import { notFound } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import Link from "next/link";
 
-export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug: string, campaignSlug: string, dict: any }) {
+export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug: string, campaignSlug: string, dict: any, lang:string }) {
+    const params = useParams();
+    const lang = params.lang
     const { data: campaignData } = useQuery({
         queryKey: [`${orgSlug}-${campaignSlug}-campaign-details`],
         queryFn: () => getCampaignBySlugs(orgSlug, campaignSlug)
@@ -19,12 +21,12 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
 
     const { data: roleData } = useQuery({
         queryKey: [`${campaignData?.id}-campaign-roles`],
-        queryFn: () => getCampaignRoles(campaignData!.id)
+        queryFn: () => getCampaignRoles(campaignData!.id.toString())
     });
 
     const { data: attachmentsData } = useQuery({
         queryKey: [`${campaignData?.id}-campaign-attachments`],
-        queryFn: () => getCampaignAttachments(campaignData!.id)
+        queryFn: () => getCampaignAttachments(campaignData!.id.toString())
     })
 
     return (
@@ -352,7 +354,7 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
                                 </div>
 
                                 {/* TODO: If user is logged in, check for existing application and change text to "Continue Application" */}
-                                <Link href={`/campaign/${campaignData.id}/apply`}>
+                                <Link href={`/${lang}/campaign/apply/${campaignData.id}`}>
                                     <Button className="w-full cursor-pointer mb-2" size="lg">
                                         {dict.common.apply}
                                     </Button>
