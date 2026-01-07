@@ -68,7 +68,7 @@ export default function ApplicationReview({
       }
 
       for (const roleId of roleIds) {
-        if (newQAMap.has(roleId)) continue;
+        //if (newQAMap.has(roleId)) continue;
         const roleQs: Question[] | undefined  = queryClient.getQueryData([`${campaignId}-${roleId}-role-questions`])
         const roleAnswers: Answer[] | undefined = queryClient.getQueryData([`${applicationId}-${roleId}-role-answers`])
         if (roleQs && roleAnswers) {
@@ -183,10 +183,23 @@ export default function ApplicationReview({
         console.error("Submission failed: ", e);
       }
   }
+
   useEffect(() => {
-    populateQAByRole(selectedRoleIds,campaignId, applicationId)
-    console.log(qaByRole)
-  }, [selectedRoleIds]);
+    if (selectedRoleIds.length === 0) return;
+
+    const generalQs = queryClient.getQueryData([`${applicationId}-common-questions`]);
+    const generalAnswers = queryClient.getQueryData([`${applicationId}-common-answers`]);
+
+    const allRoleQueriesReady = selectedRoleIds.every(roleId => {
+      const roleQs = queryClient.getQueryData([`${campaignId}-${roleId}-role-questions`]);
+      const roleAnswers = queryClient.getQueryData([`${applicationId}-${roleId}-role-answers`]);
+      return roleQs !== undefined && roleAnswers !== undefined;
+    });
+
+    if (generalQs && generalAnswers && allRoleQueriesReady) {
+      populateQAByRole(selectedRoleIds, campaignId, applicationId);
+    }
+  }, [selectedRoleIds, campaignId, applicationId, queryClient]);
 
   return (
     <div className="min-h-screen bg-background w-full">
