@@ -85,7 +85,11 @@
       "questions": {
         "answer_text": "答案文本",
         "add_option": "添加选项",
-        "option_help": "按 Enter 添加选项"
+        "option_help": "按 Enter 添加选项",
+        "question_updated": "问题已更新",
+        "question_deleted": "问题已删除",
+        "update_success": "问题已更新成功。",
+        "delete_success": "问题已删除成功。"
       },
       "roles": {
         "number_of_positions": "职位数量",

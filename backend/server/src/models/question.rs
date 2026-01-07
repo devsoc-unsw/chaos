@@ -297,19 +297,22 @@ impl Question {
                     q.title,
                     q.description,
                     q.common,
-                    COALESCE(array_remove(array_agg(DISTINCT qr.role_id), NULL), '{}') AS "roles!: Vec<i64>",
+                    COALESCE(
+                        (SELECT array_agg(qr.role_id) FROM question_roles qr WHERE qr.question_id = q.id),
+                        '{}'
+                    ) AS "roles!: Vec<i64>",
                     q.required,
                     q.question_type AS "question_type: QuestionType",
                     q.created_at,
                     q.updated_at,
-                    to_jsonb(
-                        array_agg(
-                            jsonb_build_object(
-                                'id', mod.id,
-                                'display_order', mod.display_order,
-                                'text', mod.text
-                            ) ORDER BY mod.display_order
-                        ) FILTER (WHERE mod.id IS NOT NULL)
+                    (
+                        SELECT to_jsonb(array_agg(jsonb_build_object(
+                            'id', mod.id,
+                            'display_order', mod.display_order,
+                            'text', mod.text
+                        ) ORDER BY mod.display_order))
+                        FROM multi_option_question_options mod
+                        WHERE mod.question_id = q.id
                     ) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
                 FROM
                     questions q
@@ -318,7 +321,9 @@ impl Question {
                         LEFT JOIN
                     multi_option_question_options mod ON q.id = mod.question_id
                         AND q.question_type IN ('MultiChoice', 'MultiSelect', 'DropDown', 'Ranking')
-                WHERE q.campaign_id = $1 AND q.common = false AND qr.role_id = $2
+                WHERE q.campaign_id = $1 AND q.common = false AND EXISTS (
+                    SELECT 1 FROM question_roles qr_check WHERE qr_check.question_id = q.id AND qr_check.role_id = $2
+                )
                 GROUP BY
                     q.id
             "#,

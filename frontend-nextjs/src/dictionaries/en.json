@@ -85,7 +85,11 @@
       "questions": {
         "answer_text": "Answer Text",
         "add_option": "Add Option",
-        "option_help": "Press Enter to add option"
+        "option_help": "Press Enter to add option",
+        "question_updated": "Question updated",
+        "question_deleted": "Question deleted",
+        "update_success": "The question has been updated successfully.",
+        "delete_success": "The question has been deleted successfully."
       },
       "roles": {
         "number_of_positions": "Number of Positions",
