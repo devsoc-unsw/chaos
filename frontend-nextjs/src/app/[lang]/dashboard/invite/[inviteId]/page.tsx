@@ -1,40 +1,23 @@
-"use client";
-
-import type { InviteDetails } from "@/models/invite";
-import { useParams } from "next/navigation";
+import { getDictionary } from "@/app/[lang]/dictionaries";
+import { getInvite } from "@/models/invite";
+import { notFound } from "next/navigation";
 import InviteClient from "./invite-client";
 
-export default function Page() {
-  const params = useParams<{ lang?: string; inviteId?: string }>();
-  const code = params?.inviteId ?? "mock-invite-code";
+type Params = Promise<{ lang: string; inviteId: string }>;
 
-  const invite: InviteDetails = {
-    organisation_id: "1",
-    organisation_name: "Chaos Demo Org",
-    email: "invited.user@example.com",
-    expires_at: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(),
-    used: false,
-    expired: false,
-  };
+export default async function Page({ params }: { params: Params }) {
+  const { lang, inviteId } = await params;
 
-  // Minimal dict mock so the UI renders without pulling translations.
-  const dict = {
-    dashboard: {
-      invite: {
-        title: "Organisation invite",
-        invited_by: "You’ve been invited to join {org}.",
-        sent_to: "Invite sent to",
-        expired: "This invite has expired.",
-        used: "This invite has already been used.",
-        login_cta: "Log in",
-        accept_cta: "Accept invite",
-        accepted: "Invite accepted (mock).",
-        wrong_account: "Not you? Log in with a different account.",
-      },
-    },
-  };
+  const dict = await getDictionary(lang);
 
-  return <InviteClient code={code} invite={invite} dict={dict} mockMode />;
+  let invite;
+  try {
+    invite = await getInvite(inviteId);
+  } catch {
+    return notFound();
+  }
+
+  return <InviteClient code={inviteId} invite={invite} dict={dict} />;
 }
 
 

@@ -71,23 +71,63 @@ export async function apiRequest<T>(
   const response = await fetch(url, fetchOptions);
 
   if (!response.ok) {
-    if (response.status === 401 || okRequiredOtherwiseLogin) {
-      if (isServer) {
-        const { redirect } = await import("next/navigation");
-        const { headers } = await import("next/headers");
-        const headersList = await headers();
-        const pathname = headersList.get("x-pathname") || "/";
-
-        redirect(`/login?to=${encodeURIComponent(pathname)}`);
+    // Best-effort parse of backend error payloads like `{ "error": "..." }`
+    // Use `response.clone()` so we don't consume the original body if needed elsewhere.
+    let serverMessage: string | undefined;
+    try {
+      const cloned = response.clone();
+      const contentType = cloned.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        const parsed = (await cloned.json()) as unknown;
+        if (
+          parsed &&
+          typeof parsed === "object" &&
+          "error" in parsed &&
+          typeof (parsed as { error?: unknown }).error === "string"
+        ) {
+          serverMessage = (parsed as { error: string }).error;
+        } else if (
+          parsed &&
+          typeof parsed === "object" &&
+          "message" in parsed &&
+          typeof (parsed as { message?: unknown }).message === "string"
+        ) {
+          serverMessage = (parsed as { message: string }).message;
+        }
       } else {
-        window.location.href = `/login?to=${encodeURIComponent(window.location.pathname)}`;
+        const text = await cloned.text();
+        // Some servers mislabel JSON error responses; try JSON parse anyway.
+        try {
+          const parsed = JSON.parse(text) as unknown;
+          if (
+            parsed &&
+            typeof parsed === "object" &&
+            "error" in parsed &&
+            typeof (parsed as { error?: unknown }).error === "string"
+          ) {
+            serverMessage = (parsed as { error: string }).error;
+          } else if (
+            parsed &&
+            typeof parsed === "object" &&
+            "message" in parsed &&
+            typeof (parsed as { message?: unknown }).message === "string"
+          ) {
+            serverMessage = (parsed as { message: string }).message;
+          } else {
+            serverMessage = text;
+          }
+        } catch {
+          serverMessage = text;
+        }
       }
+    } catch {
+      // ignore parse errors
     }
     
     throw new ApiError(
       response.status,
       response.statusText,
-      `API request failed: ${method} ${path}`
+      serverMessage || `API request failed: ${method} ${path}`
     );
   }
 

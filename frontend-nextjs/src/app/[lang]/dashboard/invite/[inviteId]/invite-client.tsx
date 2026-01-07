@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api";
 import { acceptInvite, InviteDetails } from "@/models/invite";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Props = {
   code: string;
@@ -16,6 +17,17 @@ type Props = {
 export default function InviteClient({ code, invite, dict, mockMode = false }: Props) {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState<string | null>(null);
+  const router = useRouter();
+
+  // After successful acceptance, redirect after a short delay.
+  useEffect(() => {
+    if (status === "success") {
+      const timer = setTimeout(() => {
+        router.push("/dashboard");
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [status, router]);
 
   const handleAccept = async () => {
     setStatus("loading");
@@ -29,14 +41,18 @@ export default function InviteClient({ code, invite, dict, mockMode = false }: P
     } catch (err) {
       setStatus("error");
       if (err instanceof ApiError) {
-        setMessage(err.message);
+        if (err.status === 401) {
+          setMessage(dict.dashboard.invite.login_required ?? "Please log in to accept this invite.");
+        } else {
+          setMessage(err.message);
+        }
       } else {
         setMessage("Something went wrong. Please try again.");
       }
     }
   };
 
-  const inviteInvalid = invite.expired || invite.used;
+  const inviteInvalid = invite.expired || invite.used || status === "success";
 
   return (
     <div className="max-w-xl mx-auto p-6 flex flex-col gap-4">
