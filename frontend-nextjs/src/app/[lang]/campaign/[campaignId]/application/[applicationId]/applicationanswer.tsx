@@ -10,7 +10,7 @@ import RoleTabs from "../../../../../../components/applicationanswer/roletabs";
 import MainContent from "../../../../../../components/applicationanswer/maincontent";
 import ReviewCard from "@/components/applicationanswer/reviewcard";
 import { linkQuestionsAndAnswers, Question, QuestionAndAnswer } from "@/models/question";
-import { redirect } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 
 interface ApplicationReviewProps {
   campaignId: string;
@@ -34,6 +34,7 @@ export default function ApplicationReview({
   applicationId,
   dict,
 }: ApplicationReviewProps) {
+  const router = useRouter();
   const { data: campaign } = useQuery({
     queryKey: [`${campaignId}-campaign-info`],
     queryFn: () => getCampaign(campaignId),
@@ -175,11 +176,9 @@ export default function ApplicationReview({
 
   const handleApplicationSubmit = async () => {
       try {
-        submitApplication(applicationId)
+        await submitApplication(applicationId)
         queryClient.invalidateQueries({ queryKey: [`application-${applicationId}`] });
-        redirect(
-          `/campaign/${campaignId}/finish`
-        );
+        router.push(`/campaign/${campaignId}/finish`);
       } catch (e) {
         console.error("Submission failed: ", e);
       }
