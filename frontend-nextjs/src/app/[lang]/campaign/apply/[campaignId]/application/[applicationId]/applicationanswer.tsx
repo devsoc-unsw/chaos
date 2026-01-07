@@ -5,9 +5,9 @@ import { getCampaign, getCampaignRoles } from "@/models/campaign";
 import { getInProgressApplication, submitApplication } from "@/models/application";
 import { Answer, updateApplicationRoles } from "@/models/answer";
 import { useState, useEffect } from "react";
-import RoleSelector from "../../../../../../components/applicationanswer/roleselector";
-import RoleTabs from "../../../../../../components/applicationanswer/roletabs";
-import MainContent from "../../../../../../components/applicationanswer/maincontent";
+import RoleSelector from "../../../../../../../components/applicationanswer/roleselector";
+import RoleTabs from "../../../../../../../components/applicationanswer/roletabs";
+import MainContent from "../../../../../../../components/applicationanswer/maincontent";
 import ReviewCard from "@/components/applicationanswer/reviewcard";
 import { linkQuestionsAndAnswers, Question, QuestionAndAnswer } from "@/models/question";
 import { redirect, useRouter } from "next/navigation";
@@ -178,7 +178,7 @@ export default function ApplicationReview({
       try {
         await submitApplication(applicationId)
         queryClient.invalidateQueries({ queryKey: [`application-${applicationId}`] });
-        router.push(`/campaign/${campaignId}/finish`);
+        router.push(`/campaign/apply/${campaignId}/finish`);
       } catch (e) {
         console.error("Submission failed: ", e);
       }

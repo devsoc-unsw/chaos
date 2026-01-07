@@ -1,6 +1,6 @@
 import { DraggableProvided} from "@hello-pangea/dnd";
 import { GripVertical } from "lucide-react"
-import { CampaignRole } from "@/models/campaign";
+import { RoleDetails } from "@/models/campaign";
 import { Info } from "lucide-react";
 import {
   Tooltip,
@@ -17,7 +17,7 @@ export function RoleCard({
   onClick,
   dict
 }: {
-  role: CampaignRole;
+  role: RoleDetails;
   index?: number;
   selected: boolean;
   drag: DraggableProvided;

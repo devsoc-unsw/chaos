@@ -1,5 +1,5 @@
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
-import { CampaignRole } from "@/models/campaign";
+import { CampaignRole, RoleDetails } from "@/models/campaign";
 import { RoleCard } from "./rolecard";
 
 export default function RoleSelector({
@@ -10,7 +10,7 @@ export default function RoleSelector({
   applicationId,
   dict
 }: {
-  roles: CampaignRole[] | undefined;
+  roles: RoleDetails[] | undefined;
   maxRolesPerApplication: number | null | undefined,
   selectedRoleIds: string[];
   onChangeSelectedRoles: (next: string[]) => void;

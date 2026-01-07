@@ -1,19 +1,5 @@
 "use client";
 
-<<<<<<< ours
-import { useQuery } from "@tanstack/react-query";
-import { getCampaign, getCampaignRoles } from "@/models/campaign";
-import { Button } from "@/components/ui/button";
-import { Copy, Pencil, Trash, Share, BookOpenCheck, FormIcon, CircleCheck } from "lucide-react";
-import { ButtonGroup } from "@/components/ui/button-group";
-import { dateToString } from "@/lib/utils";
-import {
-    Table,
-    TableBody,
-    TableCaption,
-    TableCell,
-    TableFooter,
-=======
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CampaignUpdate, createCampaignRole, getCampaign, getCampaignRoles, updateCampaign, getCampaignAttachments, uploadAttachments, deleteCampaignAttachment } from "@/models/campaign";
 import { Button } from "@/components/ui/button";
@@ -24,19 +10,12 @@ import {
     Table,
     TableBody,
     TableCell,
->>>>>>> theirs
     TableHead,
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
 import Link from "next/link";
 import { getOrganisationUserRole } from "@/models/organisation";
-<<<<<<< ours
-import CopyButton from "@/components/copy-button";
-
-export default function CampaignDetails({ campaignId, descriptionHtml, orgId, dict }: { campaignId: string, descriptionHtml: string, orgId: string, dict: any }) {
-    const editingMode = true;
-=======
 import EditDetail from "./edit-detail";
 import { useEffect, useState } from "react";
 import { RoleDetails } from "@/models/campaign";
@@ -78,15 +57,12 @@ function compareCampaignRoles(roles: RoleDetails[], clientRoles: ClientRole[]): 
 export default function CampaignDetails({ campaignId, orgId, dict }: { campaignId: string, orgId: string, dict: any }) {
     const [editingMode, setEditingMode] = useState(false);
     const queryClient = useQueryClient();
->>>>>>> theirs
 
     const { data: campaign } = useQuery({
         queryKey: [`${campaignId}-campaign-details`],
         queryFn: () => getCampaign(campaignId),
     });
 
-<<<<<<< ours
-=======
     const { mutateAsync: mutateCampaignDetails } = useMutation({
         mutationFn: (data: CampaignUpdate) => updateCampaign(campaignId, data),
         onSuccess: () => {
@@ -97,14 +73,11 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
         },
     });
 
->>>>>>> theirs
     const { data: roles } = useQuery({
         queryKey: [`${campaignId}-campaign-roles`],
         queryFn: () => getCampaignRoles(campaignId),
     });
 
-<<<<<<< ours
-=======
     const { mutateAsync: mutateCreateCampaignRole } = useMutation({
         mutationFn: (data: RoleDetails) => createCampaignRole(campaignId, data),
         onSuccess: () => {
@@ -135,14 +108,11 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
         },
     });
 
->>>>>>> theirs
     const { data: userRole } = useQuery({
         queryKey: [`${orgId}-organisation-user-role`],
         queryFn: () => getOrganisationUserRole(orgId),
     });
 
-<<<<<<< ours
-=======
     const { data: attachments } = useQuery({
         queryKey: [`${campaignId}-attachments`],
         queryFn: () => getCampaignAttachments(campaignId),
@@ -470,7 +440,6 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
         processMarkdown();
     }, [campaign?.description]);
 
->>>>>>> theirs
     return (
         <div className="flex flex-col gap-3">
             <img className="w-full max-h-42 object-cover rounded-md" src={"/placeholder.svg"} alt={`${campaign?.name} cover image`} />
@@ -482,14 +451,11 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                         </Link>
                     </ButtonGroup>
                     <ButtonGroup>
-<<<<<<< ours
-=======
                         <Link href={`/dashboard/organisation/${campaign?.organisation_id}/campaigns/${campaignId}/applications`}>
                             <Button><BarChart className="w-4 h-4" /> {dict.dashboard.campaigns.application_summary}</Button>
                         </Link>
                     </ButtonGroup>
                     <ButtonGroup>
->>>>>>> theirs
                         <CopyButton value={`${process.env.NEXT_PUBLIC_APP_URL}/campaign/${campaign?.organisation_slug}/${campaign?.campaign_slug}`}>
                             <Share className="w-4 h-4" /> {dict.dashboard.campaigns.share_link}
                         </CopyButton>
@@ -499,10 +465,6 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                     </ButtonGroup>
                     {userRole?.role === "Admin" && (
                         <ButtonGroup>
-<<<<<<< ours
-                            <Button variant="outline"><Pencil className="w-4 h-4" /> {dict.dashboard.actions.edit}</Button>
-                            <Button variant="outline"><Trash className="w-4 h-4" /> {dict.dashboard.actions.delete}</Button>
-=======
                             {
                                 editingMode ? (
                                     <Button variant="outline" onClick={saveUpdatedCampaignDetails} className="cursor-pointer"><Check className="w-4 h-4" /> {dict.dashboard.actions.save}</Button>
@@ -511,7 +473,6 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                                 )
                             }
                             <Button variant="outline" className="cursor-pointer"><Trash className="w-4 h-4" /> {dict.dashboard.actions.delete}</Button>
->>>>>>> theirs
                         </ButtonGroup>
                     )}
                     {
@@ -528,10 +489,6 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                 </ButtonGroup>
             </div>
             <div className="flex flex-col gap-1">
-<<<<<<< ours
-                <h1 className="text-2xl font-bold">{campaign?.name}</h1>
-                <p className="text-sm text-gray-500">{dateToString(campaign?.starts_at ?? "")} - {dateToString(campaign?.ends_at ?? "")}</p>
-=======
                 <h1 className="text-2xl font-bold">
                     <EditDetail 
                         key={`${campaignId}-name`} 
@@ -550,7 +507,6 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                     isError={dateError}
                     setIsError={setDateError}
                 />
->>>>>>> theirs
             </div>
 
             <div className="max-w-[500px]">
@@ -560,17 +516,6 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                         <TableRow>
                             <TableHead className="w-[100px]">{dict.common.name}</TableHead>
                             <TableHead>{dict.dashboard.campaigns.roles.number_of_positions}</TableHead>
-<<<<<<< ours
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {roles?.map((role) => (
-                            <TableRow key={role.id}>
-                                <TableCell className="font-medium">{role.name}</TableCell>
-                                <TableCell>{role.min_available} - {role.max_available}</TableCell>
-                            </TableRow>
-                        ))}
-=======
                             {editingMode && <TableHead className="w-[50px]"></TableHead>}
                         </TableRow>
                     </TableHeader>
@@ -653,15 +598,11 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                                 </TableRow>
                             )
                         }
->>>>>>> theirs
                     </TableBody>
                 </Table>
             </div>
             <div>
                 <h2 className="text-xl font-bold">{dict.common.description}</h2>
-<<<<<<< ours
-                <div dangerouslySetInnerHTML={{ __html: descriptionHtml }} />
-=======
                 {editingMode ? (
                     <EditDetail
                         namespace={`${campaignId}-description`}
@@ -702,7 +643,6 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                         ))}
                     </div>
                 )}
->>>>>>> theirs
             </div>
         </div>
     );

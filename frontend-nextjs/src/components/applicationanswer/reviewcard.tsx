@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useState } from "react";
-import { CampaignRole } from "@/models/campaign";
+import { CampaignRole, RoleDetails } from "@/models/campaign";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 export default function ReviewCard({
     questionsAndAnswersByRole,
@@ -20,7 +20,7 @@ export default function ReviewCard({
     questionsAndAnswersByRole: Map<string, QuestionAndAnswer[]>;
     applicationId: string;
     handleSubmit: () => void;
-    roles: CampaignRole[] | undefined;
+    roles: RoleDetails[] | undefined;
     dict: any;
 }) {
     const [open, setOpen] = useState(false)

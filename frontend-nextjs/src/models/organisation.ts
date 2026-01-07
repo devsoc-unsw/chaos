@@ -44,3 +44,40 @@ export type OrganisationUserRole = {
 export async function getOrganisationUserRole(orgId: string): Promise<OrganisationUserRole> {
     return await apiRequest<OrganisationUserRole>(`/api/v1/organisation/${orgId}/role`);
 }
+
+export interface Member {
+    id: string,
+    name: string,
+    email: string,
+    role: OrganisationRole,
+}
+
+export async function getOrganisationAdmins(orgId: string): Promise<Member[]> {
+    return await apiRequest<Member[]>(`/api/v1/organisation/${orgId}/admins`);
+}
+
+export async function getOrganisationUsers(orgId: string): Promise<Member[]> {
+    return await apiRequest<Member[]>(`/api/v1/organisation/${orgId}/users`);
+}
+
+export async function getAllOrganisationMembers(orgId: string): Promise<Member[]> {
+    return await apiRequest<Member[]>(`/api/v1/organisation/${orgId}/members`);
+}
+
+export async function inviteOrganisationUser(orgId: string, email: string): Promise<AppMessage> {
+    return await apiRequest<AppMessage>(`/api/v1/organisation/${orgId}/user`, {
+        method: "POST",
+        body: {
+            email: email,
+        },
+    });
+}
+
+export async function deleteOrganisationUser(orgId: string, memberId: string): Promise<AppMessage> {
+    return await apiRequest<AppMessage>(`/api/v1/organisation/${orgId}/user`, {
+        method: "DELETE",
+        body: {
+            user_id: memberId,
+        },
+    });
+}

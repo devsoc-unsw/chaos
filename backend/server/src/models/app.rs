@@ -83,6 +83,11 @@ impl<T: Serialize> IntoResponse for AppMessage<T> {
     }
 }
 
+#[derive(Serialize)]
+pub struct IdMessage {
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub id: i64,
+}
 
 #[derive(Clone)]
 pub struct AppState {

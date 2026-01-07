@@ -1,5 +1,5 @@
 "use client"
-import { CampaignRole } from "@/models/campaign";
+import {RoleDetails} from "@/models/campaign";
 
 export default function RoleTabs({
   roles,
@@ -8,7 +8,7 @@ export default function RoleTabs({
   onChangeActiveTab,
   dict
 }: {
-  roles: CampaignRole[] | undefined;
+  roles: RoleDetails[] | undefined;
   selectedRoleIds: string[];
   activeTab: string;
   onChangeActiveTab: (next: string) => void;

@@ -29,7 +29,7 @@ async function ApplicationPage({
     const application: ApplicationDetails | undefined = queryClient.getQueryData([`application-${applicationId}`]);
 
     if (!application) {
-      redirect(`/campaign/${campaignId}/finish`);
+      redirect(`/campaign/apply/${campaignId}/finish`);
     }
 
     const QApromises = [];

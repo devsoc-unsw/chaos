@@ -6,7 +6,7 @@ import { createProperSlug } from "./slug";
 
 export interface CampaignDetails {
     /// Unique identifier for the campaign
-    id: string | number; //fix this later
+    id: number; //fix this later
     campaign_slug: string;
     name: string;
     organisation_id: string;

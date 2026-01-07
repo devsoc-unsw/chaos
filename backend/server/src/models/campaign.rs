@@ -326,7 +326,7 @@ impl Campaign {
                 o.slug AS organisation_slug, o.name as organisation_name, 
                 o.contact_email, o.website_url, c.cover_image,
                 c.description, c.starts_at, c.ends_at, c.published, c.interview_period_starts_at, 
-                c.interview_period_ends_at, c.interview_format, c.outcomes_released_at, 
+                c.interview_period_ends_at, c.interview_format, c.outcomes_released_at, c.max_roles_per_application,
                 c.application_requirements
                 FROM campaigns c
                 JOIN organisations o on c.organisation_id = o.id
