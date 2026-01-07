@@ -11,6 +11,7 @@
 //! - `email_template`: Processes email template requests
 //! - `offer`: Handles offer-related requests
 //! - `organisation`: Processes organisation-related requests
+//! - `invite`: Handles invite-related requests
 //! - `question`: Handles question-related requests
 //! - `rating`: Processes rating-related requests
 //! - `role`: Handles role-related requests
@@ -23,6 +24,7 @@ pub mod campaign;
 pub mod email_template;
 pub mod offer;
 pub mod organisation;
+pub mod invite;
 pub mod question;
 pub mod rating;
 pub mod role;

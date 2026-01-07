@@ -428,28 +428,13 @@ pub async fn app() -> Result<Router, ChaosError> {
         )
 
         // Invite routes
+        // - GET  /api/v1/invite/:code  -> invite details
+        // - POST /api/v1/invite/:code  -> accept invite
         .route(
-            "/api/v1/invite/:invite_id",
-            get(InviteHandler::get),
-        )
-        .route(
-            "/api/v1/invite/:invite_id/delete",
-            delete(InviteHandler::delete),
-        )
-        .route(
-            "/api/v1/invite/:invite_id/create",
-            post(InviteHandler::create),
+            "/api/v1/invite/:code", get(InviteHandler::get).post(InviteHandler::use_invite)
         )
 
-        .route(
-            "/api/v1/invite/:invite_id/use",
-            post(InviteHandler::use_invite),
-        )
-
-        .route(
-            "/api/v1/invite/:invite_id/get_code",
-            get(InviteHandler::get_code_by_id),
-        )
+        
 
         
         .layer(cors)

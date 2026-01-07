@@ -27,6 +27,29 @@ where
     s.parse::<i64>().map_err(Error::custom)
 }
 
+/// Serializes `Option<i64>` as `Option<string>` for JavaScript compatibility.
+pub fn serialize_option<S>(value: &Option<i64>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    match value {
+        Some(v) => serializer.serialize_some(&v.to_string()),
+        None => serializer.serialize_none(),
+    }
+}
+
+/// Deserializes `Option<string>` into `Option<i64>`.
+pub fn deserialize_option<'de, D>(deserializer: D) -> Result<Option<i64>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let opt = Option::<String>::deserialize(deserializer)?;
+    match opt {
+        Some(s) => Ok(Some(s.parse::<i64>().map_err(Error::custom)?)),
+        None => Ok(None),
+    }
+}
+
 pub fn deserialize_vec<'de, D>(deserializer: D) -> Result<Vec<i64>, D::Error>
 where
     D: Deserializer<'de>,

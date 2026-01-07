@@ -360,13 +360,20 @@ impl OrganisationHandler {
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
         _admin: OrganisationAdmin,
-        State(state): State<AppState>,
+        State(mut state): State<AppState>,
         Json(request_body): Json<MemberToInvite>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Organisation::invite_user(id, request_body.email, state.email_credentials, &mut transaction.tx).await?;
+        let invite_code = Organisation::invite_user(
+            id,
+            request_body.email,
+            state.email_credentials.clone(),
+            &mut state.snowflake_generator,
+            &mut transaction.tx,
+        )
+        .await?;
 
         transaction.tx.commit().await?;
-        Ok(AppMessage::OkMessage("Successfully invited user to organisation"))
+        Ok(AppMessage::OkMessage(invite_code))
     }
 
     /// Updates an organisation's logo.
