@@ -22,7 +22,7 @@
       "multi_select": "Multiselect",
       "dropdown": "Dropdown",
       "ranking": "Ranking",
-      "existing_question": "Existing Question"
+      "existing_questions": "Existing Questions"
     },
     "options": "Options",
     "common_questions": "Common Questions",
@@ -137,7 +137,8 @@
       "save": "Save",
       "destructive_confirm": "Are you absolutely sure?",
       "confirm_understand": "Ok",
-      "invite": "Invite"
+      "invite": "Invite",
+      "add": "Add"
     }
   }
 }

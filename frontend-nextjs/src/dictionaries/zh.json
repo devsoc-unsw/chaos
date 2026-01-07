@@ -22,7 +22,7 @@
       "multi_select": "多选题",
       "dropdown": "下拉题",
       "ranking": "排序题",
-      "existing_question": "现有问题"
+      "existing_questions": "现有问题列表"
     },
     "options": "选项",
     "common_questions": "通用问题",
@@ -138,7 +138,8 @@
       "save": "保存",
       "destructive_confirm": "你确定吗",
       "confirm_understand": "确定",
-      "invite": "邀请"
+      "invite": "邀请",
+      "add": "添加"
     }
   }
 }
