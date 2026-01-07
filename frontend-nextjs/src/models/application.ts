@@ -1,5 +1,6 @@
 import { apiRequest } from "@/lib";
 import { UserDetails } from "./user";
+import { AppMessage } from "./app";
 
 export interface ApplicationDetails {
     id: string;
@@ -41,8 +42,8 @@ export async function getApplicationRating(applicationId: string): Promise<Ratin
     return await apiRequest<RatingDetails>(`/api/v1/application/${applicationId}/rating`);
 }
 
-export async function createApplicationRating(applicationId: string, rating?: number, comment?: string): Promise<void> {
-    return await apiRequest<void>(`/api/v1/application/${applicationId}/rating`, {
+export async function createApplicationRating(applicationId: string, rating?: number, comment?: string): Promise<AppMessage> {
+    return await apiRequest<AppMessage>(`/api/v1/application/${applicationId}/rating`, {
         method: "POST",
         body: {
             rating,
@@ -51,8 +52,8 @@ export async function createApplicationRating(applicationId: string, rating?: nu
     });
 }
 
-export async function updateApplicationRating(applicationId: string, rating?: number, comment?: string): Promise<void> {
-    return await apiRequest<void>(`/api/v1/application/${applicationId}/rating`, {
+export async function updateApplicationRating(applicationId: string, rating?: number, comment?: string): Promise<AppMessage> {
+    return await apiRequest<AppMessage>(`/api/v1/application/${applicationId}/rating`, {
         method: "PUT",
         body: {
             rating,
@@ -67,3 +68,16 @@ export async function submitApplication(applicationId: string) {
     });
 }
 
+export interface ApplicationRatingSummary {
+    application_id: string;
+    applied_roles: string[];
+    user_name: string;
+    user_email: string;
+    status: ApplicationStatus;
+    updated_at: string;
+    ratings: RatingDetails[];
+}
+
+export async function getApplicationRatingsSummary(campaignId: string): Promise<ApplicationRatingSummary[]> {
+    return await apiRequest<ApplicationRatingSummary[]>(`/api/v1/campaign/${campaignId}/avg_ratings`);
+}

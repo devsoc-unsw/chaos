@@ -1,26 +1,50 @@
 {
-    "common": { 
-        "organisation": "组织",
-        "name": "名称",
-        "starts_at": "开始时间",
-        "ends_at": "结束时间",
-        "published": "发布",
-        "dashboard": "仪表盘",
-        "profile": "个人资料",
-        "campaigns": "活动",
-        "settings": "设置",
-        "roles": "角色",
-        "description": "描述",
-        "questions": "问题",
-        "common_questions": "通用问题",
-        "back": "返回",
-        "application": "申请",
-        "status": "状态",
-        "select": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
-        "selected": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
-        "submit": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;"
-    },
-    "applicationpage": {
+  "common": {
+    "organisation": "组织",
+    "name": "名称",
+    "slug": "别名",
+    "starts_at": "开始时间",
+    "ends_at": "结束时间",
+    "published": "已发布",
+    "dashboard": "仪表盘",
+    "profile": "个人资料",
+    "campaigns": "活动",
+    "settings": "设置",
+    "roles": "角色",
+    "description": "详细描述",
+    "about": "关于",
+    "questions": "问题",
+    "common_questions": "通用问题",
+    "back": "返回",
+    "application": "申请",
+    "attachments": "附件",
+    "application_requirements": "申请要求",
+    "interview_details": "面试详情",
+    "interview_format": "面试格式",
+    "interview_period": "面试周期",
+    "available_roles": "可用的角色",
+    "recruitment_timeline": "招聘时间线",
+
+    "applications_open": "申请开放",
+    "applications_close": "申请关闭",
+    "interviews": "面试",
+    "results_announced": "结果公布",
+
+    "contact_information": "联系信息",
+    "visit_website": "访问网站",
+
+    "apply_now": "立即申请",
+    "application_deadline": "申请截止日期",
+    "apply": "申请",
+
+    "status": "状态",
+    "email": "邮箱",
+
+    "select": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+    "selected": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+    "submit": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;"
+  },
+  "applicationpage": {
         "empty_selected_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
         "drag_to_reorder": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
         "empty_available_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
@@ -30,52 +54,83 @@
         "your_answer": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
         "no_answer": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;"
     },
-    "dashboard": {
-        "email_templates": "邮件模板",
-        "members": "成员",
-        "sidebar": {
-            "create_organisation": "创建组织"
-        },
-        "campaigns": {
-            "copy_campaign_id": "复制 ID",
-            "copy_campaign_link": "复制活动链接",
-            "edit_campaign": "编辑活动",
-            "share_link": "分享链接",
-            "review_applications": "审核申请",
-            "manage_questions": "管理问题",
-            "publish": "发布",
-            "published": "已发布",
-            "draft": "草稿",
-            "roles": {
-                "number_of_positions": "职位数量"
-            },
-            "application_review_page": {
-                "no_application_selected": "没有选择申请",
-                "click_on_application_to_view": "点击左侧的申请来查看它",
-                "application_rating": "申请评分",
-                "review_score": "评分",
-                "review_comment": "评论 (可选)",
-                "write_your_review_here": "在这里写下你的评论...",
-                "application_not_rated": "未评分"
-            }
-        },
-        "email": {
-            "name": "名称",
-            "subject": "主题",
-            "body": "正文",
-            "delete_confirmation": "这将永久删除邮件模板并无法撤销",
-            "edit_template": "编辑模板"
-        },
-        "actions": {
-            "new": "新建",
-            "edit": "编辑",
-            "delete": "删除",
-            "preview": "预览",
-            "duplicate": "复制",
-            "cancel": "取消",
-            "save": "保存",
-            "destructive_confirm": "你确定吗"
-        }
+  "dashboard": {
+    "email_templates": "邮件模板",
+    "members": {
+      "role": "角色",
+      "members": "成员",
+      "admins": "管理员",
+      "users": "用户",
+      "remove_member": "移除成员",
+      "add_member": "添加成员",
+      "invite_member": "邀请成员",
+      "admin_edit_block": "无法更改管理员",
+      "admin_edit_block_description": "管理员无法在仪表盘更改。请发送邮件至 admin@chaos.devsoc.app 更新管理员列表。"
+    },
+    "slug_tooltip": "[NOT PROVIDED]",
+    "suggested_slug": "建议别名",
+    "slug_not_available": "别名不可用",
+    "sidebar": {
+      "create_organisation": "创建组织"
+    },
+    "campaigns": {
+      "copy_campaign_id": "复制 ID",
+      "copy_campaign_link": "复制活动链接",
+      "edit_campaign": "编辑活动",
+      "share_link": "分享链接",
+      "review_applications": "查看",
+      "application_summary": "申请总结",
+      "application_avg_ratings": "申请平均评分",
+      "manage_questions": "管理问题",
+      "publish": "发布",
+      "published": "已发布",
+      "draft": "草稿",
+      "roles": {
+        "number_of_positions": "职位数量",
+        "add_role": "添加角色"
+      },
+      "application_review_page": {
+        "no_application_selected": "未选择要评估的申请",
+        "click_on_application_to_view": "点击左侧以查看申请",
+        "application_rating": "评估申请",
+        "review_score": "评分",
+        "review_comment": "评论 (可选)",
+        "write_your_review_here": "在这里写下你的评论...",
+        "application_not_rated": "未评估"
+      },
+      "application_summary_page": {
+        "applicant_name": "申请人姓名",
+        "avg_rating": "平均评分",
+        "filter_emails": "筛选邮箱...",
+        "filter_by_role": "按角色筛选",
+        "all_roles": "所有角色",
+        "individual_ratings": "个人评分:",
+        "no_results": "无结果。",
+        "show_more": "...更多",
+        "show_less": "...收起",
+        "loading": "加载中...",
+        "no_ratings": "暂无评分",
+        "no_comment": "暂无评论"
+      }
+    },
+    "email": {
+      "name": "名称",
+      "subject": "主题",
+      "body": "正文",
+      "delete_confirmation": "这将永久删除邮件模板并无法撤销",
+      "edit_template": "编辑模板"
+    },
+    "actions": {
+      "new": "新建",
+      "edit": "编辑",
+      "save": "保存",
+      "delete": "删除",
+      "preview": "预览",
+      "duplicate": "复制",
+      "cancel": "取消",
+      "destructive_confirm": "你确定吗",
+      "confirm_understand": "确定",
+      "invite": "邀请"
     }
+  }
 }
-

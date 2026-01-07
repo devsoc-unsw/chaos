@@ -8,7 +8,7 @@
 
 use crate::models::app::{AppMessage, AppState};
 use crate::models::application::{Application, ApplicationRoleUpdate, ApplicationStatus, OpenApplicationByApplicationId};
-use crate::models::auth::{ApplicationAdmin, ApplicationOwner, ApplicationOwnerOrReviewer, ApplicationReviewerGivenApplicationId, AuthUser};
+use crate::models::auth::{ApplicationAdmin, ApplicationOwner, ApplicationOwnerOrReviewer, ApplicationReviewerGivenApplicationId, AuthUser, CampaignAdmin, CampaignOrgMember};
 use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
@@ -42,7 +42,7 @@ impl ApplicationHandler {
         let application_id = Application::create_or_get(campaign_id, user.user_id, &mut state.snowflake_generator, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, Json(json!({ "application_id": application_id.to_string() }))))
+        Ok(Json(json!({ "application_id": application_id.to_string() })))
     }
 
     /// Checks if an application exists for a given campaign and user.
@@ -64,7 +64,7 @@ impl ApplicationHandler {
         let application_exists = Application::check_application_exists(campaign_id, user.user_id, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, Json(json!({ "application_exists": application_exists }))))
+        Ok(Json(json!({ "application_exists": application_exists })))
     }
 
     /// Retrieves the details of a specific application.
@@ -110,7 +110,7 @@ impl ApplicationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         let application = Application::get_in_progress(application_id, user.user_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, Json(application)))
+        Ok(Json(application))
     }
 
     /// Updates the status of an application.
@@ -181,7 +181,7 @@ impl ApplicationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         let applications = Application::get_from_user_id(user.user_id, user.user_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, Json(applications)))
+        Ok(Json(applications))
     }
 
     /// Retrieves all roles associated with a specific application.
@@ -206,7 +206,7 @@ impl ApplicationHandler {
         let roles = Application::get_roles(application_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, Json(roles)))
+        Ok(Json(roles))
     }
 
     /// Updates the roles associated with an application.
@@ -357,5 +357,31 @@ impl ApplicationHandler {
                 .await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(ratings)))
+    }
+
+    /// Retrieves the average ratings for all users in an application.
+    /// 
+    /// This handler allows application reviewers to view the average ratings for all users in an application.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `_user` - The authenticated user (must be an application reviewer)
+    /// * `application_id` - The ID of the application
+    /// * `transaction` - Database transaction
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - List of average ratings or error
+    pub async fn get_application_ratings_summary(
+        _: CampaignOrgMember,
+        Path(campaign_id): Path<i64>,
+        mut transaction: DBTransaction<'_>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let avg_applications_ratings =
+            Application::get_application_ratings_summary(campaign_id, &mut transaction.tx)
+                .await?;
+        transaction.tx.commit().await?;
+
+        Ok(Json(avg_applications_ratings))
     }
 }

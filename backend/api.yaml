@@ -2103,6 +2103,34 @@ paths:
         "401":
           $ref: "#/components/responses/NotLoggedIn"
 
+  /campaign/{campaign_id}/avg_ratings:
+    get:
+      operationId: getApplicationAvgRatings
+      parameters:
+        - name: campaign_id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns average ratings grouped by user for the specified application
+      tags:
+        - Application
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserAvgApplicationRating"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+
   /offer/{offer_id}:
     get:
       operationId: getOffer
@@ -3041,6 +3069,39 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/RatingDetails"
+
+    UserAvgApplicationRating:
+      type: object
+      properties:
+        application_id:
+          type: string
+          description: Application ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        campaign_role_id:
+          type: string
+          description: Role ID within the campaign (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        campaign_role_name:
+          type: string
+          description: Name of the campaign role
+          example: "Software Engineer"
+        user_name:
+          type: string
+          description: User's full name
+          example: "John Doe"
+        user_email:
+          type: string
+          format: email
+          description: User's email address
+          example: "john.doe@example.com"
+        status:
+          $ref: "#/components/schemas/ApplicationStatus"
+        avg_rating:
+          type: number
+          format: double
+          nullable: true
+          description: Average rating for this user's application in the given role (null if no ratings exist)
+          example: 4.5
 
     RatingUpdate:
       type: object

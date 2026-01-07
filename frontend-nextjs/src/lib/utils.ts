@@ -10,6 +10,8 @@ export function cn(...inputs: ClassValue[]) {
 export function dateToString(date: string) {
     return moment(date).format("D MMM YYYY H:mm");
 }
+
+// I might wanna move this out of here lowk it's kinda question specific
 export function buildAnswerPayload(question: QuestionAndAnswer, value: unknown) {
   console.log(question)
   if (!question?.question_id) {

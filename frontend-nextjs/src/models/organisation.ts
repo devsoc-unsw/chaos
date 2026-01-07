@@ -1,4 +1,5 @@
 import { apiRequest } from "@/lib/api";
+import { AppMessage } from "./app";
 
 export type OrganisationDetails = {
     id: string,

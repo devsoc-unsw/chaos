@@ -17,6 +17,8 @@ CREATE TABLE questions (
            ON UPDATE CASCADE
 );
 
+CREATE INDEX IDX_questions_campaign on questions(campaign_id);
+
 CREATE TABLE multi_option_question_options (
     id BIGINT PRIMARY KEY,
     text TEXT NOT NULL,
@@ -31,7 +33,7 @@ CREATE TABLE multi_option_question_options (
     UNIQUE (question_id, display_order)
 );
 
-CREATE INDEX IDX_multi_option_question_options_questions on multi_option_question_options(question_id);
+CREATE INDEX IDX_multi_option_question_options_question on multi_option_question_options(question_id);
 
 CREATE TABLE question_roles (
     id BIGSERIAL PRIMARY KEY,
@@ -52,5 +54,5 @@ CREATE TABLE question_roles (
     UNIQUE (question_id, role_id)
 );
 
-CREATE INDEX IDX_question_roles_questions on question_roles(question_id);
-CREATE INDEX IDX_question_roles_roles on question_roles(role_id);
+CREATE INDEX IDX_question_roles_question on question_roles(question_id);
+CREATE INDEX IDX_question_roles_role on question_roles(role_id);

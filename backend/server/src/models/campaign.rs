@@ -15,8 +15,10 @@ use axum::extract::{FromRef, FromRequestParts, Path};
 use axum::http::request::Parts;
 use uuid::Uuid;
 use crate::models::app::AppState;
-use crate::service::campaign::assert_campaign_is_open;
+use crate::service::campaign::{assert_campaign_is_open, create_proper_slug};
 use super::{error::ChaosError, storage::Storage};
+use snowflake::SnowflakeIdGenerator;
+use std::env;
 
 /// Represents a campaign in the system.
 /// 
@@ -50,6 +52,16 @@ pub struct Campaign {
     pub created_at: DateTime<Utc>,
     /// When the campaign was last updated
     pub updated_at: DateTime<Utc>,
+    /// When interview period begins
+    pub interview_period_starts_at: Option<DateTime<Utc>>,
+    /// When interview period ends
+    pub interview_period_ends_at: Option<DateTime<Utc>>,
+    /// Interview format (e.g., "in-person", "online", "hybrid")
+    pub interview_format: Option<String>,
+    /// When applicants will be notified of outcomes
+    pub outcomes_released_at: Option<DateTime<Utc>>,
+    /// Additional application requirements (e.g., "Resume required", "No economics background needed")
+    pub application_requirements: Option<String>,
     /// Whether the campaign is published
     pub published: bool,
     /// Max amount of roles an applicant can apply for
@@ -75,6 +87,10 @@ pub struct CampaignDetails {
     pub organisation_slug: String,
     /// Name of the organization running the campaign
     pub organisation_name: String,
+    /// The organisation's contact email (e.g. contact@devsoc.app)
+    pub contact_email: String,
+    /// The organisations website link (e.g. https://devsoc.app)
+    pub website_url: Option<String>,
     /// Optional UUID of the campaign's cover image
     pub cover_image: Option<Uuid>,
     /// Optional description of the campaign
@@ -83,6 +99,16 @@ pub struct CampaignDetails {
     pub starts_at: DateTime<Utc>,
     /// When the campaign stops accepting applications
     pub ends_at: DateTime<Utc>,
+    /// When interview period begins
+    pub interview_period_starts_at: Option<DateTime<Utc>>,
+    /// When interview period ends
+    pub interview_period_ends_at: Option<DateTime<Utc>>,
+    /// Interview format (e.g., "in-person", "online", "hybrid")
+    pub interview_format: Option<String>,
+    /// When applicants will be notified of outcomes
+    pub outcomes_released_at: Option<DateTime<Utc>>,
+    /// Additional application requirements (e.g., "Resume required", "No economics background needed")
+    pub application_requirements: Option<String>,
     /// Whether the campaign is published
     pub published: bool,
     /// Max amount of roles an applicant can apply for
@@ -117,6 +143,16 @@ pub struct OrganisationCampaign {
     pub ends_at: DateTime<Utc>,
     /// Whether the campaign is published
     pub published: bool,
+    /// When interview period begins
+    pub interview_period_starts_at: Option<DateTime<Utc>>,
+    /// When interview period ends
+    pub interview_period_ends_at: Option<DateTime<Utc>>,
+    /// Interview format (e.g., "in-person", "online", "hybrid")
+    pub interview_format: Option<String>,
+    /// When applicants will be notified of outcomes
+    pub outcomes_released_at: Option<DateTime<Utc>>,
+    /// Additional application requirements (e.g., "Resume required", "No economics background needed")
+    pub application_requirements: Option<String>,
 }
 
 /// Data structure for creating a new campaign.
@@ -133,7 +169,17 @@ pub struct NewCampaign {
     /// When the campaign starts accepting applications
     pub starts_at: DateTime<Utc>,
     /// When the campaign stops accepting applications
-    pub ends_at: DateTime<Utc>
+    pub ends_at: DateTime<Utc>,
+    /// When interview period begins
+    pub interview_period_starts_at: Option<DateTime<Utc>>,
+    /// When interview period ends
+    pub interview_period_ends_at: Option<DateTime<Utc>>,
+    /// Interview format (e.g., "in-person", "online", "hybrid")
+    pub interview_format: Option<String>,
+    /// When applicants will be notified of outcomes
+    pub outcomes_released_at: Option<DateTime<Utc>>,
+    /// Additional application requirements (e.g., "Resume required", "No economics background needed")
+    pub application_requirements: Option<String>,
 }
 
 /// Data structure for updating an existing campaign.
@@ -151,6 +197,16 @@ pub struct CampaignUpdate {
     pub starts_at: DateTime<Utc>,
     /// When the campaign stops accepting applications
     pub ends_at: DateTime<Utc>,
+    /// When interview period begins
+    pub interview_period_starts_at: Option<DateTime<Utc>>,
+    /// When interview period ends
+    pub interview_period_ends_at: Option<DateTime<Utc>>,
+    /// Interview format (e.g., "in-person", "online", "hybrid")
+    pub interview_format: Option<String>,
+    /// When applicants will be notified of outcomes
+    pub outcomes_released_at: Option<DateTime<Utc>>,
+    /// Additional application requirements (e.g., "Resume required", "No economics background needed")
+    pub application_requirements: Option<String>,
 }
 
 /// Response structure for campaign banner updates.
@@ -159,6 +215,66 @@ pub struct CampaignUpdate {
 #[derive(Serialize)]
 pub struct CampaignBannerUpdate {
     /// URL where the new banner image can be uploaded
+    pub upload_url: String,
+}
+
+/// Represents a campaign attachment (role document).
+/// 
+/// A campaign attachment is a file associated with a campaign, typically
+/// used to store role documents or other campaign-related files.
+#[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
+pub struct CampaignAttachment {
+    /// Unique identifier for the attachment
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub id: i64,
+    /// ID of the campaign this attachment belongs to
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub campaign_id: i64,
+    /// Original filename of the uploaded file
+    pub file_name: String,
+    /// Size of the file in bytes
+    pub file_size: i64,
+}
+
+/// Response structure for role document retrieval.
+/// 
+/// Contains the attachment metadata and a pre-signed URL for downloading the file.
+#[derive(Serialize)]
+pub struct AttachmentResponse {
+    /// Unique identifier for the attachment
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub id: i64,
+    /// ID of the campaign this attachment belongs to
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub campaign_id: i64,
+    /// Original filename of the uploaded file
+    pub file_name: String,
+    /// Size of the file in bytes
+    pub file_size: i64,
+    /// Pre-signed URL for downloading the file (valid for 1 hour)
+    pub download_url: String,
+}
+
+/// Request structure for uploading a role document.
+/// 
+/// Contains the file metadata needed to create a new attachment.
+#[derive(Deserialize)]
+pub struct NewAttachment {
+    /// Original filename of the file
+    pub file_name: String,
+    /// Size of the file in bytes
+    pub file_size: i64,
+}
+
+/// Response structure for role document upload.
+/// 
+/// Contains the pre-signed URL where the file can be uploaded.
+#[derive(Serialize)]
+pub struct AttachmentUpload {
+    /// ID of the created attachment record
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub attachment_id: i64,
+    /// Pre-signed URL for uploading the file
     pub upload_url: String,
 }
 
@@ -207,8 +323,11 @@ impl Campaign {
             CampaignDetails,
             "
                 SELECT c.id, c.slug AS campaign_slug, c.name, c.organisation_id,
-                o.slug AS organisation_slug, o.name as organisation_name, c.cover_image,
-                c.description, c.starts_at, c.ends_at, c.published, c.max_roles_per_application
+                o.slug AS organisation_slug, o.name as organisation_name, 
+                o.contact_email, o.website_url, c.cover_image,
+                c.description, c.starts_at, c.ends_at, c.published, c.interview_period_starts_at, 
+                c.interview_period_ends_at, c.interview_format, c.outcomes_released_at, 
+                c.application_requirements
                 FROM campaigns c
                 JOIN organisations o on c.organisation_id = o.id
                 WHERE c.id = $1
@@ -234,12 +353,14 @@ impl Campaign {
     /// * `Result<(), ChaosError>` - Success if slug is available, error if not
     pub async fn check_slug_availability(
         organisation_id: i64,
-        slug: String,
+        mut slug: String,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         if !slug.is_ascii() {
             return Err(ChaosError::BadRequest);
         }
+
+        slug = create_proper_slug(&slug);
 
         let exists = sqlx::query!(
             "
@@ -280,8 +401,11 @@ impl Campaign {
             CampaignDetails,
             "
                 SELECT c.id, c.slug AS campaign_slug, c.name, c.organisation_id,
-                o.slug AS organisation_slug, o.name as organisation_name, c.cover_image,
-                c.description, c.starts_at, c.ends_at, c.published, c.max_roles_per_application
+                o.slug AS organisation_slug, o.name as organisation_name, 
+                o.contact_email, o.website_url, c.cover_image, 
+                c.description, c.starts_at, c.ends_at, c.published, c.max_roles_per_application,
+                c.interview_period_starts_at, c.interview_period_ends_at, c.interview_format, 
+                c.outcomes_released_at, c.application_requirements
                 FROM campaigns c
                 JOIN organisations o on c.organisation_id = o.id
                 WHERE c.slug = $1 AND o.slug = $2
@@ -311,17 +435,26 @@ impl Campaign {
         update: CampaignUpdate,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
+        update.validate()?;
+
         _ = sqlx::query!(
             "
                 UPDATE campaigns
-                SET slug = $1, name = $2, description = $3, starts_at = $4, ends_at = $5
-                WHERE id = $6 RETURNING id
+                SET slug = $1, name = $2, description = $3, starts_at = $4, ends_at = $5,
+                interview_period_starts_at = $6, interview_period_ends_at = $7,
+                interview_format = $8, outcomes_released_at = $9, application_requirements = $10
+                WHERE id = $11 RETURNING id
             ",
             update.slug,
             update.name,
             update.description,
             update.starts_at,
             update.ends_at,
+            update.interview_period_starts_at,
+            update.interview_period_ends_at,
+            update.interview_format,
+            update.outcomes_released_at,
+            update.application_requirements,
             id
         )
         .fetch_one(transaction.deref_mut())
@@ -424,6 +557,167 @@ impl Campaign {
     }
 }
 
+impl CampaignAttachment {
+    /// Retrieves the attachments for a campaign.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `campaign_id` - ID of the campaign
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<Vec<CampaignAttachment>, ChaosError>` - The attachments or None if not found
+    pub async fn get_by_campaign(
+        campaign_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<CampaignAttachment>, ChaosError> {
+        let attachments = sqlx::query_as!(
+            CampaignAttachment,
+            "
+                SELECT id, campaign_id, file_name, file_size
+                FROM campaign_attachments
+                WHERE campaign_id = $1
+            ",
+            campaign_id
+        )
+        .fetch_all(transaction.deref_mut())
+        .await?;
+
+        Ok(attachments)
+    }
+
+    /// Retrieves an attachment by its ID.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `attachment_id` - ID of the attachment
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<CampaignAttachment, ChaosError>` - The attachment or error if not found
+    pub async fn get_by_id(
+        attachment_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<CampaignAttachment, ChaosError> {
+        let attachment = sqlx::query_as!(
+            CampaignAttachment,
+            "
+                SELECT id, campaign_id, file_name, file_size
+                FROM campaign_attachments
+                WHERE id = $1
+            ",
+            attachment_id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
+        Ok(attachment)
+    }
+
+    /// Creates or updates multiple attachments for a campaign.
+    /// 
+    /// If an attachment already exists for the campaign, it will be updated.
+    /// Otherwise, a new attachment will be created for each file.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `campaign_id` - ID of the campaign
+    /// * `files` - List of files to upload
+    /// * `transaction` - Database transaction to use
+    /// * `snowflake_generator` - Generator for creating unique IDs
+    /// * `storage_bucket` - S3 bucket for storing the file
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<AttachmentUpload, ChaosError>` - Upload URL and attachment ID
+    pub async fn create_or_update_multiple(
+        campaign_id: i64,
+        files: Vec<NewAttachment>,
+        transaction: &mut Transaction<'_, Postgres>,
+        snowflake_generator: &mut SnowflakeIdGenerator,
+        storage_bucket: &Bucket,
+    ) -> Result<Vec<AttachmentUpload>, ChaosError> {
+        // Check if attachment already exists
+        let existing = Self::get_by_campaign(campaign_id, transaction).await?;
+        let campaign = Campaign::get(campaign_id, transaction).await?;
+
+        let mut attachment_ids = Vec::new();
+        for file in files {
+            let mut attachment_id = None;
+            for existing_attachment in &existing {
+                if existing_attachment.file_name == file.file_name {
+                    attachment_id = Some(existing_attachment.id);
+                    break;
+                }
+            }
+
+            let attachment_id = if let Some(id) = attachment_id {
+                id
+            } else {
+                // Create new attachment
+                let new_id = snowflake_generator.real_time_generate();
+                sqlx::query!(
+                    "
+                        INSERT INTO campaign_attachments (id, campaign_id, file_name, file_size)
+                        VALUES ($1, $2, $3, $4)
+                        RETURNING id
+                    ",
+                    new_id,
+                    campaign_id,
+                    file.file_name,
+                    file.file_size
+                )
+                .fetch_one(transaction.deref_mut())
+                .await?.id
+            };
+            attachment_ids.push(attachment_id);
+        }
+
+        let mut results = Vec::new();
+        for id in attachment_ids {
+            let upload_url = Storage::generate_put_url(
+                format!("/organisation/{}/campaign/{}/attachment/{}", campaign.organisation_id, campaign.id, id),
+                storage_bucket,
+            )
+            .await?;
+
+            results.push(AttachmentUpload {
+                upload_url,
+                attachment_id: id,
+            });
+        }
+        
+        Ok(results)
+    }
+
+    /// Deletes an attachment.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `attachment_id` - ID of the attachment to delete
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<i64, ChaosError>` - The ID of the deleted attachment or error if not found
+    pub async fn delete(
+        attachment_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
+        let id = sqlx::query!(
+            "
+                DELETE FROM campaign_attachments WHERE id = $1 RETURNING id
+            ",
+            attachment_id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
+        Ok(())
+    }
+}
 /// Extractor for ensuring a campaign is open.
 /// 
 /// This extractor is used in route handlers to ensure that the campaign
@@ -450,5 +744,28 @@ where
         tx.commit().await?;
 
         Ok(OpenCampaign)
+    }
+}
+
+
+impl CampaignUpdate {
+    pub fn validate(&self) -> Result<(), ChaosError> {
+        let campaign_name_max_chars = env::var("CAMPAIGN_NAME_MAX_CHARS")
+            .expect("Error getting CAMPAIGN_NAME_MAX_CHARS")
+            .to_string().parse::<usize>().map_err(|_| ChaosError::InternalServerError)?;
+        let campaign_description_max_chars = env::var("CAMPAIGN_DESCRIPTION_MAX_CHARS")
+            .expect("Error getting CAMPAIGN_DESCRIPTION_MAX_CHARS")
+            .to_string().parse::<usize>().map_err(|_| ChaosError::InternalServerError)?;
+        
+        if self.name.len() > campaign_name_max_chars || 
+              self.description.len() > campaign_description_max_chars ||
+              self.name.is_empty() || 
+              self.slug.is_empty() ||
+              self.starts_at >= self.ends_at {
+            return Err(ChaosError::BadRequest);
+        }
+
+        // TODO: update to ensure one day apart min to match frontend
+        Ok(())
     }
 }
