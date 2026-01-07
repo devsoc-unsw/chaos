@@ -21,7 +21,8 @@
       "multi_choice": "多选题",
       "multi_select": "多选题",
       "dropdown": "下拉题",
-      "ranking": "排序题"
+      "ranking": "排序题",
+      "existing_question": "现有问题"
     },
     "options": "选项",
     "common_questions": "通用问题",

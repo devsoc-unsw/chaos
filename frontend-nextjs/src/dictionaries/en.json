@@ -21,7 +21,8 @@
       "multi_choice": "Multichoice",
       "multi_select": "Multiselect",
       "dropdown": "Dropdown",
-      "ranking": "Ranking"
+      "ranking": "Ranking",
+      "existing_question": "Existing Question"
     },
     "options": "Options",
     "common_questions": "Common Questions",
