@@ -14,6 +14,16 @@
     "description": "Description",
     "about": "About",
     "questions": "Questions",
+    "title": "Title",
+    "question_type": "Question Type",
+    "question_types": {
+      "short_answer": "Short answer",
+      "multi_choice": "Multichoice",
+      "multi_select": "Multiselect",
+      "dropdown": "Dropdown",
+      "ranking": "Ranking"
+    },
+    "options": "Options",
     "common_questions": "Common Questions",
     "back": "Back",
     "application": "Application",
@@ -71,6 +81,12 @@
       "publish": "Publish",
       "published": "Published",
       "draft": "Draft",
+      "campaign_questions": "Campaign Questions",
+      "questions": {
+        "answer_text": "Answer Text",
+        "add_option": "Add Option",
+        "option_help": "Press Enter to add option"
+      },
       "roles": {
         "number_of_positions": "Number of Positions",
         "add_role": "Add Role"

@@ -14,6 +14,16 @@
     "description": "详细描述",
     "about": "关于",
     "questions": "问题",
+    "title": "标题",
+    "question_type": "问题类型",
+    "question_types": {
+      "short_answer": "短答案",
+      "multi_choice": "多选题",
+      "multi_select": "多选题",
+      "dropdown": "下拉题",
+      "ranking": "排序题"
+    },
+    "options": "选项",
     "common_questions": "通用问题",
     "back": "返回",
     "application": "申请",
@@ -71,6 +81,12 @@
       "publish": "发布",
       "published": "已发布",
       "draft": "草稿",
+      "campaign_questions": "活动问题",
+      "questions": {
+        "answer_text": "答案文本",
+        "add_option": "添加选项",
+        "option_help": "按 Enter 添加选项"
+      },
       "roles": {
         "number_of_positions": "职位数量",
         "add_role": "添加角色"

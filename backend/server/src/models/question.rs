@@ -131,17 +131,26 @@ impl Question {
             .await?;
 
         if !common {
-            for role in roles.unwrap_or_default() {
-                sqlx::query!(
+            if let Some(roles) = roles {
+                if roles.len() == 0 {
+                    return Err(ChaosError::BadRequestWithMessage("Question must either be common or assigned to at least one role".to_string()));
+                }
+
+                for role in roles {
+                    sqlx::query!(
                     "
                         INSERT INTO question_roles (question_id, role_id) VALUES ($1, $2)
                     ",
                     id,
                     role
                 )
-                .execute(transaction.deref_mut())
-                .await?;
+                        .execute(transaction.deref_mut())
+                        .await?;
+                }
+            } else {
+                return Err(ChaosError::BadRequestWithMessage("Question must either be common or assigned to at least one role".to_string()));
             }
+
         }
 
         Ok(id)
@@ -159,7 +168,7 @@ impl Question {
                     q.title,
                     q.description,
                     q.common,
-                    COALESCE(array_remove(array_agg(qr.role_id), NULL), '{}') AS "roles!: Vec<i64>",
+                    COALESCE(array_remove(array_agg(DISTINCT qr.role_id), NULL), '{}') AS "roles!: Vec<i64>",
                     q.required,
                     q.question_type AS "question_type: QuestionType",
                     q.created_at,
@@ -220,7 +229,7 @@ impl Question {
                     q.title,
                     q.description,
                     q.common,
-                    COALESCE(array_remove(array_agg(qr.role_id), NULL), '{}') AS "roles!: Vec<i64>",
+                    COALESCE(array_remove(array_agg(DISTINCT qr.role_id), NULL), '{}') AS "roles!: Vec<i64>",
                     q.required,
                     q.question_type AS "question_type: QuestionType",
                     q.created_at,
@@ -288,7 +297,7 @@ impl Question {
                     q.title,
                     q.description,
                     q.common,
-                    COALESCE(array_remove(array_agg(qr.role_id), NULL), '{}') AS "roles!: Vec<i64>",
+                    COALESCE(array_remove(array_agg(DISTINCT qr.role_id), NULL), '{}') AS "roles!: Vec<i64>",
                     q.required,
                     q.question_type AS "question_type: QuestionType",
                     q.created_at,
@@ -356,7 +365,7 @@ impl Question {
                     q.title,
                     q.description,
                     q.common,
-                    COALESCE(array_remove(array_agg(qr.role_id), NULL), '{}') AS "roles!: Vec<i64>",
+                    COALESCE(array_remove(array_agg(DISTINCT qr.role_id), NULL), '{}') AS "roles!: Vec<i64>",
                     q.required,
                     q.question_type AS "question_type: QuestionType",
                     q.created_at,
@@ -540,6 +549,7 @@ pub struct MultiOptionData {
 #[derive(Deserialize, Serialize)]
 pub struct MultiOptionQuestionOption {
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
     pub id: i64,
     pub display_order: i32,
     pub text: String,
