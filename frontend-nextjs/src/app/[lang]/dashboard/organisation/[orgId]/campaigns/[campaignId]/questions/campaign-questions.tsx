@@ -2,12 +2,12 @@
 
 import { dateToString } from "@/lib/utils";
 import { getCampaign, getCampaignRoles, RoleDetails } from "@/models/campaign";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, GripVertical, Plus, X } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, GripVertical, Plus, Trash, X } from "lucide-react";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { createQuestion, getAllCommonQuestions, getAllRoleQuestions, MultiOptionQuestionOption, Question, QuestionType, updateQuestion } from "@/models/question";
-import { useState } from "react";
+import { createQuestion, deleteQuestion, getAllCommonQuestions, getAllRoleQuestions, MultiOptionQuestionOption, Question, QuestionType, updateQuestion } from "@/models/question";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -27,6 +27,8 @@ import {
 } from "@/components/ui/dialog"
 
 export default function CampaignQuestions({ campaignId, orgId, dict }: { campaignId: string, orgId: string, dict: any }) {
+    const queryClient = useQueryClient();
+    
     const { data: campaign } = useQuery({
         queryKey: [`${campaignId}-campaign-details`],
         queryFn: () => getCampaign(campaignId),
@@ -56,10 +58,27 @@ export default function CampaignQuestions({ campaignId, orgId, dict }: { campaig
     const [allCommonQuestions, setAllCommonQuestions] = useState<Question[]>(commonQuestions ?? []);
     const [allRoleQuestions, setAllRoleQuestions] = useState<{ role: RoleDetails, questions: Question[] }[]>(rolesAndQuestions ?? []);
 
+    useEffect(() => {
+        if (commonQuestions) {
+            setAllCommonQuestions(commonQuestions);
+        }
+        if (rolesAndQuestions) {
+            setAllRoleQuestions(rolesAndQuestions);
+        }
+    }, [commonQuestions, rolesAndQuestions]);
+
     const [changedQuestions, setChangedQuestions] = useState<Question[]>([]);
     const [newQuestions, setNewQuestions] = useState<Question[]>([]);
 
-    const handleQuestionUpdate = (question: Question) => {
+    const handleQuestionUpdate = async (action: "update" | "delete", question: Question) => {
+        if (action === 'delete') {
+            await deleteQuestion(campaignId, question.id);
+            await queryClient.invalidateQueries({ queryKey: [`${campaignId}-common-questions`] });
+            await queryClient.invalidateQueries({ queryKey: [`${campaignId}-all-role-questions`] })
+            return;
+        }
+
+
         if (newQuestions.some((q) => q.id === question.id)) {
             setNewQuestions(newQuestions.map((q) => q.id === question.id ? question : q));
         } else if (!changedQuestions.some((q) => q.id === question.id)) {
@@ -89,12 +108,12 @@ export default function CampaignQuestions({ campaignId, orgId, dict }: { campaig
 
     const addNewQuestion = (type: QuestionType, roleId: string) => {
         const common = roleId === "common";
-        
+
         let newQuestion: Question = { id: snowflakeGenerator.generate().toString(), title: "", description: "", roles: [roleId], created_at: new Date().toISOString(), updated_at: new Date().toISOString(), question_type: type, data: { options: [] }, common, required: false };
         if (type === 'ShortAnswer') {
             delete (newQuestion as any).data;
         }
-        
+
         if (common) {
             newQuestion.roles = [];
             setAllCommonQuestions([...allCommonQuestions, newQuestion]);
@@ -103,7 +122,7 @@ export default function CampaignQuestions({ campaignId, orgId, dict }: { campaig
                 if (role.id === roleId) {
                     return { role, questions: [...questions, newQuestion] };
                 }
-    
+
                 return { role, questions };
             }));
         }
@@ -143,7 +162,7 @@ export default function CampaignQuestions({ campaignId, orgId, dict }: { campaig
                     </div>
                     <TabsContent value="common">
                         <QuestionEditor campaignId={campaignId} questions={allCommonQuestions} handleQuestionUpdate={handleQuestionUpdate} dict={dict} />
-                        <NewQuestionButton onAddNew={(type) => addNewQuestion(type, "common")} onAddExisting={(questionId) => {}} disableExisting={true} dict={dict} />
+                        <NewQuestionButton onAddNew={(type) => addNewQuestion(type, "common")} onAddExisting={(questionId) => { }} disableExisting={true} dict={dict} />
                     </TabsContent>
                     {allRoleQuestions?.map(({ role, questions }) => (
                         <TabsContent key={role.id} value={role.id}>
@@ -212,7 +231,7 @@ function NewQuestionButton({ onAddNew, onAddExisting, disableExisting = false, d
     );
 }
 
-function QuestionEditor({ possibleRole, questions, handleQuestionUpdate, dict }: { campaignId: string, possibleRole?: RoleDetails, questions?: Question[], handleQuestionUpdate: (question: Question) => void, dict: any }) {
+function QuestionEditor({ possibleRole, questions, handleQuestionUpdate, dict }: { campaignId: string, possibleRole?: RoleDetails, questions?: Question[], handleQuestionUpdate: (action: "update" | "delete", question: Question) => Promise<void>, dict: any }) {
     const roleId = possibleRole?.id ?? "common";
 
     return (
@@ -227,12 +246,12 @@ function QuestionEditor({ possibleRole, questions, handleQuestionUpdate, dict }:
     );
 }
 
-function MultiOptionQuestionCard({ question, handleQuestionUpdate, dict }: { question?: Question, handleQuestionUpdate: (question: Question) => void, dict: any }) {
+function MultiOptionQuestionCard({ question, handleQuestionUpdate, dict }: { question?: Question, handleQuestionUpdate: (action: "update" | "delete", question: Question) => Promise<void>, dict: any }) {
     const [title, setTitle] = useState<string>(question?.title ?? "");
     const [questionType, setQuestionType] = useState<string>(question?.question_type ?? "");
     const [options, setOptions] = useState<MultiOptionQuestionOption[]>(question?.data?.options ?? []);
 
-    const handleDragEnd = (result: DropResult) => {
+    const handleDragEnd = async (result: DropResult) => {
         if (!result.destination) {
             return;
         }
@@ -243,44 +262,50 @@ function MultiOptionQuestionCard({ question, handleQuestionUpdate, dict }: { que
         const newItems = items.map((option, index) => ({ ...option, display_order: index + 1 }));
 
         setOptions(newItems);
-        handleQuestionUpdate({ ...question!, data: { options: newItems } });
+        await handleQuestionUpdate('update', { ...question!, data: { options: newItems } });
     }
 
-    const addOption = (text: string) => {
+    const addOption = async (text: string) => {
         // Generate random id for use with DnD and to send to server (which expects i64 - as string or number)
         const newItems: MultiOptionQuestionOption[] = [...options, { id: snowflakeGenerator.generate().toString(), text: text, display_order: options.length + 1 }];
         setOptions(newItems);
-        handleQuestionUpdate({ ...question!, data: { options: newItems } });
+        await handleQuestionUpdate('update', { ...question!, data: { options: newItems } });
     }
 
-    const removeOption = (id: string) => {
+    const removeOption = async (id: string) => {
         const newItems = options.filter((option) => option.id !== id);
         setOptions(newItems);
-        handleQuestionUpdate({ ...question!, data: { options: newItems } });
+        await handleQuestionUpdate('update', { ...question!, data: { options: newItems } });
     }
 
-    const updateOption = (id: string, text: string) => {
+    const updateOption = async (id: string, text: string) => {
         const newItems = options.map((option) => option.id === id ? { ...option, text: text } : option);
         setOptions(newItems);
-        handleQuestionUpdate({ ...question!, data: { options: newItems } });
+        await handleQuestionUpdate('update', { ...question!, data: { options: newItems } });
     }
 
-
-    const updateTitle = (title: string) => {
+    const updateTitle = async (title: string) => {
         setTitle(title);
-        handleQuestionUpdate({ ...question!, title: title });
+        await handleQuestionUpdate('update', { ...question!, title: title });
     }
 
-    const updateQuestionType = (questionType: string) => {
+    const updateQuestionType = async (questionType: string) => {
         setQuestionType(questionType);
-        handleQuestionUpdate({ ...question!, question_type: questionType as QuestionType });
+        await handleQuestionUpdate('update', { ...question!, question_type: questionType as QuestionType });
+    }
+
+    const handleDeleteQuestion = async () => {
+        await handleQuestionUpdate('delete', question!);
     }
 
     return (
         <div className="flex flex-col p-2 border rounded-md gap-2 w">
-            <div className="flex items-center justify-between gap-2">
-                <Input className="max-w-[500px]" value={title} onChange={(e) => updateTitle(e.target.value)} />
-                <Select value={questionType} onValueChange={(value) => updateQuestionType(value)}>
+            <div className="flex flex-col gap-1">
+                <div className="flex justify-between">
+                    <Input className="max-w-[500px]" value={title} onChange={async (e) => await updateTitle(e.target.value)} />
+                    <Button variant="destructive" onClick={handleDeleteQuestion}><Trash className="w-4 h-4" /></Button>
+                </div>
+                <Select value={questionType} onValueChange={async (value) => await updateQuestionType(value)}>
                     <SelectTrigger>
                         <SelectValue placeholder={dict.common.question_type} />
                     </SelectTrigger>
@@ -315,9 +340,9 @@ function MultiOptionQuestionCard({ question, handleQuestionUpdate, dict }: { que
                                                     <div className="mt-1">
                                                         <OptionDecorator questionType={questionType} index={index} />
                                                     </div>
-                                                    <input className="w-full focus:outline-none border-b-2 border-dotted border-gray-500 max-w-[300px]" defaultValue={option.text} onChange={(e) => updateOption(option.id, (e.target as HTMLInputElement).value)} />
+                                                    <input className="w-full focus:outline-none border-b-2 border-dotted border-gray-500 max-w-[300px]" defaultValue={option.text} onChange={async (e) => await updateOption(option.id, (e.target as HTMLInputElement).value)} />
                                                 </div>
-                                                <X className="w-5 h-5 cursor-pointer text-red-500 hover:text-red-600" onClick={() => removeOption(option.id)} />
+                                                <X className="w-5 h-5 cursor-pointer text-red-500 hover:text-red-600" onClick={async () => await removeOption(option.id)} />
                                             </div>
                                         )}
                                     </Draggable>
@@ -335,9 +360,9 @@ function MultiOptionQuestionCard({ question, handleQuestionUpdate, dict }: { que
                         <OptionDecorator questionType={questionType} index={options.length} />
                     </div>
                     <div className="flex flex-col gap-1">
-                        <input className="w-full focus:outline-none border-b-2 border-dotted border-gray-500 max-w-[300px]" placeholder={dict.dashboard.campaigns.questions.add_option} onKeyDown={(e) => {
+                        <input className="w-full focus:outline-none border-b-2 border-dotted border-gray-500 max-w-[300px]" placeholder={dict.dashboard.campaigns.questions.add_option} onKeyDown={async (e) => {
                             if (e.key === 'Enter') {
-                                addOption((e.target as HTMLInputElement).value);
+                                await addOption((e.target as HTMLInputElement).value);
                                 (e.target as HTMLInputElement).value = '';
                             }
                         }} />
@@ -362,17 +387,24 @@ function OptionDecorator({ questionType, index }: { questionType: string, index:
     return <div className="rounded-full border-2 border-gray-500 w-4 h-4"></div>;
 }
 
-function ShortAnswerQuestionCard({ question, handleQuestionUpdate, dict }: { question?: Question, handleQuestionUpdate: (question: Question) => void, dict: any }) {
+function ShortAnswerQuestionCard({ question, handleQuestionUpdate, dict }: { question?: Question, handleQuestionUpdate: (action: "update" | "delete", question: Question) => Promise<void>, dict: any }) {
     const [title, setTitle] = useState(question?.title ?? "");
 
-    const updateTitle = (title: string) => {
+    const updateTitle = async (title: string) => {
         setTitle(title);
-        handleQuestionUpdate({ ...question!, title: title });
+        await handleQuestionUpdate('update', { ...question!, title: title });
+    }
+
+    const handleDeleteQuestion = async () => {
+        await handleQuestionUpdate('delete', question!);
     }
 
     return (
         <div className="flex flex-col justify-between p-2 border rounded-md gap-2 min-h-[120px]">
-            <Input className="max-w-[500px]" value={title} onChange={(e) => updateTitle(e.target.value)} />
+            <div className="flex justify-between">
+                <Input className="max-w-[500px]" value={title} onChange={async (e) => await updateTitle(e.target.value)} />
+                <Button variant="destructive" onClick={handleDeleteQuestion}><Trash className="w-4 h-4" /></Button>
+            </div>
             <div className="flex flex-col gap-1 p-2">
                 <div className="border-b-2 border-dotted border-gray-500 max-w-[300px]">
                     <p className="text-sm text-gray-500">{dict.dashboard.campaigns.questions.answer_text}</p>
