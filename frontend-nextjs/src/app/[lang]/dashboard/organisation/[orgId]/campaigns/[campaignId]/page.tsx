@@ -27,20 +27,9 @@ import html from 'remark-html';
 
     const campaign = await getCampaign(campaignId);
 
-<<<<<<< ours
-    const processedDescription = await remark()
-        .use(html)
-        .process(campaign.description ?? "");
-    const descriptionHtml = processedDescription.toString();
-    
-    return (
-      <HydrationBoundary state={dehydrate(queryClient)}>
-          <CampaignDetails campaignId={campaignId} descriptionHtml={descriptionHtml} orgId={campaign.organisation_id} dict={dict} />
-=======
     return (
       <HydrationBoundary state={dehydrate(queryClient)}>
           <CampaignDetails campaignId={campaignId} orgId={campaign.organisation_id} dict={dict} />
->>>>>>> theirs
       </HydrationBoundary>
     );
   }
