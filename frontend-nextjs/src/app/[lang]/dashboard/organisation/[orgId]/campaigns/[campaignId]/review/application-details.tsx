@@ -133,7 +133,7 @@ export default function ApplicationDetailsComponent({ applicationId, campaignId,
                         {linkedCommonQuestionsAnswers.map((data) => (
                             <div key={data?.question_id}>
                                 <p className="text-md font-medium">{data?.text}</p>
-                                <p>{data?.answer}</p>
+                                <p>{JSON.stringify(data?.answer)}</p>
                             </div>
                         ))}
                     </div>
@@ -148,7 +148,7 @@ export default function ApplicationDetailsComponent({ applicationId, campaignId,
                                 {data?.questions.map((question) => (
                                     <div key={question?.question_id}>
                                         <p className="text-md font-medium">{question?.text}</p>
-                                        <p>{question?.answer}</p>
+                                        <p>{JSON.stringify(question?.answer)}</p>
                                     </div>
                                 ))}
                             </div>
