@@ -566,72 +566,87 @@ impl Application {
         campaign_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<ApplicationRatingSummary>, ChaosError> {
-        let application_users_avg_ratings = sqlx::query_as!(
-            ApplicationRatingSummary,
-            "
-                SELECT
-                a.id AS application_id,
-                ARRAY_AGG(DISTINCT applied_roles.campaign_role_id) AS \"applied_roles!: Vec<i64>\",
-                u.name AS user_name, u.email AS user_email,
-                a.status AS \"status: ApplicationStatus\", a.updated_at,
-
-                to_jsonb(
-                    coalesce(
-                        array_remove(
-                            array_agg(
-                                jsonb_build_object(
-                                    'id', ar.id,
-                                    'rater_id', reviewer.id,
-                                    'rater_name', reviewer.name,
-                                    'category_ratings', COALESCE(cat_ratings.ratings, '[]'::jsonb),
-                                    'comment', ar.comment,
-                                    'updated_at', ar.updated_at
-                                ) ORDER BY ar.updated_at DESC
-                            ) FILTER (WHERE ar.id IS NOT NULL),
-                            NULL
-                        ),
-                        '{}'
-                    )
-                ) AS \"ratings: Json<Vec<RatingDetails>>\"
+        // Query 1: Get all applications with their basic info
+        let applications = sqlx::query!(
+            "SELECT a.id AS application_id, 
+            ARRAY_AGG(DISTINCT applied_roles.campaign_role_id) AS \"applied_roles!: Vec<i64>\",
+            u.name AS user_name, u.email AS user_email,
+            a.status AS \"status: ApplicationStatus\", a.updated_at
             FROM applications a
-            JOIN application_roles applied_roles ON applied_roles.application_id = a.id
-            JOIN campaign_roles ON campaign_roles.id = applied_roles.campaign_role_id
-            LEFT JOIN application_ratings ar on ar.application_id = a.id
-            LEFT JOIN (
-                SELECT arc.application_rating_id,
-                    jsonb_agg(
-                        jsonb_build_object(
-                            'campaign_rating_category_id', arc.campaign_rating_category_id,
-                            'category_name', crc.name,
-                            'rating', arc.rating
-                        )
-                    ) as ratings
-                FROM application_rating_category_ratings arc
-                LEFT JOIN campaign_rating_categories crc ON crc.id = arc.campaign_rating_category_id
-                GROUP BY arc.application_rating_id
-            ) cat_ratings on cat_ratings.application_rating_id = ar.id
-            JOIN users u ON u.id = a.user_id
-            LEFT JOIN users AS reviewer ON reviewer.id = ar.rater_id
-            WHERE a.campaign_id = $1 AND a.submitted = true
-            GROUP BY a.id, u.name, u.email, a.status, a.updated_at
-            ORDER BY a.id ASC
-            ",
+            JOIN application_roles applied_roles ON applied_roles.application_id = a.id 
+            JOIN campaign_roles ON campaign_roles.id = applied_roles.campaign_role_id JOIN users u ON u.id = a.user_id 
+            WHERE a.campaign_id = $1 AND a.submitted = true 
+            GROUP BY a.id, u.name, u.email, a.status, a.updated_at 
+            ORDER BY a.id ASC",
             campaign_id,
         )
         .fetch_all(transaction.deref_mut())
         .await?;
 
-        // to_jsonb(
-        //     array_agg(
-        //         jsonb_build_object(
-        //             'id', mod.id,
-        //             'display_order', mod.display_order,
-        //             'text', mod.text
-        //         ) ORDER BY mod.display_order
-        //     ) FILTER (WHERE mod.id IS NOT NULL)
-        // ) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
+        let mut result = Vec::new();
 
-        Ok(application_users_avg_ratings)
+        for app in applications {
+            // Get ratings for this application
+            let ratings = sqlx::query!(
+                "
+                    SELECT ar.id, ar.rater_id, u.name as rater_name, ar.comment, ar.updated_at
+                    FROM application_ratings ar
+                    JOIN users u ON u.id = ar.rater_id
+                    WHERE ar.application_id = $1
+                    ORDER BY ar.updated_at DESC
+                ",
+                app.application_id
+            )
+            .fetch_all(transaction.deref_mut())
+            .await?;
+
+            let mut rating_details = Vec::new();
+
+            for rating in ratings {
+                // Get category ratings for this rating
+                let category_ratings = sqlx::query!(
+                    "
+                        SELECT arc.id, arc.campaign_rating_category_id, crc.name as category_name, arc.rating
+                        FROM application_rating_category_ratings arc
+                        LEFT JOIN campaign_rating_categories crc ON crc.id = arc.campaign_rating_category_id
+                        WHERE arc.application_rating_id = $1
+                    ",
+                    rating.id
+                )
+                .fetch_all(transaction.deref_mut())
+                .await?;
+
+                let category_rating_details: Vec<crate::models::rating::CategoryRatingDetail> = category_ratings
+                    .into_iter()
+                    .map(|cr| crate::models::rating::CategoryRatingDetail {
+                        id: cr.id,
+                        campaign_rating_category_id: cr.campaign_rating_category_id,
+                        category_name: cr.category_name,
+                        rating: cr.rating,
+                    })
+                    .collect();
+
+                rating_details.push(crate::models::rating::RatingDetails {
+                    id: rating.id,
+                    rater_id: rating.rater_id,
+                    rater_name: rating.rater_name,
+                    comment: rating.comment,
+                    category_ratings: sqlx::types::Json(category_rating_details),
+                    updated_at: rating.updated_at,
+                });
+            }
+
+            result.push(ApplicationRatingSummary {
+                application_id: app.application_id,
+                applied_roles: app.applied_roles,
+                user_name: app.user_name,
+                user_email: app.user_email,
+                status: app.status,
+                updated_at: app.updated_at,
+                ratings: Some(sqlx::types::Json(rating_details)),
+            });
+        }
+        Ok(result)
     }
 
     /// Retrieves all applications submitted by a specific user.

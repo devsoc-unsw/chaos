@@ -2,7 +2,8 @@
 
 import { ApplicationSummaryDataTable } from "./data-table";
 import { dateToString } from "@/lib/utils";
-import { ApplicationRatingSummary, getApplicationRatingsSummary, RatingDetails } from "@/models/application";
+import { ApplicationRatingSummary, getApplicationRatingsSummary} from "@/models/application";
+import { RatingDetails } from "@/models/rating"
 import { getCampaign, getCampaignRoles } from "@/models/campaign";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
@@ -32,7 +33,15 @@ function RatingsShelf({ columns, ratings, dict }: { columns: ColumnDef<Applicati
                             <span className="font-medium">{rating.rater_name}</span>
                             <p className="text-sm text-gray-700">{rating.comment}</p>
                         </TableCell>
-                        <TableCell className="align-top">{rating.rating.toFixed(2)}</TableCell>
+                        <TableCell className="align-top">
+                            <div className="flex flex-col gap-1">
+                                {rating.category_ratings.map((cr) => (
+                                    <div key={cr.id} className="text-sm">
+                                        <span className="font-medium">{cr.category_name}:</span> {cr.rating}
+                                    </div>
+                                ))}
+                            </div>
+                        </TableCell>
                     </TableRow>
                 ))
             }

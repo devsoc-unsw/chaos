@@ -88,14 +88,13 @@ pub struct ApplicationCategoryRating {
     pub updated_at: DateTime<Utc>,
 }
 
-/// Data structure for creating a new Application Rating.
+/// Data structure for creating a new Category Application Rating.
 /// 
-/// This struct contains the fields needed to create a new application_rating,
-/// ONLY covers the comment
-/// excluding Numerical rating and system generated fields.
+/// This struct contains the fields needed to create a new category rating for application rating
+/// WITH the numerical score
 #[derive(Deserialize, Serialize)]
 pub struct NewApplicationCategoryRating {
-    /// ID of the category being rated
+    /// ID of the category being rated (TAKEN FROM FRONTEND the category ID )
     #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
     pub campaign_rating_category_id: i64,
     /// Numerical score based on the rating
@@ -125,7 +124,7 @@ pub struct NewRating {
 /// includes the rater's name, used primarily for API responses.
 #[derive(Deserialize, Serialize, FromRow)]
 pub struct RatingDetails {
-    /// Unique identifier for the rating
+    /// Unique identifier for the application rating we are looking at (NOT CATEGORY RATINGS)
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the user who created the rating
@@ -144,7 +143,7 @@ pub struct RatingDetails {
 /// Detail of a single category rating
 #[derive(Deserialize, Serialize)]
 pub struct CategoryRatingDetail {
-    /// ID of the application category rating record <TODO: RELOOK INTO THIS>
+    /// ID of the application category rating record
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the campaign rating category
