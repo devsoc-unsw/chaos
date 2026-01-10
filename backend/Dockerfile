@@ -1,6 +1,7 @@
 # build project
 FROM messense/rust-musl-cross:x86_64-musl as chef
 RUN cargo install cargo-chef
+RUN cargo install sqlx-cli --version 0.7.3 --no-default-features --features native-tls,postgres
 WORKDIR /backend
 
 FROM chef AS planner
@@ -17,7 +18,6 @@ COPY server/ ./server/
 
 # build app server
 WORKDIR /backend/server
-RUN cargo install sqlx-cli --no-default-features --features native-tls,postgres
 RUN cargo build --release --target x86_64-unknown-linux-musl
 
 FROM debian-slim
