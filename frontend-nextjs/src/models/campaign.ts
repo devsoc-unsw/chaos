@@ -6,7 +6,7 @@ import { createProperSlug } from "./slug";
 
 export interface CampaignDetails {
     /// Unique identifier for the campaign
-    id: string;
+    id: number; //fix this later
     campaign_slug: string;
     name: string;
     organisation_id: string;
@@ -20,6 +20,7 @@ export interface CampaignDetails {
     starts_at: string;
     ends_at: string;
     published: boolean;
+    max_roles_per_application: number | null;
     interview_period_starts_at: Date | null,
     interview_period_ends_at: Date | null,
     interview_format: string | null,
@@ -94,6 +95,12 @@ export async function deleteCampaignAttachment(attachmentId: number): Promise<vo
 
 export async function getCampaign(campaignId: string): Promise<CampaignDetails> {
     return await apiRequest<CampaignDetails>(`/api/v1/campaign/${campaignId}`);
+}
+
+export interface CampaignRole {
+    id: number;
+    name: string;
+    description: string;
 }
 
 export async function updateCampaign(campaignId: string, campaign: CampaignUpdate): Promise<AppMessage> {

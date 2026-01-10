@@ -19,9 +19,18 @@ export interface ApplicationAppliedRoleDetails {
     role_name: string;
     preference: number;
 }
+export async function createOrGetApplication(campaignId: string): Promise<{ application_id: string }> {
+    return await apiRequest<{ application_id: string }>(`/api/v1/campaign/${campaignId}/apply`, {
+      method: "POST",
+    });
+}
 
 export async function getApplication(applicationId: string): Promise<ApplicationDetails> {
     return await apiRequest<ApplicationDetails>(`/api/v1/application/${applicationId}`);
+}
+
+export async function getInProgressApplication(applicationId: string): Promise<ApplicationDetails> {
+    return await apiRequest<ApplicationDetails>(`/api/v1/application/${applicationId}/inprogress`);
 }
 
 export interface RatingDetails {
@@ -55,6 +64,12 @@ export async function updateApplicationRating(applicationId: string, rating?: nu
             rating,
             comment,
         },
+    });
+}
+
+export async function submitApplication(applicationId: string) {
+    return await apiRequest<void>(`/api/v1/application/${applicationId}/submit`, {
+        method: "POST"
     });
 }
 

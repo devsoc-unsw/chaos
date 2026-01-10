@@ -87,6 +87,29 @@ impl ApplicationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         let application = Application::get(application_id, admin.user_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
+        Ok((StatusCode::OK, Json(application)))
+    }
+
+    /// Retrieves the details of a specific application regardless of submission status.
+    /// 
+    /// This handler allows regular applicants to view application details in the answer screen.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `application_id` - The ID of the application to retrieve
+    /// * `_admin` - The authenticated user (must be an application admin)
+    /// * `transaction` - Database transaction
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Application details or error
+    pub async fn get_in_progress(
+        Path(application_id): Path<i64>,
+        user: AuthUser,
+        mut transaction: DBTransaction<'_>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let application = Application::get_in_progress(application_id, user.user_id, &mut transaction.tx).await?;
+        transaction.tx.commit().await?;
         Ok(Json(application))
     }
 

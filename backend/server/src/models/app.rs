@@ -278,20 +278,6 @@ pub async fn app() -> Result<Router, ChaosError> {
                 .put(RatingHandler::update),
         )
         .route(
-            "/api/v1/application/:application_id/rating",
-            get(ApplicationHandler::get_rating_by_current_user)
-                .post(ApplicationHandler::create_rating)
-                .put(ApplicationHandler::update_rating),
-        )
-        .route(
-            "/api/v1/application/:application_id/ratings",
-            get(ApplicationHandler::get_ratings),
-        )
-        .route(
-            "/api/v1/campaign/:campaign_id/avg_ratings",
-            get(ApplicationHandler::get_application_ratings_summary),
-        )
-        .route(
             "/api/v1/campaign/:campaign_id/role",
             post(CampaignHandler::create_role),
         )
@@ -380,6 +366,20 @@ pub async fn app() -> Result<Router, ChaosError> {
         .route(
             "/api/v1/application/:application_id",
             get(ApplicationHandler::get),
+        )
+        .route(
+            "/api/v1/application/:application_id/inprogress",
+            get(ApplicationHandler::get_in_progress),
+        )
+        .route(
+            "/api/v1/application/:application_id/rating",
+            get(ApplicationHandler::get_rating_by_current_user)
+                .post(ApplicationHandler::create_rating)
+                .put(ApplicationHandler::update_rating),
+        )
+        .route(
+            "/api/v1/application/:application_id/ratings",
+            get(ApplicationHandler::get_ratings),
         )
         .route(
             "/api/v1/application/:application_id/status",

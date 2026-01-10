@@ -64,6 +64,8 @@ pub struct Campaign {
     pub application_requirements: Option<String>,
     /// Whether the campaign is published
     pub published: bool,
+    /// Max amount of roles an applicant can apply for
+    pub max_roles_per_application: Option<i32>
 }
 
 /// Detailed view of a campaign.
@@ -109,6 +111,8 @@ pub struct CampaignDetails {
     pub application_requirements: Option<String>,
     /// Whether the campaign is published
     pub published: bool,
+    /// Max amount of roles an applicant can apply for
+    pub max_roles_per_application: Option<i32>
 }
 
 /// Simplified view of a campaign for organization listings.
@@ -322,7 +326,7 @@ impl Campaign {
                 o.slug AS organisation_slug, o.name as organisation_name, 
                 o.contact_email, o.website_url, c.cover_image,
                 c.description, c.starts_at, c.ends_at, c.published, c.interview_period_starts_at, 
-                c.interview_period_ends_at, c.interview_format, c.outcomes_released_at, 
+                c.interview_period_ends_at, c.interview_format, c.outcomes_released_at, c.max_roles_per_application,
                 c.application_requirements
                 FROM campaigns c
                 JOIN organisations o on c.organisation_id = o.id
@@ -399,7 +403,7 @@ impl Campaign {
                 SELECT c.id, c.slug AS campaign_slug, c.name, c.organisation_id,
                 o.slug AS organisation_slug, o.name as organisation_name, 
                 o.contact_email, o.website_url, c.cover_image, 
-                c.description, c.starts_at, c.ends_at, c.published, 
+                c.description, c.starts_at, c.ends_at, c.published, c.max_roles_per_application,
                 c.interview_period_starts_at, c.interview_period_ends_at, c.interview_format, 
                 c.outcomes_released_at, c.application_requirements
                 FROM campaigns c

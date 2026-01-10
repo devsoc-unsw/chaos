@@ -49,8 +49,22 @@
     "apply": "申请",
 
     "status": "状态",
-    "email": "邮箱"
+    "email": "邮箱",
+
+    "select": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+    "selected": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+    "submit": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;"
   },
+  "applicationpage": {
+        "empty_selected_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "drag_to_reorder": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "empty_available_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "selected_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "available_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "no_role_specific_qs": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "your_answer": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "no_answer": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;"
+    },
   "dashboard": {
     "email_templates": "邮件模板",
     "members": {
@@ -135,7 +149,6 @@
       "preview": "预览",
       "duplicate": "复制",
       "cancel": "取消",
-      "save": "保存",
       "destructive_confirm": "你确定吗",
       "confirm_understand": "确定",
       "invite": "邀请",
