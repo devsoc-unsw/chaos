@@ -14,6 +14,17 @@
     "description": "Description",
     "about": "About",
     "questions": "Questions",
+    "title": "Title",
+    "question_type": "Question Type",
+    "question_types": {
+      "short_answer": "Short answer",
+      "multi_choice": "Multichoice",
+      "multi_select": "Multiselect",
+      "dropdown": "Dropdown",
+      "ranking": "Ranking",
+      "existing_questions": "Existing Questions"
+    },
+    "options": "Options",
     "common_questions": "Common Questions",
     "back": "Back",
     "application": "Application",
@@ -71,6 +82,16 @@
       "publish": "Publish",
       "published": "Published",
       "draft": "Draft",
+      "campaign_questions": "Campaign Questions",
+      "questions": {
+        "answer_text": "Answer Text",
+        "add_option": "Add Option",
+        "option_help": "Press Enter to add option",
+        "question_updated": "Question updated",
+        "question_deleted": "Question deleted",
+        "update_success": "The question has been updated successfully.",
+        "delete_success": "The question has been deleted successfully."
+      },
       "roles": {
         "number_of_positions": "Number of Positions",
         "add_role": "Add Role"
@@ -116,7 +137,8 @@
       "save": "Save",
       "destructive_confirm": "Are you absolutely sure?",
       "confirm_understand": "Ok",
-      "invite": "Invite"
+      "invite": "Invite",
+      "add": "Add"
     }
   }
 }
