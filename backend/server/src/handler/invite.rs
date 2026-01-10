@@ -46,7 +46,7 @@ impl InviteHandler {
             expires_at: invite.expires_at,
             used: invite.used_at.is_some(),
             expired: invite.expires_at <= Utc::now(),
-            invited_by_organisation_id: invite.invited_by_organisation_id,
+            invited_by_user_id: invite.invited_by_user_id,
         };
 
         transaction.tx.commit().await?;
@@ -85,7 +85,7 @@ impl InviteHandler {
         Organisation::add_user(invite.organisation_id, user.user_id, &mut transaction.tx).await?;
 
         // Mark the invite as used.
-        Invite::mark_used(&code, user.user_id, invite.invited_by_organisation_id, &mut transaction.tx).await?;
+        Invite::mark_used(&code, user.user_id, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
         Ok(AppMessage::OkMessage("Invite accepted successfully"))
@@ -104,8 +104,8 @@ pub struct InviteDetails {
     pub expires_at: DateTime<Utc>,
     pub used: bool,
     pub expired: bool,
-    /// ID of the organisation that invited the user
+    /// ID of the user that invited the member to the organisation
     #[serde(serialize_with = "crate::models::serde_string::serialize_option")]
     #[serde(deserialize_with = "crate::models::serde_string::deserialize_option")]
-    pub invited_by_organisation_id: Option<i64>
+    pub invited_by_user_id: Option<i64>
 }

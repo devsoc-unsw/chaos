@@ -359,12 +359,13 @@ impl OrganisationHandler {
     pub async fn invite_user(
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
-        _admin: OrganisationAdmin,
+        admin: OrganisationAdmin,
         State(mut state): State<AppState>,
         Json(request_body): Json<MemberToInvite>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let invite_code = Organisation::invite_user(
             id,
+            admin.user_id,
             request_body.email,
             state.email_credentials.clone(),
             &mut state.snowflake_generator,

@@ -684,6 +684,7 @@ impl Organisation {
 
     pub async fn invite_user(
         organisation_id: i64,
+        inviting_user_id: i64,
         email: String,
         email_credentials: EmailCredentials,
         snowflake_generator: &mut SnowflakeIdGenerator,
@@ -750,7 +751,7 @@ impl Organisation {
             sqlx::query!(
                 r#"
                     INSERT INTO organisation_invites
-                        (id, organisation_id, code, email, expires_at, used_at, used_by, created_at, invited_by_organisation_id)
+                        (id, organisation_id, code, email, expires_at, used_at, used_by, created_at, invited_by_user_id)
                     VALUES ($1, $2, $3, $4, $5, NULL, NULL, NOW(), $6)
                 "#,
                 id,
@@ -758,12 +759,12 @@ impl Organisation {
                 code,
                 email,
                 expires_at, 
-                invited_by_organisation_id
+                inviting_user_id
             )
             .execute(transaction.deref_mut())
             .await?;
 
-            
+            // TODO: Get SMTP credentials
             // ChaosEmail::send_message(
             //     "".to_string(),
             //     email,

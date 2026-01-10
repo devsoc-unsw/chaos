@@ -29,10 +29,10 @@ pub struct Invite {
     pub used_by: Option<i64>,
     /// When the invite was created
     pub created_at: DateTime<Utc>,
-    /// ID of the organisation that invited the user
+    /// ID of the user that invited the member to the organisation
     #[serde(serialize_with = "crate::models::serde_string::serialize_option")]
     #[serde(deserialize_with = "crate::models::serde_string::deserialize_option")]
-    pub invited_by_organisation_id: Option<i64>,
+    pub invited_by_user_id: Option<i64>,
     
 }
 
@@ -63,9 +63,9 @@ impl Invite {
                     used_at,
                     used_by,
                     created_at,
-                    invited_by_organisation_id
+                    invited_by_user_id
                 FROM organisation_invites
-                WHERE code = $1
+                WHERE code = $1 AND used_at IS NULL AND expires_at > NOW()
             "#,
             code
         )
@@ -89,21 +89,20 @@ impl Invite {
     pub async fn mark_used(
         code: &str,
         user_id: i64,
-        invited_by_organisation_id: Option<i64>,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        sqlx::query!(
+        let _ = sqlx::query!(
             r#"
                 UPDATE organisation_invites
                 SET used_at = $1, used_by = $2
-                WHERE code = $3 AND invited_by_organisation_id = $4
+                WHERE code = $3 AND used_at IS NULL AND expires_at > NOW()
+                RETURNING id
             "#,
             Utc::now(),
             user_id,
             code,
-            invited_by_organisation_id
         )
-        .execute(transaction.deref_mut())
+        .fetch_one(transaction.deref_mut())
         .await?;
 
         Ok(())
@@ -114,11 +113,11 @@ impl Invite {
         code: &str,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        sqlx::query!(
-            "DELETE FROM organisation_invites WHERE code = $1",
+        let _ = sqlx::query!(
+            "DELETE FROM organisation_invites WHERE code = $1 RETURNING id",
             code
         )
-        .execute(transaction.deref_mut())
+        .fetch_one(transaction.deref_mut())
         .await?;
 
         Ok(())
