@@ -21,20 +21,30 @@ export interface ApplicationAppliedRoleDetails {
     role_name: string;
     preference: number;
 }
+export async function createOrGetApplication(campaignId: string): Promise<{ application_id: string }> {
+    return await apiRequest<{ application_id: string }>(`/api/v1/campaign/${campaignId}/apply`, {
+      method: "POST",
+    });
+}
 
 export async function getApplication(applicationId: string): Promise<ApplicationDetails> {
     return await apiRequest<ApplicationDetails>(`/api/v1/application/${applicationId}`);
 }
 
-// export interface RatingDetails {
-//     /// Unique identifier for the rating
-//     id: string;
-//     rater_id: string;
-//     rater_name: string;
-//     rating: number;
-//     comment: string | null;
-//     updated_at: string;
-// }
+
+export async function getInProgressApplication(applicationId: string): Promise<ApplicationDetails> {
+    return await apiRequest<ApplicationDetails>(`/api/v1/application/${applicationId}/inprogress`);
+}
+
+export interface RatingDetails {
+    /// Unique identifier for the rating
+    id: string;
+    rater_id: string;
+    rater_name: string;
+    rating: number;
+    comment: string | null;
+    updated_at: string;
+}
 
 // export async function getApplicationRating(applicationId: string): Promise<RatingDetails> {
 //     return await apiRequest<RatingDetails>(`/api/v1/application/${applicationId}/rating`);
@@ -57,6 +67,12 @@ export async function updateApplicationRating(applicationId: string, rating?: nu
             rating,
             comment,
         },
+    });
+}
+
+export async function submitApplication(applicationId: string) {
+    return await apiRequest<void>(`/api/v1/application/${applicationId}/submit`, {
+        method: "POST"
     });
 }
 

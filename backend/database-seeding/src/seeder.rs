@@ -153,7 +153,36 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
         &mut seeder.app_state.snowflake_generator,
     )
     .await.expect("Failed seeding Role 2");
+        let rating_category_id_1 = Rating::create_category(
+        NewCategoryRating {
+            name: "Bedrotting".to_string(),
+        },
+        campaign_id,
+        &mut seeder.app_state.snowflake_generator,
+        &mut tx,
+    )
+    .await.expect("Failed seeding Rating Category 1");
 
+    let rating_category_id_2 = Rating::create_category(
+        NewCategoryRating {
+            name: "Vibe Coding".to_string(),
+        },
+        campaign_id,
+        &mut seeder.app_state.snowflake_generator,
+        &mut tx,
+    )
+    .await.expect("Failed seeding Rating Category 2");
+
+    let rating_category_id_3 = Rating::create_category(
+        NewCategoryRating {
+            name: "Rizzler".to_string(),
+        },
+        campaign_id,
+        &mut seeder.app_state.snowflake_generator,
+        &mut tx,
+    )
+    .await.expect("Failed seeding Rating Category 3");
+  
     let question_id_1 = Question::create(
         campaign_id,
         "What year are you in?".to_string(),
@@ -252,35 +281,71 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
     )
     .await.expect("Failed seeding Question 3");
 
-    let rating_category_id_1 = Rating::create_category(
-        NewCategoryRating {
-            name: "Bedrotting".to_string(),
-        },
+    let question_id_4 = Question::create(
         campaign_id,
+        "Where did you hear about DevSoc from?".to_string(),
+        Some("This is a general question for all roles".to_string()),
+        true,
+        None,
+        true,
+        QuestionData::MultiChoice(
+            MultiOptionData {
+                options: vec![
+                    MultiOptionQuestionOption {
+                        id: 0,
+                        text: "Email".to_string(),
+                        display_order: 1,
+                    },
+                    MultiOptionQuestionOption {
+                        id: 0,
+                        text: "Word of Mouth".to_string(),
+                        display_order: 2,
+                    },
+                    MultiOptionQuestionOption {
+                        id: 0,
+                        text: "Social Media".to_string(),
+                        display_order: 3,
+                    },
+                ]
+            }
+        ),
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
-    .await.expect("Failed seeding Rating Category 1");
+        .await.expect("Failed seeding Question 4");
 
-    let rating_category_id_2 = Rating::create_category(
-        NewCategoryRating {
-            name: "Vibe Coding".to_string(),
-        },
+    let question_id_5 = Question::create(
         campaign_id,
+        "Rank these programming languages?".to_string(),
+        Some("This is a general question for all technical roles".to_string()),
+        false,
+        Some(vec![role_id_1, role_id_2]),
+        true,
+        QuestionData::Ranking(
+            MultiOptionData {
+                options: vec![
+                    MultiOptionQuestionOption {
+                        id: 0,
+                        text: "Rust".to_string(),
+                        display_order: 1,
+                    },
+                    MultiOptionQuestionOption {
+                        id: 0,
+                        text: "JavaScript".to_string(),
+                        display_order: 2,
+                    },
+                    MultiOptionQuestionOption {
+                        id: 0,
+                        text: "Python".to_string(),
+                        display_order: 3,
+                    },
+                ]
+            }
+        ),
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
-    .await.expect("Failed seeding Rating Category 2");
-
-    let rating_category_id_3 = Rating::create_category(
-        NewCategoryRating {
-            name: "Rizzler".to_string(),
-        },
-        campaign_id,
-        &mut seeder.app_state.snowflake_generator,
-        &mut tx,
-    )
-    .await.expect("Failed seeding Rating Category 3");
+        .await.expect("Failed seeding Question 4");
 
     let application_id_1 = Application::create(
         campaign_id,
