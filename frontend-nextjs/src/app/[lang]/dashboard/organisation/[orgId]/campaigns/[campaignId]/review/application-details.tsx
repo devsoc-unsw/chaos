@@ -158,6 +158,26 @@ export default function ApplicationDetailsComponent({ applicationId, campaignId,
         await queryClient.invalidateQueries({ queryKey: [`${campaignId}-campaign-applications`] });
     };
 
+    const handleCategoryRatingChange = (categoryId: string, value: string) => {
+        const rating = Number(value);
+        setCategoryRatings(prev => {
+            const existing = prev.find(cr => cr.campaign_rating_category_id === categoryId);
+            if (existing) {
+                return prev.map(cr => 
+                    cr.campaign_rating_category_id === categoryId 
+                        ? { ...cr, rating } 
+                        : cr
+                );
+            }
+            return [...prev, { campaign_rating_category_id: categoryId, rating }];
+        });
+    };
+
+    const getCategoryCurrentRating = (categoryId: string) => {
+        return categoryRatings.find(cr => cr.campaign_rating_category_id === categoryId)?.rating ?? 
+            originalRating?.category_ratings?.find(cr => cr.campaign_rating_category_id === categoryId)?.rating;
+    };
+
     const rolesQuestionsAnswers = roles.map((role, index) => {
         return {
             id: role.campaign_role_id,
@@ -217,51 +237,27 @@ export default function ApplicationDetailsComponent({ applicationId, campaignId,
             <div className="flex flex-col gap-2">
                     <p className="text-lg font-semibold">{dict.dashboard.campaigns.application_review_page.application_rating}</p>
 
-                    {/* Start of new Rating Form Category Ratings */}
-                    {/* <Label htmlFor="reviewScore">{dict.dashboard.campaigns.application_review_page.review_score}</Label> */}
-                    {ratingCategories && ratingCategories.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                            {ratingCategories.map((category) => {
-                                const currentRating = categoryRatings.find(cr => cr.campaign_rating_category_id === category.id)?.rating ?? 
-                                originalRating?.category_ratings?.find(cr => cr.campaign_rating_category_id === category.id)?.rating;
-                                
-                                return (
-                                    <div key={category.id} className="flex flex-col gap-2">
-                                        <Label htmlFor={`category-${category.id}`}>{category.name}</Label>
-                                        <Select value={currentRating?.toString() ?? ""} onValueChange={(value) => {
-                                                const rating = Number(value);
-                                                setCategoryRatings(prev => {
-                                                    const existing = prev.find(cr => cr.campaign_rating_category_id === category.id);
-                                                    if (existing) {
-                                                        return prev.map(cr => 
-                                                            cr.campaign_rating_category_id === category.id 
-                                                                ? { ...cr, rating } 
-                                                                : cr
-                                                        );
-                                                    }
-                                                    return [...prev, { campaign_rating_category_id: category.id, rating }];
-                                                });
-                                            }}
-                                        >
-                                            <SelectTrigger className="w-[180px]" id={`category-${category.id}`}>
-                                                <SelectValue placeholder={dict.dashboard.campaigns.application_review_page.review_score} />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
-                                                    <SelectItem key={value} value={`${value}`}>{value}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    ) 
-                    : (
-                         <p className="text-sm text-gray-500 mb-4">No rating categories configured for this campaign.</p>
-                     )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                        {ratingCategories?.map((category) => (
+                            <div key={category.id} className="flex flex-col gap-2">
+                                <Label htmlFor={`category-${category.id}`}>{category.name}</Label>
+                                <Select 
+                                    value={getCategoryCurrentRating(category.id)?.toString() ?? ""} 
+                                    onValueChange={(value) => handleCategoryRatingChange(category.id, value)}
+                                >
+                                    <SelectTrigger className="w-[180px]" id={`category-${category.id}`}>
+                                        <SelectValue placeholder={dict.dashboard.campaigns.application_review_page.review_score} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
+                                            <SelectItem key={value} value={`${value}`}>{value}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        ))}
+                    </div>
 
-                     {/* End of Cateogry ratings */}
                     <div className="flex flex-col gap-2 mb-4">
                         <Label htmlFor="reviewComment">{dict.dashboard.campaigns.application_review_page.review_comment}</Label>
                         <Textarea

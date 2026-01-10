@@ -568,7 +568,7 @@ impl Application {
     ) -> Result<Vec<ApplicationRatingSummary>, ChaosError> {
         // Query 1: Get all applications with their basic info
         let applications = sqlx::query!(
-            "SELECT a.id AS application_id, 
+            "SELECT a.id AS application_id,
             ARRAY_AGG(DISTINCT applied_roles.campaign_role_id) AS \"applied_roles!: Vec<i64>\",
             u.name AS user_name, u.email AS user_email,
             a.status AS \"status: ApplicationStatus\", a.updated_at

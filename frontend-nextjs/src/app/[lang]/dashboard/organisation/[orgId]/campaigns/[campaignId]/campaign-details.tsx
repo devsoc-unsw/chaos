@@ -733,7 +733,7 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
             </div>
 
             <div className="max-w-[500px]">
-                <h2 className="text-xl font-bold">{dict.common.rating_categories || "Rating Categories"}</h2>
+                <h2 className="text-xl font-bold">{dict.common.rating_categories}</h2>
                 <Table>
                 <TableHeader>
                 <TableRow>

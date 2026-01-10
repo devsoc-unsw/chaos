@@ -37,21 +37,17 @@ export function getColumns(dict: any, roleIdsToNames: Record<string, string>): C
             header: dict.dashboard.campaigns.application_summary_page.avg_rating,
             cell: ({ row }) => {
                 const ratings = row.original.ratings;
+                const allCategoryRatings = ratings.flatMap((r) => 
+                    r.category_ratings.map((cr) => cr.rating)
+                );
+                
+                const averageRating = allCategoryRatings.length > 0
+                    ? allCategoryRatings.reduce((sum, rating) => sum + rating, 0) / allCategoryRatings.length
+                    : 0;
 
                 return (
-                    <div className="flex flex-col gap-1">
-                        {ratings.map((rating) => (
-                            <div key={rating.id} className="text-sm">
-                                <span className="font-medium">{rating.rater_name}</span>
-                                <div className="flex gap-2 flex-wrap">
-                                    {rating.category_ratings.map((cr) => (
-                                        <span key={cr.id} className="text-xs bg-gray-100 px-2 py-1 rounded">
-                                            {cr.category_name}: {cr.rating}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
+                    <div className="flex items-center gap-2">
+                        <span>{averageRating.toFixed(2)}</span>
                     </div>
                 );
             },
