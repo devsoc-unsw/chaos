@@ -48,6 +48,26 @@ export async function getAllRoleQuestions(campaignId: string, roleId: string): P
     return await apiRequest<Question[]>(`/api/v1/campaign/${campaignId}/role/${roleId}/questions`);
 }
 
+export async function createQuestion(campaignId: string, question: Question): Promise<{ id: string }> {
+    return await apiRequest<{ id: string }>(`/api/v1/campaign/${campaignId}/question`, {
+        method: "POST",
+        body: question,
+    });
+}
+
+export async function updateQuestion(campaignId: string, questionId: string, question: Question): Promise<void> {
+    await apiRequest(`/api/v1/campaign/${campaignId}/question/${questionId}`, {
+        method: "PATCH",
+        body: question,
+    });
+}
+
+export async function deleteQuestion(campaignId: string, questionId: string): Promise<void> {
+    await apiRequest(`/api/v1/campaign/${campaignId}/question/${questionId}`, {
+        method: "DELETE",
+    });
+}
+
 export function processAnswerForDisplay(
     questionType: QuestionType,
     answerData: AnswerData | null | undefined,

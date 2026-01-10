@@ -28,7 +28,7 @@ export default function ApplicationDetailsComponent({ applicationId, campaignId,
     });
 
     const { data: commonQuestions } = useQuery({
-        queryKey: [`${applicationId}-common-questions`],
+        queryKey: [`${campaignId}-common-questions`],
         queryFn: () => getAllCommonQuestions(campaignId),
     });
 
@@ -43,7 +43,7 @@ export default function ApplicationDetailsComponent({ applicationId, campaignId,
 
     const roleQuestionsQueries = useQueries({
         queries: roles.map((role) => ({
-            queryKey: [`${applicationId}-role-questions-${role.campaign_role_id}`],
+            queryKey: [`${campaignId}-role-questions-${role.campaign_role_id}`],
             queryFn: () => getAllRoleQuestions(campaignId, role.campaign_role_id),
         }))
     });

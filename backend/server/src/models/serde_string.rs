@@ -23,8 +23,13 @@ pub fn deserialize<'de, D>(deserializer: D) -> Result<i64, D::Error>
 where
     D: Deserializer<'de>,
 {
-    let s = String::deserialize(deserializer)?;
-    s.parse::<i64>().map_err(Error::custom)
+    match serde_json::Value::deserialize(deserializer)? {
+        serde_json::Value::String(s) => s.parse::<i64>().map_err(Error::custom),
+        serde_json::Value::Number(n) => n
+            .as_i64()
+            .ok_or_else(|| Error::custom("number out of range for i64")),
+        _ => Err(Error::custom("expected string or number")),
+    }
 }
 
 pub fn deserialize_vec<'de, D>(deserializer: D) -> Result<Vec<i64>, D::Error>
