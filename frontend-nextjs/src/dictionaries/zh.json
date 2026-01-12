@@ -15,6 +15,17 @@
     "description": "详细描述",
     "about": "关于",
     "questions": "问题",
+    "title": "标题",
+    "question_type": "问题类型",
+    "question_types": {
+      "short_answer": "短答案",
+      "multi_choice": "多选题",
+      "multi_select": "多选题",
+      "dropdown": "下拉题",
+      "ranking": "排序题",
+      "existing_questions": "现有问题列表"
+    },
+    "options": "选项",
     "common_questions": "通用问题",
     "back": "返回",
     "application": "申请",
@@ -39,8 +50,22 @@
     "apply": "申请",
 
     "status": "状态",
-    "email": "邮箱"
+    "email": "邮箱",
+
+    "select": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+    "selected": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+    "submit": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;"
   },
+  "applicationpage": {
+        "empty_selected_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "drag_to_reorder": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "empty_available_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "selected_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "available_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "no_role_specific_qs": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "your_answer": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "no_answer": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;"
+    },
   "dashboard": {
     "email_templates": "邮件模板",
     "members": {
@@ -72,6 +97,16 @@
       "publish": "发布",
       "published": "已发布",
       "draft": "草稿",
+      "campaign_questions": "活动问题",
+      "questions": {
+        "answer_text": "答案文本",
+        "add_option": "添加选项",
+        "option_help": "按 Enter 添加选项",
+        "question_updated": "问题已更新",
+        "question_deleted": "问题已删除",
+        "update_success": "问题已更新成功。",
+        "delete_success": "问题已删除成功。"
+      },
       "roles": {
         "number_of_positions": "职位数量",
         "add_role": "添加角色"
@@ -115,10 +150,10 @@
       "preview": "预览",
       "duplicate": "复制",
       "cancel": "取消",
-      "save": "保存",
       "destructive_confirm": "你确定吗",
       "confirm_understand": "确定",
-      "invite": "邀请"
+      "invite": "邀请",
+      "add": "添加"
     }
   }
 }

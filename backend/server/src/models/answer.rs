@@ -48,6 +48,24 @@ pub struct Answer {
     updated_at: DateTime<Utc>,
 }
 
+/// A view type which collects an answer in the system along with it's
+/// associated role.
+#[derive(Deserialize, Serialize)]
+pub struct AnswerWithRole {
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    id: i64,
+    /// ID of the question this answer is for
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    question_id: i64,
+
+    /// The actual answer data, flattened in serialization
+    #[serde(flatten)]
+    data: AnswerData,
+
+    // role ID
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    role_id: i64
+}
 /// Data structure for creating a new answer.
 /// 
 /// Contains the question ID and the answer data.
@@ -118,6 +136,16 @@ impl Answer {
     ) -> Result<i64, ChaosError> {
         data.validate()?;
 
+        sqlx::query!(
+            "
+                DELETE FROM answers
+                WHERE application_id = $1 AND question_id = $2
+            ",
+            application_id,
+            question_id
+        )
+        .execute(transaction.deref_mut())
+        .await?;
         let id = snowflake_generator.real_time_generate();
 
         sqlx::query!(
@@ -378,7 +406,9 @@ impl Answer {
         data: AnswerData,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        data.validate()?;
+        if !data.is_empty() {
+            data.validate()?;
+        }
 
         let answer = sqlx::query_as!(
             AnswerTypeApplicationId,
@@ -396,7 +426,9 @@ impl Answer {
         let old_data = AnswerData::from_question_type(&answer.question_type);
         old_data.delete_from_db(id, transaction).await?;
 
-        data.insert_into_db(id, transaction).await?;
+        if !data.is_empty() {
+            data.insert_into_db(id, transaction).await?;
+        }
 
         sqlx::query!(
             "UPDATE applications SET updated_at = $1 WHERE id = $2",
@@ -517,6 +549,15 @@ impl AnswerData {
                 let options = ranking_answers.expect("Data should exist for Ranking variant");
                 AnswerData::Ranking(options)
             }
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        match self {
+            AnswerData::ShortAnswer(text) => text.is_empty(),
+            AnswerData::MultiSelect(options) | AnswerData::Ranking(options) => options.is_empty(),
+            AnswerData::MultiChoice(option_id) => false,
+            AnswerData::DropDown(option_id) => *option_id == 0
         }
     }
 

@@ -15,6 +15,17 @@
     "description": "Description",
     "about": "About",
     "questions": "Questions",
+    "title": "Title",
+    "question_type": "Question Type",
+    "question_types": {
+      "short_answer": "Short answer",
+      "multi_choice": "Multichoice",
+      "multi_select": "Multiselect",
+      "dropdown": "Dropdown",
+      "ranking": "Ranking",
+      "existing_questions": "Existing Questions"
+    },
+    "options": "Options",
     "common_questions": "Common Questions",
     "back": "Back",
     "application": "Application",
@@ -39,8 +50,31 @@
     "apply": "Apply",
 
     "status": "Status",
-    "email": "Email"
+    "email": "Email",
+
+    "select": "Select",
+    "selected": "Selected",
+    "submit": "Submit"
   },
+  "applicationpage": {
+        "roles": "roles",
+        "max_roles": "(max {roles} roles)",
+        "empty_selected_roles": "Drag a role from below to apply",
+        "drag_to_reorder": "Drag to reorder based on preference",
+        "empty_available_roles": "All roles selected",
+        "selected_roles": "Selected Roles",
+        "available_roles": "Available Roles",
+        "no_role_specific_qs": "No role-specific questions",
+        "your_answer": "Your answer",
+        "no_answer": "No answer",
+        "no_questions": "No questions",
+        "general": "General",
+        "submit_answers": "Submit Answers",
+        "review_answers": "Review answers",
+        "review_answers_desc": "Review your answers before submission. Unanswered required questions will block submission.",
+        "submit_application": "Submit Application",
+        "submit_application_tooltip": "Please answer all required questions before submitting."
+    },
   "dashboard": {
     "email_templates": "Email Templates",
     "members": {
@@ -72,6 +106,16 @@
       "publish": "Publish",
       "published": "Published",
       "draft": "Draft",
+      "campaign_questions": "Campaign Questions",
+      "questions": {
+        "answer_text": "Answer Text",
+        "add_option": "Add Option",
+        "option_help": "Press Enter to add option",
+        "question_updated": "Question updated",
+        "question_deleted": "Question deleted",
+        "update_success": "The question has been updated successfully.",
+        "delete_success": "The question has been deleted successfully."
+      },
       "roles": {
         "number_of_positions": "Number of Positions",
         "add_role": "Add Role"
@@ -117,7 +161,8 @@
       "save": "Save",
       "destructive_confirm": "Are you absolutely sure?",
       "confirm_understand": "Ok",
-      "invite": "Invite"
+      "invite": "Invite",
+      "add": "Add"
     }
   }
 }

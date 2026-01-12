@@ -99,14 +99,14 @@ const Ranking: React.FC<RankingProps> = ({
       {description && (
         <p tw="mb-2 text-sm text-gray-600">{description}</p>
       )}
-      
+
       {answerId && (
         <p tw="mb-2 text-xs text-gray-400">Answer ID: {answerId}</p>
       )}
 
       <DragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId="ranking-list" isDropDisabled={disabled}>
-          {(provided, snapshot) => (
+          {(provided,   snapshot) => (
             <div
               {...provided.droppableProps}
               ref={provided.innerRef}
