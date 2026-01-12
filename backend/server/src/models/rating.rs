@@ -122,7 +122,7 @@ pub struct NewRating {
 /// 
 /// This struct provides a complete view of a rating's details,
 /// includes the rater's name, used primarily for API responses.
-#[derive(Deserialize, Serialize, FromRow)]
+#[derive(Debug, Deserialize, Serialize, FromRow)]
 pub struct RatingDetails {
     /// Unique identifier for the application rating we are looking at (NOT CATEGORY RATINGS)
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
@@ -135,13 +135,13 @@ pub struct RatingDetails {
     /// Optional comments about the application
     pub comment: Option<String>,
     /// Category ratings for this application rating (IMPORTANT TO ADD FOR rating numerical score)
-    pub category_ratings: sqlx::types::Json<Vec<CategoryRatingDetail>>,
+    pub category_ratings: Option<sqlx::types::Json<Vec<CategoryRatingDetail>>>,
     /// When the rating was last updated
     pub updated_at: DateTime<Utc>,
 }
 
 /// Detail of a single category rating
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct CategoryRatingDetail {
     /// ID of the application category rating record
     #[serde(serialize_with = "crate::models::serde_string::serialize")]

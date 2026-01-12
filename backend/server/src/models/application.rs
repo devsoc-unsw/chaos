@@ -17,7 +17,6 @@ use axum::{async_trait, RequestPartsExt};
 use axum::extract::{FromRef, FromRequestParts, Path};
 use axum::http::request::Parts;
 use crate::models::app::AppState;
-use crate::models::question::MultiOptionQuestionOption;
 use crate::models::rating::RatingDetails;
 use crate::service::answer::assert_answer_application_is_open;
 use crate::service::application::{assert_application_is_open};
@@ -566,7 +565,7 @@ impl Application {
         campaign_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<ApplicationRatingSummary>, ChaosError> {
-        // Query 1: Get all applications with their basic info
+        // Get all applications first 
         let applications = sqlx::query!(
             "SELECT a.id AS application_id,
             ARRAY_AGG(DISTINCT applied_roles.campaign_role_id) AS \"applied_roles!: Vec<i64>\",
@@ -574,7 +573,8 @@ impl Application {
             a.status AS \"status: ApplicationStatus\", a.updated_at
             FROM applications a
             JOIN application_roles applied_roles ON applied_roles.application_id = a.id 
-            JOIN campaign_roles ON campaign_roles.id = applied_roles.campaign_role_id JOIN users u ON u.id = a.user_id 
+            JOIN campaign_roles ON campaign_roles.id = applied_roles.campaign_role_id
+            JOIN users u ON u.id = a.user_id 
             WHERE a.campaign_id = $1 AND a.submitted = true 
             GROUP BY a.id, u.name, u.email, a.status, a.updated_at 
             ORDER BY a.id ASC",
@@ -583,70 +583,85 @@ impl Application {
         .fetch_all(transaction.deref_mut())
         .await?;
 
-        let mut result = Vec::new();
+        // Collect all application_ids
+        let application_ids: Vec<i64> = applications.iter().map(|a| a.application_id).collect();
 
-        for app in applications {
-            // Get ratings for this application
-            let ratings = sqlx::query!(
-                "
-                    SELECT ar.id, ar.rater_id, u.name as rater_name, ar.comment, ar.updated_at
-                    FROM application_ratings ar
-                    JOIN users u ON u.id = ar.rater_id
-                    WHERE ar.application_id = $1
-                    ORDER BY ar.updated_at DESC
-                ",
-                app.application_id
-            )
-            .fetch_all(transaction.deref_mut())
-            .await?;
+        // Get all ratings for these applications
+        let ratings = sqlx::query!(
+            "SELECT ar.id, ar.application_id, ar.rater_id, u.name as rater_name, ar.comment, ar.updated_at
+            FROM application_ratings ar
+            JOIN users u ON u.id = ar.rater_id
+            WHERE ar.application_id = ANY($1)
+            ORDER BY ar.updated_at DESC",
+            &application_ids
+        )
+        .fetch_all(transaction.deref_mut())
+        .await?;
 
-            let mut rating_details = Vec::new();
+        // Collect all rating_ids
+        let rating_ids: Vec<i64> = ratings.iter().map(|r| r.id).collect();
 
-            for rating in ratings {
-                // Get category ratings for this rating
-                let category_ratings = sqlx::query!(
-                    "
-                        SELECT arc.id, arc.campaign_rating_category_id, crc.name as category_name, arc.rating
-                        FROM application_rating_category_ratings arc
-                        LEFT JOIN campaign_rating_categories crc ON crc.id = arc.campaign_rating_category_id
-                        WHERE arc.application_rating_id = $1
-                    ",
-                    rating.id
-                )
-                .fetch_all(transaction.deref_mut())
-                .await?;
+        // Get all category ratings for all these application_ratings
+        let category_ratings = sqlx::query!(
+            "SELECT arc.id, arc.application_rating_id, arc.campaign_rating_category_id, 
+            crc.name as category_name, arc.rating
+            FROM application_rating_category_ratings arc
+            LEFT JOIN campaign_rating_categories crc ON crc.id = arc.campaign_rating_category_id
+            WHERE arc.application_rating_id = ANY($1)",
+            &rating_ids
+        )
+        .fetch_all(transaction.deref_mut())
+        .await?;
 
-                let category_rating_details: Vec<crate::models::rating::CategoryRatingDetail> = category_ratings
-                    .into_iter()
-                    .map(|cr| crate::models::rating::CategoryRatingDetail {
-                        id: cr.id,
-                        campaign_rating_category_id: cr.campaign_rating_category_id,
-                        category_name: cr.category_name,
-                        rating: cr.rating,
-                    })
-                    .collect();
+        // Group all category ratings by application_rating_id
+        let mut category_map: std::collections::HashMap<i64, Vec<crate::models::rating::CategoryRatingDetail>> = std::collections::HashMap::new();
+        for cr in category_ratings {
+            category_map.entry(cr.application_rating_id).or_default().push(
+                crate::models::rating::CategoryRatingDetail {
+                    id: cr.id,
+                    campaign_rating_category_id: cr.campaign_rating_category_id,
+                    category_name: cr.category_name.unwrap_or_default(),
+                    rating: cr.rating,
+                }
+            );
+        }
 
-                rating_details.push(crate::models::rating::RatingDetails {
+        // Group all ratings with their category ratings by application_id
+        let mut rating_map: std::collections::HashMap<i64, Vec<RatingDetails>> = std::collections::HashMap::new();
+        
+        for rating in ratings {
+            let category_ratings_vec = category_map.remove(&rating.id).map(Json);
+            
+            rating_map.entry(rating.application_id).or_default().push(
+                RatingDetails {
                     id: rating.id,
                     rater_id: rating.rater_id,
                     rater_name: rating.rater_name,
                     comment: rating.comment,
-                    category_ratings: sqlx::types::Json(category_rating_details),
+                    category_ratings: category_ratings_vec,
                     updated_at: rating.updated_at,
-                });
-            }
-
-            result.push(ApplicationRatingSummary {
-                application_id: app.application_id,
-                applied_roles: app.applied_roles,
-                user_name: app.user_name,
-                user_email: app.user_email,
-                status: app.status,
-                updated_at: app.updated_at,
-                ratings: Some(sqlx::types::Json(rating_details)),
-            });
+                }
+            );
         }
-        Ok(result)
+
+        // Push it to struct ApplicationRatingSummary
+        let avg_ratings = applications
+            .into_iter()
+            .map(|app| {
+                let ratings = rating_map.remove(&app.application_id).map(Json); 
+                ApplicationRatingSummary {
+                    application_id: app.application_id,
+                    applied_roles: app.applied_roles,
+                    user_name: app.user_name,
+                    user_email: app.user_email,
+                    status: app.status,
+                    updated_at: app.updated_at,
+                    ratings,
+                }
+            })
+            .collect();
+
+        Ok(avg_ratings)
     }
 
     /// Retrieves all applications submitted by a specific user.

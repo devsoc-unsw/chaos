@@ -26,16 +26,6 @@ export async function getApplication(applicationId: string): Promise<Application
     return await apiRequest<ApplicationDetails>(`/api/v1/application/${applicationId}`);
 }
 
-// export interface RatingDetails {
-//     /// Unique identifier for the rating
-//     id: string;
-//     rater_id: string;
-//     rater_name: string;
-//     rating: number;
-//     comment: string | null;
-//     updated_at: string;
-// }
-
 // export async function getApplicationRating(applicationId: string): Promise<RatingDetails> {
 //     return await apiRequest<RatingDetails>(`/api/v1/application/${applicationId}/rating`);
 // }
