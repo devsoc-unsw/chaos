@@ -1,28 +1,29 @@
-# ---------- Build stage ----------
-FROM node:20-slim AS builder
+# builder
+FROM oven/bun:latest AS builder
 
 WORKDIR /app
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Build tools needed for native modules (lightningcss, @tailwindcss/oxide)
 RUN apt-get update && apt-get install -y \
     python3 \
     make \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
-RUN npm install lightningcss-linux-arm64-gnu@1.30.2
-RUN npm install @tailwindcss/oxide-linux-arm64-gnu@4.1.18
+# highk asked for help installing ts cause it was an error I'd run into trying to use the frontend on the new container
+RUN bun add lightningcss-linux-arm64-gnu@1.30.2
+RUN bun add @tailwindcss/oxide-linux-arm64-gnu@4.1.18
 
-# No need for npm rebuild if we have build tools - npm ci will handle it
 COPY . .
-RUN npm run build
+RUN bun run build
 
-# ---------- Runtime stage ----------
-FROM node:20-slim
+# runner
+FROM oven/bun:latest
 
 WORKDIR /app
 
@@ -32,4 +33,4 @@ ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=builder /app ./
 
 EXPOSE 3000
-CMD ["npm", "start"]
+CMD ["bun", "start"]

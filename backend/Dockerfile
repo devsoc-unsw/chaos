@@ -41,7 +41,7 @@ COPY --from=builder /backend/server/migrations /backend/migrations
 COPY --from=builder /backend/server/target/release/server /backend/server
 
 # setup backend start script
-COPY backend-scripts/start-backend.sh /backend/start-backend.sh
+COPY backend-deploy-utils/startup-script/start-backend.sh /backend/start-backend.sh
 RUN chmod +x /backend/start-backend.sh
 
 ENTRYPOINT ["/backend/start-backend.sh"]
