@@ -37,7 +37,7 @@ function RatingsShelf({ columns, ratings, dict }: { columns: ColumnDef<Applicati
                             <div className="flex flex-col gap-1">
                                 {rating.category_ratings.map((cr) => (
                                     <div key={cr.id} className="text-sm">
-                                        <span className="font-medium">{cr.category_name}:</span> {cr.rating}
+                                        <span className="font-medium">{cr.category_name}:</span> {cr.rating ?? "-"}
                                     </div>
                                 ))}
                             </div>

@@ -37,8 +37,9 @@ export function getColumns(dict: any, roleIdsToNames: Record<string, string>): C
             header: dict.dashboard.campaigns.application_summary_page.avg_rating,
             cell: ({ row }) => {
                 const ratings = row.original.ratings;
+                
                 const allCategoryRatings = ratings.flatMap((r) => 
-                    r.category_ratings.map((cr) => cr.rating)
+                    r.category_ratings.map((cr) => cr.rating).filter((rating): rating is number => rating !== null)
                 );
                 
                 const averageRating = allCategoryRatings.length > 0

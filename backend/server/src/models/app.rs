@@ -422,16 +422,17 @@ pub async fn app() -> Result<Router, ChaosError> {
             "/api/v1/application/:application_id/inprogress",
             get(ApplicationHandler::get_in_progress),
         )
-        .route(
-            "/api/v1/application/:application_id/rating",
-            get(ApplicationHandler::get_rating_by_current_user)
-                .post(ApplicationHandler::create_rating)
-                .put(ApplicationHandler::update_rating),
-        )
-        .route(
-            "/api/v1/application/:application_id/ratings",
-            get(ApplicationHandler::get_ratings),
-        )
+        // Rating routes are handled by RatingHandler, idk why they are back so commented
+        // .route(
+        //     "/api/v1/application/:application_id/rating",
+        //     get(ApplicationHandler::get_rating_by_current_user)
+        //         .post(ApplicationHandler::create_rating)
+        //         .put(ApplicationHandler::update_rating),
+        // )
+        // .route(
+        //     "/api/v1/application/:application_id/ratings",
+        //     get(ApplicationHandler::get_ratings),
+        // )
         .route(
             "/api/v1/application/:application_id/status",
             patch(ApplicationHandler::set_status),

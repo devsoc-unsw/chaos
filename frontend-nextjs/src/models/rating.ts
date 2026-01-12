@@ -21,10 +21,10 @@ export interface RatingDetails {
 }
 
 export interface CategoryRatingDetail {
-    id: string;
+    id: string; 
     campaign_rating_category_id: string;
     category_name: string;
-    rating: number;
+    rating: number | null; // if no rating, then null
 }
 
 export interface NewCategoryRating {

@@ -135,7 +135,7 @@ pub struct RatingDetails {
     /// Optional comments about the application
     pub comment: Option<String>,
     /// Category ratings for this application rating (IMPORTANT TO ADD FOR rating numerical score)
-    pub category_ratings: Option<sqlx::types::Json<Vec<CategoryRatingDetail>>>,
+    pub category_ratings: sqlx::types::Json<Vec<CategoryRatingDetail>>,
     /// When the rating was last updated
     pub updated_at: DateTime<Utc>,
 }
@@ -151,8 +151,8 @@ pub struct CategoryRatingDetail {
     pub campaign_rating_category_id: i64,
     /// Name of the category
     pub category_name: String,
-    /// Numerical rating value
-    pub rating: i32,
+    /// Numerical rating value (null if not rated yet)
+    pub rating: Option<i32>,
 }
 
 /// Collection of ratings for an application.

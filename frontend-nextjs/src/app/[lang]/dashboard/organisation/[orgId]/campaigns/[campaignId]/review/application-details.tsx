@@ -90,10 +90,9 @@ export default function ApplicationDetailsComponent({ applicationId, campaignId,
 
     useEffect(() => {
         if (originalRating?.category_ratings) {
-            setCategoryRatings(originalRating.category_ratings.map(cr => ({
-                campaign_rating_category_id: cr.campaign_rating_category_id,
-                rating: cr.rating,
-            })));
+            setCategoryRatings(originalRating.category_ratings.filter(cr => cr.rating !== null)
+                .map(cr => ({ campaign_rating_category_id: cr.campaign_rating_category_id, rating: cr.rating! }))
+            );
         } else {
             setCategoryRatings([]);
         }
@@ -178,6 +177,11 @@ export default function ApplicationDetailsComponent({ applicationId, campaignId,
             originalRating?.category_ratings?.find(cr => cr.campaign_rating_category_id === categoryId)?.rating;
     };
 
+    const getCategoryRatingValue = (categoryId: string): string => {
+        const rating = getCategoryCurrentRating(categoryId);
+        return rating !== null && rating !== undefined ? rating.toString() : "";
+    };
+
     const rolesQuestionsAnswers = roles.map((role, index) => {
         return {
             id: role.campaign_role_id,
@@ -242,7 +246,7 @@ export default function ApplicationDetailsComponent({ applicationId, campaignId,
                             <div key={category.id} className="flex flex-col gap-2">
                                 <Label htmlFor={`category-${category.id}`}>{category.name}</Label>
                                 <Select 
-                                    value={getCategoryCurrentRating(category.id)?.toString() ?? ""} 
+                                    value={getCategoryRatingValue(category.id)} 
                                     onValueChange={(value) => handleCategoryRatingChange(category.id, value)}
                                 >
                                     <SelectTrigger className="w-[180px]" id={`category-${category.id}`}>
