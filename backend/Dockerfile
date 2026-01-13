@@ -19,11 +19,28 @@ WORKDIR /backend/server
 COPY --from=planner /backend/server/recipe.json ./recipe.json
 
 RUN cargo chef cook --release --recipe-path recipe.json
-COPY migrations/ ./migrations/
+
+COPY migrations/ ../migrations/
 COPY server/ ./
 
-# build the application
+# Use sqlx folders for compile time checking, need to generate these in the workflow
+ENV SQLX_OFFLINE=true
+
+# Build the application
 WORKDIR /backend/server
+RUN cargo build --release
+
+# Build deploy-seeder
+FROM chef AS seeder-builder
+WORKDIR /backend
+
+
+COPY server/ ./server/
+COPY backend-deploy-utils/deploy-seeder/ ./backend-deploy-utils/deploy-seeder/
+
+ENV SQLX_OFFLINE=true
+
+WORKDIR /backend/backend-deploy-utils/deploy-seeder
 RUN cargo build --release
 
 FROM debian:trixie-slim
@@ -35,13 +52,14 @@ RUN apt-get update && apt-get install -y \
     netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
-# copy sqlx-cli and migrations for running migrations on startup
+# Copy sqlx-cli and migrations for running migrations on startup
 COPY --from=chef /usr/local/bin/sqlx /usr/local/bin/sqlx
-COPY --from=builder /backend/server/migrations /backend/migrations
+COPY --from=builder /backend/migrations /backend/migrations
 COPY --from=builder /backend/server/target/release/server /backend/server
+COPY --from=seeder-builder /backend/backend-deploy-utils/deploy-seeder/target/release/deploy-seeder /backend/deploy-seeder
 
-# setup backend start script
-COPY backend-scripts/start-backend.sh /backend/start-backend.sh
+# Setup backend start script
+COPY backend-deploy-utils/startup-script/start-backend.sh /backend/start-backend.sh
 RUN chmod +x /backend/start-backend.sh
 
 ENTRYPOINT ["/backend/start-backend.sh"]
