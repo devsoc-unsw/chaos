@@ -62,6 +62,8 @@ pub async fn seed_database(mut seeder: Seeder) {
         Organisation::create(10000,
             org_slug,
             "UNSW DevSoc".to_string(),
+            "contact@devsoc.app".to_string(),
+            Some("https://devsoc.app".to_string()),
             &mut seeder.app_state.snowflake_generator,
             &mut tx).await.expect("Failed seeding Organisation");
     }
