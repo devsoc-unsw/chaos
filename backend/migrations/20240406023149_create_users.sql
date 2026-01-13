@@ -14,8 +14,4 @@ CREATE TABLE users (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- -- Seed initial superuser COMMENTING THIS OUT SO THAT WE USE .env INSTEAD
--- INSERT INTO users (id, email, name, role)
--- VALUES (10000, 'chaosdirectors@devsoc.app', 'Super Admin', 'SuperUser');
-
 CREATE UNIQUE INDEX IDX_users_email_lower on users((lower(email)));

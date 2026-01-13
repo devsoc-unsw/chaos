@@ -3,7 +3,7 @@ pub mod seeder;
 
 #[tokio::main]
 async fn main() {
-    dotenvy::dotenv().expect("Failed to load .env");
+    dotenvy::dotenv().ok();
 
     let seeder = init().await;
 

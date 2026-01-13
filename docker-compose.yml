@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database
+  # db
   db:
     image: postgres:17
     restart: unless-stopped
@@ -19,7 +19,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Rust Backend API
+  # server
   backend:
     build:
       context: ./backend
@@ -28,7 +28,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    # Load env vars from backend/.env file
     env_file:
       - ./backend/.env
     environment:
@@ -42,7 +41,7 @@ services:
       retries: 3
       start_period: 40s
 
-  # Next.js Frontend
+  # next.js-frontend
   frontend:
     build:
       context: ./frontend-nextjs
@@ -51,11 +50,9 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-    # Load env vars from frontend-nextjs/.env file
     env_file:
       - ./frontend-nextjs/.env
     environment:
-      # Override API URL to use Docker service name (container-to-container communication)
       NEXT_API_BASE_URL: ${NEXT_API_BASE_URL:-http://backend:8080}
       NODE_ENV: production
     ports:
