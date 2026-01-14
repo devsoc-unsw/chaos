@@ -719,8 +719,17 @@ impl Organisation {
             )
             .fetch_optional(transaction.deref_mut())
             .await? {
+                // If an invite was previously used, only block re-invites when that email
+                // currently belongs to a member. This allows re-inviting after a user is deleted
+                // / removed and later re-creates an account.
                 if existing.used_at.is_some() {
-                    return Err(ChaosError::BadRequestWithMessage("Invite already used for this email".to_string()));
+                    if let Some(user) = User::find_by_email(email.clone(), transaction).await? {
+                        if Self::check_user_already_member(organisation_id, user.id, transaction).await? {
+                            return Err(ChaosError::BadRequestWithMessage(
+                                "User already a member of organisation".to_string(),
+                            ));
+                        }
+                    }
                 }
 
                 let refreshed_code = nanoid!(10, &NANOID_ALPHABET);
@@ -729,11 +738,18 @@ impl Organisation {
                 sqlx::query!(
                     r#"
                         UPDATE organisation_invites
-                        SET code = $1, expires_at = $2, created_at = NOW(), used_at = NULL, used_by = NULL
-                        WHERE id = $3
+                        SET
+                            code = $1,
+                            expires_at = $2,
+                            created_at = NOW(),
+                            used_at = NULL,
+                            used_by = NULL,
+                            invited_by_user_id = $3
+                        WHERE id = $4
                     "#,
                     refreshed_code,
                     refreshed_expiry,
+                    inviting_user_id,
                     existing.id
                 )
                 .execute(transaction.deref_mut())
@@ -745,8 +761,8 @@ impl Organisation {
             // handling new invite creation
             let id = snowflake_generator.real_time_generate(); // generate a new invite ID
             let code = nanoid!(10, &NANOID_ALPHABET); // generate a new invite code
-            let expires_at = Utc::now() + Duration::days(7); // set the invite expiry to 7 days
-            let invited_by_organisation_id = organisation_id;
+            let expires_at = Utc::now() + Duration::days(7); // set the invite expiry to 7 days 
+            let invited_by_user_id = inviting_user_id;
             // insert the new invite into the database
             sqlx::query!(
                 r#"
@@ -759,7 +775,7 @@ impl Organisation {
                 code,
                 email,
                 expires_at, 
-                inviting_user_id
+                invited_by_user_id
             )
             .execute(transaction.deref_mut())
             .await?;

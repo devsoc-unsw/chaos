@@ -73,6 +73,25 @@ impl InviteHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         let invite = Invite::get_by_code(&code, &mut transaction.tx).await?;
 
+        // Ensure the invite can only be accepted by the account whose email matches the invite email.
+        // This prevents someone from accepting an invite intended for a different email address.
+        let user_row = query!(
+            r#"
+                SELECT email
+                FROM users
+                WHERE id = $1
+            "#,
+            user.user_id
+        )
+        .fetch_one(transaction.tx.deref_mut())
+        .await?;
+
+        if user_row.email.trim().to_lowercase() != invite.email.trim().to_lowercase() {
+            return Err(ChaosError::BadRequestWithMessage(
+                "Invite was sent to a different email address".to_string(),
+            ));
+        }
+
         // Validate the invite is not already used or expired.
         if invite.used_at.is_some() {
             return Err(ChaosError::BadRequestWithMessage("Invite already used".to_string()));
