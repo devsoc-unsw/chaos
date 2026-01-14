@@ -11,18 +11,20 @@ export default async function Page({ params }: { params: Params }) {
 
   const dict = await getDictionary(lang);
 
-  try {
-    const queryClient = new QueryClient();
-    await queryClient.prefetchQuery(inviteQueryOptions(inviteId));
+  const queryClient = new QueryClient();
+  const ok = await queryClient
+    .prefetchQuery(inviteQueryOptions(inviteId))
+    .then(() => true)
+    .catch(() => false);
 
-    return (
-      <HydrationBoundary state={dehydrate(queryClient)}>
-        <InviteClient code={inviteId} dict={dict} />
-      </HydrationBoundary>
-    );
-  } catch {
-    return notFound();
-  }
+  if (!ok) return notFound();
+
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <InviteClient code={inviteId} dict={dict} />
+    </HydrationBoundary>
+  );
 }
+
 
 
