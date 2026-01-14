@@ -21,6 +21,7 @@ pub mod organisation;
 pub mod question;
 pub mod rating;
 pub mod role;
+pub mod seeder;
 pub mod storage;
 pub mod transaction;
 pub mod user;

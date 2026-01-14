@@ -1,15 +1,15 @@
-use server::models::app::init_app_state;
-use server::models::app::AppState;
-use server::models::offer::Offer;
-use server::models::rating::{Rating, NewRating};
-use server::models::user::{User, UserRole};
-use server::models::organisation::{Organisation};
-use server::models::role::{Role, RoleUpdate};
-use server::models::question::*;
-use server::models::answer::*;
-use server::models::application::{Application, NewApplication, ApplicationRole};
+use crate::models::app::init_app_state;
+use crate::models::app::AppState;
+use crate::models::offer::Offer;
+use crate::models::rating::{Rating, NewRating};
+use crate::models::user::{User, UserRole};
+use crate::models::organisation::{Organisation};
+use crate::models::role::{Role, RoleUpdate};
+use crate::models::question::*;
+use crate::models::answer::*;
+use crate::models::application::{Application, NewApplication, ApplicationRole};
 use chrono::{DateTime, Utc};
-use server::models::error::ChaosError;
+use crate::models::error::ChaosError;
 
 pub struct Seeder {
     pub app_state: AppState

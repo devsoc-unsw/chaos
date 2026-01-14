@@ -1,10 +1,9 @@
 use crate::models::app::app;
 use crate::models::error::ChaosError;
-use crate::seeder::Seeder;
+use crate::models::seeder::Seeder;
 
 mod handler;
 mod models;
-mod seeder;
 mod service;
 mod constants;
 
@@ -14,7 +13,7 @@ async fn main() -> Result<(), ChaosError> {
     dotenvy::dotenv().ok();
 
     let super_user_email = std::env::var("CHAOS_SUPER_USER_EMAIL").expect("CHAOS_SUPER_USER_EMAIL must be set");
-    let seeder = Seeder::init().await;
+    let mut seeder = Seeder::init().await;
     seeder.seed_database(super_user_email).await?;
 
 
