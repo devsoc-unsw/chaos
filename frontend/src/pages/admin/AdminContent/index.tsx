@@ -176,6 +176,7 @@ const AdminContent = ({
   };
 
   return (
+    <StyledEngineProvider injectFirst>
     <AdminContentContainer>
       <ContentHeader>
         <OrgInfo>
