@@ -39,14 +39,17 @@ export default function InviteClient({ code, dict }: Props) {
         setMessage(dict.dashboard.invite.accepted);
       })
       .catch((err) => {
-        setStatus("error");
         if (err instanceof ApiError) {
           if (err.status === 401) {
-            setMessage(dict.dashboard.invite.login_required ?? "Please log in to accept this invite.");
+            // Not logged in -> send user to login (they can create an account from there).
+            router.push(`/login?to=${encodeURIComponent(`/dashboard/invite/${code}`)}`);
+            return;
           } else {
+            setStatus("error");
             setMessage(err.message);
           }
         } else {
+          setStatus("error");
           setMessage("Something went wrong. Please try again.");
         }
       });
