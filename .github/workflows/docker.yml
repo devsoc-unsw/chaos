@@ -11,6 +11,15 @@ jobs:
     name: Build (Backend)
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: chaos
+        ports:
+          - 5432:5432
     steps:
       - uses: actions/checkout@v4
         with:

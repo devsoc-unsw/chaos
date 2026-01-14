@@ -11,6 +11,3 @@ if ! sqlx migrate run; then
 fi
 
 echo "Migrations ran successfully!"
-
-echo "Starting server..."
-exec /backend/server

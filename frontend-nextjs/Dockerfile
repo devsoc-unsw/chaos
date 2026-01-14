@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
-# highk asked for help installing ts cause it was an error I'd run into trying to use the frontend on the new container
+# Needed for some reason
 RUN bun add lightningcss-linux-arm64-gnu@1.30.2
 RUN bun add @tailwindcss/oxide-linux-arm64-gnu@4.1.18
 

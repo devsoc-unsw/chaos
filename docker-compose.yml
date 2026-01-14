@@ -21,9 +21,7 @@ services:
 
   # server
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: ghcr.io/devsoc-unsw/chaos-backend:latest
     restart: no
     depends_on:
       db:

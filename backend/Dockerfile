@@ -5,8 +5,8 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     pkg-config \
     && rm -rf /var/lib/apt/lists/*
-RUN cargo install cargo-chef --version 0.1.72
-RUN cargo install sqlx-cli --version 0.7.3 --no-default-features --features native-tls,postgres --root /usr/local
+RUN cargo install cargo-chef
+RUN cargo install sqlx-cli --no-default-features --features native-tls,postgres --root /usr/local
 WORKDIR /backend
 
 FROM chef AS planner
@@ -23,24 +23,14 @@ RUN cargo chef cook --release --recipe-path recipe.json
 COPY migrations/ ../migrations/
 COPY server/ ./
 
-# Use sqlx folders for compile time checking, need to generate these in the workflow
-ENV SQLX_OFFLINE=true
-
-# Build the application
-WORKDIR /backend/server
-RUN cargo build --release
-
-# Build deploy-seeder
-FROM chef AS seeder-builder
+# Run DB migrations script
 WORKDIR /backend
+COPY util/migrate.sh /backend/migrate.sh
+RUN sh /backend/migrate.sh
 
-
-COPY server/ ./server/
-COPY backend-deploy-utils/deploy-seeder/ ./backend-deploy-utils/deploy-seeder/
-
-ENV SQLX_OFFLINE=true
-
-WORKDIR /backend/backend-deploy-utils/deploy-seeder
+# Build the server binary TODO: remove sqlx offline, connect docker to db, then run migration script, then run server build
+WORKDIR /backend/server
+RUN echo "DATABASE_URL=postgres://postgres:password@0.0.0.0:5432/chaos" >> .env
 RUN cargo build --release
 
 FROM debian:trixie-slim
@@ -56,11 +46,6 @@ RUN apt-get update && apt-get install -y \
 COPY --from=chef /usr/local/bin/sqlx /usr/local/bin/sqlx
 COPY --from=builder /backend/migrations /backend/migrations
 COPY --from=builder /backend/server/target/release/server /backend/server
-COPY --from=seeder-builder /backend/backend-deploy-utils/deploy-seeder/target/release/deploy-seeder /backend/deploy-seeder
 
-# Setup backend start script
-COPY backend-deploy-utils/startup-script/start-backend.sh /backend/start-backend.sh
-RUN chmod +x /backend/start-backend.sh
-
-ENTRYPOINT ["/backend/start-backend.sh"]
+ENTRYPOINT ["/backend/server"]
 EXPOSE 8080
