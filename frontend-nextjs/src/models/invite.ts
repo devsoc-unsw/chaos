@@ -1,4 +1,5 @@
 import { apiRequest } from "@/lib/api";
+import type { QueryKey } from "@tanstack/react-query";
 import { AppMessage } from "./app";
 
 export type InviteDetails = {
@@ -32,5 +33,22 @@ export async function acceptInvite(code: string): Promise<AppMessage> {
     method: "POST",
   });
 }
+
+/**
+ * Gets the query key for the invite.
+ * @param code - The invite code
+ * @returns The query key
+ */
+export const inviteQueryKey = (code: string): QueryKey => ["invite", code];
+
+/**
+ * Gets the query options for the invite.
+ * @param code - The invite code
+ * @returns The query options
+ */
+export const inviteQueryOptions = (code: string) => ({
+  queryKey: inviteQueryKey(code),
+  queryFn: () => getInvite(code),
+});
 
 

@@ -1,5 +1,6 @@
 import { getDictionary } from "@/app/[lang]/dictionaries";
-import { getInvite } from "@/models/invite";
+import { inviteQueryOptions } from "@/models/invite";
+import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";
 import { notFound } from "next/navigation";
 import InviteClient from "./invite-client";
 
@@ -10,14 +11,18 @@ export default async function Page({ params }: { params: Params }) {
 
   const dict = await getDictionary(lang);
 
-  let invite;
   try {
-    invite = await getInvite(inviteId);
+    const queryClient = new QueryClient();
+    await queryClient.prefetchQuery(inviteQueryOptions(inviteId));
+
+    return (
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <InviteClient code={inviteId} dict={dict} />
+      </HydrationBoundary>
+    );
   } catch {
     return notFound();
   }
-
-  return <InviteClient code={inviteId} invite={invite} dict={dict} />;
 }
 
 
