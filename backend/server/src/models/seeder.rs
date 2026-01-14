@@ -43,6 +43,7 @@ impl Seeder {
             User::create_user(super_user, &mut tx).await?;
         }
 
+        // Check if DevSoc org already exists, and if not, create it
         if let Err(_) = Organisation::get_by_slug("devsoc".to_string(), &mut tx).await {
             let org_id = Organisation::create(
                 1,

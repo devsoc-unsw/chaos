@@ -16,11 +16,9 @@ async fn main() -> Result<(), ChaosError> {
     let mut seeder = Seeder::init().await;
     seeder.seed_database(super_user_email).await?;
 
-
     let app = app().await?;
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
     axum::serve(listener, app).await.unwrap();
-    eprintln!("error");
 
     Ok(())
 }
