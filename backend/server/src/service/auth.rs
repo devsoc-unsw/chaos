@@ -37,14 +37,14 @@ use std::ops::DerefMut;
 pub async fn create_or_get_user_id(
     email: String,
     name: String,
-    pool: Pool<Postgres>,
+    pool: &Pool<Postgres>,
     snowflake_generator: &mut SnowflakeIdGenerator,
 ) -> Result<i64, ChaosError> {
     let possible_user_id = sqlx::query!(
         "SELECT id FROM users WHERE lower(email) = $1",
         email.to_lowercase()
     )
-    .fetch_optional(&pool)
+    .fetch_optional(pool)
     .await?;
 
     if let Some(result) = possible_user_id {
@@ -59,7 +59,7 @@ pub async fn create_or_get_user_id(
         email.to_lowercase(),
         name
     )
-    .execute(&pool)
+    .execute(pool)
     .await?;
 
     Ok(user_id)
@@ -114,7 +114,7 @@ pub async fn extract_user_id_from_request(
     let TypedHeader(cookies) = parts
         .extract::<TypedHeader<Cookie>>()
         .await
-        .map_err(|e| {
+        .map_err(|_| {
             ChaosError::NotLoggedIn
         })?;
 

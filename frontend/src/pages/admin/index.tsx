@@ -1,6 +1,7 @@
 import { useContext, useEffect, useMemo, useState } from "react";
 
 import { getAdminOrgs } from "../../api";
+import { getOrganisationCampaigns } from "../../api";
 import AdminSidebar from "../../components/AdminSideBar";
 import { SetNavBarTitleContext } from "../../contexts/SetNavbarTitleContext";
 
@@ -47,7 +48,7 @@ const Admin = () => {
         // These will be fetched separately when an org is selected
         setOrgList(
           organisations.map((item) => ({
-            id: parseInt(item.id, 10),
+            id: item.id,
             icon: item.logo || '',
             orgName: item.name,
             campaigns: [],
@@ -68,6 +69,32 @@ const Admin = () => {
 
     void fetchData();
   }, []);
+
+  // Fetch campaigns for selected organisation
+  useEffect(() => {
+    const org = orgList[orgSelected];
+    if (!org?.id) {
+      setCampaigns([]);
+      return;
+    }
+    (async () => {
+      try {
+        const res = await getOrganisationCampaigns(org.id);
+        setCampaigns(
+          res.map((c) => ({
+            id: c.id,
+            image: c.cover_image || "",
+            title: c.name,
+            startDate: c.starts_at,
+            endDate: c.ends_at,
+          }))
+        );
+      } catch (e) {
+        console.error('Failed to load organisation campaigns', e);
+        setCampaigns([]);
+      }
+    })();
+  }, [orgSelected, orgList]);
 
   useEffect(() => {
     setCampaigns(

@@ -6,8 +6,8 @@
 //! - Managing role-specific answers
 
 use crate::models::answer::{Answer, NewAnswer};
-use crate::models::app::AppState;
-use crate::models::auth::{AnswerOwner, ApplicationOwner};
+use crate::models::app::{AppMessage, AppState, IdMessage};
+use crate::models::auth::{AnswerOwner, ApplicationOwner, ApplicationOwnerOrReviewer};
 use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
@@ -49,7 +49,7 @@ impl AnswerHandler {
         let id = Answer::create(
             application_id,
             data.question_id,
-            data.answer_data,
+            data.data,
             &mut state.snowflake_generator,
             &mut transaction.tx,
         )
@@ -57,7 +57,7 @@ impl AnswerHandler {
 
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, Json(json!({"id": id}))))
+        Ok((StatusCode::OK, Json(IdMessage { id })))
     }
 
     /// Retrieves all common answers for an application.
@@ -75,7 +75,7 @@ impl AnswerHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - List of answers or error
     pub async fn get_all_common_by_application(
         Path(application_id): Path<i64>,
-        _owner: ApplicationOwner,
+        _owner: ApplicationOwnerOrReviewer,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let answers =
@@ -83,7 +83,7 @@ impl AnswerHandler {
 
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, Json(answers)))
+        Ok(( Json(answers)))
     }
 
     /// Retrieves all answers for a specific role in an application.
@@ -102,7 +102,7 @@ impl AnswerHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - List of answers or error
     pub async fn get_all_by_application_and_role(
         Path((application_id, role_id)): Path<(i64, i64)>,
-        _owner: ApplicationOwner,
+        _owner: ApplicationOwnerOrReviewer,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let answers =
@@ -111,7 +111,7 @@ impl AnswerHandler {
 
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, Json(answers)))
+        Ok(( Json(answers)))
     }
 
     /// Updates an existing answer.
@@ -133,15 +133,15 @@ impl AnswerHandler {
     pub async fn update(
         Path(answer_id): Path<i64>,
         _owner: AnswerOwner,
-        _: OpenApplicationByAnswerId,
+        _: OpenApplicationByAnswerId, // Troublesome throws BadRequest
         mut transaction: DBTransaction<'_>,
-        Json(data): Json<NewAnswer>,
+        Json(new_answer): Json<NewAnswer>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Answer::update(answer_id, data.answer_data, &mut transaction.tx).await?;
+        Answer::update(answer_id, new_answer.data, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, "Successfully updated answer"))
+        Ok(AppMessage::OkMessage("Successfully updated answer"))
     }
 
     /// Deletes an answer.
@@ -169,6 +169,6 @@ impl AnswerHandler {
 
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, "Successfully deleted answer"))
+        Ok(AppMessage::OkMessage("Successfully deleted answer"))
     }
 }

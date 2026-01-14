@@ -1,493 +1,979 @@
-/**
- * DevsocRecruitmentForm Component
- *
- * This component displays a dynamic recruitment form that loads campaign data and roles from the API.
- * It implements a fallback system to ensure the form always works, even when the API is unavailable.
- *
- * HOW IT WORKS:
- * 1. Extracts campaignId from URL params (e.g., /campaign/1/apply)
- * 2. Falls back to campaignId "1" if no ID is provided in the URL
- * 3. Attempts to fetch real data from two API endpoints:
- *    - GET /api/v1/campaigns/{campaignId} (for campaign details: name, dates)
- *    - GET /api/v1/campaigns/{campaignId}/roles (for available roles)
- * 4. If API calls fail, gracefully falls back to hardcoded mock data
- * 5. Shows a loading spinner while fetching data
- * 6. Displays a warning banner when using fallback campaignId
- *
- * API INTEGRATION:
- * - Based on endpoints from PR #562: https://github.com/devsoc-unsw/chaos/pull/562/files
- * - Maps API response formats to structures
- * - Automatically assigns colors to API roles
- * - Converts ISO date strings to display format
- *
- * FALLBACK SYSTEM:
- * - Mock campaigns with different dates and titles for testing
- * - Predefined roles with descriptions and color schemes
- * - Ensures form is always functional during development
- * - Console logging helps identify when fallback is being used
- *
- * URL PATTERNS:
- * - /campaign/1/apply → Real API data for campaign 1 (or fallback)
- * - /campaign/2/apply → Real API data for campaign 2 (or fallback)
- */
-import React, { useState, useEffect } from "react";
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from "react";
+import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
+import { useParams } from "react-router-dom";
 import ShortAnswer from "components/QuestionComponents/ShortAnswer";
-import Dropdown from "components/QuestionComponents/Dropdown";
+import Dropdown, { NO_ANSWER_VALUE } from "components/QuestionComponents/Dropdown";
 import MultiChoice from "components/QuestionComponents/MultiChoice";
 import MultiSelect from "components/QuestionComponents/MultiSelect";
 import Ranking from "components/QuestionComponents/Ranking";
+import { getCampaign, getCampaignRoles, getCommonQuestions, getRoleQuestions, createOrGetApplication, getCommonApplicationAnswers, getApplicationAnswers, createAnswer, updateAnswer, deleteAnswer, updateApplicationRoles, getApplicationRoles, submitApplication } from "api";
+import type { Campaign, Role, QuestionResponse, QuestionData, Answer, ApplicationRoleUpdateInput } from "types/api";
+import { Button } from "components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "components/ui/dialog";
+import { Info } from "lucide-react";
 
-// Types for API responses
-interface ApiRole {
-  id: number;
-  name: string;
-  description: string;
-  min_available: number;
-  max_available: number;
-  finalised: boolean;
-}
+const ApplicationReview: React.FC = () => {
+  const { campaignId } = useParams<{ campaignId: string }>();
 
-interface ApiCampaign {
-  id: number;
-  name: string;
-  description?: string;
-  starts_at: string;
-  ends_at: string;
-}
+  const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<"general" | string>("general");
+  const [commonQuestions, setCommonQuestions] = useState<QuestionResponse[]>([]);
+  const [questionsByRole, setQuestionsByRole] = useState<Record<string, QuestionResponse[]>>({});
+  const [answers, setAnswers] = useState<Record<string, unknown>>({});
+  const [loading, setLoading] = useState(true);
+  const [showReviewDialog, setShowReviewDialog] = useState(false);
+  const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [applicationId, setApplicationId] = useState<string | null>(null);
+  const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+  const [commonAnswers, setCommonAnswers] = useState<Answer[]>([]);
+  const [roleAnswers, setRoleAnswers] = useState<Record<string, Answer[]>>({});
 
-// Local role interface for UI
-interface Role {
-  name: string;
-  description: string;
-  color: string;
-}
+  useEffect(() => {
+    if (!campaignId) return;
+    (async () => {
+      setLoading(true);
+      try {
+        const idStr = campaignId;
+        const [c, r, common, application] = await Promise.all([
+          getCampaign(idStr),
+          getCampaignRoles(idStr),
+          getCommonQuestions(idStr),
+          createOrGetApplication(idStr),
+        ]);
+        setCampaign(c);
+        setRoles(r);
+        setApplicationId(application.application_id);
+        const commonList = Array.isArray(common)
+          ? common
+          : (common as unknown as { questions?: QuestionResponse[] }).questions ?? [];
+        setCommonQuestions(commonList);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [campaignId]);
 
-// Campaign interface for UI
-interface Campaign {
-  title: string;
-  startDate: string;
-  endDate: string;
-}
+  // Load common answers when application ID is available
+  useEffect(() => {
+    if (!applicationId) return;
+    (async () => {
+      try {
+        const answers = await getCommonApplicationAnswers(applicationId);
+        setCommonAnswers(answers);
 
-const DevsocRecruitmentForm: React.FC = () => {
-    // Get the campaignId from the URL parameters
-    const { campaignId } = useParams<{ campaignId: string }>();
+        // Pre-fill answers in the answers state
+        const answerMap: Record<string, unknown> = {};
+        answers.forEach(answer => {
+          // API returns `answer_data` field
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          answerMap[answer.question_id] = (answer as any).answer_data ?? (answer as any).data;
+        });
+        setAnswers(prev => ({ ...prev, ...answerMap }));
+      } catch (error) {
+        console.error('Failed to load common answers:', error);
+      }
+    })();
+  }, [applicationId]);
 
-    // Fallback to a default campaign ID 1 if none is provided
-    const activeCampaignId = campaignId || "1";
+  // Load application roles when application ID is available
+  useEffect(() => {
+    if (!applicationId) return;
+    (async () => {
+      try {
+        const applicationRoles = await getApplicationRoles(applicationId);
+        // Set selected role IDs based on loaded application roles
+        const roleIds = applicationRoles.map(role => role.campaign_role_id);
+        setSelectedRoleIds(roleIds);
+      } catch (error) {
+        console.error('Failed to load application roles:', error);
+        // If no roles are found, that's OK - user can select roles
+        setSelectedRoleIds([]);
+      }
+    })();
+  }, [applicationId]);
 
-    const [currentTab, setCurrentTab] = useState<'general' | 'review'>('general');
-    const [selectedRole, setSelectedRole] = useState<string>('');
-    const [answers, setAnswers] = useState<{ [key: number]: any }>({});
-    const [showCampaignWarning, setShowCampaignWarning] = useState(!campaignId);
+  // Fetch role-specific questions when a new role is selected
+  useEffect(() => {
+    if (!campaignId || !applicationId) return;
+    const id = campaignId;
+    const missing = selectedRoleIds.filter((rid) => questionsByRole[rid] === undefined);
+    if (missing.length === 0) return;
+    (async () => {
+      const updates: Record<string, QuestionResponse[]> = {};
+      const roleAnswersUpdates: Record<string, Answer[]> = {};
+      
+      await Promise.all(
+        missing.map(async (rid) => {
+          const [questionsResp, answersResp] = await Promise.all([
+            getRoleQuestions(id, rid),
+            getApplicationAnswers(applicationId, rid)
+          ]);
+          
+          updates[rid] = Array.isArray(questionsResp)
+            ? questionsResp
+            : (questionsResp as unknown as { questions?: QuestionResponse[] }).questions ?? [];
+          
+          roleAnswersUpdates[rid] = answersResp;
+        })
+      );
+      
+      setQuestionsByRole((prev) => ({ ...prev, ...updates }));
+      setRoleAnswers((prev) => ({ ...prev, ...roleAnswersUpdates }));
+      
+      // Pre-fill answers state with role-specific answers
+      const answerMap: Record<string, unknown> = {};
+      Object.values(roleAnswersUpdates).forEach(answers => {
+        answers.forEach(answer => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          answerMap[answer.question_id] = (answer as any).answer_data ?? (answer as any).data;
+        });
+      });
+      setAnswers(prev => ({ ...prev, ...answerMap }));
+    })();
+  }, [selectedRoleIds, campaignId, questionsByRole, applicationId]);
 
-    // New state for dynamic data
-    const [campaignData, setCampaignData] = useState<Campaign | null>(null);
-    const [roles, setRoles] = useState<Role[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    // Fallback campaign data
-    const getFallbackCampaignData = (id: string): Campaign => {
-        const campaigns = {
-            "1": {
-                title: "2025 DevSoc Subcommittee Recruitment",
-                startDate: "2025-02-01",
-                endDate: "2025-02-20"
-            },
-            "2": {
-                title: "2025 Summer Internship Program",
-                startDate: "2025-03-01",
-                endDate: "2025-03-15"
-            },
-            "3": {
-                title: "2025 Winter Workshop Series",
-                startDate: "2025-07-01",
-                endDate: "2025-07-31"
-            }
-        };
-
-        return campaigns[id] || campaigns["1"];
+  const syncRoles = async (nextSelectedRoles: string[]) => {
+    if (!applicationId) {
+      console.error("No applicationId available for syncing roles");
+      return;
+    }
+    
+    const payload: ApplicationRoleUpdateInput = {
+      roles: nextSelectedRoles.map((rid, idx) => ({
+        id: "0",
+        application_id: applicationId,
+        campaign_role_id: rid,
+        preference: idx + 1,
+      })),
     };
+    
+    console.log("🔄 Syncing roles:", { applicationId, selectedRoles: nextSelectedRoles, payload });
+    
+    try {
+      const result = await updateApplicationRoles(applicationId, payload);
+      console.log("✅ Roles synced successfully:", result);
+    } catch (e) {
+      console.error("❌ Failed to update application roles:", e);
+      setValidationError(`Failed to save role selection: ${e instanceof Error ? e.message : 'Unknown error'}`);
+    }
+  };
 
-    // Fallback roles data
-    const getFallbackRoles = (): Role[] => {
-        return [
-            {
-                name: 'Marketing',
-                description: 'Social media, content creation, and promotional campaigns',
-                color: 'bg-purple-100 border-purple-300 text-purple-800'
-            },
-            {
-                name: 'Events',
-                description: 'Workshop planning, hackathons, and networking events',
-                color: 'bg-blue-100 border-blue-300 text-blue-800'
-            },
-            {
-                name: 'Education',
-                description: 'Technical workshops and mentorship programs',
-                color: 'bg-green-100 border-green-300 text-green-800'
-            },
-            {
-                name: 'Industry',
-                description: 'Corporate partnerships and sponsorship management',
-                color: 'bg-orange-100 border-orange-300 text-orange-800'
-            },
-            {
-                name: 'Design',
-                description: 'Visual content, branding, and user experience',
-                color: 'bg-pink-100 border-pink-300 text-pink-800'
-            },
-            {
-                name: 'IT',
-                description: 'Technical infrastructure and development',
-                color: 'bg-indigo-100 border-indigo-300 text-indigo-800'
-            }
-        ];
-    };
+  const toggleRole = async (roleId: string) => {
+    if (isSubmitted) {
+      setValidationError('Cannot modify roles: Application has already been submitted.');
+      return;
+    }
+    
+    setSelectedRoleIds((prev: string[]) => {
+      const next = prev.includes(roleId) ? prev.filter((id) => id !== roleId) : [...prev, roleId];
+      // Don't use void - let the error be handled by syncRoles
+      syncRoles(next).catch((e) => {
+        console.error("Role toggle sync failed:", e);
+      });
+      return next;
+    });
+    // Clear validation error when user changes roles
+    if (validationError) {
+      setValidationError(null);
+    }
+  };
 
-    // API functions
-    const fetchCampaignData = async (campaignId: string): Promise<Campaign> => {
-        const response = await fetch(`/api/v1/campaigns/${campaignId}`);
-        if (!response.ok) throw new Error('Failed to fetch campaign');
-        const apiCampaign: ApiCampaign = await response.json();
+  const handleDragEnd = (result: DropResult) => {
+    if (isSubmitted) {
+      setValidationError('Cannot modify roles: Application has already been submitted.');
+      return;
+    }
+    
+    const { source, destination, draggableId } = result;
+    if (!destination) return;
 
-        return {
-            title: apiCampaign.name,
-            startDate: apiCampaign.starts_at.split('T')[0], // Convert ISO to YYYY-MM-DD
-            endDate: apiCampaign.ends_at.split('T')[0]
-        };
-    };
-
-    const fetchCampaignRoles = async (campaignId: string): Promise<Role[]> => {
-        const response = await fetch(`/api/v1/campaigns/${campaignId}/roles`);
-        if (!response.ok) throw new Error('Failed to fetch roles');
-        const apiRoles: ApiRole[] = await response.json();
-
-        // Color palette for roles
-        const colors = [
-            'bg-purple-100 border-purple-300 text-purple-800',
-            'bg-blue-100 border-blue-300 text-blue-800',
-            'bg-green-100 border-green-300 text-green-800',
-            'bg-orange-100 border-orange-300 text-orange-800',
-            'bg-pink-100 border-pink-300 text-pink-800',
-            'bg-indigo-100 border-indigo-300 text-indigo-800',
-            'bg-red-100 border-red-300 text-red-800',
-            'bg-yellow-100 border-yellow-300 text-yellow-800'
-        ];
-
-        return apiRoles.map((role, index) => ({
-            name: role.name,
-            description: role.description,
-            color: colors[index % colors.length]
-        }));
-    };
-
-    // Format date range helper
-    const formatDateRange = (startDate: string, endDate: string): string => {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-
-        const options: Intl.DateTimeFormatOptions = {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric'
-        };
-
-        const startFormatted = start.toLocaleDateString('en-AU', options);
-        const endFormatted = end.toLocaleDateString('en-AU', options);
-
-        return `${startFormatted} - ${endFormatted}`;
-    };
-
-    // Load data on component mount or when campaignId changes
-    useEffect(() => {
-        const loadData = async () => {
-            setIsLoading(true);
-            try {
-                console.log('Fetching data for campaign:', activeCampaignId);
-
-                const [campaign, campaignRoles] = await Promise.all([
-                    fetchCampaignData(activeCampaignId),
-                    fetchCampaignRoles(activeCampaignId)
-                ]);
-
-                setCampaignData(campaign);
-                setRoles(campaignRoles);
-                console.log('Successfully loaded campaign data from API');
-
-            } catch (error) {
-                console.warn('Failed to load campaign data from API, using fallback:', error);
-
-                // Use fallback data
-                setCampaignData(getFallbackCampaignData(activeCampaignId));
-                setRoles(getFallbackRoles());
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        loadData();
-    }, [activeCampaignId]);
-
-    const handleAnswerSubmit = (questionId: number, value: any) => {
-        setAnswers((prev) => ({
-            ...prev,
-            [questionId]: value,
-        }));
-    };
-
-    const sampleOptions = [
-        { id: 1, label: "Option 1" },
-        { id: 2, label: "Option 2" },
-        { id: 3, label: "Option 3" },
-        { id: 4, label: "Option 4" },
-    ];
-
-    // Show loading state
-    if (isLoading) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading campaign data...</p>
-                </div>
-            </div>
-        );
+    // Reorder within selected list
+    if (source.droppableId === "selected-roles" && destination.droppableId === "selected-roles") {
+      if (source.index === destination.index) return;
+      setSelectedRoleIds((prev) => {
+        const next = [...prev];
+        const [moved] = next.splice(source.index, 1);
+        next.splice(destination.index, 0, moved);
+        syncRoles(next).catch((e) => {
+          console.error("Role reorder sync failed:", e);
+        });
+        return next;
+      });
+      return;
     }
 
-    // Use fallback if no data loaded
-    const currentCampaign = campaignData || getFallbackCampaignData(activeCampaignId);
-    const currentRoles = roles.length > 0 ? roles : getFallbackRoles();
+    // Move from available -> selected (insert at destination.index)
+    if (source.droppableId === "available-roles" && destination.droppableId === "selected-roles") {
+      setSelectedRoleIds((prev) => {
+        if (prev.includes(draggableId)) return prev; // already selected
+        const next = [...prev];
+        next.splice(destination.index, 0, draggableId);
+        syncRoles(next).catch((e) => {
+          console.error("Role add sync failed:", e);
+        });
+        return next;
+      });
+      return;
+    }
 
+    // Move from selected -> available (remove)
+    if (source.droppableId === "selected-roles" && destination.droppableId === "available-roles") {
+      setSelectedRoleIds((prev) => {
+        const next = prev.filter((rid) => rid !== draggableId);
+        syncRoles(next).catch((e) => {
+          console.error("Role remove sync failed:", e);
+        });
+        return next;
+      });
+      return;
+    }
+  };
+
+  const setAnswer = (questionId: string, value: unknown) => {
+    setAnswers((prev) => ({ ...prev, [questionId]: value }));
+    // Clear validation error when user makes changes
+    if (validationError) {
+      setValidationError(null);
+    }
+  };
+
+  const submitAnswer = async (questionId: string, value: unknown, questionType: string) => {
+    if (isSubmitted) {
+      setValidationError('Cannot modify answers: Application has already been submitted.');
+      return;
+    }
+    
+    if (!applicationId) {
+      console.error("No applicationId available for submitting answer");
+      return;
+    }
+
+    const answerId = getAnswerId(questionId);
+    const question = [...commonQuestions, ...Object.values(questionsByRole).flat()].find(q => String(q.id) === questionId);
+    
+    if (!question) {
+      console.error("Question not found:", questionId);
+      return;
+    }
+
+    console.log("🔄 Submitting answer:", { questionId, value, questionType, answerId, applicationId });
+    
+    // Check if this is an update or create operation
+    if (answerId) {
+      console.log("📝 This is an UPDATE operation for existing answer:", answerId);
+    } else {
+      console.log("➕ This is a CREATE operation for new answer");
+    }
+
+    // Prepare outside try so we can use in catch for recovery
+    let apiAnswerType: string = "";
+    let apiAnswerData: unknown = "";
+
+    try {
+      // Check if the answer should be deleted (empty/blank)
+      const shouldDelete =
+        (questionType === "ShortAnswer" && (!value || String(value).trim() === "")) ||
+        (questionType === "MultiSelect" && (!Array.isArray(value) || value.length === 0)) ||
+        (questionType === "DropDown" && value === NO_ANSWER_VALUE);
+
+      if (shouldDelete) {
+        if (answerId) {
+          // Delete existing answer
+          await deleteAnswer(answerId);
+          // Remove from local state
+          setCommonAnswers(prev => prev.filter(a => a.id !== answerId));
+          setRoleAnswers(prev => {
+            const newRoleAnswers = { ...prev };
+            Object.keys(newRoleAnswers).forEach(roleId => {
+              newRoleAnswers[roleId] = newRoleAnswers[roleId].filter(a => a.id !== answerId);
+            });
+            return newRoleAnswers;
+          });
+        }
+        // Update answers state to reflect the deletion
+        // For dropdowns, set to NO_ANSWER_VALUE for review modal display
+        if (questionType === "DropDown") {
+          setAnswers(prev => ({ ...prev, [questionId]: NO_ANSWER_VALUE }));
+        } else {
+          setAnswers(prev => {
+            const newAnswers = { ...prev };
+            delete newAnswers[questionId];
+            return newAnswers;
+          });
+        }
+        return;
+      }
+
+      // Determine the answer type for the API
+      
+      switch (questionType) {
+        case "ShortAnswer":
+          apiAnswerType = "ShortAnswer";
+          apiAnswerData = String(value);
+          break;
+        case "MultiChoice":
+        case "DropDown":
+          apiAnswerType = questionType;
+          apiAnswerData = value;
+          break;
+        case "MultiSelect":
+        case "Ranking":
+          apiAnswerType = questionType;
+          apiAnswerData = Array.isArray(value) ? value : [];
+          break;
+        default:
+          apiAnswerType = "ShortAnswer";
+          apiAnswerData = String(value);
+      }
+
+      if (answerId) {
+        // Update existing answer
+        console.log("📝 Updating existing answer:", { answerId, questionId, apiAnswerType, apiAnswerData });
+        const result = await updateAnswer(answerId, questionId, apiAnswerType as any, apiAnswerData as any);
+        console.log("✅ Answer updated successfully:", result);
+      } else {
+        // Create new answer
+        console.log("➕ Creating new answer:", { applicationId, questionId, apiAnswerType, apiAnswerData });
+        const newAnswer = await createAnswer(applicationId, questionId, apiAnswerType as any, apiAnswerData as any);
+        console.log("✅ Answer created successfully:", newAnswer);
+        
+        // Update local state with the new answer
+        // Keep shape consistent with API (`answer_data`)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const newAnswerObj: any = {
+          id: newAnswer?.id || String(Date.now()),
+          question_id: questionId,
+          answer_type: apiAnswerType,
+          answer_data: apiAnswerData,
+          created_at: new Date(),
+          updated_at: new Date()
+        } as Answer & { answer_data: unknown };
+
+        // Add to appropriate state based on whether it's a common or role question
+        if (commonQuestions.find(q => String(q.id) === questionId)) {
+          setCommonAnswers(prev => [...prev, newAnswerObj]);
+        } else {
+          // Find which role this question belongs to
+          for (const [roleId, questions] of Object.entries(questionsByRole)) {
+            if (questions.find(q => String(q.id) === questionId)) {
+              setRoleAnswers(prev => ({
+                ...prev,
+                [roleId]: [...(prev[roleId] || []), newAnswerObj]
+              }));
+              break;
+            }
+          }
+        }
+
+        // Update the main answers state so the review modal shows the correct value
+        setAnswers(prev => ({ ...prev, [questionId]: apiAnswerData }));
+      }
+    } catch (error) {
+      console.error('❌ Failed to submit answer:', error);
+      const e: any = error;
+
+      // Trying to fix MCQ Bad request error
+      if (!answerId && e?.status === 500) {
+        try {
+          // First try from local state
+          let existingId = getAnswerId(questionId);
+          // If not found, fetch from server (common + each selected role)
+          if (!existingId && applicationId) {
+            const [common, ...roleAnsArrays] = await Promise.all([
+              getCommonApplicationAnswers(applicationId),
+              ...selectedRoleIds.map((rid) => getApplicationAnswers(applicationId, rid)),
+            ]);
+            const allAnswers = [
+              ...common,
+              ...roleAnsArrays.flat(),
+            ];
+            const found = allAnswers.find((a) => String(a.question_id) === String(questionId));
+            if (found) existingId = found.id;
+          }
+          if (existingId) {
+            console.warn('Recovering from create error by updating existing answer:', existingId);
+            await updateAnswer(existingId, questionId, apiAnswerType as any, apiAnswerData as any);
+            return;
+          }
+        } catch (recoveryErr) {
+          console.error('Recovery update attempt failed:', recoveryErr);
+        }
+      }
+
+      const serverMsg = e?.data?.message ?? e?.data?.error ?? e?.statusText;
+
+      if (e?.status === 400 || e?.status === 422) {
+        setValidationError(`Failed to save answer: ${serverMsg ?? 'Bad request'}`);
+        return;
+      }
+
+      if (error instanceof Error && error.message.includes('Application closed')) {
+        setValidationError('Cannot update answers: Application has been submitted or campaign has ended.');
+      } else if (error instanceof Error && error.message.includes('Failed to fetch')) {
+        setValidationError('Network error: Failed to connect to server. Please check if the backend is running.');
+      } else if (e?.status === 500) {
+        setValidationError(`Server error while saving answer. ${serverMsg ? `Details: ${serverMsg}` : ''}`.trim());
+      } else {
+        setValidationError(`Failed to save answer: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }
+  };
+
+  const getAnswerId = (questionId: string): string | undefined => {
+    // Check common answers first
+    const commonAnswer = commonAnswers.find(a => a.question_id === questionId);
+    if (commonAnswer) return commonAnswer.id;
+    
+    // Check role-specific answers
+    for (const [roleId, answers] of Object.entries(roleAnswers)) {
+      const roleAnswer = answers.find(a => a.question_id === questionId);
+      if (roleAnswer) return roleAnswer.id;
+    }
+    
+    return undefined;
+  };
+
+  const formatAnswer = (question: QuestionResponse, answer: unknown): string => {
+    if (answer === null || answer === undefined || answer === '') {
+      return "No answer provided";
+    }
+
+    switch (question.question_type) {
+      case "ShortAnswer":
+        return String(answer);
+      
+      case "MultiChoice":
+      case "DropDown":
+        if (answer === NO_ANSWER_VALUE) {
+          return "No answer provided";
+        }
+        const selectedOption = question.data?.options?.find(opt => opt.id === answer);
+        return selectedOption ? selectedOption.text : String(answer);
+      
+      case "MultiSelect":
+      case "Ranking":
+        if (Array.isArray(answer)) {
+          const selectedOptions = (question.data?.options?.filter(opt => answer.includes(opt.id)) ?? [])
+            .map(opt => opt.text);
+          return selectedOptions.length > 0 ? selectedOptions.join(", ") : "No selections";
+        }
+        return String(answer);
+      
+      default:
+        return String(answer);
+    }
+  };
+
+  const validateRequiredAnswers = (): { isValid: boolean; missingQuestions: string[] } => {
+    const missingQuestions: string[] = [];
+    
+    // Check common questions
+    commonQuestions.forEach(question => {
+      if (question.required) {
+        const answer = answers[String(question.id)];
+        const isEmpty = answer === null || answer === undefined || answer === '' || 
+                       answer === NO_ANSWER_VALUE || 
+                       (Array.isArray(answer) && answer.length === 0);
+        if (isEmpty) {
+          missingQuestions.push(question.title);
+        }
+      }
+    });
+    
+    // Check role-specific questions
+    selectedRoleIds.forEach(roleId => {
+      const roleQuestions = questionsByRole[roleId] || [];
+      roleQuestions.forEach(question => {
+        if (question.required) {
+          const answer = answers[String(question.id)];
+          const isEmpty = answer === null || answer === undefined || answer === '' || 
+                         answer === NO_ANSWER_VALUE || 
+                         (Array.isArray(answer) && answer.length === 0);
+          if (isEmpty) {
+            missingQuestions.push(question.title);
+          }
+        }
+      });
+    });
+    
+    return {
+      isValid: missingQuestions.length === 0,
+      missingQuestions
+    };
+  };
+
+  const handleSubmitClick = () => {
+    setValidationError(null); // Clear any previous errors
+    
+    const validation = validateRequiredAnswers();
+    if (!validation.isValid) {
+      setValidationError(`Please answer all required questions:\n${validation.missingQuestions.join('\n')}`);
+      return;
+    }
+    
+    // If validation passes, open the confirmation modal
+    setShowSubmitDialog(true);
+  };
+
+  const handleConfirmSubmit = async () => {
+    if (!applicationId) return;
+    
+    setSubmitting(true);
+    try {
+      // Ensure roles are synced before submission
+      console.log("🔄 Final sync before submission...");
+      await syncRoles(selectedRoleIds);
+      console.log("✅ Final role sync completed");
+      
+      await submitApplication(applicationId);
+      setIsSubmitted(true);
+      // alert('Application submitted successfully!');
+      setShowSubmitDialog(false);
+      // Optionally redirect or update UI
+    } catch (error) {
+      console.error('❌ Failed to submit application:', error);
+      alert('Failed to submit application. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const renderQuestion = (q: QuestionResponse) => {
+    const options = (q.question_type === "MultiChoice" || q.question_type === "MultiSelect" || q.question_type === "DropDown" || q.question_type === "Ranking")
+      ? ((q.data?.options ?? []).map((o) => ({ id: o.id, label: o.text })) ?? [])
+      : [];
+    const idStr = String(q.id);
+
+    switch (q.question_type) {
+      case "ShortAnswer":
+        return (
+          <ShortAnswer
+            key={idStr}
+            id={idStr}
+            question={q.title}
+            description={q.description}
+            required={q.required}
+            defaultValue={(answers[idStr] as string) ?? ""}
+            onSubmit={(qid, val) => submitAnswer(qid, val, q.question_type)}
+            answerId={getAnswerId(idStr)}
+          />
+        );
+      case "DropDown":
+        return (
+          <Dropdown
+            key={idStr}
+            id={idStr}
+            question={q.title}
+            description={q.description}
+            required={q.required}
+            options={options}
+            defaultValue={answers[idStr] as string | number | undefined}
+            onSubmit={(qid, val) => submitAnswer(qid, val, q.question_type)}
+            answerId={getAnswerId(idStr)}
+          />
+        );
+      case "MultiChoice":
+        return (
+          <MultiChoice
+            key={idStr}
+            id={idStr}
+            question={q.title}
+            description={q.description}
+            required={q.required}
+            options={options}
+            defaultValue={answers[idStr] as string | number | undefined}
+            onSubmit={(qid, val) => submitAnswer(qid, val, q.question_type)}
+            answerId={getAnswerId(idStr)}
+          />
+        );
+      case "MultiSelect":
+        return (
+          <MultiSelect
+            key={idStr}
+            id={idStr}
+            question={q.title}
+            description={q.description}
+            required={q.required}
+            options={options}
+            defaultValue={(answers[idStr] as Array<string | number>) ?? []}
+            onSubmit={(qid, val) => submitAnswer(qid, val, q.question_type)}
+            answerId={getAnswerId(idStr)}
+          />
+        );
+      case "Ranking":
+        return (
+          <Ranking
+            key={idStr}
+            id={idStr}
+            question={q.title}
+            description={q.description}
+            required={q.required}
+            options={options}
+            defaultValue={(answers[idStr] as Array<string | number>) ?? []}
+            onSubmit={(qid, val) => submitAnswer(qid, val, q.question_type)}
+            answerId={getAnswerId(idStr)}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  if (loading || !campaign) {
     return (
-        <div className="min-h-screen bg-gray-50">
-            <div className="w-full mx-auto p-8">
-                {/* Campaign Warning Banner */}
-                {showCampaignWarning && (
-                    <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                        <div className="flex">
-                            <div className="flex-shrink-0">
-                                <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                                </svg>
-                            </div>
-                            <div className="ml-3">
-                                <h3 className="text-sm font-medium text-yellow-800">
-                                    Demo Mode
-                                </h3>
-                                <div className="mt-2 text-sm text-yellow-700">
-                                    <p>
-                                        No campaign ID found in URL. Using default campaign ID "{activeCampaignId}" for testing.
-                                        <br />
-                                        <span className="font-medium">Expected URL format:</span> /campaign/[campaignId]/apply
-                                    </p>
-                                </div>
-                                <div className="mt-4">
-                                    <button
-                                        type="button"
-                                        className="bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-800 rounded hover:bg-yellow-200"
-                                        onClick={() => setShowCampaignWarning(false)}
-                                    >
-                                        Dismiss
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Header - NOW DYNAMIC */}
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                        {currentCampaign.title}
-                    </h1>
-                    <p className="text-gray-600">
-                        {formatDateRange(currentCampaign.startDate, currentCampaign.endDate)}
-                    </p>
-                </div>
-
-                <div className="flex gap-8 w-full">
-                    {/* Sidebar - NOW DYNAMIC ROLES */}
-                    <div className="w-80 flex-shrink-0">
-                        <h2 className="text-xl font-semibold mb-4 text-gray-900">Available Roles</h2>
-                        <div className="space-y-3">
-                            {currentRoles.map((role) => (
-                                <div
-                                    key={role.name}
-                                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                                        selectedRole === role.name
-                                        ? role.color
-                                        : 'bg-white border-gray-200 hover:border-gray-300'
-                                    }`}
-                                    onClick={() => setSelectedRole(role.name)}
-                                >
-                                    <div className="flex items-center justify-between mb-2">
-                                        <h3 className="font-semibold">{role.name}</h3>
-                                        <button className="text-gray-400 hover:text-gray-600">
-                                            <span className="text-lg">+</span>
-                                        </button>
-                                    </div>
-                                    <p className="text-sm text-gray-600">{role.description}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Main Content */}
-                    <div className="flex-1">
-                        {/* Tabs */}
-                        <div className="flex border-b border-gray-200 mb-8">
-                            <button
-                                className={`px-6 py-3 font-medium ${
-                                    currentTab === 'general'
-                                        ? 'border-b-2 border-blue-500 text-blue-600'
-                                        : 'text-gray-500 hover:text-gray-700'
-                                }`}
-                                onClick={() => setCurrentTab('general')}
-                            >
-                                General
-                            </button>
-                            <button
-                                className={`px-6 py-3 font-medium ${
-                                    currentTab === 'review'
-                                        ? 'border-b-2 border-blue-500 text-blue-600'
-                                        : 'text-gray-500 hover:text-gray-700'
-                                }`}
-                                onClick={() => setCurrentTab('review')}
-                            >
-                                Review
-                            </button>
-                        </div>
-
-                        {/* Form Content */}
-                        {currentTab === 'general' && (
-                            <div className="bg-white rounded-lg p-8 shadow-sm">
-                                <div className="space-y-6">
-                                    {/* Name */}
-                                    <div>
-                                        <h3 className="text-lg font-medium text-gray-900 mb-4">Name</h3>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <ShortAnswer
-                                                id={1}
-                                                question="First Name"
-                                                placeholder="First Name"
-                                                required={true}
-                                                width="w-full"
-                                                onSubmit={handleAnswerSubmit}
-                                            />
-                                            <ShortAnswer
-                                                id={2}
-                                                question="Last Name"
-                                                placeholder="Last Name"
-                                                required={true}
-                                                width="w-full"
-                                                onSubmit={handleAnswerSubmit}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Email */}
-                                    <ShortAnswer
-                                        id={3}
-                                        question="Email"
-                                        placeholder="your.email@example.com"
-                                        required={true}
-                                        width="w-full"
-                                        onSubmit={handleAnswerSubmit}
-                                    />
-
-                                    {/* zID */}
-                                    <ShortAnswer
-                                        id={4}
-                                        question="zID"
-                                        placeholder="z1234567"
-                                        required={true}
-                                        width="w-full"
-                                        onSubmit={handleAnswerSubmit}
-                                    />
-
-                                    {/* Degree */}
-                                    <ShortAnswer
-                                        id={5}
-                                        question="Degree"
-                                        placeholder="e.g., Computer Science"
-                                        required={true}
-                                        width="w-full"
-                                        onSubmit={handleAnswerSubmit}
-                                    />
-
-                                    {/* Phone Number */}
-                                    <ShortAnswer
-                                        id={6}
-                                        question="Phone Number"
-                                        placeholder="+61 xxx xxx xxx"
-                                        required={false}
-                                        width="w-full"
-                                        onSubmit={handleAnswerSubmit}
-                                    />
-
-                                    {/* Gender */}
-                                    <MultiChoice
-                                        id={7}
-                                        question="Gender"
-                                        options={sampleOptions}
-                                        required={false}
-                                        onSubmit={handleAnswerSubmit}
-                                    />
-                                    <Dropdown
-                                        id={8}
-                                        question="What is your preferred programming language?"
-                                        description="Select one option from the dropdown"
-                                        options={sampleOptions}
-                                        required={true}
-                                        defaultValue={answers[2]}
-                                        onSubmit={handleAnswerSubmit}
-                                    />
-                                    <MultiSelect
-                                        id={9}
-                                        question="Which technologies are you familiar with?"
-                                        description="Select all that apply"
-                                        options={sampleOptions}
-                                        required={true}
-                                        defaultValue={answers[4] || []}
-                                        onSubmit={handleAnswerSubmit}
-                                    />
-                                    <Ranking
-                                        id={10}
-                                        question="Rank your preference for the following options"
-                                        description="Drag and drop options to your preferences"
-                                        options={sampleOptions}
-                                        required={true}
-                                        defaultValue={answers[5] || []}
-                                        onSubmit={handleAnswerSubmit}
-                                    />
-                                </div>
-                            </div>
-                        )}
-
-                        {currentTab === 'review' && (
-                            <div className="bg-white rounded-lg p-8 shadow-sm">
-                                <h3 className="text-lg font-medium text-gray-900 mb-4">Review Your Application</h3>
-                                <div className="space-y-4">
-                                    <div className="border rounded-lg p-4 bg-gray-50">
-                                        <h4 className="font-medium mb-2">Selected Role</h4>
-                                        <p className="text-gray-700">{selectedRole || 'No role selected'}</p>
-                                    </div>
-                                    <div className="border rounded-lg p-4 bg-gray-50">
-                                        <h4 className="font-medium mb-2">Form Responses</h4>
-                                        <pre className="text-sm text-gray-600 whitespace-pre-wrap">
-                                            {JSON.stringify(answers, null, 2)}
-                                        </pre>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading campaign data...</p>
         </div>
+      </div>
     );
+  }
+
+  const activeRole = activeTab !== "general" ? roles.find((r) => String(r.id) === activeTab) : undefined;
+  const activeRoleQuestions = activeTab !== "general" ? questionsByRole[activeTab] ?? [] : [];
+
+  return (
+    <div className="min-h-screen bg-gray-50 w-full">
+      <div className="w-full mx-auto p-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">{campaign.name}</h1>
+          <p className="text-gray-600">
+            {new Date(campaign.starts_at).toLocaleDateString()} - {new Date(campaign.ends_at).toLocaleDateString()}
+          </p>
+          {applicationId && (
+            <p className="text-sm text-gray-500 mt-2">
+              Application ID: {applicationId}
+            </p>
+          )}
+          {Object.keys(roleAnswers).length > 0 && (
+            <p className="text-sm text-gray-500 mt-1">
+              Role Answers Loaded: {Object.keys(roleAnswers).join(', ')} 
+              (Total: {Object.values(roleAnswers).reduce((sum, answers) => sum + answers.length, 0)} answers)
+            </p>
+          )}
+        </div>
+
+        <div className="flex gap-8 w-full">
+          {/* Sidebar – multi-select roles */}
+          <div className="w-80 flex-shrink-0">
+            <h2 className="text-xl font-semibold mb-4 text-gray-900">Roles</h2>
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <div className="space-y-6">
+                {/* Selected roles (draggable & reorderable) */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-2">Selected Roles</h3>
+                  <p className="text-sm text-gray-500 mb-2">Drag to reorder based on preference</p>
+                  <Droppable droppableId="selected-roles">
+                   {(provided) => (
+                     <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-2 min-h-[12px] border-2 border-dashed border-gray-200 rounded-lg p-2">
+                       {selectedRoleIds.length === 0 && (
+                         <div className="text-sm text-gray-500 px-2 py-1">Drag a role from below to apply</div>
+                       )}
+                      {selectedRoleIds.map((rid, index) => {
+                        const role = roles.find((r) => String(r.id) === rid);
+                        if (!role) return null;
+                        const selected = true;
+                        return (
+                          <Draggable key={rid} draggableId={rid} index={index}>
+                            {(dragProvided) => (
+                              <div
+                                ref={dragProvided.innerRef}
+                                {...dragProvided.draggableProps}
+                                {...dragProvided.dragHandleProps}
+                                className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                                  selected ? "bg-blue-50 border-blue-300" : "bg-white border-gray-200 hover:border-gray-300"
+                                }`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-semibold bg-blue-200 text-blue-800 rounded-full">
+                                      {index + 1}
+                                    </span>
+                                    <h3 className="font-medium text-sm truncate">{role.name}</h3>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    {role.description && (
+                                      <div className="group relative">
+                                        <Info tw="h-4 w-4 text-blue-500 hover:text-blue-600 transition-colors" />
+                                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                                          {role.description}
+                                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                                        </div>
+                                      </div>
+                                    )}
+                                    <span className={`text-xs px-2 py-1 rounded-full ${
+                                      selected 
+                                        ? "bg-blue-100 text-blue-700" 
+                                        : "bg-gray-100 text-gray-500"
+                                    }`}>
+                                      Selected
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </Draggable>
+                        );
+                      })}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                  </Droppable>
+                </div>
+
+                {/* Available roles (draggable into selected) */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-2">Available Roles</h3>
+                  <Droppable droppableId="available-roles">
+                    {(provided) => (
+                       <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-2 min-h-[12px] border-2 border-dashed border-gray-200 rounded-lg p-2">
+                         {roles.filter((r) => !selectedRoleIds.includes(String(r.id))).length === 0 && (
+                           <div className="text-sm text-gray-500 px-2 py-1">All roles selected</div>
+                         )}
+                        {roles
+                          .filter((r) => !selectedRoleIds.includes(String(r.id)))
+                          .map((role, index) => (
+                            <Draggable key={String(role.id)} draggableId={String(role.id)} index={index}>
+                              {(dragProvided) => (
+                                <div
+                                  ref={dragProvided.innerRef}
+                                  {...dragProvided.draggableProps}
+                                  {...dragProvided.dragHandleProps}
+                                  className="p-3 rounded-lg border-2 cursor-pointer transition-all bg-white border-gray-200 hover:border-gray-300"
+                                  onClick={() => void toggleRole(String(role.id))}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <h3 className="font-medium text-sm">{role.name}</h3>
+                                    <div className="flex items-center gap-2">
+                                      {role.description && (
+                                        <div className="group relative">
+                                          <Info tw="h-4 w-4 text-blue-500 hover:text-blue-600 transition-colors" />
+                                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                                            {role.description}
+                                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                                          </div>
+                                        </div>
+                                      )}
+                                      <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-500">Select</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </Draggable>
+                          ))}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </div>
+              </div>
+            </DragDropContext>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1">
+            {/* Tabs: General + selected roles */}
+            <div className="flex border-b border-gray-200 mb-6 gap-2">
+              <button
+                className={`px-4 py-2 font-medium ${
+                  activeTab === "general" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-gray-700"
+                }`}
+                onClick={() => setActiveTab("general")}
+              >
+                General
+              </button>
+              {selectedRoleIds.map((rid) => (
+                <button
+                  key={rid}
+                  className={`px-4 py-2 font-medium ${
+                    activeTab === rid ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-gray-700"
+                  }`}
+                  onClick={() => setActiveTab(rid)}
+                >
+                  {roles.find((r) => String(r.id) === rid)?.name ?? `Role ${rid}`}
+                </button>
+              ))}
+            </div>
+
+            {/* General questions */}
+            {activeTab === "general" && (
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                {commonQuestions.length === 0 ? (
+                  <p className="text-gray-600">No general questions.</p>
+                ) : (
+                  <div className="space-y-6">{commonQuestions.map(renderQuestion)}</div>
+                )}
+              </div>
+            )}
+
+            {/* Role-specific questions */}
+            {activeTab !== "general" && (
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  {activeRole?.name ?? "Role"} Questions
+                </h3>
+                {activeRoleQuestions.length === 0 ? (
+                  <p className="text-gray-600">No role-specific questions.</p>
+                ) : (
+                  <div className="space-y-6">{activeRoleQuestions.map(renderQuestion)}</div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Submit Button - Fixed position bottom right */}
+        <div className="fixed bottom-8 right-8 flex flex-col items-end gap-2">
+          {validationError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 max-w-sm">
+              <p className="text-red-700 text-sm whitespace-pre-line">
+                {validationError}
+              </p>
+            </div>
+          )}
+          <Button 
+            className="shadow-lg"
+            size="lg"
+            onClick={handleSubmitClick}
+          >
+            Submit
+          </Button>
+        </div>
+
+        {/* Submit Confirmation Modal */}
+        <Dialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                Confirm Application Submission
+                {applicationId && (
+                  <span className="text-sm font-normal text-gray-500 ml-2">
+                    (ID: {applicationId})
+                  </span>
+                )}
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="mb-6">
+              <p className="text-gray-700 mb-4">
+                Please review your application before submitting. Once submitted, you won't be able to make changes.
+              </p>
+            </div>
+            
+            {/* Applied Roles Section */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-3">Applied Roles:</h3>
+              {selectedRoleIds.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {selectedRoleIds.map((roleId) => {
+                    const role = roles.find(r => String(r.id) === roleId);
+                    return (
+                      <span 
+                        key={roleId}
+                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                      >
+                        {role?.name || `Role ${roleId}`}
+                      </span>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-gray-600">No roles selected</p>
+              )}
+            </div>
+
+            {/* Common Questions Section */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-3">General Questions:</h3>
+              {commonQuestions.length > 0 ? (
+                <div className="space-y-4">
+                  {commonQuestions.map((question) => (
+                    <div key={question.id} className="border-l-4 border-gray-200 pl-4">
+                      <h4 className="font-medium text-gray-900 mb-1">
+                        {question.title}
+                        {question.required && <span className="text-red-500 ml-1">*</span>}
+                      </h4>
+                      {question.description && (
+                        <p className="text-sm text-gray-600 mb-2">{question.description}</p>
+                      )}
+                      <p className="text-gray-800 bg-gray-50 p-2 rounded">
+                        {formatAnswer(question, answers[String(question.id)])}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-600">No general questions</p>
+              )}
+            </div>
+
+            {/* Role-specific Questions Sections */}
+            {selectedRoleIds.map((roleId) => {
+              const role = roles.find(r => String(r.id) === roleId);
+              const roleQuestions = questionsByRole[roleId] || [];
+              
+              return (
+                <div key={roleId} className="mb-6">
+                  <h3 className="text-lg font-semibold mb-3">
+                    {role?.name || `Role ${roleId}`} Questions:
+                  </h3>
+                  {roleQuestions.length > 0 ? (
+                    <div className="space-y-4">
+                      {roleQuestions.map((question) => (
+                        <div key={question.id} className="border-l-4 border-blue-200 pl-4">
+                          <h4 className="font-medium text-gray-900 mb-1">
+                            {question.title}
+                            {question.required && <span className="text-red-500 ml-1">*</span>}
+                          </h4>
+                          {question.description && (
+                            <p className="text-sm text-gray-600 mb-2">{question.description}</p>
+                          )}
+                          <p className="text-gray-800 bg-blue-50 p-2 rounded">
+                            {formatAnswer(question, answers[String(question.id)])}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-600">No questions for this role</p>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowSubmitDialog(false)}
+                disabled={submitting}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleConfirmSubmit}
+                disabled={submitting}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {submitting ? "Submitting..." : "Confirm Submit"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </div>
+  );
 };
 
-export default DevsocRecruitmentForm;
+export default ApplicationReview;

@@ -24,8 +24,8 @@ export type RoleWithDates = Role & {
 };
 
 export type Role = {
-  id: number;
-  campaign_id: number;
+  id: string;
+  campaign_id: string;
   name: string;
   description?: string;
   min_available: number;
@@ -47,23 +47,24 @@ export type RoleApplications = {
 
 // models::application::ApplicationDetails
 export type ApplicationDetails = {
-  id: number;
-  campaign_id: number;
+  id: string;
+  campaign_id: string;
   user: User;
   status: ApplicationStatus;
   private_status: ApplicationStatus;
   applied_roles: ApplicationAppliedRoleDetails[];
 }
 
-// models::application::ApplicationRoleDetails
+// models::application::ApplicationAppliedRoleDetails
 export type ApplicationAppliedRoleDetails = {
-  campaign_role_id: number;
+  campaign_role_id: string;
   role_name: string;
+  preference: number;
 }
 
 export type Question = {
-  id: number;
-  role_ids: number[];
+  id: string;
+  role_ids: string[];
   title: string;
   description?: string;
   max_bytes: number;
@@ -82,14 +83,14 @@ export type NewQuestion = {
 
 // models::question::Question
 export type QuestionResponse = {
-  id: number;
+  id: string;
   title: string;
   description?: string;
-  //common: boolean;
-  //max_bytes: number;
+  common: boolean;
+  roles: string[];
   required: boolean;
-  questionType: QuestionType;
-  data: QuestionData[];
+  question_type: QuestionType;
+  data?: QuestionData;
   created_at: Date;
   updated_at: Date;
 };
@@ -105,10 +106,10 @@ export enum QuestionType {
 
 export type QuestionData = {
   options: {
-    id: number,
-    displayOrder: number,
+    id: string,
+    display_order: number,
     text: string
-  };
+  }[];
 }
 
 export type QuestionInput = {
@@ -122,7 +123,7 @@ export type QuestionInput = {
 export type OrganisationRole = "User" | "Admin";
 
 // models::application::ApplicationStatus
-export type ApplicationStatus = "Draft" | "Pending" | "Completed";
+export type ApplicationStatus = "Pending" | "Rejected" | "Successful";
 
 // models::application::NewApplication
 export type NewApplication = {
@@ -131,25 +132,37 @@ export type NewApplication = {
 
 // models::application::NewApplication
 export type ApplicationRole = {
-  campaign_role_id: number,
+  campaign_role_id: string,
+}
+
+// Payload for updating roles on an application (PATCH /application/{application_id}/roles)
+export type ApplicationRoleUpdateInput = {
+  roles: ApplicationRoleUpdateInputRole[];
+}
+
+export type ApplicationRoleUpdateInputRole = {
+  id: string; // placeholder OK (backend ignores on update)
+  application_id: string;
+  campaign_role_id: string;
+  preference: number;
 }
 
 export type Application = {
-  id: number;
-  user_id: number;
-  role_id: number;
+  id: string;
+  user_id: string;
+  role_id: string;
   status: ApplicationStatus;
 };
 
 export type ApplicationResponse = {
-  id: number;
-  user_id: number;
+  id: string;
+  user_id: string;
   user_email: string;
   user_zid: string;
   user_display_name: string;
   user_degree_name: string;
   user_degree_starting_year: number;
-  role_id: number;
+  role_id: string;
   status: ApplicationStatus;
   private_status: ApplicationStatus;
   created_at: string;
@@ -158,15 +171,19 @@ export type ApplicationResponse = {
 
 // models::answer::Answer
 export type Answer = {
-  id: number,
-  question_id: number,
-  answer_type: QuestionType,
-  data: AnswerData,
+  id: string,
+  question_id: string,
+  answer_type: AnswerType,
+  answer_data: AnswerData,
   created_at: Date,
   updated_at: Date,
 }
 
-export type AnswerData = string | number | number[];
+// Same answer types as question types
+export type AnswerType = QuestionType;
+
+// Either an option id, an array of option ids, or a string of short answer
+export type AnswerData = string | string[];
 
 // export type AnswerData = 
 // { type: QuestionType.ShortAnswer; value: string }   |
@@ -176,9 +193,9 @@ export type AnswerData = string | number | number[];
 // { type: QuestionType.Ranking; value: number[] }; 
 
 export type ApplicationAnswer = {
-  id: number;
-  application_id: number;
-  question_id: number;
+  id: string;
+  application_id: string;
+  question_id: string;
   description: string;
   created_at: string;
   updated_at: string;
@@ -190,8 +207,8 @@ export type NewRating = {
 }
 
 export type ApplicationRating = {
-  id: number;
-  rater_id: number;
+  id: string;
+  rater_id: string;
   rater_name: string
   rating: number;
   comment?: string;
@@ -200,7 +217,7 @@ export type ApplicationRating = {
 
 // models::campaign::Campaign
 export type CampaignWithDates = {
-  id: number;
+  id: string;
   slug: string
   organisation_id: string; // Changed to string to handle large integers
   name: string;
@@ -214,8 +231,8 @@ export type CampaignWithDates = {
 
 // models::campaign::CampaignDetails
 export type Campaign = {
-  id: number;
-  campaign_slug: string;
+  id: string;
+  slug: string;
   name: string;
   organisation_id: string; // Changed to string to handle large integers
   organisation_slug: string;
@@ -227,7 +244,7 @@ export type Campaign = {
 }
 
 export type CampaignInfo = {
-  id: number;
+  id: string;
   name: string;
   cover_image?: string;
   starts_at: string;
@@ -238,16 +255,16 @@ export type CampaignWithRoles = {
   campaign: Campaign;
   roles: Role[];
   questions: Question[];
-  applied_for: [number, ApplicationStatus][]; // [roleId, ApplicationStatus]
+  applied_for: [string, ApplicationStatus][]; // [roleId, ApplicationStatus]
 };
 
 export type NewCampaignInput = {
   organisation_id: string; // Changed to string to handle large integers
+  slug: string;
   name: string;
-  description: string;
+  description?: string;
   starts_at: string;
   ends_at: string;
-  published: boolean;
 };
 
 export type LogoError =
@@ -256,7 +273,7 @@ export type LogoError =
   | "ImageStoreFailure";
 
 export type newOrganisation = {
-  admin: number,
+  admin: string,
   slug: string,
   name: string
 };
@@ -270,13 +287,14 @@ export type Organisation = {
 };
 
 export type Member = {
-  id: number;
+  id: string;
   name: string;
+  email: string;
   role: OrganisationRole;
 };
 
 export type OrganisationInfo = {
-  id: number;
+  id: string;
   name: string;
   logo?: string;
   members: Member[];
@@ -288,14 +306,14 @@ export type UserGender = "Male" | "Female" | "Unspecified";
 
 // matches both models::user::User and models::user::UserDetails in the backend
 export type User = {
-  id: number;
+  id: string;
   email: string;
-  zid: string;
+  zid?: string;
   name: string;
-  pronouns: string;
-  gender: string;
-  degree_name: string;
-  degree_starting_year: number;
+  pronouns?: string;
+  gender?: string;
+  degree_name?: string;
+  degree_starting_year?: number;
   role?: UserRole
 };
 
@@ -306,9 +324,9 @@ export enum UserRole {
 }
 
 export type PostCommentRespone = {
-  id: number;
-  application_id: number;
-  commenter_user_id: number;
+  id: string;
+  application_id: string;
+  commenter_user_id: string;
   description: string;
   created_at: string;
   updated_at: string;

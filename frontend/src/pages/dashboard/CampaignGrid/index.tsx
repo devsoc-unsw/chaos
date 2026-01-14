@@ -9,7 +9,7 @@ import type { Campaign, Organisation } from "types/api";
 
 type Props = {
   campaigns: Campaign[];
-  organisations: { [orgId: number]: Organisation };
+  organisations: { [orgId: string]: Organisation };
   loading: boolean;
   loadingNumCampaigns: number;
   animationDelay?: number;
@@ -63,15 +63,15 @@ const CampaignGrid = ({
         >
           <CampaignCard
             campaignId={campaign.id}
+            campaignSlug={campaign.slug}
+            organisationSlug={campaign.organisation_slug}
             title={campaign.name}
             appliedFor={[]} // No applied_for data available from backend
             positions={[]} // No roles data available from backend
             startDate={new Date(campaign.starts_at)}
             endDate={new Date(campaign.ends_at)}
             img={campaign.cover_image}
-            organisationLogo={
-              organisations[campaign.organisation_id]?.logo
-            }
+            organisationLogo={organisations[campaign.organisation_id]?.logo}
             campaigns={[]}
             setCampaigns={() => {}}
           />

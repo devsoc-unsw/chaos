@@ -13,7 +13,7 @@ use crate::models::email::{ChaosEmail, EmailCredentials};
 use crate::models::error::ChaosError;
 use crate::models::storage::Storage;
 use axum::routing::{delete, get, patch, post};
-use axum::Router;
+use axum::{Json, Router};
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use reqwest::Client as ReqwestClient;
 use s3::Bucket;
@@ -21,10 +21,73 @@ use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 use std::env;
-use axum::http::{header, Method};
+use axum::http::{header, Method, StatusCode};
+use axum::response::IntoResponse;
 use oauth2::basic::BasicClient;
+use serde::Serialize;
 use tower_http::cors::CorsLayer;
 use crate::service::oauth2::build_oauth_client;
+
+#[derive(Serialize)]
+pub enum AppMessage<T: Serialize> {
+    OkMessage(T),
+    BadRequestMessage(T),
+    NotFoundMessage(T),
+    ErrorMessage(T),
+    NotLoggedInMessage(T),
+    UnauthorizedMessage(T),
+}
+
+#[derive(Serialize)]
+pub struct MessageWrapper<T: Serialize> {
+    message: T,
+}
+
+#[derive(Serialize)]
+pub struct ErrorMessageWrapper<T: Serialize> {
+    error: T,
+}
+
+impl<T: Serialize> IntoResponse for AppMessage<T> {
+    fn into_response(self) -> axum::response::Response {
+        match self {
+            Self::OkMessage(value) => {
+                (StatusCode::OK, Json(MessageWrapper { message: value })).into_response()
+            }
+            Self::BadRequestMessage(value) => (
+                StatusCode::BAD_REQUEST,
+                Json(ErrorMessageWrapper { error: value }),
+            )
+                .into_response(),
+            Self::NotFoundMessage(value) => (
+                StatusCode::NOT_FOUND,
+                Json(ErrorMessageWrapper { error: value }),
+            )
+                .into_response(),
+            Self::ErrorMessage(value) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorMessageWrapper { error: value }),
+            )
+                .into_response(),
+            Self::NotLoggedInMessage(value) => (
+                StatusCode::UNAUTHORIZED,
+                Json(ErrorMessageWrapper { error: value }),
+            )
+                .into_response(),
+            Self::UnauthorizedMessage(value) => (
+                StatusCode::FORBIDDEN,
+                Json(ErrorMessageWrapper { error: value }),
+            )
+                .into_response(),
+        }
+    }
+}
+
+#[derive(Serialize)]
+pub struct IdMessage {
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub id: i64,
+}
 
 #[derive(Clone)]
 pub struct AppState {
@@ -118,7 +181,7 @@ pub async fn app() -> Result<Router, ChaosError> {
     let state = init_app_state().await;
 
     let cors = CorsLayer::new()
-        .allow_methods([Method::GET, Method::POST, Method::DELETE, Method::PUT])
+        .allow_methods([Method::GET, Method::POST, Method::DELETE, Method::PUT, Method::PATCH])
         .allow_headers([header::ACCEPT, header::COOKIE, header::SET_COOKIE, header::CONTENT_TYPE])
         .allow_credentials(true)
         .allow_origin([
@@ -147,7 +210,7 @@ pub async fn app() -> Result<Router, ChaosError> {
             "/api/v1/user/applications",
             get(ApplicationHandler::get_from_curr_user),
         )
-        .route("/api/v1/user/organisations", get(OrganisationHandler::get_by_admin))
+        .route("/api/v1/user/organisations", get(OrganisationHandler::get_all_for_user))
         .route("/api/v1/organisation", post(OrganisationHandler::create))
         .route(
             "/api/v1/organisation/slug_check",
@@ -157,6 +220,7 @@ pub async fn app() -> Result<Router, ChaosError> {
             "/api/v1/organisation/:organisation_id",
             get(OrganisationHandler::get).delete(OrganisationHandler::delete),
         )
+        .route("/api/v1/organisation/:organisation_id/role", get(OrganisationHandler::get_user_role))
         .route(
             "/api/v1/organisation/slug/:slug",
             get(OrganisationHandler::get_by_slug),
@@ -191,8 +255,8 @@ pub async fn app() -> Result<Router, ChaosError> {
                 .put(OrganisationHandler::update_members)
         )
         .route(
-            "/api/v1/organisation/:organisation_id/member",
-                delete(OrganisationHandler::remove_member),
+            "/api/v1/organisation/:organisation_id/user",
+            post(OrganisationHandler::invite_user).delete(OrganisationHandler::remove_user),
         )
         .route(
             "/api/v1/organisation/:organisation_id/admins",
@@ -204,18 +268,14 @@ pub async fn app() -> Result<Router, ChaosError> {
                 delete(OrganisationHandler::remove_admin),
         )
         .route(
+            "/api/v1/organisation/:organisation_id/users",
+            get(OrganisationHandler::get_users)
+        )
+        .route(
             "/api/v1/rating/:rating_id",
             get(RatingHandler::get)
                 .delete(RatingHandler::delete)
                 .put(RatingHandler::update),
-        )
-        .route(
-            "/api/v1/application/:application_id/rating",
-            post(ApplicationHandler::create_rating),
-        )
-        .route(
-            "/api/v1/application/:application_id/ratings",
-            get(ApplicationHandler::get_ratings),
         )
         .route(
             "/api/v1/campaign/:campaign_id/role",
@@ -236,7 +296,7 @@ pub async fn app() -> Result<Router, ChaosError> {
         .route(
             "/api/v1/role/:role_id",
             get(RoleHandler::get)
-                .put(RoleHandler::update)
+                .patch(RoleHandler::update)
                 .delete(RoleHandler::delete),
         )
         .route(
@@ -250,10 +310,22 @@ pub async fn app() -> Result<Router, ChaosError> {
                 .delete(CampaignHandler::delete),
         )
         .route(
-            "/api/v1/campaign/slug/:organisation_slug/:campaign_slug",
+            "/api/v1/campaign/:campaign_id/publish",
+            patch(CampaignHandler::publish),
+        )
+        .route(
+            "/api/v1/organisation/slug/:organisation_slug/campaign/slug/:campaign_slug",
             get(CampaignHandler::get_by_slugs),
         )
         .route("/api/v1/campaigns", get(CampaignHandler::get_all))
+        .route(
+            "/api/v1/campaign/:campaign_id/apply",
+            post(ApplicationHandler::create_or_get),
+        )
+        .route(
+            "/api/v1/campaign/:campaign_id/application/exists",
+            get(ApplicationHandler::check_application_exists),
+        )
         .route(
             "/api/v1/campaign/:campaign_id/question",
             post(QuestionHandler::create),
@@ -269,6 +341,15 @@ pub async fn app() -> Result<Router, ChaosError> {
         .route(
             "/api/v1/campaign/:campaign_id/banner",
             patch(CampaignHandler::update_banner),
+        )
+        .route(
+            "/api/v1/campaign/:campaign_id/attachments",
+            get(CampaignHandler::get_attachments)
+                .patch(CampaignHandler::upload_attachments),
+        )
+        .route(
+            "/api/v1/campaign/attachment/:attachment_id",
+            delete(CampaignHandler::delete_attachment),
         )
         .route(
             "/api/v1/campaign/:campaign_id/application",
@@ -287,6 +368,20 @@ pub async fn app() -> Result<Router, ChaosError> {
             get(ApplicationHandler::get),
         )
         .route(
+            "/api/v1/application/:application_id/inprogress",
+            get(ApplicationHandler::get_in_progress),
+        )
+        .route(
+            "/api/v1/application/:application_id/rating",
+            get(ApplicationHandler::get_rating_by_current_user)
+                .post(ApplicationHandler::create_rating)
+                .put(ApplicationHandler::update_rating),
+        )
+        .route(
+            "/api/v1/application/:application_id/ratings",
+            get(ApplicationHandler::get_ratings),
+        )
+        .route(
             "/api/v1/application/:application_id/status",
             patch(ApplicationHandler::set_status),
         )
@@ -303,12 +398,12 @@ pub async fn app() -> Result<Router, ChaosError> {
             post(AnswerHandler::create),
         )
         .route(
-            "/api/v1/application/:application_id/answers/role/:role_id",
+            "/api/v1/application/:application_id/role/:role_id/answers",
             get(AnswerHandler::get_all_by_application_and_role),
         )
         .route(
             "/api/v1/application/:application_id/roles",
-            patch(ApplicationHandler::update_roles)
+            get(ApplicationHandler::get_roles).patch(ApplicationHandler::update_roles)
         )
         .route(
             "/api/v1/application/:application_id/submit",
@@ -323,6 +418,10 @@ pub async fn app() -> Result<Router, ChaosError> {
             get(EmailTemplateHandler::get)
                 .patch(EmailTemplateHandler::update)
                 .delete(EmailTemplateHandler::delete),
+        )
+        .route(
+            "/api/v1/email_template/:template_id/duplicate",
+            post(EmailTemplateHandler::duplicate)
         )
         .route(
             "/api/v1/offer/:offer_id",

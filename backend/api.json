@@ -1716,7 +1716,7 @@
                   },
                   "finalised": {
                     "type": "boolean",
-                    "description": "Whether this role has been finalised (e.g. max avaliable number)",
+                    "description": "Whether this role has been finalised (e.g. max available number)",
                     "example": false
                   }
                 }
@@ -1936,7 +1936,7 @@
                     },
                     "finalised": {
                       "type": "boolean",
-                      "description": "Whether this role has been finalised (e.g. max avaliable number)",
+                      "description": "Whether this role has been finalised (e.g. max available number)",
                       "example": false
                     }
                   }
@@ -2002,7 +2002,7 @@
                   },
                   "finalised": {
                     "type": "boolean",
-                    "description": "Whether this role has been finalised (e.g. max avaliable number)",
+                    "description": "Whether this role has been finalised (e.g. max available number)",
                     "example": true
                   }
                 }
@@ -2638,7 +2638,7 @@
           },
           "finalised": {
             "type": "boolean",
-            "description": "Whether this role has been finalised (e.g. max avaliable number)",
+            "description": "Whether this role has been finalised (e.g. max available number)",
             "example": false
           }
         }

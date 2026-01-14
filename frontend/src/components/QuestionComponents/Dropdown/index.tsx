@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -9,24 +9,28 @@ import {
 } from '@/components/ui/select';
 import tw from 'twin.macro';
 
+// Special value to represent "No Answer" selection
+export const NO_ANSWER_VALUE = '__NO_ANSWER__';
+
 interface DropdownOption {
   id: string | number;
   label: string;
 }
 
 interface DropdownProps {
-  id: number;
+  id: string;
   question: string;
   description?: string;
   options: DropdownOption[];
   required?: boolean;
   defaultValue?: string | number;
   onChange?: (value: string | number) => void;
-  onSubmit?: (questionId: number, value: string | number) => void;
+  onSubmit?: (questionId: string, value: string | number) => void;
   disabled?: boolean;
   placeholder?: string;
   width?: string;
   height?: string;
+  answerId?: string;
 }
 
 const Dropdown: React.FC<DropdownProps> = ({
@@ -42,8 +46,14 @@ const Dropdown: React.FC<DropdownProps> = ({
   width = "max-w-4xl",
   height = "",
   placeholder = "Select an option",
+  answerId,
 }) => {
   const [value, setValue] = useState<string | number | undefined>(defaultValue);
+
+  // Sync internal state when the defaultValue prop changes (e.g., after async prefill)
+  useEffect(() => {
+    setValue(defaultValue);
+  }, [defaultValue]);
 
   const handleSelect = (selectedValue: string) => {
     // Convert back to number if the original option id was a number
@@ -57,7 +67,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   };
 
   return (
-    <div tw="mb-6 w-full" css={width ? tw`${width}` : undefined}>
+    <div tw="mb-6 w-full max-w-sm" css={width ? tw`${width}` : undefined}>
       <div className="flex items-center mb-2">
         <Label className="text-lg font-medium">{question}</Label>
         {required && <span className="ml-1 text-red-500">*</span>}
@@ -66,6 +76,10 @@ const Dropdown: React.FC<DropdownProps> = ({
       {description && (
         <p className="mb-4 text-sm text-muted-foreground">{description}</p>
       )}
+      
+      {answerId && (
+        <p className="mb-2 text-xs text-gray-400">Answer ID: {answerId}</p>
+      )}
 
       <Select
         value={value?.toString()}
@@ -73,9 +87,23 @@ const Dropdown: React.FC<DropdownProps> = ({
         disabled={disabled}
       >
         <SelectTrigger>
-          <SelectValue placeholder={placeholder} />
+          <SelectValue placeholder={placeholder}>
+            {value === NO_ANSWER_VALUE ? "No Answer" : undefined}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
+          {/* "No Answer" option for clearing the selection */}
+          <SelectItem
+            key={NO_ANSWER_VALUE}
+            value={NO_ANSWER_VALUE}
+            style={{
+              '--hover-bg': 'rgb(254 242 242)',
+              '--hover-text': 'rgb(153 27 27)',
+            } as React.CSSProperties}
+            className="hover:bg-[var(--hover-bg)] hover:text-[var(--hover-text)] data-[highlighted]:bg-[var(--hover-bg)] data-[highlighted]:text-[var(--hover-text)] text-red-600 font-medium"
+          >
+            No Answer
+          </SelectItem>
           {options.map((option) => (
             <SelectItem
               key={option.id}

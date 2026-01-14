@@ -10,12 +10,15 @@ use crate::models::user::UserDetails;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
-use sqlx::{FromRow, Pool, Postgres, Transaction};
+use sqlx::{FromRow, Postgres, Transaction};
+use sqlx::types::Json;
 use std::ops::DerefMut;
 use axum::{async_trait, RequestPartsExt};
 use axum::extract::{FromRef, FromRequestParts, Path};
 use axum::http::request::Parts;
 use crate::models::app::AppState;
+use crate::models::question::MultiOptionQuestionOption;
+use crate::models::rating::RatingDetails;
 use crate::service::answer::assert_answer_application_is_open;
 use crate::service::application::{assert_application_is_open};
 
@@ -27,10 +30,13 @@ use crate::service::application::{assert_application_is_open};
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Application {
     /// Unique identifier for the application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the campaign this application belongs to
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_id: i64,
     /// ID of the user who submitted the application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub user_id: i64,
     /// Public status of the application
     pub status: ApplicationStatus,
@@ -50,10 +56,29 @@ pub struct Application {
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct ApplicationRole {
     /// Unique identifier for the role application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
     pub id: i64,
     /// ID of the parent application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
     pub application_id: i64,
     /// ID of the campaign role being applied for
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
+    pub campaign_role_id: i64,
+    /// User's preference ranking for this role (lower number = higher preference)
+    pub preference: i32,
+}
+
+/// Data structure for creating a new application.
+///
+/// Contains a list of role ids and preferences
+#[derive(Deserialize)]
+pub struct UpdateRoleEntry {
+     /// ID of the campaign role being applied for
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
     pub campaign_role_id: i64,
     /// User's preference ranking for this role (lower number = higher preference)
     pub preference: i32,
@@ -75,8 +100,10 @@ pub struct NewApplication {
 #[derive(Deserialize, Serialize)]
 pub struct ApplicationDetails {
     /// Unique identifier for the application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the campaign this application belongs to
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_id: i64,
     /// Details of the user who submitted the application
     pub user: UserDetails,
@@ -86,6 +113,8 @@ pub struct ApplicationDetails {
     pub private_status: ApplicationStatus,
     /// List of roles the user has applied for, with details
     pub applied_roles: Vec<ApplicationAppliedRoleDetails>,
+    /// Whether the current logged-in user has rated this application
+    pub current_user_rated: bool,
 }
 
 /// Raw application data from the database.
@@ -95,10 +124,13 @@ pub struct ApplicationDetails {
 #[derive(Deserialize, Serialize)]
 pub struct ApplicationData {
     /// Unique identifier for the application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the campaign this application belongs to
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_id: i64,
     /// ID of the user who submitted the application
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub user_id: i64,
     /// Email address of the applicant
     pub user_email: String,
@@ -118,6 +150,8 @@ pub struct ApplicationData {
     pub status: ApplicationStatus,
     /// Private status of the application (visible only to admins)
     pub private_status: ApplicationStatus,
+    /// Whether the current logged-in user has rated this application
+    pub current_user_rated: bool,
 }
 
 /// Details about a role that has been applied for.
@@ -126,6 +160,7 @@ pub struct ApplicationData {
 #[derive(Deserialize, Serialize)]
 pub struct ApplicationAppliedRoleDetails {
     /// ID of the campaign role
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_role_id: i64,
     /// Name of the role
     pub role_name: String,
@@ -137,7 +172,8 @@ pub struct ApplicationAppliedRoleDetails {
 #[derive(Deserialize)]
 pub struct ApplicationRoleUpdate {
     /// Updated list of role preferences
-    pub roles: Vec<ApplicationRole>,
+   //pub roles: Vec<ApplicationRole>,
+   pub roles: Vec<UpdateRoleEntry>,
 }
 
 /// Possible statuses for an application.
@@ -154,7 +190,107 @@ pub enum ApplicationStatus {
     Successful,
 }
 
+/// Individual rating data for a specific application.
+///
+/// Each row represents an individual rating for a single applicant in a given role
+/// within a specific application, including reviewer information.
+#[derive(Deserialize, Serialize, FromRow)]
+pub struct ApplicationRatingSummary {
+    /// Application ID
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub application_id: i64,
+    /// Role IDs application is for
+    #[serde(serialize_with = "crate::models::serde_string::serialize_vec")]
+    pub applied_roles: Vec<i64>,
+    /// User's name (applicant)
+    pub user_name: String,
+    /// User's email (applicant)
+    pub user_email: String,
+    /// Status of the application
+    pub status: ApplicationStatus,
+    /// When the rating was last updated
+    pub updated_at: DateTime<Utc>,
+    /// All ratings the application has received
+    pub ratings: Option<sqlx::types::Json<Vec<RatingDetails>>>,
+}
+
 impl Application {
+    /// Creates a new application if it doesn't exist, otherwise returns the existing application ID.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `campaign_id` - ID of the campaign to apply to
+    /// * `user_id` - ID of the user submitting the application
+    /// * `snowflake_generator` - Generator for creating unique IDs
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<i64, ChaosError>` - ID of the application or error
+    pub async fn create_or_get(
+        campaign_id: i64,
+        user_id: i64,
+        snowflake_generator: &mut SnowflakeIdGenerator,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<i64, ChaosError> {
+        // Check if application already exists
+        let application = sqlx::query!(
+            "
+                SELECT id FROM applications
+                WHERE campaign_id = $1 AND user_id = $2
+            ",
+            campaign_id,
+            user_id
+        )
+        .fetch_optional(transaction.deref_mut())
+        .await?;
+
+        if let Some(application) = application {
+            return Ok(application.id);
+        }
+
+        let id = snowflake_generator.real_time_generate();
+        // Create new application
+        sqlx::query!(
+            "
+                INSERT INTO applications (id, campaign_id, user_id)
+                VALUES ($1, $2, $3)
+            ",
+            id,
+            campaign_id,
+            user_id
+        )
+        .execute(transaction.deref_mut())
+        .await?;
+
+        Ok(id)
+    }
+
+    /// Checks if an application exists for a given campaign and user.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `campaign_id` - ID of the campaign to check
+    /// * `user_id` - ID of the user to check
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<bool, ChaosError>` - True if application exists, false otherwise
+    pub async fn check_application_exists(
+        campaign_id: i64,
+        user_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<bool, ChaosError> {
+        let application = sqlx::query!(
+            "SELECT id FROM applications WHERE campaign_id = $1 AND user_id = $2",
+            campaign_id, user_id)
+        .fetch_optional(transaction.deref_mut())
+        .await?;
+
+        Ok(application.is_some())
+    }
+    
     /// Creates a new application in the system.
     /// 
     /// # Arguments
@@ -220,6 +356,7 @@ impl Application {
     /// * `Result<ApplicationDetails, ChaosError>` - Application details or error
     pub async fn get(
         id: i64,
+        current_user: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<ApplicationDetails, ChaosError> {
         let application_data = sqlx::query_as!(
@@ -229,13 +366,16 @@ impl Application {
                 private_status AS \"private_status: ApplicationStatus\", u.email AS user_email,
                 u.zid AS user_zid, u.name AS user_name, u.gender AS user_gender,
                 u.pronouns AS user_pronouns, u.degree_name AS user_degree_name,
-                u.degree_starting_year AS user_degree_starting_year
+                u.degree_starting_year AS user_degree_starting_year,
+                (ar.id IS NOT NULL) AS \"current_user_rated!: bool\"
                 FROM applications a
                 JOIN users u ON u.id = a.user_id
                 JOIN campaigns c ON c.id = a.campaign_id
+                LEFT JOIN application_ratings ar ON ar.application_id = a.id AND ar.application_id = $2
                 WHERE a.id = $1 AND a.submitted = true
             ",
-            id
+            id,
+            current_user
         )
         .fetch_one(transaction.deref_mut())
         .await?;
@@ -249,6 +389,7 @@ impl Application {
                     JOIN campaign_roles
                     ON application_roles.campaign_role_id = campaign_roles.id
                 WHERE application_id = $1
+                ORDER BY campaign_roles.id
             ",
             id
         )
@@ -261,6 +402,85 @@ impl Application {
             status: application_data.status,
             private_status: application_data.private_status,
             applied_roles,
+            current_user_rated: application_data.current_user_rated,
+            user: UserDetails {
+                id: application_data.user_id,
+                email: application_data.user_email,
+                zid: application_data.user_zid,
+                name: application_data.user_name,
+                pronouns: application_data.user_pronouns,
+                gender: application_data.user_gender,
+                degree_name: application_data.user_degree_name,
+                degree_starting_year: application_data.user_degree_starting_year,
+            },
+        })
+    }
+
+    /// Retrieves an application by its ID regardless of submission status.
+    /// This handler allows regular applicants to view application details in the answer screen.
+    /// # Arguments
+    /// 
+    /// * `id` - ID of the application to retrieve
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<ApplicationDetails, ChaosError>` - Application details or error
+    pub async fn get_in_progress(
+        id: i64,
+        current_user: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<ApplicationDetails, ChaosError> {
+        let application_data = match sqlx::query_as!(
+            ApplicationData,
+            "
+                SELECT a.id AS id, campaign_id, user_id, status AS \"status: ApplicationStatus\",
+                private_status AS \"private_status: ApplicationStatus\", u.email AS user_email,
+                u.zid AS user_zid, u.name AS user_name, u.gender AS user_gender,
+                u.pronouns AS user_pronouns, u.degree_name AS user_degree_name,
+                u.degree_starting_year AS user_degree_starting_year,
+                (ar.id IS NOT NULL) AS \"current_user_rated!: bool\"
+                FROM applications a
+                JOIN users u ON u.id = a.user_id
+                JOIN campaigns c ON c.id = a.campaign_id
+                LEFT JOIN application_ratings ar ON ar.application_id = a.id AND ar.application_id = $2
+                WHERE a.id = $1 AND a.submitted = false
+            ",
+            id,
+            current_user
+        )
+        .fetch_one(transaction.deref_mut())
+        .await {
+            Ok(application) => application,
+            Err(sqlx::Error::RowNotFound) => {
+                return Err(ChaosError::BadRequest);
+            },
+            Err(e) => return Err(e.into()),
+        };
+
+        let applied_roles = sqlx::query_as!(
+            ApplicationAppliedRoleDetails,
+            "
+                SELECT application_roles.campaign_role_id,
+                application_roles.preference, campaign_roles.name AS role_name
+                FROM application_roles
+                    JOIN campaign_roles
+                    ON application_roles.campaign_role_id = campaign_roles.id
+                WHERE application_id = $1
+                ORDER BY campaign_roles.id
+            ",
+            id
+        )
+        .fetch_all(transaction.deref_mut())
+        .await?;
+
+        Ok(ApplicationDetails {
+            id: application_data.id,
+            campaign_id: application_data.campaign_id,
+            status: application_data.status,
+            private_status: application_data.private_status,
+            applied_roles,
+            current_user_rated: application_data.current_user_rated,
             user: UserDetails {
                 id: application_data.user_id,
                 email: application_data.user_email,
@@ -286,6 +506,7 @@ impl Application {
     /// * `Result<Vec<ApplicationDetails>, ChaosError>` - List of applications or error
     pub async fn get_from_role_id(
         role_id: i64,
+        current_user: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<ApplicationDetails>, ChaosError> {
         let application_data_list = sqlx::query_as!(
@@ -295,14 +516,17 @@ impl Application {
                 private_status AS \"private_status: ApplicationStatus\", u.email AS user_email,
                 u.zid AS user_zid, u.name AS user_name, u.gender AS user_gender,
                 u.pronouns AS user_pronouns, u.degree_name AS user_degree_name,
-                u.degree_starting_year AS user_degree_starting_year
+                u.degree_starting_year AS user_degree_starting_year,
+                (arating.id IS NOT NULL) AS \"current_user_rated!: bool\"
                 FROM applications a
                 JOIN users u ON u.id = a.user_id
                 JOIN application_roles ar on ar.application_id = a.id
                 JOIN campaigns c on c.id = a.campaign_id
-                WHERE ar.id = $1 AND a.submitted = true
+                LEFT JOIN application_ratings arating ON arating.application_id = a.id AND arating.rater_id = $2
+                WHERE ar.campaign_role_id = $1 AND a.submitted = true
             ",
-            role_id
+            role_id,
+            current_user
         )
             .fetch_all(transaction.deref_mut())
             .await?;
@@ -318,6 +542,7 @@ impl Application {
                         JOIN campaign_roles
                         ON application_roles.campaign_role_id = campaign_roles.id
                     WHERE application_id = $1
+                    ORDER BY campaign_roles.id
                 ",
                 application_data.id
             )
@@ -330,6 +555,7 @@ impl Application {
                 status: application_data.status,
                 private_status: application_data.private_status,
                 applied_roles,
+                current_user_rated: application_data.current_user_rated,
                 user: UserDetails {
                     id: application_data.user_id,
                     email: application_data.user_email,
@@ -360,6 +586,7 @@ impl Application {
     /// * `Result<Vec<ApplicationDetails>, ChaosError>` - List of applications or error
     pub async fn get_from_campaign_id(
         campaign_id: i64,
+        current_user: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<ApplicationDetails>, ChaosError> {
         let application_data_list = sqlx::query_as!(
@@ -369,17 +596,21 @@ impl Application {
                 private_status AS \"private_status: ApplicationStatus\", u.email AS user_email,
                 u.zid AS user_zid, u.name AS user_name, u.gender AS user_gender,
                 u.pronouns AS user_pronouns, u.degree_name AS user_degree_name,
-                u.degree_starting_year AS user_degree_starting_year
+                u.degree_starting_year AS user_degree_starting_year,
+                (ar.id IS NOT NULL) AS \"current_user_rated!: bool\"
                 FROM applications a
                 JOIN users u ON u.id = a.user_id
                 JOIN campaigns c ON c.id = a.campaign_id
+                LEFT JOIN application_ratings ar ON ar.application_id = a.id AND ar.rater_id = $2
                 WHERE a.campaign_id = $1 AND a.submitted = true
             ",
-            campaign_id
+            campaign_id,
+            current_user
         )
         .fetch_all(transaction.deref_mut())
         .await?;
 
+        // TODO: Make this into one query
         let mut application_details_list = Vec::new();
         for application_data in application_data_list {
             let applied_roles = sqlx::query_as!(
@@ -391,6 +622,7 @@ impl Application {
                         JOIN campaign_roles
                         ON application_roles.campaign_role_id = campaign_roles.id
                     WHERE application_id = $1
+                    ORDER BY campaign_roles.id
                 ",
                 application_data.id
             )
@@ -403,6 +635,7 @@ impl Application {
                 status: application_data.status,
                 private_status: application_data.private_status,
                 applied_roles,
+                current_user_rated: application_data.current_user_rated,
                 user: UserDetails {
                     id: application_data.user_id,
                     email: application_data.user_email,
@@ -421,6 +654,65 @@ impl Application {
         Ok(application_details_list)
     }
 
+    pub async fn get_application_ratings_summary(
+        campaign_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<ApplicationRatingSummary>, ChaosError> {
+        let application_users_avg_ratings = sqlx::query_as!(
+            ApplicationRatingSummary,
+            "
+                SELECT
+                    a.id AS application_id,
+                    ARRAY_AGG(DISTINCT applied_roles.campaign_role_id) AS \"applied_roles!: Vec<i64>\",
+                    u.name AS user_name, u.email AS user_email,
+                    a.status AS \"status: ApplicationStatus\", a.updated_at,
+
+                    to_jsonb(
+                        coalesce(
+                            array_remove(
+                                array_agg(
+                                    jsonb_build_object(
+                                        'id', ar.id,
+                                        'rater_id', reviewer.id,
+                                        'rater_name', reviewer.name,
+                                        'rating', ar.rating,
+                                        'comment', ar.comment,
+                                        'updated_at', ar.updated_at
+                                    ) ORDER BY ar.updated_at DESC
+                                ) FILTER (WHERE ar.id IS NOT NULL),
+                                NULL
+                            ),
+                            '{}'
+                        )
+                    ) AS \"ratings: Json<Vec<RatingDetails>>\"
+                FROM applications a
+                JOIN application_roles applied_roles ON applied_roles.application_id = a.id
+                JOIN campaign_roles ON campaign_roles.id = applied_roles.campaign_role_id
+                LEFT JOIN application_ratings ar on ar.application_id = a.id
+                JOIN users u ON u.id = a.user_id
+                LEFT JOIN users AS reviewer ON reviewer.id = ar.rater_id
+                WHERE a.campaign_id = $1 AND a.submitted = true
+                GROUP BY a.id, u.name, u.email, a.status, a.updated_at
+                ORDER BY a.id ASC
+            ",
+            campaign_id,
+        )
+        .fetch_all(transaction.deref_mut())
+        .await?;
+
+        // to_jsonb(
+        //     array_agg(
+        //         jsonb_build_object(
+        //             'id', mod.id,
+        //             'display_order', mod.display_order,
+        //             'text', mod.text
+        //         ) ORDER BY mod.display_order
+        //     ) FILTER (WHERE mod.id IS NOT NULL)
+        // ) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
+
+        Ok(application_users_avg_ratings)
+    }
+
     /// Retrieves all applications submitted by a specific user.
     /// 
     /// # Arguments
@@ -432,7 +724,8 @@ impl Application {
     /// 
     /// * `Result<Vec<ApplicationDetails>, ChaosError>` - List of applications or error
     pub async fn get_from_user_id(
-        user_id: i64,
+        applicant_id: i64,
+        current_user: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<ApplicationDetails>, ChaosError> {
         let application_data_list = sqlx::query_as!(
@@ -442,11 +735,14 @@ impl Application {
                 private_status AS \"private_status: ApplicationStatus\", u.email AS user_email,
                 u.zid AS user_zid, u.name AS user_name, u.gender AS user_gender,
                 u.pronouns AS user_pronouns, u.degree_name AS user_degree_name,
-                u.degree_starting_year AS user_degree_starting_year
+                u.degree_starting_year AS user_degree_starting_year,
+                (ar.id IS NOT NULL) AS \"current_user_rated!: bool\"
                 FROM applications a JOIN users u ON u.id = a.user_id
+                LEFT JOIN application_ratings ar ON ar.application_id = a.id AND ar.rater_id = $2
                 WHERE a.user_id = $1
             ",
-            user_id
+            applicant_id,
+            current_user
         )
         .fetch_all(transaction.deref_mut())
         .await?;
@@ -462,6 +758,7 @@ impl Application {
                         JOIN campaign_roles
                         ON application_roles.campaign_role_id = campaign_roles.id
                     WHERE application_id = $1
+                    ORDER BY campaign_roles.id
                 ",
                 application_data.id
             )
@@ -475,6 +772,7 @@ impl Application {
                 // To reuse struct, do not show use private status
                 private_status: application_data.status,
                 applied_roles,
+                current_user_rated: application_data.current_user_rated,
                 user: UserDetails {
                     id: application_data.user_id,
                     email: application_data.user_email,
@@ -555,6 +853,41 @@ impl Application {
         Ok(())
     }
 
+    /// Retrieves all roles associated with a specific application.
+    ///
+    /// This function queries the database to get all application roles for a given
+    /// application ID, including their preference rankings. The roles are returned
+    /// in the order they appear in the database (typically by preference).
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - The ID of the application to retrieve roles for
+    /// * `transaction` - Database transaction to use
+    ///
+    /// # Returns
+    ///
+    /// * `Result<Vec<ApplicationRole>, ChaosError>` - List of application roles or error
+    pub async fn get_roles(
+        id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<ApplicationRole>, ChaosError> {
+        let roles = sqlx::query_as!(
+            ApplicationRole,
+
+            "
+                SELECT id, application_id, campaign_role_id, preference
+                FROM application_roles
+                WHERE application_id = $1
+                ORDER BY preference
+            ",
+            id
+        )
+        .fetch_all(transaction.deref_mut())
+        .await?;
+
+        Ok(roles)
+    }
+
     /// Updates the role preferences for an application.
     /// 
     /// # Arguments
@@ -568,7 +901,7 @@ impl Application {
     /// * `Result<(), ChaosError>` - Success or error
     pub async fn update_roles(
         id: i64,
-        roles: Vec<ApplicationRole>,
+        roles: Vec<UpdateRoleEntry>,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         sqlx::query!(
@@ -678,7 +1011,7 @@ where
             .extract::<Path<HashMap<String, i64>>>()
             .await
             .map_err(|_| ChaosError::BadRequest)?
-            .get("application_id")
+            .get("answer_id")
             .ok_or(ChaosError::BadRequest)?;
 
         let mut tx = app_state.db.begin().await?;

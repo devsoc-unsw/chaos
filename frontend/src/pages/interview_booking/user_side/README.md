@@ -1,5 +1,5 @@
 # User Interview Booking System - Backend Integration
-To run this component, run 'npm yarn start', the page is at '/interview-booking'
+To run this component, run 'bun start', the page is at '/interview-booking'
 
 
 

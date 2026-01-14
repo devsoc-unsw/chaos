@@ -1,7 +1,9 @@
 import { lazy } from "react";
 import { Route } from "react-router-dom";
-import InterviewBooking from "./pages/interview_booking/user_side";
+
 import AdminInterviewBooking from "./pages/interview_booking/admin_side/admin_index";
+import CreateQuestion from "./pages/create_question";
+import InterviewBooking from "./pages/interview_booking/user_side";
 
 const Admin = lazy(() => import("./pages/admin"));
 const ApplicationPage = lazy(() => import("./pages/application_page"));
@@ -16,16 +18,23 @@ const Marking = lazy(() => import("./pages/admin/review/marking"));
 const Rankings = lazy(() => import("./pages/admin/review/rankings"));
 const Review = lazy(() => import("./pages/admin/review"));
 const SignupPage = lazy(() => import("./pages/signup"));
-const QuestionComponentsTest = lazy(() => import("./pages/question_components_test"));
-const AdminApplicationDashboard = lazy(() => import("./pages/admin_application_dashboard"));
-const ApplicationReviewTest = lazy(() => import("./pages/application_review"))
+const QuestionComponentsTest = lazy(
+  () => import("./pages/question_components_test")
+);
+const EmailTemplates = lazy(() => import("./pages/admin/email_templates"));
+const ApplicationReviewTest = lazy(() => import("./pages/application_review"));
+const AdminApplicationDashboard = lazy(
+  () => import("./pages/admin_application_dashboard")
+);
+const CampaignLandingPage = lazy(() => import("./pages/campaign"));
+const EditCampaign = lazy(() => import("./pages/edit_campaign"));
 
 const routes = [
   <Route key="dashboard" path="/dashboard" element={<DashboardPage />} />,
   <Route key="auth" path="/auth/callback" element={<AuthSuccess />} />,
   <Route key="signup" path="/signup" element={<SignupPage />} />,
   <Route key="landing" path="/" element={<LandingPage />} />,
-  <Route key="review" path="/admin/review/:campaignSlug" element={<Review />}>
+  <Route key="review" path="/admin/review/:campaignId" element={<Review />}>
     <Route key="marking" path=":roleSlug/marking" element={<Marking />} />,
     <Route key="rankings" path=":roleSlug/rankings" element={<Rankings />} />,
     <Route
@@ -33,23 +42,32 @@ const routes = [
       path=":roleSlug/finalise"
       element={<FinaliseCandidates />}
     />
-    ,
   </Route>,
   <Route key="Admin" path="/Admin" element={<Admin />} />,
   <Route
     key="create-campaign"
-    path="/campaign/create/:orgSlug"
+    path="/admin/organisation/:orgId/campaign/create"
     element={<CampaignCreate />}
   />,
   <Route
+    key="edit-campaign"
+    path="/organisation/:orgId/campaign/:campaignId/edit"
+    element={<EditCampaign />}
+  />,
+  <Route
     key="ApplicationPage"
-    path="/:organisationSlug/:campaignSlug/application"
+    path="/apply/:campaignId"
     element={<ApplicationPage />}
   />,
   <Route
     key="QuestionComponentsTest"
     path="/question-components-test"
     element={<QuestionComponentsTest />}
+  />,
+  <Route
+    key="email-templates"
+    path="/admin/email_templates"
+    element={<EmailTemplates />}
   />,
   <Route
     key="AdminApplicationDashboard"
@@ -59,9 +77,14 @@ const routes = [
   <Route
     key="Application Review"
     path="/campaign/:campaignId/apply"
-    element={<ApplicationReviewTest/>}
-    />,
-<Route
+    element={<ApplicationReviewTest />}
+  />,
+  <Route
+    key="campaign-landing"
+    path="/campaign/:organisationSlug/:campaignSlug"
+    element={<CampaignLandingPage />}
+  />,
+  <Route
     key="InterviewBooking"
     path="/interview-booking"
     element={<InterviewBooking />}
@@ -70,6 +93,11 @@ const routes = [
     key="AdminInterviewBooking"
     path="/admin-interview-booking"
     element={<AdminInterviewBooking />}
+  />,
+  <Route
+    key="CreateQuestion"
+    path="/create-question"
+    element={<CreateQuestion />}
   />,
 ];
 

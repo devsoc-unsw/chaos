@@ -5,7 +5,7 @@
 
 use crate::models::error::ChaosError;
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, Pool, Postgres, Transaction};
+use sqlx::{FromRow, Postgres, Transaction};
 use std::ops::DerefMut;
 
 /// Represents the role of a user in the system.
@@ -27,6 +27,7 @@ pub enum UserRole {
 #[derive(Deserialize, Serialize, FromRow)]
 pub struct UserDetails {
     /// Unique identifier for the user
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// User's email address
     pub email: String,
@@ -50,6 +51,7 @@ pub struct UserDetails {
 #[derive(Deserialize, Serialize, FromRow)]
 pub struct User {
     /// Unique identifier for the user
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// User's email address
     pub email: String,
@@ -131,6 +133,22 @@ impl User {
         .await?;
 
         Ok(user)
+    }
+
+    pub async fn find_by_email(email: String, transaction: &mut Transaction<'_, Postgres>) -> Result<Option<User>, ChaosError> {
+        let possible_user = sqlx::query_as!(
+            User,
+            r#"
+            SELECT id, email, zid, name, pronouns, gender, degree_name,
+            degree_starting_year, role AS "role!: UserRole"
+            FROM users WHERE email = $1
+        "#,
+            email
+        )
+            .fetch_optional(transaction.deref_mut())
+            .await?;
+
+        Ok(possible_user)
     }
 
     /// Updates a user's name.
@@ -303,5 +321,4 @@ impl User {
 
         Ok(())
     }
-
 }

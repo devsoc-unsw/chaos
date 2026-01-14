@@ -1,0 +1,167 @@
+{
+  "common": {
+    "organisation": "Organisation",
+    "name": "Name",
+    "slug": "Slug",
+    "starts_at": "Starts At",
+    "ends_at": "Ends At",
+    "published": "Published",
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "campaigns": "Campaigns",
+    "settings": "Settings",
+    "roles": "Roles",
+    "description": "Description",
+    "about": "About",
+    "questions": "Questions",
+    "title": "Title",
+    "question_type": "Question Type",
+    "question_types": {
+      "short_answer": "Short answer",
+      "multi_choice": "Multichoice",
+      "multi_select": "Multiselect",
+      "dropdown": "Dropdown",
+      "ranking": "Ranking",
+      "existing_questions": "Existing Questions"
+    },
+    "options": "Options",
+    "common_questions": "Common Questions",
+    "back": "Back",
+    "application": "Application",
+    "attachments": "Attachments",
+    "application_requirements": "Application Requirements",
+    "interview_details": "Interview Details",
+    "interview_format": "Interview Format",
+    "interview_period": "Interview Period",
+    "available_roles": "Available Roles",
+    "recruitment_timeline": "Recruitment Timeline",
+
+    "applications_open": "Applications Open",
+    "applications_close": "Applications Close",
+    "interviews": "Interviews",
+    "results_announced": "Results Announced",
+
+    "contact_information": "Contact Information",
+    "visit_website": "Visit Website",
+
+    "apply_now": "Apply Now",
+    "application_deadline": "Application Deadline",
+    "apply": "Apply",
+
+    "status": "Status",
+    "email": "Email",
+
+    "select": "Select",
+    "selected": "Selected",
+    "submit": "Submit"
+  },
+  "applicationpage": {
+        "roles": "roles",
+        "max_roles": "(max {roles} roles)",
+        "empty_selected_roles": "Drag a role from below to apply",
+        "drag_to_reorder": "Drag to reorder based on preference",
+        "empty_available_roles": "All roles selected",
+        "selected_roles": "Selected Roles",
+        "available_roles": "Available Roles",
+        "no_role_specific_qs": "No role-specific questions",
+        "your_answer": "Your answer",
+        "no_answer": "No answer",
+        "no_questions": "No questions",
+        "general": "General",
+        "submit_answers": "Submit Answers",
+        "review_answers": "Review answers",
+        "review_answers_desc": "Review your answers before submission. Unanswered required questions will block submission.",
+        "submit_application": "Submit Application",
+        "submit_application_tooltip": "Please answer all required questions before submitting."
+    },
+  "dashboard": {
+    "email_templates": "Email Templates",
+    "members": {
+      "role": "Role",
+      "members": "Members",
+      "admins": "Admins",
+      "users": "Users",
+      "remove_member": "Remove Member",
+      "add_member": "Add Member",
+      "invite_member": "Invite Member",
+      "admin_edit_block": "Cannot change admin members",
+      "admin_edit_block_description": "Admins cannot be changed in the dashboard. Please email admin@chaos.devsoc.app to update your admins list."
+    },
+    "slug_tooltip": "User-friendly URL alias for the campaign",
+    "suggested_slug": "Suggested slug",
+    "slug_not_available": "Slug not available",
+    "sidebar": {
+      "create_organisation": "Create Organisation"
+    },
+    "campaigns": {
+      "copy_campaign_id": "Copy ID",
+      "copy_campaign_link": "Copy Campaign Link",
+      "edit_campaign": "Edit Campaign",
+      "share_link": "Share Link",
+      "review_applications": "Review Applications",
+      "application_summary": "Application Summary",
+      "application_avg_ratings": "Application Average Ratings",
+      "manage_questions": "Manage Questions",
+      "publish": "Publish",
+      "published": "Published",
+      "draft": "Draft",
+      "campaign_questions": "Campaign Questions",
+      "questions": {
+        "answer_text": "Answer Text",
+        "add_option": "Add Option",
+        "option_help": "Press Enter to add option",
+        "question_updated": "Question updated",
+        "question_deleted": "Question deleted",
+        "update_success": "The question has been updated successfully.",
+        "delete_success": "The question has been deleted successfully."
+      },
+      "roles": {
+        "number_of_positions": "Number of Positions",
+        "add_role": "Add Role"
+      },
+      "application_review_page": {
+        "no_application_selected": "No application selected",
+        "click_on_application_to_view": "Click on an application on the left to view it",
+        "application_rating": "Application rating",
+        "review_score": "Score",
+        "review_comment": "Comments (optional)",
+        "write_your_review_here": "Write your review here...",
+        "application_not_rated": "Application not rated"
+      },
+      "application_summary_page": {
+        "applicant_name": "Applicant Name",
+        "avg_rating": "Avg Rating",
+        "filter_emails": "Filter emails...",
+        "filter_by_role": "Filter by role",
+        "all_roles": "All roles",
+        "individual_ratings": "Individual Ratings:",
+        "no_results": "No results.",
+        "show_more": "...more",
+        "show_less": "...less",
+        "loading": "Loading...",
+        "no_ratings": "No ratings yet",
+        "no_comment": "No comment"
+      }
+    },
+    "email": {
+      "name": "Name",
+      "subject": "Subject",
+      "body": "Body",
+      "delete_confirmation": "This will permanently delete the email template and cannot be undone.",
+      "edit_template": "Edit Template"
+    },
+    "actions": {
+      "new": "New",
+      "edit": "Edit",
+      "delete": "Delete",
+      "preview": "Preview",
+      "duplicate": "Duplicate",
+      "cancel": "Cancel",
+      "save": "Save",
+      "destructive_confirm": "Are you absolutely sure?",
+      "confirm_understand": "Ok",
+      "invite": "Invite",
+      "add": "Add"
+    }
+  }
+}

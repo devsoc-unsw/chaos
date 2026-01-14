@@ -23,12 +23,12 @@ import type { CampaignWithRoles } from "types/api";
 const dateToString = (date: Date) => moment(date).format("D MMM YYYY");
 
 type AdminProps = {
-  campaignId: number;
+  campaignId: string;
   isAdmin: true;
 };
 
 type NonAdminProps = {
-  campaignId?: number;
+  campaignId?: string;
   isAdmin?: false;
 };
 

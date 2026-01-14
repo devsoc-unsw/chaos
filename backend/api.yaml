@@ -1163,6 +1163,37 @@ paths:
         "307":
           $ref: "#/components/responses/NotLoggedIn"
 
+  /campaign/{id}/apply:
+    post:
+      operationId: createOrGetApplication
+      parameters:
+        - name: id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Create a new application or get existing application for the specified campaign
+      tags:
+        - Campaign
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  application_id:
+                    type: integer
+                    format: int64
+                    description: ID of the created or existing application
+                    example: 1541815603606036480
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
+        "307":
+          $ref: "#/components/responses/NotLoggedIn"
+
   /campaign/{id}/applications:
     get:
       operationId: getCampaignApplications
@@ -1984,6 +2015,30 @@ paths:
           $ref: "#/components/responses/NotLoggedIn"
 
   /application/{application_id}/roles:
+    get:
+      operationId: getApplicationRoles
+      parameters:
+        - name: application_id
+          in: path
+          description: Application ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Get all roles for a specific application
+      tags:
+        - Campaign
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ApplicationRole"
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
     patch:
       operationId: updateApplicationRoles
       parameters:
@@ -2046,6 +2101,34 @@ paths:
                     type: string
                     example: Successfully submitted application
         "401":
+          $ref: "#/components/responses/NotLoggedIn"
+
+  /campaign/{campaign_id}/avg_ratings:
+    get:
+      operationId: getApplicationAvgRatings
+      parameters:
+        - name: campaign_id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns average ratings grouped by user for the specified application
+      tags:
+        - Application
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserAvgApplicationRating"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+        "307":
           $ref: "#/components/responses/NotLoggedIn"
 
   /offer/{offer_id}:
@@ -2485,6 +2568,23 @@ components:
           type: string
           example: 2024-03-15T18:25:43.511Z
 
+    ApplicationRole:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "6996987893965227483"
+        application_id:
+          type: string
+          example: "6996987893965227484"
+        campaign_role_id:
+          type: string
+          example: "6996987893965227485"
+        preference:
+          type: integer
+          format: int32
+          example: 1
+
     NewAnswer:
       type: object
       properties:
@@ -2582,7 +2682,7 @@ components:
           example: 3
         finalised:
           type: boolean
-          description: Whether this role has been finalised (e.g. max avaliable number)
+          description: Whether this role has been finalised (e.g. max available number)
           example: False
 
     RoleDetails:
@@ -2610,7 +2710,7 @@ components:
           example: 3
         finalised:
           type: boolean
-          description: Whether this role has been finalised (e.g. max avaliable number)
+          description: Whether this role has been finalised (e.g. max available number)
           example: False
 
     User:
@@ -2939,7 +3039,7 @@ components:
           example: 3
         finalised:
           type: boolean
-          description: Whether this role has been finalised (e.g. max avaliable number)
+          description: Whether this role has been finalised (e.g. max available number)
           example: False
 
     NewApplication:
@@ -2969,6 +3069,39 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/RatingDetails"
+
+    UserAvgApplicationRating:
+      type: object
+      properties:
+        application_id:
+          type: string
+          description: Application ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        campaign_role_id:
+          type: string
+          description: Role ID within the campaign (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        campaign_role_name:
+          type: string
+          description: Name of the campaign role
+          example: "Software Engineer"
+        user_name:
+          type: string
+          description: User's full name
+          example: "John Doe"
+        user_email:
+          type: string
+          format: email
+          description: User's email address
+          example: "john.doe@example.com"
+        status:
+          $ref: "#/components/schemas/ApplicationStatus"
+        avg_rating:
+          type: number
+          format: double
+          nullable: true
+          description: Average rating for this user's application in the given role (null if no ratings exist)
+          example: 4.5
 
     RatingUpdate:
       type: object

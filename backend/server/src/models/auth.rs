@@ -9,10 +9,10 @@ use crate::models::error::ChaosError;
 use crate::service::answer::user_is_answer_owner;
 use crate::service::application::{user_is_application_admin, user_is_application_owner};
 use crate::service::auth::{assert_is_super_user, extract_user_id_from_request};
-use crate::service::campaign::user_is_campaign_admin;
+use crate::service::campaign::{user_is_campaign_admin, user_is_campaign_org_member};
 use crate::service::email_template::user_is_email_template_admin;
 use crate::service::offer::{assert_user_is_offer_admin, assert_user_is_offer_recipient};
-use crate::service::organisation::assert_user_is_organisation_admin;
+use crate::service::organisation::{assert_user_is_organisation_admin, assert_user_is_organisation_admin_or_super_user};
 use crate::service::question::user_is_question_admin;
 use crate::service::rating::{
     assert_user_is_application_reviewer_given_rating_id, assert_user_is_organisation_member,
@@ -26,6 +26,14 @@ use axum::{async_trait, RequestPartsExt};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+/// Request structure for login.
+/// 
+/// Contains the redirect URL for the login page.
+#[derive(Deserialize)]
+pub struct LoginRequest {
+    pub to: Option<String>,
+}
+
 /// Request structure for OAuth authentication.
 /// 
 /// Contains the authorization code received from the OAuth provider.
@@ -33,6 +41,9 @@ use std::collections::HashMap;
 pub struct AuthRequest {
     /// Authorization code from the OAuth provider
     pub code: String,
+
+    /// Redirect URL (Optional)
+    pub state: Option<String>,
 }
 
 /// User profile information received from Google OAuth.
@@ -64,6 +75,7 @@ impl IntoResponse for AuthRedirect {
 #[derive(Deserialize, Serialize)]
 pub struct AuthUser {
     /// ID of the authenticated user
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub user_id: i64,
 }
 
@@ -93,6 +105,7 @@ where
 #[derive(Deserialize, Serialize)]
 pub struct SuperUser {
     /// ID of the super user
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub user_id: i64,
 }
 
@@ -159,6 +172,45 @@ where
     }
 }
 
+/// Organisation admin or super user information
+/// 
+/// Contains the user ID of a user that may either be an organisation admin or a super user.
+pub struct OrganisationAdminOrSuperUser {
+    /// ID of the superuser or org admin
+    pub user_id: i64,
+}
+
+/// Extractor for organization administrators or superusers, for when a certain action can be done by both.
+/// 
+/// This extractor is used in route handlers to ensure that the request
+/// comes from a user with organization administrator privileges.
+#[async_trait]
+impl<S> FromRequestParts<S> for OrganisationAdminOrSuperUser
+where
+    AppState: FromRef<S>,
+    S: Send + Sync,
+{
+    type Rejection = ChaosError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let app_state = AppState::from_ref(state);
+        let user_id = extract_user_id_from_request(parts, &app_state).await?;
+
+        let organisation_id = *parts
+            .extract::<Path<HashMap<String, i64>>>()
+            .await
+            .map_err(|_| ChaosError::BadRequest)?
+            .get("organisation_id")
+            .ok_or(ChaosError::BadRequest)?;
+
+        let mut tx = app_state.db.begin().await?;
+        assert_user_is_organisation_admin_or_super_user(user_id, organisation_id, &mut tx).await?;
+        tx.commit().await?;
+
+        Ok(OrganisationAdminOrSuperUser { user_id })
+    }
+}
+
 /// Campaign administrator information.
 /// 
 /// Contains the user ID of a user with campaign administrator privileges.
@@ -198,6 +250,38 @@ where
     }
 }
 
+pub struct CampaignOrgMember {
+    /// ID of the member of the campaign's organisation
+    pub user_id: i64,
+}
+
+#[async_trait]
+impl<S> FromRequestParts<S> for CampaignOrgMember
+where
+    AppState: FromRef<S>,
+    S: Send + Sync,
+{
+    type Rejection = ChaosError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let app_state = AppState::from_ref(state);
+        let user_id = extract_user_id_from_request(parts, &app_state).await?;
+
+        let campaign_id = *parts
+            .extract::<Path<HashMap<String, i64>>>()
+            .await
+            .map_err(|_| ChaosError::BadRequest)?
+            .get("campaign_id")
+            .ok_or(ChaosError::BadRequest)?;
+
+        let mut tx = app_state.db.begin().await?;
+        user_is_campaign_org_member(user_id, campaign_id, &mut tx).await?;
+        tx.commit().await?;
+
+        Ok(CampaignOrgMember { user_id })
+    }
+}
+
 /// Role administrator information.
 /// 
 /// Contains the user ID of a user with role administrator privileges.
@@ -222,12 +306,10 @@ where
         let app_state = AppState::from_ref(state);
         let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
-        let role_id = *parts
-            .extract::<Path<HashMap<String, i64>>>()
+        let Path(role_id) = parts
+            .extract::<Path<i64>>()
             .await
-            .map_err(|_| ChaosError::BadRequest)?
-            .get("role_id")
-            .ok_or(ChaosError::BadRequest)?;
+            .map_err(|_| ChaosError::BadRequest)?;
 
         let mut tx = app_state.db.begin().await?;
         user_is_role_admin(user_id, role_id, &mut tx).await?;
@@ -267,7 +349,9 @@ where
             .map_err(|_| ChaosError::BadRequest)?;
 
         let mut tx = app_state.db.begin().await?;
-        user_is_application_admin(user_id, application_id, &mut tx).await?;
+        if !user_is_application_admin(user_id, application_id, &mut tx).await? {
+            return Err(ChaosError::BadRequest);
+        }
         tx.commit().await?;
 
         Ok(ApplicationAdmin { user_id })
@@ -341,8 +425,10 @@ where
             .map_err(|_| ChaosError::BadRequest)?;
 
         let mut tx = app_state.db.begin().await?;
-        user_is_application_owner(user_id, application_id, &mut tx).await?;
-        tx.commit().await;
+        if !user_is_application_owner(user_id, application_id, &mut tx).await? {
+            return Err(ChaosError::Unauthorized);
+        }
+        tx.commit().await?;
 
         Ok(ApplicationCreatorGivenApplicationId { user_id })
     }
@@ -447,10 +533,12 @@ where
         let app_state = AppState::from_ref(state);
         let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
-        let Path(question_id) = parts
-            .extract::<Path<i64>>()
+        let question_id = *parts
+            .extract::<Path<HashMap<String, i64>>>()
             .await
-            .map_err(|_| ChaosError::BadRequest)?;
+            .map_err(|_| ChaosError::BadRequest)?
+            .get("id")
+            .ok_or(ChaosError::BadRequest)?;
 
         let mut tx = app_state.db.begin().await?;
         user_is_question_admin(user_id, question_id, &mut tx).await?;
@@ -484,13 +572,17 @@ where
         let app_state = AppState::from_ref(state);
         let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
-        let Path(application_id) = parts
-            .extract::<Path<i64>>()
+        let Path(ids) = parts
+            .extract::<Path<HashMap<String, i64>>>()
             .await
             .map_err(|_| ChaosError::BadRequest)?;
 
+        let application_id = ids.get("application_id").ok_or(ChaosError::BadRequest)?.clone();
+
         let mut tx = app_state.db.begin().await?;
-        user_is_application_owner(user_id, application_id, &mut tx).await?;
+        if !user_is_application_owner(user_id, application_id, &mut tx).await? {
+            return Err(ChaosError::Unauthorized);
+        }
         tx.commit().await?;
 
         Ok(ApplicationOwner { user_id })
@@ -531,6 +623,52 @@ where
         tx.commit().await?;
 
         Ok(AnswerOwner { user_id })
+    }
+}
+
+/// Application owner or a reviewer (member of organisation that application was for).
+///
+/// Contains the user ID of a user who owns a specific application.
+pub struct ApplicationOwnerOrReviewer {
+    /// ID of the application owner
+    pub user_id: i64,
+}
+
+/// Extractor for application owners.
+///
+/// This extractor is used in route handlers to ensure that the request
+/// comes from the owner of a specific application.
+#[async_trait]
+impl<S> FromRequestParts<S> for ApplicationOwnerOrReviewer
+where
+    AppState: FromRef<S>,
+    S: Send + Sync,
+{
+    type Rejection = ChaosError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let app_state = AppState::from_ref(state);
+        let user_id = extract_user_id_from_request(parts, &app_state).await?;
+
+        let Path(ids) = parts
+            .extract::<Path<HashMap<String, i64>>>()
+            .await
+            .map_err(|_| ChaosError::BadRequest)?;
+
+        let application_id = ids.get("application_id").ok_or(ChaosError::BadRequest)?.clone();
+
+        let mut tx = app_state.db.begin().await?;
+
+        if
+            !user_is_application_owner(user_id, application_id, &mut tx).await? &&
+            !assert_user_is_organisation_member(user_id, application_id, &mut tx).await?
+        {
+            println!("Lol");
+            return Err(ChaosError::Unauthorized);
+        }
+        tx.commit().await?;
+
+        Ok(ApplicationOwnerOrReviewer { user_id })
     }
 }
 

@@ -17,10 +17,13 @@ use std::ops::DerefMut;
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Rating {
     /// Unique identifier for the rating
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the application being rated
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub application_id: i64,
     /// ID of the user who created the rating
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub rater_user_id: i64,
     /// Numerical rating value
     pub rating: i32,
@@ -51,8 +54,10 @@ pub struct NewRating {
 #[derive(Deserialize, Serialize)]
 pub struct RatingDetails {
     /// Unique identifier for the rating
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the user who created the rating
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub rater_id: i64,
     /// Name of the user who created the rating
     pub rater_name: String,
@@ -177,6 +182,39 @@ impl Rating {
                 WHERE r.id = $1
         ",
             rating_id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
+        Ok(rating)
+    }
+
+    /// Retrieves a rating by its ID.
+    /// 
+    /// # Arguments
+    /// * `application_id` - The ID of the application the rating is for
+    /// * `rating_id` - The ID of the rating to retrieve
+    /// * `transaction` - A mutable reference to the database transaction
+    /// 
+    /// # Returns
+    /// Returns a `Result` containing either:
+    /// * `Ok(RatingDetails)` - The requested rating details
+    /// * `Err(ChaosError)` - An error if retrieval fails
+    pub async fn get_rating_by_rater_id(
+        application_id: i64,
+        rater_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<RatingDetails, ChaosError> {
+        let rating = sqlx::query_as!(
+            RatingDetails,
+            "
+            SELECT r.id, rater_id, u.name as rater_name, r.rating, r.comment, r.updated_at
+                FROM application_ratings r
+                JOIN users u ON u.id = r.rater_id
+                WHERE r.application_id = $1 AND r.rater_id = $2
+        ",
+            application_id,
+            rater_id
         )
         .fetch_one(transaction.deref_mut())
         .await?;

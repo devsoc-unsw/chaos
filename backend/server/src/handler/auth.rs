@@ -5,7 +5,7 @@
 //! - JWT token generation
 
 use crate::models::app::AppState;
-use crate::models::auth::{AuthRequest, GoogleUserProfile};
+use crate::models::auth::{AuthRequest, GoogleUserProfile, LoginRequest};
 use crate::models::error::ChaosError;
 use crate::service::auth::create_or_get_user_id;
 use crate::service::jwt::encode_auth_token;
@@ -13,7 +13,7 @@ use axum::extract::{Query, State};
 use axum_extra::extract::cookie::{Cookie, CookieJar, Expiration};
 use axum::response::{IntoResponse, Redirect};
 use oauth2::reqwest::async_http_client;
-use oauth2::{AuthorizationCode, TokenResponse, Scope};
+use oauth2::{AuthorizationCode, Scope, TokenResponse};
 use time::OffsetDateTime;
 
 /// Handles the Google OAuth2 callback.
@@ -46,9 +46,19 @@ use time::OffsetDateTime;
 /// * `Result<impl IntoResponse, ChaosError>` - Redirect to Google OAuth or error
 pub async fn google_auth_init(
     State(state): State<AppState>,
+    Query(query): Query<LoginRequest>,
 ) -> Result<impl IntoResponse, ChaosError> {
+
+    let csrf_token = oauth2::CsrfToken::new_random();
+
+    if let Some(to) = query.to {
+        sqlx::query!("INSERT INTO redirect_tokens (token, redirect) VALUES ($1, $2)", csrf_token.secret(), to)
+            .execute(&state.db)
+            .await?;
+    }
+
     let (auth_url, _csrf_token) = state.oauth2_client
-        .authorize_url(|| oauth2::CsrfToken::new_random())
+        .authorize_url(|| csrf_token)
         .add_scope(Scope::new("openid".to_string()))
         .add_scope(Scope::new("email".to_string()))
         .add_scope(Scope::new("profile".to_string()))
@@ -80,7 +90,7 @@ pub async fn google_callback(
     State(mut state): State<AppState>,
     jar: CookieJar,
     Query(query): Query<AuthRequest>,
-) -> Result<impl IntoResponse, ChaosError> {
+) -> Result<impl IntoResponse, ChaosError> {    
     let token = state.oauth2_client
         .exchange_code(AuthorizationCode::new(query.code))
         .request_async(async_http_client)
@@ -98,7 +108,7 @@ pub async fn google_callback(
     let user_id = create_or_get_user_id(
         profile.email.clone(),
         profile.name,
-        state.db,
+        &state.db,
         &mut state.snowflake_generator,
     )
     .await?;
@@ -116,16 +126,24 @@ pub async fn google_callback(
         .expires(Expiration::DateTime(OffsetDateTime::now_utc() + time::Duration::days(5))) // Set an expiration time of 5 days, TODO: read from env?
         .secure(!state.is_dev_env)     // Send only over HTTPS, comment out for testing
         .path("/");       // Available for all paths
-    
-    // Redirect to the frontend dashboard after successful authentication
-    let redirect_url = if state.is_dev_env {
-        "http://localhost:3000/dashboard"
+
+    let redirect_root = if state.is_dev_env {
+        "http://localhost:3000"
     } else {
-        "/dashboard" // In production, this would be the full URL
+        ""
+    };
+
+    let possible_redirect = sqlx::query!("DELETE FROM redirect_tokens WHERE token = $1 RETURNING redirect", query.state)
+    .fetch_optional(&state.db)
+    .await?;
+
+    let redirect_url = match possible_redirect {
+        Some(redirect) => format!("{redirect_root}{}", redirect.redirect),
+        None => format!("{redirect_root}/dashboard"),
     };
     
     // Add the cookie and redirect
-    Ok((jar.add(cookie), Redirect::to(redirect_url)))
+    Ok((jar.add(cookie), Redirect::to(redirect_url.as_str())))
 }
 
 pub struct DevLoginHandler;

@@ -5,7 +5,7 @@
 //! - Updating and deleting questions
 //! - Managing role-specific and common questions
 
-use crate::models::app::AppState;
+use crate::models::app::{AppMessage, AppState, IdMessage};
 use crate::models::auth::{AuthUser, CampaignAdmin, QuestionAdmin};
 use crate::models::error::ChaosError;
 use crate::models::question::{NewQuestion, Question};
@@ -46,7 +46,7 @@ impl QuestionHandler {
             data.title,
             data.description,
             data.common,
-            data.roles,
+            Some(data.roles),
             data.required,
             data.question_data,
             &mut state.snowflake_generator,
@@ -56,7 +56,7 @@ impl QuestionHandler {
 
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, Json(json!({"id": id}))))
+        Ok((StatusCode::OK, Json(IdMessage { id })))
     }
 
     /// Retrieves all questions for a specific role in a campaign.
@@ -120,6 +120,7 @@ impl QuestionHandler {
     /// # Arguments
     /// 
     /// * `state` - The application state
+    /// * `campaign_id` - The ID of the campaign
     /// * `question_id` - The ID of the question to update
     /// * `_admin` - The authenticated user (must be a question admin)
     /// * `transaction` - Database transaction
@@ -129,12 +130,20 @@ impl QuestionHandler {
     /// 
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update(
-        State(mut state): State<AppState>,
-        Path(question_id): Path<i64>,
-        _admin: QuestionAdmin,
         mut transaction: DBTransaction<'_>,
+        State(mut state): State<AppState>,
+        Path((_campaign_id, question_id)): Path<(i64, i64)>,
+        _admin: QuestionAdmin,
         Json(data): Json<NewQuestion>,
     ) -> Result<impl IntoResponse, ChaosError> {
+        // Validate question_data before updating
+        data.question_data.validate()
+            .map_err(|_| {
+                ChaosError::BadRequestWithMessage(
+                    "Question validation failed: options array is empty for question types that require options".to_string()
+                )
+            })?;
+        
         Question::update(
             question_id,
             data.title,
@@ -150,7 +159,7 @@ impl QuestionHandler {
 
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, "Successfully updated question"))
+        Ok(AppMessage::OkMessage("Successfully updated question"))
     }
 
     /// Deletes a question.
@@ -159,6 +168,7 @@ impl QuestionHandler {
     /// 
     /// # Arguments
     /// 
+    /// * `campaign_id` - The ID of the campaign
     /// * `question_id` - The ID of the question to delete
     /// * `_admin` - The authenticated user (must be a question admin)
     /// * `transaction` - Database transaction
@@ -167,7 +177,7 @@ impl QuestionHandler {
     /// 
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn delete(
-        Path(question_id): Path<i64>,
+        Path((_campaign_id, question_id)): Path<(i64, i64)>,
         _admin: QuestionAdmin,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
@@ -175,6 +185,6 @@ impl QuestionHandler {
 
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, "Successfully deleted question"))
+        Ok(AppMessage::OkMessage("Successfully deleted question"))
     }
 }

@@ -45,9 +45,9 @@ const rankingCmp = (x: Ranking, y: Ranking) =>
   ratingsMean(y.ratings) - ratingsMean(x.ratings);
 
 const Rankings = () => {
-  const campaignId = Number(useParams().campaignId);
+  const campaignId = String(useParams().campaignId);
   const setNavBarTitle = useContext(SetNavBarTitleContext);
-  const roleId = Number(useParams().roleId);
+  const roleId = String(useParams().roleId);
   const [loading, setLoading] = useState(true);
   const [rankings, setRankings] = useState<Ranking[]>([]);
   const [applications, setApplications] = useState<Applications>({});
@@ -92,7 +92,7 @@ const Rankings = () => {
       setNavBarTitle(`Ranking for ${campaignName}`);
 
       const applications = await getRoleApplications(roleId);
-      const getRatings = async (applicationId: number) => {
+      const getRatings = async (applicationId: string) => {
         const { ratings } = await getApplicationRatings(applicationId);
         const userIdsSeen = new Set();
         return ratings

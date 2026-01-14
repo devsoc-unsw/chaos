@@ -32,13 +32,15 @@ use std::ops::DerefMut;
 #[derive(Deserialize, Serialize)]
 pub struct Answer {
     /// Unique identifier for the answer
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     id: i64,
     /// ID of the question this answer is for
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     question_id: i64,
 
     /// The actual answer data, flattened in serialization
     #[serde(flatten)]
-    answer_data: AnswerData,
+    data: AnswerData,
 
     /// When the answer was created
     created_at: DateTime<Utc>,
@@ -46,17 +48,36 @@ pub struct Answer {
     updated_at: DateTime<Utc>,
 }
 
+/// A view type which collects an answer in the system along with it's
+/// associated role.
+#[derive(Deserialize, Serialize)]
+pub struct AnswerWithRole {
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    id: i64,
+    /// ID of the question this answer is for
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    question_id: i64,
+
+    /// The actual answer data, flattened in serialization
+    #[serde(flatten)]
+    data: AnswerData,
+
+    // role ID
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    role_id: i64
+}
 /// Data structure for creating a new answer.
 /// 
 /// Contains the question ID and the answer data.
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct NewAnswer {
     /// ID of the question this answer is for
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
     pub question_id: i64,
 
     /// The actual answer data, flattened in serialization
     #[serde(flatten)]
-    pub answer_data: AnswerData,
+    pub data: AnswerData,
 }
 
 /// Raw answer data from the database.
@@ -109,12 +130,22 @@ impl Answer {
     pub async fn create(
         application_id: i64,
         question_id: i64,
-        answer_data: AnswerData,
+        data: AnswerData,
         snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<i64, ChaosError> {
-        answer_data.validate()?;
+        data.validate()?;
 
+        sqlx::query!(
+            "
+                DELETE FROM answers
+                WHERE application_id = $1 AND question_id = $2
+            ",
+            application_id,
+            question_id
+        )
+        .execute(transaction.deref_mut())
+        .await?;
         let id = snowflake_generator.real_time_generate();
 
         sqlx::query!(
@@ -129,7 +160,7 @@ impl Answer {
         .execute(transaction.deref_mut())
         .await?;
 
-        answer_data.insert_into_db(id, transaction).await?;
+        data.insert_into_db(id, transaction).await?;
 
         Ok(id)
     }
@@ -157,13 +188,13 @@ impl Answer {
                     q.question_type AS "question_type: QuestionType",
                     a.created_at,
                     a.updated_at,
-                    saa.text AS short_answer_answer,
-                    array_agg(
+                    COALESCE(saa.text, '') AS short_answer_answer,
+                    array_remove(array_agg(
                         moao.option_id
-                    ) multi_option_answers,
-                    array_agg(
+                    ), NULL) AS multi_option_answers,
+                    array_remove(array_agg(
                         rar.option_id ORDER BY rar.rank
-                    ) ranking_answers
+                    ), NULL) AS ranking_answers
                 FROM
                     answers a
                     JOIN questions q ON a.question_id = q.id
@@ -195,7 +226,7 @@ impl Answer {
         Ok(Answer {
             id,
             question_id: answer_raw_data.question_id,
-            answer_data,
+            data: answer_data,
             created_at: answer_raw_data.created_at,
             updated_at: answer_raw_data.updated_at,
         })
@@ -226,13 +257,13 @@ impl Answer {
                     q.question_type AS "question_type: QuestionType",
                     a.created_at,
                     a.updated_at,
-                    saa.text AS short_answer_answer,
-                    array_agg(
+                    COALESCE(saa.text, '') AS short_answer_answer,
+                    array_remove(array_agg(
                         moao.option_id
-                    ) multi_option_answers,
-                    array_agg(
+                    ), NULL) AS multi_option_answers,
+                    array_remove(array_agg(
                         rar.option_id ORDER BY rar.rank
-                    ) ranking_answers
+                    ), NULL) AS ranking_answers
                 FROM
                     answers a
                     JOIN questions q ON a.question_id = q.id
@@ -269,7 +300,7 @@ impl Answer {
                 Answer {
                     id: answer_raw_data.id,
                     question_id: answer_raw_data.question_id,
-                    answer_data,
+                    data: answer_data,
                     created_at: answer_raw_data.created_at,
                     updated_at: answer_raw_data.updated_at,
                 }
@@ -304,13 +335,13 @@ impl Answer {
                     q.question_type AS "question_type: QuestionType",
                     a.created_at,
                     a.updated_at,
-                    saa.text AS short_answer_answer,
-                    array_agg(
+                    COALESCE(saa.text, '') AS short_answer_answer,
+                    array_remove(array_agg(
                         moao.option_id
-                    ) multi_option_answers,
-                    array_agg(
+                    ), NULL) AS multi_option_answers,
+                    array_remove(array_agg(
                         rar.option_id ORDER BY rar.rank
-                    ) ranking_answers
+                    ), NULL) AS ranking_answers
                 FROM
                     answers a
                     JOIN questions q ON a.question_id = q.id
@@ -326,7 +357,7 @@ impl Answer {
                         LEFT JOIN
                     ranking_answer_rankings rar ON rar.answer_id = a.id
                         AND q.question_type = 'Ranking'
-                WHERE a.application_id = $1 AND qr.role_id = $2 AND q.common = true
+                WHERE a.application_id = $1 AND qr.role_id = $2 AND q.common = false
                 GROUP BY
                     a.id, q.question_type, saa.text
             "#,
@@ -349,7 +380,7 @@ impl Answer {
                 Answer {
                     id: answer_raw_data.id,
                     question_id: answer_raw_data.question_id,
-                    answer_data,
+                    data: answer_data,
                     created_at: answer_raw_data.created_at,
                     updated_at: answer_raw_data.updated_at,
                 }
@@ -372,10 +403,12 @@ impl Answer {
     /// * `Result<(), ChaosError>` - Success or error
     pub async fn update(
         id: i64,
-        answer_data: AnswerData,
+        data: AnswerData,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        answer_data.validate()?;
+        if !data.is_empty() {
+            data.validate()?;
+        }
 
         let answer = sqlx::query_as!(
             AnswerTypeApplicationId,
@@ -393,7 +426,9 @@ impl Answer {
         let old_data = AnswerData::from_question_type(&answer.question_type);
         old_data.delete_from_db(id, transaction).await?;
 
-        answer_data.insert_into_db(id, transaction).await?;
+        if !data.is_empty() {
+            data.insert_into_db(id, transaction).await?;
+        }
 
         sqlx::query!(
             "UPDATE applications SET updated_at = $1 WHERE id = $2",
@@ -433,16 +468,25 @@ impl Answer {
 /// Each variant corresponds to a different question type and contains
 /// the appropriate data format for that type.
 #[derive(Deserialize, Serialize)]
+#[serde(tag = "answer_type", content = "answer_data")]
 pub enum AnswerData {
     /// Text answer for short answer questions
     ShortAnswer(String),
     /// Single selected option for multiple choice questions
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
     MultiChoice(i64),
     /// Multiple selected options for multi-select questions
+    #[serde(serialize_with = "crate::models::serde_string::serialize_vec")]
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize_vec")]
     MultiSelect(Vec<i64>),
     /// Single selected option for dropdown questions
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
     DropDown(i64),
     /// Ranked list of options for ranking questions
+    #[serde(serialize_with = "crate::models::serde_string::serialize_vec")]
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize_vec")]
     Ranking(Vec<i64>),
 }
 
@@ -505,6 +549,15 @@ impl AnswerData {
                 let options = ranking_answers.expect("Data should exist for Ranking variant");
                 AnswerData::Ranking(options)
             }
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        match self {
+            AnswerData::ShortAnswer(text) => text.is_empty(),
+            AnswerData::MultiSelect(options) | AnswerData::Ranking(options) => options.is_empty(),
+            AnswerData::MultiChoice(option_id) => false,
+            AnswerData::DropDown(option_id) => *option_id == 0
         }
     }
 

@@ -9,7 +9,7 @@ export const NextWrapper = styled("div")`
   margin-right: 100px;
 `;
 
-export const NextButton = styled(Button)`
+export const CreateButton = styled(Button)`
   font-size: 20px;
 `;
 

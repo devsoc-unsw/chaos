@@ -7,8 +7,9 @@ use crate::models::error::ChaosError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
-use sqlx::{FromRow, Pool, Postgres, Transaction};
+use sqlx::{FromRow, Postgres, Transaction};
 use std::ops::DerefMut;
+use std::env;
 
 /// Represents a role in a recruitment campaign.
 /// 
@@ -17,8 +18,10 @@ use std::ops::DerefMut;
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct Role {
     /// Unique identifier for the role
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the campaign this role belongs to
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_id: i64,
     /// Optional name of the role
     pub name: Option<String>,
@@ -27,7 +30,7 @@ pub struct Role {
     /// Minimum number of positions available
     pub min_available: i32,
     /// Maximum number of positions available
-    pub max_avaliable: i32,
+    pub max_available: i32,
     /// Whether the role details have been finalized
     pub finalised: bool,
     /// When the role was created
@@ -49,7 +52,7 @@ pub struct RoleUpdate {
     /// Minimum number of positions available
     pub min_available: i32,
     /// Maximum number of positions available
-    pub max_avaliable: i32,
+    pub max_available: i32,
     /// Whether the role details have been finalized
     pub finalised: bool,
 }
@@ -61,8 +64,10 @@ pub struct RoleUpdate {
 #[derive(Deserialize, Serialize)]
 pub struct RoleDetails {
     /// Unique identifier for the role
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub id: i64,
     /// ID of the campaign this role belongs to
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_id: i64,
     /// Name of the role
     pub name: String,
@@ -95,6 +100,7 @@ impl Role {
         transaction: &mut Transaction<'_, Postgres>,
         snowflake_generator: &mut SnowflakeIdGenerator,
     ) -> Result<i64, ChaosError> {
+        role_data.validate()?;
         let id = snowflake_generator.real_time_generate();
 
         sqlx::query!(
@@ -107,7 +113,7 @@ impl Role {
             role_data.name,
             role_data.description,
             role_data.min_available,
-            role_data.max_avaliable,
+            role_data.max_available,
             role_data.finalised
         )
         .execute(transaction.deref_mut())
@@ -181,6 +187,8 @@ impl Role {
         role_data: RoleUpdate,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
+        role_data.validate()?;
+
         let _ = sqlx::query!(
             "
                 UPDATE campaign_roles
@@ -191,7 +199,7 @@ impl Role {
             role_data.name,
             role_data.description,
             role_data.min_available,
-            role_data.max_avaliable,
+            role_data.max_available,
             role_data.finalised
         )
         .fetch_one(transaction.deref_mut())
@@ -227,5 +235,35 @@ impl Role {
         .await?;
 
         Ok(roles)
+    }
+}
+
+impl RoleUpdate {
+    pub fn validate(&self) -> Result<(), ChaosError> {
+        let role_name_max_chars = env::var("ROLE_NAME_MAX_CHARS")
+            .expect("Error getting ROLE_NAME_MAX_CHARS")
+            .to_string().parse::<usize>().map_err(|_| ChaosError::InternalServerError)?;
+        let role_description_max_chars = env::var("ROLE_DESCRIPTION_MAX_CHARS")
+            .expect("Error getting ROLE_DESCRIPTION_MAX_CHARS")
+            .to_string().parse::<usize>().map_err(|_| ChaosError::InternalServerError)?;
+        let role_positions_available_max = env::var("ROLE_POSITIONS_AVAILABLE_MAX")
+            .expect("Error getting ROLE_POSITIONS_AVAILABLE_MAX")
+            .to_string().parse::<i32>().map_err(|_| ChaosError::InternalServerError)?;
+
+        if self.name.is_empty() || 
+            self.min_available < 1 || 
+            self.max_available < 1 || 
+            self.min_available > self.max_available ||
+            self.name.len() > role_name_max_chars ||
+            self.min_available > role_positions_available_max ||
+            self.max_available > role_positions_available_max {
+            return Err(ChaosError::BadRequest);
+        }
+
+        if self.description.is_some() && self.description.as_ref().unwrap().len() > role_description_max_chars {
+            return Err(ChaosError::BadRequest);
+        }
+
+        Ok(())
     }
 }

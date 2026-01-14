@@ -1,21 +1,22 @@
-import React, { useState, ChangeEvent } from 'react';
+import React, { useState, useEffect, ChangeEvent } from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import tw from 'twin.macro';
 
 interface ShortAnswerProps {
-  id: number;
+  id: string;
   question: string;
   description?: string;
   required?: boolean;
   defaultValue?: string;
   onChange?: (value: string) => void;
-  onSubmit?: (questionId: number, value: string) => void;
+  onSubmit?: (questionId: string, value: string) => void;
   disabled?: boolean;
   rows?: number;
   placeholder?: string;
   width?: string;
   height?: string;
+  answerId?: string;
 }
 
 const ShortAnswer: React.FC<ShortAnswerProps> = ({
@@ -31,8 +32,14 @@ const ShortAnswer: React.FC<ShortAnswerProps> = ({
   placeholder = "Your answer",
   width = "max-w-4xl",
   height = "",
+  answerId,
 }) => {
   const [value, setValue] = useState(defaultValue);
+
+  // Sync internal state when the defaultValue prop changes (e.g., after async prefill)
+  useEffect(() => {
+    setValue(defaultValue);
+  }, [defaultValue]);
 
   const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setValue(e.target.value);
@@ -40,7 +47,9 @@ const ShortAnswer: React.FC<ShortAnswerProps> = ({
   };
 
   const handleBlur = () => {
-    if (onSubmit && value.trim() !== '') {
+    if (onSubmit) {
+      // Always call onSubmit when the field loses focus
+      // This allows the parent to handle both filled and cleared answers
       onSubmit(id, value);
     }
   };
@@ -54,6 +63,10 @@ const ShortAnswer: React.FC<ShortAnswerProps> = ({
 
       {description && (
         <p className="mb-4 text-sm text-muted-foreground">{description}</p>
+      )}
+      
+      {answerId && (
+        <p className="mb-2 text-xs text-gray-400">Answer ID: {answerId}</p>
       )}
 
       <Textarea
