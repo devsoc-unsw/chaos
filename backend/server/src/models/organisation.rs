@@ -116,6 +116,8 @@ pub struct Member {
     pub email: String,
     /// User's role in the organisation
     pub role: OrganisationRole,
+    /// User's email
+    pub email: String,
 }
 
 /// Data structure for updating organisation administrators.
@@ -146,6 +148,45 @@ pub struct MemberToInvite {
 
 /// Data structure for checking slug availability.
 /// 
+/// This struct contains a user's email, and the role for that user.
+#[derive(Deserialize, Serialize)]
+pub struct EmailRoleBody {
+    // email
+    pub email: String,
+    // role
+    pub role: OrganisationRole
+}
+
+/// Data structure for passing in a user's email
+///
+/// This struct contains a user's email
+#[derive(Deserialize, Serialize)]
+pub struct EmailBody {
+    // email
+    pub email: String
+}
+
+/// Data structure for passing in a user's email
+///
+/// This struct contains a user's email
+#[derive(Deserialize, Serialize)]
+pub struct IdBody {
+    // email
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
+    pub user_id: i64
+}
+
+/// Data structure for passing in a user's email and role
+///
+/// This struct contains a user's email
+#[derive(Deserialize, Serialize)]
+pub struct IdRoleBody {
+    // email
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
+    pub user_id: i64,
+    pub role: OrganisationRole
+}
+
 /// This struct contains a slug to check for availability
 /// when creating a new organisation.
 #[derive(Deserialize)]

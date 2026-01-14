@@ -244,7 +244,7 @@ impl OrganisationHandler {
     pub async fn get_members(
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
-        _admin: OrganisationAdmin,
+        _admin: OrganisationAdminOrSuperUser,
     ) -> Result<impl IntoResponse, ChaosError> {
         let members = Organisation::get_members(id, &mut transaction.tx).await?;
 

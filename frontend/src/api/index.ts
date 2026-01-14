@@ -287,7 +287,10 @@ export const setApplicationRating = (
     jsonResp: false,
   });
 
-export const createApplicationRating = (applicationId: string, rating: NewRating) =>
+export const createApplicationRating = (
+  applicationId: string,
+  rating: NewRating
+) =>
   authenticatedRequest({
     method: "POST",
     path: `/v1/application/${applicationId}/rating`,
