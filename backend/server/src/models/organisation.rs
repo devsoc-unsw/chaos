@@ -116,8 +116,6 @@ pub struct Member {
     pub email: String,
     /// User's role in the organisation
     pub role: OrganisationRole,
-    /// User's email
-    pub email: String,
 }
 
 /// Data structure for updating organisation administrators.

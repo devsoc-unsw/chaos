@@ -491,34 +491,6 @@ impl Campaign {
         Ok(())
     }
 
-    /// Publishes a campaign by setting its published field to true.
-    /// 
-    /// # Arguments
-    /// 
-    /// * `id` - ID of the campaign to publish
-    /// * `transaction` - Database transaction to use
-    /// 
-    /// # Returns
-    /// 
-    /// * `Result<(), ChaosError>` - Success or error
-    pub async fn publish(
-        id: i64,
-        transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<(), ChaosError> {
-        _ = sqlx::query!(
-            "
-                UPDATE campaigns
-                SET published = true
-                WHERE id = $1 RETURNING id
-            ",
-            id
-        )
-        .fetch_one(transaction.deref_mut())
-        .await?;
-
-        Ok(())
-    }
-
     /// Updates a campaign's banner image.
     /// 
     /// # Arguments

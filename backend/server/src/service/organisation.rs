@@ -6,6 +6,7 @@
 use crate::models::error::ChaosError;
 use sqlx::{Postgres, Transaction};
 use std::ops::DerefMut;
+use crate::models::user::UserRole;
 
 /// Verifies if a user has admin privileges for an organisation.
 /// 

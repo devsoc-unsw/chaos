@@ -143,29 +143,6 @@ impl CampaignHandler {
         Ok(AppMessage::OkMessage("Successfully published campaign"))
     }
 
-    /// Publishes a campaign by setting its published field to true.
-    /// 
-    /// This handler allows campaign admins to publish campaigns.
-    /// 
-    /// # Arguments
-    /// 
-    /// * `transaction` - Database transaction
-    /// * `id` - The ID of the campaign to publish
-    /// * `_admin` - The authenticated user (must be a campaign admin)
-    /// 
-    /// # Returns
-    /// 
-    /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
-    pub async fn publish(
-        mut transaction: DBTransaction<'_>,
-        Path(id): Path<i64>,
-        _admin: CampaignAdmin,
-    ) -> Result<impl IntoResponse, ChaosError> {
-        Campaign::publish(id, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully published campaign"))
-    }
-
     /// Updates a campaign's banner image.
     /// 
     /// This handler allows campaign admins to update the campaign's banner image.

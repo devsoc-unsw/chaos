@@ -8,7 +8,7 @@
 //! - Logo image handling
 
 use crate::models::app::{AppMessage, AppState, IdMessage};
-use crate::models::auth::SuperUser;
+use crate::models::auth::{OrganisationAdminOrSuperUser, SuperUser};
 use crate::models::auth::{AuthUser, OrganisationAdmin};
 use crate::models::campaign::{Campaign, NewCampaign};
 use crate::models::email_template::{EmailTemplate, NewEmailTemplate};
