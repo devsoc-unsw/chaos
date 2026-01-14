@@ -8,15 +8,16 @@
 //! - Banner image handling
 
 use crate::models;
-use crate::models::app::AppState;
+use crate::models::app::{AppMessage, AppState};
 use crate::models::application::Application;
 use crate::models::application::NewApplication;
 use crate::models::auth::AuthUser;
 use crate::models::auth::CampaignAdmin;
-use crate::models::campaign::{Campaign, OpenCampaign};
+use crate::models::campaign::{AttachmentResponse, Campaign, CampaignAttachment, NewAttachment, OpenCampaign};
 use crate::models::error::ChaosError;
 use crate::models::offer::Offer;
 use crate::models::role::{Role, RoleUpdate};
+use crate::models::storage::Storage;
 use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
@@ -116,7 +117,7 @@ impl CampaignHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Campaign::update(id, request_body, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully updated campaign"))
+        Ok(AppMessage::OkMessage("Successfully updated campaign"))
     }
 
     /// Publishes a campaign by setting its published field to true.
@@ -139,7 +140,7 @@ impl CampaignHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Campaign::publish(id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully published campaign"))
+        Ok(AppMessage::OkMessage("Successfully published campaign"))
     }
 
     /// Updates a campaign's banner image.
@@ -188,7 +189,7 @@ impl CampaignHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Campaign::delete(id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully deleted campaign"))
+        Ok(AppMessage::OkMessage("Successfully deleted campaign"))
     }
 
     /// Creates a new role in a campaign.
@@ -215,7 +216,7 @@ impl CampaignHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Role::create(id, data, &mut transaction.tx, &mut state.snowflake_generator).await?;
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully created role"))
+        Ok(AppMessage::OkMessage("Successfully created role"))
     }
 
     /// Retrieves all roles in a campaign.
@@ -274,7 +275,7 @@ impl CampaignHandler {
         )
         .await?;
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully created application"))
+        Ok(AppMessage::OkMessage("Successfully created application"))
     }
 
     /// Retrieves all applications for a campaign.
@@ -292,10 +293,10 @@ impl CampaignHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - List of applications or error
     pub async fn get_applications(
         Path(id): Path<i64>,
-        _admin: CampaignAdmin,
+        admin: CampaignAdmin,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let applications = Application::get_from_campaign_id(id, &mut transaction.tx).await?;
+        let applications = Application::get_from_campaign_id(id, admin.user_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(applications)))
     }
@@ -334,7 +335,7 @@ impl CampaignHandler {
         .await?;
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, "Successfully created offer"))
+        Ok(AppMessage::OkMessage("Successfully created offer"))
     }
 
     /// Retrieves all offers for a campaign.
@@ -359,5 +360,135 @@ impl CampaignHandler {
         transaction.tx.commit().await?;
 
         Ok((StatusCode::OK, Json(offers)))
+    }
+
+    /// Retrieves the attachments for a campaign.
+    /// 
+    /// This handler allows any authenticated user to view the attachments.
+    /// Returns an empty list if no documents exist.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `transaction` - Database transaction
+    /// * `state` - The application state
+    /// * `id` - The ID of the campaign
+    /// * `_user` - The authenticated user
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - List of attachments with download URLs
+    pub async fn get_attachments(
+        mut transaction: DBTransaction<'_>,
+        State(state): State<AppState>,
+        Path(id): Path<i64>,
+        _user: AuthUser,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let campaign = Campaign::get(id, &mut transaction.tx).await?;
+        let attachments = CampaignAttachment::get_by_campaign(id, &mut transaction.tx).await?;
+
+        // Generate download URLs for each attachment
+        let mut responses = Vec::new();
+        for attachment in attachments {
+            let download_url = Storage::generate_get_url(
+                format!("/organisation/{}/campaign/{}/attachment/{}", campaign.organisation_id, campaign.id, attachment.id),
+                &state.storage_bucket,
+            )
+            .await?;
+
+            responses.push(AttachmentResponse {
+                id: attachment.id,
+                campaign_id: attachment.campaign_id,
+                file_name: attachment.file_name,
+                file_size: attachment.file_size,
+                download_url,
+            });
+        }
+
+        transaction.tx.commit().await?;
+        Ok((StatusCode::OK, Json(responses)))
+    }
+
+    /// Creates or updates an attachment for a campaign.
+    /// 
+    /// This handler allows campaign admins to upload role documents.
+    /// It generates a pre-signed URL for uploading the file to S3.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `transaction` - Database transaction
+    /// * `state` - The application state
+    /// * `id` - The ID of the campaign
+    /// * `_admin` - The authenticated user (must be a campaign admin)
+    /// * `data` - The file metadata (name and size)
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Upload URL and attachment ID
+    pub async fn upload_attachments(
+        mut transaction: DBTransaction<'_>,
+        State(mut state): State<AppState>,
+        Path(id): Path<i64>,
+        _admin: CampaignAdmin,
+        Json(data): Json<Vec<NewAttachment>>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let upload_results = CampaignAttachment::create_or_update_multiple(id, data, &mut transaction.tx, &mut state.snowflake_generator, &state.storage_bucket).await?;
+        transaction.tx.commit().await?;
+        Ok((StatusCode::OK, Json(upload_results)))
+    }
+
+    /// Deletes an attachment.
+    /// 
+    /// This handler allows campaign admins to delete attachments.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `transaction` - Database transaction
+    /// * `attachment_id` - The ID of the attachment to delete
+    /// * `_admin` - The authenticated user (must be a campaign admin)
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
+    /// Deletes an attachment.
+    /// 
+    /// This handler allows campaign admins to delete attachments.
+    /// Verifies that the admin has access to the campaign the attachment belongs to.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `transaction` - Database transaction
+    /// * `attachment_id` - The ID of the attachment to delete
+    /// * `admin` - The authenticated user (must be a campaign admin)
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
+    pub async fn delete_attachment(
+        mut transaction: DBTransaction<'_>,
+        State(state): State<AppState>,
+        Path(attachment_id): Path<i64>,
+        user: AuthUser,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        // Get the attachment to find its campaign_id
+        let attachment = CampaignAttachment::get_by_id(attachment_id, &mut transaction.tx).await?;
+        let campaign = Campaign::get(attachment.campaign_id, &mut transaction.tx).await?;
+        
+        // Verify the admin has access to this campaign
+        crate::service::campaign::user_is_campaign_admin(
+            user.user_id,
+            attachment.campaign_id,
+            &mut transaction.tx,
+        )
+        .await?;
+        
+        // Delete the attachment from database
+        CampaignAttachment::delete(attachment_id, &mut transaction.tx).await?;
+
+        // Delete the file from S3 storage
+        let storage_path = format!("/organisation/{}/campaign/{}/attachment/{}", campaign.organisation_id, campaign.id, attachment.id);
+        Storage::delete_file(storage_path, &state.storage_bucket).await?;
+        
+        transaction.tx.commit().await?;
+        Ok(())
     }
 }

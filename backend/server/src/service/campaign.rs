@@ -6,7 +6,7 @@
 
 use chrono::Utc;
 use crate::models::error::ChaosError;
-use sqlx::{Pool, Postgres, Transaction};
+use sqlx::{Postgres, Transaction};
 use std::ops::DerefMut;
 
 /// Verifies if a user has admin privileges for a campaign.
@@ -50,6 +50,34 @@ pub async fn user_is_campaign_admin(
     Ok(())
 }
 
+pub async fn user_is_campaign_org_member(
+    user_id: i64,
+    campaign_id: i64,
+    transaction: &mut Transaction<'_, Postgres>,
+) -> Result<(), ChaosError> {
+    let is_admin = sqlx::query!(
+        "
+            SELECT EXISTS(
+                SELECT 1 FROM campaigns c
+                JOIN organisation_members m on c.organisation_id = m.organisation_id
+                WHERE c.id = $1 AND m.user_id = $2
+            )
+        ",
+        campaign_id,
+        user_id
+    )
+        .fetch_one(transaction.deref_mut())
+        .await?
+        .exists
+        .expect("`exists` should always exist in this query result");
+
+    if !is_admin {
+        return Err(ChaosError::Unauthorized);
+    }
+
+    Ok(())
+}
+
 /// Verifies if a campaign is still open for applications.
 /// 
 /// This function checks if the campaign deadline has not passed.
@@ -81,4 +109,24 @@ pub async fn assert_campaign_is_open(
     }
 
     Ok(())
+}
+
+pub fn create_proper_slug(input: &str) -> String {
+    let mut result = String::new();
+    let mut last_char_was_hyphen = false; // To handle consecutive non-alphanumeric chars
+
+    for c in input.chars() {
+        if c.is_alphanumeric() {
+            result.push(c);
+            last_char_was_hyphen = false;
+        } else {
+            if !last_char_was_hyphen {
+                result.push('-');
+                last_char_was_hyphen = true;
+            }
+        }
+    }
+
+    // Remove leading and trailing hyphens if necessary (optional, depending on desired behavior)
+    result.trim_matches('-').to_string().to_lowercase()
 }

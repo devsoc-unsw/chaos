@@ -5,15 +5,15 @@
 //! - Updating and deleting roles
 //! - Managing role applications
 
-use crate::models::app::AppState;
 use crate::models::application::Application;
 use crate::models::auth::{AuthUser, RoleAdmin};
 use crate::models::error::ChaosError;
 use crate::models::role::{Role, RoleUpdate};
 use crate::models::transaction::DBTransaction;
-use axum::extract::{Json, Path, State};
+use axum::extract::{Json, Path};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
+use crate::models::app::AppMessage;
 
 /// Handler for role-related HTTP requests.
 pub struct RoleHandler;
@@ -64,7 +64,7 @@ impl RoleHandler {
         Role::delete(id, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully deleted role"))
+        Ok(AppMessage::OkMessage("Successfully deleted role"))
     }
 
     /// Updates a role.
@@ -90,7 +90,7 @@ impl RoleHandler {
         Role::update(id, data, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully updated role"))
+        Ok(AppMessage::OkMessage("Successfully updated role"))
     }
 
     /// Retrieves all applications for a specific role.
@@ -108,10 +108,10 @@ impl RoleHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - List of applications or error
     pub async fn get_applications(
         Path(id): Path<i64>,
-        _admin: RoleAdmin,
+        admin: RoleAdmin,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let applications = Application::get_from_role_id(id, &mut transaction.tx).await?;
+        let applications = Application::get_from_role_id(id, admin.user_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(applications)))
     }

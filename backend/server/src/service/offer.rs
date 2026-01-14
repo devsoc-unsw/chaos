@@ -6,7 +6,7 @@
 
 use crate::models::error::ChaosError;
 use crate::models::offer::Offer;
-use sqlx::{Pool, Postgres, Transaction};
+use sqlx::{Postgres, Transaction};
 use std::ops::DerefMut;
 
 /// Verifies if a user has admin privileges for an offer.

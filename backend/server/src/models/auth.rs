@@ -9,7 +9,7 @@ use crate::models::error::ChaosError;
 use crate::service::answer::user_is_answer_owner;
 use crate::service::application::{user_is_application_admin, user_is_application_owner};
 use crate::service::auth::{assert_is_super_user, extract_user_id_from_request};
-use crate::service::campaign::user_is_campaign_admin;
+use crate::service::campaign::{user_is_campaign_admin, user_is_campaign_org_member};
 use crate::service::email_template::user_is_email_template_admin;
 use crate::service::offer::{assert_user_is_offer_admin, assert_user_is_offer_recipient};
 use crate::service::organisation::{assert_user_is_organisation_admin, assert_user_is_organisation_admin_or_super_user};
@@ -250,6 +250,38 @@ where
     }
 }
 
+pub struct CampaignOrgMember {
+    /// ID of the member of the campaign's organisation
+    pub user_id: i64,
+}
+
+#[async_trait]
+impl<S> FromRequestParts<S> for CampaignOrgMember
+where
+    AppState: FromRef<S>,
+    S: Send + Sync,
+{
+    type Rejection = ChaosError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let app_state = AppState::from_ref(state);
+        let user_id = extract_user_id_from_request(parts, &app_state).await?;
+
+        let campaign_id = *parts
+            .extract::<Path<HashMap<String, i64>>>()
+            .await
+            .map_err(|_| ChaosError::BadRequest)?
+            .get("campaign_id")
+            .ok_or(ChaosError::BadRequest)?;
+
+        let mut tx = app_state.db.begin().await?;
+        user_is_campaign_org_member(user_id, campaign_id, &mut tx).await?;
+        tx.commit().await?;
+
+        Ok(CampaignOrgMember { user_id })
+    }
+}
+
 /// Role administrator information.
 /// 
 /// Contains the user ID of a user with role administrator privileges.
@@ -396,7 +428,7 @@ where
         if !user_is_application_owner(user_id, application_id, &mut tx).await? {
             return Err(ChaosError::Unauthorized);
         }
-        tx.commit().await;
+        tx.commit().await?;
 
         Ok(ApplicationCreatorGivenApplicationId { user_id })
     }

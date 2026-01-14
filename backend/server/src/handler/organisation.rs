@@ -7,23 +7,18 @@
 //! - Email template management
 //! - Logo image handling
 
-use crate::models::app::AppState;
+use crate::models::app::{AppMessage, AppState, IdMessage};
 use crate::models::auth::{OrganisationAdminOrSuperUser, SuperUser};
 use crate::models::auth::{AuthUser, OrganisationAdmin};
 use crate::models::campaign::{Campaign, NewCampaign};
 use crate::models::email_template::{EmailTemplate, NewEmailTemplate};
 use crate::models::error::ChaosError;
-use crate::models::organisation::{
-    AdminToRemove, AdminUpdateList, NewOrganisation, Organisation, OrganisationDetails, SlugCheck, EmailRoleBody, IdRoleBody, IdBody
-};
-use crate::service::user::{user_exists_by_email};
-use crate::service::organisation::{assert_user_is_not_in_organisation};
+use crate::models::organisation::{MemberToRemove, AdminUpdateList, NewOrganisation, Organisation, SlugCheck, MemberToInvite};
 use crate::models::transaction::DBTransaction;
 use crate::service::auth::assert_is_super_user;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use serde::Serialize;
 use serde_json::json;
 
 /// Handler for organisation-related HTTP requests.
@@ -54,13 +49,15 @@ impl OrganisationHandler {
             data.admin,
             data.slug,
             data.name,
+            data.contact_email,
+            data.website_url,
             &mut state.snowflake_generator,
             &mut transaction.tx,
         )
         .await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully created organisation"))
+        Ok(AppMessage::OkMessage("Successfully created organisation"))
     }
 
     /// Checks if an organisation slug is available.
@@ -84,7 +81,7 @@ impl OrganisationHandler {
         Organisation::check_slug_availability(data.slug, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Organisation slug is available"))
+        Ok(AppMessage::OkMessage("Organisation slug is available"))
     }
 
     /// Retrieves an organisation by its ID.
@@ -155,30 +152,29 @@ impl OrganisationHandler {
         Organisation::delete(id, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully deleted organisation"))
+        Ok(AppMessage::OkMessage("Successfully deleted organisation"))
     }
 
-    /// Get all organisations that the logged in user is an Admin of
+    /// Get all organisations that the logged in user is a Member of
     /// If user is Super User, get all organisations
-    pub async fn get_by_admin(
+    pub async fn get_all_for_user(
         mut transaction: DBTransaction<'_>,
         user: AuthUser,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let mut orgs = Vec::<OrganisationDetails>::new();
         // Check if user is Super User
-        match assert_is_super_user(user.user_id, &mut transaction.tx).await {
+        let orgs = match assert_is_super_user(user.user_id, &mut transaction.tx).await {
             Ok(_) => {
                 // Is Super User
-                orgs = Organisation::get_all(&mut transaction.tx).await?;
+                Ok(Organisation::get_all(&mut transaction.tx).await?)
             }
             Err(ChaosError::Unauthorized) => {
                 // Not a Super User
-                orgs = Organisation::get_by_admin(user.user_id, &mut transaction.tx).await?;
+                Ok(Organisation::get_by_member(user.user_id, &mut transaction.tx).await?)
             }
             Err(e) => {
-                return Err(e);
+                Err(e)
             }
-        }
+        }?;
 
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(orgs)))
@@ -203,6 +199,30 @@ impl OrganisationHandler {
         _user: SuperUser,
     ) -> Result<impl IntoResponse, ChaosError> {
         let members = Organisation::get_admins(id, &mut transaction.tx).await?;
+
+        transaction.tx.commit().await?;
+        Ok((StatusCode::OK, Json(members)))
+    }
+
+    /// Retrieves all users (role) of an organisation.
+    ///
+    /// This handler allows organisation admins to view all members with the role "User".
+    ///
+    /// # Arguments
+    ///
+    /// * `state` - The application state
+    /// * `id` - The ID of the organisation
+    /// * `_admin` - The authenticated user (must be an organisation admin)
+    ///
+    /// # Returns
+    ///
+    /// * `Result<impl IntoResponse, ChaosError>` - List of members or error
+    pub async fn get_users(
+        mut transaction: DBTransaction<'_>,
+        Path(id): Path<i64>,
+        _admin: OrganisationAdmin,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let members = Organisation::get_users(id, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(members)))
@@ -255,7 +275,7 @@ impl OrganisationHandler {
         Organisation::update_admins(id, request_body.members, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully updated organisation members"))
+        Ok(AppMessage::OkMessage("Successfully updated organisation members"))
     }
 
     /// Updates the member list of an organisation.
@@ -281,7 +301,7 @@ impl OrganisationHandler {
         Organisation::update_members(id, request_body.members, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully updated organisation members"))
+        Ok(AppMessage::OkMessage("Successfully updated organisation members"))
     }
 
     /// Removes an admin from an organisation.
@@ -302,20 +322,17 @@ impl OrganisationHandler {
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
         _super_user: SuperUser,
-        Json(request_body): Json<AdminToRemove>,
+        Json(request_body): Json<MemberToRemove>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Organisation::remove_admin(id, request_body.user_id, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((
-            StatusCode::OK,
-            "Successfully removed member from organisation",
-        ))
+        Ok(AppMessage::OkMessage("Successfully removed member from organisation"))
     }
 
-    /// Removes a member from an organisation.
+    /// Removes a user from an organisation.
     /// 
-    /// This handler allows organisation admins to remove members.
+    /// This handler allows organisation admins to remove members with role "User".
     /// 
     /// # Arguments
     /// 
@@ -327,21 +344,29 @@ impl OrganisationHandler {
     /// # Returns
     /// 
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
-    pub async fn remove_member(
+    pub async fn remove_user(
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
         _admin: OrganisationAdmin,
-        Json(req): Json<IdBody>,
+        Json(request_body): Json<MemberToRemove>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let tx = &mut transaction.tx;
-        //let user_id = user_exists_by_email(req.email, tx).await?;
-        Organisation::remove_member(id, req.user_id, tx).await?;
+        Organisation::remove_user(id, request_body.user_id, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((
-            StatusCode::OK,
-            "Successfully removed member from organisation",
-        ))
+        Ok(AppMessage::OkMessage("Successfully removed member from organisation"))
+    }
+
+    pub async fn invite_user(
+        mut transaction: DBTransaction<'_>,
+        Path(id): Path<i64>,
+        _admin: OrganisationAdmin,
+        State(state): State<AppState>,
+        Json(request_body): Json<MemberToInvite>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        Organisation::invite_user(id, request_body.email, state.email_credentials, &mut transaction.tx).await?;
+
+        transaction.tx.commit().await?;
+        Ok(AppMessage::OkMessage("Successfully invited user to organisation"))
     }
 
     /// Updates an organisation's logo.
@@ -421,13 +446,18 @@ impl OrganisationHandler {
             request_body.description,
             request_body.starts_at,
             request_body.ends_at,
+            request_body.interview_period_starts_at,
+            request_body.interview_period_ends_at,
+            request_body.interview_format,
+            request_body.outcomes_released_at,
+            request_body.application_requirements,
             &mut transaction.tx,
             &mut state.snowflake_generator,
         )
         .await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, Json(json!({ "id": new_campaign_id }))))
+        Ok((StatusCode::OK, Json(IdMessage { id: new_campaign_id })))
     }
 
     /// Checks if a campaign slug is available.
@@ -453,7 +483,7 @@ impl OrganisationHandler {
         Campaign::check_slug_availability(organisation_id, data.slug, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Campaign slug is available"))
+        Ok(AppMessage::OkMessage("Campaign slug is available"))
     }
 
     /// Creates a new email template for an organisation.
@@ -488,7 +518,7 @@ impl OrganisationHandler {
         .await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Successfully created email template"))
+        Ok(AppMessage::OkMessage("Successfully created email template"))
     }
 
     /// Retrieves all email templates for an organisation.
@@ -515,36 +545,14 @@ impl OrganisationHandler {
         Ok((StatusCode::OK, Json(email_templates)))
     }
 
-    pub async fn add_member(
-        _user: OrganisationAdminOrSuperUser,
+    pub async fn get_user_role(
+        user: AuthUser,
+        Path(id): Path<i64>,
         mut transaction: DBTransaction<'_>,
-        Path(org_id): Path<i64>,
-        Json(req): Json<EmailRoleBody>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let tx = &mut transaction.tx;
-        let user_id = user_exists_by_email(req.email, tx).await?;
-        assert_user_is_not_in_organisation(user_id, org_id, tx).await?;
-        Organisation::add_member_or_admin_to_organisation(org_id, user_id, req.role.clone(), tx).await?;
+        let role = Organisation::get_user_role(id, user.user_id, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, "Member added to organisation"))
-    }
-
-    pub async fn update_member_role(
-        _user: OrganisationAdmin,
-        mut transaction: DBTransaction<'_>,
-        Path(org_id): Path<i64>,
-        Json(req): Json<IdRoleBody>,
-    ) -> Result<impl IntoResponse, ChaosError> {
-        let tx = &mut transaction.tx;
-        Organisation::change_member_role(
-            org_id,
-            req.user_id,
-            req.role,
-            tx
-        )
-        .await?;
-        transaction.tx.commit().await?;
-        Ok(StatusCode::OK)
+        Ok((StatusCode::OK, Json(json!({ "role": role }))))
     }
 }

@@ -177,61 +177,61 @@ const AdminContent = ({
 
   return (
     <StyledEngineProvider injectFirst>
-      <AdminContentContainer>
-        <ContentHeader>
-          <OrgInfo>
-            <OrgInfoImage src={icon} />
-            <OrgInfoName>{orgName}</OrgInfoName>
-          </OrgInfo>
-          <div tw="flex items-center gap-4">
-            <button
-              tw="text-gray-500 transition-colors hover:text-gray-800"
-              type="button"
-              onClick={() => setShowEditDialog(true)}
+    <AdminContentContainer>
+      <ContentHeader>
+        <OrgInfo>
+          <OrgInfoImage src={icon} />
+          <OrgInfoName>{orgName}</OrgInfoName>
+        </OrgInfo>
+        <div tw="flex items-center gap-4">
+          <button
+            tw="text-gray-500 transition-colors hover:text-gray-800"
+            type="button"
+            onClick={() => setShowEditDialog(true)}
+          >
+            <PencilIcon tw="h-8 w-8" />
+          </button>
+          {/* have to add addition button here to create campaigns,
+          or maybe it should go in a more obvious spot? */}
+          <ToggleButtonContainer>
+            <ToggleButtonGroup
+              color="primary"
+              value={windowSelected}
+              size="large"
+              exclusive
+              onChange={handleWindowChange}
             >
-              <PencilIcon tw="h-8 w-8" />
-            </button>
-            {/* have to add addition button here to create campaigns,
-            or maybe it should go in a more obvious spot? */}
-            <ToggleButtonContainer>
-              <ToggleButtonGroup
-                color="primary"
-                value={windowSelected}
-                size="large"
-                exclusive
-                onChange={handleWindowChange}
+              <ToggleButton value="campaigns">Campaigns</ToggleButton>
+              <ToggleButton value="members">Members</ToggleButton>
+              <Button
+                variant="contained"
+                color="error"
+                disableElevation
+                onClick={() => setShowDeleteDialog(true)}
               >
-                <ToggleButton value="campaigns">Campaigns</ToggleButton>
-                <ToggleButton value="members">Members</ToggleButton>
-                <Button
-                  variant="contained"
-                  color="error"
-                  disableElevation
-                  onClick={() => setShowDeleteDialog(true)}
-                >
-                  <DeleteForeverRounded />
-                </Button>
-              </ToggleButtonGroup>
-            </ToggleButtonContainer>
-          </div>
-        </ContentHeader>
-        {windowSelected === "campaigns" && (
-          <AdminCampaignContent
-            campaigns={campaigns}
-            setCampaigns={setCampaigns}
-            orgLogo={icon}
+                <DeleteForeverRounded />
+              </Button>
+            </ToggleButtonGroup>
+          </ToggleButtonContainer>
+        </div>
+      </ContentHeader>
+      {windowSelected === "campaigns" && (
+        <AdminCampaignContent
+          campaigns={campaigns}
+          setCampaigns={setCampaigns}
+          orgLogo={icon}
+          orgId={id}
+        />
+      )}
+      {windowSelected === "members" && (
+        <ContentBody>
+          <AdminMembersContent
             orgId={id}
+            members={members}
+            setMembers={setMembers}
           />
-        )}
-        {windowSelected === "members" && (
-          <ContentBody>
-            <AdminMembersContent
-              orgId={id}
-              members={members}
-              setMembers={setMembers}
-            />
-          </ContentBody>
-        )}
+        </ContentBody>
+      )}
 
         <Modal
           open={showEditDialog}

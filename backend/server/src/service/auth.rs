@@ -114,7 +114,7 @@ pub async fn extract_user_id_from_request(
     let TypedHeader(cookies) = parts
         .extract::<TypedHeader<Cookie>>()
         .await
-        .map_err(|e| {
+        .map_err(|_| {
             ChaosError::NotLoggedIn
         })?;
 

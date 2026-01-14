@@ -6,7 +6,7 @@
 //! - Managing role-specific answers
 
 use crate::models::answer::{Answer, NewAnswer};
-use crate::models::app::AppState;
+use crate::models::app::{AppMessage, AppState, IdMessage};
 use crate::models::auth::{AnswerOwner, ApplicationOwner, ApplicationOwnerOrReviewer};
 use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
@@ -57,7 +57,7 @@ impl AnswerHandler {
 
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, Json(json!({"id": id}))))
+        Ok((StatusCode::OK, Json(IdMessage { id })))
     }
 
     /// Retrieves all common answers for an application.
@@ -83,7 +83,7 @@ impl AnswerHandler {
 
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, Json(answers)))
+        Ok(( Json(answers)))
     }
 
     /// Retrieves all answers for a specific role in an application.
@@ -111,7 +111,7 @@ impl AnswerHandler {
 
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, Json(answers)))
+        Ok(( Json(answers)))
     }
 
     /// Updates an existing answer.
@@ -141,7 +141,7 @@ impl AnswerHandler {
 
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, "Successfully updated answer"))
+        Ok(AppMessage::OkMessage("Successfully updated answer"))
     }
 
     /// Deletes an answer.
@@ -169,6 +169,6 @@ impl AnswerHandler {
 
         transaction.tx.commit().await?;
 
-        Ok((StatusCode::OK, "Successfully deleted answer"))
+        Ok(AppMessage::OkMessage("Successfully deleted answer"))
     }
 }

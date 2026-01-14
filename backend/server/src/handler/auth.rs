@@ -13,7 +13,7 @@ use axum::extract::{Query, State};
 use axum_extra::extract::cookie::{Cookie, CookieJar, Expiration};
 use axum::response::{IntoResponse, Redirect};
 use oauth2::reqwest::async_http_client;
-use oauth2::{AuthorizationCode, RedirectUrl, Scope, TokenResponse};
+use oauth2::{AuthorizationCode, Scope, TokenResponse};
 use time::OffsetDateTime;
 
 /// Handles the Google OAuth2 callback.

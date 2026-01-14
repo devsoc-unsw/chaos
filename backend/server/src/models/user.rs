@@ -5,8 +5,7 @@
 
 use crate::models::error::ChaosError;
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, Pool, Postgres, Transaction};
-use crate::models::organisation::OrganisationDetails;
+use sqlx::{FromRow, Postgres, Transaction};
 use std::ops::DerefMut;
 
 /// Represents the role of a user in the system.
@@ -134,6 +133,22 @@ impl User {
         .await?;
 
         Ok(user)
+    }
+
+    pub async fn find_by_email(email: String, transaction: &mut Transaction<'_, Postgres>) -> Result<Option<User>, ChaosError> {
+        let possible_user = sqlx::query_as!(
+            User,
+            r#"
+            SELECT id, email, zid, name, pronouns, gender, degree_name,
+            degree_starting_year, role AS "role!: UserRole"
+            FROM users WHERE email = $1
+        "#,
+            email
+        )
+            .fetch_optional(transaction.deref_mut())
+            .await?;
+
+        Ok(possible_user)
     }
 
     /// Updates a user's name.

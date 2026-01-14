@@ -4,9 +4,9 @@
 //! - Verifying organisation admin privileges
 
 use crate::models::error::ChaosError;
-use sqlx::{Pool, Postgres, Transaction};
-use crate::models::user::UserRole;
+use sqlx::{Postgres, Transaction};
 use std::ops::DerefMut;
+use crate::models::user::UserRole;
 
 /// Verifies if a user has admin privileges for an organisation.
 /// 
