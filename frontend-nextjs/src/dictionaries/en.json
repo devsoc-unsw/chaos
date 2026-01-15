@@ -150,6 +150,17 @@
       "delete_confirmation": "This will permanently delete the email template and cannot be undone.",
       "edit_template": "Edit Template"
     },
+    "invite": {
+      "title": "You're invited",
+      "invited_by": "has invited you to join their organisation on Chaos",
+      "sent_to": "This invite was sent to",
+      "login_cta": "Click here to create a Chaos account",
+      "accept_cta": "Accept invite",
+      "used": "This invite has already been used",
+      "expired": "This invite has expired",
+      "accepted": "Invite accepted! You've been added to the organisation",
+      "wrong_account": "This account was not invited, please logout and try again"
+    },
     "actions": {
       "new": "New",
       "edit": "Edit",

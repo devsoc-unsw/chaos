@@ -6,7 +6,7 @@
 use crate::models::campaign::OrganisationCampaign;
 use crate::models::error::ChaosError;
 use crate::models::storage::Storage;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Utc, Duration};
 use s3::Bucket;
 use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
@@ -16,6 +16,9 @@ use uuid::Uuid;
 use crate::models::email::EmailCredentials;
 use crate::models::user::User;
 use crate::service::campaign::create_proper_slug;
+use nanoid::nanoid;
+use crate::constants::NANOID_ALPHABET;
+use crate::models::email::ChaosEmail;
 
 /// Represents an organisation in the database.
 /// 
@@ -720,10 +723,14 @@ impl Organisation {
 
     pub async fn invite_user(
         organisation_id: i64,
+        inviting_user_id: i64,
         email: String,
         email_credentials: EmailCredentials,
+        snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<(), ChaosError> {
+    ) -> Result<String, ChaosError> {
+        let email = email.to_lowercase();
+        
         let _ = sqlx::query!(
             "SELECT id FROM organisations WHERE id = $1",
             organisation_id
@@ -731,18 +738,90 @@ impl Organisation {
         .fetch_one(transaction.deref_mut())
         .await?;
 
-        let possible_user = User::find_by_email(email, transaction).await?;
+        let possible_user = User::find_by_email(email.clone(), transaction).await?;
         if let Some(user) = possible_user {
             if (Self::check_user_already_member(organisation_id, user.id, transaction).await?) {
                 return Err(ChaosError::BadRequestWithMessage("User already a member of organisation".to_string()))
             }
             Self::add_user(organisation_id, user.id, transaction).await?;
-        } else {
-            // TODO: email invite system
+            return Ok("existing-user-added".to_string());
         }
 
-        Ok(())
-    }
+        // If an invite already exists for this organisation/email, not allow duplicates, we refresh the invite.
+        let potential_invite = sqlx::query!(
+            r#"
+                SELECT id, used_at
+                FROM organisation_invites
+                WHERE organisation_id = $1 AND email = $2
+                ORDER BY created_at DESC
+                LIMIT 1
+            "#,
+            organisation_id,
+            email
+        )
+        .fetch_optional(transaction.deref_mut())
+        .await?;
+    
+        if let Some(existing) = potential_invite {
+            let refreshed_code = nanoid!(10, &NANOID_ALPHABET);
+            let refreshed_expiry = Utc::now() + Duration::days(7);
+
+            sqlx::query!(
+                r#"
+                    UPDATE organisation_invites
+                    SET
+                        code = $1,
+                        expires_at = $2,
+                        created_at = NOW(),
+                        used_at = NULL,
+                        used_by = NULL,
+                        invited_by_user_id = $3
+                    WHERE id = $4
+                "#,
+                refreshed_code,
+                refreshed_expiry,
+                inviting_user_id,
+                existing.id
+            )
+            .execute(transaction.deref_mut())
+            .await?;
+
+            return Ok(refreshed_code);
+        }
+
+        // New invite creation
+        let id = snowflake_generator.real_time_generate(); // generate a new invite ID
+        let code = nanoid!(10, &NANOID_ALPHABET); // generate a new invite code
+        let expires_at = Utc::now() + Duration::days(7); // set the invite expiry to 7 days 
+        let invited_by_user_id = inviting_user_id;
+        // insert the new invite into the database
+        sqlx::query!(
+            r#"
+                INSERT INTO organisation_invites
+                    (id, organisation_id, code, email, expires_at, used_at, used_by, created_at, invited_by_user_id)
+                VALUES ($1, $2, $3, $4, $5, NULL, NULL, NOW(), $6)
+            "#,
+            id,
+            organisation_id,
+            code,
+            email,
+            expires_at, 
+            invited_by_user_id
+        )
+        .execute(transaction.deref_mut())
+        .await?;
+
+        // TODO: Get SMTP credentials
+        // ChaosEmail::send_message(
+        //     "".to_string(),
+        //     email,
+        //     "You have been invited to join an organisation on Chaos".to_string(),
+        //     format!("You have been invited to join an organisation on Chaos. Please use the following link to accept the invite: https://chaos.devsoc.app/invite/${code}").to_string(),
+        //     email_credentials,
+        // ).await?;
+
+        return Ok(code);
+}
 
     pub async fn update_logo(
         id: i64,
