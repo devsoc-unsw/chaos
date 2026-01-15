@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api";
-import { acceptInvite, inviteQueryOptions } from "@/models/invite";
+import { acceptInvite, getInvite } from "@/models/invite";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -14,10 +14,15 @@ type Props = {
 };
 
 export default function InviteClient({ code, dict }: Props) {
+  const router = useRouter();
+
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState<string | null>(null);
-  const router = useRouter();
-  const { data: invite } = useQuery(inviteQueryOptions(code));
+
+  const { data: invite } = useQuery({
+    queryKey: [`invite-${code}`],
+    queryFn: () => getInvite(code),
+  });
 
   // After successful acceptance, redirect after a short delay.
   useEffect(() => {
@@ -33,26 +38,9 @@ export default function InviteClient({ code, dict }: Props) {
     setStatus("loading");
     setMessage(null);
 
-    acceptInvite(code)
-      .then(() => {
-        setStatus("success");
-        setMessage(dict.dashboard.invite.accepted);
-      })
-      .catch((err) => {
-        if (err instanceof ApiError) {
-          if (err.status === 401) {
-            // Not logged in -> send user to login (they can create an account from there).
-            router.push(`/login?to=${encodeURIComponent(`/dashboard/invite/${code}`)}`);
-            return;
-          } else {
-            setStatus("error");
-            setMessage(err.message);
-          }
-        } else {
-          setStatus("error");
-          setMessage("Something went wrong. Please try again.");
-        }
-      });
+    await acceptInvite(code);
+    setStatus("success");
+    setMessage(dict.dashboard.invite.accepted);
   };
 
   const inviteInvalid = !invite || invite.expired || invite.used || status === "success";
@@ -61,8 +49,9 @@ export default function InviteClient({ code, dict }: Props) {
     <div className="max-w-xl mx-auto p-6 flex flex-col gap-4">
       <h1 className="text-2xl font-bold">{dict.dashboard.invite.title}</h1>
       <p className="text-sm text-muted-foreground">
+        {invite?.organisation_name}{" "}
         {invite
-          ? dict.dashboard.invite.invited_by.replace("{org}", invite.organisation_name)
+          ? dict.dashboard.invite.invited_by
           : dict?.common?.loading ?? "Loading..."}
       </p>
       {/* Show the email the invite was sent to */}

@@ -61,35 +61,24 @@ export function AddMemberDialog({ orgId, dict }: { orgId: string, dict: any }) {
 
   const [email, setEmail] = useState("");
   const [open, setOpen] = useState(false);
-  const [status, setStatus] = useState<"idle" | "loading">("idle");
+  const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleInviteMember = async () => {
     setErrorMessage(null);
 
-    const trimmed = email.trim();
-    if (!trimmed) {
+    const normalisedEmail = email.trim().toLowerCase();
+    if (!normalisedEmail) {
       setErrorMessage(dict?.common?.email_required ?? "Email is required.");
       return;
     }
 
-    setStatus("loading");
-    try {
-      await inviteOrganisationUser(orgId, trimmed);
-      await queryClient.invalidateQueries({ queryKey: [`${orgId}-members`] });
-      setEmail("");
-      setOpen(false);
-    } catch (err) {
-      if (err instanceof ApiError) {
-        setErrorMessage(err.message);
-      } else if (err instanceof Error) {
-        setErrorMessage(err.message);
-      } else {
-        setErrorMessage("Failed to invite member.");
-      }
-    } finally {
-      setStatus("idle");
-    }
+    setLoading(true);
+    await inviteOrganisationUser(orgId, normalisedEmail);
+    await queryClient.invalidateQueries({ queryKey: [`${orgId}-members`] });
+    setEmail("");
+    setOpen(false);
+    setLoading(false);
   }
 
   return (
@@ -112,9 +101,9 @@ export function AddMemberDialog({ orgId, dict }: { orgId: string, dict: any }) {
         <DialogFooter>
           <Button
             onClick={handleInviteMember}
-            disabled={status === "loading"}
+            disabled={loading}
           >
-            {status === "loading" ? (dict?.common?.loading ?? "Loading...") : dict.dashboard.actions.invite}
+            {loading ? (dict?.common?.loading ?? "Loading...") : dict.dashboard.actions.invite}
           </Button>
         </DialogFooter>
       </DialogContent>
