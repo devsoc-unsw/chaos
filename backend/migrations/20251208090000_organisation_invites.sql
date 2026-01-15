@@ -10,6 +10,6 @@ CREATE TABLE organisation_invites (
     invited_by_user_id BIGINT REFERENCES users(id) ON DELETE SET NULL
 );
 
-CREATE INDEX IDX_organisation_invites_code ON organisation_invites (code);
-CREATE INDEX IDX_organisation_invites_organisation_id ON organisation_invites (organisation_id);
-CREATE INDEX IDX_organisation_invites_email ON organisation_invites (email);
+CREATE INDEX IDX_organisation_invites_code ON organisation_invites(code);
+CREATE INDEX IDX_organisation_invites_organisation_id ON organisation_invites(organisation_id);
+CREATE INDEX IDX_organisation_invites_email ON organisation_invites(email);

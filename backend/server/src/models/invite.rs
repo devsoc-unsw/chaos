@@ -33,7 +33,25 @@ pub struct Invite {
     #[serde(serialize_with = "crate::models::serde_string::serialize_option")]
     #[serde(deserialize_with = "crate::models::serde_string::deserialize_option")]
     pub invited_by_user_id: Option<i64>,
-    
+}
+
+/// Response payload for invite details expected by the frontend.
+#[derive(Serialize)]
+pub struct InviteDetails {
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub id: i64,
+    pub code: String,
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub organisation_id: i64,
+    pub organisation_name: String,
+    pub email: String,
+    pub expires_at: DateTime<Utc>,
+    pub used: bool,
+    pub expired: bool,
+    /// ID of the user that invited the member to the organisation
+    #[serde(serialize_with = "crate::models::serde_string::serialize_option")]
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize_option")]
+    pub invited_by_user_id: Option<i64>
 }
 
 impl Invite {
@@ -50,21 +68,22 @@ impl Invite {
     pub async fn get_by_code(
         code: &str,
         transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<Invite, ChaosError> {
+    ) -> Result<InviteDetails, ChaosError> {
         let invite = sqlx::query_as!(
-            Invite,
+            InviteDetails,
             r#"
                 SELECT
-                    id,
+                    oi.id,
                     code,
                     organisation_id,
+                    o.name AS organisation_name,
                     email,
                     expires_at,
-                    used_at,
-                    used_by,
-                    created_at,
+                    used_at IS NOT NULL AS "used!: bool",
+                    expires_at <= NOW() AS "expired!: bool",
                     invited_by_user_id
-                FROM organisation_invites
+                FROM organisation_invites oi
+                JOIN organisations o ON o.id = oi.organisation_id
                 WHERE code = $1 AND used_at IS NULL AND expires_at > NOW()
             "#,
             code
