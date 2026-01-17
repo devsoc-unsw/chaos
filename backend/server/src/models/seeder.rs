@@ -27,9 +27,10 @@ impl Seeder {
 
         // Check if super user already exists, and if not, create them
         let possible_super_user = User::find_by_email(admin_email.clone(), &mut tx).await?;
+        let super_user_id = self.app_state.snowflake_generator.real_time_generate();
         if let None = possible_super_user {
             let super_user = User {
-                id: 1,
+                id: super_user_id,
                 email: admin_email,
                 zid: Some("z8888888".to_string()),
                 name: "Chaos Super User".to_string(),
@@ -46,18 +47,12 @@ impl Seeder {
         // Check if DevSoc org already exists, and if not, create it
         if let Err(_) = Organisation::get_by_slug("devsoc".to_string(), &mut tx).await {
             let org_id = Organisation::create(
-                1,
+                super_user_id,
                 "devsoc".to_string(),
                 "UNSW DevSoc".to_string(),
                 "contact@devsoc.app".to_string(),
                 Some("https://devsoc.app".to_string()),
                 &mut self.app_state.snowflake_generator,
-                &mut tx
-            ).await?;
-
-            Organisation::update_admins(
-                org_id,
-                vec![1],
                 &mut tx
             ).await?;
         }
