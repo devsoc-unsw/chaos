@@ -17,7 +17,7 @@ async fn main() -> Result<(), ChaosError> {
     seeder.seed_database(super_user_email).await?;
 
     let app = app().await?;
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
 
     Ok(())
