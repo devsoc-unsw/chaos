@@ -57,7 +57,7 @@ export default function ApplicationReview({
   const [qaByRole, setQAByRole] = useState<Map<string, QuestionAndAnswer[]>>(new Map());
   const queryClient = useQueryClient()
 
-  // Ensure general questions/answers are fetched and stored in qaByRole on load
+  // always fetch general qAndAs on load
   useEffect(() => {
     (async () => {
       try {
@@ -199,7 +199,6 @@ export default function ApplicationReview({
                 console.error(`Failed to fetch QAs for role ${roleId}:`, err);
               }
             })();
-            // Intentionally do not set this role in newQAMap yet; it will be filled by the async fetch above
           }
         }
       }

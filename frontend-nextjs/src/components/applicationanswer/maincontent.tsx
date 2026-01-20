@@ -102,12 +102,9 @@ export default function MainContent({
 
     useEffect(() => {
       if (!questions || !answers) {
-        console.log("lolgetfucked")
         return;
       }
-      console.log("godstained")
       const linked = linkQuestionsAndAnswers(questions, answers)
-      console.log(linked)
       setQuestionsAndAnswers(linked);
     }, [questions, answers]);
 
