@@ -76,7 +76,7 @@ export default function MainContent({
               });
             } else {
               await queryClient.invalidateQueries({
-                queryKey: [`${applicationId}-${activeTab}-role-answers}`]
+                queryKey: [`${applicationId}-${activeTab}-role-answers`]
               })
             }
           }
@@ -101,8 +101,13 @@ export default function MainContent({
     }
 
     useEffect(() => {
-      if (!questions || !answers) return;
+      if (!questions || !answers) {
+        console.log("lolgetfucked")
+        return;
+      }
+      console.log("godstained")
       const linked = linkQuestionsAndAnswers(questions, answers)
+      console.log(linked)
       setQuestionsAndAnswers(linked);
     }, [questions, answers]);
 
