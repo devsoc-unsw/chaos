@@ -3,9 +3,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CampaignUpdate, createCampaignRole, getCampaign, getCampaignRoles, updateCampaign, getCampaignAttachments, uploadAttachments, deleteCampaignAttachment } from "@/models/campaign";
 import { Button } from "@/components/ui/button";
-import { Copy, Pencil, Trash, Share, BookOpenCheck, Check, Plus, FormIcon, CircleCheck, Upload, X, FileText, BarChart } from "lucide-react";
+import { Copy, Pencil, Trash, Share, BookOpenCheck, Check, Plus, FormIcon, CircleCheck, Upload, X, FileText, BarChart, CalendarClock } from "lucide-react";
 import { ButtonGroup } from "@/components/ui/button-group";
-import { cn } from "@/lib/utils";
+import { cn, dateToString } from "@/lib/utils";
 import {
     Table,
     TableBody,
@@ -38,6 +38,11 @@ interface CampaignDetailsData {
     description?: string;
     startsAt?: Date;
     endsAt?: Date;
+}
+
+interface InterviewTimelineConfig {
+    startsAt: string;
+    endsAt: string;
 }
 
 export type CampaignUpdateKeys = keyof CampaignDetailsData | "roleName" | "roleMinAvailable" | "roleMaxAvailable";
@@ -141,6 +146,7 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
     const [hoveredDeleteIndex, setHoveredDeleteIndex] = useState<number | null>(null);
     const [descriptionHtmlState, setDescriptionHtmlState] = useState<string>("");
     const [dateError, setDateError] = useState<boolean>(false);
+    const [timelineDateError, setTimelineDateError] = useState<boolean>(false);
     const [roleNameError, setRoleNameError] = useState<{ [key: string]: boolean }>(
         clientRoles.reduce((acc, role) => ({ ...acc, [role.id]: false }), {})
     );
@@ -148,6 +154,7 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
         clientRoles.reduce((acc, role) => ({ ...acc, [role.id]: false }), {})
     );
     const [updatedCampaignDetails, setUpdatedCampaignDetails] = useState<CampaignDetailsData | null>(null);
+    const [timelineDraft, setTimelineDraft] = useState<InterviewTimelineConfig | null>(null);
 
     if (!editingMode && roles && !compareCampaignRoles(roles, clientRoles)) {
         setClientRoles(roles.map((role) => ({ ...role, deleting: false, new: false })));
@@ -294,28 +301,64 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
         });
     };
 
+    const updateTimelineDetails = (data: string | Date | undefined, key: CampaignUpdateKeys) => {
+        if (!data || !editingMode) return;
+
+        const parsedDate = data instanceof Date ? data : new Date(data);
+        const newValue = parsedDate.toISOString();
+
+        setTimelineDateError(false);
+        setTimelineDraft((prev) => {
+            const base = prev ?? {
+                startsAt: campaign?.starts_at ?? new Date().toISOString(),
+                endsAt: campaign?.ends_at ?? new Date().toISOString(),
+            };
+            if (key === "startsAt") {
+                return { ...base, startsAt: newValue };
+            }
+            if (key === "endsAt") {
+                return { ...base, endsAt: newValue };
+            }
+            return base;
+        });
+    };
+
+    const formatDateOnly = (iso: string) =>
+        new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+
+    const formatTimeRange = (startIso: string, endIso: string) => {
+        const start = new Date(startIso);
+        const end = new Date(endIso);
+        return `${start.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: true })} - ${end.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: true })}`;
+    };
+
     const saveUpdatedCampaignDetails = async () => {
-        if (!updatedCampaignDetails) {
+        if (!updatedCampaignDetails && !timelineDraft) {
             setEditingMode(false);
             return;
         }
 
+        if (!campaign) {
+            toast.error("Campaign data unavailable");
+            return;
+        }
+
         let validationWarnings: string[] = [];
-        if (updatedCampaignDetails.campaignName) {
+        if (updatedCampaignDetails?.campaignName) {
             if (updatedCampaignDetails.campaignName.length > parseInt(process.env.NEXT_PUBLIC_EDIT_CAMPAIGN_HEADER_MAX_CHARS!)) {
                 validationWarnings.push(`Campaign name must be less than ${parseInt(process.env.NEXT_PUBLIC_EDIT_CAMPAIGN_HEADER_MAX_CHARS!)} characters`);
             }
         }
 
-        if (updatedCampaignDetails.description) {
+        if (updatedCampaignDetails?.description) {
             if (updatedCampaignDetails.description.length > parseInt(process.env.NEXT_PUBLIC_EDIT_CAMPAIGN_DESCRIPTION_MAX_CHARS!)) {
                 validationWarnings.push(`Campaign description must be less than ${parseInt(process.env.NEXT_PUBLIC_EDIT_CAMPAIGN_DESCRIPTION_MAX_CHARS!)} characters`);
             }
         }
 
-        if (updatedCampaignDetails.endsAt || updatedCampaignDetails.startsAt) {
-            let startDate = updatedCampaignDetails.startsAt ?? new Date(campaign?.starts_at ?? "");
-            let endDate = updatedCampaignDetails.endsAt ?? new Date(campaign?.ends_at ?? "");
+        if (updatedCampaignDetails?.endsAt || updatedCampaignDetails?.startsAt) {
+            let startDate = updatedCampaignDetails?.startsAt ?? new Date(campaign?.starts_at ?? "");
+            let endDate = updatedCampaignDetails?.endsAt ?? new Date(campaign?.ends_at ?? "");
             if (endDate.getFullYear() === startDate.getFullYear() && endDate.getMonth() === startDate.getMonth() && endDate.getDate() === startDate.getDate()) {
                 validationWarnings.push("End date must be different from start date");
                 setDateError(true);
@@ -325,7 +368,19 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
             }
         }
 
-        if (updatedCampaignDetails.clientRoles) {
+        if (timelineDraft) {
+            const startDate = new Date(timelineDraft.startsAt);
+            const endDate = new Date(timelineDraft.endsAt);
+            if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+                validationWarnings.push("Interview timeline dates must be valid");
+                setTimelineDateError(true);
+            } else if (endDate <= startDate) {
+                validationWarnings.push("Interview timeline end must be after start");
+                setTimelineDateError(true);
+            }
+        }
+
+        if (updatedCampaignDetails?.clientRoles) {
             let roleNameError = false;
             let minGreaterThanMaxError = false;
             let minLessThanZeroError = false;
@@ -370,43 +425,51 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
         }
 
         const mutationResult = (async () => {
-            // call mutations
-            const campaignUpdate: CampaignUpdate = {
-                slug: campaign?.campaign_slug ?? "",
-                name: updatedCampaignDetails.campaignName ?? campaign?.name ?? "",
-                description: updatedCampaignDetails.description ?? campaign?.description ?? "",
-                starts_at: updatedCampaignDetails.startsAt?.toISOString() ?? campaign?.starts_at ?? "",
-                ends_at: updatedCampaignDetails.endsAt?.toISOString() ?? campaign?.ends_at ?? "",
-            };
-            const campaignPromise = mutateCampaignDetails(campaignUpdate);
+            const shouldUpdateCampaign = Boolean(updatedCampaignDetails || timelineDraft);
+            if (shouldUpdateCampaign) {
+                const campaignUpdate: CampaignUpdate = {
+                    slug: campaign.campaign_slug,
+                    name: updatedCampaignDetails?.campaignName ?? campaign.name,
+                    description: updatedCampaignDetails?.description ?? campaign.description ?? "",
+                    starts_at: updatedCampaignDetails?.startsAt?.toISOString() ?? campaign.starts_at,
+                    ends_at: updatedCampaignDetails?.endsAt?.toISOString() ?? campaign.ends_at,
+                    interview_period_starts_at: timelineDraft?.startsAt ?? campaign.interview_period_starts_at ?? null,
+                    interview_period_ends_at: timelineDraft?.endsAt ?? campaign.interview_period_ends_at ?? null,
+                };
+                const campaignPromise = mutateCampaignDetails(campaignUpdate);
 
-            const rolePromises = updatedCampaignDetails.clientRoles?.map((role) => {
-                if (role.deleting === true) {
-                    return mutateDeleteRole(role.id.toString());
-                } else if (role.new === true) {
-                    return mutateCreateCampaignRole({
-                        id: role.id,
-                        campaign_id: campaignId,
-                        name: role.name,
-                        description: role.description ?? undefined,
-                        min_available: role.min_available,
-                        max_available: role.max_available,
-                        finalised: false
-                    });
-                } else {
-                    return mutateUpdateRole({
-                        roleId: role.id.toString(),
-                        data: {
+                const rolePromises = updatedCampaignDetails?.clientRoles?.map((role) => {
+                    if (role.deleting === true) {
+                        return mutateDeleteRole(role.id.toString());
+                    } else if (role.new === true) {
+                        return mutateCreateCampaignRole({
+                            id: role.id,
+                            campaign_id: campaignId,
                             name: role.name,
-                            description: role.description,
+                            description: role.description ?? undefined,
                             min_available: role.min_available,
                             max_available: role.max_available,
-                            finalised: false,
-                        },
-                    });
-                }
-            }) ?? [];
-            await Promise.all([campaignPromise, ...rolePromises]);
+                            finalised: false
+                        });
+                    } else {
+                        return mutateUpdateRole({
+                            roleId: role.id.toString(),
+                            data: {
+                                name: role.name,
+                                description: role.description,
+                                min_available: role.min_available,
+                                max_available: role.max_available,
+                                finalised: false,
+                            },
+                        });
+                    }
+                }) ?? [];
+                await Promise.all([campaignPromise, ...rolePromises]);
+            }
+
+            if (timelineDraft) {
+                setTimelineDraft(null);
+            }
         })();
 
         toast.promise(mutationResult, {
@@ -421,6 +484,7 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
             setUpdatedCampaignDetails(null);
             setEditingMode(false);
             setNewRoleId("0");
+            setTimelineDateError(false);
         } catch (err) {
             setClientRoles(roles?.map((role) => ({ ...role, deleting: false, new: false })) ?? []);
         }
@@ -440,11 +504,33 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
         processMarkdown();
     }, [campaign?.description]);
 
+    const timelineConfig = campaign?.interview_period_starts_at && campaign?.interview_period_ends_at
+        ? {
+            startsAt: campaign.interview_period_starts_at,
+            endsAt: campaign.interview_period_ends_at,
+        }
+        : null;
+
+    useEffect(() => {
+        if (editingMode && !timelineDraft && campaign) {
+            setTimelineDraft(
+                timelineConfig ?? {
+                    startsAt: campaign.starts_at,
+                    endsAt: campaign.ends_at,
+                }
+            );
+        }
+        if (!editingMode) {
+            setTimelineDraft(null);
+            setTimelineDateError(false);
+        }
+    }, [editingMode, timelineConfig, campaign, timelineDraft]);
+
     return (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 [&_button]:cursor-pointer">
             <img className="w-full max-h-42 object-cover rounded-md" src={"/placeholder.svg"} alt={`${campaign?.name} cover image`} />
-            <div className="flex items-center gap-2">
-                <ButtonGroup>
+            <div className="flex flex-wrap items-center gap-2">
+                <ButtonGroup className="flex-wrap gap-2">
                     <ButtonGroup>
                         <Link href={`/dashboard/organisation/${campaign?.organisation_id}/campaigns/${campaignId}/review`}>
                             <Button><BookOpenCheck className="w-4 h-4" /> {dict.dashboard.campaigns.review_applications}</Button>
@@ -482,6 +568,11 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                             </Link>
                         )
                     }
+                    <ButtonGroup>
+                        <Link href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}/interview-timeline`}>
+                            <Button variant="outline"><CalendarClock className="w-4 h-4" /> View interview timeline</Button>
+                        </Link>
+                    </ButtonGroup>
                     <ButtonGroup>
                         <Button variant="outline"><CircleCheck className="w-4 h-4 text-green-500" /> {dict.dashboard.campaigns.publish}</Button>
                     </ButtonGroup>
@@ -600,6 +691,43 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                         }
                     </TableBody>
                 </Table>
+            </div>
+            <div className="flex flex-col gap-2">
+                <h2 className="text-xl font-bold">Interview timeline</h2>
+                {(() => {
+                    const timelineDates = editingMode
+                        ? timelineDraft
+                        : timelineConfig;
+
+                    if (!timelineDates && !editingMode) {
+                        return <p className="text-sm text-gray-500">Not configured</p>;
+                    }
+
+                    if (!timelineDates) {
+                        return null;
+                    }
+
+                    if (!editingMode) {
+                        return (
+                            <p className="text-sm text-gray-500">
+                                {formatDateOnly(timelineDates.startsAt)} - {formatDateOnly(timelineDates.endsAt)} | {formatTimeRange(timelineDates.startsAt, timelineDates.endsAt)}
+                            </p>
+                        );
+                    }
+
+                    return (
+                        <div className="flex items-center gap-3 flex-wrap">
+                            <CampaignDates
+                                starts_at={timelineDates.startsAt}
+                                ends_at={timelineDates.endsAt}
+                                editingMode={editingMode}
+                                onUpdate={updateTimelineDetails}
+                                isError={timelineDateError}
+                                setIsError={setTimelineDateError}
+                            />
+                        </div>
+                    );
+                })()}
             </div>
             <div>
                 <h2 className="text-xl font-bold">{dict.common.description}</h2>
