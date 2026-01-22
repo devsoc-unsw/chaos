@@ -21,10 +21,10 @@ export interface CampaignDetails {
     ends_at: string;
     published: boolean;
     max_roles_per_application: number | null;
-    interview_period_starts_at: Date | null,
-    interview_period_ends_at: Date | null,
+    interview_period_starts_at: string | null,
+    interview_period_ends_at: string | null,
     interview_format: string | null,
-    outcomes_released_at: Date | null,
+    outcomes_released_at: string | null,
     application_requirements: string | null,
 }
 
@@ -44,6 +44,8 @@ export interface CampaignUpdate {
     description: string;
     starts_at: string;
     ends_at: string;
+    interview_period_starts_at?: string | null;
+    interview_period_ends_at?: string | null;
 }
 
 export interface CampaignAttachment {
