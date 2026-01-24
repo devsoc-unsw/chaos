@@ -19,7 +19,13 @@ CREATE TABLE organisation_members (
         FOREIGN KEY(organisation_id)
             REFERENCES organisations(id)
                 ON DELETE CASCADE
-                ON UPDATE CASCADE
+                ON UPDATE CASCADE,
+    CONSTRAINT FK_organisation_members_user
+        FOREIGN KEY(user_id)
+            REFERENCES users(id)
+                ON DELETE CASCADE
+                ON UPDATE CASCADE,
+    UNIQUE(organisation_id, user_id)
 );
 
 
