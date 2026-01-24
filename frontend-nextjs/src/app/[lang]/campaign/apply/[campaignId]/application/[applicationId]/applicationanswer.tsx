@@ -2,7 +2,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCampaign, getCampaignRoles } from "@/models/campaign";
-import { getInProgressApplication, submitApplication } from "@/models/application";
+import { getApplication, submitApplication } from "@/models/application";
 import { Answer, updateApplicationRoles } from "@/models/answer";
 import { useState, useEffect } from "react";
 import RoleSelector from "../../../../../../../components/applicationanswer/roleselector";
@@ -47,7 +47,7 @@ export default function ApplicationReview({
 
   const { data: application } = useQuery({
     queryKey: [`application-${applicationId}`],
-    queryFn: () => getInProgressApplication(applicationId),
+    queryFn: () => getApplication(applicationId),
   });
 
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);

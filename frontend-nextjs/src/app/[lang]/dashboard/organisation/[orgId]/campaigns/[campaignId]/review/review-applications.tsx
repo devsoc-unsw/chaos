@@ -107,7 +107,7 @@ export default function ReviewCampaignApplications({ campaignId, orgId, dict }: 
                     </ResizablePanel>
                     <ResizableHandle />
                     <ResizablePanel defaultSize={80}>
-                        <div className="p-2">
+                        <div className="p-2 h-full">
                             {selectedAppId ? (
                                 <ApplicationDetailsComponent applicationId={selectedAppId} campaignId={campaignId} dict={dict} ratedApplications={ratedApplications} setRatedApplications={setRatedApplications} />
                             ) : (

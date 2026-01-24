@@ -17,7 +17,6 @@ use axum::{async_trait, RequestPartsExt};
 use axum::extract::{FromRef, FromRequestParts, Path};
 use axum::http::request::Parts;
 use crate::models::app::AppState;
-use crate::models::question::MultiOptionQuestionOption;
 use crate::models::rating::RatingDetails;
 use crate::service::answer::assert_answer_application_is_open;
 use crate::service::application::{assert_application_is_open};
@@ -211,7 +210,7 @@ pub struct ApplicationRatingSummary {
     /// When the rating was last updated
     pub updated_at: DateTime<Utc>,
     /// All ratings the application has received
-    pub ratings: Option<sqlx::types::Json<Vec<RatingDetails>>>,
+    pub ratings: sqlx::types::Json<Vec<RatingDetails>>,
 }
 
 impl Application {
@@ -666,29 +665,40 @@ impl Application {
                     ARRAY_AGG(DISTINCT applied_roles.campaign_role_id) AS \"applied_roles!: Vec<i64>\",
                     u.name AS user_name, u.email AS user_email,
                     a.status AS \"status: ApplicationStatus\", a.updated_at,
-
-                    to_jsonb(
-                        coalesce(
-                            array_remove(
-                                array_agg(
-                                    jsonb_build_object(
-                                        'id', ar.id,
-                                        'rater_id', reviewer.id,
-                                        'rater_name', reviewer.name,
-                                        'rating', ar.rating,
-                                        'comment', ar.comment,
-                                        'updated_at', ar.updated_at
-                                    ) ORDER BY ar.updated_at DESC
-                                ) FILTER (WHERE ar.id IS NOT NULL),
-                                NULL
-                            ),
-                            '{}'
-                        )
-                    ) AS \"ratings: Json<Vec<RatingDetails>>\"
+                    
+                    coalesce(
+                        to_jsonb(
+                            array_agg(
+                                jsonb_build_object(
+                                    'id', ar.id,
+                                    'rater_id', reviewer.id,
+                                    'rater_name', reviewer.name,
+                                    'comment', ar.comment,
+                                    'category_ratings', (SELECT COALESCE(to_jsonb(array_agg(jsonb_build_object(
+                                                        'id', COALESCE(arc.id, 0),
+                                                        'campaign_rating_category_id', crc.id,
+                                                        'category_name', crc.name,
+                                                        'rating', arc.rating
+                                                    )
+                                                )
+                                            ),'[]'::jsonb
+                                        )
+                                        FROM campaign_rating_categories crc
+                                        LEFT JOIN application_rating_category_ratings arc 
+                                            ON arc.campaign_rating_category_id = crc.id 
+                                            AND arc.application_rating_id = ar.id
+                                        WHERE crc.campaign_id = a.campaign_id
+                                    ),
+                                    'updated_at', ar.updated_at
+                                ) ORDER BY ar.updated_at DESC
+                            ) FILTER (WHERE ar.id IS NOT NULL)
+                        ),
+                        '[]'::jsonb
+                    ) AS \"ratings!: Json<Vec<RatingDetails>>\"
                 FROM applications a
                 JOIN application_roles applied_roles ON applied_roles.application_id = a.id
                 JOIN campaign_roles ON campaign_roles.id = applied_roles.campaign_role_id
-                LEFT JOIN application_ratings ar on ar.application_id = a.id
+                LEFT JOIN application_ratings ar ON ar.application_id = a.id
                 JOIN users u ON u.id = a.user_id
                 LEFT JOIN users AS reviewer ON reviewer.id = ar.rater_id
                 WHERE a.campaign_id = $1 AND a.submitted = true
@@ -699,16 +709,6 @@ impl Application {
         )
         .fetch_all(transaction.deref_mut())
         .await?;
-
-        // to_jsonb(
-        //     array_agg(
-        //         jsonb_build_object(
-        //             'id', mod.id,
-        //             'display_order', mod.display_order,
-        //             'text', mod.text
-        //         ) ORDER BY mod.display_order
-        //     ) FILTER (WHERE mod.id IS NOT NULL)
-        // ) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
 
         Ok(application_users_avg_ratings)
     }

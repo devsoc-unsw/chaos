@@ -2,7 +2,8 @@
 
 import { ApplicationSummaryDataTable } from "./data-table";
 import { dateToString } from "@/lib/utils";
-import { ApplicationRatingSummary, getApplicationRatingsSummary, RatingDetails } from "@/models/application";
+import { ApplicationRatingSummary, getApplicationRatingsSummary} from "@/models/application";
+import { getRatingCategories, RatingDetails } from "@/models/rating"
 import { getCampaign, getCampaignRoles } from "@/models/campaign";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, MoreHorizontal } from "lucide-react";
@@ -92,6 +93,11 @@ export default function ApplicationSummary({ campaignId, orgId, dict }: { campai
         queryFn: () => getApplicationRatingsSummary(campaignId),
     });
 
+    const { data: ratingCategories } = useQuery({
+        queryKey: [`${campaignId}-rating-categories`],
+        queryFn: () => getRatingCategories(campaignId),
+    })
+
     return (
         <div>
             <div className="flex justify-between items-center">
@@ -109,11 +115,11 @@ export default function ApplicationSummary({ campaignId, orgId, dict }: { campai
             </div>
             <div className="mt-2">
                 <ApplicationSummaryDataTable
-                    columns={getColumns(dict, roleIdsToNames)}
+                    columns={getColumns(dict, roleIdsToNames, ratingCategories ?? [])}
                     data={data ?? []}
                     roles={roles ?? []}
                     dict={dict}
-                    renderSubComponent={({ row }) => <RatingsShelf columns={getColumns(dict, roleIdsToNames)} ratings={row.original.ratings} applicationId={row.original.application_id} dict={dict} />}
+                    renderSubComponent={({ row }) => <RatingsShelf columns={getColumns(dict, roleIdsToNames, ratingCategories ?? [])} ratings={row.original.ratings} applicationId={row.original.application_id} dict={dict} />}
                 />
             </div>
         </div>
