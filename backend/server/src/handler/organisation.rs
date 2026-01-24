@@ -8,7 +8,7 @@
 //! - Logo image handling
 
 use crate::models::app::{AppMessage, AppState, IdMessage};
-use crate::models::auth::SuperUser;
+use crate::models::auth::{OrganisationAdminOrSuperUser, SuperUser};
 use crate::models::auth::{AuthUser, OrganisationAdmin};
 use crate::models::campaign::{Campaign, NewCampaign};
 use crate::models::email_template::{EmailTemplate, NewEmailTemplate};
@@ -244,7 +244,7 @@ impl OrganisationHandler {
     pub async fn get_members(
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
-        _admin: OrganisationAdmin,
+        _admin: OrganisationAdminOrSuperUser,
     ) -> Result<impl IntoResponse, ChaosError> {
         let members = Organisation::get_members(id, &mut transaction.tx).await?;
 
@@ -359,14 +359,22 @@ impl OrganisationHandler {
     pub async fn invite_user(
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
-        _admin: OrganisationAdmin,
-        State(state): State<AppState>,
+        admin: OrganisationAdmin,
+        State(mut state): State<AppState>,
         Json(request_body): Json<MemberToInvite>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Organisation::invite_user(id, request_body.email, state.email_credentials, &mut transaction.tx).await?;
+        let invite_code = Organisation::invite_user(
+            id,
+            admin.user_id,
+            request_body.email,
+            state.email_credentials.clone(),
+            &mut state.snowflake_generator,
+            &mut transaction.tx,
+        )
+        .await?;
 
         transaction.tx.commit().await?;
-        Ok(AppMessage::OkMessage("Successfully invited user to organisation"))
+        Ok(AppMessage::OkMessage(invite_code))
     }
 
     /// Updates an organisation's logo.

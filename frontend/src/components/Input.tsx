@@ -22,4 +22,5 @@ const LabelText = ({
   </span>
 );
 
+
 export default Object.assign(Input, { Label, LabelText });

@@ -142,6 +142,17 @@
       "delete_confirmation": "这将永久删除邮件模板并无法撤销",
       "edit_template": "编辑模板"
     },
+    "invite": {
+      "title": "你被邀请了",
+      "invited_by": "邀请你加入他们的组织 on Chaos",
+      "sent_to": "此邀请发送给",
+      "login_cta": "点击这里创建 Chaos 账户",
+      "accept_cta": "接受邀请",
+      "used": "此邀请已被使用",
+      "expired": "此邀请已过期",
+      "accepted": "邀请已接受！你已加入组织",
+      "wrong_account": "此账户未被邀请，请退出并重新尝试"
+    },
     "actions": {
       "new": "新建",
       "edit": "编辑",

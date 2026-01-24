@@ -3,6 +3,7 @@ import { DeleteForeverRounded } from "@mui/icons-material";
 import { Button, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { StyledEngineProvider } from "@mui/material/styles";
 
 import "twin.macro";
 
@@ -175,6 +176,7 @@ const AdminContent = ({
   };
 
   return (
+    <StyledEngineProvider injectFirst>
     <AdminContentContainer>
       <ContentHeader>
         <OrgInfo>
@@ -231,48 +233,49 @@ const AdminContent = ({
         </ContentBody>
       )}
 
-      <Modal
-        open={showEditDialog}
-        closeModal={() => setShowEditDialog(false)}
-        title="Edit Organisation"
-        description={org?.orgName}
-        closeButton
-      >
-        <Dropzone onDrop={([file]) => setOrgLogo(file)}>
-          {orgLogo === undefined ? (
-            <p>
-              Drag and drop your organisation logo image, or click to select an
-              image
-            </p>
-          ) : (
-            <img
-              tw="max-h-full max-w-full"
-              src={imageSrc}
-              alt="campaign cover"
-            />
-          )}
-        </Dropzone>
-        <TwButton onClick={() => void uploadOrgLogo()} tw="ml-auto">
-          Update organisation logo
-        </TwButton>
-      </Modal>
+        <Modal
+          open={showEditDialog}
+          closeModal={() => setShowEditDialog(false)}
+          title="Edit Organisation"
+          description={org?.orgName}
+          closeButton
+        >
+          <Dropzone onDrop={([file]) => setOrgLogo(file)}>
+            {orgLogo === undefined ? (
+              <p>
+                Drag and drop your organisation logo image, or click to select an
+                image
+              </p>
+            ) : (
+              <img
+                tw="max-h-full max-w-full"
+                src={imageSrc}
+                alt="campaign cover"
+              />
+            )}
+          </Dropzone>
+          <TwButton onClick={() => void uploadOrgLogo()} tw="ml-auto">
+            Update organisation logo
+          </TwButton>
+        </Modal>
 
-      <Modal
-        open={showDeleteDialog}
-        closeModal={() => setShowDeleteDialog(false)}
-        title="Delete Organisation"
-        description={org?.orgName}
-        closeButton
-      >
-        <p>
-          Are you sure you want to delete this organisation?{" "}
-          <strong>This action is permanent and irreversible.</strong>
-        </p>
-        <TwButton color="danger" onClick={() => void handleDeletion()}>
-          Yes, delete this organisation
-        </TwButton>
-      </Modal>
-    </AdminContentContainer>
+        <Modal
+          open={showDeleteDialog}
+          closeModal={() => setShowDeleteDialog(false)}
+          title="Delete Organisation"
+          description={org?.orgName}
+          closeButton
+        >
+          <p>
+            Are you sure you want to delete this organisation?{" "}
+            <strong>This action is permanent and irreversible.</strong>
+          </p>
+          <TwButton color="danger" onClick={() => void handleDeletion()}>
+            Yes, delete this organisation
+          </TwButton>
+        </Modal>
+      </AdminContentContainer>
+      </StyledEngineProvider>
   );
 };
 
