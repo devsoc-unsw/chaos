@@ -309,9 +309,7 @@ impl ApplicationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         // First create the application_rating with comment
         let application_rating_id = Rating::create_application_rating(
-            NewApplicationRating {
-                comment: new_rating.comment,
-            },
+            new_rating.comment,
             application_id,
             admin.user_id,
             &mut state.snowflake_generator,
@@ -352,9 +350,7 @@ impl ApplicationHandler {
         // Update the comment
         Rating::update_application_rating(
             rating.id,
-            NewApplicationRating {
-                comment: updated_rating.comment,
-            },
+            updated_rating.comment,
             &mut transaction.tx,
         )
         .await?;

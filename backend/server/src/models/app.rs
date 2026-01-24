@@ -271,23 +271,6 @@ pub async fn app() -> Result<Router, ChaosError> {
             "/api/v1/organisation/:organisation_id/users",
             get(OrganisationHandler::get_users)
         )
-        // .route(
-        //     "/api/v1/rating/:rating_id",
-        //     get(RatingHandler::get)
-        //         .delete(RatingHandler::delete)
-        //         .put(RatingHandler::update),
-        // )
-        // .route(
-        //     "/api/v1/application/:application_id/rating",
-        //     get(ApplicationHandler::get_rating_by_current_user)
-        //         .post(ApplicationHandler::create_rating)
-        //         .put(ApplicationHandler::update_rating),
-        // )
-        // .route(
-        //     "/api/v1/application/:application_id/ratings",
-        //     get(ApplicationHandler::get_ratings),
-        // )
-
         // Campaign Rating Categories
         .route(
             "/api/v1/campaign/:campaign_id/rating_category",

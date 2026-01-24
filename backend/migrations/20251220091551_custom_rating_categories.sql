@@ -1,5 +1,3 @@
--- Add migration script here
-
 -- campaign_rating_categories (NEW TABLE)
 CREATE TABLE campaign_rating_categories (
     id BIGINT PRIMARY KEY,
@@ -13,7 +11,6 @@ CREATE TABLE campaign_rating_categories (
 );
 
 CREATE INDEX IDX_campaign_rating_categories_campaign ON campaign_rating_categories(campaign_id);
-
 
 -- application_ratings (EXISTING TABLE)
 ALTER TABLE application_ratings DROP COLUMN rating;

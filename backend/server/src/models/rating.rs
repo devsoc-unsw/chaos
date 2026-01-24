@@ -46,6 +46,9 @@ pub struct ApplicationRating {
     /// ID of the application being rated
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub application_id: i64,
+    /// ID of the user who created the rating
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub rater_user_id: i64,
     /// Optional comments about the application
     pub comment: Option<String>,
     /// When the rating was created
@@ -184,7 +187,7 @@ impl Rating {
     /// * `Err(ChaosError)` - An error if creation fails
     /// 
     pub async fn create_category(
-        new_category: NewCategoryRating,
+        name: String,
         campaign_id: i64,
         snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
@@ -193,11 +196,11 @@ impl Rating {
 
         sqlx::query!(
             "
-            INSERT INTO campaign_rating_categories (id, name, campaign_id)
-                VALUES ($1, $2, $3)
+                INSERT INTO campaign_rating_categories (id, name, campaign_id)
+                    VALUES ($1, $2, $3)
             ",
             id,
-            new_category.name,
+            name,
             campaign_id
         )
         .execute(transaction.deref_mut())
@@ -223,9 +226,9 @@ impl Rating {
         let categories = sqlx::query_as!(
             CategoryRating,
             "
-            SELECT id, name, campaign_id
-            FROM campaign_rating_categories
-            WHERE campaign_id = $1
+                SELECT id, name, campaign_id
+                FROM campaign_rating_categories
+                WHERE campaign_id = $1
             ",
             campaign_id
         )
@@ -248,18 +251,16 @@ impl Rating {
     /// * `Err(ChaosError)` - An error if update fails
     pub async fn update_category(
         category_id: i64,
-        updated_category: NewCategoryRating,
+        name: String,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let name = updated_category.name;
-
         let _ = sqlx::query!(
             "
-            UPDATE campaign_rating_categories
-            SET name = $2
-            WHERE id = $1
-            RETURNING id
-        ",
+                UPDATE campaign_rating_categories
+                SET name = $2
+                WHERE id = $1
+                RETURNING id
+            ",
             category_id,
             name,
         )
@@ -276,8 +277,8 @@ impl Rating {
     ) -> Result<(), ChaosError> {
         let _ = sqlx::query!(
             "
-            DELETE FROM campaign_rating_categories WHERE id = $1
-            RETURNING id
+                DELETE FROM campaign_rating_categories WHERE id = $1
+                RETURNING id
             ",
             category_id
         )
@@ -304,20 +305,19 @@ impl Rating {
     /// * `Ok(())` - If the rating was created successfully
     /// * `Err(ChaosError)` - An error if creation fails
     pub async fn create_application_rating(
-        new_rating: NewApplicationRating,
+        comment: Option<String>,
         application_id: i64,
         rater_id: i64,
         snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<i64, ChaosError> {
         let rating_id = snowflake_generator.real_time_generate();
-        let comment = new_rating.comment;
 
         sqlx::query!(
             "
-            INSERT INTO application_ratings (id, application_id, rater_id, comment)
-                VALUES ($1, $2, $3, $4)
-        ",
+                INSERT INTO application_ratings (id, application_id, rater_id, comment)
+                    VALUES ($1, $2, $3, $4)
+            ",
             rating_id,
             application_id,
             rater_id,
@@ -342,19 +342,18 @@ impl Rating {
     /// * `Err(ChaosError)` - An error if update fails
     pub async fn update_application_rating(
         rating_id: i64,
-        updated_rating: NewApplicationRating,
+        comment: Option<String>,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let comment = updated_rating.comment;
         let current_time = Utc::now();
 
         let _ = sqlx::query!(
             "
-            UPDATE application_ratings
-            SET comment = $2, updated_at = $3
-            WHERE id = $1
-            RETURNING id
-        ",
+                UPDATE application_ratings
+                SET comment = $2, updated_at = $3
+                WHERE id = $1
+                RETURNING id
+            ",
             rating_id,
             comment,
             current_time
@@ -382,9 +381,9 @@ impl Rating {
         // Throws error if rating id doesn't exist.
         let _ = sqlx::query!(
             "
-            DELETE FROM application_ratings WHERE id = $1
-            RETURNING id
-        ",
+                DELETE FROM application_ratings WHERE id = $1
+                RETURNING id
+            ",
             rating_id
         )
         .fetch_one(transaction.deref_mut())
@@ -392,74 +391,6 @@ impl Rating {
 
         Ok(())
     }
-
-    // /// -------------- GET requests for ApplicationRating: ONLY COMMENT ----------------------
-    /////  ============================ NOT NEEDED (COMMNET IS IN ANOTHER FUNCTION ALR)===================
-
-    // /// Retrieves a rating by its ID, able to see which application is being rated,
-    // /// ONLY THE COMMENT IS VIEWED, 
-    // /// NOT Vector of numerical scores
-    // /// 
-    // /// # Arguments
-    // /// * `rating_id` - The ID of the rating to retrieve
-    // /// * `transaction` - A mutable reference to the database transaction
-    // /// 
-    // /// # Returns
-    // /// Returns a `Result` containing either:
-    // /// * `Ok(RatingDetails)` - The requested rating details
-    // /// * `Err(ChaosError)` - An error if retrieval fails
-    // pub async fn get_comment_rating(
-    //     rating_id: i64,
-    //     transaction: &mut Transaction<'_, Postgres>,
-    // ) -> Result<RatingDetails, ChaosError> {
-    //     let rating = sqlx::query_as!(
-    //         RatingDetails,
-    //         "
-    //         SELECT r.id, rater_id, u.name as rater_name, r.comment, r.updated_at
-    //             FROM application_ratings r
-    //             JOIN users u ON u.id = r.rater_id
-    //             WHERE r.id = $1
-    //     ",
-    //         rating_id
-    //     )
-    //     .fetch_one(transaction.deref_mut())
-    //     .await?;
-
-    //     Ok(rating)
-    // }
-
-    // /// Retrieves a rating by application_ID.  (UNCONFIRMED: Want it to be seperate?)
-    // /// ONLY THE COMMENT IS VIEWED, 
-    // /// NOT Vector of numerical scores
-    // /// 
-    // /// # Arguments
-    // /// * `application_id` - The ID of the application the rating is for
-    // /// * `rater_id` - The ID of the rater
-    // /// * `transaction` - A mutable reference to the database transaction
-    // /// 
-    // /// # Returns
-    // /// Returns a `Result` containing either:
-    // /// * `Ok(RatingDetails)` - The requested rating details
-    // /// * `Err(ChaosError)` - An error if retrieval fails
-    // pub async fn get_comment_rating_by_application_id(
-    //     application_id: i64,
-    //     transaction: &mut Transaction<'_, Postgres>,
-    // ) -> Result<RatingDetails, ChaosError> {
-    //     let rating = sqlx::query_as!(
-    //         RatingDetails,
-    //         "
-    //         SELECT r.id, rater_id, u.name as rater_name, r.comment, r.updated_at
-    //             FROM application_ratings r
-    //             JOIN users u ON u.id = r.rater_id
-    //             WHERE r.application_id = $1
-    //     ",
-    //         application_id,
-    //     )
-    //     .fetch_one(transaction.deref_mut())
-    //     .await?;
-
-    //     Ok(rating)
-    // }
 
     // ------------------- GET requests for ApplicationRating: Get Rating Details -------------------
 

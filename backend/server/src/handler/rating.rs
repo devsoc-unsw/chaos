@@ -40,7 +40,7 @@ impl RatingHandler {
         Json(data): Json<NewCategoryRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let category = Rating::create_category(
-            data,
+            data.name,
             campaign_id,
             &mut state.snowflake_generator,
             &mut transaction.tx,
@@ -86,7 +86,7 @@ impl RatingHandler {
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewCategoryRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Rating::update_category(category_id, data, &mut transaction.tx).await?;
+        Rating::update_category(category_id, data.name, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
 
@@ -134,9 +134,7 @@ impl RatingHandler {
         Json(new_rating): Json<NewRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let application_rating_id = Rating::create_application_rating(
-            NewApplicationRating {
-                comment: new_rating.comment,
-            },
+            new_rating.comment,
             application_id,
             admin.user_id,
             &mut state.snowflake_generator,
@@ -211,7 +209,7 @@ impl RatingHandler {
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewApplicationRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Rating::update_application_rating(rating_id, data, &mut transaction.tx).await?;
+        Rating::update_application_rating(rating_id, data.comment, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
 
