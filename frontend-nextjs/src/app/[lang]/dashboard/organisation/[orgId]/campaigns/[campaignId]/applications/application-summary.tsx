@@ -41,8 +41,17 @@ function RatingsShelf({ columns, ratings, applicationId, dict }: { columns: Colu
                             <span className="font-medium">{rating.rater_name}</span>
                             <p className="text-sm text-gray-700">{rating.comment}</p>
                         </TableCell>
-                        <TableCell className="align-top">{rating.rating.toFixed(2)}</TableCell>
-                        <TableCell className="align-top">
+                        {rating.category_ratings.map((cr) => (
+                            <TableCell key={cr.id} className="align-middle">
+                                {cr.rating ?? "-"}
+                            </TableCell>
+                        ))}
+                        <TableCell className="align-middle ">
+                            {rating.category_ratings.filter((cr) => cr.rating).length > 0
+                                ? (rating.category_ratings.filter((cr) => cr.rating).map((cr) => cr.rating!).reduce((acc, rating) => acc! + rating!, 0) / rating.category_ratings.filter((cr) => cr.rating).length).toFixed(2)
+                                : "-"}
+                        </TableCell>
+                        <TableCell className="align-middle">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" className="h-8 w-8 p-0">
