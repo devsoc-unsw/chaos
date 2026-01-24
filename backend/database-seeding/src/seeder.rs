@@ -154,9 +154,7 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
     )
     .await.expect("Failed seeding Role 2");
         let rating_category_id_1 = Rating::create_category(
-        NewCategoryRating {
-            name: "Bedrotting".to_string(),
-        },
+        "Bedrotting".to_string(),
         campaign_id,
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
@@ -164,9 +162,7 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
     .await.expect("Failed seeding Rating Category 1");
 
     let rating_category_id_2 = Rating::create_category(
-        NewCategoryRating {
-            name: "Vibe Coding".to_string(),
-        },
+        "Vibe Coding".to_string(),
         campaign_id,
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
@@ -174,9 +170,7 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
     .await.expect("Failed seeding Rating Category 2");
 
     let rating_category_id_3 = Rating::create_category(
-        NewCategoryRating {
-            name: "Rizzler".to_string(),
-        },
+        "Rizzler".to_string(),
         campaign_id,
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
@@ -436,9 +430,7 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
     .await.expect("Failed seeding Answer 3");
 
     let app_rating_id_1 = Rating::create_application_rating(
-        NewApplicationRating {
-            comment: Some("This guy has massive aura, but does not know how to vibe code".to_string()),
-        },
+        Some("This guy has massive aura, but does not know how to vibe code".to_string()),
         application_id_1,
         1,
         &mut seeder.app_state.snowflake_generator,
