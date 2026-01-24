@@ -273,11 +273,45 @@ pub async fn app() -> Result<Router, ChaosError> {
             "/api/v1/organisation/:organisation_id/users",
             get(OrganisationHandler::get_users)
         )
+        // Campaign Rating Categories
+        .route(
+            "/api/v1/campaign/:campaign_id/rating_category",
+            post(RatingHandler::create_category),
+        )
+        .route(
+            "/api/v1/campaign/:campaign_id/rating_categories",
+            get(RatingHandler::get_categories_by_campaign),
+        )
+        .route(
+            "/api/v1/campaign/:campaign_id/rating_category/:category_id",
+            patch(RatingHandler::update_category)
+                .delete(RatingHandler::delete_category),
+        )
+
+        // Application Ratings (with comment and category scores)
+        .route(
+            "/api/v1/application/:application_id/rating",
+            post(RatingHandler::create)
+                .get(RatingHandler::get_all_by_application),
+        )
         .route(
             "/api/v1/rating/:rating_id",
-            get(RatingHandler::get)
-                .delete(RatingHandler::delete)
-                .put(RatingHandler::update),
+            patch(RatingHandler::update_comment)
+                .delete(RatingHandler::delete),
+        )
+        .route(
+            "/api/v1/rating/:rating_id/category",
+            post(RatingHandler::create_category_rating_from_existing_application_rating),
+        )
+        .route(
+            "/api/v1/rating/:rating_id/category/:category_rating_id",
+            patch(RatingHandler::update_category_rating)
+                .delete(RatingHandler::delete_category_rating),
+        )
+
+        .route(
+            "/api/v1/campaign/:campaign_id/avg_ratings",
+            get(ApplicationHandler::get_application_ratings_summary),
         )
         .route(
             "/api/v1/campaign/:campaign_id/role",
@@ -373,16 +407,17 @@ pub async fn app() -> Result<Router, ChaosError> {
             "/api/v1/application/:application_id/inprogress",
             get(ApplicationHandler::get_in_progress),
         )
-        .route(
-            "/api/v1/application/:application_id/rating",
-            get(ApplicationHandler::get_rating_by_current_user)
-                .post(ApplicationHandler::create_rating)
-                .put(ApplicationHandler::update_rating),
-        )
-        .route(
-            "/api/v1/application/:application_id/ratings",
-            get(ApplicationHandler::get_ratings),
-        )
+        // Rating routes are handled by RatingHandler, idk why they are back so commented
+        // .route(
+        //     "/api/v1/application/:application_id/rating",
+        //     get(ApplicationHandler::get_rating_by_current_user)
+        //         .post(ApplicationHandler::create_rating)
+        //         .put(ApplicationHandler::update_rating),
+        // )
+        // .route(
+        //     "/api/v1/application/:application_id/ratings",
+        //     get(ApplicationHandler::get_ratings),
+        // )
         .route(
             "/api/v1/application/:application_id/status",
             patch(ApplicationHandler::set_status),

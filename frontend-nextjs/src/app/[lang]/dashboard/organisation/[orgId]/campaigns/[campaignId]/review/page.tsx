@@ -4,6 +4,7 @@ import {
     QueryClient,
 } from '@tanstack/react-query';
 import { getCampaign, getCampaignApplications, getCampaignRoles } from '@/models/campaign';
+import { getRatingCategories } from '@/models/rating';
 import { getDictionary } from '@/app/[lang]/dictionaries';
 import ReviewCampaignApplications from './review-applications';
 
@@ -25,6 +26,11 @@ export default async function CampaignReviewPage({ params }: { params: Promise<{
     await queryClient.prefetchQuery({
         queryKey: [`${campaignId}-campaign-applications`],
         queryFn: () => getCampaignApplications(campaignId),
+    });
+
+    await queryClient.prefetchQuery({
+        queryKey: [`${campaignId}-rating-categories`],
+        queryFn: () => getRatingCategories(campaignId),
     });
 
     return (
