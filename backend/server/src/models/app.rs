@@ -296,6 +296,10 @@ pub async fn app() -> Result<Router, ChaosError> {
             get(CampaignHandler::get_applications),
         )
         .route(
+            "/api/v1/campaign/:campaign_id/avg_ratings",
+            get(ApplicationHandler::get_application_ratings_summary),
+        )
+        .route(
             "/api/v1/role/:role_id",
             get(RoleHandler::get)
                 .patch(RoleHandler::update)

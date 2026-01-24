@@ -34,5 +34,5 @@ jobs:
         run: bun run build
         env:
           NEXT_PUBLIC_APP_URL: http://localhost:3000
-          NEXT_OAUTH_CALLBACK_URL: http://localhost:8080/auth/google
-          NEXT_API_BASE_URL: https://localhost:8080
+          NEXT_OAUTH_CALLBACK_URL: http://localhost:8000/auth/google
+          NEXT_API_BASE_URL: https://localhost:8000

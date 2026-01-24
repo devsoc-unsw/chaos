@@ -19,11 +19,11 @@ services:
       POSTGRES_DB: chaos
     volumes:
       - chaos-postgres-data:/var/lib/postgresql/data
-    # Forward ports: 5432 (db), 3000 (frontend), 8080 (backend)
+    # Forward ports: 5432 (db), 3000 (frontend), 8000 (backend)
     ports:
       - "5433:5432"
       - "3000:3000"
-      - "8080:8080"
+      - "8000:8000"
 
 volumes:
   chaos-postgres-data:

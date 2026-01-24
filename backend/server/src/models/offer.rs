@@ -348,24 +348,32 @@ impl Offer {
         email_credentials: EmailCredentials,
     ) -> Result<(), ChaosError> {
         let offer = Offer::get(id, transaction).await?;
-        let email_parts = EmailTemplate::generate_email(
-            offer.user_name.clone(),
-            offer.role_name,
-            offer.organisation_name,
-            offer.campaign_name,
-            offer.expiry,
-            offer.email_template_id,
-            transaction,
-        )
-        .await?;
+        // TODO: Once Azhad done with email, then we need to uncomment this part for sending offers
+        // let email_parts = EmailTemplate::generate_email(
+        //     offer.user_name.clone(),
+        //     offer.role_name,
+        //     offer.organisation_name,
+        //     offer.campaign_name,
+        //     offer.expiry,
+        //     offer.email_template_id,
+        //     transaction,
+        // )
+        // .await?;
 
-        ChaosEmail::send_message(
-            offer.user_name,
-            offer.user_email,
-            email_parts.subject,
-            email_parts.body,
-            email_credentials,
+        // ChaosEmail::send_message(
+        //     offer.user_name,
+        //     offer.user_email,
+        //     email_parts.subject,
+        //     email_parts.body,
+        //     email_credentials,
+        // )
+        // .await?;
+        let _ = sqlx::query!(
+            "UPDATE offers SET status = $2 WHERE id = $1",
+            id,
+            OfferStatus::Sent as OfferStatus
         )
+        .execute(transaction.deref_mut())
         .await?;
         Ok(())
     }
