@@ -178,9 +178,10 @@ pub async fn init_app_state() -> AppState {
     state
 }
 
-pub async fn app() -> Result<Router, ChaosError> {
+pub async fn app() -> Result<(Router, AppState), ChaosError> {
     
     let state = init_app_state().await;
+    let state_clone = state.clone();
 
     let cors = CorsLayer::new()
         .allow_methods([Method::GET, Method::POST, Method::DELETE, Method::PUT, Method::PATCH])
@@ -191,11 +192,13 @@ pub async fn app() -> Result<Router, ChaosError> {
             "http://localhost:3000".parse().unwrap(),
             "https://chaos.devsoc.app".parse().unwrap(),
             "http://chaos.devsoc.app".parse().unwrap(),
+            "https://chaos.devsoc.cn".parse().unwrap(),
+            "http://chaos.devsoc.cn".parse().unwrap(),
             "https://chaosstaging.devsoc.app".parse().unwrap(),
             "http://chaosstaging.devsoc.app".parse().unwrap(),
         ]);
 
-    Ok(Router::new()
+    let router = Router::new()
         .route("/", get(|| async { "Join DevSoc! https://devsoc.app/" }))
         .route("/auth/google", get(google_auth_init))
         .route("/api/auth/callback/google", get(google_callback))
@@ -481,10 +484,8 @@ pub async fn app() -> Result<Router, ChaosError> {
         .route(
             "/api/v1/invite/:code", get(InviteHandler::get).post(InviteHandler::use_invite)
         )
-
-        
-
-        
         .layer(cors)
-        .with_state(state))
+        .with_state(state);
+        
+    Ok((router, state_clone))
 }

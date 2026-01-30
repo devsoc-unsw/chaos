@@ -8,7 +8,9 @@ use crate::models::error::ChaosError;
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor};
 use serde::Serialize;
+use sqlx::{Postgres, Transaction};
 use std::env;
+use std::ops::DerefMut;
 
 /// Main email service for Chaos.
 /// 
@@ -26,6 +28,8 @@ pub struct EmailCredentials {
     pub credentials: Credentials,
     /// SMTP server host address
     pub email_host: String,
+    /// SMTP server port
+    pub email_host_port: u16,
 }
 
 /// Components of an email message.
@@ -66,9 +70,16 @@ impl ChaosEmail {
             .expect("Error getting SMTP HOST")
             .to_string();
 
+        let email_host_port = env::var("SMTP_PORT")
+            .expect("Error getting SMTP PORT")
+            .to_string()
+            .parse::<u16>()
+            .unwrap();
+
         EmailCredentials {
             credentials: Credentials::new(smtp_username, smtp_password),
             email_host,
+            email_host_port,
         }
     }
 
@@ -86,6 +97,7 @@ impl ChaosEmail {
     ) -> Result<AsyncSmtpTransport<Tokio1Executor>, ChaosError> {
         Ok(
             AsyncSmtpTransport::<Tokio1Executor>::relay(&credentials.email_host)?
+                .port(credentials.email_host_port)
                 .credentials(credentials.credentials)
                 .build(),
         )
@@ -112,7 +124,7 @@ impl ChaosEmail {
         credentials: EmailCredentials,
     ) -> Result<(), ChaosError> {
         let message = Message::builder()
-            .from("Chaos Subcommittee Recruitment <noreply@chaos.devsoc.app>".parse()?)
+            .from("Chaos Subcommittee Recruitment <noreply@chaos-updates.devsoc.cn>".parse()?)
             .reply_to("help@chaos.devsoc.app".parse()?)
             .to(format!("{recipient_name} <{recipient_email_address}>").parse()?)
             .subject(subject)
@@ -120,6 +132,71 @@ impl ChaosEmail {
 
         let mailer = Self::new_connection(credentials)?;
         mailer.send(message).await?;
+
+        Ok(())
+    }
+}
+
+pub struct EmailQueue;
+
+impl EmailQueue {
+    pub async fn add_to_queue(
+        recipient_name: Option<String>,
+        recipient_email_address: String,
+        subject: String,
+        body: String,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
+        let _ = sqlx::query!(
+            r#"
+                INSERT INTO email_queue (recepient_name, recepient_email_address, subject, body)
+                VALUES ($1, $2, $3, $4)
+            "#,
+            recipient_name,
+            recipient_email_address,
+            subject,
+            body,
+        )
+            .execute(transaction.deref_mut())
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn send_next(
+        credentials: EmailCredentials,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
+        let email = sqlx::query!(
+            r#"
+                WITH del AS (
+                  SELECT id
+                  FROM email_queue
+                  ORDER BY created_at ASC
+                  LIMIT 1
+                  FOR UPDATE
+                )
+                DELETE FROM email_queue
+                USING del
+                WHERE email_queue.id = del.id
+                RETURNING email_queue.id, recepient_name, recepient_email_address, subject, body
+            "#
+        )
+            .fetch_optional(transaction.deref_mut())
+            .await?;
+
+        if let Some(email) = email {
+            let recepient_name = email.recepient_name.unwrap_or_else(|| "".to_string());
+            
+            ChaosEmail::send_message(
+                recepient_name,
+                email.recepient_email_address,
+                email.subject,
+                email.body,
+                credentials,
+            )
+                .await?;
+        }
 
         Ok(())
     }
