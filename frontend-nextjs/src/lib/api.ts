@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_API_BASE_URL || "https://chaos-api.devsoc.cn";
+const API_BASE_URL = process.env.NEXT_API_BASE_URL || "http://localhost:8080";
 
 const isServer = typeof window === "undefined";
 
