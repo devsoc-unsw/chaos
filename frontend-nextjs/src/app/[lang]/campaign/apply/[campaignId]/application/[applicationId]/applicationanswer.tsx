@@ -49,7 +49,7 @@ export default function ApplicationReview({
 
   const { data: application } = useQuery({
     queryKey: [`application-${applicationId}`],
-    queryFn: () => getInProgressApplication(applicationId),
+    queryFn: () => getInProgressApplication(applicationId), //for some reason this is not registering so I have to comment this for now
   });
 
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
