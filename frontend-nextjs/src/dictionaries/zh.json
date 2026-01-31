@@ -98,6 +98,12 @@
       "published": "已发布",
       "draft": "草稿",
       "campaign_questions": "活动问题",
+      "settings": {
+        "campaign_settings": "活动设置",
+        "general_settings": "通用设置",
+        "role_settings": "角色设置",
+        "rating_category_settings": "评分类别设置"
+      },
       "questions": {
         "answer_text": "答案文本",
         "add_option": "添加选项",

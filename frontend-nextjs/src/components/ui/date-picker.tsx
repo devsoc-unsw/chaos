@@ -21,8 +21,8 @@ interface DatePickerProps {
 
 export function DatePicker({ value, onChange, label }: DatePickerProps = {}) {
   const [open, setOpen] = React.useState(false)
-  const [date, setDate] = React.useState<Date | undefined>(undefined)
-  const [time, setTime] = React.useState<string>("00:00:00")
+  const [date, setDate] = React.useState<Date | undefined>(value ? new Date(value) : undefined)
+  const [time, setTime] = React.useState<string>(value ? new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : "00:00:00")
 
   // Combine date and time into ISO datetime string
   const updateDateTime = React.useCallback((newDate: Date | undefined, newTime: string) => {
@@ -35,7 +35,7 @@ export function DatePicker({ value, onChange, label }: DatePickerProps = {}) {
       combinedDate.setMinutes(parseInt(minutes) || 0)
       combinedDate.setSeconds(parseInt(seconds) || 0)
       combinedDate.setMilliseconds(0)
-      
+
       // Return ISO string
       onChange(combinedDate.toISOString())
     }
@@ -60,22 +60,22 @@ export function DatePicker({ value, onChange, label }: DatePickerProps = {}) {
   return (
     <div className="flex gap-4">
       {/* Date  */}
-    <div className="flex flex-col gap-3">
-      <Label htmlFor="date" className="px-1">{label || ""}</Label>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button variant="outline" id="date" className="w-48 justify-between font-normal">
-            {date ? date.toLocaleDateString() : "Select date"}
-            <ChevronDownIcon />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto overflow-hidden p-0" align="start">
-          <Calendar mode="single" selected={date} captionLayout="dropdown" onSelect={handleDateSelect} />
-        </PopoverContent>
-      </Popover>
-    </div>
-    {/* Time  */}
-    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-1">
+        <Label htmlFor="date" className="px-1">{label || ""}</Label>
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" id="date" className="w-48 justify-between font-normal">
+              {date ? date.toLocaleDateString() : "Select date"}
+              <ChevronDownIcon />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+            <Calendar mode="single" selected={date} captionLayout="dropdown" onSelect={handleDateSelect} />
+          </PopoverContent>
+        </Popover>
+      </div>
+      {/* Time  */}
+      <div className="flex flex-col gap-1">
         <Label htmlFor="time-picker" className="px-1">
           Time
         </Label>
