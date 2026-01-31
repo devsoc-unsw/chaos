@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import RoleSelector from "../../../../../../../components/application-answer/role-selector";
 import RoleTabs from "../../../../../../../components/application-answer/role-tabs";
 import MainContent from "../../../../../../../components/application-answer/main-content";
+import TabSwitcher from "../../../../../../../components/application-answer/tab-switcher";
 import ReviewCard from "@/components/application-answer/review-card";
 import { getAllCommonQuestions, linkQuestionsAndAnswers, Question, QuestionAndAnswer } from "@/models/question";
 import { getAllRoleAnswers } from "@/models/answer";
@@ -266,7 +267,10 @@ export default function ApplicationReview({
           <RoleSelector roles={roles} maxRolesPerApplication={campaign?.max_roles_per_application} selectedRoleIds={selectedRoleIds} onChangeSelectedRoles={updateRoles} applicationId={applicationId} dict={dict} />
           <div className="flex-1">
             <RoleTabs roles={roles} selectedRoleIds={selectedRoleIds} activeTab={activeTab} onChangeActiveTab={setActiveTab} dict={dict} />
-            <MainContent campaignId={campaignId} applicationId={applicationId} activeTab={activeTab} dict={dict} updateRoleAnswers={updateQuestionAnswer} qaByRole={qaByRole} />
+            <div className="relative pb-14">
+              <MainContent campaignId={campaignId} applicationId={applicationId} activeTab={activeTab} dict={dict} updateRoleAnswers={updateQuestionAnswer} qaByRole={qaByRole} />
+              <TabSwitcher roles={roles} selectedRoleIds={selectedRoleIds} activeTab={activeTab} onChangeActiveTab={setActiveTab} dict={dict} />
+            </div>
             <ReviewCard questionsAndAnswersByRole={qaByRole} selectedRoleIds={selectedRoleIds} roles={roles} applicationId={applicationId} handleSubmit={handleApplicationSubmit} dict={dict} />
           </div>
         </div>
