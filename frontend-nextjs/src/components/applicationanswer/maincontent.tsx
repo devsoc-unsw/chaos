@@ -76,7 +76,7 @@ export default function MainContent({
               });
             } else {
               await queryClient.invalidateQueries({
-                queryKey: [`${applicationId}-${activeTab}-role-answers}`]
+                queryKey: [`${applicationId}-${activeTab}-role-answers`]
               })
             }
           }
@@ -96,7 +96,9 @@ export default function MainContent({
         }
         updateRoleAnswers(updatedQA);
       } catch (err) {
+        // roll back answers on error so that frontend and backend aren't out of sync
         console.error("Failed to submit answer", err);
+        updateRoleAnswers(question);
       }
     }
 
