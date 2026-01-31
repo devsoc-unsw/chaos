@@ -31,6 +31,9 @@ export async function getApplication(applicationId: string): Promise<Application
     return await apiRequest<ApplicationDetails>(`/api/v1/application/${applicationId}`);
 }
 
+export async function getInProgressApplication(applicationId: string): Promise<ApplicationDetails> {
+    return await apiRequest<ApplicationDetails>(`/api/v1/application/${applicationId}/inprogress`);
+}
 // export async function getApplicationRating(applicationId: string): Promise<RatingDetails> {
 //     return await apiRequest<RatingDetails>(`/api/v1/application/${applicationId}/rating`);
 // }

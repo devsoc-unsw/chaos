@@ -36,7 +36,7 @@ async fn main() -> Result<(), ChaosError> {
     });
 
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
     let server_task = axum::serve(listener, app);
 
     let _ = tokio::join!(server_task, email_task);
