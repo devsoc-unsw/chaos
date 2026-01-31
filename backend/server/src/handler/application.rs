@@ -15,7 +15,7 @@ use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use serde_json::json;
-use crate::models::rating::{NewRating, Rating};
+use crate::models::rating::{NewRating, NewApplicationRating, Rating};
 
 /// Handler for application-related HTTP requests.
 pub struct ApplicationHandler;
@@ -263,31 +263,31 @@ impl ApplicationHandler {
 
     /// Retrieves the rating for an application given by the current user.
     /// 
-    /// This handler allows application reviewers to view the rating for an application.
+    /// This handler allows application reviewers to view their rating for an application.
     /// 
     /// # Arguments
     /// 
-    /// * `state` - The application state
     /// * `application_id` - The ID of the application to get the rating for
     /// * `admin` - The authenticated user (must be an application reviewer)
     /// * `transaction` - Database transaction
     /// 
     /// # Returns
     /// 
-    /// * `Result<impl IntoResponse, ChaosError>` - Rating or error
+    /// * `Result<impl IntoResponse, ChaosError>` - Rating details with all category scores or error
     pub async fn get_rating_by_current_user(
         Path(application_id): Path<i64>,
         admin: ApplicationReviewerGivenApplicationId,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let rating = Rating::get_rating_by_rater_id(application_id, admin.user_id, &mut transaction.tx).await?;
+        let rating = Rating::get_rating_details(application_id, admin.user_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(rating)))
     }
 
-    /// Creates a new rating for an application.
+    /// Creates a new rating for an application with comment and category scores.
     /// 
     /// This handler allows application reviewers to create ratings.
+    /// First creates the application_rating with comment, then creates all category ratings.
     /// 
     /// # Arguments
     /// 
@@ -295,7 +295,7 @@ impl ApplicationHandler {
     /// * `application_id` - The ID of the application to rate
     /// * `admin` - The authenticated user (must be an application reviewer)
     /// * `transaction` - Database transaction
-    /// * `new_rating` - The rating details
+    /// * `new_rating` - The rating details including comment and category scores
     /// 
     /// # Returns
     /// 
@@ -307,27 +307,76 @@ impl ApplicationHandler {
         mut transaction: DBTransaction<'_>,
         Json(new_rating): Json<NewRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Rating::create(
-            new_rating,
+        // First create the application_rating with comment
+        let application_rating_id = Rating::create_application_rating(
+            new_rating.comment,
             application_id,
             admin.user_id,
             &mut state.snowflake_generator,
             &mut transaction.tx,
         )
+        .await?;
+        
+        // Then loop through and create each category rating
+        for category_rating in new_rating.category_ratings {
+            Rating::create_category_rating(
+                category_rating,
+                application_rating_id,
+                &mut state.snowflake_generator,
+                &mut transaction.tx,
+            )
             .await?;
+        }
+
         transaction.tx.commit().await?;
         Ok(AppMessage::OkMessage("Successfully created rating"))
     }
 
     pub async fn update_rating(
+        State(mut state): State<AppState>,
         Path(application_id): Path<i64>,
         admin: ApplicationReviewerGivenApplicationId,
         mut transaction: DBTransaction<'_>,
         Json(updated_rating): Json<NewRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let rating = Rating::get_rating_by_rater_id(application_id, admin.user_id, &mut transaction.tx).await?;
+        // Get the existing rating for this user and application
+        let rating = Rating::get_rating_details(
+            application_id,
+            admin.user_id,
+            &mut transaction.tx,
+        )
+        .await?;
 
-        Rating::update(rating.id, updated_rating, &mut transaction.tx).await?;
+        // Update the comment
+        Rating::update_application_rating(
+            rating.id,
+            updated_rating.comment,
+            &mut transaction.tx,
+        )
+        .await?;
+
+        // Get existing category ratings and delete them
+        let existing_category_ratings = Rating::get_all_category_ratings_from_application_rating_id(
+            rating.id,
+            &mut transaction.tx,
+        )
+        .await?;
+
+        for category_rating in existing_category_ratings {
+            Rating::delete_category_rating(category_rating.id, &mut transaction.tx).await?;
+        }
+
+        // Create new category ratings
+        for category_rating in updated_rating.category_ratings {
+            Rating::create_category_rating(
+                category_rating,
+                rating.id,
+                &mut state.snowflake_generator,
+                &mut transaction.tx,
+            )
+            .await?;
+        }
+
         transaction.tx.commit().await?;
         Ok(AppMessage::OkMessage("Successfully updated rating"))
     }
@@ -338,23 +387,19 @@ impl ApplicationHandler {
     /// 
     /// # Arguments
     /// 
-    /// * `_state` - The application state
     /// * `application_id` - The ID of the application
     /// * `_admin` - The authenticated user (must be an application reviewer)
     /// * `transaction` - Database transaction
     /// 
     /// # Returns
     /// 
-    /// * `Result<impl IntoResponse, ChaosError>` - List of ratings or error
+    /// * `Result<impl IntoResponse, ChaosError>` - List of ratings with all category scores or error
     pub async fn get_ratings(
-        State(_state): State<AppState>,
         Path(application_id): Path<i64>,
         _admin: ApplicationReviewerGivenApplicationId,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let ratings =
-            Rating::get_all_ratings_from_application_id(application_id, &mut transaction.tx)
-                .await?;
+        let ratings = Rating::get_all_ratings_from_application_id(application_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(ratings)))
     }

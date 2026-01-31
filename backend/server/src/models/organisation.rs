@@ -13,7 +13,7 @@ use snowflake::SnowflakeIdGenerator;
 use sqlx::{FromRow, Postgres, Transaction};
 use std::ops::DerefMut;
 use uuid::Uuid;
-use crate::models::email::EmailCredentials;
+use crate::models::email::{EmailCredentials, EmailQueue};
 use crate::models::user::User;
 use crate::service::campaign::create_proper_slug;
 use nanoid::nanoid;
@@ -811,14 +811,13 @@ impl Organisation {
         .execute(transaction.deref_mut())
         .await?;
 
-        // TODO: Get SMTP credentials
-        // ChaosEmail::send_message(
-        //     "".to_string(),
-        //     email,
-        //     "You have been invited to join an organisation on Chaos".to_string(),
-        //     format!("You have been invited to join an organisation on Chaos. Please use the following link to accept the invite: https://chaos.devsoc.app/invite/${code}").to_string(),
-        //     email_credentials,
-        // ).await?;
+        EmailQueue::add_to_queue(
+            None,
+            email,
+            "You have been invited to join an organisation on Chaos".to_string(),
+            format!("You have been invited to join an organisation on Chaos. Please use the following link to accept the invite: https://chaos.devsoc.cn/dashboard/invite/{code}").to_string(),
+            transaction,
+        ).await?;
 
         return Ok(code);
 }

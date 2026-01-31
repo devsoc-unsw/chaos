@@ -56,7 +56,8 @@ impl Seeder {
                 &mut tx
             ).await?;
         }
-    
+
+        tx.commit().await?;
         Ok(())
     }
 }

@@ -1,6 +1,8 @@
 import { apiRequest } from "@/lib";
 import { UserDetails } from "./user";
 import { AppMessage } from "./app";
+import { RatingDetails } from "./rating";
+
 
 export interface ApplicationDetails {
     id: string;
@@ -32,30 +34,19 @@ export async function getApplication(applicationId: string): Promise<Application
 export async function getInProgressApplication(applicationId: string): Promise<ApplicationDetails> {
     return await apiRequest<ApplicationDetails>(`/api/v1/application/${applicationId}/inprogress`);
 }
+// export async function getApplicationRating(applicationId: string): Promise<RatingDetails> {
+//     return await apiRequest<RatingDetails>(`/api/v1/application/${applicationId}/rating`);
+// }
 
-export interface RatingDetails {
-    /// Unique identifier for the rating
-    id: string;
-    rater_id: string;
-    rater_name: string;
-    rating: number;
-    comment: string | null;
-    updated_at: string;
-}
-
-export async function getApplicationRating(applicationId: string): Promise<RatingDetails> {
-    return await apiRequest<RatingDetails>(`/api/v1/application/${applicationId}/rating`);
-}
-
-export async function createApplicationRating(applicationId: string, rating?: number, comment?: string): Promise<AppMessage> {
-    return await apiRequest<AppMessage>(`/api/v1/application/${applicationId}/rating`, {
-        method: "POST",
-        body: {
-            rating,
-            comment,
-        },
-    });
-}
+// export async function createApplicationRating(applicationId: string, rating?: number, comment?: string): Promise<AppMessage> {
+//     return await apiRequest<AppMessage>(`/api/v1/application/${applicationId}/rating`, {
+//         method: "POST",
+//         body: {
+//             rating,
+//             comment,
+//         },
+//     });
+// }
 
 export async function updateApplicationRating(applicationId: string, rating?: number, comment?: string): Promise<AppMessage> {
     return await apiRequest<AppMessage>(`/api/v1/application/${applicationId}/rating`, {

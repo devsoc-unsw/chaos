@@ -7,7 +7,7 @@ import ApplicationReview from "./applicationanswer";
 import { ApplicationDetails } from "@/models/application";
 import { getDictionary } from "@/app/[lang]/dictionaries";
 import { getCampaignRoles, getCampaign } from "@/models/campaign";
-import { getInProgressApplication } from "@/models/application";
+import { getApplication, getInProgressApplication } from "@/models/application";
 import { getAllRoleQuestions, getAllCommonQuestions } from "@/models/question";
 import { getAllRoleAnswers, getAllCommonAnswers} from "@/models/answer";
 import { redirect } from "next/navigation";
