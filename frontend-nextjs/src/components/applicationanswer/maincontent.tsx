@@ -76,7 +76,7 @@ export default function MainContent({
               });
             } else {
               await queryClient.invalidateQueries({
-                queryKey: [`${applicationId}-${activeTab}-role-answers}`]
+                queryKey: [`${applicationId}-${activeTab}-role-answers`]
               })
             }
           }
@@ -101,7 +101,9 @@ export default function MainContent({
     }
 
     useEffect(() => {
-      if (!questions || !answers) return;
+      if (!questions || !answers) {
+        return;
+      }
       const linked = linkQuestionsAndAnswers(questions, answers)
       setQuestionsAndAnswers(linked);
     }, [questions, answers]);
