@@ -11,6 +11,7 @@ import Multichoice from "./questions/multichoice";
 import MultiSelect from "./questions/multiselect";
 import Ranking from "./questions/ranking";
 import { buildAnswerPayload } from "@/lib/utils";
+import { toast } from "sonner";
 
 export default function MainContent({
   campaignId,
@@ -98,6 +99,7 @@ export default function MainContent({
       } catch (err) {
         // roll back answers on error so that frontend and backend aren't out of sync
         console.error("Failed to submit answer", err);
+        toast.error("Failed to submit answer");
         updateRoleAnswers(question);
       }
     }
@@ -173,7 +175,7 @@ export default function MainContent({
     };
 
     return (
-        <div className="border-b border-gray-200 mb-6 gap-2">
+        <div className="border-b border-gray-200 mb-6 gap-2 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             <div>
               {questionsAndAnswers.length === 0 ? (
                 <p>{dict.applicationpage.no_questions}</p>

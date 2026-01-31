@@ -1,6 +1,6 @@
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 import { CampaignRole, RoleDetails } from "@/models/campaign";
-import { RoleCard } from "./rolecard";
+import { RoleCard } from "./role-card";
 
 export default function RoleSelector({
   roles,

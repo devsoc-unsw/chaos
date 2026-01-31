@@ -88,7 +88,7 @@ export default function ReviewCard({
                     qa.answer === "No Answer" ||
                     qa.answer === "__NO_ANSWER__"
                 ) {
-                    return "Not ranked yet";
+                    return "No Answer";
                 }
                 // vibed this too cause lowk didn't know how to map it in the best way
                 // Backend always returns rankings in string form, so we have to split it up to render nicely

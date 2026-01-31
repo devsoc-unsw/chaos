@@ -5,10 +5,10 @@ import { getCampaign, getCampaignRoles } from "@/models/campaign";
 import { getInProgressApplication, submitApplication } from "@/models/application";
 import { Answer, getAllCommonAnswers, updateApplicationRoles } from "@/models/answer";
 import { useState, useEffect } from "react";
-import RoleSelector from "../../../../../../../components/applicationanswer/roleselector";
-import RoleTabs from "../../../../../../../components/applicationanswer/roletabs";
-import MainContent from "../../../../../../../components/applicationanswer/maincontent";
-import ReviewCard from "@/components/applicationanswer/reviewcard";
+import RoleSelector from "../../../../../../../components/application-answer/role-selector";
+import RoleTabs from "../../../../../../../components/application-answer/role-tabs";
+import MainContent from "../../../../../../../components/application-answer/main-content";
+import ReviewCard from "@/components/application-answer/review-card";
 import { getAllCommonQuestions, linkQuestionsAndAnswers, Question, QuestionAndAnswer } from "@/models/question";
 import { getAllRoleAnswers } from "@/models/answer";
 import { getAllRoleQuestions } from "@/models/question";
@@ -251,7 +251,7 @@ export default function ApplicationReview({
   }, [selectedRoleIds, campaignId, applicationId, queryClient]);
 
   return (
-    <div className="min-h-screen bg-background w-full">
+    <div className="min-h-screen bg-background w-full overflow-y-scroll [&::-webkit-scrollbar]:hidden">
       <div className="w-full mx-auto p-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
