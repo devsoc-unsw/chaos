@@ -2,7 +2,8 @@
 
 import { ApplicationSummaryDataTable } from "./data-table";
 import { dateToString } from "@/lib/utils";
-import { ApplicationRatingSummary, getApplicationRatingsSummary, RatingDetails } from "@/models/application";
+import { ApplicationRatingSummary, getApplicationRatingsSummary} from "@/models/application";
+import { getRatingCategories, RatingDetails } from "@/models/rating"
 import { getCampaign, getCampaignRoles } from "@/models/campaign";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
@@ -32,7 +33,17 @@ function RatingsShelf({ columns, ratings, dict }: { columns: ColumnDef<Applicati
                             <span className="font-medium">{rating.rater_name}</span>
                             <p className="text-sm text-gray-700">{rating.comment}</p>
                         </TableCell>
-                        <TableCell className="align-top">{rating.rating.toFixed(2)}</TableCell>
+                        {rating.category_ratings.map((cr) => (
+                            <TableCell key={cr.id}>
+                                {cr.rating ?? "-"}
+                            </TableCell>
+                        ))}
+                        <TableCell>
+                            {rating.category_ratings.filter((cr) => cr.rating).map((cr) => cr.rating!).reduce((acc, rating) => acc! + rating!, 0) / rating.category_ratings.filter((cr) => cr.rating).length}
+                        </TableCell>
+
+                        {/* // Add empty cell at end to make shelf row have same number of cells as parent */}
+                        <TableCell />
                     </TableRow>
                 ))
             }
@@ -63,6 +74,11 @@ export default function ApplicationSummary({ campaignId, orgId, dict }: { campai
         queryFn: () => getApplicationRatingsSummary(campaignId),
     });
 
+    const { data: ratingCategories } = useQuery({
+        queryKey: [`${campaignId}-rating-categories`],
+        queryFn: () => getRatingCategories(campaignId),
+    })
+
     return (
         <div>
             <div className="flex justify-between items-center">
@@ -80,11 +96,11 @@ export default function ApplicationSummary({ campaignId, orgId, dict }: { campai
             </div>
             <div className="mt-2">
                 <ApplicationSummaryDataTable
-                    columns={getColumns(dict, roleIdsToNames)}
+                    columns={getColumns(dict, roleIdsToNames, ratingCategories ?? [])}
                     data={data ?? []}
                     roles={roles ?? []}
                     dict={dict}
-                    renderSubComponent={({ row }) => <RatingsShelf columns={getColumns(dict, roleIdsToNames)} ratings={row.original.ratings} dict={dict} />}
+                    renderSubComponent={({ row }) => <RatingsShelf columns={getColumns(dict, roleIdsToNames, ratingCategories ?? [])} ratings={row.original.ratings} dict={dict} />}
                 />
             </div>
         </div>

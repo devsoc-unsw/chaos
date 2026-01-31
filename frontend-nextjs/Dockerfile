@@ -30,7 +30,12 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-COPY --from=builder /app ./
+RUN groupadd --system --gid 1001 chaos
+RUN useradd --system --uid 1001 --gid chaos nextjs
 
-EXPOSE 3000
+COPY --from=builder --chown=chaos:nodejs /app ./
+
+USER nextjs
+
+EXPOSE 80
 CMD ["bun", "start"]

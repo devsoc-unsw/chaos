@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CampaignUpdate, createCampaignRole, getCampaign, getCampaignRoles, updateCampaign, getCampaignAttachments, uploadAttachments, deleteCampaignAttachment } from "@/models/campaign";
+import { getRatingCategories, createCategory, updateCategory, deleteCategory, RatingCategory } from "@/models/rating";
 import { Button } from "@/components/ui/button";
 import { Copy, Pencil, Trash, Share, BookOpenCheck, Check, Plus, FormIcon, CircleCheck, Upload, X, FileText, BarChart } from "lucide-react";
 import { ButtonGroup } from "@/components/ui/button-group";
@@ -32,15 +33,21 @@ interface ClientRole extends RoleDetails {
     new: boolean;
 }
 
+interface ClientCategory extends RatingCategory {
+    deleting: boolean;
+    new: boolean;
+}
+
 interface CampaignDetailsData {
     campaignName?: string;
     clientRoles?: ClientRole[];
     description?: string;
     startsAt?: Date;
     endsAt?: Date;
+    clientCategories?: ClientCategory[];
 }
 
-export type CampaignUpdateKeys = keyof CampaignDetailsData | "roleName" | "roleMinAvailable" | "roleMaxAvailable";
+export type CampaignUpdateKeys = keyof CampaignDetailsData | "roleName" | "roleMinAvailable" | "roleMaxAvailable" | "categoryName";
 
 function compareCampaignRoles(roles: RoleDetails[], clientRoles: ClientRole[]): boolean {
     if (roles.length !== clientRoles.length) return false;
@@ -51,6 +58,14 @@ function compareCampaignRoles(roles: RoleDetails[], clientRoles: ClientRole[]): 
                     role.min_available === clientRoles[index].min_available && 
                     role.max_available === clientRoles[index].max_available && 
                     role.finalised === clientRoles[index].finalised
+        );
+}
+
+function compareRatingCategories(categories: RatingCategory[], clientCategories: ClientCategory[]): boolean {
+    if (categories.length !== clientCategories.length) return false;
+    return categories.every(
+        (category, index) => category.id === clientCategories[index].id && 
+                    category.name === clientCategories[index].name
         );
 }
 
@@ -113,6 +128,41 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
         queryFn: () => getOrganisationUserRole(orgId),
     });
 
+    const { data: ratingCategories } = useQuery({
+        queryKey: [`${campaignId}-rating-categories`],
+        queryFn: () => getRatingCategories(campaignId),
+    });
+
+    const { mutateAsync: mutateCreateCategory } = useMutation({
+        mutationFn: (name: string) => createCategory(name, campaignId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [`${campaignId}-rating-categories`] });
+        },
+        onError: () => {
+            queryClient.invalidateQueries({ queryKey: [`${campaignId}-rating-categories`] });
+        },
+    });
+
+    const { mutateAsync: mutateUpdateCategory } = useMutation({
+        mutationFn: ({ categoryId, name }: { categoryId: string, name: string }) => updateCategory(name, campaignId, categoryId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [`${campaignId}-rating-categories`] });
+        },
+        onError: () => {
+            queryClient.invalidateQueries({ queryKey: [`${campaignId}-rating-categories`] });
+        },
+    });
+
+    const { mutateAsync: mutateDeleteCategory } = useMutation({
+        mutationFn: (categoryId: string) => deleteCategory(campaignId, categoryId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [`${campaignId}-rating-categories`] });
+        },
+        onError: () => {
+            queryClient.invalidateQueries({ queryKey: [`${campaignId}-rating-categories`] });
+        },
+    });
+
     const { data: attachments } = useQuery({
         queryKey: [`${campaignId}-attachments`],
         queryFn: () => getCampaignAttachments(campaignId),
@@ -148,9 +198,20 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
         clientRoles.reduce((acc, role) => ({ ...acc, [role.id]: false }), {})
     );
     const [updatedCampaignDetails, setUpdatedCampaignDetails] = useState<CampaignDetailsData | null>(null);
+    const [clientCategories, setClientCategories] = useState<ClientCategory[]>([]);
+    const [newCategoryId, setNewCategoryId] = useState<string>("0");
+    const [hoveredDeleteCategoryIndex, setHoveredDeleteCategoryIndex] = useState<number | null>(null);
+    const [categoryNameError, setCategoryNameError] = useState<{ [key: string]: boolean }>(
+        clientCategories.reduce((acc, category) => ({ ...acc, [category.id]: false }), {})
+    );
+
 
     if (!editingMode && roles && !compareCampaignRoles(roles, clientRoles)) {
         setClientRoles(roles.map((role) => ({ ...role, deleting: false, new: false })));
+    }
+
+    if (!editingMode && ratingCategories && !compareRatingCategories(ratingCategories, clientCategories)) {
+        setClientCategories(ratingCategories.map((category) => ({ ...category, deleting: false, new: false })));
     }
 
     const toggleEditingMode = () => {
@@ -233,6 +294,18 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
         setNewRoleId(newRoleId + 1);
     };
 
+    const addNewCategoryRow = () => {
+        if (!editingMode) return;
+        setClientCategories([...clientCategories, {
+            id: newCategoryId,
+            campaign_id: campaignId,
+            name: "New Category",
+            deleting: false,
+            new: true,
+        }]);
+        setNewCategoryId(newCategoryId + 1);
+    };
+
     const handleDeleteRole = (roleId: string) => {
         if (!editingMode) return;
         const deletingRole = clientRoles.find((r) => r.id === roleId);
@@ -251,6 +324,28 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
             return {
                 ...prev,
                 clientRoles: updatedRoles,
+            };
+        });
+    };
+
+    const handleDeleteCategory = (categoryId: string) => {
+        if (!editingMode) return;
+        const deletingCategory = clientCategories.find((c) => c.id === categoryId);
+
+        if (!deletingCategory) return;
+
+        setClientCategories(clientCategories.filter((c) => c !== deletingCategory));
+
+        deletingCategory.deleting = true;
+
+        setUpdatedCampaignDetails((prev) => {
+            const prevCategories = prev?.clientCategories ?? [];
+            const updatedCategories = prevCategories.filter((category) => category.id !== categoryId);
+
+            updatedCategories.push(deletingCategory);
+            return {
+                ...prev,
+                clientCategories: updatedCategories,
             };
         });
     };
@@ -281,6 +376,25 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                 return {
                     ...prev,
                     clientRoles: updatedRoles,
+                };
+            });
+            return;
+        }
+
+        if (key === "categoryName" && index !== undefined) {
+            const updatedCategory = clientCategories?.[index] ?? null;
+            if (!updatedCategory) return;
+
+            updatedCategory.name = String(data);
+            
+            setUpdatedCampaignDetails((prev) => {
+                const prevCategories = prev?.clientCategories ?? [];
+                const updatedCategories = prevCategories.filter((category) => category.id !== updatedCategory.id);
+                updatedCategories.push(updatedCategory);
+
+                return {
+                    ...prev,
+                    clientCategories: updatedCategories,
                 };
             });
             return;
@@ -406,7 +520,21 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                     });
                 }
             }) ?? [];
-            await Promise.all([campaignPromise, ...rolePromises]);
+
+            const categoryPromises = updatedCampaignDetails.clientCategories?.map((category) => {
+                if (category.deleting === true) {
+                    return mutateDeleteCategory(category.id.toString());
+                } else if (category.new === true) {
+                    return mutateCreateCategory(category.name);
+                } else {
+                    return mutateUpdateCategory({
+                        categoryId: category.id.toString(),
+                        name: category.name,
+                    });
+                }
+            }) ?? [];
+
+            await Promise.all([campaignPromise, ...rolePromises, ...categoryPromises]);
         })();
 
         toast.promise(mutationResult, {
@@ -421,8 +549,10 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
             setUpdatedCampaignDetails(null);
             setEditingMode(false);
             setNewRoleId("0");
+            setNewCategoryId("0");
         } catch (err) {
             setClientRoles(roles?.map((role) => ({ ...role, deleting: false, new: false })) ?? []);
+            setClientCategories(ratingCategories?.map((category) => ({ ...category, deleting: false, new: false })) ?? []);
         }
     };
     
@@ -601,6 +731,63 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                     </TableBody>
                 </Table>
             </div>
+
+            <div className="max-w-[500px]">
+                <h2 className="text-xl font-bold">{dict.common.rating_categories}</h2>
+                <Table>
+                <TableHeader>
+                <TableRow>
+                <TableHead className="w-[100px]">{dict.common.name}</TableHead>
+                    {editingMode && <TableHead className="w-[50px]"></TableHead>}
+                </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {clientCategories?.map((category, index) => (
+                            <TableRow key={category.id} className={cn("group transition-colors", hoveredDeleteCategoryIndex === index && "bg-red-50! hover:bg-red-50!")}>
+                                <TableCell className="font-medium">
+                                    <EditDetail 
+                                        key={`${index}-category-name`} 
+                                        namespace={`${index}-category-name`} 
+                                        value={category.name} 
+                                        onChange={(value) => updateCampaignDetails(value, "categoryName", index)} 
+                                        editable={editingMode} 
+                                        maxLength={100}
+                                        isError={categoryNameError?.[category.id]}
+                                        setIsError={() => setCategoryNameError(prev => ({ ...prev, [category.id]: false }))}
+                                    />
+                                </TableCell>
+                                {editingMode && (
+                                    <TableCell className="w-[50px]">
+                                        <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 hover:bg-red-200"
+                                            onMouseEnter={() => {
+                                                setHoveredDeleteCategoryIndex(index);
+                                            }}
+                                            onMouseLeave={() => {
+                                                setHoveredDeleteCategoryIndex(null);
+                                            }}
+                                            onClick={() => handleDeleteCategory(category.id)}
+                                        >
+                                            <Trash className="w-4 h-4" />
+                                        </Button>
+                                    </TableCell>
+                                )}
+                            </TableRow>
+                        ))}
+                        {
+                            editingMode && (
+                                <TableRow>
+                                    <TableCell colSpan={2} className="text-right">
+                                        <div className="flex justify-center w-full">
+                                            <Button variant="outline" onClick={addNewCategoryRow} className="w-full"><Plus className="w-4 h-4" /> {dict.dashboard.campaigns.add_category || "Add Category"}</Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            )
+                        }
+                    </TableBody>
+                </Table>
+            </div>
+
             <div>
                 <h2 className="text-xl font-bold">{dict.common.description}</h2>
                 {editingMode ? (
@@ -616,6 +803,7 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                     <div dangerouslySetInnerHTML={{ __html: descriptionHtmlState }} />
                 )}
             </div>
+            {/* TODO: Add in the column roles */}
             <div>
                 <h2 className="text-xl font-bold">{dict.common.attachments}</h2>
                 {editingMode && (

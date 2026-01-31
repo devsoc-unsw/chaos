@@ -125,12 +125,13 @@ pub async fn google_callback(
         .http_only(true) // Prevent JavaScript access
         .expires(Expiration::DateTime(OffsetDateTime::now_utc() + time::Duration::days(5))) // Set an expiration time of 5 days, TODO: read from env?
         .secure(!state.is_dev_env)     // Send only over HTTPS, comment out for testing
+        .domain("devsoc.cn")
         .path("/");       // Available for all paths
 
     let redirect_root = if state.is_dev_env {
         "http://localhost:3000"
     } else {
-        ""
+        "https://chaos.devsoc.cn"
     };
 
     let possible_redirect = sqlx::query!("DELETE FROM redirect_tokens WHERE token = $1 RETURNING redirect", query.state)

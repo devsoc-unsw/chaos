@@ -22,7 +22,7 @@ services:
   # server
   backend:
     image: ghcr.io/devsoc-unsw/chaos-backend:latest
-    restart: no
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
@@ -41,9 +41,7 @@ services:
 
   # next.js-frontend
   frontend:
-    build:
-      context: ./frontend-nextjs
-      dockerfile: Dockerfile
+    image: ghcr.io/devsoc-unsw/chaos-frontend:latest
     restart: unless-stopped
     depends_on:
       backend:
