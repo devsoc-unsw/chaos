@@ -18,18 +18,16 @@ export default function MainContent({
   applicationId,
   activeTab,
   dict,
-  updateRoleAnswers
+  updateRoleAnswers,
+  qaByRole
 }: {
   campaignId: string;
   applicationId: string;
   activeTab: string;
   dict: any;
   updateRoleAnswers: (newQA:QuestionAndAnswer) => void;
-//   activeRoleId: string;
+  qaByRole?: Map<string, QuestionAndAnswer[]>;
 }) {
-    const [questionsAndAnswers, setQuestionsAndAnswers] =
-    useState<QuestionAndAnswer[]>([]);
-
     const generalTab = activeTab === "general"
     const queryClient = useQueryClient()
     const { data: questions } = useQuery({
@@ -51,6 +49,11 @@ export default function MainContent({
         ? getAllCommonAnswers(applicationId)
         : getAllRoleAnswers(applicationId, activeTab),
     });
+
+    const questionsAndAnswers =
+      qaByRole?.has(activeTab)
+        ? (qaByRole.get(activeTab) ?? [])
+        : (questions && answers ? linkQuestionsAndAnswers(questions, answers) : []);
   
     // submits answer to a question
     const submitAnswer = async (
@@ -104,13 +107,13 @@ export default function MainContent({
       }
     }
 
-    useEffect(() => {
-      if (!questions || !answers) {
-        return;
-      }
-      const linked = linkQuestionsAndAnswers(questions, answers)
-      setQuestionsAndAnswers(linked);
-    }, [questions, answers]);
+    // useEffect(() => {
+    //   if (!questions || !answers) {
+    //     return;
+    //   }
+    //   const linked = linkQuestionsAndAnswers(questions, answers)
+    //   setQuestionsAndAnswers(linked);
+    // }, [questions, answers]);
 
     const renderQuestion = (q:QuestionAndAnswer) => {
       switch (q.question_type) {

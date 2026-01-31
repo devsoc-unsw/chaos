@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AnswerValue, MultiOptionQuestionOption, QuestionAndAnswer } from '@/models/question';
@@ -23,23 +23,35 @@ export default function MultiSelect({
         (question as any).options ?? [];
 
     // vibed this i cbf lowk mb lmk if I should rewrite
-    function deriveIdsFromAnswerString(answerString: string, options: MultiOptionQuestionOption[]) {
-        if (!answerString) return [];
-            const labels = answerString
-                .split(",")
-                .map(s => s.trim())
-                .filter(Boolean);
+    function deriveIdsFromAnswer(
+      answer: string | string[] | undefined,
+      options: MultiOptionQuestionOption[]
+    ): string[] {
+        if (!answer) return [];
 
-            return labels
-                .map(label => {
-                const opt = options.find(o => o.text === label);
+        if (Array.isArray(answer)) {
+            return answer.map((id) => String(id));
+        }
+
+        const labels = String(answer)
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+
+        return labels
+            .map((label) => {
+                const opt = options.find((o) => o.text === label);
                 return opt ? String(opt.id) : null;
-                })
-                .filter(Boolean) as string[];
+            })
+            .filter(Boolean) as string[];
     }
 
     const [selectedOptions, setSelectedOptions] =
-    useState<string[]>(deriveIdsFromAnswerString(question.answer, options));
+    useState<string[]>(deriveIdsFromAnswer(question.answer, options));
+
+    useEffect(() => {
+        setSelectedOptions(deriveIdsFromAnswer(question.answer, options));
+    }, [question.answer]);
 
     const handleChange = async (optionId: string | number, checked: boolean) => {
         const id = String(optionId);
@@ -72,7 +84,7 @@ export default function MultiSelect({
                     <div key={option.id} className="flex items-center space-x-2">
                         <Checkbox
                             id={`option-${question.id}-${option.id}`}
-                            checked={selectedOptions.includes(option.id)}
+                            checked={selectedOptions.includes(String(option.id))}
                             onCheckedChange={(checked) => handleChange(option.id, !!checked)}
                         />
                         <Label

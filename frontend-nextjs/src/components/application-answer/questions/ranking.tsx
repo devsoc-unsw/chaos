@@ -26,15 +26,34 @@ export default function Ranking({
 }){
   const options: MultiOptionQuestionOption[] = (question as any).options ?? [];
 
-  //vibed this
-  function reorderOptionsFromRankingString(
-    answer: string,
+  function reorderOptionsFromAnswer(
+    answer: string | string[] | undefined,
     options: MultiOptionQuestionOption[]
   ): MultiOptionQuestionOption[] {
-    const labelsInOrder = answer
+    if (!answer) return options;
+
+    if (Array.isArray(answer)) {
+      const ids = answer.map((id) => String(id));
+      const ordered: MultiOptionQuestionOption[] = [];
+      const used = new Set<string>();
+
+      for (const id of ids) {
+        const opt = options.find((o) => String(o.id) === id);
+        if (opt) {
+          ordered.push(opt);
+          used.add(String(opt.id));
+        }
+      }
+
+      const remaining = options.filter((o) => !used.has(String(o.id)));
+      return [...ordered, ...remaining];
+    }
+
+    // assign labels to answers for ranking, vibed this cbf
+    const labelsInOrder = String(answer)
       .split(",")
-      .map(part => part.trim())
-      .map(part => {
+      .map((part) => part.trim())
+      .map((part) => {
         const dot = part.indexOf(".");
         return dot === -1 ? part : part.slice(dot + 1).trim();
       });
@@ -43,22 +62,22 @@ export default function Ranking({
     const used = new Set<string>();
 
     for (const label of labelsInOrder) {
-      const opt = options.find(o => o.text === label);
+      const opt = options.find((o) => o.text === label);
       if (opt) {
         ordered.push(opt);
-        used.add(opt.id);
+        used.add(String(opt.id));
       }
     }
 
-    const remaining = options.filter(o => !used.has(o.id));
+    const remaining = options.filter((o) => !used.has(String(o.id)));
     return [...ordered, ...remaining];
   }
 
   const [rankedOptions, setRankedOptions] = useState<RankedOption[]>(
-    reorderOptionsFromRankingString(question.answer || "", options)
+    reorderOptionsFromAnswer(question.answer, options)
   );
   useEffect(() => {
-    setRankedOptions(reorderOptionsFromRankingString(question.answer, options));
+    setRankedOptions(reorderOptionsFromAnswer(question.answer, options));
   }, [question.answer]);
 
 
