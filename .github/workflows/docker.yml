@@ -1,16 +1,18 @@
 name: Docker
-
 on:
-  pull_request:
-    branches: [main, "renovate/*"]
   push:
-    branches: ["*"]
+    branches:
+      - main
+      - CHAOS-224-KHAOS-rewrite
+
+env:
+  ENVIRONMENT: ${{ github.ref_name == 'main' && 'prod' || 'staging' }}
+  IMAGE_NAME: ${{ github.ref_name == 'main' && 'chaos' || 'chaos-staging' }}
 
 jobs:
   build-backend:
     name: Build (Backend)
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/CHAOS-224-KHAOS-rewrite' }}
     services:
       postgres:
         image: postgres:16
@@ -69,10 +71,9 @@ jobs:
           context: backend
           builder: ${{ steps.buildx.outputs.name }}
           file: backend/Dockerfile
-          push: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/CHAOS-224-KHAOS-rewrite' }}
           tags: |
-            ghcr.io/devsoc-unsw/chaos-backend:${{ github.sha }}
-            ghcr.io/devsoc-unsw/chaos-backend:staging-latest
+            ghcr.io/devsoc-unsw/${ env.IMAGE_NAME }}-backend:${{ github.sha }}
+            ghcr.io/devsoc-unsw/${ env.IMAGE_NAME }}-backend:latest
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
@@ -83,7 +84,6 @@ jobs:
   build-frontend:
     name: Build (Frontend)
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/CHAOS-224-KHAOS-rewrite' }}
     permissions:
       contents: read
       packages: write
@@ -102,18 +102,16 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: frontend-nextjs
-          push: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/CHAOS-224-KHAOS-rewrite' }}
           platforms: linux/amd64
           file: frontend-nextjs/Dockerfile
           tags: |
-            ghcr.io/devsoc-unsw/chaos-frontend:${{ github.sha }}
-            ghcr.io/devsoc-unsw/chaos-frontend:staging-latest
+            ghcr.io/devsoc-unsw/${{ env.IMAGE_NAME }}-frontend:${{ github.sha }}
+            ghcr.io/devsoc-unsw/${{ env.IMAGE_NAME }}-frontend:latest
           labels: ${{ steps.meta.outputs.labels }}
   deploy:
     name: Deploy (CD)
     runs-on: ubuntu-latest
     needs: [build-frontend, build-backend]
-    if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/CHAOS-224-KHAOS-rewrite' }}
     concurrency: staging
     environment:
       name: staging
@@ -133,11 +131,11 @@ jobs:
         run: |
           git config user.name "CSESoc CD"
           git config user.email "technical@csesoc.org.au"
-          git checkout -b update/chaos/staging/${{ github.sha }}
-          yq -i '.items[0].spec.template.spec.containers[0].image = "ghcr.io/devsoc-unsw/chaos-frontend:${{ github.sha }}"' projects/chaos/staging/deploy-frontend.yml
-          yq -i '.items[0].spec.template.spec.containers[0].image = "ghcr.io/devsoc-unsw/chaos-backend:${{ github.sha }}"' projects/chaos/staging/deploy-backend.yml
+          git checkout -b update/${{ env.IMAGE_NAME }}/${{ github.sha }}
+          yq -i '.items[0].spec.template.spec.containers[0].image = "ghcr.io/devsoc-unsw/${{ env.IMAGE_NAME }}-frontend:${{ github.sha }}"' projects/chaos/${{ env.ENVIRONMENT }}/frontend/deploy.yml
+          yq -i '.items[0].spec.template.spec.containers[0].image = "ghcr.io/devsoc-unsw/${{ env.IMAGE_NAME }}-backend:${{ github.sha }}"' projects/chaos/${{ env.ENVIRONMENT }}/backend/deploy.yml
           git add .
-          git commit -m "feat(chaos/staging): update images"
-          git push -u origin update/chaos/staging/${{ github.sha }}
-          gh pr create --title "feat(chaos/staging): update images" --body "Updates the images for the chaos staging deployment to commit devsoc-unsw/chaos@${{ github.sha }}." > URL
+          git commit -m "feat(${{ env.IMAGE_NAME}}): update images"
+          git push -u origin update/${{ env.IMAGE_NAME }}/${{ github.sha }}
+          gh pr create --title "feat(${{ env.IMAGE_NAME }}): update images" --body "Updates the images for the ${{ env.IMAGE_NAME }} deployment to commit devsoc-unsw/${{ env.IMAGE_NAME}}@${{ github.sha }}." > URL
           gh pr merge $(cat URL) --squash -d

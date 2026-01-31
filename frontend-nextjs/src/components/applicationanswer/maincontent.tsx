@@ -103,7 +103,9 @@ export default function MainContent({
     }
 
     useEffect(() => {
-      if (!questions || !answers) return;
+      if (!questions || !answers) {
+        return;
+      }
       const linked = linkQuestionsAndAnswers(questions, answers)
       setQuestionsAndAnswers(linked);
     }, [questions, answers]);

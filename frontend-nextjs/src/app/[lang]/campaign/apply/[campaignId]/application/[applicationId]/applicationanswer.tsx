@@ -2,14 +2,16 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCampaign, getCampaignRoles } from "@/models/campaign";
-import { getApplication, submitApplication } from "@/models/application";
-import { Answer, updateApplicationRoles } from "@/models/answer";
+import { getInProgressApplication, submitApplication } from "@/models/application";
+import { Answer, getAllCommonAnswers, updateApplicationRoles } from "@/models/answer";
 import { useState, useEffect } from "react";
 import RoleSelector from "../../../../../../../components/applicationanswer/roleselector";
 import RoleTabs from "../../../../../../../components/applicationanswer/roletabs";
 import MainContent from "../../../../../../../components/applicationanswer/maincontent";
 import ReviewCard from "@/components/applicationanswer/reviewcard";
-import { linkQuestionsAndAnswers, Question, QuestionAndAnswer } from "@/models/question";
+import { getAllCommonQuestions, linkQuestionsAndAnswers, Question, QuestionAndAnswer } from "@/models/question";
+import { getAllRoleAnswers } from "@/models/answer";
+import { getAllRoleQuestions } from "@/models/question";
 import { redirect, useRouter } from "next/navigation";
 
 interface ApplicationReviewProps {
@@ -47,15 +49,43 @@ export default function ApplicationReview({
 
   const { data: application } = useQuery({
     queryKey: [`application-${applicationId}`],
-    queryFn: () => getApplication(applicationId),
+    queryFn: () => getInProgressApplication(applicationId),
   });
 
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<"general" | string>("general");
-  const [qaByRole, setQAByRole] = useState<Map<string,QuestionAndAnswer[]>>(new Map());
+  const [qaByRole, setQAByRole] = useState<Map<string, QuestionAndAnswer[]>>(new Map());
   const queryClient = useQueryClient()
 
-  const populateQAByRole = (roleIds:string[], campaignId: string, applicationId: string) => {
+  // always fetch general qAndAs on load
+  useEffect(() => {
+    (async () => {
+      try {
+        const [generalQs, generalAnswers] = await Promise.all([
+          queryClient.fetchQuery({
+            queryKey: [`${applicationId}-common-questions`],
+            queryFn: () => getAllCommonQuestions(campaignId),
+          }),
+          queryClient.fetchQuery({
+            queryKey: [`${applicationId}-common-answers`],
+            queryFn: () => getAllCommonAnswers(applicationId),
+          }),
+        ]);
+
+        const linkedGeneral = linkQuestionsAndAnswers(generalQs, generalAnswers);
+
+        setQAByRole(prev => {
+          const newMap = new Map(prev);
+          newMap.set("general", linkedGeneral);
+          return newMap;
+        });
+      } catch (err) {
+        console.error("Failed to fetch general questions/answers", err);
+      }
+    })();
+  }, [campaignId, applicationId, queryClient]);
+
+  const populateQAByRole = (roleIds: string[], campaignId: string, applicationId: string) => {
     setQAByRole(prev => {
       const newQAMap = new Map(prev);
       if (!newQAMap.has('general')) {
@@ -69,7 +99,7 @@ export default function ApplicationReview({
 
       for (const roleId of roleIds) {
         //if (newQAMap.has(roleId)) continue;
-        const roleQs: Question[] | undefined  = queryClient.getQueryData([`${campaignId}-${roleId}-role-questions`])
+        const roleQs: Question[] | undefined = queryClient.getQueryData([`${campaignId}-${roleId}-role-questions`])
         const roleAnswers: Answer[] | undefined = queryClient.getQueryData([`${applicationId}-${roleId}-role-answers`])
         if (roleQs && roleAnswers) {
           const linked = linkQuestionsAndAnswers(roleQs, roleAnswers);
@@ -96,7 +126,7 @@ export default function ApplicationReview({
 
       return newQAMap;
     });
-};
+  };
 
   // format roles to match what backend expects
   const buildUpdatedRolesPayload = (orderedIds: string[]) => {
@@ -131,7 +161,6 @@ export default function ApplicationReview({
     setSelectedRoleIds(nextSelectedRoles)
     setQAByRole(prev => {
       const newQAMap = new Map<string, QuestionAndAnswer[]>();
-
       if (prev.has('general')) {
         newQAMap.set('general', prev.get('general')!);
       }
@@ -146,7 +175,30 @@ export default function ApplicationReview({
             const linked = linkQuestionsAndAnswers(roleQs, roleAnswers);
             newQAMap.set(roleId, linked);
           } else {
-            newQAMap.set(roleId, []);
+            (async () => {
+              try {
+                const [roleQs, roleAnswers] = await Promise.all([
+                  queryClient.fetchQuery({
+                    queryKey: [`${campaignId}-${roleId}-role-questions`],
+                    queryFn: () => getAllRoleQuestions(campaignId, roleId),
+                  }),
+                  queryClient.fetchQuery({
+                    queryKey: [`${applicationId}-${roleId}-role-answers`],
+                    queryFn: () => getAllRoleAnswers(applicationId, roleId),
+                  }),
+                ]);
+
+                const linked = linkQuestionsAndAnswers(roleQs, roleAnswers);
+
+                setQAByRole(prevInner => {
+                  const updated = new Map(prevInner);
+                  updated.set(roleId, linked);
+                  return updated;
+                });
+              } catch (err) {
+                console.error(`Failed to fetch QAs for role ${roleId}:`, err);
+              }
+            })();
           }
         }
       }
@@ -175,20 +227,17 @@ export default function ApplicationReview({
   }, [application]);
 
   const handleApplicationSubmit = async () => {
-      try {
-        await submitApplication(applicationId)
-        queryClient.invalidateQueries({ queryKey: [`application-${applicationId}`] });
-        router.push(`/campaign/apply/${campaignId}/finish`);
-      } catch (e) {
-        console.error("Submission failed: ", e);
-      }
+    try {
+      await submitApplication(applicationId)
+      queryClient.invalidateQueries({ queryKey: [`application-${applicationId}`] });
+      router.push(`/campaign/apply/${campaignId}/finish`);
+    } catch (e) {
+      console.error("Submission failed: ", e);
+    }
   }
 
   useEffect(() => {
     if (selectedRoleIds.length === 0) return;
-
-    const generalQs = queryClient.getQueryData([`${applicationId}-common-questions`]);
-    const generalAnswers = queryClient.getQueryData([`${applicationId}-common-answers`]);
 
     const allRoleQueriesReady = selectedRoleIds.every(roleId => {
       const roleQs = queryClient.getQueryData([`${campaignId}-${roleId}-role-questions`]);
@@ -196,7 +245,7 @@ export default function ApplicationReview({
       return roleQs !== undefined && roleAnswers !== undefined;
     });
 
-    if (generalQs && generalAnswers && allRoleQueriesReady) {
+    if (allRoleQueriesReady) {
       populateQAByRole(selectedRoleIds, campaignId, applicationId);
     }
   }, [selectedRoleIds, campaignId, applicationId, queryClient]);
@@ -214,11 +263,11 @@ export default function ApplicationReview({
         </div>
         <div></div>
         <div className="flex gap-8 w-full">
-          <RoleSelector roles={roles} maxRolesPerApplication={campaign?.max_roles_per_application} selectedRoleIds={selectedRoleIds} onChangeSelectedRoles={updateRoles} applicationId={applicationId} dict={dict}/>
+          <RoleSelector roles={roles} maxRolesPerApplication={campaign?.max_roles_per_application} selectedRoleIds={selectedRoleIds} onChangeSelectedRoles={updateRoles} applicationId={applicationId} dict={dict} />
           <div className="flex-1">
-            <RoleTabs roles={roles} selectedRoleIds={selectedRoleIds} activeTab={activeTab} onChangeActiveTab={setActiveTab} dict={dict}/>
-            <MainContent campaignId={campaignId} applicationId={applicationId} activeTab={activeTab} dict={dict} updateRoleAnswers={updateQuestionAnswer}/>
-            <ReviewCard questionsAndAnswersByRole={qaByRole} roles={roles} applicationId={applicationId} handleSubmit={handleApplicationSubmit} dict={dict}/>
+            <RoleTabs roles={roles} selectedRoleIds={selectedRoleIds} activeTab={activeTab} onChangeActiveTab={setActiveTab} dict={dict} />
+            <MainContent campaignId={campaignId} applicationId={applicationId} activeTab={activeTab} dict={dict} updateRoleAnswers={updateQuestionAnswer} />
+            <ReviewCard questionsAndAnswersByRole={qaByRole} selectedRoleIds={selectedRoleIds} roles={roles} applicationId={applicationId} handleSubmit={handleApplicationSubmit} dict={dict} />
           </div>
         </div>
       </div>
