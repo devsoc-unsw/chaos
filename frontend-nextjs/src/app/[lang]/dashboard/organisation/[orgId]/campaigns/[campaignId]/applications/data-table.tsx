@@ -4,6 +4,7 @@ import {
     ColumnDef,
     ColumnFiltersState,
     Row,
+    RowSelectionState,
     flexRender,
     getCoreRowModel,
     getFilteredRowModel,
@@ -27,6 +28,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { Button } from "@/components/ui/button";
+import { Mail } from "lucide-react";
 import React from "react";
 import { RoleDetails } from "@/models/campaign";
 
@@ -35,6 +38,9 @@ interface DataTableProps<TData, TValue> {
     data: TData[];
     roles: RoleDetails[];
     dict: any;
+    acceptedApplicationIds: Set<string>;
+    acceptedApplications: Map<string, string>; // Map of applicationId -> selectedRoleId
+    rejectedApplicationIds: Set<string>;
     renderSubComponent?: (props: { row: Row<TData> }) => React.ReactNode;
 }
 
@@ -43,9 +49,21 @@ export function ApplicationSummaryDataTable<TData, TValue>({
     data,
     roles,
     dict,
+    acceptedApplicationIds,
+    acceptedApplications,
+    rejectedApplicationIds,
     renderSubComponent,
 }: DataTableProps<TData, TValue>) {
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+    const rowSelection = React.useMemo(() => {
+        const selection: RowSelectionState = {};
+        data.forEach((item: any, index) => {
+            if (acceptedApplicationIds.has(item.application_id)) {
+                selection[index] = true;
+            }
+        });
+        return selection;
+    }, [data, acceptedApplicationIds]);
 
     const table = useReactTable({
         data,
@@ -57,12 +75,32 @@ export function ApplicationSummaryDataTable<TData, TValue>({
         getFilteredRowModel: getFilteredRowModel(),
         state: {
             columnFilters,
+            rowSelection,
         },
     });
 
+    const handleSendEmails = () => {
+        // Build acceptance/rejection email data
+        // TODO: Need to see Azhad API implemention for request body for formatting JSON 
+        const acceptanceData = Array.from(acceptedApplications.entries()).map(([appId, selectedRoleId]) => {
+            return `${appId} [Role: ${selectedRoleId}]`;
+        });
+
+        // Build rejection email data
+        const rejectionData = Array.from(rejectedApplicationIds);
+
+        if (acceptanceData.length > 0) {
+            console.log("Sent Acceptance Email to applicationIDs:", acceptanceData);
+        }
+        
+        if (rejectionData.length > 0) {
+            console.log("Sent Rejection Email to ApplicationIDs:", rejectionData);
+        }
+    };
+
     return (
         <div>
-            <div className="flex items-center py-4">
+            <div className="flex items-center justify-between py-4">
                 <Select
                     value={(table.getColumn("applied_roles")?.getFilterValue() as string) ?? "all"}
                     onValueChange={(value) =>
@@ -82,6 +120,12 @@ export function ApplicationSummaryDataTable<TData, TValue>({
                         </SelectGroup>
                     </SelectContent>
                 </Select>
+                <Button variant="outline" onClick={handleSendEmails} 
+                disabled={acceptedApplicationIds.size === 0 && rejectedApplicationIds.size === 0} className="gap-2 border-gray-400 hover:border-gray-500"
+                >
+                    <Mail className="h-4 w-4" />
+                    Send Emails
+                </Button>
             </div>
             <div className="overflow-hidden rounded-md border">
                 <Table>
