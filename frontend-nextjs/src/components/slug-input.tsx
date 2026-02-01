@@ -3,15 +3,18 @@ import { checkCampaignSlugAvailability } from "@/models/campaign";
 import { createProperSlug } from "@/models/slug";
 import { useState } from "react";
 
-export default function SlugInput({ orgId, name, value, currentSlug, onChange, onBlur, dict }: { orgId: string, name: string, value: string, currentSlug?: string, onChange: (value: string) => void, onBlur: () => void, dict: any }) {
+export default function SlugInput({ orgId, name, value, currentSlug, onChange, onBlur, updateSlugAvailable, dict }: { orgId: string, name: string, value: string, currentSlug?: string, onChange: (value: string) => void, onBlur: () => void, updateSlugAvailable: (available: boolean) => void, dict: any }) {
     const [slugAvailable, setSlugAvailable] = useState(true);
 
     const checkSlugAvailability = async () => {
         if (value !== currentSlug) {
             try {
                 await checkCampaignSlugAvailability(orgId, value);
+                setSlugAvailable(true);
+                updateSlugAvailable(true);
             } catch (_) {
                 setSlugAvailable(false);
+                updateSlugAvailable(false);
             }
         }
     }

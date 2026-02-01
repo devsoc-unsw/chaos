@@ -21,6 +21,7 @@ import {
 import { getOrganisationById } from "@/models/organisation";
 import { uploadFile } from "@/models/file";
 import { createCategory } from "@/models/rating";
+import SlugInput from "@/components/slug-input";
 
 export default function CampaignNewForm({ orgId, dict }: { orgId: string, dict: any }) {
     const queryClient = useQueryClient();
@@ -60,18 +61,6 @@ export default function CampaignNewForm({ orgId, dict }: { orgId: string, dict: 
         setSuggestedSlug(createProperSlug(name));
     }
 
-    const handleSlugChange = async (slug: string) => {
-        setSlugAvailable(true);
-
-        try {
-            await checkCampaignSlugAvailability(orgId, slug);
-        } catch (_) {
-            setSlugAvailable(false);
-        }
-
-        setSlug(slug);
-    }
-
     return (
         <div className="flex flex-col gap-3">
             <div className="flex justify-between items-center">
@@ -103,9 +92,7 @@ export default function CampaignNewForm({ orgId, dict }: { orgId: string, dict: 
                             </TooltipContent>
                         </Tooltip>
                     </div>
-                    {name && <p className="text-sm text-gray-500">{dict.dashboard.suggested_slug}: <span className="bg-gray-100 border rounded px-1">{suggestedSlug}</span></p>}
-                    <Input className="max-w-[300px]" type="text" value={slug} onChange={(e) => handleSlugChange(e.target.value)} />
-                    <p className="text-red-500 text-xs">{!slugAvailable && dict.dashboard.slug_not_available}</p>
+                    <SlugInput orgId={orgId} name={name} value={slug} currentSlug={suggestedSlug} onChange={(value) => setSlug(value)} onBlur={() => {}} updateSlugAvailable={setSlugAvailable} dict={dict} />
                 </div>
                 <div className="flex flex-col gap-1">
                     <Label>{dict.common.description}</Label>
