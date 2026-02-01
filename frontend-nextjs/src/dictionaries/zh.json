@@ -54,7 +54,10 @@
 
     "select": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
     "selected": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
-    "submit": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;"
+    "submit": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+    "min": "最小值",
+    "max": "最大值",
+    "add": "添加"
   },
   "applicationpage": {
         "empty_selected_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",

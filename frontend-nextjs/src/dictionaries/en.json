@@ -54,7 +54,10 @@
 
     "select": "Select",
     "selected": "Selected",
-    "submit": "Submit"
+    "submit": "Submit",
+    "min": "Min",
+    "max": "Max",
+    "add": "Add"
   },
   "applicationpage": {
         "roles": "roles",
