@@ -5,10 +5,11 @@ import { getCampaign, getCampaignRoles } from "@/models/campaign";
 import { getInProgressApplication, submitApplication } from "@/models/application";
 import { Answer, getAllCommonAnswers, updateApplicationRoles } from "@/models/answer";
 import { useState, useEffect } from "react";
-import RoleSelector from "../../../../../../../components/applicationanswer/roleselector";
-import RoleTabs from "../../../../../../../components/applicationanswer/roletabs";
-import MainContent from "../../../../../../../components/applicationanswer/maincontent";
-import ReviewCard from "@/components/applicationanswer/reviewcard";
+import RoleSelector from "../../../../../../../components/application-answer/role-selector";
+import RoleTabs from "../../../../../../../components/application-answer/role-tabs";
+import MainContent from "../../../../../../../components/application-answer/main-content";
+import TabSwitcher from "../../../../../../../components/application-answer/tab-switcher";
+import ReviewCard from "@/components/application-answer/review-card";
 import { getAllCommonQuestions, linkQuestionsAndAnswers, Question, QuestionAndAnswer } from "@/models/question";
 import { getAllRoleAnswers } from "@/models/answer";
 import { getAllRoleQuestions } from "@/models/question";
@@ -251,7 +252,7 @@ export default function ApplicationReview({
   }, [selectedRoleIds, campaignId, applicationId, queryClient]);
 
   return (
-    <div className="min-h-screen bg-background w-full">
+    <div className="min-h-screen bg-background w-full overflow-y-scroll [&::-webkit-scrollbar]:hidden">
       <div className="w-full mx-auto p-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
@@ -266,7 +267,10 @@ export default function ApplicationReview({
           <RoleSelector roles={roles} maxRolesPerApplication={campaign?.max_roles_per_application} selectedRoleIds={selectedRoleIds} onChangeSelectedRoles={updateRoles} applicationId={applicationId} dict={dict} />
           <div className="flex-1">
             <RoleTabs roles={roles} selectedRoleIds={selectedRoleIds} activeTab={activeTab} onChangeActiveTab={setActiveTab} dict={dict} />
-            <MainContent campaignId={campaignId} applicationId={applicationId} activeTab={activeTab} dict={dict} updateRoleAnswers={updateQuestionAnswer} />
+            <div className="relative pb-14">
+              <MainContent campaignId={campaignId} applicationId={applicationId} activeTab={activeTab} dict={dict} updateRoleAnswers={updateQuestionAnswer} qaByRole={qaByRole} />
+              <TabSwitcher roles={roles} selectedRoleIds={selectedRoleIds} activeTab={activeTab} onChangeActiveTab={setActiveTab} dict={dict} />
+            </div>
             <ReviewCard questionsAndAnswersByRole={qaByRole} selectedRoleIds={selectedRoleIds} roles={roles} applicationId={applicationId} handleSubmit={handleApplicationSubmit} dict={dict} />
           </div>
         </div>

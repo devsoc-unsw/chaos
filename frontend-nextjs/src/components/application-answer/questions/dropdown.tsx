@@ -34,23 +34,25 @@ export default function Dropdown({
     const options: MultiOptionQuestionOption[] =
     (question as any).options ?? [];
 
-    // Derive the actual option ID from the answer text
-    const getValueFromAnswer = (): string => {
+    const getValueAndAnswer = (): { value: string; answer: string } => {
         if (!question.answer || question.answer === "No Answer") {
-            return NO_ANSWER_VALUE;
+            return { value: NO_ANSWER_VALUE, answer: "" };
         }
-        const matchingOption = options.find(opt => opt.text === question.answer);
-        return matchingOption ? matchingOption.id.toString() : NO_ANSWER_VALUE;
+        const textAnswer = options.find(opt => opt.text === question.answer);
+        const idAnswer = options.find(opt => opt.id.toString() === String(question.answer));
+        const match = textAnswer ?? idAnswer;
+        return match ? { value: match.id.toString(), answer: match.text } : { value: NO_ANSWER_VALUE, answer: "" };
     };
 
-    const [value, setValue] = useState(getValueFromAnswer());
-    const [answer, setAnswer] = useState(question.answer ? question.answer : "")
-    const placeholder = question.answer ? question.answer : ""
+    const initial = getValueAndAnswer();
+    const [value, setValue] = useState(initial.value);
+    const [answer, setAnswer] = useState(initial.answer);
+    const placeholder = initial.answer || ""
 
     useEffect(() => {
-        const newValue = getValueFromAnswer();
-        setValue(newValue);
-        setAnswer(question.answer || "");
+        const { value: v, answer: a } = getValueAndAnswer();
+        setValue(v);
+        setAnswer(a);
     }, [question.answer, question.answer_id]);
 
     const handleSelect = async (selectedValue: string) => {
@@ -62,14 +64,14 @@ export default function Dropdown({
             try {
                 await submitAnswer(question, value, applicationId, answerId);
             } catch (err) {
-                console.error("Dropdown update failed:", err);
+                console.error("Submit failed:", err);
             }
             return
         }
 
         const option = options.find(opt => opt.id.toString() === selectedValue);
         if (!option) {
-            console.error("Selected option not found:", selectedValue);
+            console.error("option not found:", selectedValue);
             return;
         }
         value = option.id.toString()
@@ -79,7 +81,7 @@ export default function Dropdown({
         try {
             await submitAnswer(question, value, applicationId, answerId);
         } catch (err) {
-            console.error("Dropdown update failed:", err);
+            console.error("Submit failed:", err);
         }
     };
 

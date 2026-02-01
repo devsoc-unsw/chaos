@@ -11,24 +11,23 @@ import Multichoice from "./questions/multichoice";
 import MultiSelect from "./questions/multiselect";
 import Ranking from "./questions/ranking";
 import { buildAnswerPayload } from "@/lib/utils";
+import { toast } from "sonner";
 
 export default function MainContent({
   campaignId,
   applicationId,
   activeTab,
   dict,
-  updateRoleAnswers
+  updateRoleAnswers,
+  qaByRole
 }: {
   campaignId: string;
   applicationId: string;
   activeTab: string;
   dict: any;
   updateRoleAnswers: (newQA:QuestionAndAnswer) => void;
-//   activeRoleId: string;
+  qaByRole?: Map<string, QuestionAndAnswer[]>;
 }) {
-    const [questionsAndAnswers, setQuestionsAndAnswers] =
-    useState<QuestionAndAnswer[]>([]);
-
     const generalTab = activeTab === "general"
     const queryClient = useQueryClient()
     const { data: questions } = useQuery({
@@ -50,6 +49,11 @@ export default function MainContent({
         ? getAllCommonAnswers(applicationId)
         : getAllRoleAnswers(applicationId, activeTab),
     });
+
+    const questionsAndAnswers =
+      qaByRole?.has(activeTab)
+        ? (qaByRole.get(activeTab) ?? [])
+        : (questions && answers ? linkQuestionsAndAnswers(questions, answers) : []);
   
     // submits answer to a question
     const submitAnswer = async (
@@ -96,17 +100,20 @@ export default function MainContent({
         }
         updateRoleAnswers(updatedQA);
       } catch (err) {
+        // roll back answers on error so that frontend and backend aren't out of sync
         console.error("Failed to submit answer", err);
+        toast.error("Failed to submit answer");
+        updateRoleAnswers(question);
       }
     }
 
-    useEffect(() => {
-      if (!questions || !answers) {
-        return;
-      }
-      const linked = linkQuestionsAndAnswers(questions, answers)
-      setQuestionsAndAnswers(linked);
-    }, [questions, answers]);
+    // useEffect(() => {
+    //   if (!questions || !answers) {
+    //     return;
+    //   }
+    //   const linked = linkQuestionsAndAnswers(questions, answers)
+    //   setQuestionsAndAnswers(linked);
+    // }, [questions, answers]);
 
     const renderQuestion = (q:QuestionAndAnswer) => {
       switch (q.question_type) {
@@ -171,7 +178,7 @@ export default function MainContent({
     };
 
     return (
-        <div className="border-b border-gray-200 mb-6 gap-2">
+        <div className="border-b border-gray-200 mb-6 gap-2 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             <div>
               {questionsAndAnswers.length === 0 ? (
                 <p>{dict.applicationpage.no_questions}</p>

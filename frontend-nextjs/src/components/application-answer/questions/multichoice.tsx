@@ -19,19 +19,23 @@ export default function MultiChoice({
   submitAnswer: (question: QuestionAndAnswer, value: AnswerValue, applicationId: string, answerId?: string) => Promise<void>;
   dict: any;
 }) {
-    //extract option from text
-    const getOptionFromText = (question: QuestionAndAnswer): string => {
-      if (!question.answer) return ""
+    // Need to match by text and ID as what we get from db is text and what we set is ID, lowk spaghetti might be refactored this term
+    const getOptionFromQuestion = (question: QuestionAndAnswer): string => {
+      if (!question.answer) return "";
 
-      const option = question.options.find(o => o.text === question.answer);
-      return option ? option.id : ""
+      const byText = question.options?.find((o) => o.text === question.answer);
+      const byId = question.options?.find(
+        (o) => String(o.id) === String(question.answer)
+      );
+      const option = byText ?? byId;
+      return option ? String(option.id) : "";
     }
 
-    const [value, setValue] = useState(getOptionFromText(question))
+    const [value, setValue] = useState(getOptionFromQuestion(question))
     const options: MultiOptionQuestionOption[] = question.options ?? [];
 
     useEffect(() => {
-        setValue(getOptionFromText(question));
+        setValue(getOptionFromQuestion(question));
     }, [question.answer])
 
     const handleChange = async (value: string) => {
@@ -39,7 +43,7 @@ export default function MultiChoice({
         try {
             await submitAnswer(question, value, applicationId, answerId)
         } catch (err) {
-            console.error("Short answer update failed:", err);
+            console.error("Submit failed:", err);
         }
     }
 
@@ -61,7 +65,7 @@ export default function MultiChoice({
           {options.map((option) => (
             <div key={option.id} className="flex items-center space-x-2">
               <RadioGroupItem
-                value={option.id}
+                value={String(option.id)}
                 id={`option-${question.question_id}-${option.id}`}
               />
               <Label
