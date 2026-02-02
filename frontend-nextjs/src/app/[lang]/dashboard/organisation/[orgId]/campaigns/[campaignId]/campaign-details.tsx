@@ -599,7 +599,9 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                                 editingMode ? (
                                     <Button variant="outline" onClick={saveUpdatedCampaignDetails} className="cursor-pointer"><Check className="w-4 h-4" /> {dict.dashboard.actions.save}</Button>
                                 ) : (
-                                    <Button variant="outline" onClick={toggleEditingMode} className="cursor-pointer"><Pencil className="w-4 h-4" /> {dict.dashboard.actions.edit}</Button>
+                                    <Link href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}/edit`}>
+                                        <Button variant="outline" className="cursor-pointer"><Pencil className="w-4 h-4" /> {dict.dashboard.actions.edit}</Button>
+                                    </Link>
                                 )
                             }
                             <Button variant="outline" className="cursor-pointer"><Trash className="w-4 h-4" /> {dict.dashboard.actions.delete}</Button>

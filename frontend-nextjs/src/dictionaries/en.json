@@ -54,7 +54,10 @@
 
     "select": "Select",
     "selected": "Selected",
-    "submit": "Submit"
+    "submit": "Submit",
+    "min": "Min",
+    "max": "Max",
+    "add": "Add"
   },
   "applicationpage": {
         "roles": "roles",
@@ -107,6 +110,12 @@
       "published": "Published",
       "draft": "Draft",
       "campaign_questions": "Campaign Questions",
+      "settings": {
+        "campaign_settings": "Campaign Settings",
+        "general_settings": "General Settings",
+        "role_settings": "Role Settings",
+        "rating_category_settings": "Rating Category Settings"
+      },
       "questions": {
         "answer_text": "Answer Text",
         "add_option": "Add Option",
