@@ -205,7 +205,8 @@ pub async fn app() -> Result<(Router, AppState), ChaosError> {
         .route("/api/v1/dev/super_admin_login", get(DevLoginHandler::dev_super_admin_login))
         .route("/api/v1/dev/org_admin_login", get(DevLoginHandler::dev_org_admin_login))
         .route("/api/v1/dev/user_login", get(DevLoginHandler::dev_user_login))
-        .route("/api/v1/user", get(UserHandler::get))
+        .route("/api/v1/user", get(UserHandler::get)),
+        .route("/api/v1/user/is_superuser", get(UserHandler::is_superuser))
         .route("/api/v1/user/name", patch(UserHandler::update_name))
         .route("/api/v1/user/pronouns", patch(UserHandler::update_pronouns))
         .route("/api/v1/user/gender", patch(UserHandler::update_gender))

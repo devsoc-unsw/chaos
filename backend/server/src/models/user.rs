@@ -108,6 +108,15 @@ pub struct UserDegree {
     pub degree_starting_year: i32,
 }
 
+/// Data structure for updating a user's role.
+#[derive(Deserialize, Serialize)]
+pub struct UserRoleUpdate {
+    /// Email of the user whose role should be updated
+    pub email: String,
+    /// New role for the user
+    pub role: UserRole,
+}
+
 impl User {
     /// Retrieves a user by their ID.
     /// 
@@ -288,6 +297,31 @@ impl User {
             degree_name,
             degree_starting_year,
             id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
+        Ok(())
+    }
+
+    /// Updates a user's role.
+    ///
+    /// This is intended for administrative use only, and should be called from
+    /// handlers that have already verified the caller is a super user.
+    pub async fn update_role(
+        email: String,
+        role: UserRole,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
+        let _ = sqlx::query!(
+            r#"
+            UPDATE users
+            SET role = $1::user_role
+            WHERE email = $2
+            RETURNING email
+        "#,
+            role as UserRole,
+            email
         )
         .fetch_one(transaction.deref_mut())
         .await?;

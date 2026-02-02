@@ -4,10 +4,10 @@
 //! - Retrieving user details
 //! - Updating user information (name, pronouns, gender, zid, degree)
 
-use crate::models::auth::AuthUser;
+use crate::models::auth::{AuthUser, SuperUser};
 use crate::models::error::ChaosError;
-use crate::models::user::{User, UserDegree, UserGender, UserName, UserPronouns, UserZid};
-use axum::extract::{Json};
+use crate::models::user::{User, UserDegree, UserGender, UserName, UserPronouns, UserRole, UserRoleUpdate, UserZid};
+use axum::extract::Json;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use crate::models::app::AppMessage;
@@ -163,5 +163,47 @@ impl UserHandler {
 
         transaction.tx.commit().await?;
         Ok(AppMessage::OkMessage("Updated user degree"))
+    }
+
+    /// Returns whether the current user is a superuser.
+    pub async fn is_superuser(
+        mut transaction: DBTransaction<'_>,
+        user: AuthUser,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let user = User::get(user.user_id, &mut transaction.tx).await?;
+        transaction.tx.commit().await?;
+        let is_superuser = matches!(user.role, UserRole::SuperUser);
+        Ok((StatusCode::OK, Json(serde_json::json!({ "is_superuser": is_superuser }))))
+    }
+
+    /// Updates a user's role.
+    ///
+    /// This endpoint is restricted to super users via the `SuperUser` extractor.
+    /// It allows promoting or demoting users between `User` and `SuperUser`.
+    ///
+    /// # Arguments
+    ///
+    /// * `user` - The authenticated caller, must be a super user
+    /// * `request_body.email` - Email of the user whose role is being changed
+    /// * `request_body` - The new role for the user
+    ///
+    /// # Returns
+    ///
+    /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
+    pub async fn update_role(
+        mut transaction: DBTransaction<'_>,
+        _super_user: SuperUser,
+        Json(request_body): Json<UserRoleUpdate>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        // Look up the target user by email, then update their role.
+        let maybe_user =
+            User::find_by_email(request_body.email.to_lowercase(), &mut transaction.tx).await?;
+
+        let target_user = maybe_user.ok_or(ChaosError::BadRequest)?;
+
+        User::update_role(request_body.email, request_body.role, &mut transaction.tx).await?;
+
+        transaction.tx.commit().await?;
+        Ok(AppMessage::OkMessage("Updated user role"))
     }
 }

@@ -66,8 +66,8 @@ export default function RoleSelector({
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="space-y-6">
           {/* Selected roles (draggable & reorderable) */}
-           <h3 className="text-sm font-semibold text-foreground mb-2">{dict.applicationpage.selectedroles}</h3>
-           <p className="text-sm text-muted-foreground mb-2">{dict.applicationpage.dragtoreorder}</p>
+           <h3 className="text-sm font-semibold text-foreground mb-2">{dict.applicationpage.selected_roles}</h3>
+           <p className="text-sm text-muted-foreground mb-2">{dict.applicationpage.drag_to_reorder}</p>
           <Droppable droppableId="selected-roles">
             {(provided) => (
               <div
@@ -76,7 +76,7 @@ export default function RoleSelector({
                 className="space-y-2 min-h-[12px] border-2 border-dashed rounded-lg p-2"
               >
                 {selectedRoleIds.length === 0 && (
-                    <div className="text-sm text-muted-foreground px-2 py-1">{dict.applicationpage.emptyselectedroles}</div>
+                    <div className="text-sm text-muted-foreground px-2 py-1">{dict.applicationpage.empty_selected_roles}</div>
                 )}
                 {selectedRoleIds.map((id, index) => {
                   const role = roles?.find((r) => String(r.id) === id);
