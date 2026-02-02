@@ -304,31 +304,6 @@ impl User {
         Ok(())
     }
 
-    /// Updates a user's role.
-    ///
-    /// This is intended for administrative use only, and should be called from
-    /// handlers that have already verified the caller is a super user.
-    pub async fn update_role(
-        email: String,
-        role: UserRole,
-        transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
-            r#"
-            UPDATE users
-            SET role = $1::user_role
-            WHERE email = $2
-            RETURNING email
-        "#,
-            role as UserRole,
-            email
-        )
-        .fetch_one(transaction.deref_mut())
-        .await?;
-
-        Ok(())
-    }
-
 
     /// Creates a User, This should only used for database seeding
     pub async fn create_user(

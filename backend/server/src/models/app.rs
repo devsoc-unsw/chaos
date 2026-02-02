@@ -13,7 +13,7 @@ use crate::handler::user::UserHandler;
 use crate::models::email::{ChaosEmail, EmailCredentials};
 use crate::models::error::ChaosError;
 use crate::models::storage::Storage;
-use axum::routing::{delete, get, patch, post};
+use axum::routing::{delete, get, patch, post, put};
 use axum::{Json, Router};
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use reqwest::Client as ReqwestClient;
@@ -205,7 +205,7 @@ pub async fn app() -> Result<(Router, AppState), ChaosError> {
         .route("/api/v1/dev/super_admin_login", get(DevLoginHandler::dev_super_admin_login))
         .route("/api/v1/dev/org_admin_login", get(DevLoginHandler::dev_org_admin_login))
         .route("/api/v1/dev/user_login", get(DevLoginHandler::dev_user_login))
-        .route("/api/v1/user", get(UserHandler::get)),
+        .route("/api/v1/user", get(UserHandler::get))
         .route("/api/v1/user/is_superuser", get(UserHandler::is_superuser))
         .route("/api/v1/user/name", patch(UserHandler::update_name))
         .route("/api/v1/user/pronouns", patch(UserHandler::update_pronouns))
@@ -265,6 +265,10 @@ pub async fn app() -> Result<(Router, AppState), ChaosError> {
             post(OrganisationHandler::invite_user).delete(OrganisationHandler::remove_user),
         )
         .route(
+            "/api/v1/organisation/:organisation_id/member",
+            put(OrganisationHandler::update_member),
+        )
+        .route(
             "/api/v1/organisation/:organisation_id/admins",
             get(OrganisationHandler::get_admins)
                 .put(OrganisationHandler::update_admins)
@@ -276,6 +280,10 @@ pub async fn app() -> Result<(Router, AppState), ChaosError> {
         .route(
             "/api/v1/organisation/:organisation_id/users",
             get(OrganisationHandler::get_users)
+        )
+        .route(
+            "/api/v1/organisation/:organisation_id/users",
+            put(OrganisationHandler::get_users)
         )
         // Campaign Rating Categories
         .route(

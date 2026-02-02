@@ -56,6 +56,24 @@ export async function getOrganisationAdmins(orgId: string): Promise<Member[]> {
     return await apiRequest<Member[]>(`/api/v1/organisation/${orgId}/admins`);
 }
 
+export async function updateOrganisationAdmins(orgId: string, memberIds: string[]): Promise<AppMessage> {
+    return await apiRequest<AppMessage>(`/api/v1/organisation/${orgId}/admins`, {
+        method: "PUT",
+        body: { members: memberIds.map((id) => Number(id)) },
+    });
+}
+
+export async function updateOrganisationMemberRole(
+    orgId: string,
+    userId: string,
+    role: OrganisationRole
+): Promise<AppMessage> {
+    return await apiRequest<AppMessage>(`/api/v1/organisation/${orgId}/member`, {
+        method: "PUT",
+        body: { user_id: Number(userId), role },
+    });
+}
+
 export async function getOrganisationUsers(orgId: string): Promise<Member[]> {
     return await apiRequest<Member[]>(`/api/v1/organisation/${orgId}/users`);
 }

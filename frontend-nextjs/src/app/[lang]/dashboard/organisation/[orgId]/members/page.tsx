@@ -12,7 +12,7 @@ export default async function OrganisationMembersPage({ params }: { params: Prom
 
   await queryClient.prefetchQuery({
     queryKey: ["is_superuser"],
-    queryFn: getIsSuperuser,
+    queryFn: () => getIsSuperuser(),
   });
 
   await queryClient.prefetchQuery({
