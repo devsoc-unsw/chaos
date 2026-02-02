@@ -20,6 +20,7 @@ COPY --from=planner /backend/server/recipe.json ./recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
 
 COPY server/ ./
+COPY migrations/ ./
 
 # Build the server binary
 WORKDIR /backend/server
