@@ -13,7 +13,7 @@ use crate::models::auth::{AuthUser, OrganisationAdmin};
 use crate::models::campaign::{Campaign, NewCampaign};
 use crate::models::email_template::{EmailTemplate, NewEmailTemplate};
 use crate::models::error::ChaosError;
-use crate::models::organisation::{MemberToRemove, AdminUpdateList, NewOrganisation, Organisation, SlugCheck, MemberToInvite};
+use crate::models::organisation::{MemberToRemove, MemberRoleUpdate, AdminUpdateList, NewOrganisation, Organisation, SlugCheck, MemberToInvite};
 use crate::models::transaction::DBTransaction;
 use crate::service::auth::assert_is_super_user;
 use axum::extract::{Json, Path, State};
@@ -302,6 +302,19 @@ impl OrganisationHandler {
 
         transaction.tx.commit().await?;
         Ok(AppMessage::OkMessage("Successfully updated organisation members"))
+    }
+
+    /// Updates a single member's role (promote to Admin or demote to User). Superusers only.
+    pub async fn update_member(
+        mut transaction: DBTransaction<'_>,
+        Path(id): Path<i64>,
+        _super_user: SuperUser,
+        Json(request_body): Json<MemberRoleUpdate>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        Organisation::update_member_role(id, request_body.user_id, request_body.role, &mut transaction.tx).await?;
+
+        transaction.tx.commit().await?;
+        Ok(AppMessage::OkMessage("Successfully updated member role"))
     }
 
     /// Removes an admin from an organisation.

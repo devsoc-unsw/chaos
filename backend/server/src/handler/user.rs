@@ -4,10 +4,10 @@
 //! - Retrieving user details
 //! - Updating user information (name, pronouns, gender, zid, degree)
 
-use crate::models::auth::AuthUser;
+use crate::models::auth::{AuthUser, SuperUser};
 use crate::models::error::ChaosError;
-use crate::models::user::{User, UserDegree, UserGender, UserName, UserPronouns, UserZid};
-use axum::extract::{Json};
+use crate::models::user::{User, UserDegree, UserGender, UserName, UserPronouns, UserRole, UserRoleUpdate, UserZid};
+use axum::extract::Json;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use crate::models::app::AppMessage;
@@ -163,5 +163,16 @@ impl UserHandler {
 
         transaction.tx.commit().await?;
         Ok(AppMessage::OkMessage("Updated user degree"))
+    }
+
+    /// Returns whether the current user is a superuser.
+    pub async fn is_superuser(
+        mut transaction: DBTransaction<'_>,
+        user: AuthUser,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let user = User::get(user.user_id, &mut transaction.tx).await?;
+        transaction.tx.commit().await?;
+        let is_superuser = matches!(user.role, UserRole::SuperUser);
+        Ok((StatusCode::OK, Json(serde_json::json!({ "is_superuser": is_superuser }))))
     }
 }

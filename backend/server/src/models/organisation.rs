@@ -142,6 +142,14 @@ pub struct MemberToRemove {
     pub user_id: i64,
 }
 
+/// Data structure for updating a single member's role (promote or demote).
+#[derive(Deserialize)]
+pub struct MemberRoleUpdate {
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
+    pub user_id: i64,
+    pub role: OrganisationRole,
+}
+
 #[derive(Deserialize)]
 pub struct MemberToInvite {
     pub email: String,
@@ -626,6 +634,16 @@ impl Organisation {
         admin_to_remove: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
+        Self::update_member_role(organisation_id, admin_to_remove, OrganisationRole::User, transaction).await
+    }
+
+    /// Updates a single member's role (promote to Admin or demote to User). The user must already be in the organisation.
+    pub async fn update_member_role(
+        organisation_id: i64,
+        user_id: i64,
+        role: OrganisationRole,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
         let _ = sqlx::query!(
             "SELECT id FROM organisations WHERE id = $1",
             organisation_id
@@ -637,9 +655,9 @@ impl Organisation {
             "
             UPDATE organisation_members SET role = $3 WHERE user_id = $1 AND organisation_id = $2
         ",
-            admin_to_remove,
+            user_id,
             organisation_id,
-            OrganisationRole::User as OrganisationRole
+            role as OrganisationRole
         )
         .execute(transaction.deref_mut())
         .await?;

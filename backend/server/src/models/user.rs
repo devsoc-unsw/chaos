@@ -108,6 +108,15 @@ pub struct UserDegree {
     pub degree_starting_year: i32,
 }
 
+/// Data structure for updating a user's role.
+#[derive(Deserialize, Serialize)]
+pub struct UserRoleUpdate {
+    /// Email of the user whose role should be updated
+    pub email: String,
+    /// New role for the user
+    pub role: UserRole,
+}
+
 impl User {
     /// Retrieves a user by their ID.
     /// 

@@ -1,3 +1,5 @@
+import { apiRequest } from "@/lib/api";
+
 export type UserRole = "User" | "SuperUser";
 
 export type User = {
@@ -22,3 +24,11 @@ export type UserDetails = {
   degree_name: string | null;
   degree_starting_year: number | null;
 };
+
+export type IsSuperuserResponse = {
+  is_superuser: boolean;
+};
+
+export async function getIsSuperuser(): Promise<IsSuperuserResponse> {
+  return apiRequest<IsSuperuserResponse>("/api/v1/user/is_superuser");
+}

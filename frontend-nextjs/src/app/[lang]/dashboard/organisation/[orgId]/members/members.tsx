@@ -15,15 +15,21 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { getColumns } from "./columns";
-import { deleteOrganisationUser, getAllOrganisationMembers, inviteOrganisationUser } from "@/models/organisation";
+import { deleteOrganisationUser, getAllOrganisationMembers, inviteOrganisationUser, updateOrganisationMemberRole } from "@/models/organisation";
 import { DataTable } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getIsSuperuser } from "@/models/user";
 import { useState } from "react";
 import { ApiError } from "@/lib/api";
 
 export default function OrganisationMembers({ orgId, dict }: { orgId: string, dict: any }) {
   const queryClient = useQueryClient();
+
+  const { data: isSuperuserData } = useQuery({
+    queryKey: ["is_superuser"],
+    queryFn: () => getIsSuperuser(),
+  });
 
   let { data: members } = useQuery({
     queryKey: [`${orgId}-members`],
@@ -37,7 +43,13 @@ export default function OrganisationMembers({ orgId, dict }: { orgId: string, di
     await queryClient.invalidateQueries({ queryKey: [`${orgId}-members`] });
   }
 
-  const userColumns = getColumns(handleDeleteMember, dict);
+  const handleUpdateMemberRole = async (memberId: string, newRole: "Admin" | "User") => {
+    await updateOrganisationMemberRole(orgId, memberId, newRole);
+    await queryClient.invalidateQueries({ queryKey: [`${orgId}-members`] });
+  }
+
+  const isSuperuser = isSuperuserData?.is_superuser ?? false;
+  const userColumns = getColumns(handleDeleteMember, handleUpdateMemberRole, dict, isSuperuser);
 
   return (
     <div className="flex flex-col gap-3">

@@ -21,8 +21,41 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { AddMemberDialog } from "./members";
 
-export function getColumns(handleDeleteMember: (memberId: string) => Promise<void>, dict: any): ColumnDef<Member>[] {
-    return [
+function UpdateRoleButton({
+  member,
+  onUpdate,
+}: {
+  member: Member;
+  onUpdate: (memberId: string, newRole: "Admin" | "User") => Promise<void>;
+}) {
+  const [loading, setLoading] = useState(false);
+  const isAdmin = member.role === "Admin";
+
+  const handleClick = async () => {
+    setLoading(true);
+    await onUpdate(member.id, isAdmin ? "User" : "Admin");
+    setLoading(false);
+  };
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      disabled={loading}
+      onClick={handleClick}
+    >
+      {loading ? "..." : isAdmin ? "Remove admin" : "Make admin"}
+    </Button>
+  );
+}
+
+export function getColumns(
+    handleDeleteMember: (memberId: string) => Promise<void>,
+    handleUpdateMemberRole: (memberId: string, newRole: "Admin" | "User") => Promise<void>,
+    dict: any,
+    isSuperuser = false
+): ColumnDef<Member>[] {
+    const columns: ColumnDef<Member>[] = [
         {
             header: dict.common.name,
             accessorKey: "name",
@@ -35,7 +68,19 @@ export function getColumns(handleDeleteMember: (memberId: string) => Promise<voi
             header: dict.dashboard.members.role,
             accessorKey: "role",
         },
-        {
+    ];
+
+    if (isSuperuser) {
+        columns.push({
+            header: "Update",
+            id: "update",
+            cell: ({ row }: { row: Row<Member> }) => (
+                <UpdateRoleButton member={row.original} onUpdate={handleUpdateMemberRole} />
+            ),
+        });
+    }
+
+    columns.push({
             id: "actions",
             cell: ({ row }: { row: Row<Member> }) => {
                 const member = row.original;
@@ -81,6 +126,8 @@ export function getColumns(handleDeleteMember: (memberId: string) => Promise<voi
                     </div>
                 )
             },
-        },
-    ];
+        }
+    );
+
+    return columns;
 }
