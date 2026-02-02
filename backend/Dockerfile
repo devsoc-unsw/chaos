@@ -14,6 +14,8 @@ WORKDIR /backend/server
 RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS builder
+COPY migrations/ ./migrations/
+
 WORKDIR /backend/server
 COPY --from=planner /backend/server/recipe.json ./recipe.json
 
