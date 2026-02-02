@@ -72,8 +72,8 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           file: backend/Dockerfile
           tags: |
-            ghcr.io/devsoc-unsw/${ env.IMAGE_NAME }}-backend:${{ github.sha }}
-            ghcr.io/devsoc-unsw/${ env.IMAGE_NAME }}-backend:latest
+            ghcr.io/devsoc-unsw/${{ env.IMAGE_NAME }}-backend:${{ github.sha }}
+            ghcr.io/devsoc-unsw/${{ env.IMAGE_NAME }}-backend:latest
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
