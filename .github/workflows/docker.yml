@@ -71,6 +71,7 @@ jobs:
           context: backend
           builder: ${{ steps.buildx.outputs.name }}
           file: backend/Dockerfile
+          push: true
           tags: |
             ghcr.io/devsoc-unsw/${{ env.IMAGE_NAME }}-backend:${{ github.sha }}
             ghcr.io/devsoc-unsw/${{ env.IMAGE_NAME }}-backend:latest
@@ -104,6 +105,7 @@ jobs:
           context: frontend-nextjs
           platforms: linux/amd64
           file: frontend-nextjs/Dockerfile
+          push: true
           tags: |
             ghcr.io/devsoc-unsw/${{ env.IMAGE_NAME }}-frontend:${{ github.sha }}
             ghcr.io/devsoc-unsw/${{ env.IMAGE_NAME }}-frontend:latest
