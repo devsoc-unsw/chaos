@@ -132,8 +132,8 @@ jobs:
           git config user.name "CSESoc CD"
           git config user.email "technical@csesoc.org.au"
           git checkout -b update/${{ env.IMAGE_NAME }}/${{ github.sha }}
-          yq -i '.items[0].spec.template.spec.containers[0].image = "ghcr.io/devsoc-unsw/${{ env.IMAGE_NAME }}-frontend:${{ github.sha }}"' projects/chaos/${{ env.ENVIRONMENT }}/frontend/deploy.yml
-          yq -i '.items[0].spec.template.spec.containers[0].image = "ghcr.io/devsoc-unsw/${{ env.IMAGE_NAME }}-backend:${{ github.sha }}"' projects/chaos/${{ env.ENVIRONMENT }}/backend/deploy.yml
+          yq -i '.spec.template.spec.containers[0].image = "ghcr.io/devsoc-unsw/${{ env.IMAGE_NAME }}-frontend:${{ github.sha }}"' projects/chaos/${{ env.ENVIRONMENT }}/frontend/deploy.yml
+          yq -i '.spec.template.spec.containers[0].image = "ghcr.io/devsoc-unsw/${{ env.IMAGE_NAME }}-backend:${{ github.sha }}"' projects/chaos/${{ env.ENVIRONMENT }}/backend/deploy.yml
           git add .
           git commit -m "feat(${{ env.IMAGE_NAME}}): update images"
           git push -u origin update/${{ env.IMAGE_NAME }}/${{ github.sha }}
