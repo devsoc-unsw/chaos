@@ -42,6 +42,7 @@ jobs:
           echo "S3_ENDPOINT=https://chaos-storage.s3.ap-southeast-1.amazonaws.com" >> backend/.env
           echo "S3_REGION_NAME=ap-southeast-1" >> backend/.env
           echo "DEV_ENV=dev" >> backend/.env
+          echo "EMAIL_FROM=noreply@example.com" >> backend/.env
           echo "SMTP_USERNAME=test_username" >> backend/.env
           echo "SMTP_PASSWORD=test_password" >> backend/.env
           echo "SMTP_HOST=smtp.example.com" >> backend/.env

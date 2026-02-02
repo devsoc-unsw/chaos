@@ -37,5 +37,5 @@ COPY --from=builder --chown=chaos:nodejs /app ./
 
 USER nextjs
 
-EXPOSE 80
+EXPOSE 3000
 CMD ["bun", "start"]

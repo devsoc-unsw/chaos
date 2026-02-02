@@ -45,4 +45,4 @@ COPY --from=builder --chown=chaos:rust /backend/server/target/release/server /ba
 USER rust
 
 ENTRYPOINT ["/backend/server"]
-EXPOSE 8000
+EXPOSE 8080
