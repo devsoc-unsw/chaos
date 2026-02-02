@@ -20,6 +20,7 @@ COPY --from=planner /backend/server/recipe.json ./recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
 
 COPY server/ ./
+COPY migrations/ ./
 
 # Build the server binary
 WORKDIR /backend/server
@@ -45,4 +46,4 @@ COPY --from=builder --chown=chaos:rust /backend/server/target/release/server /ba
 USER rust
 
 ENTRYPOINT ["/backend/server"]
-EXPOSE 8000
+EXPOSE 8080

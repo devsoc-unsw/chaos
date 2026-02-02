@@ -121,17 +121,23 @@ pub async fn google_callback(
     );
 
     // Create a cookie with the token
+    let domain = if state.is_dev_env {
+        "localhost"
+    } else {
+        "devsoc.app"
+    };
+    
     let cookie = Cookie::build(("auth_token", token))
         .http_only(true) // Prevent JavaScript access
         .expires(Expiration::DateTime(OffsetDateTime::now_utc() + time::Duration::days(5))) // Set an expiration time of 5 days, TODO: read from env?
         .secure(!state.is_dev_env)     // Send only over HTTPS, comment out for testing
-        // .domain("devsoc.cn")
+        .domain(domain)
         .path("/");       // Available for all paths
 
     let redirect_root = if state.is_dev_env {
         "http://localhost:3000"
     } else {
-        "https://chaos.devsoc.cn"
+        "https://chaos.devsoc.app"
     };
 
     let possible_redirect = sqlx::query!("DELETE FROM redirect_tokens WHERE token = $1 RETURNING redirect", query.state)
