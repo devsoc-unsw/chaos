@@ -51,6 +51,9 @@ pub enum ChaosError {
     #[error("SQLx error")]
     DatabaseError(#[from] sqlx::Error),
 
+    #[error("Migration error")]
+    MigrationError(#[from] sqlx::migrate::MigrateError),
+
     /// HTTP request failed
     #[error("Reqwest error")]
     ReqwestError(#[from] reqwest::Error),

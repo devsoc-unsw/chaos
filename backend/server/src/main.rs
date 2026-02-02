@@ -13,13 +13,17 @@ async fn main() -> Result<(), ChaosError> {
     // Try to load .env file, but don't fail if it doesn't exist (env vars may be set via Docker)
     dotenvy::dotenv().ok();
 
+    let (app, state_clone) = app().await?;
+
+    // Run migrations
+    sqlx::migrate!("../migrations").run(&state_clone.db).await?;
+    println!("Migrations ran successfully!");
+
     let super_user_email = std::env::var("CHAOS_SUPER_USER_EMAIL").expect("CHAOS_SUPER_USER_EMAIL must be set");
     let mut seeder = Seeder::init().await;
     seeder.seed_database(super_user_email).await?;
 
-    let (app, state_clone) = app().await?;
     let email_db = state_clone.db.clone();
-
     let email_task = tokio::spawn(async move {
         loop {
             let mut transaction = email_db.begin().await.unwrap();

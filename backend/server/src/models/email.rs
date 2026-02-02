@@ -26,6 +26,8 @@ pub struct ChaosEmail;
 pub struct EmailCredentials {
     /// SMTP authentication credentials
     pub credentials: Credentials,
+    /// Email from address
+    pub email_from: String,
     /// SMTP server host address
     pub email_host: String,
     /// SMTP server port
@@ -66,6 +68,10 @@ impl ChaosEmail {
             .expect("Error getting SMTP PASSWORD")
             .to_string();
 
+        let email_from = env::var("SMTP_USERNAME")
+            .expect("Error getting EMAIL_FROM")
+            .to_string();
+
         let email_host = env::var("SMTP_HOST")
             .expect("Error getting SMTP HOST")
             .to_string();
@@ -78,6 +84,7 @@ impl ChaosEmail {
 
         EmailCredentials {
             credentials: Credentials::new(smtp_username, smtp_password),
+            email_from,
             email_host,
             email_host_port,
         }
@@ -124,8 +131,8 @@ impl ChaosEmail {
         credentials: EmailCredentials,
     ) -> Result<(), ChaosError> {
         let message = Message::builder()
-            .from("Chaos Subcommittee Recruitment <noreply@chaos-updates.devsoc.cn>".parse()?)
-            .reply_to("help@chaos.devsoc.app".parse()?)
+            .from(format!("Chaos Subcommittee Recruitment <{}>", credentials.email_from).parse()?)
+            .reply_to("chaos@devsoc.app".parse()?)
             .to(format!("{recipient_name} <{recipient_email_address}>").parse()?)
             .subject(subject)
             .body(body)?;
