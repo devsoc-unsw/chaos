@@ -82,7 +82,7 @@ pub enum ChaosError {
 
     /// Template rendering failed
     #[error("Template rendering error")]
-    TemplateRendorError(#[from] handlebars::RenderError),
+    TemplateRenderError(#[from] handlebars::RenderError),
 
     /// Email sending failed
     #[error("Lettre error")]
@@ -108,7 +108,30 @@ pub enum ChaosError {
 /// errors from external dependencies.
 impl IntoResponse for ChaosError {
     fn into_response(self) -> Response {
-        println!("{:?}", self);
+        // Logging wrapped errors
+        match &self {
+            ChaosError::NotLoggedIn
+            | ChaosError::Unauthorized
+            | ChaosError::ForbiddenOperation
+            | ChaosError::BadRequest
+            | ChaosError::NotFound
+            | ChaosError::ApplicationClosed
+            | ChaosError::CampaignClosed
+            | ChaosError::InternalServerError => println!("{:?}", self),
+            ChaosError::BadRequestWithMessage(e) => println!("Bad Request: {}", e),
+            ChaosError::DatabaseError(e) => println!("Database error: {}", e),
+            ChaosError::MigrationError(e) => println!("Migration error: {}", e),
+            ChaosError::ReqwestError(e) => println!("Reqwest error: {}", e),
+            ChaosError::OAuthError(e) => println!("OAuth2 error: {}", e),
+            ChaosError::StorageError(e) => println!("Storage error: {}", e),
+            ChaosError::DotEnvyError(e) => println!("DotEnvy error: {}", e),
+            ChaosError::TemplateError(e) => println!("Template error: {}", e),
+            ChaosError::TemplateRenderError(e) => println!("TemplateRender error: {}", e),
+            ChaosError::LettreError(e) => println!("Lettre error: {}", e),
+            ChaosError::AddressError(e) => println!("Address error: {}", e),
+            ChaosError::SmtpTransportError(e) => println!("SmtpTransport error: {}", e),
+        };
+
         // Don't leak real error, only return a generic error message
         match self {
             ChaosError::NotLoggedIn => AppMessage::NotLoggedInMessage("Not logged in").into_response(), // User is not logged in
