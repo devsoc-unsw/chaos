@@ -103,7 +103,7 @@ impl ChaosEmail {
         credentials: EmailCredentials,
     ) -> Result<AsyncSmtpTransport<Tokio1Executor>, ChaosError> {
         Ok(
-            AsyncSmtpTransport::<Tokio1Executor>::relay(&credentials.email_host)?
+            AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(&credentials.email_host)?
                 .port(credentials.email_host_port)
                 .credentials(credentials.credentials)
                 .build(),

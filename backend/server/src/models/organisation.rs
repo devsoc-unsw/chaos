@@ -829,13 +829,14 @@ impl Organisation {
         .execute(transaction.deref_mut())
         .await?;
 
-        EmailQueue::add_to_queue(
-            None,
+        ChaosEmail::send_message(
+            "".to_string(),
             email,
             "You have been invited to join an organisation on Chaos".to_string(),
             format!("You have been invited to join an organisation on Chaos. Please use the following link to accept the invite: https://chaos.devsoc.app/dashboard/invite/{code}").to_string(),
-            transaction,
-        ).await?;
+            email_credentials
+        )
+        .await?;
 
         return Ok(code);
 }
