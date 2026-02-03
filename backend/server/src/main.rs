@@ -29,7 +29,7 @@ async fn main() -> Result<(), ChaosError> {
             let mut transaction = email_db.begin().await.unwrap();
             if let Err(e) = EmailQueue::send_next(state_clone.email_credentials.clone(), &mut transaction).await
             {
-                eprintln!("Error processing email: {}", e);
+                e.print();
             } else {
                 transaction.commit().await.unwrap();
             }

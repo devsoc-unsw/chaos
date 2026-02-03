@@ -101,14 +101,8 @@ pub enum ChaosError {
     InternalServerError,
 }
 
-/// Implementation for converting errors into HTTP responses.
-/// 
-/// This implementation maps each error type to an appropriate HTTP status code
-/// and response format. It handles both application-specific errors and
-/// errors from external dependencies.
-impl IntoResponse for ChaosError {
-    fn into_response(self) -> Response {
-        // Logging wrapped errors
+impl ChaosError {
+    pub fn print(&self) {
         match &self {
             ChaosError::NotLoggedIn
             | ChaosError::Unauthorized
@@ -131,6 +125,17 @@ impl IntoResponse for ChaosError {
             ChaosError::AddressError(e) => println!("Address error: {}", e),
             ChaosError::SmtpTransportError(e) => println!("SmtpTransport error: {}", e),
         };
+    }
+}
+
+/// Implementation for converting errors into HTTP responses.
+/// 
+/// This implementation maps each error type to an appropriate HTTP status code
+/// and response format. It handles both application-specific errors and
+/// errors from external dependencies.
+impl IntoResponse for ChaosError {
+    fn into_response(self) -> Response {
+        self.print();
 
         // Don't leak real error, only return a generic error message
         match self {
