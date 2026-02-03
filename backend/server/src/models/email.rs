@@ -124,16 +124,21 @@ impl ChaosEmail {
     /// * `Ok(())` - If the email was sent successfully
     /// * `Err(ChaosError)` - An error if sending fails
     pub async fn send_message(
-        recipient_name: String,
+        recipient_name: Option<String>,
         recipient_email_address: String,
         subject: String,
         body: String,
         credentials: EmailCredentials,
     ) -> Result<(), ChaosError> {
+        let to = match recipient_name {
+            Some(name) => format!("{name} <{recipient_email_address}>"),
+            None => recipient_email_address,
+        };
+
         let message = Message::builder()
             .from(format!("Chaos Subcommittee Recruitment <{}>", credentials.email_from).parse()?)
             .reply_to("chaos@devsoc.app".parse()?)
-            .to(format!("{recipient_name} <{recipient_email_address}>").parse()?)
+            .to(to.parse()?)
             .subject(subject)
             .body(body)?;
 
@@ -192,11 +197,9 @@ impl EmailQueue {
             .fetch_optional(transaction.deref_mut())
             .await?;
 
-        if let Some(email) = email {
-            let recepient_name = email.recepient_name.unwrap_or_else(|| "".to_string());
-            
+        if let Some(email) = email {            
             ChaosEmail::send_message(
-                recepient_name,
+                email.recepient_name,
                 email.recepient_email_address,
                 email.subject,
                 email.body,

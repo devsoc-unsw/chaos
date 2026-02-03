@@ -830,7 +830,7 @@ impl Organisation {
         .await?;
 
         ChaosEmail::send_message(
-            "".to_string(),
+            None,
             email,
             "You have been invited to join an organisation on Chaos".to_string(),
             format!("You have been invited to join an organisation on Chaos. Please use the following link to accept the invite: https://chaos.devsoc.app/dashboard/invite/{code}").to_string(),
