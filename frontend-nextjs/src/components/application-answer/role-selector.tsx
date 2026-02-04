@@ -105,7 +105,7 @@ export default function RoleSelector({
             )}
           </Droppable>
 
-          <h3 className="text-sm font-semibold text-foreground mb-2">{dict.applicationpage.availableroles}</h3>
+          <h3 className="text-sm font-semibold text-foreground mb-2">{dict.applicationpage.available_roles}</h3>
           <Droppable droppableId="available-roles">
             {(provided) => (
               <div
@@ -114,7 +114,7 @@ export default function RoleSelector({
                 className="space-y-2 min-h-[12px] border-2 border-dashed border-muted rounded-lg p-2"
               >
                 {selectedRoleIds.length === roles?.length && (
-                    <div className="text-sm text-muted-foreground px-2 py-1">{dict.applicationpage.emptyavailableroles}</div>
+                    <div className="text-sm text-muted-foreground px-2 py-1">{dict.applicationpage.empty_available_roles}</div>
                 )}
                 {availableRoles?.map((role, index) => (
                   <Draggable

@@ -124,7 +124,7 @@ export default function Ranking({
                             ref={provided.innerRef}
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
-                            className="flex items-center p-3 bg-card border-1"
+                            className="flex items-center p-3 bg-card border-1 w-full max-w-4xl"
                             >
                             <span className="bg-primary-foreground text-foreground rounded-full w-8 h-8 flex items-center justify-center font-semibold mr-3 text-sm">
                                 { index + 1 }
