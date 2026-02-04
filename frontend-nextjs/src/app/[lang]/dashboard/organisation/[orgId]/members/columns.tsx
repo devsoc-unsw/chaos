@@ -26,7 +26,7 @@ function UpdateRoleButton({
   onUpdate,
 }: {
   member: Member;
-  onUpdate: (memberId: string, newRole: "Admin" | "User") => Promise<void>;
+  onUpdate: (userId: string, newRole: "Admin" | "User") => Promise<void>;
 }) {
   const [loading, setLoading] = useState(false);
   const isAdmin = member.role === "Admin";

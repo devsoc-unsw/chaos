@@ -128,6 +128,7 @@ pub struct Member {
 #[derive(Deserialize, Serialize)]
 pub struct AdminUpdateList {
     /// List of user IDs to be administrators
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize_vec")]
     pub members: Vec<i64>,
 }
 

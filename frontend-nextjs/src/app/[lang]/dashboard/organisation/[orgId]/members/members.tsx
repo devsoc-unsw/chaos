@@ -43,8 +43,8 @@ export default function OrganisationMembers({ orgId, dict }: { orgId: string, di
     await queryClient.invalidateQueries({ queryKey: [`${orgId}-members`] });
   }
 
-  const handleUpdateMemberRole = async (memberId: string, newRole: "Admin" | "User") => {
-    await updateOrganisationMemberRole(orgId, memberId, newRole);
+  const handleUpdateMemberRole = async (userId: string, newRole: "Admin" | "User") => {
+    await updateOrganisationMemberRole(orgId, userId, newRole);
     await queryClient.invalidateQueries({ queryKey: [`${orgId}-members`] });
   }
 

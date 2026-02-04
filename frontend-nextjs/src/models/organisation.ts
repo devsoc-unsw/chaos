@@ -59,7 +59,7 @@ export async function getOrganisationAdmins(orgId: string): Promise<Member[]> {
 export async function updateOrganisationAdmins(orgId: string, memberIds: string[]): Promise<AppMessage> {
     return await apiRequest<AppMessage>(`/api/v1/organisation/${orgId}/admins`, {
         method: "PUT",
-        body: { members: memberIds.map((id) => Number(id)) },
+        body: { members: memberIds },
     });
 }
 
@@ -70,7 +70,7 @@ export async function updateOrganisationMemberRole(
 ): Promise<AppMessage> {
     return await apiRequest<AppMessage>(`/api/v1/organisation/${orgId}/member`, {
         method: "PUT",
-        body: { user_id: Number(userId), role },
+        body: { user_id: userId, role },
     });
 }
 
