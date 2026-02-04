@@ -13,7 +13,9 @@ jobs:
   build-backend:
     name: Build (Backend)
     runs-on: ubuntu-latest
-    environment: ${{ env.ENVIRONMENT }}
+    environment:
+      name: ${{ env.ENVIRONMENT }}
+      url: https://chaos.devsoc.app
     services:
       postgres:
         image: postgres:16
@@ -86,7 +88,9 @@ jobs:
   build-frontend:
     name: Build (Frontend)
     runs-on: ubuntu-latest
-    environment: ${{ env.ENVIRONMENT }}
+    environment:
+      name: ${{ env.ENVIRONMENT }}
+      url: https://chaos.devsoc.app
     permissions:
       contents: read
       packages: write
