@@ -110,6 +110,8 @@
       "published": "Published",
       "draft": "Draft",
       "campaign_questions": "Campaign Questions",
+      "no_roles_available": "No roles available",
+      "no_rating_categories_available": "No rating categories available",
       "settings": {
         "campaign_settings": "Campaign Settings",
         "general_settings": "General Settings",

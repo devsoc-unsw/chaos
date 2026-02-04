@@ -101,6 +101,8 @@
       "published": "已发布",
       "draft": "草稿",
       "campaign_questions": "活动问题",
+      "no_roles_available": "暂无角色可用",
+      "no_rating_categories_available": "暂无评分类别可用",
       "settings": {
         "campaign_settings": "活动设置",
         "general_settings": "通用设置",
