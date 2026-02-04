@@ -106,6 +106,8 @@ jobs:
           platforms: linux/amd64
           file: frontend-nextjs/Dockerfile
           push: true
+          build-args: |
+            NEXT_PUBLIC_APP_URL=${{ vars.NEXT_PUBLIC_APP_URL }}
           tags: |
             ghcr.io/devsoc-unsw/${{ env.IMAGE_NAME }}-frontend:${{ github.sha }}
             ghcr.io/devsoc-unsw/${{ env.IMAGE_NAME }}-frontend:latest

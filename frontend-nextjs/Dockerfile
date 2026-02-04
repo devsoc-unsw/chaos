@@ -20,6 +20,10 @@ RUN bun add lightningcss-linux-arm64-gnu@1.30.2
 RUN bun add @tailwindcss/oxide-linux-arm64-gnu@4.1.18
 
 COPY . .
+
+ARG NEXT_PUBLIC_APP_ROOT_URL
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+
 RUN bun run build
 
 # runner
