@@ -740,6 +740,14 @@ impl CampaignAttachment {
 
     /// Deletes an attachment. Returns BadRequest if campaign is published.
     /// Returns (organisation_id, campaign_id) for the caller to build storage path.
+    /// # Arguments
+    /// 
+    /// * `attachment_id` - ID of the attachment to delete
+    /// * `transaction` - Database transaction to use
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<i64, ChaosError>` - The ID of the deleted attachment or error if not found
     pub async fn delete(
         attachment_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
