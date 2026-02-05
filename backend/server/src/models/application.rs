@@ -668,7 +668,7 @@ impl Application {
                     
                     coalesce(
                         to_jsonb(
-                            array_agg(
+                            array_agg(DISTINCT
                                 jsonb_build_object(
                                     'id', ar.id,
                                     'rater_id', reviewer.id,
@@ -690,7 +690,7 @@ impl Application {
                                         WHERE crc.campaign_id = a.campaign_id
                                     ),
                                     'updated_at', ar.updated_at
-                                ) ORDER BY ar.updated_at DESC
+                                )
                             ) FILTER (WHERE ar.id IS NOT NULL)
                         ),
                         '[]'::jsonb
