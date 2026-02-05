@@ -35,7 +35,7 @@ export default async function Layout({ children, params }: { children: React.Rea
 
   await queryClient.prefetchQuery({
     queryKey: ['user'],
-    queryFn: getCurrentUser,
+    queryFn: () => getCurrentUser(),
   });
 
   await queryClient.prefetchQuery({
