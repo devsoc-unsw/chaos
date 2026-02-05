@@ -397,7 +397,7 @@ pub async fn app() -> Result<(Router, AppState), ChaosError> {
                 .patch(CampaignHandler::upload_attachments),
         )
         .route(
-            "/api/v1/campaign/attachment/:attachment_id",
+            "/api/v1/campaign/:campaign_id/attachment/:attachment_id",
             delete(CampaignHandler::delete_attachment),
         )
         .route(

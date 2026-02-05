@@ -69,7 +69,7 @@ impl CampaignHandler {
         Path((organisation_slug, campaign_slug)): Path<(String, String)>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let campaign =
-            Campaign::get_by_slugs_published(organisation_slug, campaign_slug, &mut transaction.tx).await?;
+            Campaign::get_by_slugs(organisation_slug, campaign_slug, true, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(campaign)))
@@ -467,25 +467,22 @@ impl CampaignHandler {
     pub async fn delete_attachment(
         mut transaction: DBTransaction<'_>,
         State(state): State<AppState>,
-        Path(attachment_id): Path<i64>,
-        user: AuthUser,
+        Path((campaign_id, attachment_id)): Path<(i64, i64)>,
+        _admin: CampaignAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
         let attachment = CampaignAttachment::get_by_id(attachment_id, &mut transaction.tx).await?;
 
-        // Verify the admin has access to this campaign
-        crate::service::campaign::user_is_campaign_admin(
-            user.user_id,
-            attachment.campaign_id,
-            &mut transaction.tx,
-        )
-        .await?;
+        // Ensure the attachment actually belongs to the campaign in the path
+        if attachment.campaign_id != campaign_id {
+            return Err(ChaosError::BadRequest);
+        }
 
         let (organisation_id, campaign_id) = CampaignAttachment::delete(attachment_id, &mut transaction.tx).await?;
 
         // Delete the file from S3 storage
         let storage_path = format!("/organisation/{}/campaign/{}/attachment/{}", organisation_id, campaign_id, attachment.id);
         Storage::delete_file(storage_path, &state.storage_bucket).await?;
-        
+
         transaction.tx.commit().await?;
         Ok(())
     }

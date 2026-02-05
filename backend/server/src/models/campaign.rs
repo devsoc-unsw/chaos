@@ -341,28 +341,6 @@ impl Campaign {
         Ok(campaign)
     }
 
-    /// Retrieves a campaign by its organisation and campaign slugs. Returns BadRequest if not published.
-     /// 
-    /// # Arguments
-    /// 
-    /// * `organisation_slug` - Slug of the organization creating the campaign
-    /// * `campaign_slug` - Slug of the campaign
-    /// 
-    /// # Returns
-    /// 
-    /// * `Result<(), ChaosError>` - Success if campaign is unpublished, error if not
-    pub async fn get_by_slugs_published(
-        organisation_slug: String,
-        campaign_slug: String,
-        transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<CampaignDetails, ChaosError> {
-        let campaign = Self::get_by_slugs(organisation_slug, campaign_slug, transaction).await?;
-        if !campaign.published {
-            return Err(ChaosError::BadRequest);
-        }
-        Ok(campaign)
-    }
-
     /// Checks if a slug is available for a new campaign.
     /// 
     /// # Arguments
@@ -410,6 +388,7 @@ impl Campaign {
     /// 
     /// * `organisation_slug` - Slug of the organization
     /// * `campaign_slug` - Slug of the campaign
+    /// * `check_for_published` - If true, returns BadRequest when the campaign is not published
     /// * `transaction` - Database transaction to use
     /// 
     /// # Returns
@@ -418,6 +397,7 @@ impl Campaign {
     pub async fn get_by_slugs(
         organisation_slug: String,
         campaign_slug: String,
+        check_for_published: bool,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<CampaignDetails, ChaosError> {
         let campaign = sqlx::query_as!(
@@ -438,6 +418,10 @@ impl Campaign {
         )
         .fetch_one(transaction.deref_mut())
         .await?;
+
+        if check_for_published && !campaign.published {
+            return Err(ChaosError::BadRequest);
+        }
 
         Ok(campaign)
     }
