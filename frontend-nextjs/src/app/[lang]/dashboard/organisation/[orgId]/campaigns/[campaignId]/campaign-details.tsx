@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getCampaign, getCampaignRoles, getCampaignAttachments, publishCampaign } from "@/models/campaign";
 import { getRatingCategories, RatingCategory } from "@/models/rating";
 import { Button } from "@/components/ui/button";
-import { Copy, Pencil, Trash, Share, BookOpenCheck, FormIcon, CircleCheck, FileText, BarChart } from "lucide-react";
+import { Copy, Pencil, Trash, Share, BookOpenCheck, FormIcon, FileText, BarChart } from "lucide-react";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { cn, dateToString } from "@/lib/utils";
 import {
@@ -22,6 +22,7 @@ import { RoleDetails } from "@/models/campaign";
 import { remark } from "remark";
 import html from "remark-html";
 import CopyButton from "@/components/copy-button";
+import { PublishCampaignDialog } from "./publish-campaign-dialog";
 
 interface ClientRole extends RoleDetails {
     deleting: boolean;
@@ -141,25 +142,36 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                         </CopyButton>
                     </ButtonGroup>
                     {userRole?.role === "Admin" && (
-                        <ButtonGroup>
-                            <Link href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}/edit`}>
-                                <Button variant="outline" className="cursor-pointer"><Pencil className="w-4 h-4" /> {dict.dashboard.actions.edit}</Button>
-                            </Link>
-                            <Button variant="outline" className="cursor-pointer"><Trash className="w-4 h-4" /> {dict.dashboard.actions.delete}</Button>
-                        </ButtonGroup>
+                        <>
+                            <ButtonGroup>
+                                <Link href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}/edit`}>
+                                    <Button variant="outline" className="cursor-pointer">
+                                        <Pencil className="w-4 h-4" /> {dict.dashboard.actions.edit}
+                                    </Button>
+                                </Link>
+                                <Button variant="outline" className="cursor-pointer">
+                                    <Trash className="w-4 h-4" /> {dict.dashboard.actions.delete}
+                                </Button>
+                            </ButtonGroup>
+                            {!campaign?.published && (
+                                <>
+                                    <ButtonGroup>
+                                        <Link href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}/questions`}>
+                                            <Button variant="outline">
+                                                <FormIcon className="w-4 h-4" /> {dict.dashboard.campaigns.manage_questions}
+                                            </Button>
+                                        </Link>
+                                    </ButtonGroup>
+                                    <ButtonGroup>
+                                        <PublishCampaignDialog
+                                            onPublish={handlePublish}
+                                            label={dict.dashboard.campaigns.publish}
+                                        />
+                                    </ButtonGroup>
+                                </>
+                            )}
+                        </>
                     )}
-                    {
-                        !campaign?.published && (
-                            <Link href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}/questions`}>
-                                <Button variant="outline"><FormIcon className="w-4 h-4" /> {dict.dashboard.campaigns.manage_questions}</Button>
-                            </Link>
-                        )
-                    }
-                    <ButtonGroup>
-                        <Button variant="outline" onClick={handlePublish}>
-                            <CircleCheck className="w-4 h-4 text-green-500" /> {dict.dashboard.campaigns.publish}
-                        </Button>
-                    </ButtonGroup>
 
                 </ButtonGroup>
             </div>

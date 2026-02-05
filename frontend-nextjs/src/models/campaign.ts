@@ -179,6 +179,6 @@ export async function getCampaignBySlugs(orgSlug: string, campaignSlug: string):
 
 export async function publishCampaign(campaignId: string): Promise<AppMessage> {
     return await apiRequest<AppMessage>(`/api/v1/campaign/${campaignId}/publish`, {
-        method: "POST",
+        method: "PATCH",
     });
 }
