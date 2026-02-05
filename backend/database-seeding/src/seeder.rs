@@ -126,7 +126,7 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
         )
         .await.expect("Failed seeding Campaign");
 
-    _ = Campaign::publish(campaign_id, &mut tx);
+    _ = Campaign::publish(campaign_id, &mut tx).await.expect("Failed publishing");
 
     let role_id_1 = Role::create(
         campaign_id,
