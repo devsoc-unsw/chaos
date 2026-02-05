@@ -1,6 +1,6 @@
 "use client"
 
-import { Building2, ChevronDown, Mail, Megaphone, Plus, Settings, User, Users } from "lucide-react"
+import { Building2, ChevronDown, LogOut, Mail, Megaphone, Plus, Settings, User, Users } from "lucide-react"
 
 import {
   Sidebar,
@@ -135,6 +135,14 @@ export function AdminSidebar({ userRole, dict }: AdminSidebarProps) {
                   <a href={`/dashboard/${orgId}/profile`}>
                     <User />
                     <span>{dict.common.profile}</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href={`${process.env.NEXT_PUBLIC_API_BASE_URL || "https://chaos-api.devsoc.app"}/auth/logout`}>
+                    <LogOut />
+                    <span>{dict.common.logout}</span>
                   </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
