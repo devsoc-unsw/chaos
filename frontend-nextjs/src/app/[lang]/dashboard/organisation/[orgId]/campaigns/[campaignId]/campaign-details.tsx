@@ -124,7 +124,7 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                         </Link>
                     </ButtonGroup>
                     <ButtonGroup>
-                        <CopyButton value={`${process.env.NEXT_PUBLIC_APP_URL}/campaign/${campaign?.organisation_slug}/${campaign?.campaign_slug}`}>
+                        <CopyButton value={`https://chaos.devsoc.app/campaign/${campaign?.organisation_slug}/${campaign?.campaign_slug}`}>
                             <Share className="w-4 h-4" /> {dict.dashboard.campaigns.share_link}
                         </CopyButton>
                         <CopyButton value={campaignId}>
