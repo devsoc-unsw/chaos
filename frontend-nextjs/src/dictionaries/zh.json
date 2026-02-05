@@ -49,6 +49,8 @@
     "application_deadline": "申请截止日期",
     "apply": "申请",
 
+    "logout": "登出",
+
     "status": "状态",
     "email": "邮箱",
 
@@ -157,6 +159,7 @@
       "title": "你被邀请了",
       "invited_by": "邀请你加入他们的组织 on Chaos",
       "sent_to": "此邀请发送给",
+      "sent_to_note": "请使用正确的 Google 账户登录。",
       "login_cta": "点击这里创建 Chaos 账户",
       "accept_cta": "接受邀请",
       "used": "此邀请已被使用",

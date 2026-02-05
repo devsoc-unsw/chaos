@@ -381,6 +381,7 @@ impl OrganisationHandler {
             admin.user_id,
             request_body.email,
             state.email_credentials.clone(),
+            state.is_dev_env,
             &mut state.snowflake_generator,
             &mut transaction.tx,
         )

@@ -153,6 +153,32 @@ pub async fn google_callback(
     Ok((jar.add(cookie), Redirect::to(redirect_url.as_str())))
 }
 
+pub async fn logout(
+    State(state): State<AppState>,
+    jar: CookieJar
+) -> Result<impl IntoResponse, ChaosError> {
+    let domain = if state.is_dev_env {
+        "localhost"
+    } else {
+        "devsoc.app"
+    };
+
+    let empty_cookie= Cookie::build(("auth_token", ""))
+    .http_only(true) // Prevent JavaScript access
+    .expires(Expiration::DateTime(OffsetDateTime::now_utc() + time::Duration::days(5))) // Set an expiration time of 5 days, TODO: read from env?
+    .secure(!state.is_dev_env)     // Send only over HTTPS, comment out for testing
+    .domain(domain)
+    .path("/");
+
+    let redirect = if state.is_dev_env {
+        "http://localhost:3000"
+    } else {
+        "https://chaos.devsoc.app"
+    };
+
+    Ok((jar.remove(empty_cookie), Redirect::to(redirect)))
+}
+
 pub struct DevLoginHandler;
 impl DevLoginHandler {
 
