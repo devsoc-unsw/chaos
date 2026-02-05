@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getCampaign, getCampaignRoles, getCampaignAttachments } from "@/models/campaign";
+import { getCampaign, getCampaignRoles, getCampaignAttachments, publishCampaign } from "@/models/campaign";
 import { getRatingCategories, RatingCategory } from "@/models/rating";
 import { Button } from "@/components/ui/button";
 import { Copy, Pencil, Trash, Share, BookOpenCheck, FormIcon, CircleCheck, FileText, BarChart } from "lucide-react";
@@ -65,7 +65,7 @@ function compareRatingCategories(categories: RatingCategory[], clientCategories:
 }
 
 export default function CampaignDetails({ campaignId, orgId, dict }: { campaignId: string, orgId: string, dict: any }) {
-    const { data: campaign } = useQuery({
+    const { data: campaign, refetch: refetchCampaign } = useQuery({
         queryKey: [`${campaignId}-campaign-details`],
         queryFn: () => getCampaign(campaignId),
     });
@@ -94,6 +94,15 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
     const [hoveredDeleteIndex, setHoveredDeleteIndex] = useState<number | null>(null);
     const [descriptionHtmlState, setDescriptionHtmlState] = useState<string>("");
     const [hoveredDeleteCategoryIndex, setHoveredDeleteCategoryIndex] = useState<number | null>(null);
+
+    const handlePublish = async () => {
+        try {
+            await publishCampaign(campaignId);
+            await refetchCampaign();
+        } catch (error) {
+            console.error("Failed to publish campaign:", error);
+        }
+    };
 
     useEffect(() => {
         async function processMarkdown() {
@@ -147,7 +156,9 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                         )
                     }
                     <ButtonGroup>
-                        <Button variant="outline"><CircleCheck className="w-4 h-4 text-green-500" /> {dict.dashboard.campaigns.publish}</Button>
+                        <Button variant="outline" onClick={handlePublish}>
+                            <CircleCheck className="w-4 h-4 text-green-500" /> {dict.dashboard.campaigns.publish}
+                        </Button>
                     </ButtonGroup>
 
                 </ButtonGroup>
