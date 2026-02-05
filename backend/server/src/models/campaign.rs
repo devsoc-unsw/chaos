@@ -342,6 +342,15 @@ impl Campaign {
     }
 
     /// Retrieves a campaign by its organisation and campaign slugs. Returns BadRequest if not published.
+     /// 
+    /// # Arguments
+    /// 
+    /// * `organisation_slug` - Slug of the organization creating the campaign
+    /// * `campaign_slug` - Slug of the campaign
+    /// 
+    /// # Returns
+    /// 
+    /// * `Result<(), ChaosError>` - Success if campaign is unpublished, error if not
     pub async fn get_by_slugs_published(
         organisation_slug: String,
         campaign_slug: String,
