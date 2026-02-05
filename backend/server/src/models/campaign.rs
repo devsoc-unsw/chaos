@@ -15,6 +15,7 @@ use axum::extract::{FromRef, FromRequestParts, Path};
 use axum::http::request::Parts;
 use uuid::Uuid;
 use crate::models::app::AppState;
+use crate::models::role::{Role, RoleUpdate};
 use crate::service::campaign::{assert_campaign_is_open, create_proper_slug};
 use super::{error::ChaosError, storage::Storage};
 use snowflake::SnowflakeIdGenerator;
@@ -340,6 +341,19 @@ impl Campaign {
         Ok(campaign)
     }
 
+    /// Retrieves a campaign by its organisation and campaign slugs. Returns BadRequest if not published.
+    pub async fn get_by_slugs_published(
+        organisation_slug: String,
+        campaign_slug: String,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<CampaignDetails, ChaosError> {
+        let campaign = Self::get_by_slugs(organisation_slug, campaign_slug, transaction).await?;
+        if !campaign.published {
+            return Err(ChaosError::BadRequest);
+        }
+        Ok(campaign)
+    }
+
     /// Checks if a slug is available for a new campaign.
     /// 
     /// # Arguments
@@ -435,6 +449,10 @@ impl Campaign {
         update: CampaignUpdate,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
+        let campaign = Self::get(id, transaction).await?;
+        if campaign.published {
+            return Err(ChaosError::BadRequest);
+        }
         update.validate()?;
 
         _ = sqlx::query!(
@@ -477,6 +495,10 @@ impl Campaign {
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
+        let campaign = Self::get(id, transaction).await?;
+        if campaign.published {
+            return Err(ChaosError::BadRequest);
+        }
         _ = sqlx::query!(
             "
                 UPDATE campaigns
@@ -507,6 +529,10 @@ impl Campaign {
         transaction: &mut Transaction<'_, Postgres>,
         storage_bucket: &Bucket,
     ) -> Result<CampaignBannerUpdate, ChaosError> {
+        let campaign = Self::get(id, transaction).await?;
+        if campaign.published {
+            return Err(ChaosError::BadRequest);
+        }
         let dt = Utc::now();
         let image_id = Uuid::new_v4();
         let current_time = dt;
@@ -544,6 +570,10 @@ impl Campaign {
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
+        let campaign = Self::get(id, transaction).await?;
+        if campaign.published {
+            return Err(ChaosError::BadRequest);
+        }
         _ = sqlx::query!(
             "
                 DELETE FROM campaigns WHERE id = $1 RETURNING id
@@ -554,6 +584,20 @@ impl Campaign {
         .await?;
 
         Ok(())
+    }
+
+    /// Creates a new role in the campaign. Returns BadRequest if campaign is published.
+    pub async fn create_role(
+        campaign_id: i64,
+        role_data: RoleUpdate,
+        transaction: &mut Transaction<'_, Postgres>,
+        snowflake_generator: &mut SnowflakeIdGenerator,
+    ) -> Result<i64, ChaosError> {
+        let campaign = Self::get(campaign_id, transaction).await?;
+        if campaign.published {
+            return Err(ChaosError::BadRequest);
+        }
+        Role::create(campaign_id, role_data, transaction, snowflake_generator).await
     }
 }
 
@@ -639,9 +683,11 @@ impl CampaignAttachment {
         snowflake_generator: &mut SnowflakeIdGenerator,
         storage_bucket: &Bucket,
     ) -> Result<Vec<AttachmentUpload>, ChaosError> {
-        // Check if attachment already exists
-        let existing = Self::get_by_campaign(campaign_id, transaction).await?;
         let campaign = Campaign::get(campaign_id, transaction).await?;
+        if campaign.published {
+            return Err(ChaosError::BadRequest);
+        }
+        let existing = Self::get_by_campaign(campaign_id, transaction).await?;
 
         let mut attachment_ids = Vec::new();
         for file in files {
@@ -692,21 +738,18 @@ impl CampaignAttachment {
         Ok(results)
     }
 
-    /// Deletes an attachment.
-    /// 
-    /// # Arguments
-    /// 
-    /// * `attachment_id` - ID of the attachment to delete
-    /// * `transaction` - Database transaction to use
-    /// 
-    /// # Returns
-    /// 
-    /// * `Result<i64, ChaosError>` - The ID of the deleted attachment or error if not found
+    /// Deletes an attachment. Returns BadRequest if campaign is published.
+    /// Returns (organisation_id, campaign_id) for the caller to build storage path.
     pub async fn delete(
         attachment_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<(), ChaosError> {
-        let id = sqlx::query!(
+    ) -> Result<(i64, i64), ChaosError> {
+        let attachment = Self::get_by_id(attachment_id, transaction).await?;
+        let campaign = Campaign::get(attachment.campaign_id, transaction).await?;
+        if campaign.published {
+            return Err(ChaosError::BadRequest);
+        }
+        _ = sqlx::query!(
             "
                 DELETE FROM campaign_attachments WHERE id = $1 RETURNING id
             ",
@@ -715,7 +758,7 @@ impl CampaignAttachment {
         .fetch_one(transaction.deref_mut())
         .await?;
 
-        Ok(())
+        Ok((campaign.organisation_id, campaign.id))
     }
 }
 /// Extractor for ensuring a campaign is open.

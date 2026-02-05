@@ -17,6 +17,7 @@ use axum::{async_trait, RequestPartsExt};
 use axum::extract::{FromRef, FromRequestParts, Path};
 use axum::http::request::Parts;
 use crate::models::app::AppState;
+use crate::models::campaign::Campaign;
 use crate::models::rating::RatingDetails;
 use crate::service::answer::assert_answer_application_is_open;
 use crate::service::application::{assert_application_is_open};
@@ -232,6 +233,11 @@ impl Application {
         snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<i64, ChaosError> {
+        let campaign = Campaign::get(campaign_id, transaction).await?;
+        if !campaign.published {
+            return Err(ChaosError::BadRequest);
+        }
+
         // Check if application already exists
         let application = sqlx::query!(
             "
@@ -310,6 +316,11 @@ impl Application {
         snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<i64, ChaosError> {
+        let campaign = Campaign::get(campaign_id, transaction).await?;
+        if !campaign.published {
+            return Err(ChaosError::BadRequest);
+        }
+
         let id = snowflake_generator.real_time_generate();
 
         // Insert into table applications

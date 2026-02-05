@@ -69,11 +69,7 @@ impl CampaignHandler {
         Path((organisation_slug, campaign_slug)): Path<(String, String)>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let campaign =
-            Campaign::get_by_slugs(organisation_slug, campaign_slug, &mut transaction.tx).await?;
-
-        if (!campaign.published) {
-            return Err(ChaosError::BadRequest);
-        }
+            Campaign::get_by_slugs_published(organisation_slug, campaign_slug, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(campaign)))
@@ -120,12 +116,6 @@ impl CampaignHandler {
         _admin: CampaignAdmin,
         Json(request_body): Json<models::campaign::CampaignUpdate>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let campaign = Campaign::get(id, &mut transaction.tx).await?;
-
-        if campaign.published {
-            return Err(ChaosError::BadRequest);
-        }
-
         Campaign::update(id, request_body, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
         Ok(AppMessage::OkMessage("Successfully updated campaign"))
@@ -149,11 +139,6 @@ impl CampaignHandler {
         Path(id): Path<i64>,
         _admin: CampaignAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let campaign = Campaign::get(id, &mut transaction.tx).await?;
-
-        if campaign.published {
-            return Err(ChaosError::BadRequest);
-        }
         Campaign::publish(id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
         Ok(AppMessage::OkMessage("Successfully published campaign"))
@@ -179,12 +164,6 @@ impl CampaignHandler {
         Path(id): Path<i64>,
         _admin: CampaignAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let campaign = Campaign::get(id, &mut transaction.tx).await?;
-
-        if campaign.published {
-            return Err(ChaosError::BadRequest);
-        }
-
         let banner_url =
             Campaign::update_banner(id, &mut transaction.tx, &state.storage_bucket).await?;
         transaction.tx.commit().await?;
@@ -209,12 +188,6 @@ impl CampaignHandler {
         Path(id): Path<i64>,
         _admin: CampaignAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let campaign = Campaign::get(id, &mut transaction.tx).await?;
-
-        if campaign.published {
-            return Err(ChaosError::BadRequest);
-        }
-
         Campaign::delete(id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
         Ok(AppMessage::OkMessage("Successfully deleted campaign"))
@@ -242,13 +215,7 @@ impl CampaignHandler {
         _admin: CampaignAdmin,
         Json(data): Json<RoleUpdate>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let campaign = Campaign::get(id, &mut transaction.tx).await?;
-
-        if campaign.published {
-            return Err(ChaosError::BadRequest);
-        }
-
-        Role::create(id, data, &mut transaction.tx, &mut state.snowflake_generator).await?;
+        Campaign::create_role(id, data, &mut transaction.tx, &mut state.snowflake_generator).await?;
         transaction.tx.commit().await?;
         Ok(AppMessage::OkMessage("Successfully created role"))
     }
@@ -300,12 +267,6 @@ impl CampaignHandler {
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewApplication>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let campaign = Campaign::get(id, &mut transaction.tx).await?;
-
-        if !campaign.published {
-            return Err(ChaosError::BadRequest);
-        }
-
         Application::create(
             id,
             user.user_id,
@@ -471,12 +432,6 @@ impl CampaignHandler {
         _admin: CampaignAdmin,
         Json(data): Json<Vec<NewAttachment>>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let campaign = Campaign::get(id, &mut transaction.tx).await?;
-
-        if campaign.published {
-            return Err(ChaosError::BadRequest);
-        }
-
         let upload_results = CampaignAttachment::create_or_update_multiple(id, data, &mut transaction.tx, &mut state.snowflake_generator, &state.storage_bucket).await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(upload_results)))
@@ -515,13 +470,7 @@ impl CampaignHandler {
         Path(attachment_id): Path<i64>,
         user: AuthUser,
     ) -> Result<impl IntoResponse, ChaosError> {
-        // Get the attachment to find its campaign_id
         let attachment = CampaignAttachment::get_by_id(attachment_id, &mut transaction.tx).await?;
-        let campaign = Campaign::get(attachment.campaign_id, &mut transaction.tx).await?;
-
-        if campaign.published {
-            return Err(ChaosError::BadRequest);
-        }
 
         // Verify the admin has access to this campaign
         crate::service::campaign::user_is_campaign_admin(
@@ -530,12 +479,11 @@ impl CampaignHandler {
             &mut transaction.tx,
         )
         .await?;
-        
-        // Delete the attachment from database
-        CampaignAttachment::delete(attachment_id, &mut transaction.tx).await?;
+
+        let (organisation_id, campaign_id) = CampaignAttachment::delete(attachment_id, &mut transaction.tx).await?;
 
         // Delete the file from S3 storage
-        let storage_path = format!("/organisation/{}/campaign/{}/attachment/{}", campaign.organisation_id, campaign.id, attachment.id);
+        let storage_path = format!("/organisation/{}/campaign/{}/attachment/{}", organisation_id, campaign_id, attachment.id);
         Storage::delete_file(storage_path, &state.storage_bucket).await?;
         
         transaction.tx.commit().await?;
