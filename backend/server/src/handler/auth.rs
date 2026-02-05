@@ -153,6 +153,19 @@ pub async fn google_callback(
     Ok((jar.add(cookie), Redirect::to(redirect_url.as_str())))
 }
 
+pub async fn logout(
+    State(state): State<AppState>,
+    jar: CookieJar
+) -> Result<impl IntoResponse, ChaosError> {
+    let redirect = if state.is_dev_env {
+        "http://localhost:3000"
+    } else {
+        "https://chaos.devsoc.app"
+    };
+
+    Ok((jar.remove(Cookie::from("auth_token")), Redirect::to(redirect)))
+}
+
 pub struct DevLoginHandler;
 impl DevLoginHandler {
 
