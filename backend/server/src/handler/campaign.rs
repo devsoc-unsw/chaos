@@ -70,6 +70,11 @@ impl CampaignHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         let campaign =
             Campaign::get_by_slugs(organisation_slug, campaign_slug, &mut transaction.tx).await?;
+
+        if (!campaign.published) {
+            return Err(ChaosError::BadRequest);
+        }
+
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(campaign)))
     }
@@ -115,7 +120,7 @@ impl CampaignHandler {
         _admin: CampaignAdmin,
         Json(request_body): Json<models::campaign::CampaignUpdate>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let campaign = Campaign::get(attachment.campaign_id, &mut transaction.tx).await?;
+        let campaign = Campaign::get(id, &mut transaction.tx).await?;
 
         if campaign.published {
             return Err(ChaosError::BadRequest);
@@ -144,7 +149,7 @@ impl CampaignHandler {
         Path(id): Path<i64>,
         _admin: CampaignAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let campaign = Campaign::get(attachment.campaign_id, &mut transaction.tx).await?;
+        let campaign = Campaign::get(id, &mut transaction.tx).await?;
 
         if campaign.published {
             return Err(ChaosError::BadRequest);
@@ -174,7 +179,7 @@ impl CampaignHandler {
         Path(id): Path<i64>,
         _admin: CampaignAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let campaign = Campaign::get(attachment.campaign_id, &mut transaction.tx).await?;
+        let campaign = Campaign::get(id, &mut transaction.tx).await?;
 
         if campaign.published {
             return Err(ChaosError::BadRequest);
@@ -204,7 +209,7 @@ impl CampaignHandler {
         Path(id): Path<i64>,
         _admin: CampaignAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let campaign = Campaign::get(attachment.campaign_id, &mut transaction.tx).await?;
+        let campaign = Campaign::get(id, &mut transaction.tx).await?;
 
         if campaign.published {
             return Err(ChaosError::BadRequest);
@@ -237,7 +242,7 @@ impl CampaignHandler {
         _admin: CampaignAdmin,
         Json(data): Json<RoleUpdate>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let campaign = Campaign::get(attachment.campaign_id, &mut transaction.tx).await?;
+        let campaign = Campaign::get(id, &mut transaction.tx).await?;
 
         if campaign.published {
             return Err(ChaosError::BadRequest);
@@ -295,6 +300,12 @@ impl CampaignHandler {
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewApplication>,
     ) -> Result<impl IntoResponse, ChaosError> {
+        let campaign = Campaign::get(id, &mut transaction.tx).await?;
+
+        if !campaign.published {
+            return Err(ChaosError::BadRequest);
+        }
+
         Application::create(
             id,
             user.user_id,
@@ -460,7 +471,7 @@ impl CampaignHandler {
         _admin: CampaignAdmin,
         Json(data): Json<Vec<NewAttachment>>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let campaign = Campaign::get(attachment.campaign_id, &mut transaction.tx).await?;
+        let campaign = Campaign::get(id, &mut transaction.tx).await?;
 
         if campaign.published {
             return Err(ChaosError::BadRequest);
