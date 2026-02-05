@@ -30,7 +30,7 @@ export async function apiRequest<T>(
   path: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const { method = "GET", body, headers = {}, okRequiredOtherwiseLogin = false } = options;
+  const { method = "GET", body, headers = {}, okRequiredOtherwiseLogin = true } = options;
 
   const requestHeaders: Record<string, string> = { ...headers };
 
@@ -71,7 +71,7 @@ export async function apiRequest<T>(
   const response = await fetch(url, fetchOptions);
 
   if (!response.ok) {
-    if (response.status === 401 || okRequiredOtherwiseLogin) {
+    if (response.status === 401 && okRequiredOtherwiseLogin) {
       if (isServer) {
         const { redirect } = await import("next/navigation");
         const { headers } = await import("next/headers");

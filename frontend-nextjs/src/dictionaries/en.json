@@ -168,6 +168,7 @@
       "title": "You're invited",
       "invited_by": "has invited you to join their organisation on Chaos",
       "sent_to": "This invite was sent to",
+      "sent_to_note": "Please use the correct Google account to sign in.",
       "login_cta": "Click here to create a Chaos account",
       "accept_cta": "Accept invite",
       "used": "This invite has already been used",
