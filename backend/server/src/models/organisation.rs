@@ -745,6 +745,7 @@ impl Organisation {
         inviting_user_id: i64,
         email: String,
         email_credentials: EmailCredentials,
+        is_dev_env: bool,
         snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<String, ChaosError> {
@@ -830,14 +831,18 @@ impl Organisation {
         .execute(transaction.deref_mut())
         .await?;
 
-        ChaosEmail::send_message(
-            None,
-            email,
-            "You have been invited to join an organisation on Chaos".to_string(),
-            format!("You have been invited to join an organisation on Chaos. Please use the following link to accept the invite: https://chaos.devsoc.app/dashboard/invite/{code}").to_string(),
-            email_credentials
-        )
-        .await?;
+        if is_dev_env {
+            println!("Invite code for {email}: {code}")
+        } else {
+            ChaosEmail::send_message(
+                None,
+                email,
+                "You have been invited to join an organisation on Chaos".to_string(),
+                format!("You have been invited to join an organisation on Chaos. Please use the following link to accept the invite: https://chaos.devsoc.app/dashboard/invite/{code}").to_string(),
+                email_credentials
+            )
+            .await?;
+        }
 
         return Ok(code);
 }
