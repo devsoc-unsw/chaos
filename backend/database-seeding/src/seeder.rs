@@ -5,6 +5,7 @@ use server::models::rating::{Rating, NewRating, NewCategoryRating, NewApplicatio
 use server::models::user::{User, UserRole};
 use server::models::organisation::{Organisation};
 use server::models::role::{Role, RoleUpdate};
+use server::models::campaign::{Campaign};
 use server::models::question::*;
 use server::models::answer::*;
 use server::models::application::{Application, NewApplication, ApplicationRole};
@@ -124,7 +125,8 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
             &mut seeder.app_state.snowflake_generator,
         )
         .await.expect("Failed seeding Campaign");
-    
+
+    _ = Campaign::publish(campaign_id, &mut tx).await.expect("Failed publishing");
 
     let role_id_1 = Role::create(
         campaign_id,

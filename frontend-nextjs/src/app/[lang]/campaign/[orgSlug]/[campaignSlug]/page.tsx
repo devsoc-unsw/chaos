@@ -3,7 +3,6 @@ import { getCampaignBySlugs } from "@/models/campaign";
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import CampaignInfo from "./campaign-info";
 
-
 export default async function CampaignPage({ params }: { params: Promise<{ orgSlug: string, campaignSlug: string, lang: string }> }) {
     const { orgSlug, campaignSlug, lang } = await params;
     const dict = await getDictionary(lang);
@@ -19,5 +18,4 @@ export default async function CampaignPage({ params }: { params: Promise<{ orgSl
             <CampaignInfo orgSlug={orgSlug} campaignSlug={campaignSlug} dict={dict} lang={lang}/>
         </HydrationBoundary>
     )
-
 }
