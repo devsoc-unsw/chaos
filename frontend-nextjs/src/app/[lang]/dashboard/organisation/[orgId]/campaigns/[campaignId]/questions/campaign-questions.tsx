@@ -1,15 +1,14 @@
 "use client";
 
-import { cn, dateToString } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { getCampaign, getCampaignRoles, RoleDetails } from "@/models/campaign";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, ChevronsUpDown, GripVertical, Plus, Trash, X } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Asterisk, Check, ChevronsUpDown, GripVertical, Plus, Trash, X } from "lucide-react";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createQuestion, deleteQuestion, getAllCommonQuestions, getAllRoleQuestions, MultiOptionQuestionOption, Question, QuestionType, updateQuestion } from "@/models/question";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
 import { snowflakeGenerator } from "@/lib";
@@ -20,7 +19,6 @@ import {
     AlertDialogAction,
     AlertDialogCancel,
     AlertDialogContent,
-    AlertDialogDescription,
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
@@ -70,103 +68,74 @@ export default function CampaignQuestions({ campaignId, orgId, dict }: { campaig
         }
     });
 
-    const [allCommonQuestions, setAllCommonQuestions] = useState<Question[]>(commonQuestions ?? []);
-    const [allRoleQuestions, setAllRoleQuestions] = useState<{ role: RoleDetails, questions: Question[] }[]>(rolesAndQuestions ?? []);
+    const { mutateAsync: mutateUpdateQuestion } = useMutation({
+        mutationFn: ({ questionId, question }: { questionId: string; question: Question }) =>
+            updateQuestion(campaignId, questionId, question),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [`${campaignId}-common-questions`] });
+            queryClient.invalidateQueries({ queryKey: [`${campaignId}-all-role-questions`] });
+        },
+        onError: () => {
+            queryClient.invalidateQueries({ queryKey: [`${campaignId}-common-questions`] });
+            queryClient.invalidateQueries({ queryKey: [`${campaignId}-all-role-questions`] });
+        },
+    });
 
-    useEffect(() => {
-        if (commonQuestions) {
-            setAllCommonQuestions(commonQuestions);
-        }
-        if (rolesAndQuestions) {
-            setAllRoleQuestions(rolesAndQuestions);
-        }
-    }, [commonQuestions, rolesAndQuestions]);
+    const { mutateAsync: mutateDeleteQuestion } = useMutation({
+        mutationFn: (questionId: string) => deleteQuestion(campaignId, questionId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [`${campaignId}-common-questions`] });
+            queryClient.invalidateQueries({ queryKey: [`${campaignId}-all-role-questions`] });
+        },
+        onError: () => {
+            queryClient.invalidateQueries({ queryKey: [`${campaignId}-common-questions`] });
+            queryClient.invalidateQueries({ queryKey: [`${campaignId}-all-role-questions`] });
+        },
+    });
 
-    const [changedQuestions, setChangedQuestions] = useState<Question[]>([]);
-    const [newQuestions, setNewQuestions] = useState<Question[]>([]);
+    const { mutateAsync: mutateCreateQuestion } = useMutation({
+        mutationFn: (question: Question) => createQuestion(campaignId, question),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [`${campaignId}-common-questions`] });
+            queryClient.invalidateQueries({ queryKey: [`${campaignId}-all-role-questions`] });
+        },
+        onError: () => {
+            queryClient.invalidateQueries({ queryKey: [`${campaignId}-common-questions`] });
+            queryClient.invalidateQueries({ queryKey: [`${campaignId}-all-role-questions`] });
+        },
+    });
 
     const handleQuestionUpdate = async (action: "update" | "delete", question: Question) => {
         if (action === 'delete') {
-            await deleteQuestion(campaignId, question.id);
-            await queryClient.invalidateQueries({ queryKey: [`${campaignId}-common-questions`] });
-            await queryClient.invalidateQueries({ queryKey: [`${campaignId}-all-role-questions`] });
-            return;
-        }
-
-
-        if (newQuestions.some((q) => q.id === question.id)) {
-            setNewQuestions(newQuestions.map((q) => q.id === question.id ? question : q));
-        } else if (!changedQuestions.some((q) => q.id === question.id)) {
-            setChangedQuestions([...changedQuestions, question]);
+            await mutateDeleteQuestion(question.id);
         } else {
-            setChangedQuestions(changedQuestions.map((q) => q.id === question.id ? question : q));
-        }
-
-        if (question.common) {
-            setAllCommonQuestions(allCommonQuestions.map((q) => q.id === question.id ? question : q));
-        } else {
-            setAllRoleQuestions(allRoleQuestions.map(({ role, questions }) => { return { role, questions: questions.map((q) => q.id === question.id ? question : q) } }));
+            await mutateUpdateQuestion({ questionId: question.id, question });
         }
     }
 
-    const saveQuestions = async () => {
-        await Promise.all(changedQuestions.map(async (question) => {
-            await updateQuestion(campaignId, question.id, question);
-        }))
-        await Promise.all(newQuestions.map(async (question) => {
-            await createQuestion(campaignId, question);
-        }))
-
-        setChangedQuestions([]);
-        setNewQuestions([]);
-
-        await queryClient.invalidateQueries({ queryKey: [`${campaignId}-common-questions`] });
-        await queryClient.invalidateQueries({ queryKey: [`${campaignId}-all-role-questions`] })
-    }
-
-    const addNewQuestion = (type: QuestionType, roleId: string) => {
+    const addNewQuestion = async (type: QuestionType, roleId: string) => {
         const common = roleId === "common";
 
-        let newQuestion: Question = { id: snowflakeGenerator.generate().toString(), title: "", description: "", roles: [roleId], created_at: new Date().toISOString(), updated_at: new Date().toISOString(), question_type: type, data: { options: [] }, common, required: false };
+        let newQuestion: Question = { id: snowflakeGenerator.generate().toString(), title: "", description: "", roles: common ? [] : [roleId], created_at: new Date().toISOString(), updated_at: new Date().toISOString(), question_type: type, data: { options: [{ id: snowflakeGenerator.generate().toString(), display_order: 1, text: "Default Option" }] }, common, required: false };
         if (type === 'ShortAnswer') {
             delete (newQuestion as any).data;
         }
 
-        if (common) {
-            newQuestion.roles = [];
-            setAllCommonQuestions([...allCommonQuestions, newQuestion]);
-        } else {
-            setAllRoleQuestions(allRoleQuestions.map(({ role, questions }) => {
-                if (role.id === roleId) {
-                    return { role, questions: [...questions, newQuestion] };
-                }
-
-                return { role, questions };
-            }));
-        }
-
-        setNewQuestions([...newQuestions, newQuestion]);
+        await mutateCreateQuestion(newQuestion);
     }
 
-    const addExistingQuestion = (questionId: string, oldRoleId: string, newRoleId: string) => {
+    const addExistingQuestion = async (questionId: string, oldRoleId: string, newRoleId: string) => {
         // Common questions cannot be shared with roles
         if (newRoleId === "common" || oldRoleId === "common") { return; }
 
-        // Update all instances of the question with the new roleId
-        // setAllRoleQuestions(allRoleQuestions.map(({ role, questions }) => {
-        //     const updatedQuestions = questions.map((question) => question.id === questionId ? { ...question, roles: [...question.roles, roleId] } : question);
-        //     return {role, questions: updatedQuestions};
-        // }));
-        const question = allRoleQuestions.find(({ role }) => role.id === oldRoleId)?.questions.find((question) => question.id === questionId);
+        const question = rolesAndQuestions
+            ?.find(({ role }) => role.id === oldRoleId)
+            ?.questions.find((question) => question.id === questionId);
+
         if (!question) { return; }
 
         const updatedQuestion = { ...question, roles: [...question.roles, newRoleId] };
-        const update = async () => {
-            await updateQuestion(campaignId, question.id, updatedQuestion);
-            await queryClient.invalidateQueries({ queryKey: [`${campaignId}-all-role-questions`] });
-        }
-
-        update();
+        await mutateUpdateQuestion({ questionId: question.id, question: updatedQuestion });
     }
 
     return (
@@ -185,23 +154,20 @@ export default function CampaignQuestions({ campaignId, orgId, dict }: { campaig
             </div>
             <div className="mt-2 pb-10">
                 <Tabs defaultValue="common" className="max-w-[1000px]">
-                    <div className="flex items-center justify-between">
-                        <TabsList>
-                            <TabsTrigger value="common">Common</TabsTrigger>
-                            {roles?.map((role) => (
-                                <TabsTrigger key={role.id} value={role.id}>{role.name}</TabsTrigger>
-                            ))}
-                        </TabsList>
-                        <Button disabled={changedQuestions.length === 0 && newQuestions.length === 0} onClick={saveQuestions}>Save</Button>
-                    </div>
+                    <TabsList>
+                        <TabsTrigger value="common">Common</TabsTrigger>
+                        {roles?.map((role) => (
+                            <TabsTrigger key={role.id} value={role.id}>{role.name}</TabsTrigger>
+                        ))}
+                    </TabsList>
                     <TabsContent value="common">
-                        <QuestionEditor campaignId={campaignId} questions={allCommonQuestions} handleQuestionUpdate={handleQuestionUpdate} dict={dict} />
-                        <NewQuestionButton currentRole="common" allRoleQuestions={allRoleQuestions} onAddNew={(type) => addNewQuestion(type, "common")} onAddExisting={(questionId) => { }} disableExisting={true} dict={dict} />
+                        <QuestionEditor questions={commonQuestions ?? []} handleQuestionUpdate={handleQuestionUpdate} dict={dict} />
+                        <NewQuestionButton currentRole="common" allRoleQuestions={rolesAndQuestions ?? []} onAddNew={(type) => addNewQuestion(type, "common")} onAddExisting={(questionId) => { }} disableExisting={true} dict={dict} />
                     </TabsContent>
-                    {allRoleQuestions?.map(({ role, questions }) => (
+                    {rolesAndQuestions?.map(({ role, questions }) => (
                         <TabsContent key={role.id} value={role.id}>
-                            <QuestionEditor campaignId={campaignId} possibleRole={role} questions={questions} handleQuestionUpdate={handleQuestionUpdate} dict={dict} />
-                            <NewQuestionButton currentRole={role.id} allRoleQuestions={allRoleQuestions} onAddNew={(type) => addNewQuestion(type, role.id)} onAddExisting={(questionId, oldRoleId) => addExistingQuestion(questionId, oldRoleId, role.id)} dict={dict} />
+                            <QuestionEditor possibleRole={role} questions={questions} handleQuestionUpdate={handleQuestionUpdate} dict={dict} />
+                            <NewQuestionButton currentRole={role.id} allRoleQuestions={rolesAndQuestions ?? []} onAddNew={(type) => addNewQuestion(type, role.id)} onAddExisting={(questionId, oldRoleId) => addExistingQuestion(questionId, oldRoleId, role.id)} dict={dict} />
                         </TabsContent>
                     ))}
                 </Tabs>
@@ -331,7 +297,7 @@ function ExistingQuestionsCombobox({ allRoleQuestions, setQuestion, setOldRoleId
     )
 }
 
-function QuestionEditor({ possibleRole, questions, handleQuestionUpdate, dict }: { campaignId: string, possibleRole?: RoleDetails, questions?: Question[], handleQuestionUpdate: (action: "update" | "delete", question: Question) => Promise<void>, dict: any }) {
+function QuestionEditor({ possibleRole, questions, handleQuestionUpdate, dict }: { possibleRole?: RoleDetails, questions?: Question[], handleQuestionUpdate: (action: "update" | "delete", question: Question) => Promise<void>, dict: any }) {
     const roleId = possibleRole?.id ?? "common";
 
     return (
@@ -350,6 +316,7 @@ function MultiOptionQuestionCard({ question, currentRole, possibleRole, handleQu
     const [title, setTitle] = useState<string>(question?.title ?? "");
     const [questionType, setQuestionType] = useState<string>(question?.question_type ?? "");
     const [options, setOptions] = useState<MultiOptionQuestionOption[]>(question?.data?.options ?? []);
+    const [required, setRequired] = useState<boolean>(question?.required ?? false);
 
     const handleDragEnd = async (result: DropResult) => {
         if (!result.destination) {
@@ -403,12 +370,28 @@ function MultiOptionQuestionCard({ question, currentRole, possibleRole, handleQu
         await handleQuestionUpdate('update', updatedQuestion);
     }
 
+    const toggleRequired = async () => {
+        const newRequired = !required;
+        setRequired(newRequired);
+        await handleQuestionUpdate('update', { ...question!, required: newRequired });
+    }
+
     return (
         <div className="flex flex-col p-2 border rounded-md gap-2 w">
             <div className="flex flex-col gap-1">
                 <div className="flex justify-between">
                     <Input className="max-w-[500px]" value={title} onChange={async (e) => await updateTitle(e.target.value)} />
                     <div className="flex items-center gap-1">
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant={required ? "default" : "outline"} onClick={toggleRequired}>
+                                    <Asterisk className="w-4 h-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>{required ? "Required" : "Optional"}</p>
+                            </TooltipContent>
+                        </Tooltip>
                         {
                             question?.roles && question?.roles.length > 1 && (
                                 <Tooltip>
@@ -510,6 +493,7 @@ function OptionDecorator({ questionType, index }: { questionType: string, index:
 
 function ShortAnswerQuestionCard({ question, currentRole, possibleRole, handleQuestionUpdate, dict }: { question?: Question, currentRole: string, possibleRole?: RoleDetails, handleQuestionUpdate: (action: "update" | "delete", question: Question) => Promise<void>, dict: any }) {
     const [title, setTitle] = useState(question?.title ?? "");
+    const [required, setRequired] = useState(question?.required ?? false);
 
     const updateTitle = async (title: string) => {
         setTitle(title);
@@ -525,11 +509,27 @@ function ShortAnswerQuestionCard({ question, currentRole, possibleRole, handleQu
         await handleQuestionUpdate('update', updatedQuestion);
     }
 
+    const toggleRequired = async () => {
+        const newRequired = !required;
+        setRequired(newRequired);
+        await handleQuestionUpdate('update', { ...question!, required: newRequired });
+    }
+
     return (
         <div className="flex flex-col justify-between p-2 border rounded-md gap-2 min-h-[120px]">
             <div className="flex justify-between">
                 <Input className="max-w-[500px]" value={title} onChange={async (e) => await updateTitle(e.target.value)} />
                 <div className="flex items-center gap-1">
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant={required ? "default" : "outline"} onClick={toggleRequired}>
+                                <Asterisk className="w-4 h-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>{required ? "Required" : "Optional"}</p>
+                        </TooltipContent>
+                    </Tooltip>
                 {
                     question?.roles && question?.roles.length > 1 && (
                         <Tooltip>
