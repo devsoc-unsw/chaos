@@ -71,11 +71,7 @@ export default function CampaignQuestions({ campaignId, orgId, dict }: { campaig
     const { mutateAsync: mutateUpdateQuestion } = useMutation({
         mutationFn: ({ questionId, question }: { questionId: string; question: Question }) =>
             updateQuestion(campaignId, questionId, question),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [`${campaignId}-common-questions`] });
-            queryClient.invalidateQueries({ queryKey: [`${campaignId}-all-role-questions`] });
-        },
-        onError: () => {
+        onSettled: () => {
             queryClient.invalidateQueries({ queryKey: [`${campaignId}-common-questions`] });
             queryClient.invalidateQueries({ queryKey: [`${campaignId}-all-role-questions`] });
         },
@@ -83,23 +79,15 @@ export default function CampaignQuestions({ campaignId, orgId, dict }: { campaig
 
     const { mutateAsync: mutateDeleteQuestion } = useMutation({
         mutationFn: (questionId: string) => deleteQuestion(campaignId, questionId),
-        onSuccess: () => {
+        onSettled: () => {
             queryClient.invalidateQueries({ queryKey: [`${campaignId}-common-questions`] });
             queryClient.invalidateQueries({ queryKey: [`${campaignId}-all-role-questions`] });
-        },
-        onError: () => {
-            queryClient.invalidateQueries({ queryKey: [`${campaignId}-common-questions`] });
-            queryClient.invalidateQueries({ queryKey: [`${campaignId}-all-role-questions`] });
-        },
+        }
     });
 
     const { mutateAsync: mutateCreateQuestion } = useMutation({
         mutationFn: (question: Question) => createQuestion(campaignId, question),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [`${campaignId}-common-questions`] });
-            queryClient.invalidateQueries({ queryKey: [`${campaignId}-all-role-questions`] });
-        },
-        onError: () => {
+        onSettled: () => {
             queryClient.invalidateQueries({ queryKey: [`${campaignId}-common-questions`] });
             queryClient.invalidateQueries({ queryKey: [`${campaignId}-all-role-questions`] });
         },
