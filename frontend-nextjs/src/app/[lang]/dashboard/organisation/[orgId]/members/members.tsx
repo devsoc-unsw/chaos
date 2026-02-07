@@ -52,18 +52,12 @@ export default function OrganisationMembers({ orgId, dict }: { orgId: string, di
   const userColumns = getColumns(handleDeleteMember, handleUpdateMemberRole, dict, isSuperuser);
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
+    <div>
+      <div className="flex items-center justify-between my-2">
         <h1 className="text-2xl font-bold">{dict.dashboard.members.members}</h1>
         <AddMemberDialog orgId={orgId} dict={dict} />
       </div>
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center justify-between">
-          <div>
-          </div>
-        </div>
         <DataTable columns={userColumns} data={members ?? []} />
-      </div>
     </div>
   )
 }

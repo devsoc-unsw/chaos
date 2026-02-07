@@ -40,8 +40,10 @@ export default function EmailTemplates({ orgId, dict }: { orgId: string, dict: a
 
 
   return (
-    <div className="flex flex-col gap-2">
-      <h1 className="text-2xl font-bold">{dict.dashboard.email_templates}</h1>
+    <div>
+      <div className="flex items-center justify-between my-2">
+        <h1 className="text-2xl font-bold">{dict.dashboard.email_templates}</h1>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
         {templates.map((template) => {
           return <EmailCard key={template.id} template={template} dict={dict} />
@@ -51,7 +53,6 @@ export default function EmailTemplates({ orgId, dict }: { orgId: string, dict: a
           <p className="text-xl font-semibold">{dict.dashboard.actions.new}</p>
         </Card>
       </div>
-
     </div>
   )
 }

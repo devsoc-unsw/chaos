@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function Campaigns({ orgId, dict }: { orgId: string, dict: any }) {
     const router = useRouter();
@@ -29,10 +30,9 @@ export default function Campaigns({ orgId, dict }: { orgId: string, dict: any })
         <div>
             <div className="flex items-center justify-between my-2">
                 <h1 className="text-2xl font-bold">{dict.common.campaigns}</h1>
-                <Button className="cursor-pointer" onClick={() => router.push(`/dashboard/organisation/${orgId}/campaigns/new`)}>
-                    <Plus className="w-10 h-10" />
-                    <p className="text-xl font-semibold">{dict.dashboard.actions.new}</p>
-                </Button>
+                <Link href={`/dashboard/organisation/${orgId}/campaigns/new`}>
+                    <Button variant="ghost" className="mr-1"><Plus className="w-8 h-8" /> </Button>
+                </Link>
             </div>
             <DataTable columns={columns} data={data ?? []} />
         </div>
