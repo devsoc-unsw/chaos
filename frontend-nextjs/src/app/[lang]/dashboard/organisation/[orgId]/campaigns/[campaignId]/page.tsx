@@ -4,11 +4,12 @@ import {
     QueryClient,
     useQuery,
   } from '@tanstack/react-query';
-import { getCampaign, getCampaignRoles } from '@/models/campaign';
+import { getCampaign, getCampaignAttachments, getCampaignRoles } from '@/models/campaign';
 import { getDictionary } from '@/app/[lang]/dictionaries';
 import CampaignDetails from './campaign-details';
 import { remark } from 'remark';
 import html from 'remark-html';
+import { getRatingCategories } from '@/models/rating';
   
   export default async function CampaignDetailsPage({ params }: { params: Promise<{ campaignId: string, lang: string }> }) {
     const { campaignId, lang } = await params;
@@ -23,6 +24,16 @@ import html from 'remark-html';
     await queryClient.prefetchQuery({
       queryKey: [`${campaignId}-campaign-roles`],
       queryFn: () => getCampaignRoles(campaignId),
+    });
+
+    await queryClient.prefetchQuery({
+      queryKey: [`${campaignId}-rating-categories`],
+      queryFn: () => getRatingCategories(campaignId),
+    });
+
+    await queryClient.prefetchQuery({
+      queryKey: [`${campaignId}-attachments`],
+      queryFn: () => getCampaignAttachments(campaignId),
     });
 
     const campaign = await getCampaign(campaignId);
