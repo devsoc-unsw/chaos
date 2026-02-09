@@ -127,12 +127,19 @@ pub async fn google_callback(
         "devsoc.app"
     };
     
-    let cookie = Cookie::build(("auth_token", token))
+    let cookie = Cookie::build(("auth_token", token.clone()))
         .http_only(true) // Prevent JavaScript access
         .expires(Expiration::DateTime(OffsetDateTime::now_utc() + time::Duration::days(5))) // Set an expiration time of 5 days, TODO: read from env?
         .secure(!state.is_dev_env)     // Send only over HTTPS, comment out for testing
         .domain(domain)
         .path("/");       // Available for all paths
+
+    let cn_cookie = Cookie::build(("auth_token", token))
+        .http_only(true)
+        .expires(Expiration::DateTime(OffsetDateTime::now_utc() + time::Duration::days(5)))
+        .secure(!state.is_dev_env)
+        .domain("devsoc.cn")
+        .path("/");
 
     let redirect_root = if state.is_dev_env {
         "http://localhost:3000"
@@ -149,8 +156,8 @@ pub async fn google_callback(
         None => format!("{redirect_root}/dashboard"),
     };
     
-    // Add the cookie and redirect
-    Ok((jar.add(cookie), Redirect::to(redirect_url.as_str())))
+    // Add cookies and redirect
+    Ok((jar.add(cookie).add(cn_cookie), Redirect::to(redirect_url.as_str())))
 }
 
 pub async fn logout(
@@ -170,13 +177,20 @@ pub async fn logout(
     .domain(domain)
     .path("/");
 
+    let empty_cn_cookie= Cookie::build(("auth_token", ""))
+        .http_only(true) // Prevent JavaScript access
+        .expires(Expiration::DateTime(OffsetDateTime::now_utc() + time::Duration::days(5)))
+        .secure(!state.is_dev_env)
+        .domain("devsoc.cn")
+        .path("/");
+
     let redirect = if state.is_dev_env {
         "http://localhost:3000"
     } else {
         "https://chaos.devsoc.app"
     };
 
-    Ok((jar.remove(empty_cookie), Redirect::to(redirect)))
+    Ok((jar.remove(empty_cookie).remove(empty_cn_cookie), Redirect::to(redirect)))
 }
 
 pub struct DevLoginHandler;
