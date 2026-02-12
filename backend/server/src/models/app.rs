@@ -1,6 +1,6 @@
 use crate::handler::answer::AnswerHandler;
 use crate::handler::application::ApplicationHandler;
-use crate::handler::auth::{google_callback, google_auth_init, DevLoginHandler};
+use crate::handler::auth::{DevLoginHandler, google_auth_init, google_callback, logout};
 use crate::handler::campaign::CampaignHandler;
 use crate::handler::email_template::EmailTemplateHandler;
 use crate::handler::offer::OfferHandler;
@@ -13,7 +13,7 @@ use crate::handler::user::UserHandler;
 use crate::models::email::{ChaosEmail, EmailCredentials};
 use crate::models::error::ChaosError;
 use crate::models::storage::Storage;
-use axum::routing::{delete, get, patch, post};
+use axum::routing::{delete, get, patch, post, put};
 use axum::{Json, Router};
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use reqwest::Client as ReqwestClient;
@@ -178,9 +178,10 @@ pub async fn init_app_state() -> AppState {
     state
 }
 
-pub async fn app() -> Result<Router, ChaosError> {
+pub async fn app() -> Result<(Router, AppState), ChaosError> {
     
     let state = init_app_state().await;
+    let state_clone = state.clone();
 
     let cors = CorsLayer::new()
         .allow_methods([Method::GET, Method::POST, Method::DELETE, Method::PUT, Method::PATCH])
@@ -191,18 +192,22 @@ pub async fn app() -> Result<Router, ChaosError> {
             "http://localhost:3000".parse().unwrap(),
             "https://chaos.devsoc.app".parse().unwrap(),
             "http://chaos.devsoc.app".parse().unwrap(),
+            "https://chaos.devsoc.cn".parse().unwrap(),
+            "http://chaos.devsoc.cn".parse().unwrap(),
             "https://chaosstaging.devsoc.app".parse().unwrap(),
             "http://chaosstaging.devsoc.app".parse().unwrap(),
         ]);
 
-    Ok(Router::new()
+    let router = Router::new()
         .route("/", get(|| async { "Join DevSoc! https://devsoc.app/" }))
         .route("/auth/google", get(google_auth_init))
+        .route("/auth/logout", get(logout))
         .route("/api/auth/callback/google", get(google_callback))
         .route("/api/v1/dev/super_admin_login", get(DevLoginHandler::dev_super_admin_login))
         .route("/api/v1/dev/org_admin_login", get(DevLoginHandler::dev_org_admin_login))
         .route("/api/v1/dev/user_login", get(DevLoginHandler::dev_user_login))
         .route("/api/v1/user", get(UserHandler::get))
+        .route("/api/v1/user/is_superuser", get(UserHandler::is_superuser))
         .route("/api/v1/user/name", patch(UserHandler::update_name))
         .route("/api/v1/user/pronouns", patch(UserHandler::update_pronouns))
         .route("/api/v1/user/gender", patch(UserHandler::update_gender))
@@ -261,6 +266,10 @@ pub async fn app() -> Result<Router, ChaosError> {
             post(OrganisationHandler::invite_user).delete(OrganisationHandler::remove_user),
         )
         .route(
+            "/api/v1/organisation/:organisation_id/member",
+            put(OrganisationHandler::update_member),
+        )
+        .route(
             "/api/v1/organisation/:organisation_id/admins",
             get(OrganisationHandler::get_admins)
                 .put(OrganisationHandler::update_admins)
@@ -272,6 +281,10 @@ pub async fn app() -> Result<Router, ChaosError> {
         .route(
             "/api/v1/organisation/:organisation_id/users",
             get(OrganisationHandler::get_users)
+        )
+        .route(
+            "/api/v1/organisation/:organisation_id/users",
+            put(OrganisationHandler::get_users)
         )
         // Campaign Rating Categories
         .route(
@@ -384,7 +397,7 @@ pub async fn app() -> Result<Router, ChaosError> {
                 .patch(CampaignHandler::upload_attachments),
         )
         .route(
-            "/api/v1/campaign/attachment/:attachment_id",
+            "/api/v1/campaign/:campaign_id/attachment/:attachment_id",
             delete(CampaignHandler::delete_attachment),
         )
         .route(
@@ -481,10 +494,8 @@ pub async fn app() -> Result<Router, ChaosError> {
         .route(
             "/api/v1/invite/:code", get(InviteHandler::get).post(InviteHandler::use_invite)
         )
-
-        
-
-        
         .layer(cors)
-        .with_state(state))
+        .with_state(state);
+        
+    Ok((router, state_clone))
 }

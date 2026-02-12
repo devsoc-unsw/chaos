@@ -3,13 +3,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { getCampaignBySlugs, getCampaignAttachments, getCampaignRoles } from "@/models/campaign";
 
-import { Calendar, ExternalLink, Mail, FileText, Video, Clock, Users, Briefcase, Info, Phone, SquareUserRound } from "lucide-react";
-import { dateToString } from "@/lib/utils"; 
+import { Calendar, ExternalLink, Mail, FileText, Video, Clock, Users, Briefcase, Info, Phone, Files } from "lucide-react";
+import { dateToString } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { notFound, useParams } from "next/navigation";
 import Link from "next/link";
 
-export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug: string, campaignSlug: string, dict: any, lang:string }) {
+export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug: string, campaignSlug: string, dict: any, lang: string }) {
     const params = useParams();
     const lang = params.lang
     const { data: campaignData } = useQuery({
@@ -173,20 +173,20 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
                             {/* Attachments */}
                             <div className="p-6">
                                 <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-1">
-                                    <SquareUserRound className="w-5 h-5" />
+                                    <Files className="w-5 h-5" />
                                     {dict.common.attachments}
                                 </h3>
                                 <div>
                                     {attachmentsData && attachmentsData.length > 0 && attachmentsData.map(attachment => (
                                         <div>
-                                            <a 
-                                                href={attachment.download_url} 
-                                                target="_blank" 
+                                            <a
+                                                href={attachment.download_url}
+                                                target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="text-blue-600 hover:text-blue-800 underline flex items-center gap-2"
                                             >
                                                 <FileText className="w-4 h-4" />
-                                                    {attachment.file_name} ({(attachment.file_size / 1024).toFixed(2)} KB)
+                                                {attachment.file_name} ({(attachment.file_size / 1024).toFixed(2)} KB)
                                             </a>
                                         </div>
                                     ))}

@@ -3,7 +3,7 @@
 //! This module provides functionality for managing job offers in recruitment campaigns,
 //! including creation, updates, and email notifications.
 
-use crate::models::email::{ChaosEmail, EmailCredentials, EmailParts};
+use crate::models::email::{ChaosEmail, EmailCredentials, EmailParts, EmailQueue};
 use crate::models::email_template::EmailTemplate;
 use crate::models::error::ChaosError;
 use chrono::{DateTime, Utc};
@@ -360,20 +360,13 @@ impl Offer {
         // )
         // .await?;
 
-        // ChaosEmail::send_message(
-        //     offer.user_name,
-        //     offer.user_email,
-        //     email_parts.subject,
-        //     email_parts.body,
-        //     email_credentials,
-        // )
-        // .await?;
-        let _ = sqlx::query!(
-            "UPDATE offers SET status = $2 WHERE id = $1",
-            id,
-            OfferStatus::Sent as OfferStatus
+        EmailQueue::add_to_queue(
+            Some(offer.user_name),
+            offer.user_email,
+            email_parts.subject,
+            email_parts.body,
+            transaction,
         )
-        .execute(transaction.deref_mut())
         .await?;
         Ok(())
     }

@@ -1,6 +1,6 @@
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 import { CampaignRole, RoleDetails } from "@/models/campaign";
-import { RoleCard } from "./rolecard";
+import { RoleCard } from "./role-card";
 
 export default function RoleSelector({
   roles,
@@ -66,8 +66,8 @@ export default function RoleSelector({
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="space-y-6">
           {/* Selected roles (draggable & reorderable) */}
-           <h3 className="text-sm font-semibold text-foreground mb-2">{dict.applicationpage.selectedroles}</h3>
-           <p className="text-sm text-muted-foreground mb-2">{dict.applicationpage.dragtoreorder}</p>
+           <h3 className="text-sm font-semibold text-foreground mb-2">{dict.applicationpage.selected_roles}</h3>
+           <p className="text-sm text-muted-foreground mb-2">{dict.applicationpage.drag_to_reorder}</p>
           <Droppable droppableId="selected-roles">
             {(provided) => (
               <div
@@ -76,7 +76,7 @@ export default function RoleSelector({
                 className="space-y-2 min-h-[12px] border-2 border-dashed rounded-lg p-2"
               >
                 {selectedRoleIds.length === 0 && (
-                    <div className="text-sm text-muted-foreground px-2 py-1">{dict.applicationpage.emptyselectedroles}</div>
+                    <div className="text-sm text-muted-foreground px-2 py-1">{dict.applicationpage.empty_selected_roles}</div>
                 )}
                 {selectedRoleIds.map((id, index) => {
                   const role = roles?.find((r) => String(r.id) === id);
@@ -105,7 +105,7 @@ export default function RoleSelector({
             )}
           </Droppable>
 
-          <h3 className="text-sm font-semibold text-foreground mb-2">{dict.applicationpage.availableroles}</h3>
+          <h3 className="text-sm font-semibold text-foreground mb-2">{dict.applicationpage.available_roles}</h3>
           <Droppable droppableId="available-roles">
             {(provided) => (
               <div
@@ -114,7 +114,7 @@ export default function RoleSelector({
                 className="space-y-2 min-h-[12px] border-2 border-dashed border-muted rounded-lg p-2"
               >
                 {selectedRoleIds.length === roles?.length && (
-                    <div className="text-sm text-muted-foreground px-2 py-1">{dict.applicationpage.emptyavailableroles}</div>
+                    <div className="text-sm text-muted-foreground px-2 py-1">{dict.applicationpage.empty_available_roles}</div>
                 )}
                 {availableRoles?.map((role, index) => (
                   <Draggable

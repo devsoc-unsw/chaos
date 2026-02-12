@@ -3,11 +3,11 @@ import {
   dehydrate,
   HydrationBoundary,
 } from "@tanstack/react-query";
-import ApplicationReview from "./applicationanswer";
+import ApplicationReview from "./application-answer";
 import { ApplicationDetails } from "@/models/application";
 import { getDictionary } from "@/app/[lang]/dictionaries";
 import { getCampaignRoles, getCampaign } from "@/models/campaign";
-import { getApplication } from "@/models/application";
+import { getApplication, getInProgressApplication } from "@/models/application";
 import { getAllRoleQuestions, getAllCommonQuestions } from "@/models/question";
 import { getAllRoleAnswers, getAllCommonAnswers} from "@/models/answer";
 import { redirect } from "next/navigation";
@@ -23,7 +23,7 @@ async function ApplicationPage({
 
   await queryClient.prefetchQuery({
     queryKey: [`application-${applicationId}`],
-    queryFn: () => getApplication(applicationId)
+    queryFn: () => getInProgressApplication(applicationId)
   })
 
     const application: ApplicationDetails | undefined = queryClient.getQueryData([`application-${applicationId}`]);

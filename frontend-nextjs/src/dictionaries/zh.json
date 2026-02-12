@@ -49,12 +49,17 @@
     "application_deadline": "申请截止日期",
     "apply": "申请",
 
+    "logout": "登出",
+
     "status": "状态",
     "email": "邮箱",
 
     "select": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
     "selected": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
-    "submit": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;"
+    "submit": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+    "min": "最小值",
+    "max": "最大值",
+    "add": "添加"
   },
   "applicationpage": {
         "empty_selected_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
@@ -98,6 +103,14 @@
       "published": "已发布",
       "draft": "草稿",
       "campaign_questions": "活动问题",
+      "no_roles_available": "暂无角色可用",
+      "no_rating_categories_available": "暂无评分类别可用",
+      "settings": {
+        "campaign_settings": "活动设置",
+        "general_settings": "通用设置",
+        "role_settings": "角色设置",
+        "rating_category_settings": "评分类别设置"
+      },
       "questions": {
         "answer_text": "答案文本",
         "add_option": "添加选项",
@@ -146,6 +159,7 @@
       "title": "你被邀请了",
       "invited_by": "邀请你加入他们的组织 on Chaos",
       "sent_to": "此邀请发送给",
+      "sent_to_note": "请使用正确的 Google 账户登录。",
       "login_cta": "点击这里创建 Chaos 账户",
       "accept_cta": "接受邀请",
       "used": "此邀请已被使用",

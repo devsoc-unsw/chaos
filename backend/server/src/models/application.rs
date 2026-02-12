@@ -17,6 +17,7 @@ use axum::{async_trait, RequestPartsExt};
 use axum::extract::{FromRef, FromRequestParts, Path};
 use axum::http::request::Parts;
 use crate::models::app::AppState;
+use crate::models::campaign::Campaign;
 use crate::models::rating::RatingDetails;
 use crate::service::answer::assert_answer_application_is_open;
 use crate::service::application::{assert_application_is_open};
@@ -232,6 +233,11 @@ impl Application {
         snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<i64, ChaosError> {
+        let campaign = Campaign::get(campaign_id, transaction).await?;
+        if !campaign.published {
+            return Err(ChaosError::BadRequest);
+        }
+
         // Check if application already exists
         let application = sqlx::query!(
             "
@@ -310,6 +316,11 @@ impl Application {
         snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<i64, ChaosError> {
+        let campaign = Campaign::get(campaign_id, transaction).await?;
+        if !campaign.published {
+            return Err(ChaosError::BadRequest);
+        }
+
         let id = snowflake_generator.real_time_generate();
 
         // Insert into table applications
@@ -667,39 +678,31 @@ impl Application {
                     a.status AS \"status: ApplicationStatus\", a.updated_at,
                     
                     coalesce(
-                        (SELECT 
-                        jsonb_agg(
-                            jsonb_build_object(
-                                'id', ar.id,
-                                'rater_id', reviewer.id,
-                                'rater_name', reviewer.name,
-                                'comment', ar.comment,
-                                'category_ratings', category_ratings_json,
-                                'updated_at', ar.updated_at
-                            ) ORDER BY ar.updated_at DESC
-                        ) FILTER (WHERE ar.id IS NOT NULL)
-                        FROM application_ratings ar
-                        JOIN users reviewer ON reviewer.id = ar.rater_id
-                        LEFT JOIN LATERAL (
-                            SELECT 
-                            coalesce(
-                                jsonb_agg(
-                                    jsonb_build_object(
-                                        'id', COALESCE(arc.id, 0),
-                                        'campaign_rating_category_id', crc.id,
-                                        'category_name', crc.name,
-                                        'rating', arc.rating
-                                    ) ORDER BY crc.id
-                                ) FILTER (WHERE crc.id IS NOT NULL),
-                                '[]'::jsonb
-                            ) as category_ratings_json
-                            FROM campaign_rating_categories crc
-                            LEFT JOIN application_rating_category_ratings arc 
-                                ON arc.campaign_rating_category_id = crc.id 
-                                AND arc.application_rating_id = ar.id
-                            WHERE crc.campaign_id = a.campaign_id
-                        ) cat_ratings ON true
-                        WHERE ar.application_id = a.id
+                        to_jsonb(
+                            array_agg(DISTINCT
+                                jsonb_build_object(
+                                    'id', ar.id,
+                                    'rater_id', reviewer.id,
+                                    'rater_name', reviewer.name,
+                                    'comment', ar.comment,
+                                    'category_ratings', (SELECT COALESCE(to_jsonb(array_agg(jsonb_build_object(
+                                                        'id', COALESCE(arc.id, 0),
+                                                        'campaign_rating_category_id', crc.id,
+                                                        'category_name', crc.name,
+                                                        'rating', arc.rating
+                                                    )
+                                                )
+                                            ),'[]'::jsonb
+                                        )
+                                        FROM campaign_rating_categories crc
+                                        LEFT JOIN application_rating_category_ratings arc 
+                                            ON arc.campaign_rating_category_id = crc.id 
+                                            AND arc.application_rating_id = ar.id
+                                        WHERE crc.campaign_id = a.campaign_id
+                                    ),
+                                    'updated_at', ar.updated_at
+                                )
+                            ) FILTER (WHERE ar.id IS NOT NULL)
                         ),
                         '[]'::jsonb
                     ) AS \"ratings!: Json<Vec<RatingDetails>>\"

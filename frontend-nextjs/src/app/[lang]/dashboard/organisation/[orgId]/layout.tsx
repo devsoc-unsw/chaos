@@ -35,7 +35,7 @@ export default async function Layout({ children, params }: { children: React.Rea
 
   await queryClient.prefetchQuery({
     queryKey: ['user'],
-    queryFn: getCurrentUser,
+    queryFn: () => getCurrentUser(),
   });
 
   await queryClient.prefetchQuery({
@@ -56,7 +56,7 @@ export default async function Layout({ children, params }: { children: React.Rea
         <AdminSidebar userRole={userRole} dict={dict} />
         <main className="w-full h-screen">
           <SidebarTrigger />
-          <div className="px-2 max-w-[1500px] mx-auto overflow-y-auto min-h-[calc(100vh-100px)]">
+          <div className="px-2 max-w-[1500px] mx-auto overflow-y-auto min-h-[calc(100vh-100px)] pb-20">
             {children}
           </div>
         </main>

@@ -7,5 +7,5 @@ export default async function Login({
 }) {
     const to = (await searchParams).to ?? "/dashboard";
 
-    redirect(`${process.env.NEXT_API_BASE_URL}/auth/google?to=${encodeURIComponent(to)}`)
+    redirect(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/google?to=${encodeURIComponent(to)}`)
 }

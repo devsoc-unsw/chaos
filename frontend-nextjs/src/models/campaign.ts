@@ -176,3 +176,9 @@ export async function getCampaignBySlugs(orgSlug: string, campaignSlug: string):
     // return await apiRequest<CampaignDetails>(`/api/v1/campaign/${orgSlug}/${campaignSlug}`);
     return await apiRequest<CampaignDetails>(`/api/v1/organisation/slug/${orgSlug}/campaign/slug/${campaignSlug}`);
 }
+
+export async function publishCampaign(campaignId: string): Promise<AppMessage> {
+    return await apiRequest<AppMessage>(`/api/v1/campaign/${campaignId}/publish`, {
+        method: "PATCH",
+    });
+}

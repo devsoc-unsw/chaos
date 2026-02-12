@@ -14,6 +14,8 @@ WORKDIR /backend/server
 RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS builder
+COPY migrations/ ./migrations/
+
 WORKDIR /backend/server
 COPY --from=planner /backend/server/recipe.json ./recipe.json
 
@@ -45,4 +47,4 @@ COPY --from=builder --chown=chaos:rust /backend/server/target/release/server /ba
 USER rust
 
 ENTRYPOINT ["/backend/server"]
-EXPOSE 8000
+EXPOSE 8080

@@ -13,7 +13,7 @@ use snowflake::SnowflakeIdGenerator;
 use sqlx::{FromRow, Postgres, Transaction};
 use std::ops::DerefMut;
 use uuid::Uuid;
-use crate::models::email::EmailCredentials;
+use crate::models::email::{EmailCredentials, EmailQueue};
 use crate::models::user::User;
 use crate::service::campaign::create_proper_slug;
 use nanoid::nanoid;
@@ -128,6 +128,7 @@ pub struct Member {
 #[derive(Deserialize, Serialize)]
 pub struct AdminUpdateList {
     /// List of user IDs to be administrators
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize_vec")]
     pub members: Vec<i64>,
 }
 
@@ -140,6 +141,14 @@ pub struct MemberToRemove {
     /// ID of the user to remove as administrator
     #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
     pub user_id: i64,
+}
+
+/// Data structure for updating a single member's role (promote or demote).
+#[derive(Deserialize)]
+pub struct MemberRoleUpdate {
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
+    pub user_id: i64,
+    pub role: OrganisationRole,
 }
 
 #[derive(Deserialize)]
@@ -626,6 +635,16 @@ impl Organisation {
         admin_to_remove: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
+        Self::update_member_role(organisation_id, admin_to_remove, OrganisationRole::User, transaction).await
+    }
+
+    /// Updates a single member's role (promote to Admin or demote to User). The user must already be in the organisation.
+    pub async fn update_member_role(
+        organisation_id: i64,
+        user_id: i64,
+        role: OrganisationRole,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
         let _ = sqlx::query!(
             "SELECT id FROM organisations WHERE id = $1",
             organisation_id
@@ -637,9 +656,9 @@ impl Organisation {
             "
             UPDATE organisation_members SET role = $3 WHERE user_id = $1 AND organisation_id = $2
         ",
-            admin_to_remove,
+            user_id,
             organisation_id,
-            OrganisationRole::User as OrganisationRole
+            role as OrganisationRole
         )
         .execute(transaction.deref_mut())
         .await?;
@@ -726,6 +745,7 @@ impl Organisation {
         inviting_user_id: i64,
         email: String,
         email_credentials: EmailCredentials,
+        is_dev_env: bool,
         snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<String, ChaosError> {
@@ -811,14 +831,18 @@ impl Organisation {
         .execute(transaction.deref_mut())
         .await?;
 
-        // TODO: Get SMTP credentials
-        // ChaosEmail::send_message(
-        //     "".to_string(),
-        //     email,
-        //     "You have been invited to join an organisation on Chaos".to_string(),
-        //     format!("You have been invited to join an organisation on Chaos. Please use the following link to accept the invite: https://chaos.devsoc.app/invite/${code}").to_string(),
-        //     email_credentials,
-        // ).await?;
+        if is_dev_env {
+            println!("Invite code for {email}: {code}")
+        } else {
+            ChaosEmail::send_message(
+                None,
+                email,
+                "You have been invited to join an organisation on Chaos".to_string(),
+                format!("You have been invited to join an organisation on Chaos. Please use the following link to accept the invite: https://chaos.devsoc.app/dashboard/invite/{code}").to_string(),
+                email_credentials
+            )
+            .await?;
+        }
 
         return Ok(code);
 }

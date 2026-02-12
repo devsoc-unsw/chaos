@@ -317,6 +317,8 @@ impl Rating {
             "
                 INSERT INTO application_ratings (id, application_id, rater_id, comment)
                     VALUES ($1, $2, $3, $4)
+                ON CONFLICT (application_id, rater_id)
+                DO UPDATE SET comment = $4, updated_at = NOW()
             ",
             rating_id,
             application_id,

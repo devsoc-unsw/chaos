@@ -49,12 +49,17 @@
     "application_deadline": "Application Deadline",
     "apply": "Apply",
 
+    "logout": "Logout",
+
     "status": "Status",
     "email": "Email",
 
     "select": "Select",
     "selected": "Selected",
-    "submit": "Submit"
+    "submit": "Submit",
+    "min": "Min",
+    "max": "Max",
+    "add": "Add"
   },
   "applicationpage": {
         "roles": "roles",
@@ -107,6 +112,14 @@
       "published": "Published",
       "draft": "Draft",
       "campaign_questions": "Campaign Questions",
+      "no_roles_available": "No roles available",
+      "no_rating_categories_available": "No rating categories available",
+      "settings": {
+        "campaign_settings": "Campaign Settings",
+        "general_settings": "General Settings",
+        "role_settings": "Role Settings",
+        "rating_category_settings": "Rating Category Settings"
+      },
       "questions": {
         "answer_text": "Answer Text",
         "add_option": "Add Option",
@@ -155,6 +168,7 @@
       "title": "You're invited",
       "invited_by": "has invited you to join their organisation on Chaos",
       "sent_to": "This invite was sent to",
+      "sent_to_note": "Please use the correct Google account to sign in.",
       "login_cta": "Click here to create a Chaos account",
       "accept_cta": "Accept invite",
       "used": "This invite has already been used",
