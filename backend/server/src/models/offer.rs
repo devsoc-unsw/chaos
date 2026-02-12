@@ -348,17 +348,16 @@ impl Offer {
         email_credentials: EmailCredentials,
     ) -> Result<(), ChaosError> {
         let offer = Offer::get(id, transaction).await?;
-        // TODO: Once Azhad done with email, then we need to uncomment this part for sending offers
-        // let email_parts = EmailTemplate::generate_email(
-        //     offer.user_name.clone(),
-        //     offer.role_name,
-        //     offer.organisation_name,
-        //     offer.campaign_name,
-        //     offer.expiry,
-        //     offer.email_template_id,
-        //     transaction,
-        // )
-        // .await?;
+        let email_parts = EmailTemplate::generate_email(
+            offer.user_name.clone(),
+            offer.role_name,
+            offer.organisation_name,
+            offer.campaign_name,
+            offer.expiry,
+            offer.email_template_id,
+            transaction,
+        )
+        .await?;
 
         EmailQueue::add_to_queue(
             Some(offer.user_name),
