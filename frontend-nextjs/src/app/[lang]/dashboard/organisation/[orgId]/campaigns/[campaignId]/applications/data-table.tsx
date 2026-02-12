@@ -41,6 +41,7 @@ interface DataTableProps<TData, TValue> {
     acceptedApplicationIds: Set<string>;
     acceptedApplications: Map<string, string>; // Map of applicationId -> selectedRoleId
     rejectedApplicationIds: Set<string>;
+    offerTemplateId?: string;
     renderSubComponent?: (props: { row: Row<TData> }) => React.ReactNode;
 }
 
@@ -52,6 +53,7 @@ export function ApplicationSummaryDataTable<TData, TValue>({
     acceptedApplicationIds,
     acceptedApplications,
     rejectedApplicationIds,
+    offerTemplateId,
     renderSubComponent,
 }: DataTableProps<TData, TValue>) {
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -90,11 +92,12 @@ export function ApplicationSummaryDataTable<TData, TValue>({
         const rejectionData = Array.from(rejectedApplicationIds);
 
         if (acceptanceData.length > 0) {
-            console.log("Sent Acceptance Email to applicationIDs:", acceptanceData);
+            const offerEmailPart = offerTemplateId ? `[EmailTemplate: ${offerTemplateId}] ` : '';
+            console.log(`Sent Acceptance Email ${offerEmailPart}to ApplicationIDs:`, acceptanceData);
         }
         
         if (rejectionData.length > 0) {
-            console.log("Sent Rejection Email to ApplicationIDs:", rejectionData);
+            console.log(`Sent Rejection Email to ApplicationIDs:`, rejectionData);
         }
     };
 

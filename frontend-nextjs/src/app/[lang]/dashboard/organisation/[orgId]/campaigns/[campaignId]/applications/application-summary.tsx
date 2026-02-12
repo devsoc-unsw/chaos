@@ -5,6 +5,7 @@ import { dateToString } from "@/lib/utils";
 import { ApplicationRatingSummary, getApplicationRatingsSummary} from "@/models/application";
 import { getRatingCategories, RatingDetails } from "@/models/rating"
 import { getCampaign, getCampaignRoles } from "@/models/campaign";
+import { getOrganisationEmailTemplates } from "@/models/email";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
@@ -225,6 +226,27 @@ export default function ApplicationSummary({ campaignId, orgId, dict }: { campai
         queryFn: () => getRatingCategories(campaignId),
     });
 
+    const { data: emailTemplates } = useQuery({
+        queryKey: [`${orgId}-email-templates`],
+        queryFn: () => getOrganisationEmailTemplates(orgId),
+    });
+
+    // Current way to differentiate an email template of "Offer"
+    // No Reject yet
+    // Could also make use of "Interview status"
+    const offerTemplate = useMemo(() => {
+        const template = emailTemplates?.find(template => 
+            template.name.toLowerCase().includes("offer")
+        );
+        
+        // Validation of email template organisation_id matches the campaign organisation_id
+        if (template && campaign && template.organisation_id !== campaign.organisation_id) {
+            console.error('Email template organisation_id does not match campaign organisation_id');
+            return undefined;
+        }
+        
+        return template;
+    }, [emailTemplates, campaign]);
     const handleAccept = useCallback((applicationId: string, appliedRoles: string[]) => {
         // If already accepted, we can undo the acception
         if (acceptedApplicationIds.has(applicationId)) {
@@ -250,8 +272,12 @@ export default function ApplicationSummary({ campaignId, orgId, dict }: { campai
         } else {
             // Single role applied, no popup needed - store the role ID
             setAcceptedApplications(prev => new Map(prev).set(applicationId, appliedRoles[0]));
+            
+            if (offerTemplate) {
+                console.log(`Accepted application ${applicationId} with role ${appliedRoles[0]} and email template ${offerTemplate.id} (${offerTemplate.name})`);
+            }
         }
-    }, [acceptedApplicationIds]);
+    }, [acceptedApplicationIds, offerTemplate]);
 
     const handleReject = useCallback((applicationId: string) => {
         // If already rejected, we can undo the rejection
@@ -278,16 +304,18 @@ export default function ApplicationSummary({ campaignId, orgId, dict }: { campai
             newSet.add(applicationId);
             return newSet;
         });
-        console.log(`Rejected application ${applicationId}`);
     }, [rejectedApplicationIds, acceptedApplications]);
 
     const handleRoleConfirm = useCallback((selectedRoleId: string) => {
         if (currentApplication) {
             // Store the selected role ID along with the application ID
             setAcceptedApplications(prev => new Map(prev).set(currentApplication.id, selectedRoleId));
-            console.log(`Selected role ${selectedRoleId} for application ${currentApplication.id}`);
+            
+            if (offerTemplate) {
+                console.log(`Accepted application ${currentApplication.id} with role ${selectedRoleId} and email template ${offerTemplate.id} (${offerTemplate.name})`);
+            }
         }
-    }, [currentApplication]);
+    }, [currentApplication, offerTemplate]);
 
     return (
         <div>
@@ -313,6 +341,7 @@ export default function ApplicationSummary({ campaignId, orgId, dict }: { campai
                     acceptedApplicationIds={acceptedApplicationIds}
                     acceptedApplications={acceptedApplications}
                     rejectedApplicationIds={rejectedApplicationIds}
+                    offerTemplateId={offerTemplate?.id}
                     renderSubComponent={({ row }) => <RatingsShelf columns={getColumns(dict, roleIdsToNames, ratingCategories ?? [], handleAccept, handleReject, acceptedApplicationIds, rejectedApplicationIds, ActionsCell)} ratings={row.original.ratings} applicationId={row.original.application_id} dict={dict} />}
                 />
             </div>
