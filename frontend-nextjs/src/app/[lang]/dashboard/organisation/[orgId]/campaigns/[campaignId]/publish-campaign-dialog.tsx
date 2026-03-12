@@ -20,9 +20,10 @@ import { CircleCheck } from "lucide-react";
 type PublishCampaignDialogProps = {
   onPublish: () => Promise<void> | void;
   label: string;
+  buttonClassName?: string;
 };
 
-export function PublishCampaignDialog({ onPublish, label }: PublishCampaignDialogProps) {
+export function PublishCampaignDialog({ onPublish, label, buttonClassName }: PublishCampaignDialogProps) {
   const [confirmPublish, setConfirmPublish] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -40,7 +41,7 @@ export function PublishCampaignDialog({ onPublish, label }: PublishCampaignDialo
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="outline" disabled={loading}>
+        <Button variant="outline" disabled={loading} className={buttonClassName}>
           <CircleCheck className="w-4 h-4 text-green-500 mr-1" />
           {label}
         </Button>
