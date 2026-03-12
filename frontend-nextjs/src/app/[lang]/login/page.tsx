@@ -9,6 +9,6 @@ export default async function Login({
 
     const raw = process.env.NEXT_PUBLIC_API_BASE_URL;
     const apiBase =
-        raw && String(raw).startsWith("http") ? raw : "http://localhost:8080/";
+        raw && String(raw).startsWith("http") ? raw : "http://localhost:8080";
     redirect(`${apiBase}/auth/google?to=${encodeURIComponent(to)}`);
 }

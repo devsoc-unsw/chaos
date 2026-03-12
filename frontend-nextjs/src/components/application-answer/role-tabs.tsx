@@ -15,10 +15,10 @@ export default function RoleTabs({
   dict: any;
 }) {
     return (
-        <div className="flex border-b border-accent mb-6 gap-2">
+        <div className="mb-4 flex min-w-max gap-2 border-b border-accent pb-2 sm:mb-6">
               <button
-                className={`px-4 py-2 font-medium ${
-                  activeTab === "general" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"
+                className={`rounded-full px-3 py-2 text-sm font-medium transition-colors sm:px-4 ${
+                  activeTab === "general" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
                 onClick={() => onChangeActiveTab("general")}
               >
@@ -27,8 +27,8 @@ export default function RoleTabs({
               {selectedRoleIds.map((rid) => (
                 <button
                   key={rid}
-                  className={`px-4 py-2 font-medium ${
-                    activeTab === rid ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"
+                  className={`rounded-full px-3 py-2 text-sm font-medium transition-colors sm:px-4 ${
+                    activeTab === rid ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
                   onClick={() => onChangeActiveTab(rid)}
                 >

@@ -22,7 +22,11 @@ export default function TabSwitcher({
   const canGoNext = currentIndex >= 0 && currentIndex < tabOrder.length - 1;
 
   return (
-    <div className="absolute bottom-0 left-0 z-10 flex items-center gap-1 p-4">
+    <div className="absolute bottom-0 left-0 right-0 z-10 flex items-center justify-between border-t bg-background/95 p-3 backdrop-blur supports-[backdrop-filter]:bg-background/70 sm:p-4">
+      <p className="text-xs text-muted-foreground sm:text-sm">
+        {currentIndex + 1}/{tabOrder.length}
+      </p>
+      <div className="flex items-center gap-1">
       <button
         aria-label="Previous tab"
         disabled={!canGoPrev}
@@ -39,6 +43,7 @@ export default function TabSwitcher({
       >
         <ChevronRight className="h-5 w-5" />
       </button>
+      </div>
     </div>
   );
 }
