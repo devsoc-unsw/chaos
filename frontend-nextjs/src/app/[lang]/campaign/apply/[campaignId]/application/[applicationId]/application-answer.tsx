@@ -5,11 +5,11 @@ import { getCampaign, getCampaignRoles } from "@/models/campaign";
 import { getInProgressApplication, submitApplication } from "@/models/application";
 import { Answer, getAllCommonAnswers, updateApplicationRoles } from "@/models/answer";
 import { useState, useEffect } from "react";
-import RoleSelector from "../../../../../../../components/application-answer/role-selector";
-import RoleTabs from "../../../../../../../components/application-answer/role-tabs";
-import MainContent from "../../../../../../../components/application-answer/main-content";
-import TabSwitcher from "../../../../../../../components/application-answer/tab-switcher";
-import ReviewCard from "@/components/application-answer/review-card";
+import RoleSelector from "@components/application-answer/role-selector";
+import RoleTabs from "@components/application-answer/role-tabs";
+import MainContent from "@components/application-answer/main-content";
+import TabSwitcher from "@components/application-answer/tab-switcher";
+import ReviewCard from "@components/application-answer/review-card";
 import { getAllCommonQuestions, linkQuestionsAndAnswers, Question, QuestionAndAnswer } from "@/models/question";
 import { getAllRoleAnswers } from "@/models/answer";
 import { getAllRoleQuestions } from "@/models/question";
@@ -252,22 +252,26 @@ export default function ApplicationReview({
   }, [selectedRoleIds, campaignId, applicationId, queryClient]);
 
   return (
-    <div className="min-h-screen bg-background w-full overflow-y-scroll [&::-webkit-scrollbar]:hidden">
-      <div className="w-full mx-auto p-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
+    <div className="min-h-screen w-full overflow-x-hidden bg-background">
+      <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+        <div className="mb-5 sm:mb-8">
+          <h1 className="mb-2 break-words text-2xl font-bold text-foreground sm:text-3xl">
             {campaign?.name}
           </h1>
-          <h3 className="text-xl text-muted-foreground">
+          <h3 className="text-base text-muted-foreground sm:text-xl">
             {formatDate(campaign?.starts_at)} - {formatDate(campaign?.ends_at)}
           </h3>
         </div>
         <div></div>
-        <div className="flex gap-8 w-full">
-          <RoleSelector roles={roles} maxRolesPerApplication={campaign?.max_roles_per_application} selectedRoleIds={selectedRoleIds} onChangeSelectedRoles={updateRoles} applicationId={applicationId} dict={dict} />
-          <div className="flex-1">
-            <RoleTabs roles={roles} selectedRoleIds={selectedRoleIds} activeTab={activeTab} onChangeActiveTab={setActiveTab} dict={dict} />
-            <div className="relative pb-14">
+        <div className="flex w-full flex-col gap-4 lg:gap-8 xl:flex-row">
+          <div className="w-full xl:w-80 xl:shrink-0">
+            <RoleSelector roles={roles} maxRolesPerApplication={campaign?.max_roles_per_application} selectedRoleIds={selectedRoleIds} onChangeSelectedRoles={updateRoles} applicationId={applicationId} dict={dict} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="overflow-x-auto pb-1">
+              <RoleTabs roles={roles} selectedRoleIds={selectedRoleIds} activeTab={activeTab} onChangeActiveTab={setActiveTab} dict={dict} />
+            </div>
+            <div className="relative pb-12 sm:pb-14">
               <MainContent campaignId={campaignId} applicationId={applicationId} activeTab={activeTab} dict={dict} updateRoleAnswers={updateQuestionAnswer} qaByRole={qaByRole} />
               <TabSwitcher roles={roles} selectedRoleIds={selectedRoleIds} activeTab={activeTab} onChangeActiveTab={setActiveTab} dict={dict} />
             </div>
