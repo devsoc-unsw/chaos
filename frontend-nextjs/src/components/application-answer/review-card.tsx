@@ -132,12 +132,12 @@ export default function ReviewCard({
             <button
                 type="button"
                 onClick={() => setOpen(true)}
-                className="fixed bottom-6 right-6 z-50 rounded-md border border-primary px-4 py-2 text-primary transition-colors cursor-pointer hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground focus-visible:bg-primary focus-visible:text-primary-foreground"
+                className="fixed bottom-4 left-4 right-4 z-50 inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-center text-sm font-semibold text-primary-foreground shadow-[0_10px_30px_-12px_hsl(var(--primary))] transition-all hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:translate-y-0 active:brightness-100 sm:bottom-6 sm:left-auto sm:right-6 sm:w-auto sm:px-5"
             >
                 {dict.applicationpage.submit_answers}
             </button>
             <Dialog open={open} onOpenChange={setOpen}>
-                <DialogContent className="!max-w-none !w-[40vw] max-h-[80vh] overflow-y-auto flex flex-col">
+                <DialogContent className="flex max-h-[85vh] w-[95vw] max-w-3xl flex-col overflow-y-auto sm:w-[92vw]">
                     <div className="sticky top-0 z-10 bg-background">
                         <DialogHeader>
                             <DialogTitle>
@@ -148,14 +148,14 @@ export default function ReviewCard({
                             </DialogDescription>
                         </DialogHeader>
                     </div>
-                    <div className="flex-1 overflow-y-auto px-6 pb-6 pt6">
+                    <div className="flex-1 overflow-y-auto px-1 pb-4 pt-4 sm:px-2 sm:pb-6">
                         {questionsAndAnswersByRole.has('general') && (
                             (() => {
                                 const qas = questionsAndAnswersByRole.get('general');
                                 const role = roles?.find(r => String(r.id) === String('general'));
                                 return (
                                     <div key="general" className="mb-6">
-                                        <h3 className="text-xl font-bold">
+                                        <h3 className="text-lg font-bold sm:text-xl">
                                             General
                                         </h3>
                                         {!qas || qas.length === 0 ? (
@@ -165,13 +165,13 @@ export default function ReviewCard({
                                                 const answer = renderAnswerPreview(qa)
                                                 return (
                                                     <div key={qa.question_id} className="mb-2">
-                                                        <div className="flex">
-                                                            <h4 className="text-l font-semibold">{qa.text}</h4>
+                                                        <div className="flex items-start gap-1">
+                                                            <h4 className="text-sm font-semibold sm:text-base">{qa.text}</h4>
                                                             {qa.required && (
                                                                 <div className="text-destructive font-bold">*</div>
                                                             )}
                                                         </div>
-                                                        <div className="mt-2 rounded bg-muted p-3 text-sm overflow-x-auto">
+                                                        <div className="mt-2 overflow-x-auto rounded bg-muted p-3 text-sm">
                                                             {answer}
                                                         </div>
                                                     </div>
@@ -191,7 +191,7 @@ export default function ReviewCard({
 
                             return (
                                 <div key={roleId} className="mb-6">
-                                    <h3 className="text-xl font-bold">
+                                    <h3 className="text-lg font-bold sm:text-xl">
                                         {role?.name ?? `Role ${roleId}`}
                                     </h3>
                                     {!qas || qas.length === 0 ? (
@@ -201,13 +201,13 @@ export default function ReviewCard({
                                             const answer = renderAnswerPreview(qa)
                                             return (
                                                 <div key={qa.question_id} className="mb-2">
-                                                    <div className="flex">
-                                                        <h4 className="text-l font-semibold">{qa.text}</h4>
+                                                    <div className="flex items-start gap-1">
+                                                        <h4 className="text-sm font-semibold sm:text-base">{qa.text}</h4>
                                                         {qa.required && (
                                                             <div className="text-destructive font-bold">*</div>
                                                         )}
                                                     </div>
-                                                    <div className="mt-2 rounded bg-muted p-3 text-sm overflow-x-auto">
+                                                    <div className="mt-2 overflow-x-auto rounded bg-muted p-3 text-sm">
                                                         {answer}
                                                     </div>
                                                 </div>
@@ -218,13 +218,13 @@ export default function ReviewCard({
                             );
                         })}
                     </div>
-                    <div className="sticky bottom-0 z-10 bg-background border-t p-4">
+                    <div className="sticky bottom-0 z-10 border-t bg-background p-4">
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <span className="inline-block w-full">
                                         <Button
-                                            className="w-full bg-background text-primary border border-primary transition-colors cursor-pointer hover:bg-primary hover:text-primary-foreground active:bg-primary active:text-primary-foreground focus-visible:bg-primary focus-visible:text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="w-full rounded-lg border border-primary bg-primary text-primary-foreground transition-all hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0 active:brightness-100 disabled:opacity-50 disabled:cursor-not-allowed"
                                             type="button"
                                             disabled={requiredUnanswered}
                                             onClick={() => handleSubmit()}
