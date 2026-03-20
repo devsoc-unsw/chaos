@@ -19,6 +19,7 @@ use crate::service::rating::{
     assert_user_is_rating_creator_and_organisation_member,
 };
 use crate::service::role::user_is_role_admin;
+use crate::service::comment::user_is_comment_author;
 use axum::extract::{FromRef, FromRequestParts, Path};
 use axum::http::request::Parts;
 use axum::response::{IntoResponse, Redirect, Response};
@@ -626,6 +627,50 @@ where
         tx.commit().await?;
 
         Ok(AnswerOwner { user_id })
+    }
+}
+
+/// Comment author information for a specific comment.
+///
+/// Ensures the request user is the author of the given comment.
+pub struct CommentAuthorGivenApplicationAndCommentId {
+    /// ID of the comment author
+    pub user_id: i64,
+}
+
+/// Extractor for comment authors.
+///
+/// This extractor validates that the authenticated user is the `comments.author_id`
+/// for the provided `(application_id, comment_id)` route parameters.
+#[async_trait]
+impl<S> FromRequestParts<S> for CommentAuthorGivenApplicationAndCommentId
+where
+    AppState: FromRef<S>,
+    S: Send + Sync,
+{
+    type Rejection = ChaosError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let app_state = AppState::from_ref(state);
+        let user_id = extract_user_id_from_request(parts, &app_state).await?;
+
+        let Path(ids) = parts
+            .extract::<Path<HashMap<String, i64>>>()
+            .await
+            .map_err(|_| ChaosError::BadRequest)?;
+
+        let comment_id = ids.get("comment_id").ok_or(ChaosError::BadRequest)?.clone();
+
+        let mut tx = app_state.db.begin().await?;
+        let is_owner = user_is_comment_author(user_id, comment_id, &mut tx).await?;
+
+        if !is_owner {
+            return Err(ChaosError::Unauthorized);
+        }
+
+        tx.commit().await?;
+
+        Ok(CommentAuthorGivenApplicationAndCommentId { user_id })
     }
 }
 

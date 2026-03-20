@@ -1,17 +1,45 @@
 "use client";
 
-import { ColumnDef, Row } from "@tanstack/react-table";
-import moment from "moment";
+import { ColumnDef } from "@tanstack/react-table";
+import { useEffect, useState } from "react";
 
-import { MoreHorizontal, ChevronDown, ChevronRight } from "lucide-react"
+import { ChevronDown, ChevronRight } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { ApplicationRatingSummary } from "@/models/application";
+import { ApplicationRatingSummary, ApplicationStatus } from "@/models/application";
 import { RatingCategory } from "@/models/rating";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { usePathname } from "next/navigation";
 
-export function getColumns(dict: any, roleIdsToNames: Record<string, string>, ratingCategories: RatingCategory[]): ColumnDef<ApplicationRatingSummary>[] {
+function ApplicantLinkCell({ app }: { app: ApplicationRatingSummary }) {
+  const pathname = usePathname();
+  const base = pathname.endsWith("/applications")
+    ? pathname
+    : `${pathname}/applications`;
+
+  return (
+    <Link
+      href={`${base}/${app.application_id}`}
+      className="text-primary hover:underline"
+    >
+      {app.user_name}
+    </Link>
+  );
+}
+
+export function getColumns(
+    dict: any,
+    roleIdsToNames: Record<string, string>,
+    ratingCategories: RatingCategory[],
+    onPrivateStatusChange: (applicationId: string, status: ApplicationStatus) => Promise<void>
+): ColumnDef<ApplicationRatingSummary>[] {
     const ratingColumns = ratingCategories.map((category) => {
         return {
             id: `rating-${category.id}`,
@@ -32,15 +60,12 @@ export function getColumns(dict: any, roleIdsToNames: Record<string, string>, ra
             }
         }
     }) as ColumnDef<ApplicationRatingSummary>[];
-    
+
     return [
-        {
-            header: "ID",
-            accessorKey: "application_id",
-        },
         {
             header: dict.dashboard.campaigns.application_summary_page.applicant_name,
             accessorKey: "user_name",
+            cell: ({ row }) => <ApplicantLinkCell app={row.original} />,
         },
         {
             header: dict.common.email,
@@ -77,6 +102,17 @@ export function getColumns(dict: any, roleIdsToNames: Record<string, string>, ra
             },
         },
         {
+            id: "private-status",
+            header: dict.dashboard.campaigns.application_summary_page.private_status ?? "Status",
+            cell: ({ row }) => (
+                <PrivateStatusCell
+                    app={row.original}
+                    dict={dict}
+                    onPrivateStatusChange={onPrivateStatusChange}
+                />
+            ),
+        },
+        {
             id: "actions",
             cell: ({ row }) => {
                 return (
@@ -96,4 +132,49 @@ export function getColumns(dict: any, roleIdsToNames: Record<string, string>, ra
             }
         }
     ];
+}
+
+function PrivateStatusCell({
+    app,
+    dict,
+    onPrivateStatusChange,
+}: {
+    app: ApplicationRatingSummary;
+    dict: any;
+    onPrivateStatusChange: (applicationId: string, status: ApplicationStatus) => Promise<void>;
+}) {
+    const [value, setValue] = useState<ApplicationStatus>(app.private_status ?? "Pending");
+    console.log(app);
+    useEffect(() => {
+        setValue(app.private_status ?? "Pending");
+    }, [app.private_status]);
+
+    const handleChange = async (newValue: ApplicationStatus) => {
+        setValue(newValue);
+        await onPrivateStatusChange(app.application_id, newValue);
+    };
+
+    return (
+        <div className="w-[140px]">
+            <Select
+                value={value}
+                onValueChange={(v: ApplicationStatus) => handleChange(v)}
+            >
+                <SelectTrigger>
+                    <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="Successful" className="focus:bg-muted">
+                        {dict.dashboard.campaigns.application_summary_page.accept ?? "Accept"}
+                    </SelectItem>
+                    <SelectItem value="Rejected" className="focus:bg-muted">
+                        {dict.dashboard.campaigns.application_summary_page.reject ?? "Reject"}
+                    </SelectItem>
+                    <SelectItem value="Pending" className="focus:bg-muted">
+                        {dict.dashboard.campaigns.application_summary_page.pending ?? "Pending"}
+                    </SelectItem>
+                </SelectContent>
+            </Select>
+        </div>
+    );
 }

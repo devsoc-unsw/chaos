@@ -27,6 +27,8 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 import Link from "next/link";
+import ApplicationRatingForm from "./application-rating-form";
+import { Separator } from "@/components/ui/separator";
 
 export default function ReviewCampaignApplications({ campaignId, orgId, dict }: { campaignId: string, orgId: string, dict: any }) {
     const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
@@ -46,6 +48,7 @@ export default function ReviewCampaignApplications({ campaignId, orgId, dict }: 
         queryKey: [`${campaignId}-campaign-applications`],
         queryFn: () => getCampaignApplications(campaignId),
     });
+
 
     const [ratedApplications, setRatedApplications] = useState<Record<string, boolean>>(
         applications?.reduce((acc, a) => {
@@ -109,7 +112,11 @@ export default function ReviewCampaignApplications({ campaignId, orgId, dict }: 
                     <ResizablePanel defaultSize={80}>
                         <div className="p-2 h-full">
                             {selectedAppId ? (
-                                <ApplicationDetailsComponent applicationId={selectedAppId} campaignId={campaignId} dict={dict} ratedApplications={ratedApplications} setRatedApplications={setRatedApplications} />
+                                <>
+                                    <ApplicationDetailsComponent applicationId={selectedAppId} campaignId={campaignId} dict={dict} ratedApplications={ratedApplications} setRatedApplications={setRatedApplications}>
+                                        <ApplicationRatingForm applicationId={selectedAppId} campaignId={campaignId} dict={dict} />
+                                    </ApplicationDetailsComponent>
+                                </>
                             ) : (
                                 <Empty>
                                     <EmptyHeader>

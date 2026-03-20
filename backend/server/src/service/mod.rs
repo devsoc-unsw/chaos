@@ -7,6 +7,7 @@
 //! - `application`: Handles application creation, updates, and retrieval
 //! - `auth`: Manages authentication and authorization
 //! - `campaign`: Handles campaign-related operations
+//! //! - `comment`: Handles commentrelated operations
 //! - `email_template`: Manages email template operations
 //! - `jwt`: Handles JWT token generation and validation
 //! - `oauth2`: Manages OAuth2 authentication flow
@@ -20,6 +21,7 @@ pub mod answer;
 pub mod application;
 pub mod auth;
 pub mod campaign;
+pub mod comment;
 pub mod email_template;
 pub mod jwt;
 pub mod oauth2;

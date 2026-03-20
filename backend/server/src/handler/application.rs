@@ -9,11 +9,13 @@
 use crate::models::app::{AppMessage, AppState};
 use crate::models::application::{Application, ApplicationRoleUpdate, ApplicationStatus, OpenApplicationByApplicationId};
 use crate::models::auth::{ApplicationAdmin, ApplicationOwner, ApplicationOwnerOrReviewer, ApplicationReviewerGivenApplicationId, AuthUser, CampaignAdmin, CampaignOrgMember};
+use crate::models::email::EmailQueue;
 use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
+use serde::Deserialize;
 use serde_json::json;
 use crate::models::rating::{NewRating, NewApplicationRating, Rating};
 
@@ -418,7 +420,7 @@ impl ApplicationHandler {
     /// 
     /// * `Result<impl IntoResponse, ChaosError>` - List of average ratings or error
     pub async fn get_application_ratings_summary(
-        _: CampaignOrgMember,
+        _: CampaignAdmin,
         Path(campaign_id): Path<i64>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {

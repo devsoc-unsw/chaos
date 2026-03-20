@@ -2,16 +2,25 @@
 
 import { ApplicationSummaryDataTable } from "./data-table";
 import { dateToString } from "@/lib/utils";
-import { ApplicationRatingSummary, getApplicationRatingsSummary} from "@/models/application";
+import {
+    ApplicationRatingSummary,
+    getApplicationRatingsSummary,
+    updateApplicationPrivateStatus,
+    ApplicationStatus,
+} from "@/models/application";
+import { queueCampaignOutcomeEmails } from "@/models/email";
 import { getRatingCategories, RatingDetails } from "@/models/rating"
 import { getCampaign, getCampaignRoles } from "@/models/campaign";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { getColumns } from "./columns";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { ColumnDef } from "@tanstack/react-table";
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { SendEmailsModal, type SendEmailsApplicant } from "./send-email-modal";
+import { Send } from "lucide-react";
 
 function RatingsShelf({ columns, ratings, dict }: { columns: ColumnDef<ApplicationRatingSummary>[], ratings: RatingDetails[], dict: any }) {
     if (!ratings || ratings.length === 0) {
@@ -41,9 +50,6 @@ function RatingsShelf({ columns, ratings, dict }: { columns: ColumnDef<Applicati
                         <TableCell>
                             {rating.category_ratings.filter((cr) => cr.rating).map((cr) => cr.rating!).reduce((acc, rating) => acc! + rating!, 0) / rating.category_ratings.filter((cr) => cr.rating).length}
                         </TableCell>
-
-                        {/* // Add empty cell at end to make shelf row have same number of cells as parent */}
-                        <TableCell />
                     </TableRow>
                 ))
             }
@@ -51,7 +57,23 @@ function RatingsShelf({ columns, ratings, dict }: { columns: ColumnDef<Applicati
     )
 }
 
+function toApplicant(
+    app: ApplicationRatingSummary,
+    roleIdsToNames: Record<string, string>
+): SendEmailsApplicant {
+    const applied = app.applied_roles ?? [];
+    return {
+        id: app.application_id,
+        name: app.user_name,
+        email: app.user_email,
+        roles: applied.map((rid) => roleIdsToNames[rid] ?? rid),
+    };
+}
+
 export default function ApplicationSummary({ campaignId, orgId, dict }: { campaignId: string, orgId: string, dict: any }) {
+    const queryClient = useQueryClient();
+    const [sendModalOpen, setSendModalOpen] = useState(false);
+
     const { data: campaign } = useQuery({
         queryKey: [`${campaignId}-campaign-details`],
         queryFn: () => getCampaign(campaignId),
@@ -77,7 +99,39 @@ export default function ApplicationSummary({ campaignId, orgId, dict }: { campai
     const { data: ratingCategories } = useQuery({
         queryKey: [`${campaignId}-rating-categories`],
         queryFn: () => getRatingCategories(campaignId),
-    })
+    });
+
+    const { mutateAsync: mutatePrivateStatus } = useMutation({
+        mutationFn: ({ applicationId, status }: { applicationId: string; status: ApplicationStatus }) =>
+            updateApplicationPrivateStatus(applicationId, status),
+        onSettled: () => {
+            // inavlidate queries similar to how we do in the question component type beat so frontend is in sync w/ backend
+            queryClient.invalidateQueries({ queryKey: [`${campaignId}-application-ratings-summary`] });
+        },
+    });
+
+    const handlePrivateStatusChange = useCallback(
+        async (applicationId: string, status: ApplicationStatus) => {
+            await mutatePrivateStatus({ applicationId, status });
+        },
+        [mutatePrivateStatus]
+    );
+
+    const members = data ?? [];
+    const acceptedApplicants = useMemo(
+        () =>
+            members
+                .filter((a) => a.private_status === "Successful")
+                .map((a) => toApplicant(a, roleIdsToNames)),
+        [members, roleIdsToNames]
+    );
+    const rejectedApplicants = useMemo(
+        () =>
+            members
+                .filter((a) => a.private_status === "Rejected")
+                .map((a) => toApplicant(a, roleIdsToNames)),
+        [members, roleIdsToNames]
+    );
 
     return (
         <div>
@@ -93,14 +147,36 @@ export default function ApplicationSummary({ campaignId, orgId, dict }: { campai
                     <h2 className="text-lg font-medium">{campaign?.name}</h2>
                     <p className="text-sm text-gray-500">{dateToString(campaign?.starts_at ?? "")} - {dateToString(campaign?.ends_at ?? "")}</p>
                 </div>
+                <Button
+                    variant="outline"
+                    onClick={() => setSendModalOpen(true)}
+                    className="gap-2"
+                    disabled={acceptedApplicants.length === 0 && rejectedApplicants.length === 0}
+                >
+                    <Send className="size-4" />
+                    {dict.dashboard.campaigns.send_outcome_emails ?? "Send outcome emails"}
+                </Button>
             </div>
+            <SendEmailsModal
+                open={sendModalOpen}
+                onOpenChange={setSendModalOpen}
+                orgId={orgId}
+                acceptedApplicants={acceptedApplicants}
+                rejectedApplicants={rejectedApplicants}
+                organisationName={campaign?.organisation_name}
+                campaignName={campaign?.name}
+                campaignEndsAt={campaign?.ends_at}
+                onSend={async (payload) => {
+                    await queueCampaignOutcomeEmails(campaignId, payload);
+                }}
+            />
             <div className="mt-2">
                 <ApplicationSummaryDataTable
-                    columns={getColumns(dict, roleIdsToNames, ratingCategories ?? [])}
+                    columns={getColumns(dict, roleIdsToNames, ratingCategories ?? [], handlePrivateStatusChange)}
                     data={data ?? []}
                     roles={roles ?? []}
                     dict={dict}
-                    renderSubComponent={({ row }) => <RatingsShelf columns={getColumns(dict, roleIdsToNames, ratingCategories ?? [])} ratings={row.original.ratings} dict={dict} />}
+                    renderSubComponent={({ row }) => <RatingsShelf columns={getColumns(dict, roleIdsToNames, ratingCategories ?? [], handlePrivateStatusChange)} ratings={row.original.ratings} dict={dict}/>}
                 />
             </div>
         </div>

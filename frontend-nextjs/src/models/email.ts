@@ -79,3 +79,29 @@ export async function updateEmailTemplate(templateId: string, template: EmailTem
 export async function deleteEmailTemplate(templateId: string): Promise<AppMessage> {
     return await apiRequest<AppMessage>(`/api/v1/email_template/${templateId}`, { method: "DELETE" });
 }
+
+/** Batch queue for `POST /api/v1/campaign/:id/outcome-emails/queue` (worker sends via `EmailQueue`). */
+export interface QueueOutcomeEmailsPayload {
+    emails: {
+        id: string;
+        name: string;
+        email: string;
+        role: string;
+        subject: string;
+        body: string;
+    }[];
+}
+
+export async function queueCampaignOutcomeEmails(
+    campaignId: string,
+    payload: QueueOutcomeEmailsPayload,
+): Promise<AppMessage> {
+    console.log(payload);
+    return await apiRequest<AppMessage>(
+        `/api/v1/offer/${campaignId}/outcome-emails/queue`,
+        {
+            method: "POST",
+            body: payload,
+        },
+    );
+}

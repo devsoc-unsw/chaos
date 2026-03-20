@@ -1,17 +1,8 @@
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
-export default function CopyButton({
-    value,
-    children,
-    className
-}: {
-    value: string;
-    children: React.ReactNode;
-    className?: string;
-}) {
+export default function CopyButton({ value, children }: { value: string, children: React.ReactNode }) {
     const [copying, setCopying] = useState(false);
 
     const handleCopy = () => {
@@ -23,7 +14,7 @@ export default function CopyButton({
     }
 
     return (
-        <Button onClick={handleCopy} variant="outline" className={cn("cursor-pointer relative", className)}>
+        <Button onClick={handleCopy} variant="outline" className="cursor-pointer relative ">
             <div className={copying ? "invisible flex gap-1 items-center justify-center" : "flex gap-1 items-center justify-center"}>
                 {children}
             </div>
