@@ -709,9 +709,9 @@ impl Application {
                 FROM applications a
                 JOIN application_roles applied_roles ON applied_roles.application_id = a.id
                 JOIN campaign_roles ON campaign_roles.id = applied_roles.campaign_role_id
-                LEFT JOIN application_ratings ar ON ar.application_id = a.id
                 JOIN users u ON u.id = a.user_id
-                LEFT JOIN users AS reviewer ON reviewer.id = ar.rater_id
+                LEFT JOIN application_ratings ar ON ar.application_id = a.id
+                LEFT JOIN users reviewer ON reviewer.id = ar.rater_id
                 WHERE a.campaign_id = $1 AND a.submitted = true
                 GROUP BY a.id, u.name, u.email, a.status, a.updated_at
                 ORDER BY a.id ASC
