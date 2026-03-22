@@ -178,10 +178,10 @@ export default function MainContent({
     };
 
     return (
-        <div className="border-b border-gray-200 mb-6 gap-2 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-            <div>
+        <div className="mb-6 rounded-xl border bg-card p-4 sm:p-6">
+            <div className="space-y-4">
               {questionsAndAnswers.length === 0 ? (
-                <p>{dict.applicationpage.no_questions}</p>
+                <p className="text-sm text-muted-foreground">{dict.applicationpage.no_questions}</p>
               ) : (
                 questionsAndAnswers.map((qa) => (
                   <div key={qa.question_id}>
