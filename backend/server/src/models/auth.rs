@@ -766,7 +766,7 @@ pub struct OfferAdmin {
 }
 
 /// Extractor for offer administrators.
-/// 
+///
 /// This extractor is used in route handlers to ensure that the request
 /// comes from a user with offer administrator privileges.
 #[async_trait]
