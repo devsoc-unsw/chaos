@@ -492,10 +492,6 @@ pub async fn app() -> Result<(Router, AppState), ChaosError> {
             "/api/v1/comment/create",
             post(CommentHandler::create_comment),
         )
-        .route(
-            "/api/v1/comment/:application_id/get",
-            get(CommentHandler::get_)
-        )
         // Invite routes
         // - GET  /api/v1/invite/:code  -> invite details
         // - POST /api/v1/invite/:code  -> accept invite
