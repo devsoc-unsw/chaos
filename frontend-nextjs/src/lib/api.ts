@@ -1,5 +1,4 @@
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://chaos-api.devsoc.app";
 
 const isServer = typeof window === "undefined";
 
@@ -84,7 +83,7 @@ export async function apiRequest<T>(
         window.location.href = `/login?to=${encodeURIComponent(window.location.pathname)}`;
       }
     }
-
+    
     throw new ApiError(
       response.status,
       response.statusText,
