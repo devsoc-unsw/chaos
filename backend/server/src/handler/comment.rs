@@ -105,8 +105,8 @@ impl CommentHandler {
         Ok(AppMessage::OkMessage("Successfully deleted comment"))
     }
 
-    pub async fn get_comments_by_application(
+    // pub async fn get_comments_by_application(
         
-    )
+    // )
 }
 
