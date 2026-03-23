@@ -8,10 +8,19 @@ import { getAllCommonAnswers, getAllRoleAnswers } from "@/models/answer";
 import { getAllCommonQuestions, getAllRoleQuestions, linkQuestionsAndAnswers } from "@/models/question";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label"
 import { useState, useEffect } from "react";
-import ApplicationRatingForm from "./application-rating-form";
 
-export default function ApplicationDetailsComponent({ applicationId, campaignId, dict, ratedApplications, setRatedApplications, children }: { applicationId: string, campaignId: string, dict: any, ratedApplications: Record<string, boolean>, setRatedApplications: (ratedApplications: Record<string, boolean>) => void, children?: React.ReactNode;}) {
+export default function ApplicationRatingForm({ applicationId, campaignId, dict }: { applicationId: string, campaignId: string, dict: any }) {
     const queryClient = useQueryClient();
     
     const { data: application } = useQuery({
@@ -138,10 +147,6 @@ export default function ApplicationDetailsComponent({ applicationId, campaignId,
         // setRating(undefined);
         setCategoryRatings([]);
         setComment(undefined);
-        setRatedApplications({
-            ...ratedApplications,
-            [applicationId]: true,
-        });
 
         await queryClient.invalidateQueries({ queryKey: [`${applicationId}-application-rating`] });
         await queryClient.invalidateQueries({ queryKey: [`${applicationId}-application-details`] });
@@ -191,43 +196,48 @@ export default function ApplicationDetailsComponent({ applicationId, campaignId,
     });
 
     return (
-        <ScrollArea className="h-full">
-            <p className="text-xs text-gray-500 font-mono">{dict.common.application} #{application?.id}</p>
-            <h1 className="text-2xl font-medium">{application?.user.name}</h1>
+        <div className="flex flex-col gap-2">
+                    <p className="text-lg font-semibold">{dict.dashboard.campaigns.application_review_page.application_rating}</p>
 
-            {/* User answers */}
-            <ScrollArea className="h-96 overflow-y-auto" type="auto">
-                <div className="flex flex-col gap-3">
-                    <div className="flex flex-col gap-1">
-                        <p className="text-lg font-semibold">{dict.common.common_questions}</p>
-                        {linkedCommonQuestionsAnswers.map((data) => (
-                            <div key={data?.question_id}>
-                                <p className="text-md font-medium">{data?.text}</p>
-                                <p>{JSON.stringify(data?.answer)}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                        {ratingCategories?.map((category) => (
+                            <div key={category.id} className="flex flex-col gap-2">
+                                <Label htmlFor={`category-${category.id}`}>{category.name}</Label>
+                                <Select 
+                                    value={getCategoryRatingValue(category.id)} 
+                                    onValueChange={(value) => handleCategoryRatingChange(category.id, value)}
+                                >
+                                    <SelectTrigger className="w-[180px]" id={`category-${category.id}`}>
+                                        <SelectValue placeholder={dict.dashboard.campaigns.application_review_page.review_score} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
+                                            <SelectItem key={value} value={`${value}`}>{value}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                         ))}
                     </div>
 
-                    <Separator />
-
-                    <div className="flex flex-col gap-3">
-                        {linkedRolesQuestionsAnswers.map((data, index) => (
-                            <div key={data?.id} className="flex flex-col gap-1">
-                                {index > 0 && <Separator className="my-1" />}
-                                <p className="text-lg font-semibold">{data?.roleName} {dict.common.questions}</p>
-                                {data?.questions.map((question) => (
-                                    <div key={question?.question_id}>
-                                        <p className="text-md font-medium">{question?.text}</p>
-                                        <p>{JSON.stringify(question?.answer)}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        ))}
+                    <div className="flex flex-col gap-2 mb-4">
+                        <Label htmlFor="reviewComment">{dict.dashboard.campaigns.application_review_page.review_comment}</Label>
+                        <Textarea
+                            className="min-h-[100px]" 
+                            id="reviewComment"
+                            placeholder={dict.dashboard.campaigns.application_review_page.write_your_review_here}
+                            value={comment ?? originalRating?.comment ?? ""}
+                            onChange={(e) => setComment(e.target.value)}
+                        />
                     </div>
-                </div>
-            </ScrollArea>
-            <Separator className="my-4" />
-            {children}
-        </ScrollArea>
+                    <div>
+                        <Button 
+                            disabled={categoryRatings.length === 0 && comment === undefined} 
+                            onClick={handleSubmitRating}
+                        >
+                            Submit
+                        </Button>
+                    </div>
+            </div>
     );
 }

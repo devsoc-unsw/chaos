@@ -251,7 +251,7 @@ export default function ApplicationReview({
     }
   }, [selectedRoleIds, campaignId, applicationId, queryClient]);
 
-  return (
+   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-background">
       <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
         <div className="mb-5 sm:mb-8">

@@ -2,6 +2,7 @@ use crate::handler::answer::AnswerHandler;
 use crate::handler::application::ApplicationHandler;
 use crate::handler::auth::{DevLoginHandler, google_auth_init, google_callback, logout};
 use crate::handler::campaign::CampaignHandler;
+use crate::handler::comment::CommentHandler;
 use crate::handler::email_template::EmailTemplateHandler;
 use crate::handler::offer::OfferHandler;
 use crate::handler::organisation::OrganisationHandler;
@@ -487,7 +488,10 @@ pub async fn app() -> Result<(Router, AppState), ChaosError> {
             "/api/v1/offer/:offer_id/send",
             post(OfferHandler::send_offer),
         )
-
+        .route(
+            "/api/v1/comment/create",
+            post(CommentHandler::create_comment),
+        )
         // Invite routes
         // - GET  /api/v1/invite/:code  -> invite details
         // - POST /api/v1/invite/:code  -> accept invite

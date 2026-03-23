@@ -208,6 +208,8 @@ pub struct ApplicationRatingSummary {
     pub user_email: String,
     /// Status of the application
     pub status: ApplicationStatus,
+    /// Private status (internal accept/reject)
+    pub private_status: ApplicationStatus,
     /// When the rating was last updated
     pub updated_at: DateTime<Utc>,
     /// All ratings the application has received
@@ -675,7 +677,9 @@ impl Application {
                     a.id AS application_id,
                     ARRAY_AGG(DISTINCT applied_roles.campaign_role_id) AS \"applied_roles!: Vec<i64>\",
                     u.name AS user_name, u.email AS user_email,
-                    a.status AS \"status: ApplicationStatus\", a.updated_at,
+                    a.status AS \"status: ApplicationStatus\",
+                    a.private_status AS \"private_status: ApplicationStatus\",
+                    a.updated_at,
                     
                     coalesce(
                         to_jsonb(
@@ -713,7 +717,7 @@ impl Application {
                 JOIN users u ON u.id = a.user_id
                 LEFT JOIN users AS reviewer ON reviewer.id = ar.rater_id
                 WHERE a.campaign_id = $1 AND a.submitted = true
-                GROUP BY a.id, u.name, u.email, a.status, a.updated_at
+                GROUP BY a.id, u.name, u.email, a.status, a.private_status, a.updated_at
                 ORDER BY a.id ASC
             ",
             campaign_id,

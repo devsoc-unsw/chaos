@@ -27,6 +27,23 @@ pub struct Comment {
     pub created_at: DateTime<Utc>,
 }
 
+/// A comment authored by a user on a specific application for frontend representation
+#[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
+pub struct CommentDetails {
+    /// Unique identifier for the comment.
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub id: i64,
+    /// The name of the author.
+    pub name: String,
+    /// The comment body.
+    pub body: String,
+    /// The user who authored the comment.
+    #[serde(serialize_with = "crate::models::serde_string::serialize")]
+    pub author_id: i64,
+    /// When the comment was created.
+    pub created_at: DateTime<Utc>,
+}
+
 /// Request payload for creating a new comment.
 #[derive(Deserialize, Serialize)]
 pub struct NewComment {
@@ -108,6 +125,30 @@ impl Comment {
         .await?;
 
         Ok(comment)
+    }
+
+    /// Updates an existing comment.
+    ///
+    /// The update is scoped to both the comment ID and the author, so users can only edit their own comments.
+    ///
+    /// # Arguments
+    /// * `application_id` - The application the comment belongs to (used for extra scoping/consistency).
+    /// * `transaction` - Database transaction to use.
+    pub async fn get_comments_by_application(
+        application_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<CommentDetails>, ChaosError> {
+        let application_comments_by_postdate = sqlx::query_as!(
+            CommentDetails,
+            "SELECT u.name, c.id, c.author_id, c.body, c.created_at FROM comments c INNER JOIN
+            users u ON c.author_id = u.id
+            WHERE c.application_id = $1
+            ORDER BY c.created_at ASC",
+            application_id
+        ).fetch_all(transaction.deref_mut())
+        .await?;
+
+        Ok(application_comments_by_postdate)
     }
 
     /// Updates an existing comment.

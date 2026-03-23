@@ -96,6 +96,7 @@
       "edit_campaign": "编辑活动",
       "share_link": "分享链接",
       "review_applications": "查看",
+      "send_outcome_emails": "发送结果邮件",
       "application_summary": "申请总结",
       "application_avg_ratings": "申请平均评分",
       "manage_questions": "管理问题",
@@ -136,6 +137,10 @@
       "application_summary_page": {
         "applicant_name": "申请人姓名",
         "avg_rating": "平均评分",
+        "private_status": "状态",
+        "accept": "接受",
+        "reject": "拒绝",
+        "pending": "待定",
         "filter_emails": "筛选邮箱...",
         "filter_by_role": "按角色筛选",
         "all_roles": "所有角色",

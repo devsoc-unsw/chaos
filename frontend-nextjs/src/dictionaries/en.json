@@ -105,6 +105,7 @@
       "edit_campaign": "Edit Campaign",
       "share_link": "Share Link",
       "review_applications": "Review Applications",
+      "send_outcome_emails": "Send outcome emails",
       "application_summary": "Application Summary",
       "application_avg_ratings": "Application Average Ratings",
       "manage_questions": "Manage Questions",
@@ -145,6 +146,10 @@
       "application_summary_page": {
         "applicant_name": "Applicant Name",
         "avg_rating": "Avg Rating",
+        "private_status": "Status",
+        "accept": "Accept",
+        "reject": "Reject",
+        "pending": "Pending",
         "filter_emails": "Filter emails...",
         "filter_by_role": "Filter by role",
         "all_roles": "All roles",

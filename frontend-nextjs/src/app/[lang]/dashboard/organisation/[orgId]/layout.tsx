@@ -16,17 +16,21 @@ export async function generateMetadata(
   // read route params
   const { orgId, lang } = await params
   const dict = await getDictionary(lang);
+  
   const org = await getOrganisationById(orgId);
+ 
   return {
     title: `${org.name} - Chaos ${dict.common.dashboard}`,
   }
 }
 
-export default async function Layout({ children, params }: { children: React.ReactNode, params: Promise<{ orgId: string, lang: string }> }) {
+export default async function Layout({ children, params }: { children: React.ReactNode, params: Promise<{ orgId: string,lang: string }> }) {
   const { orgId, lang } = await params;
   const dict = await getDictionary(lang);
+  
   // Guard to ensure dashboard doesn't render if user not authenticated
   await getCurrentUser();
+  
   const queryClient = new QueryClient();
 
   await queryClient.prefetchQuery({

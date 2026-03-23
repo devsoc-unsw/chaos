@@ -87,4 +87,3 @@ export function PublishCampaignDialog({ onPublish, label, buttonClassName }: Pub
     </AlertDialog>
   );
 }
-
