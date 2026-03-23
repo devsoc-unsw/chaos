@@ -3,7 +3,7 @@
 //! This module provides HTTP request handlers for CRUD operations on application comments.
 
 use crate::models::app::{AppMessage, AppState};
-use crate::models::auth::{ApplicationReviewerGivenApplicationId, CommentAuthorGivenApplicationAndCommentId};
+use crate::models::auth::ApplicationReviewerGivenApplicationId;
 use crate::models::comment::{Comment, NewComment, UpdateComment};
 use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
@@ -59,7 +59,7 @@ impl CommentHandler {
     /// Returns an OK message on success.
     pub async fn edit_comment(
         Path((application_id, comment_id)): Path<(i64, i64)>,
-        admin: CommentAuthorGivenApplicationAndCommentId,
+        admin: ApplicationReviewerGivenApplicationId,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<UpdateComment>,
     ) -> Result<impl IntoResponse, ChaosError> {
@@ -89,7 +89,7 @@ impl CommentHandler {
     /// Returns an OK message on success.
     pub async fn delete_comment(
         Path((application_id, comment_id)): Path<(i64, i64)>,
-        admin: CommentAuthorGivenApplicationAndCommentId,
+        admin: ApplicationReviewerGivenApplicationId,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Comment::delete(
@@ -104,9 +104,5 @@ impl CommentHandler {
 
         Ok(AppMessage::OkMessage("Successfully deleted comment"))
     }
-
-    // pub async fn get_comments_by_application(
-        
-    // )
 }
 

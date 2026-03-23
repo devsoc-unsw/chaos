@@ -197,7 +197,7 @@ impl EmailQueue {
             .fetch_optional(transaction.deref_mut())
             .await?;
 
-        if let Some(email) = email {            
+        if let Some(email) = email {
             ChaosEmail::send_message(
                 email.recepient_name,
                 email.recepient_email_address,

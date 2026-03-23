@@ -47,6 +47,7 @@ export interface SendEmailsApplicant {
   id: string;
   name: string;
   email: string;
+  roleIds: string[];
   roles: string[];
 }
 
@@ -118,14 +119,27 @@ export function SendEmailsModal(props: SendEmailsModalProps) {
     activeOutcome === "accepted" ? acceptedApplicants : rejectedApplicants;
 
   const handleSend = async () => {
+    if (sending) {
+      return;
+    }
+
+    setSending(true);
+
     if (!onSend) {
       toast.error("Sending is not configured.");
       return;
     }
+
     const subj = subject.trim();
     const bod = body.trim();
+
     if (!subj || !bod) {
       toast.error("Subject and body are required.");
+      return;
+    }
+
+    if (!selectedTemplateId) {
+      toast.error("Please choose an email template.");
       return;
     }
 
@@ -133,9 +147,22 @@ export function SendEmailsModal(props: SendEmailsModalProps) {
     const eventLabel = eventName || campaignName;
 
     const recipients = [...acceptedApplicants, ...rejectedApplicants];
+    const missingRoleApplicant = recipients.find((a) => a.roleIds.length === 0);
+
+    if (missingRoleApplicant) {
+      toast.error(`Missing role for ${missingRoleApplicant.name}.`);
+      return;
+    }
+
+    const expiryIso = new Date(
+      Date.now() + 3 * 24 * 60 * 60 * 1000,
+    ).toISOString();
+
     const payload: QueueOutcomeEmailsPayload = {
       emails: recipients.map((a) => {
         const roleStr = a.roles.length ? a.roles.join(", ") : "";
+        const primaryRoleId = a.roleIds[0];
+
         const vars: Record<string, string> = {
           name: a.name,
           role: roleStr,
@@ -146,19 +173,22 @@ export function SendEmailsModal(props: SendEmailsModalProps) {
         };
         return {
           id: a.id,
+          application_id: a.id,
           name: a.name,
           email: a.email,
           role: roleStr,
+          role_id: primaryRoleId,
+          email_template_id: selectedTemplateId,
+          expiry: expiryIso,
           subject: mergeOutcomePlaceholders(subj, vars),
           body: mergeOutcomePlaceholders(bod, vars),
         };
       }),
     };
 
-    setSending(true);
     try {
       await onSend(payload);
-      toast.success("Emails queued for delivery.");
+      toast.success("Sent out emails");
       onOpenChange(false);
     } catch (e) {
       console.error(e);

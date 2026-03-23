@@ -4,18 +4,48 @@
 //! - Creating and retrieving offers
 //! - Replying to offers
 //! - Previewing and sending offer emails
+//! - Queuing offer emails for the background worker (`EmailQueue`)
 
 use crate::models::app::{AppMessage, AppState};
-use crate::models::auth::{OfferAdmin, OfferRecipient};
+use crate::models::auth::{OfferAdmin, OfferRecipient, CampaignAdmin};
 use crate::models::error::ChaosError;
 use crate::models::offer::{Offer, OfferReply};
 use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
+use chrono::{DateTime, Utc};
+use serde::Deserialize;
+use crate::models::email::EmailQueue;
 
 /// Handler for offer-related HTTP requests.
 pub struct OfferHandler;
+
+/// One outcome email row (subject/body already resolved on the client).
+#[derive(Deserialize)]
+#[allow(dead_code)]
+pub struct QueueOutcomeEmailItem {
+    #[serde(default)]
+    pub id: Option<String>,
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
+    pub application_id: i64,
+    pub email: String,
+    pub name: String,
+    #[serde(default)]
+    pub role: Option<String>,
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
+    pub role_id: i64,
+    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
+    pub email_template_id: i64,
+    pub expiry: DateTime<Utc>,
+    pub subject: String,
+    pub body: String,
+}
+
+#[derive(Deserialize)]
+pub struct QueueOutcomeEmailsRequest {
+    pub emails: Vec<QueueOutcomeEmailItem>,
+}
 
 impl OfferHandler {
     /// Retrieves the details of a specific offer.
@@ -140,5 +170,50 @@ impl OfferHandler {
         transaction.tx.commit().await?;
 
         Ok(AppMessage::OkMessage("Successfully sent offer"))
+    }
+
+    /// Queues outcome emails for the worker (`EmailQueue`, same pipeline as offer email queue).
+    ///
+    /// Auth matches viewing application ratings summary: org member for the campaign.
+    pub async fn queue_outcome_emails(
+        _user: CampaignAdmin,
+        Path(campaign_id): Path<i64>,
+        mut transaction: DBTransaction<'_>,
+        State(mut state): State<AppState>,
+        Json(body): Json<QueueOutcomeEmailsRequest>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        if body.emails.is_empty() {
+            return Err(ChaosError::BadRequestWithMessage(
+                "No emails to queue".to_string(),
+            ));
+        }
+
+        let count = body.emails.len();
+        for item in body.emails {
+            let offer_id = Offer::create(
+                campaign_id,
+                item.application_id,
+                item.email_template_id,
+                item.role_id,
+                item.expiry,
+                &mut transaction.tx,
+                &mut state.snowflake_generator,
+            )
+            .await?;
+            if state.is_dev_env {
+                let email = item.email; //need to modify so that an offer form is created ts so clapped
+                println!("need to call offers here, but sent to: {email}");
+            } else {
+                Offer::send_offer(
+                    offer_id,
+                    &mut transaction.tx,
+                    state.email_credentials.clone(),
+                )
+                .await?;
+            }
+        }
+
+        transaction.tx.commit().await?;
+        Ok(AppMessage::OkMessage(format!("Queued {count} email(s) for delivery")))
     }
 }

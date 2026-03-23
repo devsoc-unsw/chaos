@@ -340,7 +340,7 @@ impl Offer {
     /// 
     /// # Returns
     /// Returns a `Result` containing either:
-    /// * `Ok(())` - If the email was sent successfully
+    /// * `Ok(())` - If the email was queued successfully
     /// * `Err(ChaosError)` - An error if sending fails
     pub async fn send_offer(
         id: i64,

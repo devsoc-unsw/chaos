@@ -84,9 +84,13 @@ export async function deleteEmailTemplate(templateId: string): Promise<AppMessag
 export interface QueueOutcomeEmailsPayload {
     emails: {
         id: string;
+        application_id: string;
         name: string;
         email: string;
         role: string;
+        role_id: string;
+        email_template_id: string;
+        expiry: string;
         subject: string;
         body: string;
     }[];

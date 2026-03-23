@@ -66,6 +66,7 @@ function toApplicant(
         id: app.application_id,
         name: app.user_name,
         email: app.user_email,
+        roleIds: applied,
         roles: applied.map((rid) => roleIdsToNames[rid] ?? rid),
     };
 }
