@@ -1,4 +1,3 @@
--- Add migration script here
 CREATE TABLE comments (
     id BIGINT PRIMARY KEY,
     body TEXT NOT NULL,
