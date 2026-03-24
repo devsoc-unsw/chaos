@@ -87,6 +87,7 @@ export interface QueueOutcomeEmailsPayload {
         application_id: string;
         name: string;
         email: string;
+        email_type: "Interview" | "Accept" | "Reject";
         role: string;
         role_id: string;
         email_template_id: string;

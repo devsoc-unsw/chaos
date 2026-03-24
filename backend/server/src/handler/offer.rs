@@ -16,7 +16,7 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
-use crate::models::email::EmailQueue;
+use crate::models::email::{EmailQueue, EmailType};
 
 /// Handler for offer-related HTTP requests.
 pub struct OfferHandler;
@@ -40,6 +40,7 @@ pub struct QueueOutcomeEmailItem {
     pub expiry: DateTime<Utc>,
     pub subject: String,
     pub body: String,
+    pub email_type: EmailType,
 }
 
 #[derive(Deserialize)]
@@ -190,26 +191,40 @@ impl OfferHandler {
 
         let count = body.emails.len();
         for item in body.emails {
-            let offer_id = Offer::create(
-                campaign_id,
-                item.application_id,
-                item.email_template_id,
-                item.role_id,
-                item.expiry,
-                &mut transaction.tx,
-                &mut state.snowflake_generator,
-            )
-            .await?;
-            if state.is_dev_env {
-                let email = item.email; //need to modify so that an offer form is created ts so clapped
-                println!("need to call offers here, but sent to: {email}");
-            } else {
-                Offer::send_offer(
-                    offer_id,
+            if matches!(item.email_type, EmailType::Accept) {
+                let offer_id = Offer::create(
+                    campaign_id,
+                    item.application_id,
+                    item.email_template_id,
+                    item.role_id,
+                    item.expiry,
                     &mut transaction.tx,
-                    state.email_credentials.clone(),
+                    &mut state.snowflake_generator,
                 )
                 .await?;
+                if state.is_dev_env {
+                    let email = item.email;
+                    println!("need to call offers here, but sent to: {email}");
+                } else {
+                    Offer::send_offer(
+                        offer_id,
+                        &mut transaction.tx,
+                        state.email_credentials.clone(),
+                    ).await?;
+                }
+            } else {
+                if state.is_dev_env {
+                    let email = item.email;
+                    println!("Sending reject email to {email}");
+                } else {
+                    EmailQueue::add_to_queue(
+                        Some(item.name),
+                        item.email,
+                        item.subject,
+                        item.body,
+                        &mut transaction.tx,
+                    ).await?;
+                }
             }
         }
 
