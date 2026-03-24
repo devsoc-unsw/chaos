@@ -9,7 +9,7 @@
 tmp_env_file="$(mktemp)"
 trap 'rm -rf "$tmp_env_file"' EXIT INT TERM
 cat << 'EOF' > "$tmp_env_file"
-DATABASE_URL="postgres://user:password@localhost:5432/chaos"
+DATABASE_URL="postgres://postgres:password@localhost:5432/chaos"
 JWT_SECRET="test_secret"
 GOOGLE_CLIENT_ID="test"
 GOOGLE_CLIENT_SECRET="test"
