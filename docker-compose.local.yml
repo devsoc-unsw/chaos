@@ -1,0 +1,79 @@
+services:
+  # db
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-chaos}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - chaos_postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-chaos}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+# server
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-chaos}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    volumes:
+      - ./backend:/app/backend:cached
+      - cargo-registry:/usr/local/cargo/registry
+      - cargo-git:/usr/local/cargo/git
+      - backend-target:/app/backend/target
+    working_dir: /app/backend/server
+    command: sh -c "cd /app/backend && /usr/local/cargo/bin/sqlx migrate run && cd server && cargo watch -x run"
+
+  # next.js-frontend
+  frontend:
+    build:
+      context: ./frontend-nextjs
+      dockerfile: Dockerfile.dev
+    depends_on:
+      - backend
+    env_file:
+      - ./frontend-nextjs/.env
+    environment:
+      NEXT_API_BASE_URL: http://backend:8080
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:${BACKEND_PORT:-8080}
+      NEXT_PUBLIC_APP_URL: http://localhost:${FRONTEND_PORT:-3000}/
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    volumes:
+      - ./frontend-nextjs:/app:cached
+      - frontend-node-modules:/app/node_modules
+      - frontend-next-cache:/app/.next
+    # Save time rebuilding the frontend if the node_modules directory is already present.
+    command: 
+      sh -lc "if [ ! -d node_modules ] || [ -z \"$(ls -A node_modules 2>/dev/null)\" ]; 
+      then bun install; fi; 
+      bun run dev -- -H 0.0.0.0 -p 3000"
+
+volumes:
+  chaos_postgres-data:
+    external: true
+  cargo-registry:
+  cargo-git:
+  backend-target:
+  frontend-node-modules:
+  frontend-next-cache:
+
