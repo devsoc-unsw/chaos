@@ -7,7 +7,7 @@
 use crate::models::error::ChaosError;
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor};
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use sqlx::{Postgres, Transaction};
 use std::env;
 use std::ops::DerefMut;
@@ -44,6 +44,17 @@ pub struct EmailParts {
     pub subject: String,
     /// The email body content
     pub body: String,
+}
+
+/// Email Type
+/// 
+/// This enum represents the different types of email that can be sent(Interview, Accept, Reject)
+#[derive(Deserialize, Serialize, sqlx::Type, Clone, Debug)]
+#[sqlx(type_name = "email_type", rename_all = "PascalCase")]
+pub enum EmailType{
+    Interview,
+    Accept,
+    Reject,
 }
 
 impl ChaosEmail {
@@ -197,7 +208,7 @@ impl EmailQueue {
             .fetch_optional(transaction.deref_mut())
             .await?;
 
-        if let Some(email) = email {            
+        if let Some(email) = email {
             ChaosEmail::send_message(
                 email.recepient_name,
                 email.recepient_email_address,

@@ -47,6 +47,7 @@ export interface SendEmailsApplicant {
   id: string;
   name: string;
   email: string;
+  roleIds: string[];
   roles: string[];
 }
 
@@ -83,7 +84,7 @@ export function SendEmailsModal(props: SendEmailsModalProps) {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>();
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
-  const [activeOutcome, setActiveOutcome] = useState<OutcomeType>("accepted");
+  const [outcome, setOutcome] = useState<OutcomeType>("accepted");
 
   const {
     data: templates = [],
@@ -114,28 +115,56 @@ export function SendEmailsModal(props: SendEmailsModalProps) {
   };
 
   const totalEmails = acceptedApplicants.length + rejectedApplicants.length;
-  const activeApplicants =
-    activeOutcome === "accepted" ? acceptedApplicants : rejectedApplicants;
+  const applicantsToSend =
+    outcome === "accepted" ? acceptedApplicants : rejectedApplicants;
 
   const handleSend = async () => {
+    if (sending) {
+      return;
+    }
+
+    setSending(true);
+
     if (!onSend) {
       toast.error("Sending is not configured.");
       return;
     }
+
     const subj = subject.trim();
     const bod = body.trim();
+
     if (!subj || !bod) {
       toast.error("Subject and body are required.");
+      return;
+    }
+
+    if (!selectedTemplateId) {
+      toast.error("Please choose an email template.");
       return;
     }
 
     const expiryDate = campaignEndsAt ? dateToString(campaignEndsAt) : "";
     const eventLabel = eventName || campaignName;
 
-    const recipients = [...acceptedApplicants, ...rejectedApplicants];
-    const payload: QueueOutcomeEmailsPayload = {
-      emails: recipients.map((a) => {
+    const recipients = applicantsToSend;
+    const missingRoleApplicant = recipients.find((a) => a.roleIds.length === 0);
+
+    if (missingRoleApplicant) {
+      toast.error(`Missing role for ${missingRoleApplicant.name}.`);
+      return;
+    }
+
+    const expiryIso = new Date(
+      Date.now() + 3 * 24 * 60 * 60 * 1000,
+    ).toISOString();
+
+    const buildEmailItem = (
+      a: SendEmailsApplicant,
+      emailType: "Accept" | "Reject",
+    ) => {
         const roleStr = a.roles.length ? a.roles.join(", ") : "";
+        const primaryRoleId = a.roleIds[0];
+
         const vars: Record<string, string> = {
           name: a.name,
           role: roleStr,
@@ -146,19 +175,29 @@ export function SendEmailsModal(props: SendEmailsModalProps) {
         };
         return {
           id: a.id,
+          application_id: a.id,
           name: a.name,
           email: a.email,
+          email_type: emailType,
           role: roleStr,
+          role_id: primaryRoleId,
+          email_template_id: selectedTemplateId,
+          expiry: expiryIso,
           subject: mergeOutcomePlaceholders(subj, vars),
           body: mergeOutcomePlaceholders(bod, vars),
         };
-      }),
+      };
+
+    const emailType: "Accept" | "Reject" =
+      outcome === "accepted" ? "Accept" : "Reject";
+
+    const payload: QueueOutcomeEmailsPayload = {
+      emails: recipients.map((a) => buildEmailItem(a, emailType)),
     };
 
-    setSending(true);
     try {
       await onSend(payload);
-      toast.success("Emails queued for delivery.");
+      toast.success("Sent out emails");
       onOpenChange(false);
     } catch (e) {
       console.error(e);
@@ -194,8 +233,8 @@ export function SendEmailsModal(props: SendEmailsModalProps) {
               <div className="flex items-center gap-2">
                 <Label className="text-xs">Outcome</Label>
                 <Select
-                  value={activeOutcome}
-                  onValueChange={(val) => setActiveOutcome(val as OutcomeType)}
+                  value={outcome}
+                  onValueChange={(val) => setOutcome(val as OutcomeType)}
                 >
                   <SelectTrigger className="h-8 w-[140px]">
                     <SelectValue />
@@ -213,7 +252,7 @@ export function SendEmailsModal(props: SendEmailsModalProps) {
             </div>
 
             <div className="flex flex-wrap gap-1.5">
-              {activeApplicants.map((a) => (
+              {applicantsToSend.map((a) => (
                 <Badge key={a.id} variant="outline" className="text-xs">
                   {a.name}
                 </Badge>

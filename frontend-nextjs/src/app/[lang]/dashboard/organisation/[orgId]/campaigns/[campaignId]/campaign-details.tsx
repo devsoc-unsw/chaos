@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getCampaign, getCampaignRoles, getCampaignAttachments, publishCampaign } from "@/models/campaign";
 import { getRatingCategories, RatingCategory } from "@/models/rating";
 import { Button } from "@/components/ui/button";
-import { Copy, Pencil, Trash, Share, BookOpenCheck, FormIcon, FileText, BarChart } from "lucide-react";
+import { Copy, Pencil, Trash, Share, BookOpenCheck, FormIcon, FileText, BarChart, CircleCheck } from "lucide-react";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { cn, dateToString } from "@/lib/utils";
 import {
@@ -146,6 +146,13 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                             <Link href={`/dashboard/organisation/${campaign?.organisation_id}/campaigns/${campaignId}/applications`} className="w-full sm:w-auto">
                                 <Button className="w-full justify-center sm:w-auto">
                                     <BarChart className="w-4 h-4" /> {dict.dashboard.campaigns.application_summary}
+                                </Button>
+                            </Link>
+                        </ButtonGroup>
+                        <ButtonGroup className="w-full sm:w-auto flex-col sm:flex-row gap-2 sm:gap-0 [&>*]:w-full sm:[&>*]:w-auto">
+                            <Link href={`/dashboard/organisation/${campaign?.organisation_id}/campaigns/${campaignId}/offers`} className="w-full sm:w-auto">
+                                <Button className="w-full justify-center sm:w-auto">
+                                    <CircleCheck className="w-4 h-4" /> View Offers
                                 </Button>
                             </Link>
                         </ButtonGroup>
