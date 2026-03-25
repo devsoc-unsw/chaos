@@ -1,6 +1,9 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://chaos-api.devsoc.app";
-
 const isServer = typeof window === "undefined";
+const API_BASE_URL = isServer
+  ? process.env.NEXT_API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    "http://backend:8080"
+  : process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 
 export class ApiError extends Error {
   status: number;
