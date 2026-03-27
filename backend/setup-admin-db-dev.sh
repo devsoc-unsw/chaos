@@ -12,6 +12,6 @@ echo "Working directory: $working_dir"
 # IMPORTANT: Replace YOUR_GMAIL with your account gmail.
 # Run the database seeding script to set up the admin account.
 # Like e.g. cargo run -- --email peter@gmail.com. Replace YOUR_GMAIL with your account gmail.
-cargo run -- --email "vietthanh01202@gmail.com"
+cargo run -- --email "jaredlucasschulz@gmail.com"
 
 echo "\nAdmin account set up successfully!\n"
