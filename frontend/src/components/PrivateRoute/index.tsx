@@ -12,8 +12,9 @@ const PrivateRoute = (props: ComponentProps<typeof Route>) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    function getLoggedIn() {
-      if (!isLoggedIn()) {
+    async function getLoggedIn() {
+      const loggedIn = await isLoggedIn();
+      if (!loggedIn) {
         navigate("/");
       }
       setLoading(false);

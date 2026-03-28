@@ -3,7 +3,7 @@ import type { ApplicationStatus } from "types/api";
 
 export type Ranking = {
   name: string;
-  id: number;
+  id: string;
   status: ApplicationStatus;
   ratings: { rater: string; rating: number }[];
 };
@@ -13,5 +13,5 @@ export type Rankings = {
 };
 
 export type Applications = {
-  [id: number]: ApplicationWithQuestions;
+  [id: string]: ApplicationWithQuestions;
 };

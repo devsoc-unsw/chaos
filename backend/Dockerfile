@@ -1,22 +1,50 @@
-FROM lukemathwalker/cargo-chef:latest-rust-1.68.0 AS chef
-WORKDIR /app
+# build project w/ cargo chef to speed up build times(idk saw it on yt)
+FROM rust:latest AS chef
+
+RUN apt-get update && apt-get install -y \
+    libssl-dev \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+RUN cargo install cargo-chef
+WORKDIR /backend
 
 FROM chef AS planner
-COPY . .
+COPY server/ ./server/
+WORKDIR /backend/server
 RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS builder
-COPY --from=planner /app/recipe.json recipe.json
+COPY migrations/ ./migrations/
+
+WORKDIR /backend/server
+COPY --from=planner /backend/server/recipe.json ./recipe.json
+
 RUN cargo chef cook --release --recipe-path recipe.json
-COPY . .
-RUN cargo build --release --bin server
 
-FROM ubuntu
-RUN apt update
-RUN apt install -y wget libpq5
-RUN wget https://mirrors.edge.kernel.org/ubuntu/pool/main/o/openssl/libssl1.1_1.1.0g-2ubuntu4_amd64.deb \
-    && dpkg -i libssl1.1_1.1.0g-2ubuntu4_amd64.deb \
-    && rm libssl1.1_1.1.0g-2ubuntu4_amd64.deb
+COPY server/ ./
 
-COPY --from=builder /app/target/release/server /
-CMD ["./server"]
+# Build the server binary
+WORKDIR /backend/server
+
+ENV SQLX_OFFLINE=true
+
+RUN cargo build --release
+
+FROM debian:trixie-slim
+
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    libssl3 \
+    libc6 \
+    netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN groupadd --system --gid 1001 chaos
+RUN useradd --system --uid 1001 --gid chaos rust
+
+COPY --from=builder --chown=chaos:rust /backend/server/target/release/server /backend/server
+
+USER rust
+
+ENTRYPOINT ["/backend/server"]
+EXPOSE 8080

@@ -1,33 +1,9 @@
-import { styled } from "@mui/material/styles";
+import tw from "twin.macro";
 
-export const FormContainer = styled("div")(() => ({
-  display: "flex",
-  padding: "16px 9px",
-}));
+export const FormContainer = tw.div`flex flex-row p-4 px-[9px]`;
 
-export const ImageUploadWrapper = styled("label")(() => ({
-  display: "block",
-  minWidth: "60px",
-  height: "60px",
-  lineHeight: "60px",
-  margin: "0px",
-}));
+export const ImageUploadWrapper = tw.label`m-0 block h-[60px] min-w-[60px] leading-[60px]`;
 
-export const TextInput = styled("input")(() => ({
-  height: "30px",
-  width: "133px",
-  margin: "15px",
-  borderRadius: "12px",
-  borderColor: "black",
-  borderWidth: "1px",
-  padding: "10px",
-}));
+export const TextInput = tw.input`m-4 h-8 w-[133px] rounded-xl border border-black p-3`;
 
-export const UploadButton = styled("button")(() => ({
-  height: "30px",
-  width: "30px",
-  marginTop: "15px",
-  borderRadius: "12px",
-  borderColor: "black",
-  borderWidth: "1px",
-}));
+export const UploadButton = tw.button`mt-4 h-8 w-8 rounded-[12px] border border-black`;

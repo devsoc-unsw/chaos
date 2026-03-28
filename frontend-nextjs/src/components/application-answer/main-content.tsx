@@ -1,0 +1,195 @@
+"use client"
+
+import { AnswerValue, MultiOptionQuestionOption, QuestionAndAnswer } from "@/models/question";
+import { getAllCommonQuestions, getAllRoleQuestions, linkQuestionsAndAnswers } from "@/models/question";
+import { getAllRoleAnswers, getAllCommonAnswers, updateAnswer, createAnswer, deleteAnswer  } from "@/models/answer";
+import { QueryClient, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import ShortAnswer from "./questions/shortanswer";
+import Dropdown from "./questions/dropdown";
+import Multichoice from "./questions/multichoice";
+import MultiSelect from "./questions/multiselect";
+import Ranking from "./questions/ranking";
+import { buildAnswerPayload } from "@/lib/utils";
+import { toast } from "sonner";
+
+export default function MainContent({
+  campaignId,
+  applicationId,
+  activeTab,
+  dict,
+  updateRoleAnswers,
+  qaByRole
+}: {
+  campaignId: string;
+  applicationId: string;
+  activeTab: string;
+  dict: any;
+  updateRoleAnswers: (newQA:QuestionAndAnswer) => void;
+  qaByRole?: Map<string, QuestionAndAnswer[]>;
+}) {
+    const generalTab = activeTab === "general"
+    const queryClient = useQueryClient()
+    const { data: questions } = useQuery({
+    queryKey: generalTab
+      ? [`${campaignId}-common-questions`]
+      : [`${campaignId}-${activeTab}-role-questions`],
+      queryFn: () =>
+      generalTab
+        ? getAllCommonQuestions(campaignId)
+        : getAllRoleQuestions(campaignId, activeTab),
+    });
+
+    const { data: answers } = useQuery({
+    queryKey: generalTab
+      ? [`${applicationId}-common-answers`]
+      : [`${applicationId}-${activeTab}-role-answers`],
+      queryFn: () =>
+      generalTab
+        ? getAllCommonAnswers(applicationId)
+        : getAllRoleAnswers(applicationId, activeTab),
+    });
+
+    const questionsAndAnswers =
+      qaByRole?.has(activeTab)
+        ? (qaByRole.get(activeTab) ?? [])
+        : (questions && answers ? linkQuestionsAndAnswers(questions, answers) : []);
+  
+    // submits answer to a question
+    const submitAnswer = async (
+      question: QuestionAndAnswer,
+      value: AnswerValue,
+      applicationId: string,
+      answerId: string | undefined
+    ):Promise<void>  =>  {
+      const updatedQA: QuestionAndAnswer = {
+        ...question,
+        answer: value,
+      };
+
+      try {
+        const payload = buildAnswerPayload(question, value);
+
+        // HANDLE EMPTY QUESTION
+        if (payload.answer_data === null) {
+          if (answerId) {
+            await deleteAnswer(answerId);
+            if (generalTab) {
+              await queryClient.invalidateQueries({
+                queryKey: [`${applicationId}-common-answers`]
+              });
+            } else {
+              await queryClient.invalidateQueries({
+                queryKey: [`${applicationId}-${activeTab}-role-answers`]
+              })
+            }
+          }
+          const deletedQA: QuestionAndAnswer = {
+            ...question,
+            answer_id: undefined,
+            answer: "No Answer",
+          };
+          updateRoleAnswers(deletedQA);
+          return
+        } else {
+          if (answerId) {
+            await updateAnswer(answerId, payload)
+          } else {
+            await createAnswer(applicationId, payload)
+          }
+        }
+        updateRoleAnswers(updatedQA);
+      } catch (err) {
+        // roll back answers on error so that frontend and backend aren't out of sync
+        console.error("Failed to submit answer", err);
+        toast.error("Failed to submit answer");
+        updateRoleAnswers(question);
+      }
+    }
+
+    // useEffect(() => {
+    //   if (!questions || !answers) {
+    //     return;
+    //   }
+    //   const linked = linkQuestionsAndAnswers(questions, answers)
+    //   setQuestionsAndAnswers(linked);
+    // }, [questions, answers]);
+
+    const renderQuestion = (q:QuestionAndAnswer) => {
+      switch (q.question_type) {
+        case "ShortAnswer":
+          return (
+            <ShortAnswer
+              question={q}
+              applicationId={applicationId}
+              answerId={q.answer_id}
+              submitAnswer={submitAnswer}
+              dict={dict}
+            />
+          );
+        case "DropDown":
+          return (
+            <Dropdown
+              question={q}
+              applicationId={applicationId}
+              answerId={q.answer_id}
+              submitAnswer={submitAnswer}
+              dict={dict}
+              activeTab={activeTab}
+            />
+          );
+        case "MultiChoice":
+          return (
+            <Multichoice
+              question={q}
+              applicationId={applicationId}
+              answerId={q.answer_id}
+              submitAnswer={submitAnswer}
+              dict={dict}
+            />
+          );
+        case "MultiSelect":
+          return (
+            <MultiSelect
+              question={q}
+              applicationId={applicationId}
+              answerId={q.answer_id}
+              submitAnswer={submitAnswer}
+              dict={dict}
+            />
+          );
+        case "Ranking":
+          return (
+            <Ranking
+              question={q}
+              applicationId={applicationId}
+              answerId={q.answer_id}
+              submitAnswer={submitAnswer}
+              dict={dict}
+            />
+          );
+        default:
+          return (
+            <p>
+              {JSON.stringify(q, null, 2)}
+            </p>
+          );
+      }
+    };
+
+    return (
+        <div className="mb-6 rounded-xl border bg-card p-4 sm:p-6">
+            <div className="space-y-4">
+              {questionsAndAnswers.length === 0 ? (
+                <p className="text-sm text-muted-foreground">{dict.applicationpage.no_questions}</p>
+              ) : (
+                questionsAndAnswers.map((qa) => (
+                  <div key={qa.question_id}>
+                    {renderQuestion(qa)}
+                  </div>
+                ))
+              )}
+            </div>
+        </div>
+    )
+}

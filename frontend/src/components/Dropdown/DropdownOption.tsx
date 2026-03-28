@@ -1,5 +1,5 @@
 import { Menu } from "@headlessui/react";
-import tw from "twin.macro";
+import "twin.macro";
 
 import type { ComponentProps, MouseEvent, ReactElement } from "react";
 

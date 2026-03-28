@@ -1,19 +1,21 @@
 import type {
-  AdminLevel,
+  ApplicationAppliedRoleDetails,
+  ApplicationStatus,
   CampaignInfo,
-  OrganisationUserInfo,
+  OrganisationInfo,
+  User,
 } from "../../types/api";
 
 export type Organisation = {
-  id: number;
+  id: string;
   icon: string;
   orgName: string;
   campaigns: CampaignInfo[];
-  members: OrganisationUserInfo[];
+  members: OrganisationInfo[];
 };
 
 export type Campaign = {
-  id: number;
+  id: string;
   image: string;
   title: string;
   startDate: string;
@@ -21,19 +23,28 @@ export type Campaign = {
 };
 
 export type Member = {
-  id: number;
+  id: string;
   name: string;
-  role: AdminLevel;
+  role: string;
 };
 
 type Question = {
   question: string;
   answer?: string;
+  isCommon?: boolean; // Whether this is a common question or role-specific
 };
 
+// Processed type that combines ApplicationDetails from API with UI state for marking
+// NOT directly returned by the API - created by transforming ApplicationDetails
 export type ApplicationWithQuestions = {
-  applicationId: number;
-  zId: string;
-  mark?: number;
-  questions: Question[];
+  applicationId: string;
+  campaign_id: string;
+  user: User;
+  status: ApplicationStatus;
+  private_status: ApplicationStatus;
+  applied_roles: ApplicationAppliedRoleDetails[];
+  zId: string; // Convenience field extracted from user.zid
+  mark?: number; // UI state for marking
+  comment?: string; // UI state for comments
+  questions: Question[]; // UI state with question-answer pairs
 };

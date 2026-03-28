@@ -5,11 +5,11 @@ import { CampaignCard, Transition } from "components";
 import CampaignLoading from "./CampaignLoading";
 
 import type { ComponentProps } from "react";
-import type { CampaignWithRoles, Organisation } from "types/api";
+import type { Campaign, Organisation } from "types/api";
 
 type Props = {
-  campaigns: CampaignWithRoles[];
-  organisations: { [orgId: number]: Organisation };
+  campaigns: Campaign[];
+  organisations: { [orgId: string]: Organisation };
   loading: boolean;
   loadingNumCampaigns: number;
   animationDelay?: number;
@@ -52,7 +52,7 @@ const CampaignGrid = ({
     <div tw="flex flex-wrap justify-around gap-4 pb-4 lg:justify-start">
       {campaigns.map((campaign, i) => (
         <Transition
-          key={campaign.campaign.id}
+          key={campaign.id}
           appear
           show
           enter={{
@@ -62,20 +62,18 @@ const CampaignGrid = ({
           enterFrom={tw`translate-y-4 opacity-0`}
         >
           <CampaignCard
-            campaignId={campaign.campaign.id}
-            title={campaign.campaign.name}
-            appliedFor={campaign.applied_for}
-            positions={campaign.roles.map((role) => ({
-              id: role.id,
-              name: role.name,
-              number: role.max_available,
-            }))}
-            startDate={new Date(campaign.campaign.starts_at)}
-            endDate={new Date(campaign.campaign.ends_at)}
-            img={campaign.campaign.cover_image}
-            organisationLogo={
-              organisations[campaign.campaign.organisation_id].logo
-            }
+            campaignId={campaign.id}
+            campaignSlug={campaign.slug}
+            organisationSlug={campaign.organisation_slug}
+            title={campaign.name}
+            appliedFor={[]} // No applied_for data available from backend
+            positions={[]} // No roles data available from backend
+            startDate={new Date(campaign.starts_at)}
+            endDate={new Date(campaign.ends_at)}
+            img={campaign.cover_image}
+            organisationLogo={organisations[campaign.organisation_id]?.logo}
+            campaigns={[]}
+            setCampaigns={() => {}}
           />
         </Transition>
       ))}

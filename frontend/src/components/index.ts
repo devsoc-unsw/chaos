@@ -1,5 +1,5 @@
-import BackgroundWrapper from "./BackgroundWrapper";
 import CampaignCard from "./CampaignCard";
+import DevToolBar from "./DevToolBar";
 import LoadingIndicator from "./LoadingIndicator";
 import MarkChip from "./MarkChip";
 import MessagePopup from "./MessagePopup";
@@ -10,7 +10,6 @@ import ReviewerStepper from "./ReviewerStepper";
 import Transition from "./Transition";
 
 export {
-  BackgroundWrapper,
   CampaignCard,
   LoadingIndicator,
   MarkChip,
@@ -20,4 +19,5 @@ export {
   PrivateRoute,
   ReviewerStepper,
   Transition,
+  DevToolBar,
 };

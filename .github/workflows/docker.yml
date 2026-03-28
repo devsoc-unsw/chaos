@@ -1,21 +1,55 @@
 name: Docker
-
 on:
-  pull_request:
-    branches: [main, "renovate/*"]
   push:
-    branches: ["*"]
+    branches:
+      - main
+      - CHAOS-224-KHAOS-rewrite
+
+env:
+  ENVIRONMENT: ${{ github.ref_name == 'main' && 'prod' || 'staging' }}
+  IMAGE_NAME: ${{ github.ref_name == 'main' && 'chaos' || 'chaos-staging' }}
 
 jobs:
   build-backend:
     name: Build (Backend)
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    environment:
+      name: staging
+      url: https://chaos.devsoc.app
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: chaos
+        ports:
+          - 5432:5432
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: true
           token: ${{ secrets.GH_TOKEN }}
+      - name: Setup cargo cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            backend/server/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+      - name: Setup temporary DB
+        working-directory: backend
+        run: |
+          which sqlx || cargo install sqlx-cli --no-default-features --features native-tls,postgres
+          echo "DATABASE_URL=postgres://postgres:password@localhost:5432/chaos" >> .env
+          sqlx migrate run
+      - name: Generate SQLx files
+        working-directory: backend/server
+        run: cargo sqlx prepare
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@master
@@ -40,33 +74,29 @@ jobs:
           context: backend
           builder: ${{ steps.buildx.outputs.name }}
           file: backend/Dockerfile
-          push: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+          push: true
           tags: |
-            ghcr.io/devsoc-unsw/chaos-backend:${{ github.sha }}
-            ghcr.io/devsoc-unsw/chaos-backend:latest
+            ghcr.io/devsoc-unsw/${{ env.IMAGE_NAME }}-backend:${{ github.sha }}
+            ghcr.io/devsoc-unsw/${{ env.IMAGE_NAME }}-backend:latest
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=local,src=/tmp/.buildx-cache
-          # Note the mode=max here
-          # More: https://github.com/moby/buildkit#--export-cache-options
-          # And: https://github.com/docker/buildx#--cache-tonametypetypekeyvalue
           cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
       - name: Move cache
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-  build-client:
-    name: Build (Client)
+  build-frontend:
+    name: Build (Frontend)
     runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://chaos.devsoc.app
     permissions:
       contents: read
       packages: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-        with:
-          platforms: arm64
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       - name: Log into registry ${{ env.REGISTRY }}
@@ -78,26 +108,25 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
-          context: frontend
-          push: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+          context: frontend-nextjs
           platforms: linux/amd64
-          file: frontend/Dockerfile
+          file: frontend-nextjs/Dockerfile
+          push: true
           build-args: |
-            VITE_API_BASE_URL=${{ secrets.API_BASE_URL }}
-            VITE_OAUTH_CALLBACK_URL=${{ secrets.OAUTH_CALLBACK_URL }}
+            NEXT_PUBLIC_APP_URL=${{ vars.NEXT_PUBLIC_APP_URL }}
+            NEXT_PUBLIC_API_BASE_URL=${{ vars.NEXT_PUBLIC_API_BASE_URL }}
           tags: |
-            ghcr.io/devsoc-unsw/chaos-frontend:${{ github.sha }}
-            ghcr.io/devsoc-unsw/chaos-frontend:latest
+            ghcr.io/devsoc-unsw/${{ env.IMAGE_NAME }}-frontend:${{ github.sha }}
+            ghcr.io/devsoc-unsw/${{ env.IMAGE_NAME }}-frontend:latest
           labels: ${{ steps.meta.outputs.labels }}
   deploy:
     name: Deploy (CD)
     runs-on: ubuntu-latest
-    needs: [build-client, build-backend]
-    if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+    needs: [build-frontend, build-backend]
     concurrency: staging
     environment:
       name: staging
-      url: https://chaos.staging.csesoc.unsw.edu.au
+      url: https://chaosstaging.devsoc.app
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -113,11 +142,11 @@ jobs:
         run: |
           git config user.name "CSESoc CD"
           git config user.email "technical@csesoc.org.au"
-          git checkout -b update/chaos/staging/${{ github.sha }}
-          yq -i '.items[0].spec.template.spec.containers[0].image = "ghcr.io/devsoc-unsw/chaos-frontend:${{ github.sha }}"' projects/chaos/staging/deploy-frontend.yml
-          yq -i '.items[0].spec.template.spec.containers[0].image = "ghcr.io/devsoc-unsw/chaos-backend:${{ github.sha }}"' projects/chaos/staging/deploy-backend.yml
+          git checkout -b update/${{ env.IMAGE_NAME }}/${{ github.sha }}
+          yq -i '.spec.template.spec.containers[0].image = "ghcr.io/devsoc-unsw/${{ env.IMAGE_NAME }}-frontend:${{ github.sha }}"' projects/chaos/${{ env.ENVIRONMENT }}/frontend/deploy.yml
+          yq -i '.spec.template.spec.containers[0].image = "ghcr.io/devsoc-unsw/${{ env.IMAGE_NAME }}-backend:${{ github.sha }}"' projects/chaos/${{ env.ENVIRONMENT }}/backend/deploy.yml
           git add .
-          git commit -m "feat(chaos/staging): update images"
-          git push -u origin update/chaos/staging/${{ github.sha }}
-          gh pr create --title "feat(chaos/staging): update images" --body "Updates the images for the chaos staging deployment to commit devsoc-unsw/chaos@${{ github.sha }}." > URL
+          git commit -m "feat(${{ env.IMAGE_NAME}}): update images"
+          git push -u origin update/${{ env.IMAGE_NAME }}/${{ github.sha }}
+          gh pr create --title "feat(${{ env.IMAGE_NAME }}): update images" --body "Updates the images for the ${{ env.IMAGE_NAME }} deployment to commit devsoc-unsw/${{ env.IMAGE_NAME}}@${{ github.sha }}." > URL
           gh pr merge $(cat URL) --squash -d

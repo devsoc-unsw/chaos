@@ -34,18 +34,17 @@ import type { DropFirst } from "types/util";
 
 const Icon = styled.span(tw`inline h-4 w-4`);
 const tabIcons: { [status in ApplicationStatus]?: ReactNode } = {
-  Success: <Icon as={CheckIcon} tw="text-green-600" />,
-  Rejected: <Icon as={XMarkIcon} tw="text-red-600" />,
+  Completed: <Icon as={CheckIcon} tw="text-orange-600" />,
 };
 
 const FinaliseCandidates = () => {
-  const campaignId = Number(useParams().campaignId);
+  const campaignId = String(useParams().campaignId);
   const setNavBarTitle = useContext(SetNavBarTitleContext);
-  const roleId = Number(useParams().roleId);
+  const roleId = String(useParams().roleId);
   const roles = useRoles();
   const [organisation, setOrganisation] = useState("ORGANISATION");
 
-  const [emails, setEmails] = useState<{ [id: number]: string }>({});
+  const [emails, setEmails] = useState<{ [id: string]: string }>({});
 
   const { get: getOrg, loading: orgLoading } = useFetch<Organisation>(
     `/organisation`,
@@ -111,7 +110,7 @@ const FinaliseCandidates = () => {
   );
 
   const renderEmail = useCallback(
-    (id: number, name: string) => {
+    (id: string, name: string) => {
       const emailParams = { name, ...params };
       return emails[id].replaceAll(
         // this should be fine because we know all the param names ahead of time and none of them
@@ -150,7 +149,7 @@ const FinaliseCandidates = () => {
 
     return useCallback(
       (
-        applicationId: number,
+        applicationId: string,
         ...args: DropFirst<Parameters<typeof putApplication>>
       ) => putApplication(`/${applicationId}/status`, ...args),
       [putApplication]

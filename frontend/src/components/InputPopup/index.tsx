@@ -1,5 +1,11 @@
-import { Box, Button, Popover, TextField, Typography } from "@mui/material";
+import { Popover } from "@mui/material";
 import { useState } from "react";
+
+import Button from "components/Button";
+import Input from "components/Input";
+import { TypographyH6 } from "components/Typography";
+
+import "twin.macro";
 
 import type {
   ChangeEvent,
@@ -44,13 +50,12 @@ const InputPopup = ({
 }: Props) => {
   const [formValues, setFormValues] = useState({ [name]: "", ...defaultState });
   const setFormValue = (key: string, value: string) => {
-    setFormValues({
+    setFormValues((formValues) => ({
       ...formValues,
       [key]: value,
-    });
+    }));
   };
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    // eslint-disable-next-line no-shadow
     const { name, value } = e.target;
     setFormValue(name, value);
   };
@@ -63,37 +68,46 @@ const InputPopup = ({
         vertical: "bottom",
         horizontal: "right",
       }}
+      disableEnforceFocus
+      disableAutoFocus
+      disableRestoreFocus
       transformOrigin={{
         vertical: "top",
         horizontal: "right",
       }}
     >
-      <Box p={2} display="flex" flexDirection="column" gap={2}>
-        <Typography variant="h6">{title}</Typography>
+      <div tw="flex flex-col gap-4 p-4 px-6">
+        <TypographyH6>{title}</TypographyH6>
         <form
           onSubmit={(e) => {
             e.preventDefault();
             onSubmit(formValues);
           }}
         >
-          <Box display="flex" flexDirection="column" gap={1}>
-            <Box display="flex" gap={1}>
-              <TextField
-                label={label}
-                name={name}
-                size="small"
-                autoFocus
-                value={formValues[name]}
-                onChange={handleInputChange}
-              />
-              <Button type="submit">{submitText}</Button>
-            </Box>
+          <div tw="flex flex-col gap-4">
+            <div tw="flex flex-row gap-2">
+              <Input.Label>
+                <Input.LabelText required>{label}</Input.LabelText>
+                <Input
+                  id="member-add-email"
+                  required
+                  value={formValues[name]}
+                  onChange={handleInputChange}
+                  placeholder="lol"
+                />
+              </Input.Label>
+              {/*
+                Had to manually add below as the button was showing up as white(should be primary right?)
+                This component only appears here I'll try to get to the bottom of that later, was just bugging me
+              */}
+              <Button type="submit" className="bg-brand-500 text-white ring-brand-500/40 hover:bg-brand-600 active:bg-brand-700">{submitText}</Button>
+            </div>
             {typeof children === "function"
               ? children({ formValues, setFormValue, handleInputChange })
               : children}
-          </Box>
+          </div>
         </form>
-      </Box>
+      </div>
     </Popover>
   );
 };

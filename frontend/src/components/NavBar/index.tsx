@@ -1,5 +1,5 @@
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, Link as RouterLink } from "react-router-dom";
 import tw, { styled } from "twin.macro";
 
@@ -22,8 +22,16 @@ const NavButton = styled(NavLink, {
 });
 
 const NavBar = ({ campaign }: { campaign: string }) => {
-  const loggedIn = isLoggedIn();
+  const [loggedIn, setLoggedIn] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
+
+  useEffect(() => {
+    async function checkLoginStatus() {
+      const status = await isLoggedIn();
+      setLoggedIn(status);
+    }
+    checkLoginStatus();
+  }, []);
 
   return (
     <header tw="fixed inset-x-0 z-10 bg-white bg-gradient-to-r from-[#9dbbfb55] to-[#a78bfa55] shadow-md">
@@ -57,15 +65,15 @@ const NavBar = ({ campaign }: { campaign: string }) => {
             {loggedIn ? (
               <AvatarButton />
             ) : (
-              // <a
-              //   tw="rounded bg-indigo-400/30 px-3 py-1.5 text-black shadow transition-colors hover:bg-indigo-400/[0.42]"
-              //   href={import.meta.env.VITE_OAUTH_CALLBACK_URL as string}
-              // >
-              //   Get Started
-              // </a>
-              <p tw="rounded bg-indigo-400/30 px-3 py-1.5 text-black shadow transition-colors hover:bg-indigo-400/[0.42]">
-                Coming Soon!
-              </p>
+              <a
+                tw="rounded bg-indigo-400/30 px-3 py-1.5 text-black shadow transition-colors hover:bg-indigo-400/[0.42]"
+                href={import.meta.env.VITE_OAUTH_CALLBACK_URL as string}
+              >
+                Get Started
+              </a>
+              // <p tw="rounded bg-indigo-400/30 px-3 py-1.5 text-black shadow transition-colors hover:bg-indigo-400/[0.42]">
+              //   Coming Soon!
+              // </p>
             )}
           </div>
         </div>

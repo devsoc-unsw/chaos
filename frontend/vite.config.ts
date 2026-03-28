@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import react from "@vitejs/plugin-react";
+import path from "path";
 
 export default defineConfig({
   plugins: [
@@ -11,6 +12,11 @@ export default defineConfig({
     }),
     tsconfigPaths(),
   ],
+  resolve: {
+        alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
   optimizeDeps: {
     esbuildOptions: {
       target: "es2020",
@@ -24,7 +30,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       "/api": {
-        target: "http://127.0.0.1:8000",
+        target: "http://127.0.0.1:8080",
         rewrite: (path) => path.replace(/^\/api/, ""),
       },
     },

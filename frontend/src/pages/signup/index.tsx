@@ -61,7 +61,7 @@ const Signup = () => {
       <Card
         as="form"
         tw="gap-4 px-8 py-6"
-        onSubmit={(e) => {
+        onSubmit={(e: SubmitEvent) => {
           e.preventDefault();
           void signup();
         }}

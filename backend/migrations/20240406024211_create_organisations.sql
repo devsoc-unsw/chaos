@@ -1,0 +1,32 @@
+CREATE TABLE organisations (
+    id BIGINT PRIMARY KEY,
+    slug TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL UNIQUE,
+    logo UUID,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TYPE organisation_role AS ENUM ('User', 'Admin');
+CREATE UNIQUE INDEX IDX_organisations_slug on organisations(slug);
+
+CREATE TABLE organisation_members (
+    id BIGSERIAL PRIMARY KEY,
+    organisation_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    role organisation_role NOT NULL DEFAULT 'User',
+    CONSTRAINT FK_organisation_members_organisation
+        FOREIGN KEY(organisation_id)
+            REFERENCES organisations(id)
+                ON DELETE CASCADE
+                ON UPDATE CASCADE,
+    CONSTRAINT FK_organisation_members_user
+        FOREIGN KEY(user_id)
+            REFERENCES users(id)
+                ON DELETE CASCADE
+                ON UPDATE CASCADE,
+    UNIQUE(organisation_id, user_id)
+);
+
+
+CREATE INDEX IDX_organisation_members_organisation on organisation_members(organisation_id);

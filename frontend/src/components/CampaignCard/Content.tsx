@@ -23,12 +23,12 @@ import type { CampaignWithRoles } from "types/api";
 const dateToString = (date: Date) => moment(date).format("D MMM YYYY");
 
 type AdminProps = {
-  campaignId: number;
+  campaignId: string;
   isAdmin: true;
 };
 
 type NonAdminProps = {
-  campaignId?: number;
+  campaignId?: string;
   isAdmin?: false;
 };
 
@@ -164,10 +164,8 @@ const Content = ({
   };
 
   let status: VariantProps<typeof CampaignStatus>["status"];
-  if (appliedFor.some(([_, status]) => status === "Success")) {
-    status = "offered";
-  } else if (appliedFor.some(([_, status]) => status === "Rejected")) {
-    status = "rejected";
+  if (appliedFor.some(([_, status]) => status === "Completed")) {
+    status = "completed";
   } else if (date > endDate) {
     status = "closed";
   } else if (appliedFor.length) {
