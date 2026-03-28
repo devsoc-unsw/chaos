@@ -6,7 +6,7 @@ on:
       - CHAOS-224-KHAOS-rewrite
 
 env:
-  ENVIRONMENT: ${{ github.ref_name == 'main' && 'prod' || 'staging' }}
+  ENVIRONMENT: ${{ github.ref_name == 'main' && 'staging' || 'staging' }}
   IMAGE_NAME: ${{ github.ref_name == 'main' && 'chaos' || 'chaos-staging' }}
 
 jobs:
