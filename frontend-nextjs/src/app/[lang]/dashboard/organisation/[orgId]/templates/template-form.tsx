@@ -13,6 +13,11 @@ import {
 } from "@/models/email";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useRef, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -91,20 +96,38 @@ export default function TemplateForm({
         </div>
         <div className="flex flex-col gap-1">
           <Label>{dict.dashboard.email.body}</Label>
-          <ButtonGroup>
-            {templateVariables.map((variable) => {
-              return (
-                <Button
-                  variant="outline"
-                  className="text-xs"
-                  key={variable.key}
-                  onClick={() => handleAddVariable(variable.key)}
-                >
-                  {variable.key}
-                </Button>
-              );
-            })}
-          </ButtonGroup>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <ButtonGroup>
+                {templateVariables.map((variable) => {
+                  return (
+                    <Button
+                      variant="outline"
+                      className="text-xs"
+                      key={variable.key}
+                      onClick={() => handleAddVariable(variable.key)}
+                    >
+                      {variable.key}
+                    </Button>
+                  );
+                })}
+              </ButtonGroup>
+            </TooltipTrigger>
+            <TooltipContent
+              side="right"
+              className="text-start max-w-xs gap-2 flex flex-col"
+            >
+              <p>
+                These buttons add variables which will automatically be replaced
+                when your emails are generated.
+              </p>
+              <p>
+                Please do not add any variables for emails which you won't have
+                data for (e.g adding an offer_link for rejection templates)
+              </p>
+            </TooltipContent>
+          </Tooltip>
+
           <Textarea
             className="max-w-2xl min-h-[300px]"
             value={body}
