@@ -115,7 +115,7 @@ export default function TemplateForm({
             </TooltipTrigger>
             <TooltipContent
               side="right"
-              className="text-start max-w-xs gap-2 flex flex-col"
+              className="max-w-xs gap-2 flex flex-col"
             >
               <p>
                 These buttons add variables which will automatically be replaced
