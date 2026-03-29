@@ -13,7 +13,7 @@ import {
 } from "@/models/email";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 
 export default function TemplateForm({
@@ -40,10 +40,19 @@ export default function TemplateForm({
 
   const [saving, setSaving] = useState(false);
 
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+
   const handleSave = async () => {
     setSaving(true);
     await submitData(templateId, name, subject, body);
     setSaving(false);
+  };
+
+  const handleAddVariable = (value: string) => {
+    setBody((prev) => prev + value);
+    if (textAreaRef.current) {
+      textAreaRef.current.focus();
+    }
   };
 
   return (
@@ -89,6 +98,7 @@ export default function TemplateForm({
                   variant="outline"
                   className="text-xs"
                   key={variable.key}
+                  onClick={() => handleAddVariable(variable.key)}
                 >
                   {variable.key}
                 </Button>
@@ -99,6 +109,7 @@ export default function TemplateForm({
             className="max-w-2xl min-h-[300px]"
             value={body}
             onChange={(e) => setBody(e.target.value)}
+            ref={textAreaRef}
           />
         </div>
         <div>
