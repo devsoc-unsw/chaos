@@ -64,7 +64,7 @@ export const templateVariables: TemplateVariable[] = [
     example: "March 30, 2024",
   },
   {
-    key: " {{offer_link}}",
+    key: "{{offer_link}}",
     description: "Offer link",
     example: "https://youtu.be/dQw4w9WgXcQ?si=9Ky5ftBCD_dIZ9YZ",
   },
