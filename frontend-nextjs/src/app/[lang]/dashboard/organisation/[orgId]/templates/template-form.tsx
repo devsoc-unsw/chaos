@@ -54,10 +54,22 @@ export default function TemplateForm({
   };
 
   const handleAddVariable = (value: string) => {
-    setBody((prev) => prev + value);
-    if (textAreaRef.current) {
-      textAreaRef.current.focus();
+    const textarea = textAreaRef.current;
+    if (!textarea) {
+      return;
     }
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+
+    setBody(body.slice(0, start) + value + body.slice(end));
+    setTimeout(() => {
+      // Put cursor after the added variable
+      const newPosition = start + value.length;
+      textarea.selectionEnd = newPosition;
+      textarea.selectionStart = newPosition;
+      textarea.focus();
+    }, 0);
   };
 
   return (
