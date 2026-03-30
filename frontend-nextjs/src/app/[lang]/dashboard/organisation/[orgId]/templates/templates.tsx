@@ -217,11 +217,11 @@ function EmailTemplatePreview({
   dict: any;
 }) {
   for (const variable of templateVariables) {
-    template.template_body = template.template_body.replace(
+    template.template_body = template.template_body.replaceAll(
       variable.key,
       variable.example
     );
-    template.template_subject = template.template_subject.replace(
+    template.template_subject = template.template_subject.replaceAll(
       variable.key,
       variable.example
     );
