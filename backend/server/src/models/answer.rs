@@ -1,5 +1,5 @@
 //! Answer management module for the Chaos application.
-//! 
+//!
 //! This module provides functionality for managing answers to application questions,
 //! including creation, retrieval, updating, and deletion of answers. It supports
 //! various question types such as short answer, multiple choice, and ranking questions.
@@ -13,10 +13,10 @@ use sqlx::{Postgres, Transaction};
 use std::ops::DerefMut;
 
 /// Represents an answer in the system.
-/// 
+///
 /// An answer is a response to a question in an application. The answer data is
 /// stored in a type-specific format based on the question type.
-/// 
+///
 /// With the chosen `serde` representation and the use of `#[serde(flatten)]`, the JSON for a
 /// `Answer` will look like this:
 /// ```json
@@ -64,10 +64,10 @@ pub struct AnswerWithRole {
 
     // role ID
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
-    role_id: i64
+    role_id: i64,
 }
 /// Data structure for creating a new answer.
-/// 
+///
 /// Contains the question ID and the answer data.
 #[derive(Deserialize, Serialize)]
 pub struct NewAnswer {
@@ -81,7 +81,7 @@ pub struct NewAnswer {
 }
 
 /// Raw answer data from the database.
-/// 
+///
 /// Contains all fields needed to construct an Answer structure,
 /// including the question type and various answer formats.
 #[derive(Deserialize, sqlx::FromRow)]
@@ -115,17 +115,17 @@ pub struct AnswerTypeApplicationId {
 
 impl Answer {
     /// Creates a new answer.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `application_id` - ID of the application this answer belongs to
     /// * `question_id` - ID of the question being answered
     /// * `answer_data` - The answer data
     /// * `snowflake_generator` - Generator for creating unique IDs
     /// * `transaction` - Database transaction to use
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<i64, ChaosError>` - ID of the created answer or error
     pub async fn create(
         application_id: i64,
@@ -166,14 +166,14 @@ impl Answer {
     }
 
     /// Retrieves an answer by its ID.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `id` - ID of the answer to retrieve
     /// * `transaction` - Database transaction to use
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<Answer, ChaosError>` - Answer details or error
     pub async fn get(
         id: i64,
@@ -233,16 +233,16 @@ impl Answer {
     }
 
     /// Retrieves all common answers for an application.
-    /// 
+    ///
     /// Common answers are those that apply to all roles in the application.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `application_id` - ID of the application to get answers for
     /// * `transaction` - Database transaction to use
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<Vec<Answer>, ChaosError>` - List of answers or error
     pub async fn get_all_common_by_application(
         application_id: i64,
@@ -311,15 +311,15 @@ impl Answer {
     }
 
     /// Retrieves all answers for an application and role.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `application_id` - ID of the application to get answers for
     /// * `role_id` - ID of the role to get answers for
     /// * `transaction` - Database transaction to use
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<Vec<Answer>, ChaosError>` - List of answers or error
     pub async fn get_all_by_application_and_role(
         application_id: i64,
@@ -391,15 +391,15 @@ impl Answer {
     }
 
     /// Updates an existing answer.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `id` - ID of the answer to update
     /// * `answer_data` - New answer data
     /// * `transaction` - Database transaction to use
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<(), ChaosError>` - Success or error
     pub async fn update(
         id: i64,
@@ -442,14 +442,14 @@ impl Answer {
     }
 
     /// Deletes an answer.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `id` - ID of the answer to delete
     /// * `transaction` - Database transaction to use
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<(), ChaosError>` - Success or error
     pub async fn delete(
         id: i64,
@@ -464,7 +464,7 @@ impl Answer {
 }
 
 /// Represents the different types of answer data.
-/// 
+///
 /// Each variant corresponds to a different question type and contains
 /// the appropriate data format for that type.
 #[derive(Deserialize, Serialize)]
@@ -492,13 +492,13 @@ pub enum AnswerData {
 
 impl AnswerData {
     /// Creates a new AnswerData instance based on a question type.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `question_type` - Type of the question
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `AnswerData` - New answer data instance
     fn from_question_type(question_type: &QuestionType) -> Self {
         match question_type {
@@ -511,16 +511,16 @@ impl AnswerData {
     }
 
     /// Creates an AnswerData instance from raw database data.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `question_type` - Type of the question
     /// * `short_answer_answer` - Text answer for short answer questions
     /// * `multi_option_answers` - Selected options for multiple choice/select questions
     /// * `ranking_answers` - Ranked options for ranking questions
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `AnswerData` - New answer data instance
     fn from_answer_raw_data(
         question_type: QuestionType,
@@ -556,15 +556,15 @@ impl AnswerData {
         match self {
             AnswerData::ShortAnswer(text) => text.is_empty(),
             AnswerData::MultiSelect(options) | AnswerData::Ranking(options) => options.is_empty(),
-            AnswerData::MultiChoice(option_id) => false,
-            AnswerData::DropDown(option_id) => *option_id == 0
+            AnswerData::MultiChoice(_option_id) => false,
+            AnswerData::DropDown(option_id) => *option_id == 0,
         }
     }
 
     /// Validates the answer data.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<(), ChaosError>` - Success if valid, error if not
     pub fn validate(&self) -> Result<(), ChaosError> {
         match self {
@@ -585,14 +585,14 @@ impl AnswerData {
     }
 
     /// Inserts the answer data into the database.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `answer_id` - ID of the answer to insert data for
     /// * `transaction` - Database transaction to use
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<(), ChaosError>` - Success or error
     pub async fn insert_into_db(
         self,
@@ -656,14 +656,14 @@ impl AnswerData {
     }
 
     /// Deletes the answer data from the database.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `answer_id` - ID of the answer to delete data for
     /// * `transaction` - Database transaction to use
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<(), ChaosError>` - Success or error
     pub async fn delete_from_db(
         self,

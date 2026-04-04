@@ -1,23 +1,23 @@
 //! Email template management for Chaos.
-//! 
+//!
 //! This module provides functionality for managing email templates with support
 //! for variable substitution using Handlebars templating.
 
+use crate::constants::NANOID_ALPHABET;
 use crate::models::email::EmailParts;
 use crate::models::error::ChaosError;
+use crate::models::organisation::Organisation;
 use chrono::{DateTime, Local, Utc};
 use handlebars::Handlebars;
+use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
+use snowflake::SnowflakeIdGenerator;
 use sqlx::{Postgres, Transaction};
 use std::collections::HashMap;
 use std::ops::DerefMut;
-use nanoid::nanoid;
-use snowflake::SnowflakeIdGenerator;
-use crate::models::organisation::Organisation;
-use crate::constants::NANOID_ALPHABET;
 
 /// Represents an email template in the database.
-/// 
+///
 /// Email templates support the following variables in their subject and body:
 /// * `name` - The recipient's name
 /// * `role` - The role being applied for
@@ -27,10 +27,16 @@ use crate::constants::NANOID_ALPHABET;
 #[derive(Deserialize, Serialize)]
 pub struct EmailTemplate {
     /// Unique identifier for the template
-    #[serde(serialize_with = "crate::models::serde_string::serialize", deserialize_with = "crate::models::serde_string::deserialize")]
+    #[serde(
+        serialize_with = "crate::models::serde_string::serialize",
+        deserialize_with = "crate::models::serde_string::deserialize"
+    )]
     pub id: i64,
     /// ID of the organisation that owns this template
-    #[serde(serialize_with = "crate::models::serde_string::serialize", deserialize_with = "crate::models::serde_string::deserialize")]
+    #[serde(
+        serialize_with = "crate::models::serde_string::serialize",
+        deserialize_with = "crate::models::serde_string::deserialize"
+    )]
     pub organisation_id: i64,
     /// Display name of the template
     pub name: String,
@@ -41,7 +47,7 @@ pub struct EmailTemplate {
 }
 
 /// Data structure for creating a new email template.
-/// 
+///
 /// This struct contains the fields needed to create a new email template,
 /// excluding the ID and organisation ID which are managed by the system.
 #[derive(Deserialize, Serialize)]
@@ -56,11 +62,11 @@ pub struct NewEmailTemplate {
 
 impl EmailTemplate {
     /// Retrieves an email template by its ID.
-    /// 
+    ///
     /// # Arguments
     /// * `id` - The ID of the template to retrieve
     /// * `transaction` - A mutable reference to the database transaction
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(EmailTemplate)` - The requested template
@@ -81,11 +87,11 @@ impl EmailTemplate {
     }
 
     /// Retrieves all email templates for a specific organisation.
-    /// 
+    ///
     /// # Arguments
     /// * `organisation_id` - The ID of the organisation
     /// * `pool` - A reference to the database connection pool
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(Vec<EmailTemplate>)` - List of templates for the organisation
@@ -106,14 +112,14 @@ impl EmailTemplate {
     }
 
     /// Updates an existing email template.
-    /// 
+    ///
     /// # Arguments
     /// * `id` - The ID of the template to update
     /// * `name` - The new name for the template
     /// * `template_subject` - The new subject template
     /// * `template_body` - The new body template
     /// * `pool` - A reference to the database connection pool
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(())` - If the update was successful
@@ -141,16 +147,19 @@ impl EmailTemplate {
     }
 
     /// Deletes an email template.
-    /// 
+    ///
     /// # Arguments
     /// * `id` - The ID of the template to delete
     /// * `pool` - A reference to the database connection pool
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(())` - If the deletion was successful
     /// * `Err(ChaosError)` - An error if the deletion fails
-    pub async fn delete(id: i64, transaction: &mut Transaction<'_, Postgres>,) -> Result<(), ChaosError> {
+    pub async fn delete(
+        id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
         let _ = sqlx::query!("DELETE FROM email_templates WHERE id = $1 RETURNING id", id)
             .fetch_one(transaction.deref_mut())
             .await?;
@@ -168,7 +177,11 @@ impl EmailTemplate {
     /// Returns a `Result` containing either:
     /// * `Ok(())` - If the deletion was successful
     /// * `Err(ChaosError)` - An error if the deletion fails
-    pub async fn duplicate(id: i64, transaction: &mut Transaction<'_, Postgres>, snowflake_generator: &mut SnowflakeIdGenerator,) -> Result<(), ChaosError> {
+    pub async fn duplicate(
+        id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+        snowflake_generator: &mut SnowflakeIdGenerator,
+    ) -> Result<(), ChaosError> {
         let template = EmailTemplate::get(id, transaction).await?;
 
         let duplicate_prevention_id = nanoid!(6, &NANOID_ALPHABET);
@@ -179,14 +192,15 @@ impl EmailTemplate {
             template.template_subject,
             template.template_body,
             transaction,
-            snowflake_generator
-        ).await?;
+            snowflake_generator,
+        )
+        .await?;
 
         Ok(())
     }
 
     /// Generates an email using a template and provided data.
-    /// 
+    ///
     /// # Arguments
     /// * `name` - The recipient's name
     /// * `role` - The role being applied for
@@ -195,7 +209,7 @@ impl EmailTemplate {
     /// * `expiry_date` - The expiration date of the application/offer
     /// * `email_template_id` - The ID of the template to use
     /// * `transaction` - A mutable reference to the database transaction
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(EmailParts)` - The generated email subject and body

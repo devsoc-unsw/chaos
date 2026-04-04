@@ -1,5 +1,5 @@
 //! Role management for Chaos campaigns.
-//! 
+//!
 //! This module provides functionality for managing roles within recruitment campaigns,
 //! including creation, updates, and retrieval of role information.
 
@@ -8,11 +8,11 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
 use sqlx::{FromRow, Postgres, Transaction};
-use std::ops::DerefMut;
 use std::env;
+use std::ops::DerefMut;
 
 /// Represents a role in a recruitment campaign.
-/// 
+///
 /// A role defines a position that can be applied for within a campaign,
 /// including its availability and status.
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
@@ -40,7 +40,7 @@ pub struct Role {
 }
 
 /// Data structure for updating an existing role.
-/// 
+///
 /// This struct contains the fields that can be modified for a role,
 /// excluding system-managed fields like IDs and timestamps.
 #[derive(Deserialize, Serialize)]
@@ -58,7 +58,7 @@ pub struct RoleUpdate {
 }
 
 /// Detailed view of a role's information.
-/// 
+///
 /// This struct provides a complete view of a role's details,
 /// used primarily for API responses.
 #[derive(Deserialize, Serialize)]
@@ -83,13 +83,13 @@ pub struct RoleDetails {
 
 impl Role {
     /// Creates a new role in a campaign.
-    /// 
+    ///
     /// # Arguments
     /// * `campaign_id` - The ID of the campaign to create the role in
     /// * `role_data` - The data for the new role
     /// * `transaction` - A mutable reference to the database transaction
     /// * `snowflake_generator` - A generator for creating unique IDs
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(())` - If the role was created successfully
@@ -123,16 +123,19 @@ impl Role {
     }
 
     /// Retrieves a role by its ID.
-    /// 
+    ///
     /// # Arguments
     /// * `id` - The ID of the role to retrieve
     /// * `pool` - A reference to the database connection pool
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(RoleDetails)` - The requested role details
     /// * `Err(ChaosError)` - An error if retrieval fails
-    pub async fn get(id: i64, transaction: &mut Transaction<'_, Postgres>,) -> Result<RoleDetails, ChaosError> {
+    pub async fn get(
+        id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<RoleDetails, ChaosError> {
         let role = sqlx::query_as!(
             RoleDetails,
             "
@@ -149,16 +152,19 @@ impl Role {
     }
 
     /// Deletes a role.
-    /// 
+    ///
     /// # Arguments
     /// * `id` - The ID of the role to delete
     /// * `pool` - A reference to the database connection pool
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(())` - If the role was deleted successfully
     /// * `Err(ChaosError)` - An error if deletion fails
-    pub async fn delete(id: i64, transaction: &mut Transaction<'_, Postgres>,) -> Result<(), ChaosError> {
+    pub async fn delete(
+        id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
         let _ = sqlx::query!(
             "
                 DELETE FROM campaign_roles WHERE id = $1 RETURNING id
@@ -172,12 +178,12 @@ impl Role {
     }
 
     /// Updates an existing role.
-    /// 
+    ///
     /// # Arguments
     /// * `id` - The ID of the role to update
     /// * `role_data` - The new data for the role
     /// * `pool` - A reference to the database connection pool
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(())` - If the role was updated successfully
@@ -209,11 +215,11 @@ impl Role {
     }
 
     /// Retrieves all roles in a specific campaign.
-    /// 
+    ///
     /// # Arguments
     /// * `campaign_id` - The ID of the campaign to get roles from
     /// * `transaction` - A mutable reference to the database transaction
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(Vec<RoleDetails>)` - List of roles in the campaign
@@ -242,25 +248,34 @@ impl RoleUpdate {
     pub fn validate(&self) -> Result<(), ChaosError> {
         let role_name_max_chars = env::var("ROLE_NAME_MAX_CHARS")
             .expect("Error getting ROLE_NAME_MAX_CHARS")
-            .to_string().parse::<usize>().map_err(|_| ChaosError::InternalServerError)?;
+            .to_string()
+            .parse::<usize>()
+            .map_err(|_| ChaosError::InternalServerError)?;
         let role_description_max_chars = env::var("ROLE_DESCRIPTION_MAX_CHARS")
             .expect("Error getting ROLE_DESCRIPTION_MAX_CHARS")
-            .to_string().parse::<usize>().map_err(|_| ChaosError::InternalServerError)?;
+            .to_string()
+            .parse::<usize>()
+            .map_err(|_| ChaosError::InternalServerError)?;
         let role_positions_available_max = env::var("ROLE_POSITIONS_AVAILABLE_MAX")
             .expect("Error getting ROLE_POSITIONS_AVAILABLE_MAX")
-            .to_string().parse::<i32>().map_err(|_| ChaosError::InternalServerError)?;
+            .to_string()
+            .parse::<i32>()
+            .map_err(|_| ChaosError::InternalServerError)?;
 
-        if self.name.is_empty() || 
-            self.min_available < 1 || 
-            self.max_available < 1 || 
-            self.min_available > self.max_available ||
-            self.name.len() > role_name_max_chars ||
-            self.min_available > role_positions_available_max ||
-            self.max_available > role_positions_available_max {
+        if self.name.is_empty()
+            || self.min_available < 1
+            || self.max_available < 1
+            || self.min_available > self.max_available
+            || self.name.len() > role_name_max_chars
+            || self.min_available > role_positions_available_max
+            || self.max_available > role_positions_available_max
+        {
             return Err(ChaosError::BadRequest);
         }
 
-        if self.description.is_some() && self.description.as_ref().unwrap().len() > role_description_max_chars {
+        if self.description.is_some()
+            && self.description.as_ref().unwrap().len() > role_description_max_chars
+        {
             return Err(ChaosError::BadRequest);
         }
 

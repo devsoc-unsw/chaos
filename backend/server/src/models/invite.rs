@@ -51,7 +51,7 @@ pub struct InviteDetails {
     /// ID of the user that invited the member to the organisation
     #[serde(serialize_with = "crate::models::serde_string::serialize_option")]
     #[serde(deserialize_with = "crate::models::serde_string::deserialize_option")]
-    pub invited_by_user_id: Option<i64>
+    pub invited_by_user_id: Option<i64>,
 }
 
 impl Invite {
@@ -141,6 +141,4 @@ impl Invite {
 
         Ok(())
     }
-
-
 }

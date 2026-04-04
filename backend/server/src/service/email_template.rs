@@ -1,5 +1,5 @@
 //! Email template service for the Chaos application.
-//! 
+//!
 //! This module provides functionality for managing email templates, including:
 //! - Verifying email template admin privileges
 
@@ -8,17 +8,17 @@ use sqlx::{Postgres, Transaction};
 use std::ops::DerefMut;
 
 /// Verifies if a user has admin privileges for an email template.
-/// 
+///
 /// This function checks if the user is an admin of the organisation that owns the template.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `user_id` - The ID of the user to check
 /// * `template_id` - The ID of the email template
 /// * `pool` - Database connection pool
-/// 
+///
 /// # Returns
-/// 
+///
 /// * `Result<(), ChaosError>` - Ok if the user is an admin, Unauthorized error otherwise
 pub async fn user_is_email_template_admin(
     user_id: i64,

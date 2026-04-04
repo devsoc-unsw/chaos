@@ -1,5 +1,5 @@
 //! Email functionality for Chaos.
-//! 
+//!
 //! This module provides functionality for sending emails using SMTP.
 //! It handles email credentials management and message sending through
 //! the Lettre email library.
@@ -7,19 +7,19 @@
 use crate::models::error::ChaosError;
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use sqlx::{Postgres, Transaction};
 use std::env;
 use std::ops::DerefMut;
 
 /// Main email service for Chaos.
-/// 
+///
 /// This struct provides methods for setting up email credentials and
 /// sending emails through SMTP.
 pub struct ChaosEmail;
 
 /// Email credentials and configuration.
-/// 
+///
 /// This struct holds the SMTP credentials and host information needed
 /// to establish email connections.
 #[derive(Clone)]
@@ -35,7 +35,7 @@ pub struct EmailCredentials {
 }
 
 /// Components of an email message.
-/// 
+///
 /// This struct represents the subject and body of an email message,
 /// which can be serialized to JSON.
 #[derive(Serialize)]
@@ -47,11 +47,11 @@ pub struct EmailParts {
 }
 
 /// Email Type
-/// 
+///
 /// This enum represents the different types of email that can be sent(Interview, Accept, Reject)
 #[derive(Deserialize, Serialize, sqlx::Type, Clone, Debug)]
 #[sqlx(type_name = "email_type", rename_all = "PascalCase")]
-pub enum EmailType{
+pub enum EmailType {
     Interview,
     Accept,
     Reject,
@@ -59,15 +59,15 @@ pub enum EmailType{
 
 impl ChaosEmail {
     /// Sets up email credentials from environment variables.
-    /// 
+    ///
     /// # Environment Variables
     /// * `SMTP_USERNAME` - The SMTP username
     /// * `SMTP_PASSWORD` - The SMTP password
     /// * `SMTP_HOST` - The SMTP server host
-    /// 
+    ///
     /// # Returns
     /// Returns an `EmailCredentials` instance with the configured credentials.
-    /// 
+    ///
     /// # Panics
     /// Panics if any of the required environment variables are not set.
     pub fn setup_credentials() -> EmailCredentials {
@@ -102,10 +102,10 @@ impl ChaosEmail {
     }
 
     /// Creates a new SMTP connection with the provided credentials.
-    /// 
+    ///
     /// # Arguments
     /// * `credentials` - The email credentials to use for the connection
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(AsyncSmtpTransport)` - A configured SMTP transport
@@ -122,14 +122,14 @@ impl ChaosEmail {
     }
 
     /// Sends an email message.
-    /// 
+    ///
     /// # Arguments
     /// * `recipient_name` - The name of the email recipient
     /// * `recipient_email_address` - The email address of the recipient
     /// * `subject` - The email subject
     /// * `body` - The email body content
     /// * `credentials` - The email credentials to use for sending
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(())` - If the email was sent successfully
@@ -147,7 +147,13 @@ impl ChaosEmail {
         };
 
         let message = Message::builder()
-            .from(format!("Chaos Subcommittee Recruitment <{}>", credentials.email_from).parse()?)
+            .from(
+                format!(
+                    "Chaos Subcommittee Recruitment <{}>",
+                    credentials.email_from
+                )
+                .parse()?,
+            )
             .reply_to("chaos@devsoc.app".parse()?)
             .to(to.parse()?)
             .subject(subject)
@@ -180,8 +186,8 @@ impl EmailQueue {
             subject,
             body,
         )
-            .execute(transaction.deref_mut())
-            .await?;
+        .execute(transaction.deref_mut())
+        .await?;
 
         Ok(())
     }
@@ -205,8 +211,8 @@ impl EmailQueue {
                 RETURNING email_queue.id, recepient_name, recepient_email_address, subject, body
             "#
         )
-            .fetch_optional(transaction.deref_mut())
-            .await?;
+        .fetch_optional(transaction.deref_mut())
+        .await?;
 
         if let Some(email) = email {
             ChaosEmail::send_message(
@@ -216,7 +222,7 @@ impl EmailQueue {
                 email.body,
                 credentials,
             )
-                .await?;
+            .await?;
         }
 
         Ok(())

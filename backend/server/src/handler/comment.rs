@@ -3,7 +3,9 @@
 //! This module provides HTTP request handlers for CRUD operations on application comments.
 
 use crate::models::app::{AppMessage, AppState};
-use crate::models::auth::{ApplicationReviewerGivenApplicationId, CommentAuthorGivenApplicationAndCommentId};
+use crate::models::auth::{
+    ApplicationReviewerGivenApplicationId, CommentAuthorGivenApplicationAndCommentId,
+};
 use crate::models::comment::{Comment, NewComment, UpdateComment};
 use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
@@ -106,7 +108,6 @@ impl CommentHandler {
     }
 
     // pub async fn get_comments_by_application(
-        
+
     // )
 }
-

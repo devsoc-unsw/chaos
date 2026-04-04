@@ -145,7 +145,8 @@ impl Comment {
             WHERE c.application_id = $1
             ORDER BY c.created_at ASC",
             application_id
-        ).fetch_all(transaction.deref_mut())
+        )
+        .fetch_all(transaction.deref_mut())
         .await?;
 
         Ok(application_comments_by_postdate)
@@ -223,4 +224,3 @@ impl Comment {
         Ok(())
     }
 }
-

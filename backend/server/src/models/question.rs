@@ -2,9 +2,9 @@ use crate::models::error::ChaosError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
+use sqlx::types::Json;
 use sqlx::{Postgres, QueryBuilder, Transaction};
 use std::ops::DerefMut;
-use sqlx::types::Json;
 
 /// The `Question` type that will be sent in API responses.
 ///
@@ -132,25 +132,29 @@ impl Question {
 
         if !common {
             if let Some(roles) = roles {
-                if roles.len() == 0 {
-                    return Err(ChaosError::BadRequestWithMessage("Question must either be common or assigned to at least one role".to_string()));
+                if roles.is_empty() {
+                    return Err(ChaosError::BadRequestWithMessage(
+                        "Question must either be common or assigned to at least one role"
+                            .to_string(),
+                    ));
                 }
 
                 for role in roles {
                     sqlx::query!(
-                    "
+                        "
                         INSERT INTO question_roles (question_id, role_id) VALUES ($1, $2)
                     ",
-                    id,
-                    role
-                )
-                        .execute(transaction.deref_mut())
-                        .await?;
+                        id,
+                        role
+                    )
+                    .execute(transaction.deref_mut())
+                    .await?;
                 }
             } else {
-                return Err(ChaosError::BadRequestWithMessage("Question must either be common or assigned to at least one role".to_string()));
+                return Err(ChaosError::BadRequestWithMessage(
+                    "Question must either be common or assigned to at least one role".to_string(),
+                ));
             }
-
         }
 
         Ok(id)
