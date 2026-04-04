@@ -1,28 +1,28 @@
 //! Application service for the Chaos application.
-//! 
+//!
 //! This module provides functionality for managing applications, including:
 //! - Verifying application admin privileges
 //! - Verifying application ownership
 //! - Checking application status and deadlines
 
-use chrono::Utc;
 use crate::models::error::ChaosError;
+use chrono::Utc;
 use sqlx::{Postgres, Transaction};
 use std::ops::DerefMut;
 
 /// Verifies if a user has admin privileges for an application.
-/// 
+///
 /// This function checks if the user is an admin of the organisation that owns the campaign
 /// the application belongs to.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `user_id` - The ID of the user to check
 /// * `application_id` - The ID of the application
 /// * `pool` - Database connection pool
-/// 
+///
 /// # Returns
-/// 
+///
 /// * `Result<(), ChaosError>` - Ok if the user is an admin, Unauthorized error otherwise
 pub async fn user_is_application_admin(
     user_id: i64,
@@ -57,17 +57,17 @@ pub async fn user_is_application_admin(
 }
 
 /// Verifies if a user is the owner of an application.
-/// 
+///
 /// This function checks if the user created the application.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `user_id` - The ID of the user to check
 /// * `application_id` - The ID of the application
 /// * `pool` - Database connection pool
-/// 
+///
 /// # Returns
-/// 
+///
 /// * `Result<(), ChaosError>` - Ok if the user is the owner, Unauthorized error otherwise
 pub async fn user_is_application_owner(
     user_id: i64,
@@ -98,17 +98,17 @@ pub async fn user_is_application_owner(
 }
 
 /// Verifies if an application is still open for submissions.
-/// 
+///
 /// This function checks if the application has not been submitted and if the campaign
 /// deadline has not passed.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `application_id` - The ID of the application to check
 /// * `pool` - Database connection pool
-/// 
+///
 /// # Returns
-/// 
+///
 /// * `Result<(), ChaosError>` - Ok if the application is open, ApplicationClosed error otherwise
 pub async fn assert_application_is_open(
     application_id: i64,
@@ -123,11 +123,11 @@ pub async fn assert_application_is_open(
         ",
         application_id
     )
-        .fetch_one(transaction.deref_mut())
-        .await?;
+    .fetch_one(transaction.deref_mut())
+    .await?;
 
     if application.submitted || application.ends_at <= time {
-        return Err(ChaosError::ApplicationClosed)
+        return Err(ChaosError::ApplicationClosed);
     }
 
     Ok(())

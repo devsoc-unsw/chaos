@@ -1,5 +1,5 @@
 //! Authentication and authorization module for the Chaos application.
-//! 
+//!
 //! This module provides functionality for handling user authentication and authorization,
 //! including OAuth integration with Google, role-based access control, and various
 //! permission checks for different parts of the application.
@@ -10,16 +10,18 @@ use crate::service::answer::user_is_answer_owner;
 use crate::service::application::{user_is_application_admin, user_is_application_owner};
 use crate::service::auth::{assert_is_super_user, extract_user_id_from_request};
 use crate::service::campaign::{user_is_campaign_admin, user_is_campaign_org_member};
+use crate::service::comment::user_is_comment_author;
 use crate::service::email_template::user_is_email_template_admin;
 use crate::service::offer::{assert_user_is_offer_admin, assert_user_is_offer_recipient};
-use crate::service::organisation::{assert_user_is_organisation_admin, assert_user_is_organisation_admin_or_super_user};
+use crate::service::organisation::{
+    assert_user_is_organisation_admin, assert_user_is_organisation_admin_or_super_user,
+};
 use crate::service::question::user_is_question_admin;
 use crate::service::rating::{
     assert_user_is_application_reviewer_given_rating_id, assert_user_is_organisation_member,
     assert_user_is_rating_creator_and_organisation_member,
 };
 use crate::service::role::user_is_role_admin;
-use crate::service::comment::user_is_comment_author;
 use axum::extract::{FromRef, FromRequestParts, Path};
 use axum::http::request::Parts;
 use axum::response::{IntoResponse, Redirect, Response};
@@ -28,7 +30,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /// Request structure for login.
-/// 
+///
 /// Contains the redirect URL for the login page.
 #[derive(Deserialize)]
 pub struct LoginRequest {
@@ -36,7 +38,7 @@ pub struct LoginRequest {
 }
 
 /// Request structure for OAuth authentication.
-/// 
+///
 /// Contains the authorization code received from the OAuth provider.
 #[derive(Deserialize, Serialize)]
 pub struct AuthRequest {
@@ -48,7 +50,7 @@ pub struct AuthRequest {
 }
 
 /// User profile information received from Google OAuth.
-/// 
+///
 /// Contains basic user information provided by Google after successful authentication.
 #[derive(Deserialize, Serialize)]
 pub struct GoogleUserProfile {
@@ -59,7 +61,7 @@ pub struct GoogleUserProfile {
 }
 
 /// Response type for authentication redirects.
-/// 
+///
 /// Handles redirecting users to the appropriate authentication page.
 pub struct AuthRedirect;
 
@@ -71,7 +73,7 @@ impl IntoResponse for AuthRedirect {
 }
 
 /// Authenticated user information.
-/// 
+///
 /// Contains the user ID of the currently authenticated user.
 #[derive(Deserialize, Serialize)]
 pub struct AuthUser {
@@ -81,7 +83,7 @@ pub struct AuthUser {
 }
 
 /// Extractor for authenticated users.
-/// 
+///
 /// This extractor is used in route handlers to ensure that the request
 /// comes from an authenticated user.
 #[async_trait]
@@ -101,7 +103,7 @@ where
 }
 
 /// Super user information.
-/// 
+///
 /// Contains the user ID of a user with super user privileges.
 #[derive(Deserialize, Serialize)]
 pub struct SuperUser {
@@ -111,7 +113,7 @@ pub struct SuperUser {
 }
 
 /// Extractor for super users.
-/// 
+///
 /// This extractor is used in route handlers to ensure that the request
 /// comes from a user with super user privileges.
 #[async_trait]
@@ -135,7 +137,7 @@ where
 }
 
 /// Organization administrator information.
-/// 
+///
 /// Contains the user ID of a user with organization administrator privileges.
 pub struct OrganisationAdmin {
     /// ID of the organization administrator
@@ -143,7 +145,7 @@ pub struct OrganisationAdmin {
 }
 
 /// Extractor for organization administrators.
-/// 
+///
 /// This extractor is used in route handlers to ensure that the request
 /// comes from a user with organization administrator privileges.
 #[async_trait]
@@ -174,7 +176,7 @@ where
 }
 
 /// Organisation admin or super user information
-/// 
+///
 /// Contains the user ID of a user that may either be an organisation admin or a super user.
 pub struct OrganisationAdminOrSuperUser {
     /// ID of the superuser or org admin
@@ -182,7 +184,7 @@ pub struct OrganisationAdminOrSuperUser {
 }
 
 /// Extractor for organization administrators or superusers, for when a certain action can be done by both.
-/// 
+///
 /// This extractor is used in route handlers to ensure that the request
 /// comes from a user with organization administrator privileges.
 #[async_trait]
@@ -213,7 +215,7 @@ where
 }
 
 /// Campaign administrator information.
-/// 
+///
 /// Contains the user ID of a user with campaign administrator privileges.
 pub struct CampaignAdmin {
     /// ID of the campaign administrator
@@ -221,7 +223,7 @@ pub struct CampaignAdmin {
 }
 
 /// Extractor for campaign administrators.
-/// 
+///
 /// This extractor is used in route handlers to ensure that the request
 /// comes from a user with campaign administrator privileges.
 #[async_trait]
@@ -284,7 +286,7 @@ where
 }
 
 /// Role administrator information.
-/// 
+///
 /// Contains the user ID of a user with role administrator privileges.
 pub struct RoleAdmin {
     /// ID of the role administrator
@@ -292,7 +294,7 @@ pub struct RoleAdmin {
 }
 
 /// Extractor for role administrators.
-/// 
+///
 /// This extractor is used in route handlers to ensure that the request
 /// comes from a user with role administrator privileges.
 #[async_trait]
@@ -321,7 +323,7 @@ where
 }
 
 /// Application administrator information.
-/// 
+///
 /// Contains the user ID of a user with application administrator privileges.
 pub struct ApplicationAdmin {
     /// ID of the application administrator
@@ -329,7 +331,7 @@ pub struct ApplicationAdmin {
 }
 
 /// Extractor for application administrators.
-/// 
+///
 /// This extractor is used in route handlers to ensure that the request
 /// comes from a user with application administrator privileges.
 #[async_trait]
@@ -360,7 +362,7 @@ where
 }
 
 /// Application reviewer information for a specific application.
-/// 
+///
 /// Contains the user ID of a user who has permission to review a specific application.
 pub struct ApplicationReviewerGivenApplicationId {
     /// ID of the application reviewer
@@ -368,7 +370,7 @@ pub struct ApplicationReviewerGivenApplicationId {
 }
 
 /// Extractor for application reviewers.
-/// 
+///
 /// This extractor is used in route handlers to ensure that the request
 /// comes from a user with permission to review a specific application.
 #[async_trait]
@@ -397,7 +399,7 @@ where
 }
 
 /// Application creator information for a specific application.
-/// 
+///
 /// Contains the user ID of a user who created a specific application.
 pub struct ApplicationCreatorGivenApplicationId {
     /// ID of the application creator
@@ -405,7 +407,7 @@ pub struct ApplicationCreatorGivenApplicationId {
 }
 
 /// Extractor for application creators.
-/// 
+///
 /// This extractor is used in route handlers to ensure that the request
 /// comes from the creator of a specific application.
 #[async_trait]
@@ -436,7 +438,7 @@ where
 }
 
 /// Application reviewer information for a specific rating.
-/// 
+///
 /// Contains the user ID of a user who has permission to review an application
 /// based on a specific rating.
 pub struct ApplicationReviewerGivenRatingId {
@@ -445,7 +447,7 @@ pub struct ApplicationReviewerGivenRatingId {
 }
 
 /// Extractor for application reviewers based on rating.
-/// 
+///
 /// This extractor is used in route handlers to ensure that the request
 /// comes from a user with permission to review an application based on a specific rating.
 #[async_trait]
@@ -474,7 +476,7 @@ where
 }
 
 /// Rating creator information.
-/// 
+///
 /// Contains the user ID of a user who created a specific rating.
 pub struct RatingCreator {
     /// ID of the rating creator
@@ -482,7 +484,7 @@ pub struct RatingCreator {
 }
 
 /// Extractor for rating creators.
-/// 
+///
 /// This extractor is used in route handlers to ensure that the request
 /// comes from the creator of a specific rating.
 #[async_trait]
@@ -514,7 +516,7 @@ where
 }
 
 /// Question administrator information.
-/// 
+///
 /// Contains the user ID of a user with question administrator privileges.
 pub struct QuestionAdmin {
     /// ID of the question administrator
@@ -522,7 +524,7 @@ pub struct QuestionAdmin {
 }
 
 /// Extractor for question administrators.
-/// 
+///
 /// This extractor is used in route handlers to ensure that the request
 /// comes from a user with question administrator privileges.
 #[async_trait]
@@ -553,7 +555,7 @@ where
 }
 
 /// Application owner information.
-/// 
+///
 /// Contains the user ID of a user who owns a specific application.
 pub struct ApplicationOwner {
     /// ID of the application owner
@@ -561,7 +563,7 @@ pub struct ApplicationOwner {
 }
 
 /// Extractor for application owners.
-/// 
+///
 /// This extractor is used in route handlers to ensure that the request
 /// comes from the owner of a specific application.
 #[async_trait]
@@ -581,7 +583,7 @@ where
             .await
             .map_err(|_| ChaosError::BadRequest)?;
 
-        let application_id = ids.get("application_id").ok_or(ChaosError::BadRequest)?.clone();
+        let application_id = *ids.get("application_id").ok_or(ChaosError::BadRequest)?;
 
         let mut tx = app_state.db.begin().await?;
         if !user_is_application_owner(user_id, application_id, &mut tx).await? {
@@ -594,7 +596,7 @@ where
 }
 
 /// Answer owner information.
-/// 
+///
 /// Contains the user ID of a user who owns a specific answer.
 pub struct AnswerOwner {
     /// ID of the answer owner
@@ -602,7 +604,7 @@ pub struct AnswerOwner {
 }
 
 /// Extractor for answer owners.
-/// 
+///
 /// This extractor is used in route handlers to ensure that the request
 /// comes from the owner of a specific answer.
 #[async_trait]
@@ -659,7 +661,7 @@ where
             .await
             .map_err(|_| ChaosError::BadRequest)?;
 
-        let comment_id = ids.get("comment_id").ok_or(ChaosError::BadRequest)?.clone();
+        let comment_id = *ids.get("comment_id").ok_or(ChaosError::BadRequest)?;
 
         let mut tx = app_state.db.begin().await?;
         let is_owner = user_is_comment_author(user_id, comment_id, &mut tx).await?;
@@ -703,13 +705,12 @@ where
             .await
             .map_err(|_| ChaosError::BadRequest)?;
 
-        let application_id = ids.get("application_id").ok_or(ChaosError::BadRequest)?.clone();
+        let application_id = *ids.get("application_id").ok_or(ChaosError::BadRequest)?;
 
         let mut tx = app_state.db.begin().await?;
 
-        if
-            !user_is_application_owner(user_id, application_id, &mut tx).await? &&
-            !assert_user_is_organisation_member(user_id, application_id, &mut tx).await?
+        if !user_is_application_owner(user_id, application_id, &mut tx).await?
+            && !assert_user_is_organisation_member(user_id, application_id, &mut tx).await?
         {
             println!("Lol");
             return Err(ChaosError::Unauthorized);
@@ -721,7 +722,7 @@ where
 }
 
 /// Email template administrator information.
-/// 
+///
 /// Contains the user ID of a user with email template administrator privileges.
 pub struct EmailTemplateAdmin {
     /// ID of the email template administrator
@@ -729,7 +730,7 @@ pub struct EmailTemplateAdmin {
 }
 
 /// Extractor for email template administrators.
-/// 
+///
 /// This extractor is used in route handlers to ensure that the request
 /// comes from a user with email template administrator privileges.
 #[async_trait]
@@ -758,7 +759,7 @@ where
 }
 
 /// Offer administrator information.
-/// 
+///
 /// Contains the user ID of a user with offer administrator privileges.
 pub struct OfferAdmin {
     /// ID of the offer administrator
@@ -795,7 +796,7 @@ where
 }
 
 /// Offer recipient information.
-/// 
+///
 /// Contains the user ID of a user who is the recipient of a specific offer.
 pub struct OfferRecipient {
     /// ID of the offer recipient
@@ -803,7 +804,7 @@ pub struct OfferRecipient {
 }
 
 /// Extractor for offer recipients.
-/// 
+///
 /// This extractor is used in route handlers to ensure that the request
 /// comes from the recipient of a specific offer.
 #[async_trait]

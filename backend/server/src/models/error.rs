@@ -1,11 +1,11 @@
 //! Error handling module for the Chaos application.
-//! 
+//!
 //! This module defines the core error types and their conversion to HTTP responses.
 //! It provides a unified error handling system that covers both application-specific
 //! errors and errors from external dependencies.
 
-use axum::response::{IntoResponse, Response};
 use crate::models::app::AppMessage;
+use axum::response::{IntoResponse, Response};
 
 /// Custom error enum for Chaos.
 ///
@@ -30,7 +30,7 @@ pub enum ChaosError {
     /// Invalid request parameters or data
     #[error("Bad request")]
     BadRequest,
-    
+
     /// Invalid request parameters or data with detailed message
     #[error("Bad request: {0}")]
     BadRequestWithMessage(String),
@@ -129,7 +129,7 @@ impl ChaosError {
 }
 
 /// Implementation for converting errors into HTTP responses.
-/// 
+///
 /// This implementation maps each error type to an appropriate HTTP status code
 /// and response format. It handles both application-specific errors and
 /// errors from external dependencies.
@@ -139,21 +139,30 @@ impl IntoResponse for ChaosError {
 
         // Don't leak real error, only return a generic error message
         match self {
-            ChaosError::NotLoggedIn => AppMessage::NotLoggedInMessage("Not logged in").into_response(), // User is not logged in
-            ChaosError::Unauthorized => AppMessage::UnauthorizedMessage("Unauthorized").into_response(), // Unauthorized to complete the action
+            ChaosError::NotLoggedIn => {
+                AppMessage::NotLoggedInMessage("Not logged in").into_response()
+            } // User is not logged in
+            ChaosError::Unauthorized => {
+                AppMessage::UnauthorizedMessage("Unauthorized").into_response()
+            } // Unauthorized to complete the action
             ChaosError::ForbiddenOperation => {
                 AppMessage::UnauthorizedMessage("Forbidden operation").into_response()
             }
             ChaosError::BadRequest => AppMessage::BadRequestMessage("Bad request").into_response(),
-            ChaosError::BadRequestWithMessage(msg) => AppMessage::BadRequestMessage(msg).into_response(),
+            ChaosError::BadRequestWithMessage(msg) => {
+                AppMessage::BadRequestMessage(msg).into_response()
+            }
             ChaosError::NotFound => AppMessage::NotFoundMessage("Not found").into_response(),
-            ChaosError::ApplicationClosed => AppMessage::BadRequestMessage("Application closed").into_response(),
-            ChaosError::CampaignClosed => AppMessage::BadRequestMessage("Campaign closed").into_response(),
-            ChaosError::DatabaseError(db_error) => match db_error {
-                // We only care about the RowNotFound error, as others are miscellaneous DB errors.
-                sqlx::Error::RowNotFound => AppMessage::NotFoundMessage("Not found").into_response(),
-                _ => AppMessage::ErrorMessage("Internal server error").into_response(),
-            },
+            ChaosError::ApplicationClosed => {
+                AppMessage::BadRequestMessage("Application closed").into_response()
+            }
+            ChaosError::CampaignClosed => {
+                AppMessage::BadRequestMessage("Campaign closed").into_response()
+            }
+            // We only care about the RowNotFound error, as others are miscellaneous DB errors.
+            ChaosError::DatabaseError(sqlx::Error::RowNotFound) => {
+                AppMessage::NotFoundMessage("Not found").into_response()
+            }
             _ => AppMessage::ErrorMessage("Internal server error").into_response(),
         }
     }

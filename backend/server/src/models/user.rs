@@ -1,5 +1,5 @@
 //! User management module for the Chaos application.
-//! 
+//!
 //! This module provides functionality for managing users, including retrieval
 //! and updating of user information such as name, pronouns, gender, zID, and degree details.
 
@@ -9,7 +9,7 @@ use sqlx::{FromRow, Postgres, Transaction};
 use std::ops::DerefMut;
 
 /// Represents the role of a user in the system.
-/// 
+///
 /// Users can have different roles that determine their permissions and access levels.
 #[derive(Deserialize, Serialize, sqlx::Type, Clone)]
 #[sqlx(type_name = "user_role", rename_all = "PascalCase")]
@@ -21,7 +21,7 @@ pub enum UserRole {
 }
 
 /// Detailed information about a user.
-/// 
+///
 /// This struct contains all the personal and academic information about a user
 /// that can be displayed in the application.
 #[derive(Deserialize, Serialize, FromRow)]
@@ -46,7 +46,7 @@ pub struct UserDetails {
 }
 
 /// Complete user information including role.
-/// 
+///
 /// This struct extends UserDetails to include the user's role in the system.
 #[derive(Deserialize, Serialize, FromRow)]
 pub struct User {
@@ -119,16 +119,19 @@ pub struct UserRoleUpdate {
 
 impl User {
     /// Retrieves a user by their ID.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `id` - ID of the user to retrieve
     /// * `pool` - Database connection pool
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<User, ChaosError>` - User details or error
-    pub async fn get(id: i64, transaction: &mut Transaction<'_, Postgres>,) -> Result<User, ChaosError> {
+    pub async fn get(
+        id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<User, ChaosError> {
         let user = sqlx::query_as!(
             User,
             r#"
@@ -144,7 +147,10 @@ impl User {
         Ok(user)
     }
 
-    pub async fn find_by_email(email: String, transaction: &mut Transaction<'_, Postgres>) -> Result<Option<User>, ChaosError> {
+    pub async fn find_by_email(
+        email: String,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Option<User>, ChaosError> {
         let possible_user = sqlx::query_as!(
             User,
             r#"
@@ -154,29 +160,29 @@ impl User {
         "#,
             email
         )
-            .fetch_optional(transaction.deref_mut())
-            .await?;
+        .fetch_optional(transaction.deref_mut())
+        .await?;
 
         Ok(possible_user)
     }
 
     /// Updates a user's name.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `id` - ID of the user to update
     /// * `name` - New name for the user
     /// * `pool` - Database connection pool
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<(), ChaosError>` - Success or error
     pub async fn update_name(
         id: i64,
         name: String,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             "
             UPDATE users SET name = $1 WHERE id = $2 RETURNING id
         ",
@@ -190,22 +196,22 @@ impl User {
     }
 
     /// Updates a user's pronouns.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `id` - ID of the user to update
     /// * `pronouns` - New pronouns for the user
     /// * `pool` - Database connection pool
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<(), ChaosError>` - Success or error
     pub async fn update_pronouns(
         id: i64,
         pronouns: String,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             "
             UPDATE users SET pronouns = $1 WHERE id = $2 RETURNING id
         ",
@@ -219,22 +225,22 @@ impl User {
     }
 
     /// Updates a user's gender.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `id` - ID of the user to update
     /// * `gender` - New gender for the user
     /// * `pool` - Database connection pool
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<(), ChaosError>` - Success or error
     pub async fn update_gender(
         id: i64,
         gender: String,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             "
             UPDATE users SET gender = $1 WHERE id = $2 RETURNING id
         ",
@@ -248,18 +254,22 @@ impl User {
     }
 
     /// Updates a user's zID.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `id` - ID of the user to update
     /// * `zid` - New zID for the user
     /// * `pool` - Database connection pool
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<(), ChaosError>` - Success or error
-    pub async fn update_zid(id: i64, zid: String, transaction: &mut Transaction<'_, Postgres>,) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+    pub async fn update_zid(
+        id: i64,
+        zid: String,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
+        sqlx::query!(
             "
             UPDATE users SET zid = $1 WHERE id = $2 RETURNING id
         ",
@@ -273,16 +283,16 @@ impl User {
     }
 
     /// Updates a user's degree information.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `id` - ID of the user to update
     /// * `degree_name` - New degree name for the user
     /// * `degree_starting_year` - New degree starting year for the user
     /// * `pool` - Database connection pool
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<(), ChaosError>` - Success or error
     pub async fn update_degree(
         id: i64,
@@ -290,7 +300,7 @@ impl User {
         degree_starting_year: i32,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             "
             UPDATE users SET degree_name = $1, degree_starting_year = $2 WHERE id = $3 RETURNING id
         ",
@@ -303,7 +313,6 @@ impl User {
 
         Ok(())
     }
-
 
     /// Creates a User, This should only used for database seeding
     pub async fn create_user(

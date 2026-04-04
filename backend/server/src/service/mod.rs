@@ -1,13 +1,13 @@
 //! Service layer for the Chaos application.
-//! 
+//!
 //! This module contains the business logic layer of the application, handling all core functionality
 //! and database operations. Each submodule represents a specific domain of the application:
-//! 
+//!
 //! - `answer`: Manages application answers and their data
 //! - `application`: Handles application creation, updates, and retrieval
 //! - `auth`: Manages authentication and authorization
 //! - `campaign`: Handles campaign-related operations
-//! //! - `comment`: Handles commentrelated operations
+//! - `comment`: Handles comment-related operations
 //! - `email_template`: Manages email template operations
 //! - `jwt`: Handles JWT token generation and validation
 //! - `oauth2`: Manages OAuth2 authentication flow

@@ -1,5 +1,5 @@
 //! JWT service for the Chaos application.
-//! 
+//!
 //! This module provides functionality for JWT token management, including:
 //! - Token encoding and decoding
 //! - Token payload structure
@@ -12,12 +12,12 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
 /// Represents the payload structure of an authorization JWT token.
-/// 
+///
 /// This struct contains all the claims that are encoded in the JWT token,
 /// including user information and token validity timestamps.
-/// 
+///
 /// # Fields
-/// 
+///
 /// * `iss` - The issuer of the token (Chaos)
 /// * `sub` - The subject of the token (user's ID)
 /// * `jti` - A unique identifier for the token
@@ -42,24 +42,24 @@ pub struct AuthorizationJwtPayload {
 }
 
 /// Encodes a new authorization JWT token.
-/// 
+///
 /// This function creates a new JWT token with the provided user information
 /// and signs it using the provided encoding key. The token is valid for 7 days
 /// from the time of creation.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `username` - The username to include in the token
 /// * `user_id` - The user ID to include in the token
 /// * `encoding_key` - The key used to sign the token
 /// * `jwt_header` - The header to use for the token
-/// 
+///
 /// # Returns
-/// 
+///
 /// * `String` - The encoded JWT token
-/// 
+///
 /// # Panics
-/// 
+///
 /// This function will panic if:
 /// * The system time cannot be retrieved
 /// * The token cannot be encoded
@@ -86,18 +86,18 @@ pub fn encode_auth_token(
 }
 
 /// Decodes and validates an authorization JWT token.
-/// 
+///
 /// This function attempts to decode and validate a JWT token using the provided
 /// decoding key and validation parameters.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `token` - The JWT token to decode
 /// * `decoding_key` - The key used to verify the token's signature
 /// * `jwt_validator` - The validation parameters to use
-/// 
+///
 /// # Returns
-/// 
+///
 /// * `Option<AuthorizationJwtPayload>` - The decoded token payload if valid, None otherwise
 pub fn decode_auth_token(
     token: &str,

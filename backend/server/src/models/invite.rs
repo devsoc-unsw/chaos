@@ -51,7 +51,7 @@ pub struct InviteDetails {
     /// ID of the user that invited the member to the organisation
     #[serde(serialize_with = "crate::models::serde_string::serialize_option")]
     #[serde(deserialize_with = "crate::models::serde_string::deserialize_option")]
-    pub invited_by_user_id: Option<i64>
+    pub invited_by_user_id: Option<i64>,
 }
 
 impl Invite {
@@ -110,7 +110,7 @@ impl Invite {
         user_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             r#"
                 UPDATE organisation_invites
                 SET used_at = $1, used_by = $2
@@ -132,7 +132,7 @@ impl Invite {
         code: &str,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             "DELETE FROM organisation_invites WHERE code = $1 RETURNING id",
             code
         )
@@ -141,6 +141,4 @@ impl Invite {
 
         Ok(())
     }
-
-
 }

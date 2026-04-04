@@ -1,5 +1,5 @@
 //! Application handler for the Chaos application.
-//! 
+//!
 //! This module provides HTTP request handlers for managing applications, including:
 //! - Creating and retrieving applications
 //! - Updating application status and roles
@@ -7,33 +7,36 @@
 //! - Managing application ratings
 
 use crate::models::app::{AppMessage, AppState};
-use crate::models::application::{Application, ApplicationRoleUpdate, ApplicationStatus, OpenApplicationByApplicationId};
-use crate::models::auth::{ApplicationAdmin, ApplicationOwner, ApplicationOwnerOrReviewer, ApplicationReviewerGivenApplicationId, AuthUser, CampaignAdmin, CampaignOrgMember};
-use crate::models::email::EmailQueue;
+use crate::models::application::{
+    Application, ApplicationRoleUpdate, ApplicationStatus, OpenApplicationByApplicationId,
+};
+use crate::models::auth::{
+    ApplicationAdmin, ApplicationOwner, ApplicationOwnerOrReviewer,
+    ApplicationReviewerGivenApplicationId, AuthUser, CampaignAdmin,
+};
 use crate::models::error::ChaosError;
+use crate::models::rating::{NewRating, Rating};
 use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use serde::Deserialize;
 use serde_json::json;
-use crate::models::rating::{NewRating, NewApplicationRating, Rating};
 
 /// Handler for application-related HTTP requests.
 pub struct ApplicationHandler;
 
 impl ApplicationHandler {
     /// Creates a new application if it doesn't exist, otherwise returns the existing application ID.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `campaign_id` - ID of the campaign to apply to
     /// * `user_id` - ID of the user submitting the application
     /// * `snowflake_generator` - Generator for creating unique IDs
     /// * `transaction` - Database transaction to use
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - Application details or error
     pub async fn create_or_get(
         Path(campaign_id): Path<i64>,
@@ -41,93 +44,105 @@ impl ApplicationHandler {
         State(mut state): State<AppState>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let application_id = Application::create_or_get(campaign_id, user.user_id, &mut state.snowflake_generator, &mut transaction.tx).await?;
+        let application_id = Application::create_or_get(
+            campaign_id,
+            user.user_id,
+            &mut state.snowflake_generator,
+            &mut transaction.tx,
+        )
+        .await?;
         transaction.tx.commit().await?;
 
-        Ok(Json(json!({ "application_id": application_id.to_string() })))
+        Ok(Json(
+            json!({ "application_id": application_id.to_string() }),
+        ))
     }
 
     /// Checks if an application exists for a given campaign and user.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `campaign_id` - ID of the campaign to check
     /// * `user` - The authenticated user
     /// * `transaction` - Database transaction
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - True if application exists, false otherwise
     pub async fn check_application_exists(
         Path(campaign_id): Path<i64>,
         user: AuthUser,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let application_exists = Application::check_application_exists(campaign_id, user.user_id, &mut transaction.tx).await?;
+        let application_exists =
+            Application::check_application_exists(campaign_id, user.user_id, &mut transaction.tx)
+                .await?;
 
         transaction.tx.commit().await?;
         Ok(Json(json!({ "application_exists": application_exists })))
     }
 
     /// Retrieves the details of a specific application.
-    /// 
+    ///
     /// This handler allows application admins to view application details.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `application_id` - The ID of the application to retrieve
     /// * `_admin` - The authenticated user (must be an application admin)
     /// * `transaction` - Database transaction
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - Application details or error
     pub async fn get(
         Path(application_id): Path<i64>,
         admin: ApplicationAdmin,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let application = Application::get(application_id, admin.user_id, &mut transaction.tx).await?;
+        let application =
+            Application::get(application_id, admin.user_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(application)))
     }
 
     /// Retrieves the details of a specific application regardless of submission status.
-    /// 
+    ///
     /// This handler allows regular applicants to view application details in the answer screen.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `application_id` - The ID of the application to retrieve
     /// * `_admin` - The authenticated user (must be an application admin)
     /// * `transaction` - Database transaction
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - Application details or error
     pub async fn get_in_progress(
         Path(application_id): Path<i64>,
         user: AuthUser,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let application = Application::get_in_progress(application_id, user.user_id, &mut transaction.tx).await?;
+        let application =
+            Application::get_in_progress(application_id, user.user_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
         Ok(Json(application))
     }
 
     /// Updates the status of an application.
-    /// 
+    ///
     /// This handler allows application admins to update the application's status.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `state` - The application state
     /// * `application_id` - The ID of the application to update
     /// * `_admin` - The authenticated user (must be an application admin)
     /// * `data` - The new application status
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn set_status(
         Path(application_id): Path<i64>,
@@ -141,18 +156,18 @@ impl ApplicationHandler {
     }
 
     /// Updates the private status of an application.
-    /// 
+    ///
     /// This handler allows application admins to update the application's private status.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `state` - The application state
     /// * `application_id` - The ID of the application to update
     /// * `_admin` - The authenticated user (must be an application admin)
     /// * `data` - The new private status
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn set_private_status(
         Path(application_id): Path<i64>,
@@ -166,22 +181,23 @@ impl ApplicationHandler {
     }
 
     /// Retrieves all applications for the current user.
-    /// 
+    ///
     /// This handler returns all applications created by the authenticated user.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `user` - The authenticated user
     /// * `transaction` - Database transaction
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - List of applications or error
     pub async fn get_from_curr_user(
         user: AuthUser,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let applications = Application::get_from_user_id(user.user_id, user.user_id, &mut transaction.tx).await?;
+        let applications =
+            Application::get_from_user_id(user.user_id, user.user_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
         Ok(Json(applications))
     }
@@ -212,18 +228,18 @@ impl ApplicationHandler {
     }
 
     /// Updates the roles associated with an application.
-    /// 
+    ///
     /// This handler allows application owners to update the roles they're applying for.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `_user` - The authenticated user (must be the application owner)
     /// * `application_id` - The ID of the application to update
     /// * `transaction` - Database transaction
     /// * `data` - The new role assignments
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update_roles(
         _user: ApplicationOwner,
@@ -234,23 +250,25 @@ impl ApplicationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Application::update_roles(application_id, data.roles, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
-        Ok(AppMessage::OkMessage("Successfully updated application roles"))
+        Ok(AppMessage::OkMessage(
+            "Successfully updated application roles",
+        ))
     }
 
     /// Submits an application for review.
-    /// 
+    ///
     /// This handler allows application owners to submit their application.
     /// The application must be open and not already submitted.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `_user` - The authenticated user (must be the application owner)
     /// * `_` - Ensures the application is open
     /// * `application_id` - The ID of the application to submit
     /// * `transaction` - Database transaction
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn submit(
         _user: ApplicationOwner,
@@ -264,43 +282,44 @@ impl ApplicationHandler {
     }
 
     /// Retrieves the rating for an application given by the current user.
-    /// 
+    ///
     /// This handler allows application reviewers to view their rating for an application.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `application_id` - The ID of the application to get the rating for
     /// * `admin` - The authenticated user (must be an application reviewer)
     /// * `transaction` - Database transaction
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - Rating details with all category scores or error
     pub async fn get_rating_by_current_user(
         Path(application_id): Path<i64>,
         admin: ApplicationReviewerGivenApplicationId,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let rating = Rating::get_rating_details(application_id, admin.user_id, &mut transaction.tx).await?;
+        let rating =
+            Rating::get_rating_details(application_id, admin.user_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(rating)))
     }
 
     /// Creates a new rating for an application with comment and category scores.
-    /// 
+    ///
     /// This handler allows application reviewers to create ratings.
     /// First creates the application_rating with comment, then creates all category ratings.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `state` - The application state
     /// * `application_id` - The ID of the application to rate
     /// * `admin` - The authenticated user (must be an application reviewer)
     /// * `transaction` - Database transaction
     /// * `new_rating` - The rating details including comment and category scores
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn create_rating(
         State(mut state): State<AppState>,
@@ -318,7 +337,7 @@ impl ApplicationHandler {
             &mut transaction.tx,
         )
         .await?;
-        
+
         // Then loop through and create each category rating
         for category_rating in new_rating.category_ratings {
             Rating::create_category_rating(
@@ -342,27 +361,20 @@ impl ApplicationHandler {
         Json(updated_rating): Json<NewRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
         // Get the existing rating for this user and application
-        let rating = Rating::get_rating_details(
-            application_id,
-            admin.user_id,
-            &mut transaction.tx,
-        )
-        .await?;
+        let rating =
+            Rating::get_rating_details(application_id, admin.user_id, &mut transaction.tx).await?;
 
         // Update the comment
-        Rating::update_application_rating(
-            rating.id,
-            updated_rating.comment,
-            &mut transaction.tx,
-        )
-        .await?;
+        Rating::update_application_rating(rating.id, updated_rating.comment, &mut transaction.tx)
+            .await?;
 
         // Get existing category ratings and delete them
-        let existing_category_ratings = Rating::get_all_category_ratings_from_application_rating_id(
-            rating.id,
-            &mut transaction.tx,
-        )
-        .await?;
+        let existing_category_ratings =
+            Rating::get_all_category_ratings_from_application_rating_id(
+                rating.id,
+                &mut transaction.tx,
+            )
+            .await?;
 
         for category_rating in existing_category_ratings {
             Rating::delete_category_rating(category_rating.id, &mut transaction.tx).await?;
@@ -384,40 +396,42 @@ impl ApplicationHandler {
     }
 
     /// Retrieves all ratings for an application.
-    /// 
+    ///
     /// This handler allows application reviewers to view all ratings for an application.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `application_id` - The ID of the application
     /// * `_admin` - The authenticated user (must be an application reviewer)
     /// * `transaction` - Database transaction
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - List of ratings with all category scores or error
     pub async fn get_ratings(
         Path(application_id): Path<i64>,
         _admin: ApplicationReviewerGivenApplicationId,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let ratings = Rating::get_all_ratings_from_application_id(application_id, &mut transaction.tx).await?;
+        let ratings =
+            Rating::get_all_ratings_from_application_id(application_id, &mut transaction.tx)
+                .await?;
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(ratings)))
     }
 
     /// Retrieves the average ratings for all users in an application.
-    /// 
+    ///
     /// This handler allows application reviewers to view the average ratings for all users in an application.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `_user` - The authenticated user (must be an application reviewer)
     /// * `application_id` - The ID of the application
     /// * `transaction` - Database transaction
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - List of average ratings or error
     pub async fn get_application_ratings_summary(
         _: CampaignAdmin,
@@ -425,8 +439,7 @@ impl ApplicationHandler {
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let avg_applications_ratings =
-            Application::get_application_ratings_summary(campaign_id, &mut transaction.tx)
-                .await?;
+            Application::get_application_ratings_summary(campaign_id, &mut transaction.tx).await?;
         transaction.tx.commit().await?;
 
         Ok(Json(avg_applications_ratings))

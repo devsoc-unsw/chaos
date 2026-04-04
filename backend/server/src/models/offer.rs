@@ -1,9 +1,9 @@
 //! Offer management for Chaos.
-//! 
+//!
 //! This module provides functionality for managing job offers in recruitment campaigns,
 //! including creation, updates, and email notifications.
 
-use crate::models::email::{ChaosEmail, EmailCredentials, EmailParts, EmailQueue};
+use crate::models::email::{EmailCredentials, EmailParts, EmailQueue};
 use crate::models::email_template::EmailTemplate;
 use crate::models::error::ChaosError;
 use chrono::{DateTime, Utc};
@@ -13,7 +13,7 @@ use sqlx::{Postgres, Transaction};
 use std::ops::DerefMut;
 
 /// Represents an offer in the database.
-/// 
+///
 /// An offer represents a job offer made to an applicant, including
 /// the associated role, campaign, and email template for notification.
 #[derive(Deserialize)]
@@ -42,7 +42,7 @@ pub struct Offer {
 }
 
 /// Detailed view of an offer's information.
-/// 
+///
 /// This struct provides a complete view of an offer's details,
 /// including related information from other tables.
 #[derive(Deserialize, Serialize)]
@@ -84,7 +84,7 @@ pub struct OfferDetails {
 }
 
 /// Possible states of an offer.
-/// 
+///
 /// This enum represents the different states an offer can be in,
 /// from initial creation to final acceptance or rejection.
 #[derive(Deserialize, Serialize, sqlx::Type, Clone, Debug)]
@@ -101,7 +101,7 @@ pub enum OfferStatus {
 }
 
 /// Response to an offer.
-/// 
+///
 /// This struct represents an applicant's response to an offer,
 /// indicating whether they accept or decline.
 #[derive(Deserialize)]
@@ -112,7 +112,7 @@ pub struct OfferReply {
 
 impl Offer {
     /// Creates a new offer.
-    /// 
+    ///
     /// # Arguments
     /// * `campaign_id` - The ID of the campaign
     /// * `application_id` - The ID of the application
@@ -121,7 +121,7 @@ impl Offer {
     /// * `expiry` - When the offer expires
     /// * `transaction` - A mutable reference to the database transaction
     /// * `snowflake_id_generator` - A generator for creating unique IDs
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(i64)` - The ID of the created offer
@@ -137,7 +137,7 @@ impl Offer {
     ) -> Result<i64, ChaosError> {
         let id = snowflake_id_generator.real_time_generate();
 
-        let _ = sqlx::query!(
+        sqlx::query!(
             "
                 INSERT INTO offers (id, campaign_id, application_id, email_template_id, role_id, expiry) VALUES ($1, $2, $3, $4, $5, $6)
             ",
@@ -155,11 +155,11 @@ impl Offer {
     }
 
     /// Retrieves an offer by its ID.
-    /// 
+    ///
     /// # Arguments
     /// * `id` - The ID of the offer to retrieve
     /// * `transaction` - A mutable reference to the database transaction
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(OfferDetails)` - The requested offer details
@@ -198,11 +198,11 @@ impl Offer {
     }
 
     /// Retrieves all offers for a specific campaign.
-    /// 
+    ///
     /// # Arguments
     /// * `campaign_id` - The ID of the campaign to get offers from
     /// * `transaction` - A mutable reference to the database transaction
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(Vec<OfferDetails>)` - List of offers in the campaign
@@ -241,11 +241,11 @@ impl Offer {
     }
 
     /// Deletes an offer.
-    /// 
+    ///
     /// # Arguments
     /// * `id` - The ID of the offer to delete
     /// * `transaction` - A mutable reference to the database transaction
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(())` - If the offer was deleted successfully
@@ -254,7 +254,7 @@ impl Offer {
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!("DELETE FROM offers WHERE id = $1 RETURNING id", id)
+        sqlx::query!("DELETE FROM offers WHERE id = $1 RETURNING id", id)
             .fetch_one(transaction.deref_mut())
             .await?;
 
@@ -262,17 +262,17 @@ impl Offer {
     }
 
     /// Processes a response to an offer.
-    /// 
+    ///
     /// # Arguments
     /// * `id` - The ID of the offer to respond to
     /// * `accept` - Whether the offer is being accepted
     /// * `transaction` - A mutable reference to the database transaction
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(())` - If the response was processed successfully
     /// * `Err(ChaosError)` - An error if processing fails
-    /// 
+    ///
     /// # Note
     /// This will fail if the offer has expired.
     pub async fn reply(
@@ -291,7 +291,7 @@ impl Offer {
             status = OfferStatus::Declined;
         }
 
-        let _ = sqlx::query!(
+        sqlx::query!(
             "UPDATE offers SET status = $2 WHERE id = $1",
             id,
             status as OfferStatus
@@ -303,11 +303,11 @@ impl Offer {
     }
 
     /// Generates a preview of the offer email.
-    /// 
+    ///
     /// # Arguments
     /// * `id` - The ID of the offer to preview
     /// * `transaction` - A mutable reference to the database transaction
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(EmailParts)` - The generated email subject and body
@@ -332,12 +332,12 @@ impl Offer {
     }
 
     /// Sends an offer email to the applicant.
-    /// 
+    ///
     /// # Arguments
     /// * `id` - The ID of the offer to send
     /// * `transaction` - A mutable reference to the database transaction
     /// * `email_credentials` - The credentials to use for sending email
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(())` - If the email was sent successfully
@@ -345,7 +345,7 @@ impl Offer {
     pub async fn send_offer(
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
-        email_credentials: EmailCredentials,
+        _email_credentials: EmailCredentials,
     ) -> Result<(), ChaosError> {
         let offer = Offer::get(id, transaction).await?;
         let email_parts = EmailTemplate::generate_email(
