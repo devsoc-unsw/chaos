@@ -1,27 +1,27 @@
 //! Organisation management for Chaos.
-//! 
+//!
 //! This module provides functionality for managing organisations in the system,
 //! including creation, updates, member management, and campaign creation.
 
+use crate::constants::NANOID_ALPHABET;
 use crate::models::campaign::OrganisationCampaign;
+use crate::models::email::ChaosEmail;
+use crate::models::email::EmailCredentials;
 use crate::models::error::ChaosError;
 use crate::models::storage::Storage;
-use chrono::{DateTime, Utc, Duration};
+use crate::models::user::User;
+use crate::service::campaign::create_proper_slug;
+use chrono::{DateTime, Duration, Utc};
+use nanoid::nanoid;
 use s3::Bucket;
 use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
 use sqlx::{FromRow, Postgres, Transaction};
 use std::ops::DerefMut;
 use uuid::Uuid;
-use crate::models::email::{EmailCredentials, EmailQueue};
-use crate::models::user::User;
-use crate::service::campaign::create_proper_slug;
-use nanoid::nanoid;
-use crate::constants::NANOID_ALPHABET;
-use crate::models::email::ChaosEmail;
 
 /// Represents an organisation in the database.
-/// 
+///
 /// An organisation is a group that can run recruitment campaigns
 /// and manage its members and administrators.
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
@@ -51,7 +51,7 @@ pub struct Organisation {
 }
 
 /// Data structure for creating a new organisation.
-/// 
+///
 /// This struct contains the fields needed to create a new organisation,
 /// including the initial administrator.
 #[derive(Deserialize, Serialize)]
@@ -69,7 +69,7 @@ pub struct NewOrganisation {
 }
 
 /// Detailed view of an organisation's information.
-/// 
+///
 /// This struct provides a complete view of an organisation's details,
 /// used primarily for API responses.
 #[derive(Deserialize, Serialize)]
@@ -92,7 +92,7 @@ pub struct OrganisationDetails {
 }
 
 /// Possible roles for organisation members.
-/// 
+///
 /// This enum represents the different roles a user can have
 /// within an organisation.
 #[derive(Deserialize, Serialize, sqlx::Type, Clone)]
@@ -105,7 +105,7 @@ pub enum OrganisationRole {
 }
 
 /// Represents a member of an organisation.
-/// 
+///
 /// This struct contains information about a user's membership
 /// in an organisation, including their role.
 #[derive(Deserialize, Serialize, FromRow)]
@@ -122,7 +122,7 @@ pub struct Member {
 }
 
 /// Data structure for updating organisation administrators.
-/// 
+///
 /// This struct contains a list of user IDs who should be
 /// administrators of the organisation.
 #[derive(Deserialize, Serialize)]
@@ -133,7 +133,7 @@ pub struct AdminUpdateList {
 }
 
 /// Data structure for removing an administrator.
-/// 
+///
 /// This struct contains the ID of the user to remove
 /// from the administrator role.
 #[derive(Deserialize)]
@@ -157,14 +157,14 @@ pub struct MemberToInvite {
 }
 
 /// Data structure for checking slug availability.
-/// 
+///
 /// This struct contains a user's email, and the role for that user.
 #[derive(Deserialize, Serialize)]
 pub struct EmailRoleBody {
     // email
     pub email: String,
     // role
-    pub role: OrganisationRole
+    pub role: OrganisationRole,
 }
 
 /// Data structure for passing in a user's email
@@ -173,7 +173,7 @@ pub struct EmailRoleBody {
 #[derive(Deserialize, Serialize)]
 pub struct EmailBody {
     // email
-    pub email: String
+    pub email: String,
 }
 
 /// Data structure for passing in a user's email
@@ -183,7 +183,7 @@ pub struct EmailBody {
 pub struct IdBody {
     // email
     #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
-    pub user_id: i64
+    pub user_id: i64,
 }
 
 /// Data structure for passing in a user's email and role
@@ -194,7 +194,7 @@ pub struct IdRoleBody {
     // email
     #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
     pub user_id: i64,
-    pub role: OrganisationRole
+    pub role: OrganisationRole,
 }
 
 /// This struct contains a slug to check for availability
@@ -207,19 +207,19 @@ pub struct SlugCheck {
 
 impl Organisation {
     /// Creates a new organisation.
-    /// 
+    ///
     /// # Arguments
     /// * `admin_id` - The ID of the user who will be the initial administrator
     /// * `slug` - The URL-friendly identifier for the organisation
     /// * `name` - The display name of the organisation
     /// * `snowflake_generator` - A generator for creating unique IDs
     /// * `transaction` - A mutable reference to the database transaction
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(())` - If the organisation was created successfully
     /// * `Err(ChaosError)` - An error if creation fails
-    /// 
+    ///
     /// # Note
     /// The slug must be ASCII-only.
     pub async fn create(
@@ -247,7 +247,7 @@ impl Organisation {
             id,
             slug.to_lowercase(),
             name,
-            contact_email, 
+            contact_email,
             website_url
         )
         .execute(transaction.deref_mut())
@@ -269,16 +269,16 @@ impl Organisation {
     }
 
     /// Checks if a slug is available for use.
-    /// 
+    ///
     /// # Arguments
     /// * `slug` - The slug to check
     /// * `pool` - A reference to the database connection pool
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(())` - If the slug is available
     /// * `Err(ChaosError)` - If the slug is invalid or already in use
-    /// 
+    ///
     /// # Note
     /// The slug must be ASCII-only.
     pub async fn check_slug_availability(
@@ -310,16 +310,19 @@ impl Organisation {
     }
 
     /// Retrieves an organisation by its ID.
-    /// 
+    ///
     /// # Arguments
     /// * `id` - The ID of the organisation to retrieve
     /// * `pool` - A reference to the database connection pool
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(OrganisationDetails)` - The requested organisation details
     /// * `Err(ChaosError)` - An error if retrieval fails
-    pub async fn get(id: i64, transaction: &mut Transaction<'_, Postgres>,) -> Result<OrganisationDetails, ChaosError> {
+    pub async fn get(
+        id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<OrganisationDetails, ChaosError> {
         let organisation = sqlx::query_as!(
             OrganisationDetails,
             "
@@ -335,7 +338,9 @@ impl Organisation {
         Ok(organisation)
     }
 
-    pub async fn get_all(transaction: &mut Transaction<'_, Postgres>,) -> Result<Vec<OrganisationDetails>, ChaosError> {
+    pub async fn get_all(
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<OrganisationDetails>, ChaosError> {
         let organisations = sqlx::query_as!(
             OrganisationDetails,
             "
@@ -350,11 +355,11 @@ impl Organisation {
     }
 
     /// Retrieves an organisation by its slug.
-    /// 
+    ///
     /// # Arguments
     /// * `slug` - The slug of the organisation to retrieve
     /// * `pool` - A reference to the database connection pool
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(OrganisationDetails)` - The requested organisation details
@@ -379,11 +384,11 @@ impl Organisation {
     }
 
     /// Retrieves all organisations that a user is a member of.
-    /// 
+    ///
     /// # Arguments
     /// * `user_id` - The ID of the user to retrieve organisations for
     /// * `transaction` - A mutable reference to the database transaction
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(Vec<OrganisationDetails>)` - The requested organisations
@@ -398,7 +403,7 @@ impl Organisation {
             SELECT o.id, o.slug, o.name, o.logo, o.created_at, o.website_url, o.contact_email
                     FROM organisations o
                     JOIN organisation_members om
-                    ON o.id = om.organisation_id 
+                    ON o.id = om.organisation_id
                     WHERE om.user_id = $1
             ",
             user_id
@@ -410,17 +415,20 @@ impl Organisation {
     }
 
     /// Deletes an organisation.
-    /// 
+    ///
     /// # Arguments
     /// * `id` - The ID of the organisation to delete
     /// * `pool` - A reference to the database connection pool
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(())` - If the organisation was deleted successfully
     /// * `Err(ChaosError)` - An error if deletion fails
-    pub async fn delete(id: i64, transaction: &mut Transaction<'_, Postgres>,) -> Result<(), ChaosError> {
-        _ = sqlx::query!(
+    pub async fn delete(
+        id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
+        sqlx::query!(
             "
             DELETE FROM organisations WHERE id = $1 RETURNING id
         ",
@@ -433,11 +441,11 @@ impl Organisation {
     }
 
     /// Retrieves all administrators of an organisation.
-    /// 
+    ///
     /// # Arguments
     /// * `organisation_id` - The ID of the organisation
     /// * `pool` - A reference to the database connection pool
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(MemberList)` - List of administrators
@@ -495,11 +503,11 @@ impl Organisation {
     }
 
     /// Retrieves all members of an organisation.
-    /// 
+    ///
     /// # Arguments
     /// * `organisation_id` - The ID of the organisation
     /// * `pool` - A reference to the database connection pool
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(MemberList)` - List of all members
@@ -525,12 +533,12 @@ impl Organisation {
     }
 
     /// Updates the list of administrators for an organisation.
-    /// 
+    ///
     /// # Arguments
     /// * `organisation_id` - The ID of the organisation
     /// * `admin_id_list` - List of user IDs to be administrators
     /// * `transaction` - A mutable reference to the database transaction
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(())` - If the administrators were updated successfully
@@ -550,7 +558,7 @@ impl Organisation {
         //     )
         // }
 
-        let _ = sqlx::query!(
+        sqlx::query!(
             "SELECT id FROM organisations WHERE id = $1",
             organisation_id
         )
@@ -583,12 +591,12 @@ impl Organisation {
     }
 
     /// Updates the list of members for an organisation.
-    /// 
+    ///
     /// # Arguments
     /// * `organisation_id` - The ID of the organisation
     /// * `member_id_list` - List of user IDs to be members
     /// * `transaction` - A mutable reference to the database transaction
-    /// 
+    ///
     /// # Returns
     /// Returns a `Result` containing either:
     /// * `Ok(())` - If the members were updated successfully
@@ -598,7 +606,7 @@ impl Organisation {
         member_id_list: Vec<i64>,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             "SELECT id FROM organisations WHERE id = $1",
             organisation_id
         )
@@ -635,7 +643,13 @@ impl Organisation {
         admin_to_remove: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        Self::update_member_role(organisation_id, admin_to_remove, OrganisationRole::User, transaction).await
+        Self::update_member_role(
+            organisation_id,
+            admin_to_remove,
+            OrganisationRole::User,
+            transaction,
+        )
+        .await
     }
 
     /// Updates a single member's role (promote to Admin or demote to User). The user must already be in the organisation.
@@ -645,7 +659,7 @@ impl Organisation {
         role: OrganisationRole,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             "SELECT id FROM organisations WHERE id = $1",
             organisation_id
         )
@@ -671,7 +685,7 @@ impl Organisation {
         user_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             "SELECT id FROM organisations WHERE id = $1",
             organisation_id
         )
@@ -697,12 +711,12 @@ impl Organisation {
         user_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             "SELECT id FROM organisations WHERE id = $1",
             organisation_id
         )
-            .fetch_one(transaction.deref_mut())
-            .await?;
+        .fetch_one(transaction.deref_mut())
+        .await?;
 
         sqlx::query!(
             "
@@ -713,8 +727,8 @@ impl Organisation {
             user_id,
             OrganisationRole::User as OrganisationRole
         )
-            .execute(transaction.deref_mut())
-            .await?;
+        .execute(transaction.deref_mut())
+        .await?;
 
         Ok(())
     }
@@ -731,8 +745,8 @@ impl Organisation {
             organisation_id,
             user_id
         )
-            .fetch_optional(transaction.deref_mut())
-            .await?;
+        .fetch_optional(transaction.deref_mut())
+        .await?;
 
         match possible_user {
             Some(_) => Ok(true),
@@ -750,8 +764,8 @@ impl Organisation {
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<String, ChaosError> {
         let email = email.to_lowercase();
-        
-        let _ = sqlx::query!(
+
+        sqlx::query!(
             "SELECT id FROM organisations WHERE id = $1",
             organisation_id
         )
@@ -760,8 +774,10 @@ impl Organisation {
 
         let possible_user = User::find_by_email(email.clone(), transaction).await?;
         if let Some(user) = possible_user {
-            if (Self::check_user_already_member(organisation_id, user.id, transaction).await?) {
-                return Err(ChaosError::BadRequestWithMessage("User already a member of organisation".to_string()))
+            if Self::check_user_already_member(organisation_id, user.id, transaction).await? {
+                return Err(ChaosError::BadRequestWithMessage(
+                    "User already a member of organisation".to_string(),
+                ));
             }
             Self::add_user(organisation_id, user.id, transaction).await?;
             return Ok("existing-user-added".to_string());
@@ -781,7 +797,7 @@ impl Organisation {
         )
         .fetch_optional(transaction.deref_mut())
         .await?;
-    
+
         if let Some(existing) = potential_invite {
             let refreshed_code = nanoid!(10, &NANOID_ALPHABET);
             let refreshed_expiry = Utc::now() + Duration::days(7);
@@ -812,7 +828,7 @@ impl Organisation {
         // New invite creation
         let id = snowflake_generator.real_time_generate(); // generate a new invite ID
         let code = nanoid!(10, &NANOID_ALPHABET); // generate a new invite code
-        let expires_at = Utc::now() + Duration::days(7); // set the invite expiry to 7 days 
+        let expires_at = Utc::now() + Duration::days(7); // set the invite expiry to 7 days
         let invited_by_user_id = inviting_user_id;
         // insert the new invite into the database
         sqlx::query!(
@@ -825,7 +841,7 @@ impl Organisation {
             organisation_id,
             code,
             email,
-            expires_at, 
+            expires_at,
             invited_by_user_id
         )
         .execute(transaction.deref_mut())
@@ -844,8 +860,8 @@ impl Organisation {
             .await?;
         }
 
-        return Ok(code);
-}
+        Ok(code)
+    }
 
     pub async fn update_logo(
         id: i64,
@@ -856,7 +872,7 @@ impl Organisation {
 
         let logo_id = Uuid::new_v4();
         let current_time = dt;
-        _ = sqlx::query!(
+        sqlx::query!(
             "
             UPDATE organisations
                 SET logo = $2, updated_at = $3
@@ -884,7 +900,7 @@ impl Organisation {
             "
                 SELECT
                     c.id, c.organisation_id, c.slug as campaign_slug, c.name, c.cover_image,
-                    c.description, c.starts_at, c.ends_at, c.published, o.slug as organisation_slug, 
+                    c.description, c.starts_at, c.ends_at, c.published, o.slug as organisation_slug,
                     c.interview_period_starts_at, c.interview_period_ends_at, c.interview_format,
                     c.outcomes_released_at, c.application_requirements
                 FROM campaigns c
@@ -957,7 +973,7 @@ impl Organisation {
     ) -> Result<i64, ChaosError> {
         let id = snowflake_generator.real_time_generate();
 
-        let _ = sqlx::query!(
+        sqlx::query!(
             "
                 INSERT INTO email_templates (id, organisation_id, name, template_subject, template_body)
                     VALUES ($1, $2, $3, $4, $5)

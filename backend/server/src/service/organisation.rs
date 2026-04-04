@@ -1,25 +1,25 @@
 //! Organisation service for the Chaos application.
-//! 
+//!
 //! This module provides functionality for managing organisations, including:
 //! - Verifying organisation admin privileges
 
 use crate::models::error::ChaosError;
+use crate::models::user::UserRole;
 use sqlx::{Postgres, Transaction};
 use std::ops::DerefMut;
-use crate::models::user::UserRole;
 
 /// Verifies if a user has admin privileges for an organisation.
-/// 
+///
 /// This function checks if the user is an admin member of the specified organisation.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `user_id` - The ID of the user to check
 /// * `organisation_id` - The ID of the organisation
 /// * `pool` - Database connection pool
-/// 
+///
 /// # Returns
-/// 
+///
 /// * `Result<(), ChaosError>` - Ok if the user is an admin, Unauthorized error otherwise
 pub async fn assert_user_is_organisation_admin(
     user_id: i64,
@@ -42,17 +42,17 @@ pub async fn assert_user_is_organisation_admin(
 }
 
 /// Verifies if a user is in an organization
-/// 
+///
 /// This function checks if the user is a member of the specified organisation.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `user_id` - The ID of the user to check
 /// * `organisation_id` - The ID of the organisation
 /// * `pool` - Database connection pool
-/// 
+///
 /// # Returns
-/// 
+///
 /// * `Result<(), ChaosError>` - Ok if the user is a member, Unauthorized error otherwise
 pub async fn assert_user_is_not_in_organisation(
     user_id: i64,
@@ -67,7 +67,7 @@ pub async fn assert_user_is_not_in_organisation(
         .fetch_one(transaction.deref_mut())
         .await?.exists.expect("`exists` should always exist in this query result");
 
-    if in_organization{
+    if in_organization {
         return Err(ChaosError::Unauthorized);
     }
 
@@ -75,17 +75,17 @@ pub async fn assert_user_is_not_in_organisation(
 }
 
 /// Verifies if a user has admin privileges for an organisation or is a super user.
-/// 
+///
 /// This function checks if the user is an admin member of the specified organisation or is a super user.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `user_id` - The ID of the user to check
 /// * `organisation_id` - The ID of the organisation
 /// * `pool` - Database connection pool
-/// 
+///
 /// # Returns
-/// 
+///
 /// * `Result<(), ChaosError>` - Ok if the user is an admin, Unauthorized error otherwise
 pub async fn assert_user_is_organisation_admin_or_super_user(
     user_id: i64,
@@ -110,11 +110,9 @@ pub async fn assert_user_is_organisation_admin_or_super_user(
     .exists
     .expect("`exists` should always exist in this query result");
 
-    if !is_admin && !is_super_user{
+    if !is_admin && !is_super_user {
         return Err(ChaosError::Unauthorized);
     }
 
     Ok(())
 }
-
-

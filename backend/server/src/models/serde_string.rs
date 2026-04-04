@@ -1,4 +1,8 @@
-use serde::{de::Error, Deserializer, ser::{SerializeSeq, Serializer}, Deserialize};
+use serde::{
+    de::Error,
+    ser::{SerializeSeq, Serializer},
+    Deserialize, Deserializer,
+};
 use serde_json;
 
 pub fn serialize<S>(value: &i64, serializer: S) -> Result<S::Ok, S::Error>
@@ -133,9 +137,9 @@ impl<'de> serde::de::Visitor<'de> for VecVisitor {
         while let Some(elem) = seq.next_element::<serde_json::Value>()? {
             let parsed = match elem {
                 serde_json::Value::String(s) => s.parse::<i64>().map_err(Error::custom)?,
-                serde_json::Value::Number(n) => {
-                    n.as_i64().ok_or_else(|| Error::custom("number out of range for i64"))?
-                }
+                serde_json::Value::Number(n) => n
+                    .as_i64()
+                    .ok_or_else(|| Error::custom("number out of range for i64"))?,
                 _ => return Err(Error::custom("expected string or number in roles array")),
             };
             vec.push(parsed);

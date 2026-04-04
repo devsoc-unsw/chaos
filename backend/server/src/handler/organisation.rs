@@ -1,5 +1,5 @@
 //! Organisation handler for the Chaos application.
-//! 
+//!
 //! This module provides HTTP request handlers for managing organisations, including:
 //! - Organisation CRUD operations
 //! - Member and admin management
@@ -8,12 +8,15 @@
 //! - Logo image handling
 
 use crate::models::app::{AppMessage, AppState, IdMessage};
-use crate::models::auth::{OrganisationAdminOrSuperUser, SuperUser};
 use crate::models::auth::{AuthUser, OrganisationAdmin};
+use crate::models::auth::{OrganisationAdminOrSuperUser, SuperUser};
 use crate::models::campaign::{Campaign, NewCampaign};
 use crate::models::email_template::{EmailTemplate, NewEmailTemplate};
 use crate::models::error::ChaosError;
-use crate::models::organisation::{MemberToRemove, MemberRoleUpdate, AdminUpdateList, NewOrganisation, Organisation, SlugCheck, MemberToInvite};
+use crate::models::organisation::{
+    AdminUpdateList, MemberRoleUpdate, MemberToInvite, MemberToRemove, NewOrganisation,
+    Organisation, SlugCheck,
+};
 use crate::models::transaction::DBTransaction;
 use crate::service::auth::assert_is_super_user;
 use axum::extract::{Json, Path, State};
@@ -26,18 +29,18 @@ pub struct OrganisationHandler;
 
 impl OrganisationHandler {
     /// Creates a new organisation.
-    /// 
+    ///
     /// This handler allows super users to create new organisations.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `state` - The application state
     /// * `_user` - The authenticated user (must be a super user)
     /// * `transaction` - Database transaction
     /// * `data` - The new organisation details
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn create(
         State(mut state): State<AppState>,
@@ -61,17 +64,17 @@ impl OrganisationHandler {
     }
 
     /// Checks if an organisation slug is available.
-    /// 
+    ///
     /// This handler allows super users to check slug availability.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `state` - The application state
     /// * `_user` - The authenticated user (must be a super user)
     /// * `data` - The slug to check
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn check_organisation_slug_availability(
         mut transaction: DBTransaction<'_>,
@@ -85,17 +88,17 @@ impl OrganisationHandler {
     }
 
     /// Retrieves an organisation by its ID.
-    /// 
+    ///
     /// This handler allows any authenticated user to view organisation details.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `state` - The application state
     /// * `id` - The ID of the organisation to retrieve
     /// * `_user` - The authenticated user
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - Organisation details or error
     pub async fn get(
         mut transaction: DBTransaction<'_>,
@@ -108,17 +111,17 @@ impl OrganisationHandler {
     }
 
     /// Retrieves an organisation by its slug.
-    /// 
+    ///
     /// This handler allows any authenticated user to view organisation details using a slug.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `state` - The application state
     /// * `slug` - The slug of the organisation
     /// * `_user` - The authenticated user
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - Organisation details or error
     pub async fn get_by_slug(
         mut transaction: DBTransaction<'_>,
@@ -132,17 +135,17 @@ impl OrganisationHandler {
     }
 
     /// Deletes an organisation.
-    /// 
+    ///
     /// This handler allows super users to delete organisations.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `state` - The application state
     /// * `id` - The ID of the organisation to delete
     /// * `_user` - The authenticated user (must be a super user)
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn delete(
         mut transaction: DBTransaction<'_>,
@@ -171,9 +174,7 @@ impl OrganisationHandler {
                 // Not a Super User
                 Ok(Organisation::get_by_member(user.user_id, &mut transaction.tx).await?)
             }
-            Err(e) => {
-                Err(e)
-            }
+            Err(e) => Err(e),
         }?;
 
         transaction.tx.commit().await?;
@@ -181,17 +182,17 @@ impl OrganisationHandler {
     }
 
     /// Retrieves all admins of an organisation.
-    /// 
+    ///
     /// This handler allows super users to view organisation admins.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `state` - The application state
     /// * `id` - The ID of the organisation
     /// * `_user` - The authenticated user (must be a super user)
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - List of admins or error
     pub async fn get_admins(
         mut transaction: DBTransaction<'_>,
@@ -229,17 +230,17 @@ impl OrganisationHandler {
     }
 
     /// Retrieves all members of an organisation.
-    /// 
+    ///
     /// This handler allows organisation admins to view all members.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `state` - The application state
     /// * `id` - The ID of the organisation
     /// * `_admin` - The authenticated user (must be an organisation admin)
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - List of members or error
     pub async fn get_members(
         mut transaction: DBTransaction<'_>,
@@ -253,18 +254,18 @@ impl OrganisationHandler {
     }
 
     /// Updates the admin list of an organisation.
-    /// 
+    ///
     /// This handler allows super users to update organisation admins.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `id` - The ID of the organisation
     /// * `_super_user` - The authenticated user (must be a super user)
     /// * `transaction` - Database transaction
     /// * `request_body` - The new admin list
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update_admins(
         Path(id): Path<i64>,
@@ -275,22 +276,24 @@ impl OrganisationHandler {
         Organisation::update_admins(id, request_body.members, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok(AppMessage::OkMessage("Successfully updated organisation members"))
+        Ok(AppMessage::OkMessage(
+            "Successfully updated organisation members",
+        ))
     }
 
     /// Updates the member list of an organisation.
-    /// 
+    ///
     /// This handler allows organisation admins to update members.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `transaction` - Database transaction
     /// * `id` - The ID of the organisation
     /// * `_admin` - The authenticated user (must be an organisation admin)
     /// * `request_body` - The new member list
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update_members(
         mut transaction: DBTransaction<'_>,
@@ -301,7 +304,9 @@ impl OrganisationHandler {
         Organisation::update_members(id, request_body.members, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok(AppMessage::OkMessage("Successfully updated organisation members"))
+        Ok(AppMessage::OkMessage(
+            "Successfully updated organisation members",
+        ))
     }
 
     /// Updates a single member's role (promote to Admin or demote to User). Superusers only.
@@ -311,25 +316,31 @@ impl OrganisationHandler {
         _super_user: SuperUser,
         Json(request_body): Json<MemberRoleUpdate>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Organisation::update_member_role(id, request_body.user_id, request_body.role, &mut transaction.tx).await?;
+        Organisation::update_member_role(
+            id,
+            request_body.user_id,
+            request_body.role,
+            &mut transaction.tx,
+        )
+        .await?;
 
         transaction.tx.commit().await?;
         Ok(AppMessage::OkMessage("Successfully updated member role"))
     }
 
     /// Removes an admin from an organisation.
-    /// 
+    ///
     /// This handler allows super users to remove admins.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `transaction` - Database transaction
     /// * `id` - The ID of the organisation
     /// * `_super_user` - The authenticated user (must be a super user)
     /// * `request_body` - The admin to remove
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn remove_admin(
         mut transaction: DBTransaction<'_>,
@@ -340,22 +351,24 @@ impl OrganisationHandler {
         Organisation::remove_admin(id, request_body.user_id, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok(AppMessage::OkMessage("Successfully removed member from organisation"))
+        Ok(AppMessage::OkMessage(
+            "Successfully removed member from organisation",
+        ))
     }
 
     /// Removes a user from an organisation.
-    /// 
+    ///
     /// This handler allows organisation admins to remove members with role "User".
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `transaction` - Database transaction
     /// * `id` - The ID of the organisation
     /// * `_admin` - The authenticated user (must be an organisation admin)
     /// * `request_body` - The member to remove
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn remove_user(
         mut transaction: DBTransaction<'_>,
@@ -366,7 +379,9 @@ impl OrganisationHandler {
         Organisation::remove_user(id, request_body.user_id, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
-        Ok(AppMessage::OkMessage("Successfully removed member from organisation"))
+        Ok(AppMessage::OkMessage(
+            "Successfully removed member from organisation",
+        ))
     }
 
     pub async fn invite_user(
@@ -392,17 +407,17 @@ impl OrganisationHandler {
     }
 
     /// Updates an organisation's logo.
-    /// 
+    ///
     /// This handler allows organisation admins to update the logo.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `state` - The application state
     /// * `id` - The ID of the organisation
     /// * `_admin` - The authenticated user (must be an organisation admin)
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - Logo URL or error
     pub async fn update_logo(
         State(state): State<AppState>,
@@ -410,24 +425,25 @@ impl OrganisationHandler {
         Path(id): Path<i64>,
         _admin: OrganisationAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let logo_url = Organisation::update_logo(id, &mut transaction.tx, &state.storage_bucket).await?;
+        let logo_url =
+            Organisation::update_logo(id, &mut transaction.tx, &state.storage_bucket).await?;
 
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(logo_url)))
     }
 
     /// Retrieves all campaigns for an organisation.
-    /// 
+    ///
     /// This handler allows any authenticated user to view organisation campaigns.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `state` - The application state
     /// * `id` - The ID of the organisation
     /// * `_user` - The authenticated user
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - List of campaigns or error
     pub async fn get_campaigns(
         mut transaction: DBTransaction<'_>,
@@ -441,18 +457,18 @@ impl OrganisationHandler {
     }
 
     /// Creates a new campaign for an organisation.
-    /// 
+    ///
     /// This handler allows organisation admins to create campaigns.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `id` - The ID of the organisation
     /// * `state` - The application state
     /// * `_admin` - The authenticated user (must be an organisation admin)
     /// * `request_body` - The new campaign details
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn create_campaign(
         Path(id): Path<i64>,
@@ -479,22 +495,27 @@ impl OrganisationHandler {
         .await?;
 
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, Json(IdMessage { id: new_campaign_id })))
+        Ok((
+            StatusCode::OK,
+            Json(IdMessage {
+                id: new_campaign_id,
+            }),
+        ))
     }
 
     /// Checks if a campaign slug is available.
-    /// 
+    ///
     /// This handler allows organisation admins to check slug availability.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `organisation_id` - The ID of the organisation
     /// * `state` - The application state
     /// * `_user` - The authenticated user (must be an organisation admin)
     /// * `data` - The slug to check
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn check_campaign_slug_availability(
         Path(organisation_id): Path<i64>,
@@ -509,18 +530,18 @@ impl OrganisationHandler {
     }
 
     /// Creates a new email template for an organisation.
-    /// 
+    ///
     /// This handler allows organisation admins to create email templates.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `id` - The ID of the organisation
     /// * `state` - The application state
     /// * `_admin` - The authenticated user (must be an organisation admin)
     /// * `request_body` - The new template details
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn create_email_template(
         Path(id): Path<i64>,
@@ -544,24 +565,25 @@ impl OrganisationHandler {
     }
 
     /// Retrieves all email templates for an organisation.
-    /// 
+    ///
     /// This handler allows organisation admins to view all email templates.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `_user` - The authenticated user (must be an organisation admin)
     /// * `id` - The ID of the organisation
     /// * `state` - The application state
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<impl IntoResponse, ChaosError>` - List of email templates or error
     pub async fn get_all_email_templates(
         _user: OrganisationAdmin,
         Path(id): Path<i64>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let email_templates = EmailTemplate::get_all_by_organisation(id, &mut transaction.tx).await?;
+        let email_templates =
+            EmailTemplate::get_all_by_organisation(id, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
         Ok((StatusCode::OK, Json(email_templates)))
