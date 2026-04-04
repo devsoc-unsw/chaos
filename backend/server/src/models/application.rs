@@ -824,7 +824,7 @@ impl Application {
         new_status: ApplicationStatus,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        _ = sqlx::query!(
+        sqlx::query!(
             "
                 UPDATE applications
                 SET status = $2
@@ -855,7 +855,7 @@ impl Application {
         new_status: ApplicationStatus,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        _ = sqlx::query!(
+        sqlx::query!(
             "
                 UPDATE applications
                 SET private_status = $2
@@ -961,7 +961,7 @@ impl Application {
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             "
                 UPDATE applications SET submitted = true WHERE id = $1 RETURNING id
             ",

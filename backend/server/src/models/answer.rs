@@ -455,7 +455,7 @@ impl Answer {
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!("DELETE FROM answers WHERE id = $1 RETURNING id", id)
+        sqlx::query!("DELETE FROM answers WHERE id = $1 RETURNING id", id)
             .fetch_one(transaction.deref_mut())
             .await?;
 

@@ -428,7 +428,7 @@ impl Organisation {
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        _ = sqlx::query!(
+        sqlx::query!(
             "
             DELETE FROM organisations WHERE id = $1 RETURNING id
         ",
@@ -558,7 +558,7 @@ impl Organisation {
         //     )
         // }
 
-        let _ = sqlx::query!(
+        sqlx::query!(
             "SELECT id FROM organisations WHERE id = $1",
             organisation_id
         )
@@ -606,7 +606,7 @@ impl Organisation {
         member_id_list: Vec<i64>,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             "SELECT id FROM organisations WHERE id = $1",
             organisation_id
         )
@@ -659,7 +659,7 @@ impl Organisation {
         role: OrganisationRole,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             "SELECT id FROM organisations WHERE id = $1",
             organisation_id
         )
@@ -685,7 +685,7 @@ impl Organisation {
         user_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             "SELECT id FROM organisations WHERE id = $1",
             organisation_id
         )
@@ -711,7 +711,7 @@ impl Organisation {
         user_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             "SELECT id FROM organisations WHERE id = $1",
             organisation_id
         )
@@ -765,7 +765,7 @@ impl Organisation {
     ) -> Result<String, ChaosError> {
         let email = email.to_lowercase();
 
-        let _ = sqlx::query!(
+        sqlx::query!(
             "SELECT id FROM organisations WHERE id = $1",
             organisation_id
         )
@@ -872,7 +872,7 @@ impl Organisation {
 
         let logo_id = Uuid::new_v4();
         let current_time = dt;
-        _ = sqlx::query!(
+        sqlx::query!(
             "
             UPDATE organisations
                 SET logo = $2, updated_at = $3
@@ -973,7 +973,7 @@ impl Organisation {
     ) -> Result<i64, ChaosError> {
         let id = snowflake_generator.real_time_generate();
 
-        let _ = sqlx::query!(
+        sqlx::query!(
             "
                 INSERT INTO email_templates (id, organisation_id, name, template_subject, template_body)
                     VALUES ($1, $2, $3, $4, $5)

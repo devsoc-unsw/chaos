@@ -131,7 +131,7 @@ impl EmailTemplate {
         template_body: String,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             "
                 UPDATE email_templates SET name = $2, template_subject = $3, template_body = $4 WHERE id = $1 RETURNING id
             ",
@@ -160,7 +160,7 @@ impl EmailTemplate {
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!("DELETE FROM email_templates WHERE id = $1 RETURNING id", id)
+        sqlx::query!("DELETE FROM email_templates WHERE id = $1 RETURNING id", id)
             .fetch_one(transaction.deref_mut())
             .await?;
 

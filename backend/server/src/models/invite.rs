@@ -110,7 +110,7 @@ impl Invite {
         user_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             r#"
                 UPDATE organisation_invites
                 SET used_at = $1, used_by = $2
@@ -132,7 +132,7 @@ impl Invite {
         code: &str,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             "DELETE FROM organisation_invites WHERE code = $1 RETURNING id",
             code
         )

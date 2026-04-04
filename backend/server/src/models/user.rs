@@ -182,7 +182,7 @@ impl User {
         name: String,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             "
             UPDATE users SET name = $1 WHERE id = $2 RETURNING id
         ",
@@ -211,7 +211,7 @@ impl User {
         pronouns: String,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             "
             UPDATE users SET pronouns = $1 WHERE id = $2 RETURNING id
         ",
@@ -240,7 +240,7 @@ impl User {
         gender: String,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             "
             UPDATE users SET gender = $1 WHERE id = $2 RETURNING id
         ",
@@ -269,7 +269,7 @@ impl User {
         zid: String,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             "
             UPDATE users SET zid = $1 WHERE id = $2 RETURNING id
         ",
@@ -300,7 +300,7 @@ impl User {
         degree_starting_year: i32,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             "
             UPDATE users SET degree_name = $1, degree_starting_year = $2 WHERE id = $3 RETURNING id
         ",

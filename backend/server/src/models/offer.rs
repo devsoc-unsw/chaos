@@ -137,7 +137,7 @@ impl Offer {
     ) -> Result<i64, ChaosError> {
         let id = snowflake_id_generator.real_time_generate();
 
-        let _ = sqlx::query!(
+        sqlx::query!(
             "
                 INSERT INTO offers (id, campaign_id, application_id, email_template_id, role_id, expiry) VALUES ($1, $2, $3, $4, $5, $6)
             ",
@@ -254,7 +254,7 @@ impl Offer {
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!("DELETE FROM offers WHERE id = $1 RETURNING id", id)
+        sqlx::query!("DELETE FROM offers WHERE id = $1 RETURNING id", id)
             .fetch_one(transaction.deref_mut())
             .await?;
 
@@ -291,7 +291,7 @@ impl Offer {
             status = OfferStatus::Declined;
         }
 
-        let _ = sqlx::query!(
+        sqlx::query!(
             "UPDATE offers SET status = $2 WHERE id = $1",
             id,
             status as OfferStatus

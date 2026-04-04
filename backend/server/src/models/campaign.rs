@@ -448,7 +448,7 @@ impl Campaign {
         }
         update.validate()?;
 
-        _ = sqlx::query!(
+        sqlx::query!(
             "
                 UPDATE campaigns
                 SET slug = $1, name = $2, description = $3, starts_at = $4, ends_at = $5,
@@ -492,7 +492,7 @@ impl Campaign {
         if campaign.published {
             return Err(ChaosError::BadRequest);
         }
-        _ = sqlx::query!(
+        sqlx::query!(
             "
                 UPDATE campaigns
                 SET published = true
@@ -530,7 +530,7 @@ impl Campaign {
         let image_id = Uuid::new_v4();
         let current_time = dt;
 
-        _ = sqlx::query!(
+        sqlx::query!(
             "
                 UPDATE campaigns
                 SET cover_image = $1, updated_at = $2
@@ -567,7 +567,7 @@ impl Campaign {
         if campaign.published {
             return Err(ChaosError::BadRequest);
         }
-        _ = sqlx::query!(
+        sqlx::query!(
             "
                 DELETE FROM campaigns WHERE id = $1 RETURNING id
             ",
@@ -754,7 +754,7 @@ impl CampaignAttachment {
         if campaign.published {
             return Err(ChaosError::BadRequest);
         }
-        _ = sqlx::query!(
+        sqlx::query!(
             "
                 DELETE FROM campaign_attachments WHERE id = $1 RETURNING id
             ",

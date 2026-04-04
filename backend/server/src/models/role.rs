@@ -165,7 +165,7 @@ impl Role {
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             "
                 DELETE FROM campaign_roles WHERE id = $1 RETURNING id
             ",
@@ -195,7 +195,7 @@ impl Role {
     ) -> Result<(), ChaosError> {
         role_data.validate()?;
 
-        let _ = sqlx::query!(
+        sqlx::query!(
             "
                 UPDATE campaign_roles
                 SET (name, description, min_available, max_available, finalised) = ($2, $3, $4, $5, $6)

@@ -254,7 +254,7 @@ impl Rating {
         name: String,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             "
                 UPDATE campaign_rating_categories
                 SET name = $2
@@ -275,7 +275,7 @@ impl Rating {
         category_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             "
                 DELETE FROM campaign_rating_categories WHERE id = $1
                 RETURNING id
@@ -349,7 +349,7 @@ impl Rating {
     ) -> Result<(), ChaosError> {
         let current_time = Utc::now();
 
-        let _ = sqlx::query!(
+        sqlx::query!(
             "
                 UPDATE application_ratings
                 SET comment = $2, updated_at = $3
@@ -381,7 +381,7 @@ impl Rating {
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         // Throws error if rating id doesn't exist.
-        let _ = sqlx::query!(
+        sqlx::query!(
             "
                 DELETE FROM application_ratings WHERE id = $1
                 RETURNING id
@@ -576,7 +576,7 @@ impl Rating {
     ) -> Result<(), ChaosError> {
         let current_time = Utc::now();
 
-        let _ = sqlx::query!(
+        sqlx::query!(
             "
             UPDATE application_rating_category_ratings
             SET rating = $2, updated_at = $3
@@ -636,7 +636,7 @@ impl Rating {
         application_category_rating_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             "
             DELETE FROM application_rating_category_ratings WHERE id = $1
             RETURNING id

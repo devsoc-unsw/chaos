@@ -176,7 +176,7 @@ impl EmailQueue {
         body: String,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             r#"
                 INSERT INTO email_queue (recepient_name, recepient_email_address, subject, body)
                 VALUES ($1, $2, $3, $4)
