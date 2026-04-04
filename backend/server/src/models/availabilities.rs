@@ -17,9 +17,9 @@ pub struct UserCampaignId {
     id: i64,
 }
 
-pub struct AvailabilitiesHandler;
+pub struct Availabilities;
 
-impl AvailabilitiesHandler {
+impl Availabilities {
     // ------------------------- Context -------------------------
     // `user_campaign_availabilities` and `availability_slots` use a two-table design
     // to avoid repeating `user_id` and `campaign_id` on every slot row.
