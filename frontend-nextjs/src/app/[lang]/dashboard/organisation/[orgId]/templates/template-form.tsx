@@ -1,16 +1,10 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { ButtonGroup } from "@/components/ui/button-group";
 import Link from "next/link";
-import {
-  EmailTemplate,
-  getEmailTemplate,
-  templateVariables,
-  updateEmailTemplate,
-} from "@/models/email";
+import { templateVariables, type EmailTemplate } from "@/models/email";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,7 +12,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 
 export default function TemplateForm({
@@ -45,6 +39,18 @@ export default function TemplateForm({
 
   const [saving, setSaving] = useState(false);
 
+  // History management for undo/redo
+  type HistoryState = {
+    text: string;
+    cursorPosition: number;
+  };
+
+  const historyRef = useRef<HistoryState[]>([
+    { text: template?.template_body ?? "", cursorPosition: 0 },
+  ]);
+  const currentIndexRef = useRef<number>(0);
+  const pendingCursorRef = useRef<number | null>(null);
+
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSave = async () => {
@@ -53,23 +59,87 @@ export default function TemplateForm({
     setSaving(false);
   };
 
+  // Apply pending cursor position whenever body changes
+  useEffect(() => {
+    if (pendingCursorRef.current !== null) {
+      const textarea = textAreaRef.current;
+      if (textarea) {
+        textarea.selectionStart = textarea.selectionEnd =
+          pendingCursorRef.current;
+        textarea.focus();
+      }
+      pendingCursorRef.current = null;
+    }
+  }, [body]);
+
+  // Add a new state to history and update current index
+  const addToHistory = (newBody: string) => {
+    const textarea = textAreaRef.current;
+    const cursorPosition = textarea?.selectionStart ?? 0;
+
+    // If user is not at the end of history (e.g., after undo, they make a new edit),
+    // remove all future states
+    if (currentIndexRef.current < historyRef.current.length - 1) {
+      historyRef.current = historyRef.current.slice(
+        0,
+        currentIndexRef.current + 1
+      );
+    }
+
+    // Add new state to history
+    historyRef.current.push({ text: newBody, cursorPosition });
+    currentIndexRef.current = historyRef.current.length - 1;
+  };
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newBody = e.target.value;
+    setBody(newBody);
+    addToHistory(newBody);
+  };
+
   const handleAddVariable = (value: string) => {
     const textarea = textAreaRef.current;
     if (!textarea) {
       return;
     }
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
+    textarea.setRangeText(
+      value,
+      textarea.selectionStart,
+      textarea.selectionEnd,
+      "end"
+    );
 
-    setBody(body.slice(0, start) + value + body.slice(end));
-    setTimeout(() => {
-      // Put cursor after the added variable
-      const newPosition = start + value.length;
-      textarea.selectionEnd = newPosition;
-      textarea.selectionStart = newPosition;
-      textarea.focus();
-    }, 0);
+    const newBody = textarea.value;
+    setBody(newBody);
+    addToHistory(newBody);
+    textarea.focus();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Undo: Ctrl+Z
+    if (e.ctrlKey && e.key === "z") {
+      e.preventDefault();
+
+      if (currentIndexRef.current > 0) {
+        currentIndexRef.current--;
+        const state = historyRef.current[currentIndexRef.current];
+        pendingCursorRef.current = state.cursorPosition;
+        setBody(state.text);
+      }
+    }
+
+    // Redo: Ctrl+Shift+Z
+    if (e.ctrlKey && e.shiftKey && e.key === "z") {
+      e.preventDefault();
+
+      if (currentIndexRef.current < historyRef.current.length - 1) {
+        currentIndexRef.current++;
+        const state = historyRef.current[currentIndexRef.current];
+        pendingCursorRef.current = state.cursorPosition;
+        setBody(state.text);
+      }
+    }
   };
 
   return (
@@ -143,7 +213,8 @@ export default function TemplateForm({
           <Textarea
             className="max-w-2xl min-h-[300px]"
             value={body}
-            onChange={(e) => setBody(e.target.value)}
+            onChange={handleTextChange}
+            onKeyDown={handleKeyDown}
             ref={textAreaRef}
           />
         </div>
