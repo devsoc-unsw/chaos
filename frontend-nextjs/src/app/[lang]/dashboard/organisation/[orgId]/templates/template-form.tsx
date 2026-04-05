@@ -118,7 +118,7 @@ export default function TemplateForm({
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     // Undo: Ctrl+Z
-    if (e.ctrlKey && e.key === "z") {
+    if (e.ctrlKey && e.key.toLowerCase() === "z" && !e.shiftKey) {
       e.preventDefault();
 
       if (currentIndexRef.current > 0) {
@@ -130,7 +130,7 @@ export default function TemplateForm({
     }
 
     // Redo: Ctrl+Shift+Z
-    if (e.ctrlKey && e.shiftKey && e.key === "z") {
+    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "z") {
       e.preventDefault();
 
       if (currentIndexRef.current < historyRef.current.length - 1) {
