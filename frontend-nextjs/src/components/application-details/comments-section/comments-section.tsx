@@ -41,7 +41,11 @@ function CommentsSection({ applicationId }: Props) {
         <CardTitle className="text-xl font-semibold">Comments</CardTitle>
       </CardHeader>
       <CardContent>
-        <CommentsContainer comments={comments} isPending={isPending} />
+        <CommentsContainer
+          comments={comments}
+          isPending={isPending}
+          applicationId={applicationId}
+        />
         <Separator className="my-2" />
         <CommentsInput createComment={mutateCreateComment} />
       </CardContent>

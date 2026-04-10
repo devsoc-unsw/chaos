@@ -8,11 +8,12 @@ import { useEffect, useRef } from "react";
 import Comment from "@components/application-details/comments-section/comment";
 
 type Props = {
+  applicationId: string;
   comments: CommentDetails[] | undefined;
   isPending: boolean;
 };
 
-function CommentsContainer({ comments, isPending }: Props) {
+function CommentsContainer({ applicationId, comments, isPending }: Props) {
   // Get ref to comments container div
   const commentsContainer = useRef<HTMLDivElement>(null);
 
@@ -39,7 +40,11 @@ function CommentsContainer({ comments, isPending }: Props) {
       ref={commentsContainer}
     >
       {comments.map((comment) => (
-        <Comment comment={comment} />
+        <Comment
+          key={comment.id}
+          comment={comment}
+          applicationId={applicationId}
+        />
       ))}
     </div>
   );
