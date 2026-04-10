@@ -126,6 +126,6 @@ impl CommentHandler {
 
         transaction.tx.commit().await?;
 
-        Ok(AppMessage::OkMessage(comments))
+        Ok(Json(comments))
     }
 }
