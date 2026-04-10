@@ -1,4 +1,4 @@
-import {apiRequest} from "@/lib";
+import { apiRequest } from "@/lib";
 
 export interface CommentDetails {
   id: string;
@@ -7,7 +7,6 @@ export interface CommentDetails {
   author_id: string;
   created_at: string;
 }
-
 
 export async function createComment(
   applicationId: string,
@@ -18,12 +17,11 @@ export async function createComment(
     {
       method: "POST",
       body: {
-        body
-      }
+        body,
+      },
     },
   );
 }
-
 
 export async function editComment(
   applicationId: string,
@@ -35,12 +33,11 @@ export async function editComment(
     {
       method: "PUT",
       body: {
-        body
-      }
+        body,
+      },
     },
   );
 }
-
 
 export async function deleteComment(
   applicationId: string,
@@ -54,12 +51,11 @@ export async function deleteComment(
   );
 }
 
-
 export async function getCommentsByApplication(
   applicationId: string,
 ): Promise<CommentDetails[]> {
   return await apiRequest<CommentDetails[]>(
-    `/api/v1/application/${applicationId}/comment/`,
+    `/api/v1/application/${applicationId}/comment`,
     {
       method: "GET",
     },
