@@ -13,7 +13,10 @@ use crate::models::application::Application;
 use crate::models::application::NewApplication;
 use crate::models::auth::AuthUser;
 use crate::models::auth::CampaignAdmin;
-use crate::models::campaign::{AttachmentResponse, Campaign, CampaignAttachment, NewAttachment, OpenCampaign};
+use crate::models::campaign::{
+    AttachmentResponse, Campaign, CampaignAttachment, CampaignDetailsResponse, NewAttachment,
+    OpenCampaign,
+};
 use crate::models::error::ChaosError;
 use crate::models::offer::Offer;
 use crate::models::role::{Role, RoleUpdate};
@@ -44,12 +47,22 @@ impl CampaignHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Campaign details or error
     pub async fn get(
         mut transaction: DBTransaction<'_>,
+        State(state): State<AppState>,
         Path(id): Path<i64>,
         // no need for AuthUser as this is public
     ) -> Result<impl IntoResponse, ChaosError> {
         let campaign = Campaign::get(id, &mut transaction.tx).await?;
+        let cover_image_url =
+            Campaign::cover_image_presigned_get_url(id, campaign.cover_image, &state.storage_bucket)
+                .await?;
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, Json(campaign)))
+        Ok((
+            StatusCode::OK,
+            Json(CampaignDetailsResponse {
+                campaign,
+                cover_image_url,
+            }),
+        ))
     }
 
     /// Retrieves a campaign by its organisation and campaign slugs.
@@ -68,13 +81,27 @@ impl CampaignHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Campaign details or error
     pub async fn get_by_slugs(
         mut transaction: DBTransaction<'_>,
+        State(state): State<AppState>,
         Path((organisation_slug, campaign_slug)): Path<(String, String)>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let campaign =
             Campaign::get_by_slugs(organisation_slug, campaign_slug, true, &mut transaction.tx).await?;
 
+        let cover_image_url = Campaign::cover_image_presigned_get_url(
+            campaign.id,
+            campaign.cover_image,
+            &state.storage_bucket,
+        )
+        .await?;
+
         transaction.tx.commit().await?;
-        Ok((StatusCode::OK, Json(campaign)))
+        Ok((
+            StatusCode::OK,
+            Json(CampaignDetailsResponse {
+                campaign,
+                cover_image_url,
+            }),
+        ))
     }
 
     /// Retrieves all campaigns.

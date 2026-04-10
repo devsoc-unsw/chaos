@@ -15,6 +15,7 @@ export interface CampaignDetails {
     contact_email: string,
     website_url: string,
     cover_image: string | null;
+    cover_image_url?: string | null;
     /// Optional description of the campaign
     description: string | null;
     starts_at: string;

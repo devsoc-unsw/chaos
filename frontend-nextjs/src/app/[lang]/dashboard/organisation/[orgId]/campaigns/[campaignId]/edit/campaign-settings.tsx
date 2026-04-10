@@ -1,7 +1,8 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CampaignUpdate, createCampaignRole, getCampaign, getCampaignRoles, updateCampaign, getCampaignAttachments, uploadAttachments, deleteCampaignAttachment, CampaignRole, RoleDetails } from "@/models/campaign";
+import { CampaignUpdate, createCampaignRole, getCampaign, getCampaignRoles, updateCampaign, RoleDetails, setCampaignCoverImage } from "@/models/campaign";
+import { uploadFile } from "@/models/file";
 import { getRatingCategories, createCategory, updateCategory, deleteCategory, RatingCategory } from "@/models/rating";
 import { Button } from "@/components/ui/button";
 import { Copy, Pencil, Trash, Share, BookOpenCheck, Check, Plus, FormIcon, CircleCheck, Upload, X, FileText, BarChart, ArrowLeft } from "lucide-react";
@@ -16,15 +17,17 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import Link from "next/link";
-import { getOrganisationUserRole } from "@/models/organisation";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import SlugInput from "@/components/slug-input";
 import { DatePicker } from "@/components/ui/date-picker";
+import ImageUpload from "@/components/ui/image-upload";
 import { snowflakeGenerator } from "@/lib";
 import { deleteRole, RoleUpdate, updateRole } from "@/models/role";
+import { toast } from "sonner";
+import Image from "next/image";
 
 export default function CampaignSettings({ campaignId, orgId, dict }: { campaignId: string, orgId: string, dict: any }) {
     const queryClient = useQueryClient();
@@ -43,12 +46,13 @@ export default function CampaignSettings({ campaignId, orgId, dict }: { campaign
         queryKey: [`${campaignId}-rating-categories`],
         queryFn: () => getRatingCategories(campaignId),
     });
-
     const [campaignName, setCampaignName] = useState(campaign?.name ?? "");
     const [campaignSlug, setCampaignSlug] = useState(campaign?.campaign_slug ?? "");
     const [campaignDescription, setCampaignDescription] = useState(campaign?.description ?? "");
     const [campaignStartsAt, setCampaignStartsAt] = useState(new Date(campaign?.starts_at ?? "").toISOString());
     const [campaignEndsAt, setCampaignEndsAt] = useState(new Date(campaign?.ends_at ?? "").toISOString());
+    const [selectedBanner, setSelectedBanner] = useState<File | null>(null);
+    const [bannerUploading, setBannerUploading] = useState(false);
 
     const { mutateAsync: mutateUpdateCampaignDetails } = useMutation({
         mutationFn: (data: CampaignUpdate) => updateCampaign(campaignId, data),
@@ -129,8 +133,37 @@ export default function CampaignSettings({ campaignId, orgId, dict }: { campaign
             ends_at: campaignEndsAt,
             ...overrides,
         });
-    }
+    };
 
+    const existingBannerSrc =
+        campaign?.cover_image_url ||
+        (campaign?.cover_image && /^https?:\/\//i.test(campaign.cover_image)
+            ? campaign.cover_image
+            : null) ||
+        "/placeholder.svg";
+
+    const handleBannerUpload = async () => {
+        if (!selectedBanner) {
+            return;
+        }
+        setBannerUploading(true);
+        try {
+            const { upload_url } = await setCampaignCoverImage(campaignId);
+            await uploadFile(upload_url, selectedBanner);
+            setSelectedBanner(null);
+            await queryClient.invalidateQueries({ queryKey: [`${campaignId}-campaign-details`] });
+            toast.success(dict.dashboard.campaigns.settings.campaign_banner_uploaded);
+        } catch (e) {
+            const detail = e instanceof Error ? e.message : "";
+            toast.error(
+                detail
+                    ? `${dict.dashboard.campaigns.settings.campaign_banner_failed} ${detail}`
+                    : dict.dashboard.campaigns.settings.campaign_banner_failed
+            );
+        } finally {
+            setBannerUploading(false);
+        }
+    };
 
     return (
         <div className="flex flex-col gap-10 max-w-2xl">
@@ -169,6 +202,37 @@ export default function CampaignSettings({ campaignId, orgId, dict }: { campaign
 
                 <div className="flex flex-col gap-1">
                     <DatePicker label={dict.common.ends_at} value={campaignEndsAt} onChange={(value) => { setCampaignEndsAt(value); handleCampaignDetailsUpdate({ ends_at: value }) }} />
+                </div>
+
+                <div className="flex flex-col gap-3">
+                    <h3 className="text-base font-semibold">
+                        {dict.dashboard.campaigns.settings.campaign_banner}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                        {dict.dashboard.campaigns.settings.campaign_banner_help}
+                    </p>
+                    <div className="relative h-40 w-full overflow-hidden rounded-lg border bg-muted">
+                        <Image
+                            src={existingBannerSrc}
+                            alt=""
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 768px) 100vw, 672px"
+                            unoptimized={existingBannerSrc.startsWith("http")}
+                        />
+                    </div>
+                    <ImageUpload
+                        selectedImage={selectedBanner}
+                        onImageChange={setSelectedBanner}
+                    />
+                    <Button
+                        type="button"
+                        disabled={!selectedBanner || bannerUploading}
+                        onClick={() => void handleBannerUpload()}
+                    >
+                        <Upload className="mr-2 h-4 w-4" />
+                        {dict.dashboard.campaigns.settings.upload_banner}
+                    </Button>
                 </div>
             </div>
 
