@@ -42,7 +42,9 @@ export async function apiRequest<T>(
   }
 
   const cleanPath = path.startsWith("/") ? path.slice(1) : path;
-  const url = `${API_BASE_URL}/${cleanPath}`;
+  const base = API_BASE_URL.replace(/\/+$/, ""); 
+  const url = `${base}/${cleanPath}`;
+  
   
   let fetchOptions: RequestInit;
 
