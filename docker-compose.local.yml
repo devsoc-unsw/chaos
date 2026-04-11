@@ -1,0 +1,78 @@
+services:
+  dev-container:
+    container_name: chaos-dev-container
+    build:
+      context: .
+      dockerfile: Dockerfile
+    stdin_open: true
+    tty: true
+
+    ports:
+      # Expose dev server ports
+      - "3000:3000"
+      - "8080:8080"
+    volumes:
+      - ./:/root/chaos
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgres://postgres:password@db:5432/chaos
+    networks:
+      - chaos-network
+
+
+
+
+
+
+
+
+
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  db:
+    image: postgres:17
+
+
+
+
+
+
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: chaos
+    networks:
+      - chaos-network
+    volumes:
+      - chaos-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d chaos"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+
+
+volumes:
+  chaos-postgres-data:
+
+networks:
+  chaos-network:
+    driver: bridge
