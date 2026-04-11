@@ -55,7 +55,7 @@ impl Availabilities {
     /// * `Err(ChaosError)` - If creation fails
     ///
 
-    pub async fn create_user_campaign_availabilitty(
+    pub async fn create_user_campaign_availability(
         user_id: i64,
         campaign_id: i64,
         snowflake_generator: &mut SnowflakeIdGenerator,
@@ -124,7 +124,7 @@ impl Availabilities {
     /// * `Ok(Vec<Availabilities>)` - a Vec of all the availabilities
     /// * `Err(ChaosError)`- If no such user campaign pair found
 
-    pub async fn get_availaibility_slots(
+    pub async fn get_availability_slots(
         availability_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<Availability>, ChaosError> {

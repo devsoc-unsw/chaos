@@ -39,7 +39,7 @@ async fn get_or_create_uc_id(
         Availabilities::get_user_campaign_id(user_id, campaign_id, &mut transaction.tx).await;
     Ok(match uc_id_res {
         Err(_) => {
-            Availabilities::create_user_campaign_availabilitty(
+            Availabilities::create_user_campaign_availability(
                 user_id,
                 campaign_id,
                 &mut state.snowflake_generator,
@@ -54,7 +54,7 @@ async fn get_or_create_uc_id(
 impl AvailabilitiesHandler {
     // TODO: change auth_user to an availabilities specific extractor
 
-    /// Retreives all availability slots for a given user_id and campaign_id
+    /// Retrieves all availability slots for a given user_id and campaign_id
     ///
     /// # Arguments
     ///
@@ -77,7 +77,7 @@ impl AvailabilitiesHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         let uc_id = get_or_create_uc_id(user_id, campaign_id, &mut state, &mut transaction).await?;
 
-        let res = Availabilities::get_availaibility_slots(uc_id, &mut transaction.tx).await?;
+        let res = Availabilities::get_availability_slots(uc_id, &mut transaction.tx).await?;
 
         transaction.tx.commit().await?;
 
@@ -91,7 +91,7 @@ impl AvailabilitiesHandler {
 
     // TODO: change auth_user to an availabilities specific extractor
 
-    /// Modifies availabilities for a given user in a campagin
+    /// Modifies availabilities for a given user in a campaign
     ///
     /// # Arguments
     ///
@@ -117,7 +117,7 @@ impl AvailabilitiesHandler {
         let uc_id = get_or_create_uc_id(user_id, campaign_id, &mut state, &mut transaction).await?;
 
         let curr_availabilities =
-            Availabilities::get_availaibility_slots(uc_id, &mut transaction.tx).await?;
+            Availabilities::get_availability_slots(uc_id, &mut transaction.tx).await?;
 
         // Diff is determined by assuming all current timeslots are to be deleted and none are to be added
         // Since if any availability slot is passed in, then it will either be added (if not already in the db)
