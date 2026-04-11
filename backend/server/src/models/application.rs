@@ -55,10 +55,6 @@ pub struct Application {
 /// and includes the user's preference ranking.
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct ApplicationRole {
-    /// Unique identifier for the role application
-    #[serde(serialize_with = "crate::models::serde_string::serialize")]
-    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
-    pub id: i64,
     /// ID of the parent application
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
     #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
@@ -891,7 +887,7 @@ impl Application {
         let roles = sqlx::query_as!(
             ApplicationRole,
             "
-                SELECT id, application_id, campaign_role_id, preference
+                SELECT application_id, campaign_role_id, preference
                 FROM application_roles
                 WHERE application_id = $1
                 ORDER BY preference
