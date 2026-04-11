@@ -69,7 +69,7 @@ impl AvailabilitiesHandler {
     /// * `Ok(Vec<Availability>)` - Vec of availabilities
     /// * `Err(ChaosError)` - If no availabilities are found
 
-    pub async fn get_availaibility_slots(
+    pub async fn get(
         Path((user_id, campaign_id)): Path<(i64, i64)>,
         State(mut state): State<AppState>,
         _auth_user: AuthUser,
@@ -97,8 +97,8 @@ impl AvailabilitiesHandler {
     ///
     /// * `user_id` - ID of the interviewer
     /// * `campaign_id` - ID of the campaign in which the user will be interviewing
-    /// * `availabilities` - the set of ALL availabilities the user now has
     /// * `state` - The application state
+    /// * `availabilities` - the set of ALL availabilities the user now has
     /// * `_auth_user` - The authenticated user
     /// * `transaction` - Database transaction
     ///
@@ -107,12 +107,12 @@ impl AvailabilitiesHandler {
     /// * `Ok(())` - If successful
     /// * `Err(ChaosError)` - Otherwise
 
-    pub async fn modify_availability_slots(
+    pub async fn update(
         Path((user_id, campaign_id)): Path<(i64, i64)>,
-        Json(availabilities): Json<Vec<Availability>>,
         State(mut state): State<AppState>,
         _auth_user: AuthUser,
         mut transaction: DBTransaction<'_>,
+        Json(availabilities): Json<Vec<Availability>>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let uc_id = get_or_create_uc_id(user_id, campaign_id, &mut state, &mut transaction).await?;
 

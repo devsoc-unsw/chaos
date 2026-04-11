@@ -1,6 +1,7 @@
 use crate::handler::answer::AnswerHandler;
 use crate::handler::application::ApplicationHandler;
 use crate::handler::auth::{google_auth_init, google_callback, logout, DevLoginHandler};
+use crate::handler::availabilities::AvailabilitiesHandler;
 use crate::handler::campaign::CampaignHandler;
 use crate::handler::email_template::EmailTemplateHandler;
 use crate::handler::invite::InviteHandler;
@@ -519,6 +520,10 @@ pub async fn app() -> Result<(Router, AppState), ChaosError> {
         .route(
             "/api/v1/invite/:code",
             get(InviteHandler::get).post(InviteHandler::use_invite),
+        )
+        .route(
+            "/api/v1/availabilities/:user_id/:campaign_id",
+            get(AvailabilitiesHandler::get).patch(AvailabilitiesHandler::update),
         )
         .layer(cors)
         .with_state(state);
