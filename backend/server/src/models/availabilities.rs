@@ -1,20 +1,28 @@
-use std::ops::DerefMut;
+use std::{hash::Hash, ops::DerefMut};
 
 use chrono::{DateTime, Utc};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
 use sqlx::{Postgres, Transaction};
 
 use crate::models::error::ChaosError;
 
-#[derive(Deserialize, sqlx::FromRow)]
+#[derive(Serialize, Deserialize, sqlx::FromRow, PartialEq)]
 pub struct Availability {
     start_time: DateTime<Utc>,
 }
 
+impl Eq for Availability {}
+
+impl Hash for Availability {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.start_time.hash(state);
+    }
+}
+
 #[derive(Deserialize, sqlx::FromRow)]
 pub struct UserCampaignId {
-    id: i64,
+    pub id: i64,
 }
 
 pub struct Availabilities;
@@ -36,7 +44,7 @@ impl Availabilities {
     /// Creates an ID for a user-campaign availability pair
     ///
     /// # Arguments
-    /// * `user_id` - ID of the user interviewer
+    /// * `user_id` - ID of the interviewer
     /// * `campaign_id` - ID of the campaign in which the user will be interviewing
     /// * `snowflake_generator` - A generator for creating unique IDs
     /// * `transaction` - A mutable reference to the database transaction
@@ -52,7 +60,7 @@ impl Availabilities {
         campaign_id: i64,
         snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<(), ChaosError> {
+    ) -> Result<i64, ChaosError> {
         let id = snowflake_generator.real_time_generate();
 
         sqlx::query!(
@@ -67,7 +75,7 @@ impl Availabilities {
         .execute(transaction.deref_mut())
         .await?;
 
-        Ok(())
+        Ok(id)
     }
 
     /// Creates availability slots in bulk for a given user-campaign.
@@ -117,21 +125,17 @@ impl Availabilities {
     /// * `Err(ChaosError)`- If no such user campaign pair found
 
     pub async fn get_availaibility_slots(
-        user_id: i64,
-        campaign_id: i64,
+        availability_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<Availability>, ChaosError> {
         let slots = sqlx::query_as!(
             Availability,
             "
                 SELECT start_time
-                FROM user_campaign_availabilities uc
-                RIGHT JOIN availability_slots s ON uc.id = s.availability_id
-                WHERE user_id = $1
-                AND campaign_id = $2
-            ",
-            user_id,
-            campaign_id
+                FROM availability_slots
+                WHERE availability_id = $1
+                ",
+            availability_id
         )
         .fetch_all(transaction.deref_mut())
         .await?;
@@ -204,37 +208,6 @@ impl Availabilities {
             user_id,
             campaign_id,
             &start_times as &[DateTime<Utc>]
-        )
-        .execute(transaction.deref_mut())
-        .await?;
-
-        Ok(())
-    }
-
-    /// Deletes a UC pair
-    ///
-    /// # Arguments
-    /// * `user_id` - ID of the interviewer
-    /// * `campaign_id` - ID of the campaign in which the user will be interviewing
-    ///
-    /// # Returns
-    /// Returns a `Result` containing either
-    /// * `Ok(())` - if update was successful
-    /// * `Err(ChaosError)` - if update was unsuccessful
-
-    pub async fn delete_user_campaign(
-        user_id: i64,
-        campaign_id: i64,
-        transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<(), ChaosError> {
-        sqlx::query!(
-            "
-                DELETE FROM user_campaign_availabilities
-                WHERE user_id = $1
-                AND campaign_id = $2
-            ",
-            user_id,
-            campaign_id
         )
         .execute(transaction.deref_mut())
         .await?;

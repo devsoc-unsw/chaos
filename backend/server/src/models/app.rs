@@ -10,6 +10,7 @@ use crate::handler::question::QuestionHandler;
 use crate::handler::rating::RatingHandler;
 use crate::handler::role::RoleHandler;
 use crate::handler::user::UserHandler;
+use crate::models::availabilities::Availability;
 use crate::models::email::{ChaosEmail, EmailCredentials};
 use crate::models::error::ChaosError;
 use crate::models::storage::Storage;
@@ -174,6 +175,11 @@ pub async fn init_app_state() -> AppState {
         is_dev_env,
         email_credentials,
     }
+}
+
+#[derive(Serialize)]
+pub struct AvailabilitiesMessage {
+    pub availabilities: Vec<Availability>,
 }
 
 pub async fn app() -> Result<(Router, AppState), ChaosError> {

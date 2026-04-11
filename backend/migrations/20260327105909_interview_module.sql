@@ -6,9 +6,10 @@ CREATE TABLE user_campaign_availabilities (
 );
 
 CREATE TABLE availability_slots (
+  id SERIAL PRIMARY KEY,
   availability_id BIGINT NOT NULL REFERENCES user_campaign_availabilities(id) ON DELETE CASCADE,
   start_time TIMESTAMPTZ NOT NULL,
-  PRIMARY KEY (availability_id, start_time)
+  UNIQUE (availability_id, start_time)
 );
 
 CREATE TABLE interview_timeslots (
