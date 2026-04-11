@@ -107,7 +107,25 @@ impl CommentHandler {
         Ok(AppMessage::OkMessage("Successfully deleted comment"))
     }
 
-    // pub async fn get_comments_by_application(
+    /// Get all comments for an application.
+    ///
+    /// # Arguments
+    /// * `application_id` - ID of the application to fetch the comments for.
+    /// * `_admin` - Authenticated user allowed to review the application.
+    /// * `transaction` - Database transaction wrapper.
+    ///
+    /// # Returns
+    /// The comments for the application.
+    pub async fn get_comments_by_application(
+        Path(application_id): Path<i64>,
+        _admin: ApplicationReviewerGivenApplicationId,
+        mut transaction: DBTransaction<'_>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let comments =
+            Comment::get_comments_by_application(application_id, &mut transaction.tx).await?;
 
-    // )
+        transaction.tx.commit().await?;
+
+        Ok(Json(comments))
+    }
 }
