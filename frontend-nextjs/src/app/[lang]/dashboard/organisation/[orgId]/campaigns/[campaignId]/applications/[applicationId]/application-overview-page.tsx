@@ -17,9 +17,9 @@ export default function ApplicationOverviewPageComponent({
   campaignId,
   dict,
 }: Props) {
-  const [ratedApplications, setRatedApplications] = useState<Record<string, boolean>>(
-    {},
-  );
+  const [ratedApplications, setRatedApplications] = useState<
+    Record<string, boolean>
+  >({});
 
   return (
     <div className="flex flex-col gap-4">
@@ -28,14 +28,15 @@ export default function ApplicationOverviewPageComponent({
         campaignId={campaignId}
         dict={dict}
         ratedApplications={ratedApplications}
-        setRatedApplications={setRatedApplications}>
+        setRatedApplications={setRatedApplications}
+      >
         <ApplicationRatingsSection
-            applicationId={applicationId}
-            campaignId={campaignId}
-            dict={dict}
-          />
+          applicationId={applicationId}
+          campaignId={campaignId}
+          dict={dict}
+        />
         <Separator className="my-4" />
-        <CommentsSection/>
+        <CommentsSection applicationId={applicationId} />
       </ApplicationDetailsComponent>
     </div>
   );
