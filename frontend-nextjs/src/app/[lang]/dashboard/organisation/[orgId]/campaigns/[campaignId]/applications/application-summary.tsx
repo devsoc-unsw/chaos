@@ -19,6 +19,15 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { useMemo, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { SendEmailsModal, type SendEmailsApplicant } from "./send-email-modal";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Send } from "lucide-react";
 import React from "react";
 import {
@@ -244,7 +253,43 @@ export default function ApplicationSummary({
           await queueCampaignOutcomeEmails(campaignId, payload);
         }}
       />
+
       <div className="mt-2">
+        <div className="flex items-center py-4">
+          <Select
+            value={
+              (table.getColumn("applied_roles")?.getFilterValue() as string) ??
+              "all"
+            }
+            onValueChange={(value) =>
+              table
+                .getColumn("applied_roles")
+                ?.setFilterValue(value === "all" ? undefined : value)
+            }
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue
+                placeholder={
+                  dict.dashboard.campaigns.application_summary_page
+                    .filter_by_role
+                }
+              />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>{dict.common.roles}</SelectLabel>
+                <SelectItem value="all">
+                  {dict.dashboard.campaigns.application_summary_page.all_roles}
+                </SelectItem>
+                {roles?.map((role) => (
+                  <SelectItem key={role.id} value={role.id}>
+                    {role.name}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
         <ApplicationSummaryDataTable
           table={table}
           roles={roles ?? []}

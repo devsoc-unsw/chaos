@@ -9,15 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import React from "react";
 import { RoleDetails } from "@/models/campaign";
 
@@ -36,40 +28,6 @@ export function ApplicationSummaryDataTable<TData>({
 }: ApplicationSummaryDataTableProp<TData>) {
   return (
     <div>
-      <div className="flex items-center py-4">
-        <Select
-          value={
-            (table.getColumn("applied_roles")?.getFilterValue() as string) ??
-            "all"
-          }
-          onValueChange={(value) =>
-            table
-              .getColumn("applied_roles")
-              ?.setFilterValue(value === "all" ? undefined : value)
-          }
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue
-              placeholder={
-                dict.dashboard.campaigns.application_summary_page.filter_by_role
-              }
-            />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectLabel>{dict.common.roles}</SelectLabel>
-              <SelectItem value="all">
-                {dict.dashboard.campaigns.application_summary_page.all_roles}
-              </SelectItem>
-              {roles.map((role) => (
-                <SelectItem key={role.id} value={role.id}>
-                  {role.name}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      </div>
       <div className="overflow-hidden rounded-md border">
         <TableWrapper>
           <TableHeader>
