@@ -1,6 +1,8 @@
 FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV BUN_INSTALL=/root/.bun
+ENV PATH="${BUN_INSTALL}/bin:/root/.cargo/bin:${PATH}"
 
 # Install essential linux commands
 RUN apt update && apt install -y \
@@ -27,7 +29,8 @@ RUN { \
     echo "alias ll='ls -la --color=auto'"; \
     echo "alias grep='grep --color=auto'"; \
     echo "export PS1='\\[\\033[1;32m\\][dev-container]\\[\\033[0m\\] \\w \\$ '"; \
-    echo "export PATH=\"$HOME/.cargo/bin:$PATH\""; \
+    echo "export BUN_INSTALL=\"$HOME/.bun\""; \
+    echo "export PATH=\"$BUN_INSTALL/bin:$HOME/.cargo/bin:$PATH\""; \
 } >> ~/.bashrc
 
 # Make Chaos folder
