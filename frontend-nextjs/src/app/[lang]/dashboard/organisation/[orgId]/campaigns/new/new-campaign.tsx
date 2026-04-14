@@ -1,7 +1,7 @@
 "use client";
 
-import { checkCampaignSlugAvailability, createCampaign, setCampaignCoverImage } from "@/models/campaign";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { createCampaign, setCampaignCoverImage } from "@/models/campaign";
+import { useQueryClient } from "@tanstack/react-query";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -18,7 +18,6 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { getOrganisationById } from "@/models/organisation";
 import { uploadFile } from "@/models/file";
 import { createCategory } from "@/models/rating";
 import SlugInput from "@/components/slug-input";
@@ -47,7 +46,7 @@ export default function CampaignNewForm({ orgId, dict }: { orgId: string, dict: 
         const res = await createCampaign(name, description, startDate, endDate, orgId, slug);
         const campaignId = res.id;
         const bannerUpdate = await setCampaignCoverImage(campaignId);
-        
+
         uploadFile(bannerUpdate.upload_url, selectedImage);
 
         await queryClient.invalidateQueries({ queryKey: [`${orgId}-campaigns`] });
@@ -92,7 +91,7 @@ export default function CampaignNewForm({ orgId, dict }: { orgId: string, dict: 
                             </TooltipContent>
                         </Tooltip>
                     </div>
-                    <SlugInput orgId={orgId} name={name} value={slug} currentSlug={suggestedSlug} onChange={(value) => setSlug(value)} onBlur={() => {}} updateSlugAvailable={setSlugAvailable} dict={dict} />
+                    <SlugInput orgId={orgId} name={name} value={slug} currentSlug={suggestedSlug} onChange={(value) => setSlug(value)} onBlur={() => { }} updateSlugAvailable={setSlugAvailable} dict={dict} />
                 </div>
                 <div className="flex flex-col gap-1">
                     <Label>{dict.common.description}</Label>

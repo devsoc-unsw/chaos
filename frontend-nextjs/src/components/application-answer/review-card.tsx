@@ -8,11 +8,10 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { useState } from "react";
-import { CampaignRole, RoleDetails } from "@/models/campaign";
+import { RoleDetails } from "@/models/campaign";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 export default function ReviewCard({
     questionsAndAnswersByRole,
-    applicationId,
     selectedRoleIds,
     handleSubmit,
     roles,
@@ -152,7 +151,6 @@ export default function ReviewCard({
                         {questionsAndAnswersByRole.has('general') && (
                             (() => {
                                 const qas = questionsAndAnswersByRole.get('general');
-                                const role = roles?.find(r => String(r.id) === String('general'));
                                 return (
                                     <div key="general" className="mb-6">
                                         <h3 className="text-lg font-bold sm:text-xl">

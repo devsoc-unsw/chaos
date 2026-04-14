@@ -17,7 +17,7 @@ function Comment({ comment, applicationId }: Props) {
   const queryClient = useQueryClient();
 
   // Get current user
-  const { isPending, data: user } = useQuery({
+  const { data: user } = useQuery({
     queryKey: ["user"],
     queryFn: () => getCurrentUser(),
   });

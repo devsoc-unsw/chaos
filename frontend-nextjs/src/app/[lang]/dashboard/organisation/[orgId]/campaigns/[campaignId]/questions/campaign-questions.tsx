@@ -104,7 +104,7 @@ export default function CampaignQuestions({ campaignId, orgId, dict }: { campaig
     const addNewQuestion = async (type: QuestionType, roleId: string) => {
         const common = roleId === "common";
 
-        let newQuestion: Question = { id: snowflakeGenerator.generate().toString(), title: "", description: "", roles: common ? [] : [roleId], created_at: new Date().toISOString(), updated_at: new Date().toISOString(), question_type: type, data: { options: [{ id: snowflakeGenerator.generate().toString(), display_order: 1, text: "Default Option" }] }, common, required: false };
+        const newQuestion: Question = { id: snowflakeGenerator.generate().toString(), title: "", description: "", roles: common ? [] : [roleId], created_at: new Date().toISOString(), updated_at: new Date().toISOString(), question_type: type, data: { options: [{ id: snowflakeGenerator.generate().toString(), display_order: 1, text: "Default Option" }] }, common, required: false };
         if (type === 'ShortAnswer') {
             delete (newQuestion as any).data;
         }
@@ -150,7 +150,7 @@ export default function CampaignQuestions({ campaignId, orgId, dict }: { campaig
                     </TabsList>
                     <TabsContent value="common">
                         <QuestionEditor questions={commonQuestions ?? []} handleQuestionUpdate={handleQuestionUpdate} dict={dict} />
-                        <NewQuestionButton currentRole="common" allRoleQuestions={rolesAndQuestions ?? []} onAddNew={(type) => addNewQuestion(type, "common")} onAddExisting={(questionId) => { }} disableExisting={true} dict={dict} />
+                        <NewQuestionButton currentRole="common" allRoleQuestions={rolesAndQuestions ?? []} onAddNew={(type) => addNewQuestion(type, "common")} onAddExisting={() => { }} disableExisting={true} dict={dict} />
                     </TabsContent>
                     {rolesAndQuestions?.map(({ role, questions }) => (
                         <TabsContent key={role.id} value={role.id}>
@@ -292,7 +292,7 @@ function QuestionEditor({ possibleRole, questions, handleQuestionUpdate, dict }:
         <div className="flex flex-col gap-2">
             {questions?.map((question) => {
                 if (question.question_type !== 'ShortAnswer') {
-                    return <MultiOptionQuestionCard key={question.id} question={question} currentRole={roleId} possibleRole={possibleRole} handleQuestionUpdate={handleQuestionUpdate} dict={dict} />
+                    return <MultiOptionQuestionCard key={question.id} question={question} currentRole={roleId} handleQuestionUpdate={handleQuestionUpdate} dict={dict} />
                 }
                 return <ShortAnswerQuestionCard key={question.id} question={question} currentRole={roleId} possibleRole={possibleRole} handleQuestionUpdate={handleQuestionUpdate} dict={dict} />;
             })}
@@ -300,7 +300,7 @@ function QuestionEditor({ possibleRole, questions, handleQuestionUpdate, dict }:
     );
 }
 
-function MultiOptionQuestionCard({ question, currentRole, possibleRole, handleQuestionUpdate, dict }: { question?: Question, currentRole: string, possibleRole?: RoleDetails, handleQuestionUpdate: (action: "update" | "delete", question: Question) => Promise<void>, dict: any }) {
+function MultiOptionQuestionCard({ question, currentRole, handleQuestionUpdate, dict }: { question?: Question, currentRole: string, handleQuestionUpdate: (action: "update" | "delete", question: Question) => Promise<void>, dict: any }) {
     const [title, setTitle] = useState<string>(question?.title ?? "");
     const [questionType, setQuestionType] = useState<string>(question?.question_type ?? "");
     const [options, setOptions] = useState<MultiOptionQuestionOption[]>(question?.data?.options ?? []);
@@ -430,7 +430,7 @@ function MultiOptionQuestionCard({ question, currentRole, possibleRole, handleQu
                                                 <div className="flex items-center gap-2">
                                                     <GripVertical className="w-4 h-4" />
                                                     <div className="mt-1">
-                                                        <OptionDecorator questionType={questionType} index={index} />
+                                                        <OptionDecorator questionType={questionType} />
                                                     </div>
                                                     <input className="w-full focus:outline-none border-b-2 border-dotted border-gray-500 max-w-[300px]" defaultValue={option.text} onChange={async (e) => await updateOption(option.id, (e.target as HTMLInputElement).value)} />
                                                 </div>
@@ -449,7 +449,7 @@ function MultiOptionQuestionCard({ question, currentRole, possibleRole, handleQu
                 >
                     <GripVertical className="w-4 h-4 mt-1" />
                     <div className="mt-1">
-                        <OptionDecorator questionType={questionType} index={options.length} />
+                        <OptionDecorator questionType={questionType} />
                     </div>
                     <div className="flex flex-col gap-1">
                         <input className="w-full focus:outline-none border-b-2 border-dotted border-gray-500 max-w-[300px]" placeholder={dict.dashboard.campaigns.questions.add_option} onKeyDown={async (e) => {
@@ -466,7 +466,7 @@ function MultiOptionQuestionCard({ question, currentRole, possibleRole, handleQu
     );
 }
 
-function OptionDecorator({ questionType, index }: { questionType: string, index: number }) {
+function OptionDecorator({ questionType }: { questionType: string }) {
     if (questionType === 'MultiChoice') {
         return <div className="rounded-full border-2 border-gray-500 w-4 h-4"></div>;
     } else if (questionType === 'MultiSelect') {
@@ -518,21 +518,21 @@ function ShortAnswerQuestionCard({ question, currentRole, possibleRole, handleQu
                             <p>{required ? "Required" : "Optional"}</p>
                         </TooltipContent>
                     </Tooltip>
-                {
-                    question?.roles && question?.roles.length > 1 && (
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="ghost" onClick={handleRemoveQuestionFromRole}>
-                                    <X className="w-8 h-8" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Remove question from this role</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    )
-                }
-                <Button variant="destructive" onClick={handleDeleteQuestion}><Trash className="w-4 h-4" /></Button>
+                    {
+                        question?.roles && question?.roles.length > 1 && (
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="ghost" onClick={handleRemoveQuestionFromRole}>
+                                        <X className="w-8 h-8" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Remove question from this role</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        )
+                    }
+                    <Button variant="destructive" onClick={handleDeleteQuestion}><Trash className="w-4 h-4" /></Button>
                 </div>
             </div>
             <div className="flex flex-col gap-1 p-2">

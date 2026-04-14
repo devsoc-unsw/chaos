@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getAllOrganisations } from "@/models/organisation";
 
-export default async function DashboardRedirect({ params }: { params: Promise<{ lang: string }> }) {
+export default async function DashboardRedirect() {
   const orgs = await getAllOrganisations();
 
   if (orgs.length === 0) {

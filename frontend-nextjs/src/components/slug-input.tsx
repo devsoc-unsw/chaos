@@ -12,7 +12,7 @@ export default function SlugInput({ orgId, name, value, currentSlug, onChange, o
                 await checkCampaignSlugAvailability(orgId, value);
                 setSlugAvailable(true);
                 updateSlugAvailable?.(true);
-            } catch (_) {
+            } catch {
                 setSlugAvailable(false);
                 updateSlugAvailable?.(false);
             }

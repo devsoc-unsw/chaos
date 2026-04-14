@@ -1,6 +1,6 @@
 "use client";
 
-import { createEmailTemplate, getEmailTemplate, updateEmailTemplate } from "@/models/email";
+import { createEmailTemplate } from "@/models/email";
 import { useQueryClient } from "@tanstack/react-query";
 import TemplateForm from "../template-form";
 import { redirect } from "next/navigation";

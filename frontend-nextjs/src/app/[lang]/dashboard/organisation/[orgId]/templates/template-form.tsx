@@ -1,11 +1,10 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { ButtonGroup } from "@/components/ui/button-group";
 import Link from "next/link";
-import { EmailTemplate, getEmailTemplate, templateVariables, updateEmailTemplate } from "@/models/email";
+import { EmailTemplate, templateVariables } from "@/models/email";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
@@ -23,7 +22,7 @@ export default function TemplateForm({ templateId, template, orgId, dict, submit
         await submitData(templateId, name, subject, body);
         setSaving(false);
     }
-    
+
 
     return (
         <div className="flex flex-col gap-3">

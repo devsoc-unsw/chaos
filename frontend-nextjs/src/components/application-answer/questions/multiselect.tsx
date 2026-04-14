@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AnswerValue, MultiOptionQuestionOption, QuestionAndAnswer } from '@/models/question';
@@ -11,7 +11,6 @@ export default function MultiSelect({
     applicationId,
     answerId,
     submitAnswer,
-    dict,
 }: {
     question: any;
     applicationId: string;
@@ -24,8 +23,8 @@ export default function MultiSelect({
 
     // vibed this i cbf lowk mb lmk if I should rewrite
     function deriveIdsFromAnswer(
-      answer: string | string[] | undefined,
-      options: MultiOptionQuestionOption[]
+        answer: string | string[] | undefined,
+        options: MultiOptionQuestionOption[]
     ): string[] {
         if (!answer) return [];
 
@@ -47,7 +46,7 @@ export default function MultiSelect({
     }
 
     const [selectedOptions, setSelectedOptions] =
-    useState<string[]>(deriveIdsFromAnswer(question.answer, options));
+        useState<string[]>(deriveIdsFromAnswer(question.answer, options));
 
     useEffect(() => {
         setSelectedOptions(deriveIdsFromAnswer(question.answer, options));

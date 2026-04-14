@@ -21,7 +21,7 @@ export async function getAllRoleAnswers(applicationId: string, roleId: string): 
     return await apiRequest<Answer[]>(`/api/v1/application/${applicationId}/role/${roleId}/answers`);
 }
 
-export async function updateApplicationRoles(applicationId: string, roles: any): Promise<void> {
+export async function updateApplicationRoles(applicationId: string, roles: unknown): Promise<void> {
   return await apiRequest<void>(`/api/v1/application/${applicationId}/roles`, {
     method: "PATCH",
     body: {
@@ -30,14 +30,14 @@ export async function updateApplicationRoles(applicationId: string, roles: any):
   });
 }
 
-export async function updateAnswer(answerId: string, body: any): Promise<void> {
+export async function updateAnswer(answerId: string, body: unknown): Promise<void> {
   return await apiRequest<void>(`/api/v1/answer/${answerId}`, {
     method: "PATCH",
     body,
   });
 }
 
-export function createAnswer(applicationId: string, body: any) {
+export function createAnswer(applicationId: string, body: unknown) {
   return apiRequest(`/api/v1/application/${applicationId}/answer`, {
     method: "POST",
     body,

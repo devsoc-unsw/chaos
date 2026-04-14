@@ -1,13 +1,13 @@
 "use client";
 
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import {getApplication } from "@/models/application";
-import { createRating, getCategoryRatingsByApplication, updateRatingComment, updateCategoryRating, 
-    getRatingCategories, deleteCategoryRating, deleteRating, NewCategoryRating, createCategoryRatingFromRating } from "@/models/rating";
+import { getApplication } from "@/models/application";
+import {
+    createRating, getCategoryRatingsByApplication, updateRatingComment, updateCategoryRating,
+    getRatingCategories, NewCategoryRating, createCategoryRatingFromRating
+} from "@/models/rating";
 import { getAllCommonAnswers, getAllRoleAnswers } from "@/models/answer";
 import { getAllCommonQuestions, getAllRoleQuestions, linkQuestionsAndAnswers } from "@/models/question";
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
     Select,
     SelectContent,
@@ -22,7 +22,7 @@ import { useState, useEffect } from "react";
 
 export default function ApplicationRatingForm({ applicationId, campaignId, dict }: { applicationId: string, campaignId: string, dict: any }) {
     const queryClient = useQueryClient();
-    
+
     const { data: application } = useQuery({
         queryKey: [`${applicationId}-application-details`],
         queryFn: () => getApplication(applicationId),
@@ -67,15 +67,15 @@ export default function ApplicationRatingForm({ applicationId, campaignId, dict 
         // queryFn: () => getApplicationRating(applicationId),
         queryFn: () => getCategoryRatingsByApplication(applicationId),
     });
-    
-    
+
+
     // Get existing rating if user has already rated this application
     const originalRating = applicationRating?.[0];
     const hasRated = originalRating !== undefined;
 
     // let originalRating = applicationRating?.rating;
     // let originalComment = applicationRating?.comment;
-    
+
     // const hasRated = applicationRating?.rating !== undefined;
     // const [rating, setRating] = useState<number | undefined>(undefined);
     // const [comment, setComment] = useState<string | undefined>(undefined);
@@ -119,18 +119,18 @@ export default function ApplicationRatingForm({ applicationId, campaignId, dict 
 
     const handleSubmitRating = async () => {
         const sendingComment = comment ?? originalRating?.comment ?? null;
-        
+
         if (hasRated && originalRating) {
             // Update existing rating
             if (comment !== undefined) {
                 await updateRatingComment(originalRating.id, sendingComment);
             }
-            
+
             for (const categoryRating of categoryRatings) {
                 const existing = originalRating.category_ratings.find(
                     cr => cr.campaign_rating_category_id === categoryRating.campaign_rating_category_id
                 );
-                
+
                 if (existing) {
                     if (existing.rating !== categoryRating.rating) {
                         await updateCategoryRating(originalRating.id, existing.id, categoryRating.rating);
@@ -158,9 +158,9 @@ export default function ApplicationRatingForm({ applicationId, campaignId, dict 
         setCategoryRatings(prev => {
             const existing = prev.find(cr => cr.campaign_rating_category_id === categoryId);
             if (existing) {
-                return prev.map(cr => 
-                    cr.campaign_rating_category_id === categoryId 
-                        ? { ...cr, rating } 
+                return prev.map(cr =>
+                    cr.campaign_rating_category_id === categoryId
+                        ? { ...cr, rating }
                         : cr
                 );
             }
@@ -169,7 +169,7 @@ export default function ApplicationRatingForm({ applicationId, campaignId, dict 
     };
 
     const getCategoryCurrentRating = (categoryId: string) => {
-        return categoryRatings.find(cr => cr.campaign_rating_category_id === categoryId)?.rating ?? 
+        return categoryRatings.find(cr => cr.campaign_rating_category_id === categoryId)?.rating ??
             originalRating?.category_ratings?.find(cr => cr.campaign_rating_category_id === categoryId)?.rating;
     };
 
@@ -197,47 +197,47 @@ export default function ApplicationRatingForm({ applicationId, campaignId, dict 
 
     return (
         <div className="flex flex-col gap-2">
-                    <p className="text-lg font-semibold">{dict.dashboard.campaigns.application_review_page.application_rating}</p>
+            <p className="text-lg font-semibold">{dict.dashboard.campaigns.application_review_page.application_rating}</p>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                        {ratingCategories?.map((category) => (
-                            <div key={category.id} className="flex flex-col gap-2">
-                                <Label htmlFor={`category-${category.id}`}>{category.name}</Label>
-                                <Select 
-                                    value={getCategoryRatingValue(category.id)} 
-                                    onValueChange={(value) => handleCategoryRatingChange(category.id, value)}
-                                >
-                                    <SelectTrigger className="w-[180px]" id={`category-${category.id}`}>
-                                        <SelectValue placeholder={dict.dashboard.campaigns.application_review_page.review_score} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
-                                            <SelectItem key={value} value={`${value}`}>{value}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="flex flex-col gap-2 mb-4">
-                        <Label htmlFor="reviewComment">{dict.dashboard.campaigns.application_review_page.review_comment}</Label>
-                        <Textarea
-                            className="min-h-[100px]" 
-                            id="reviewComment"
-                            placeholder={dict.dashboard.campaigns.application_review_page.write_your_review_here}
-                            value={comment ?? originalRating?.comment ?? ""}
-                            onChange={(e) => setComment(e.target.value)}
-                        />
-                    </div>
-                    <div>
-                        <Button 
-                            disabled={categoryRatings.length === 0 && comment === undefined} 
-                            onClick={handleSubmitRating}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                {ratingCategories?.map((category) => (
+                    <div key={category.id} className="flex flex-col gap-2">
+                        <Label htmlFor={`category-${category.id}`}>{category.name}</Label>
+                        <Select
+                            value={getCategoryRatingValue(category.id)}
+                            onValueChange={(value) => handleCategoryRatingChange(category.id, value)}
                         >
-                            Submit
-                        </Button>
+                            <SelectTrigger className="w-[180px]" id={`category-${category.id}`}>
+                                <SelectValue placeholder={dict.dashboard.campaigns.application_review_page.review_score} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
+                                    <SelectItem key={value} value={`${value}`}>{value}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
+                ))}
             </div>
+
+            <div className="flex flex-col gap-2 mb-4">
+                <Label htmlFor="reviewComment">{dict.dashboard.campaigns.application_review_page.review_comment}</Label>
+                <Textarea
+                    className="min-h-[100px]"
+                    id="reviewComment"
+                    placeholder={dict.dashboard.campaigns.application_review_page.write_your_review_here}
+                    value={comment ?? originalRating?.comment ?? ""}
+                    onChange={(e) => setComment(e.target.value)}
+                />
+            </div>
+            <div>
+                <Button
+                    disabled={categoryRatings.length === 0 && comment === undefined}
+                    onClick={handleSubmitRating}
+                >
+                    Submit
+                </Button>
+            </div>
+        </div>
     );
 }

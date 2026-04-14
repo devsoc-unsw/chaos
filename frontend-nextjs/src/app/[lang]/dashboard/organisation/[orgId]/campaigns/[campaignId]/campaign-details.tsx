@@ -1,5 +1,4 @@
 "use client";
-
 import { useQuery } from "@tanstack/react-query";
 import { getCampaign, getCampaignRoles, getCampaignAttachments, publishCampaign } from "@/models/campaign";
 import { getRatingCategories, RatingCategory } from "@/models/rating";
@@ -47,25 +46,6 @@ interface CampaignDetailsData {
 
 export type CampaignUpdateKeys = keyof CampaignDetailsData | "roleName" | "roleMinAvailable" | "roleMaxAvailable" | "categoryName";
 
-function compareCampaignRoles(roles: RoleDetails[], clientRoles: ClientRole[]): boolean {
-    if (roles.length !== clientRoles.length) return false;
-    return roles.every(
-        (role, index) => role.id === clientRoles[index].id &&
-            role.name === clientRoles[index].name &&
-            role.description === clientRoles[index].description &&
-            role.min_available === clientRoles[index].min_available &&
-            role.max_available === clientRoles[index].max_available &&
-            role.finalised === clientRoles[index].finalised
-    );
-}
-
-function compareRatingCategories(categories: RatingCategory[], clientCategories: ClientCategory[]): boolean {
-    if (categories.length !== clientCategories.length) return false;
-    return categories.every(
-        (category, index) => category.id === clientCategories[index].id &&
-            category.name === clientCategories[index].name
-    );
-}
 
 export default function CampaignDetails({ campaignId, orgId, dict }: { campaignId: string, orgId: string, dict: any }) {
     const { data: campaign, refetch: refetchCampaign } = useQuery({

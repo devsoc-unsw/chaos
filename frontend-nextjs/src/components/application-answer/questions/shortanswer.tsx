@@ -1,23 +1,23 @@
 import { useState, useEffect, ChangeEvent } from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { AnswerValue, MultiOptionQuestionOption, QuestionAndAnswer } from '@/models/question';
+import { AnswerValue, QuestionAndAnswer } from '@/models/question';
 
-export default function  ShortAnswer({
-  question,
-  applicationId,
-  answerId,
-  submitAnswer,
-  dict
+export default function ShortAnswer({
+    question,
+    applicationId,
+    answerId,
+    submitAnswer,
+    dict
 }: {
-  question: any;
-  applicationId: string;
-  answerId?: string;
-  submitAnswer: (question: QuestionAndAnswer, value: AnswerValue, applicationId: string, answerId?: string) => Promise<void>;
-  dict: any;
+    question: any;
+    applicationId: string;
+    answerId?: string;
+    submitAnswer: (question: QuestionAndAnswer, value: AnswerValue, applicationId: string, answerId?: string) => Promise<void>;
+    dict: any;
 }) {
     const [value, setValue] = useState(question.answer);
-    const [previousAnswer, setPreviousAnswer] = useState(question.answer === "No Answer" ? null : question.answer)    
+    const [previousAnswer, setPreviousAnswer] = useState(question.answer === "No Answer" ? null : question.answer)
 
     useEffect(() => {
         if (question.answer === 'No Answer') {

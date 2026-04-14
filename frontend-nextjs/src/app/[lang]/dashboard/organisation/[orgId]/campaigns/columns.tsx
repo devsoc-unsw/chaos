@@ -11,12 +11,9 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link";
-import { getDictionary } from "@/app/[lang]/dictionaries";
 import { Badge } from "@/components/ui/badge";
 
 export function getColumns(userRole: OrganisationUserRole, dict: any): ColumnDef<OrganisationCampaign>[] {

@@ -19,7 +19,10 @@ export default async function Page({ params }: { params: Promise<{ lang: string;
   let user: User | undefined = undefined;
   try {
     user = await getCurrentUser(false);
-  } catch (_) {}
+  }
+  catch {
+    user = undefined;
+  }
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

@@ -13,7 +13,7 @@ import ReviewCard from "@components/application-answer/review-card";
 import { getAllCommonQuestions, linkQuestionsAndAnswers, Question, QuestionAndAnswer } from "@/models/question";
 import { getAllRoleAnswers } from "@/models/answer";
 import { getAllRoleQuestions } from "@/models/question";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 interface ApplicationReviewProps {
   campaignId: string;
@@ -251,7 +251,7 @@ export default function ApplicationReview({
     }
   }, [selectedRoleIds, campaignId, applicationId, queryClient]);
 
-   return (
+  return (
     <div className="min-h-screen w-full overflow-x-hidden bg-background">
       <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
         <div className="mb-5 sm:mb-8">
@@ -273,7 +273,7 @@ export default function ApplicationReview({
             </div>
             <div className="relative pb-12 sm:pb-14">
               <MainContent campaignId={campaignId} applicationId={applicationId} activeTab={activeTab} dict={dict} updateRoleAnswers={updateQuestionAnswer} qaByRole={qaByRole} />
-              <TabSwitcher roles={roles} selectedRoleIds={selectedRoleIds} activeTab={activeTab} onChangeActiveTab={setActiveTab} dict={dict} />
+              <TabSwitcher selectedRoleIds={selectedRoleIds} activeTab={activeTab} onChangeActiveTab={setActiveTab} />
             </div>
             <ReviewCard questionsAndAnswersByRole={qaByRole} selectedRoleIds={selectedRoleIds} roles={roles} applicationId={applicationId} handleSubmit={handleApplicationSubmit} dict={dict} />
           </div>

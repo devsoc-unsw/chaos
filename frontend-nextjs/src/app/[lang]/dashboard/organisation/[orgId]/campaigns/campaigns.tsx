@@ -1,6 +1,6 @@
 "use client";
 
-import { getOrganisationUserRole, OrganisationCampaign } from "@/models/organisation";
+import { getOrganisationUserRole } from "@/models/organisation";
 import { getColumns } from "./columns";
 import { useQuery } from "@tanstack/react-query";
 import { getOrganisationCampaigns } from "@/models/organisation";

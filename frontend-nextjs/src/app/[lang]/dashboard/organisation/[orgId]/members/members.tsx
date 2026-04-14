@@ -1,14 +1,12 @@
 "use client";
 
-import { Info, Plus } from "lucide-react"
+import { Plus } from "lucide-react"
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 
 import {
   Dialog,
-  DialogClose,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -21,7 +19,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getIsSuperuser } from "@/models/user";
 import { useState } from "react";
-import { ApiError } from "@/lib/api";
 
 export default function OrganisationMembers({ orgId, dict }: { orgId: string, dict: any }) {
   const queryClient = useQueryClient();

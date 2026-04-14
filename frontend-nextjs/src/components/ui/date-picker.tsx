@@ -20,7 +20,7 @@ interface DatePickerProps {
   label?: string
 }
 
-export function DatePicker({ value, onChange, onBlur, label }: DatePickerProps = {}) {
+export function DatePicker({ value, onChange, label }: DatePickerProps = {}) {
   const [open, setOpen] = React.useState(false)
   const [date, setDate] = React.useState<Date | undefined>(value ? new Date(value) : undefined)
   const [time, setTime] = React.useState<string>(value ? new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : "00:00:00")

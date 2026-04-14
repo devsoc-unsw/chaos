@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ApiError } from "@/lib/api";
 import { acceptInvite, getInvite } from "@/models/invite";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -87,10 +86,10 @@ export default function InviteClient({ code, currentUser, dict }: Props) {
       {
         currentUser && currentUser.email !== invite?.email && (
           <>
-          <p className="text-xl">
-            {dict.dashboard.invite.wrong_account}
-          </p>
-          <Link href={`${process.env.NEXT_PUBLIC_API_BASE_URL || "https://chaos-api.devsoc.app"}/auth/logout`} className="w-full">
+            <p className="text-xl">
+              {dict.dashboard.invite.wrong_account}
+            </p>
+            <Link href={`${process.env.NEXT_PUBLIC_API_BASE_URL || "https://chaos-api.devsoc.app"}/auth/logout`} className="w-full">
               <Button variant="outline" className="w-full">
                 <LogOut />
                 {dict.common.logout}

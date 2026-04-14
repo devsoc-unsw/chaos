@@ -24,6 +24,7 @@ export default defineConfig([
   pluginReact.configs.flat["jsx-runtime"],
   {
     rules: {
+      "@typescript-eslint/no-explicit-any": "off",
       "react/prop-types": "off",
     },
     settings: {

@@ -1,38 +1,34 @@
-import React, { useState, useEffect, ChangeEvent } from 'react';
+import { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from '@/components/ui/select';
-import { AnswerValue, MultiOptionQuestionOption, Question, QuestionAndAnswer } from '@/models/question';
-import { deleteAnswer } from '@/models/answer';
-import { useQueryClient } from '@tanstack/react-query';
+import { AnswerValue, MultiOptionQuestionOption, QuestionAndAnswer } from '@/models/question';
 
 // Special value to represent "No Answer" selection
 export const NO_ANSWER_VALUE = 'NO_ANSWER';
 
 export default function Dropdown({
-  question,
-  applicationId,
-  answerId,
-  submitAnswer,
-  dict,
-  activeTab
+    question,
+    applicationId,
+    answerId,
+    submitAnswer,
+    dict
 }: {
-  question: any;
-  applicationId: string;
-  answerId?: string;
-  submitAnswer: (question: QuestionAndAnswer, value: AnswerValue, applicationId: string, answerId?: string) => Promise<void>;
-  dict: any;
-  activeTab?: string;
+    question: any;
+    applicationId: string;
+    answerId?: string;
+    submitAnswer: (question: QuestionAndAnswer, value: AnswerValue, applicationId: string, answerId?: string) => Promise<void>;
+    dict: any;
+    activeTab?: string;
 }) {
-    const queryClient = useQueryClient();
     const noAnswerLabel = dict?.no_answer ?? 'No Answer';
     const options: MultiOptionQuestionOption[] =
-    (question as any).options ?? [];
+        (question as any).options ?? [];
 
     const getValueAndAnswer = (): { value: string; answer: string } => {
         if (!question.answer || question.answer === "No Answer") {
@@ -110,10 +106,10 @@ export default function Dropdown({
                     </SelectItem>
                     {options.map((option) => (
                         <SelectItem
-                        key={option.id}
-                        value={option.id.toString()}
+                            key={option.id}
+                            value={option.id.toString()}
                         >
-                        {option.text}
+                            {option.text}
                         </SelectItem>
                     ))}
                 </SelectContent>

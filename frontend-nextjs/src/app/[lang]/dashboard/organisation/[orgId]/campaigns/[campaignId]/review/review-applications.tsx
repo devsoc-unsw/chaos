@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getCampaign, getCampaignApplications, getCampaignRoles } from "@/models/campaign";
+import { getCampaign, getCampaignApplications } from "@/models/campaign";
 import { dateToString, cn } from "@/lib/utils";
 import { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -9,7 +9,6 @@ import { ApplicationDetails } from "@/models/application";
 import ApplicationDetailsComponent from "./application-details";
 import {
     Empty,
-    EmptyContent,
     EmptyDescription,
     EmptyHeader,
     EmptyMedia,
@@ -28,20 +27,13 @@ import {
 } from "@/components/ui/tooltip"
 import Link from "next/link";
 import ApplicationRatingForm from "./application-rating-form";
-import { Separator } from "@/components/ui/separator";
 
 export default function ReviewCampaignApplications({ campaignId, orgId, dict }: { campaignId: string, orgId: string, dict: any }) {
     const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
-    const [roleFilter, setRoleFilter] = useState<string | null>(null);
 
     const { data: campaign } = useQuery({
         queryKey: [`${campaignId}-campaign-details`],
         queryFn: () => getCampaign(campaignId),
-    });
-
-    const { data: roles } = useQuery({
-        queryKey: [`${campaignId}-campaign-roles`],
-        queryFn: () => getCampaignRoles(campaignId),
     });
 
     const { data: applications } = useQuery({

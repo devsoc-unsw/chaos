@@ -1,20 +1,15 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { RoleDetails } from "@/models/campaign";
 
 export default function TabSwitcher({
-  roles,
   selectedRoleIds,
   activeTab,
   onChangeActiveTab,
-  dict,
 }: {
-  roles: RoleDetails[] | undefined;
   selectedRoleIds: string[];
   activeTab: string;
   onChangeActiveTab: (next: string) => void;
-  dict: any;
 }) {
   const tabOrder = ["general", ...selectedRoleIds];
   const currentIndex = tabOrder.indexOf(activeTab);

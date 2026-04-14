@@ -4,12 +4,11 @@ import { getCampaign } from "@/models/campaign";
 import { useQuery } from "@tanstack/react-query";
 
 export default function Finish({
-    campaignId,
-    dict,
+    campaignId
 }: {
     campaignId: string;
     dict: any;
-}){
+}) {
     const { data: campaign } = useQuery({
         queryKey: [`${campaignId}-campaign-info`],
         queryFn: () => getCampaign(campaignId),

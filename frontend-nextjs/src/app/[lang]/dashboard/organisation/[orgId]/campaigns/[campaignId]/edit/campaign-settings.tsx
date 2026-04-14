@@ -1,22 +1,11 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CampaignUpdate, createCampaignRole, getCampaign, getCampaignRoles, updateCampaign, getCampaignAttachments, uploadAttachments, deleteCampaignAttachment, CampaignRole, RoleDetails } from "@/models/campaign";
+import { CampaignUpdate, createCampaignRole, getCampaign, getCampaignRoles, updateCampaign, RoleDetails } from "@/models/campaign";
 import { getRatingCategories, createCategory, updateCategory, deleteCategory, RatingCategory } from "@/models/rating";
 import { Button } from "@/components/ui/button";
-import { Copy, Pencil, Trash, Share, BookOpenCheck, Check, Plus, FormIcon, CircleCheck, Upload, X, FileText, BarChart, ArrowLeft } from "lucide-react";
-import { ButtonGroup } from "@/components/ui/button-group";
-import { cn } from "@/lib/utils";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
+import { Trash, Plus, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { getOrganisationUserRole } from "@/models/organisation";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
