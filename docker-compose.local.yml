@@ -1,9 +1,7 @@
 services:
   dev-container:
     container_name: chaos-dev-container
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/devsoc-unsw/chaos-devcontainer:latest
     stdin_open: true
     tty: true
 
@@ -24,27 +22,8 @@ services:
         condition: service_healthy
 
 
-
-
-
-
-
-
-
-
-
-
-
-
   db:
     image: postgres:17
-
-
-
-
-
-
-
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
@@ -58,8 +37,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
-
 
 volumes:
   chaos-postgres-data:

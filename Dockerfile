@@ -5,7 +5,9 @@ ENV BUN_INSTALL=/root/.bun
 ENV PATH="${BUN_INSTALL}/bin:/root/.cargo/bin:${PATH}"
 
 # Install essential linux commands
-RUN apt update && apt install -y \
+RUN apt update && apt install -y ca-certificates
+
+RUN apt install -y \
     sudo \
     curl \
     git \
