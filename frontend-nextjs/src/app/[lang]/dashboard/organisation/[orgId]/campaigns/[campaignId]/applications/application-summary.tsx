@@ -292,8 +292,6 @@ export default function ApplicationSummary({
         </div>
         <ApplicationSummaryDataTable
           table={table}
-          roles={roles ?? []}
-          dict={dict}
           renderSubComponent={({ row }) => (
             <RatingsShelf
               columns={getColumns(

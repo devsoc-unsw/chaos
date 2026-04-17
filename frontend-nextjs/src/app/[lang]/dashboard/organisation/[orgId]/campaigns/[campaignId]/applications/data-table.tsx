@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { Row, flexRender, type Table } from "@tanstack/react-table";
 import {
   Table as TableWrapper,
@@ -10,25 +11,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import React from "react";
-import { RoleDetails } from "@/models/campaign";
-
 interface ApplicationSummaryDataTableProp<TData> {
   table: Table<TData>;
-  dict: any;
-  roles: RoleDetails[];
   renderSubComponent?: (props: { row: Row<TData> }) => React.ReactNode;
 }
 
 export function ApplicationSummaryDataTable<TData>({
   table,
-  dict,
-  roles,
   renderSubComponent,
 }: ApplicationSummaryDataTableProp<TData>) {
   return (
     <div>
-      <div className="overflow-hidden rounded-md border">
+      <div className="overflow-hidden rounded-md border border-2 border-red-500">
         <TableWrapper>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
