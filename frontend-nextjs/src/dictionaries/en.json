@@ -119,7 +119,12 @@
         "campaign_settings": "Campaign Settings",
         "general_settings": "General Settings",
         "role_settings": "Role Settings",
-        "rating_category_settings": "Rating Category Settings"
+        "rating_category_settings": "Rating Category Settings",
+        "campaign_banner": "Campaign banner",
+        "campaign_banner_help": "Choose an image, then save. This replaces the file stored for the current banner.",
+        "upload_banner": "Save banner",
+        "campaign_banner_uploaded": "Banner saved.",
+        "campaign_banner_failed": "Could not save the banner."
       },
       "questions": {
         "answer_text": "Answer Text",
