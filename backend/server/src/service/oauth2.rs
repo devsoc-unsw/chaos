@@ -1,5 +1,5 @@
 //! OAuth2 service for the Chaos application.
-//! 
+//!
 //! This module provides functionality for OAuth2 authentication with Google,
 //! including client setup and configuration for OpenID Connect.
 
@@ -8,28 +8,28 @@ use oauth2::{AuthUrl, ClientId, ClientSecret, RedirectUrl, TokenUrl};
 use std::env;
 
 /// Builds and configures an OAuth2 client for Google authentication.
-/// 
+///
 /// This function creates a BasicClient configured with Google's OAuth2 endpoints
 /// and the application's client credentials. The client follows the OAuth2 standard
 /// and OpenID Connect protocol to authenticate users and retrieve their email.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `client_id` - The Google OAuth2 client ID
 /// * `client_secret` - The Google OAuth2 client secret
-/// 
+///
 /// # Returns
-/// 
+///
 /// * `BasicClient` - A configured OAuth2 client ready for authentication
-/// 
+///
 /// # Panics
-/// 
+///
 /// This function will panic if:
 /// * The `CHAOS_HOSTNAME` environment variable is not set
 /// * The redirect URL cannot be parsed
-/// 
+///
 /// # Example
-/// 
+///
 /// ```rust
 /// let client = build_oauth_client(
 ///     "your-client-id".to_string(),

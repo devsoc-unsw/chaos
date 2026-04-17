@@ -7,9 +7,6 @@ use crate::models::transaction::DBTransaction;
 use crate::models::user::User;
 use axum::extract::Path;
 use axum::response::IntoResponse;
-use sqlx::query;
-use std::ops::DerefMut;
-
 
 /// Handler for invite-related HTTP requests.
 pub struct InviteHandler;
@@ -67,14 +64,23 @@ impl InviteHandler {
 
         // Validate the invite is not already used or expired.
         if invite.used {
-            return Err(ChaosError::BadRequestWithMessage("Invite already used".to_string()));
+            return Err(ChaosError::BadRequestWithMessage(
+                "Invite already used".to_string(),
+            ));
         }
         if invite.expired {
-            return Err(ChaosError::BadRequestWithMessage("Invite expired".to_string()));
+            return Err(ChaosError::BadRequestWithMessage(
+                "Invite expired".to_string(),
+            ));
         }
 
         // Add the user to the organisation.
-        Organisation::add_user(invite.organisation_id, auth_user.user_id, &mut transaction.tx).await?;
+        Organisation::add_user(
+            invite.organisation_id,
+            auth_user.user_id,
+            &mut transaction.tx,
+        )
+        .await?;
 
         // Mark the invite as used.
         Invite::mark_used(&code, auth_user.user_id, &mut transaction.tx).await?;
@@ -82,6 +88,4 @@ impl InviteHandler {
         transaction.tx.commit().await?;
         Ok(AppMessage::OkMessage("Invite accepted successfully"))
     }
-
-    
 }

@@ -1,24 +1,23 @@
 //! Comment service for the Chaos application.
-//! 
+//!
 //! This module provides functionality for managing comments, including:
 //! - Verifying comment owner
-use chrono::Utc;
 use crate::models::error::ChaosError;
 use sqlx::{Postgres, Transaction};
 use std::ops::DerefMut;
 
 /// Verifies if a user has owner privileges for a comment
-/// 
+///
 /// This function checks if the user is the author of a comment and can thus edit/delete it
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `user_id` - The ID of the user to check
 /// * `comment_id` - The ID of the comment
 /// * `pool` - Database connection pool
-/// 
+///
 /// # Returns
-/// 
+///
 /// * `Result<(), ChaosError>` - Ok if the user is an admin, Unauthorized error otherwise
 pub async fn user_is_comment_author(
     user_id: i64,

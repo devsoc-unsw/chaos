@@ -3,10 +3,10 @@ use crate::models::email::EmailQueue;
 use crate::models::error::ChaosError;
 use crate::models::seeder::Seeder;
 
+mod constants;
 mod handler;
 mod models;
 mod service;
-mod constants;
 
 #[tokio::main]
 async fn main() -> Result<(), ChaosError> {
@@ -19,7 +19,8 @@ async fn main() -> Result<(), ChaosError> {
     sqlx::migrate!("../migrations").run(&state_clone.db).await?;
     println!("Migrations ran successfully!");
 
-    let super_user_email = std::env::var("CHAOS_SUPER_USER_EMAIL").expect("CHAOS_SUPER_USER_EMAIL must be set");
+    let super_user_email =
+        std::env::var("CHAOS_SUPER_USER_EMAIL").expect("CHAOS_SUPER_USER_EMAIL must be set");
     let mut seeder = Seeder::init().await;
     seeder.seed_database(super_user_email).await?;
 
@@ -27,7 +28,8 @@ async fn main() -> Result<(), ChaosError> {
     let email_task = tokio::spawn(async move {
         loop {
             let mut transaction = email_db.begin().await.unwrap();
-            if let Err(e) = EmailQueue::send_next(state_clone.email_credentials.clone(), &mut transaction).await
+            if let Err(e) =
+                EmailQueue::send_next(state_clone.email_credentials.clone(), &mut transaction).await
             {
                 e.print();
             } else {
@@ -38,7 +40,6 @@ async fn main() -> Result<(), ChaosError> {
             tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
         }
     });
-
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
     let server_task = axum::serve(listener, app);

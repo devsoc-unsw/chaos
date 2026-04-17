@@ -1,5 +1,5 @@
 //! Authentication handler for the Chaos application.
-//! 
+//!
 //! This module provides HTTP request handlers for authentication, including:
 //! - Google OAuth2 authentication
 //! - JWT token generation
@@ -10,54 +10,58 @@ use crate::models::error::ChaosError;
 use crate::service::auth::create_or_get_user_id;
 use crate::service::jwt::encode_auth_token;
 use axum::extract::{Query, State};
-use axum_extra::extract::cookie::{Cookie, CookieJar, Expiration};
 use axum::response::{IntoResponse, Redirect};
+use axum_extra::extract::cookie::{Cookie, CookieJar, Expiration};
 use oauth2::reqwest::async_http_client;
 use oauth2::{AuthorizationCode, Scope, TokenResponse};
 use time::OffsetDateTime;
 
 /// Handles the Google OAuth2 callback.
-/// 
+///
 /// This handler processes the OAuth2 code received from Google after user authorization.
 /// It exchanges the code for an access token, retrieves the user's profile information,
 /// creates or retrieves the user in the database, and generates a JWT token for authentication.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `state` - The application state
 /// * `query` - The OAuth2 callback query parameters containing the authorization code
 /// * `oauth_client` - The OAuth2 client for Google authentication
-/// 
+///
 /// # Returns
-/// 
+///
 /// * `Result<impl IntoResponse, ChaosError>` - JWT token or error
-/// 
+///
 /// Initiates the Google OAuth2 flow.
-/// 
+///
 /// This handler redirects users to Google's OAuth2 authorization URL to begin
 /// the authentication process.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `state` - The application state containing the OAuth2 client
-/// 
+///
 /// # Returns
-/// 
+///
 /// * `Result<impl IntoResponse, ChaosError>` - Redirect to Google OAuth or error
 pub async fn google_auth_init(
     State(state): State<AppState>,
     Query(query): Query<LoginRequest>,
 ) -> Result<impl IntoResponse, ChaosError> {
-
     let csrf_token = oauth2::CsrfToken::new_random();
 
     if let Some(to) = query.to {
-        sqlx::query!("INSERT INTO redirect_tokens (token, redirect) VALUES ($1, $2)", csrf_token.secret(), to)
-            .execute(&state.db)
-            .await?;
+        sqlx::query!(
+            "INSERT INTO redirect_tokens (token, redirect) VALUES ($1, $2)",
+            csrf_token.secret(),
+            to
+        )
+        .execute(&state.db)
+        .await?;
     }
 
-    let (auth_url, _csrf_token) = state.oauth2_client
+    let (auth_url, _csrf_token) = state
+        .oauth2_client
         .authorize_url(|| csrf_token)
         .add_scope(Scope::new("openid".to_string()))
         .add_scope(Scope::new("email".to_string()))
@@ -68,30 +72,31 @@ pub async fn google_auth_init(
 }
 
 /// Handles the Google OAuth2 callback.
-/// 
+///
 /// This handler processes the OAuth2 code received from Google after user authorization.
 /// It exchanges the code for an access token, retrieves the user's profile information,
 /// creates or retrieves the user in the database, and generates a JWT token for authentication.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `state` - The application state
 /// * `query` - The OAuth2 callback query parameters containing the authorization code
 /// * `oauth_client` - The OAuth2 client for Google authentication
-/// 
+///
 /// # Returns
-/// 
+///
 /// * `Result<impl IntoResponse, ChaosError>` - JWT token or error
-/// 
+///
 /// # Note
-/// 
+///
 /// Currently returns the JWT token directly. TODO: Return it as a set-cookie header.
 pub async fn google_callback(
     State(mut state): State<AppState>,
     jar: CookieJar,
     Query(query): Query<AuthRequest>,
-) -> Result<impl IntoResponse, ChaosError> {    
-    let token = state.oauth2_client
+) -> Result<impl IntoResponse, ChaosError> {
+    let token = state
+        .oauth2_client
         .exchange_code(AuthorizationCode::new(query.code))
         .request_async(async_http_client)
         .await?;
@@ -126,14 +131,16 @@ pub async fn google_callback(
     } else {
         "devsoc.app"
     };
-    
+
     //let cookie = Cookie::build(("auth_token", token))
     let cookie = Cookie::build(("auth_token", token))
         .http_only(true) // Prevent JavaScript access
-        .expires(Expiration::DateTime(OffsetDateTime::now_utc() + time::Duration::days(5))) // Set an expiration time of 5 days, TODO: read from env?
-        .secure(!state.is_dev_env)     // Send only over HTTPS, comment out for testing
+        .expires(Expiration::DateTime(
+            OffsetDateTime::now_utc() + time::Duration::days(5),
+        )) // Set an expiration time of 5 days, TODO: read from env?
+        .secure(!state.is_dev_env) // Send only over HTTPS, comment out for testing
         .domain(domain)
-        .path("/");       // Available for all paths
+        .path("/"); // Available for all paths
 
     // let cn_cookie = Cookie::build(("auth_token", token))
     //     .http_only(true)
@@ -148,7 +155,10 @@ pub async fn google_callback(
         "https://chaos.devsoc.app"
     };
 
-    let possible_redirect = sqlx::query!("DELETE FROM redirect_tokens WHERE token = $1 RETURNING redirect", query.state)
+    let possible_redirect = sqlx::query!(
+        "DELETE FROM redirect_tokens WHERE token = $1 RETURNING redirect",
+        query.state
+    )
     .fetch_optional(&state.db)
     .await?;
 
@@ -156,7 +166,7 @@ pub async fn google_callback(
         Some(redirect) => format!("{redirect_root}{}", redirect.redirect),
         None => format!("{redirect_root}/dashboard"),
     };
-    
+
     // Ok((jar.add(cookie).add(cn_cookie), Redirect::to(redirect_url.as_str())))
     // Add the cookie and redirect
     Ok((jar.add(cookie), Redirect::to(redirect_url.as_str())))
@@ -164,7 +174,7 @@ pub async fn google_callback(
 
 pub async fn logout(
     State(state): State<AppState>,
-    jar: CookieJar
+    jar: CookieJar,
 ) -> Result<impl IntoResponse, ChaosError> {
     let domain = if state.is_dev_env {
         "localhost"
@@ -172,12 +182,14 @@ pub async fn logout(
         "devsoc.app"
     };
 
-    let empty_cookie= Cookie::build(("auth_token", ""))
-    .http_only(true) // Prevent JavaScript access
-    .expires(Expiration::DateTime(OffsetDateTime::now_utc() + time::Duration::days(5))) // Set an expiration time of 5 days, TODO: read from env?
-    .secure(!state.is_dev_env)     // Send only over HTTPS, comment out for testing
-    .domain(domain)
-    .path("/");
+    let empty_cookie = Cookie::build(("auth_token", ""))
+        .http_only(true) // Prevent JavaScript access
+        .expires(Expiration::DateTime(
+            OffsetDateTime::now_utc() + time::Duration::days(5),
+        )) // Set an expiration time of 5 days, TODO: read from env?
+        .secure(!state.is_dev_env) // Send only over HTTPS, comment out for testing
+        .domain(domain)
+        .path("/");
 
     // let empty_cn_cookie= Cookie::build(("auth_token", ""))
     //     .http_only(true) // Prevent JavaScript access
@@ -198,12 +210,10 @@ pub async fn logout(
 
 pub struct DevLoginHandler;
 impl DevLoginHandler {
-
     pub async fn dev_super_admin_login(
         State(state): State<AppState>,
-        jar: CookieJar
+        jar: CookieJar,
     ) -> Result<impl IntoResponse, ChaosError> {
-
         if !state.is_dev_env {
             // Disabled for non dev environment
             return Err(ChaosError::ForbiddenOperation);
@@ -219,21 +229,22 @@ impl DevLoginHandler {
         // Create a cookie with the token
         let cookie = Cookie::build(("auth_token", token))
             .http_only(true) // Prevent JavaScript access
-            .expires(Expiration::DateTime(OffsetDateTime::now_utc() + time::Duration::days(5))) // Set an expiration time of 5 days, TODO: read from env?
-            .path("/");       // Available for all paths
-        
+            .expires(Expiration::DateTime(
+                OffsetDateTime::now_utc() + time::Duration::days(5),
+            )) // Set an expiration time of 5 days, TODO: read from env?
+            .path("/"); // Available for all paths
+
         // Redirect to the frontend dashboard after successful authentication
         let redirect_url = "http://localhost:3000/dashboard";
-        
+
         // Add the cookie and redirect
         Ok((jar.add(cookie), Redirect::to(redirect_url)))
     }
 
     pub async fn dev_org_admin_login(
         State(state): State<AppState>,
-        jar: CookieJar
+        jar: CookieJar,
     ) -> Result<impl IntoResponse, ChaosError> {
-
         if !state.is_dev_env {
             // Disabled for non dev environment
             return Err(ChaosError::ForbiddenOperation);
@@ -249,21 +260,22 @@ impl DevLoginHandler {
         // Create a cookie with the token
         let cookie = Cookie::build(("auth_token", token))
             .http_only(true) // Prevent JavaScript access
-            .expires(Expiration::DateTime(OffsetDateTime::now_utc() + time::Duration::days(5))) // Set an expiration time of 5 days, TODO: read from env?
-            .path("/");       // Available for all paths
-        
+            .expires(Expiration::DateTime(
+                OffsetDateTime::now_utc() + time::Duration::days(5),
+            )) // Set an expiration time of 5 days, TODO: read from env?
+            .path("/"); // Available for all paths
+
         // Redirect to the frontend dashboard after successful authentication
         let redirect_url = "http://localhost:3000/dashboard";
-        
+
         // Add the cookie and redirect
         Ok((jar.add(cookie), Redirect::to(redirect_url)))
     }
 
     pub async fn dev_user_login(
         State(state): State<AppState>,
-        jar: CookieJar
+        jar: CookieJar,
     ) -> Result<impl IntoResponse, ChaosError> {
-
         if !state.is_dev_env {
             // Disabled for non dev environment
             return Err(ChaosError::ForbiddenOperation);
@@ -279,12 +291,14 @@ impl DevLoginHandler {
         // Create a cookie with the token
         let cookie = Cookie::build(("auth_token", token))
             .http_only(true) // Prevent JavaScript access
-            .expires(Expiration::DateTime(OffsetDateTime::now_utc() + time::Duration::days(5))) // Set an expiration time of 5 days, TODO: read from env?
-            .path("/");       // Available for all paths
-        
+            .expires(Expiration::DateTime(
+                OffsetDateTime::now_utc() + time::Duration::days(5),
+            )) // Set an expiration time of 5 days, TODO: read from env?
+            .path("/"); // Available for all paths
+
         // Redirect to the frontend dashboard after successful authentication
         let redirect_url = "http://localhost:3000/dashboard";
-        
+
         // Add the cookie and redirect
         Ok((jar.add(cookie), Redirect::to(redirect_url)))
     }

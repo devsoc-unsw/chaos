@@ -1,9 +1,9 @@
 //! HTTP request handlers for the Chaos application.
-//! 
+//!
 //! This module contains the HTTP request handlers that process incoming requests and return responses.
 //! Each submodule corresponds to a specific domain of the application and contains handlers for
 //! related endpoints:
-//! 
+//!
 //! - `answer`: Handles requests related to application answers
 //! - `application`: Processes application-related requests
 //! - `auth`: Manages authentication and authorization requests
@@ -23,9 +23,9 @@ pub mod auth;
 pub mod campaign;
 pub mod comment;
 pub mod email_template;
+pub mod invite;
 pub mod offer;
 pub mod organisation;
-pub mod invite;
 pub mod question;
 pub mod rating;
 pub mod role;

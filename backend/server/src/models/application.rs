@@ -1,29 +1,29 @@
 //! Application management module for the Chaos application.
-//! 
+//!
 //! This module provides functionality for managing applications within recruitment campaigns,
 //! including creating, retrieving, updating, and submitting applications. It also handles
 //! application status management and role preferences.
 
-use std::collections::HashMap;
+use crate::models::app::AppState;
+use crate::models::campaign::Campaign;
 use crate::models::error::ChaosError;
+use crate::models::rating::RatingDetails;
 use crate::models::user::UserDetails;
+use crate::service::answer::assert_answer_application_is_open;
+use crate::service::application::assert_application_is_open;
+use axum::extract::{FromRef, FromRequestParts, Path};
+use axum::http::request::Parts;
+use axum::{async_trait, RequestPartsExt};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
-use sqlx::{FromRow, Postgres, Transaction};
 use sqlx::types::Json;
+use sqlx::{FromRow, Postgres, Transaction};
+use std::collections::HashMap;
 use std::ops::DerefMut;
-use axum::{async_trait, RequestPartsExt};
-use axum::extract::{FromRef, FromRequestParts, Path};
-use axum::http::request::Parts;
-use crate::models::app::AppState;
-use crate::models::campaign::Campaign;
-use crate::models::rating::RatingDetails;
-use crate::service::answer::assert_answer_application_is_open;
-use crate::service::application::{assert_application_is_open};
 
 /// Represents an application in the system.
-/// 
+///
 /// An application is a user's submission for one or more roles within a campaign.
 /// It tracks the application's status, both public and private, and maintains
 /// timestamps for creation and updates.
@@ -49,7 +49,7 @@ pub struct Application {
 }
 
 /// Represents a role preference within an application.
-/// 
+///
 /// Users can apply for multiple roles in a single application, specifying their
 /// preferences for each role. This struct links an application to a specific role
 /// and includes the user's preference ranking.
@@ -76,7 +76,7 @@ pub struct ApplicationRole {
 /// Contains a list of role ids and preferences
 #[derive(Deserialize)]
 pub struct UpdateRoleEntry {
-     /// ID of the campaign role being applied for
+    /// ID of the campaign role being applied for
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
     #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
     pub campaign_role_id: i64,
@@ -85,7 +85,7 @@ pub struct UpdateRoleEntry {
 }
 
 /// Data structure for creating a new application.
-/// 
+///
 /// Contains the list of roles the user is applying for, with their preferences.
 #[derive(Deserialize, Serialize)]
 pub struct NewApplication {
@@ -94,7 +94,7 @@ pub struct NewApplication {
 }
 
 /// Detailed view of an application, including user information and role preferences.
-/// 
+///
 /// This structure combines application data with user details and the specific roles
 /// the user has applied for.
 #[derive(Deserialize, Serialize)]
@@ -118,7 +118,7 @@ pub struct ApplicationDetails {
 }
 
 /// Raw application data from the database.
-/// 
+///
 /// Contains all fields needed to construct an ApplicationDetails structure,
 /// including user information and application status.
 #[derive(Deserialize, Serialize)]
@@ -155,7 +155,7 @@ pub struct ApplicationData {
 }
 
 /// Details about a role that has been applied for.
-/// 
+///
 /// Contains information about the role and the user's preference for it.
 #[derive(Deserialize, Serialize)]
 pub struct ApplicationAppliedRoleDetails {
@@ -172,12 +172,12 @@ pub struct ApplicationAppliedRoleDetails {
 #[derive(Deserialize)]
 pub struct ApplicationRoleUpdate {
     /// Updated list of role preferences
-   //pub roles: Vec<ApplicationRole>,
-   pub roles: Vec<UpdateRoleEntry>,
+    //pub roles: Vec<ApplicationRole>,
+    pub roles: Vec<UpdateRoleEntry>,
 }
 
 /// Possible statuses for an application.
-/// 
+///
 /// Applications can be in one of three states: pending review, rejected, or successful.
 #[derive(Deserialize, Serialize, sqlx::Type, Clone, Debug)]
 #[sqlx(type_name = "application_status", rename_all = "PascalCase")]
@@ -218,16 +218,16 @@ pub struct ApplicationRatingSummary {
 
 impl Application {
     /// Creates a new application if it doesn't exist, otherwise returns the existing application ID.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `campaign_id` - ID of the campaign to apply to
     /// * `user_id` - ID of the user submitting the application
     /// * `snowflake_generator` - Generator for creating unique IDs
     /// * `transaction` - Database transaction to use
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<i64, ChaosError>` - ID of the application or error
     pub async fn create_or_get(
         campaign_id: i64,
@@ -274,15 +274,15 @@ impl Application {
     }
 
     /// Checks if an application exists for a given campaign and user.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `campaign_id` - ID of the campaign to check
     /// * `user_id` - ID of the user to check
     /// * `transaction` - Database transaction to use
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<bool, ChaosError>` - True if application exists, false otherwise
     pub async fn check_application_exists(
         campaign_id: i64,
@@ -291,25 +291,27 @@ impl Application {
     ) -> Result<bool, ChaosError> {
         let application = sqlx::query!(
             "SELECT id FROM applications WHERE campaign_id = $1 AND user_id = $2",
-            campaign_id, user_id)
+            campaign_id,
+            user_id
+        )
         .fetch_optional(transaction.deref_mut())
         .await?;
 
         Ok(application.is_some())
     }
-    
+
     /// Creates a new application in the system.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `campaign_id` - ID of the campaign to apply to
     /// * `user_id` - ID of the user submitting the application
     /// * `application_data` - Details of the application including role preferences
     /// * `snowflake_generator` - Generator for creating unique IDs
     /// * `transaction` - Database transaction to use
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<(), ChaosError>` - Success or error
     pub async fn create(
         campaign_id: i64,
@@ -357,14 +359,14 @@ impl Application {
     }
 
     /// Retrieves an application by its ID.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `id` - ID of the application to retrieve
     /// * `transaction` - Database transaction to use
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<ApplicationDetails, ChaosError>` - Application details or error
     pub async fn get(
         id: i64,
@@ -431,12 +433,12 @@ impl Application {
     /// Retrieves an application by its ID regardless of submission status.
     /// This handler allows regular applicants to view application details in the answer screen.
     /// # Arguments
-    /// 
+    ///
     /// * `id` - ID of the application to retrieve
     /// * `transaction` - Database transaction to use
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<ApplicationDetails, ChaosError>` - Application details or error
     pub async fn get_in_progress(
         id: i64,
@@ -507,14 +509,14 @@ impl Application {
     }
 
     /// Retrieves all applications for a specific role.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `role_id` - ID of the role to get applications for
     /// * `transaction` - Database transaction to use
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<Vec<ApplicationDetails>, ChaosError>` - List of applications or error
     pub async fn get_from_role_id(
         role_id: i64,
@@ -587,14 +589,14 @@ impl Application {
     }
 
     /// Retrieves all applications for a specific campaign.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `campaign_id` - ID of the campaign to get applications for
     /// * `transaction` - Database transaction to use
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<Vec<ApplicationDetails>, ChaosError>` - List of applications or error
     pub async fn get_from_campaign_id(
         campaign_id: i64,
@@ -680,7 +682,7 @@ impl Application {
                     a.status AS \"status: ApplicationStatus\",
                     a.private_status AS \"private_status: ApplicationStatus\",
                     a.updated_at,
-                    
+
                     coalesce(
                         to_jsonb(
                             array_agg(DISTINCT
@@ -699,8 +701,8 @@ impl Application {
                                             ),'[]'::jsonb
                                         )
                                         FROM campaign_rating_categories crc
-                                        LEFT JOIN application_rating_category_ratings arc 
-                                            ON arc.campaign_rating_category_id = crc.id 
+                                        LEFT JOIN application_rating_category_ratings arc
+                                            ON arc.campaign_rating_category_id = crc.id
                                             AND arc.application_rating_id = ar.id
                                         WHERE crc.campaign_id = a.campaign_id
                                     ),
@@ -729,14 +731,14 @@ impl Application {
     }
 
     /// Retrieves all applications submitted by a specific user.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `user_id` - ID of the user to get applications for
     /// * `transaction` - Database transaction to use
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<Vec<ApplicationDetails>, ChaosError>` - List of applications or error
     pub async fn get_from_user_id(
         applicant_id: i64,
@@ -807,22 +809,22 @@ impl Application {
     }
 
     /// Updates the public status of an application.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `id` - ID of the application to update
     /// * `new_status` - New status to set
     /// * `pool` - Database connection pool
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<(), ChaosError>` - Success or error
     pub async fn set_status(
         id: i64,
         new_status: ApplicationStatus,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        _ = sqlx::query!(
+        sqlx::query!(
             "
                 UPDATE applications
                 SET status = $2
@@ -838,22 +840,22 @@ impl Application {
     }
 
     /// Updates the private status of an application.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `id` - ID of the application to update
     /// * `new_status` - New status to set
     /// * `pool` - Database connection pool
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<(), ChaosError>` - Success or error
     pub async fn set_private_status(
         id: i64,
         new_status: ApplicationStatus,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        _ = sqlx::query!(
+        sqlx::query!(
             "
                 UPDATE applications
                 SET private_status = $2
@@ -888,7 +890,6 @@ impl Application {
     ) -> Result<Vec<ApplicationRole>, ChaosError> {
         let roles = sqlx::query_as!(
             ApplicationRole,
-
             "
                 SELECT id, application_id, campaign_role_id, preference
                 FROM application_roles
@@ -904,15 +905,15 @@ impl Application {
     }
 
     /// Updates the role preferences for an application.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `id` - ID of the application to update
     /// * `roles` - New list of role preferences
     /// * `transaction` - Database transaction to use
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<(), ChaosError>` - Success or error
     pub async fn update_roles(
         id: i64,
@@ -947,20 +948,20 @@ impl Application {
     }
 
     /// Submits an application, marking it as ready for review.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `id` - ID of the application to submit
     /// * `transaction` - Database transaction to use
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Result<(), ChaosError>` - Success or error
     pub async fn submit(
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let _ = sqlx::query!(
+        sqlx::query!(
             "
                 UPDATE applications SET submitted = true WHERE id = $1 RETURNING id
             ",
@@ -974,7 +975,7 @@ impl Application {
 }
 
 /// Extractor for ensuring an application is open by application ID.
-/// 
+///
 /// This extractor is used in route handlers to ensure that the application
 /// being accessed is still open for submissions.
 pub struct OpenApplicationByApplicationId;
@@ -1006,7 +1007,7 @@ where
 }
 
 /// Extractor for ensuring an application is open by answer ID.
-/// 
+///
 /// This extractor is used in route handlers to ensure that the application
 /// associated with an answer is still open for submissions.
 pub struct OpenApplicationByAnswerId;
