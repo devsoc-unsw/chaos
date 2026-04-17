@@ -13,9 +13,12 @@ CHAOS' backend is implemented in Rust and for data persistence, we use PostgreSQ
 
 ### Backend Development
 To run the backend in a dev/testing environment:
-0. Contact your director before you do the set up.
 
 1. Install `docker-compose` (see [official installation guide](https://docs.docker.com/compose/install/)).
+
+1.2. docker compose -f docker-compose.local.yml up -d
+1.3. docker exec -it chaos-dev-container bash (this will enter your dev container)
+1.4. Then you can run the project locally in here without the worry of not working on your machine (I 100% sure broo!)
 
 2. Navigate to the directory this file is in (`backend`) in your terminal (not `backend/server`).
 
