@@ -45,7 +45,6 @@ export async function apiRequest<T>(
   const base = API_BASE_URL.replace(/\/+$/, ""); 
   const url = `${base}/${cleanPath}`;
   
-  
   let fetchOptions: RequestInit;
 
   if (isServer) {
