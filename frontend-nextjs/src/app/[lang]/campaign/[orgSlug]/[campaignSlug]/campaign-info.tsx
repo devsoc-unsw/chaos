@@ -34,7 +34,13 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
             {/* Hero Section */}
             <div className="relative h-[280px] overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5 sm:h-[340px] lg:h-[400px]">
                 <img
-                    src={campaignData.cover_image || '/placeholder.svg'}
+                    src={
+                        campaignData.cover_image_url ||
+                        (campaignData.cover_image?.startsWith("http")
+                            ? campaignData.cover_image
+                            : null) ||
+                        "/placeholder.svg"
+                    }
                     alt="Campaign cover"
                     className="absolute inset-0 w-full h-full object-cover opacity-30"
                 />
