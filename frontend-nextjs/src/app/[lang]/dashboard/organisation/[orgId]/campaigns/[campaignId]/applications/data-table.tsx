@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Row, flexRender, type Table } from "@tanstack/react-table";
 import {
   Table as TableWrapper,
@@ -12,16 +12,22 @@ import {
 } from "@/components/ui/table";
 
 interface ApplicationSummaryDataTableProp<TData> {
+  label: string;
   table: Table<TData>;
   renderSubComponent?: (props: { row: Row<TData> }) => React.ReactNode;
 }
 
 export function ApplicationSummaryDataTable<TData>({
+  label,
   table,
   renderSubComponent,
 }: ApplicationSummaryDataTableProp<TData>) {
   return (
     <div>
+      <div>
+        {/* Label */}
+        <p className="mb-4 text-sm font-semibold">{label}</p>
+      </div>
       <div className="overflow-hidden rounded-md border border-2 border-red-500">
         <TableWrapper>
           <TableHeader>

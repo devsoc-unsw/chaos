@@ -1,7 +1,7 @@
 "use client";
 
 import { ApplicationSummaryDataTable } from "./data-table";
-import { dateToString } from "@/lib/utils";
+import { cn, dateToString } from "@/lib/utils";
 import {
   ApplicationRatingSummary,
   getApplicationRatingsSummary,
@@ -12,7 +12,7 @@ import { queueCampaignOutcomeEmails } from "@/models/email";
 import { getRatingCategories, RatingDetails } from "@/models/rating";
 import { getCampaign, getCampaignRoles, RoleDetails } from "@/models/campaign";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import Link from "next/link";
 import { getColumns } from "./columns";
 import { TableCell, TableRow } from "@/components/ui/table";
@@ -38,6 +38,16 @@ import {
   getExpandedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import {
+  mockCampaign,
+  mockRoles,
+  mockRatingCategories,
+  mockApplicationRatingSummary,
+  mockDict,
+} from "@/mocks/application-summary.mock";
+
+// Toggle this flag to use mock data instead of API calls
+const USE_MOCK_DATA = true;
 
 function RatingsShelf({
   columns,
@@ -98,10 +108,30 @@ function toApplicant(
   };
 }
 
+function ResultFilterButton({
+  children,
+  className,
+  onClick,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  onClick?: () => void;
+}) {
+  return (
+    <Button
+      variant="outline"
+      className={cn("ml-2 w-24", className)}
+      onClick={onClick}
+    >
+      {children}
+    </Button>
+  );
+}
+
 export default function ApplicationSummary({
   campaignId,
   orgId,
-  dict,
+  dict: propsDict,
 }: {
   campaignId: string;
   orgId: string;
@@ -110,14 +140,19 @@ export default function ApplicationSummary({
   const queryClient = useQueryClient();
   const [sendModalOpen, setSendModalOpen] = useState(false);
 
+  // Use mockDict when in mock mode, otherwise use the prop dict
+  const dict = USE_MOCK_DATA ? mockDict : propsDict;
+
   const { data: campaign } = useQuery({
     queryKey: [`${campaignId}-campaign-details`],
-    queryFn: () => getCampaign(campaignId),
+    queryFn: () =>
+      USE_MOCK_DATA ? Promise.resolve(mockCampaign) : getCampaign(campaignId),
   });
 
   const { data: roles } = useQuery({
     queryKey: [`${campaignId}-campaign-roles`],
-    queryFn: () => getCampaignRoles(campaignId),
+    queryFn: () =>
+      USE_MOCK_DATA ? Promise.resolve(mockRoles) : getCampaignRoles(campaignId),
   });
 
   const roleIdsToNames = useMemo(() => {
@@ -131,12 +166,18 @@ export default function ApplicationSummary({
 
   const { data } = useQuery({
     queryKey: [`${campaignId}-application-ratings-summary`],
-    queryFn: () => getApplicationRatingsSummary(campaignId),
+    queryFn: () =>
+      USE_MOCK_DATA
+        ? Promise.resolve(mockApplicationRatingSummary)
+        : getApplicationRatingsSummary(campaignId),
   });
 
   const { data: ratingCategories } = useQuery({
     queryKey: [`${campaignId}-rating-categories`],
-    queryFn: () => getRatingCategories(campaignId),
+    queryFn: () =>
+      USE_MOCK_DATA
+        ? Promise.resolve(mockRatingCategories)
+        : getRatingCategories(campaignId),
   });
 
   const { mutateAsync: mutatePrivateStatus } = useMutation({
@@ -162,20 +203,48 @@ export default function ApplicationSummary({
     [mutatePrivateStatus]
   );
 
-  const members = data ?? [];
+  const [statusFilter, setStatusFilter] = useState<string | undefined>(
+    undefined
+  );
+
+  const handleStatusFilter = (status: string | undefined) => {
+    setStatusFilter(status);
+  };
+
+  const allMembers = data ?? [];
+
+  const members = useMemo(() => {
+    if (!statusFilter) return allMembers;
+    return allMembers.filter((a) => a.private_status === statusFilter);
+  }, [allMembers, statusFilter]);
+
+  const totalCount = allMembers.length;
+  const pendingCount = useMemo(
+    () => allMembers.filter((a) => a.private_status === "Pending").length,
+    [allMembers]
+  );
+  const acceptedCount = useMemo(
+    () => allMembers.filter((a) => a.private_status === "Successful").length,
+    [allMembers]
+  );
+  const rejectedCount = useMemo(
+    () => allMembers.filter((a) => a.private_status === "Rejected").length,
+    [allMembers]
+  );
+
   const acceptedApplicants = useMemo(
     () =>
-      members
+      allMembers
         .filter((a) => a.private_status === "Successful")
         .map((a) => toApplicant(a, roleIdsToNames)),
-    [members, roleIdsToNames]
+    [allMembers, roleIdsToNames]
   );
   const rejectedApplicants = useMemo(
     () =>
-      members
+      allMembers
         .filter((a) => a.private_status === "Rejected")
         .map((a) => toApplicant(a, roleIdsToNames)),
-    [members, roleIdsToNames]
+    [allMembers, roleIdsToNames]
   );
 
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -194,7 +263,7 @@ export default function ApplicationSummary({
   );
 
   const table = useReactTable({
-    data: data ?? [],
+    data: members,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
@@ -255,7 +324,7 @@ export default function ApplicationSummary({
       />
 
       <div className="mt-2">
-        <div className="flex items-center py-4">
+        <div className="flex items-center py-4 gap-2">
           <Select
             value={
               (table.getColumn("applied_roles")?.getFilterValue() as string) ??
@@ -290,7 +359,31 @@ export default function ApplicationSummary({
             </SelectContent>
           </Select>
         </div>
+
+        {/* Result Filter Button group */}
+        <div className="mb-2 flex items-center">
+          <ResultFilterButton onClick={() => handleStatusFilter(undefined)}>
+            All ({totalCount})
+          </ResultFilterButton>
+          <ResultFilterButton
+            className="bg-destructive/15 hover:bg-destructive/20"
+            onClick={() => handleStatusFilter("Rejected")}
+          >
+            Rejected ({rejectedCount})
+          </ResultFilterButton>
+          <ResultFilterButton
+            className="bg-constructive/20 hover:bg-constructive/30"
+            onClick={() => handleStatusFilter("Successful")}
+          >
+            Offer ({acceptedCount})
+          </ResultFilterButton>
+          <button className="cursor-pointer ml-4">
+            <Plus className="size-4" />
+          </button>
+        </div>
+
         <ApplicationSummaryDataTable
+          label={statusFilter ? statusFilter : "All"}
           table={table}
           renderSubComponent={({ row }) => (
             <RatingsShelf
