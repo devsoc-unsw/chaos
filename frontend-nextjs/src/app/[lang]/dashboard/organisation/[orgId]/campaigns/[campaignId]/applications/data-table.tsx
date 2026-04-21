@@ -25,7 +25,6 @@ export function ApplicationSummaryDataTable<TData>({
   renderSubComponent,
 }: ApplicationSummaryDataTableProp<TData>) {
   const colorMap: Record<string, string> = {
-    'bg-yellow-100': 'border-yellow-100',
     'bg-green-100': 'border-green-100',
     'bg-red-100': 'border-red-100',
   };

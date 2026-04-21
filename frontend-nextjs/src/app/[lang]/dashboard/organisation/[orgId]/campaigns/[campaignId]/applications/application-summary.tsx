@@ -203,18 +203,27 @@ export default function ApplicationSummary({
     [mutatePrivateStatus]
   );
 
-  const [statusFilter, setStatusFilter] = useState<string | undefined>(
-    undefined
+  const [statusFilter, setStatusFilter] = useState<string>(
+    "All"
   );
 
-  const handleStatusFilter = (status: string | undefined) => {
+  const handleStatusFilter = (status: string) => {
     setStatusFilter(status);
   };
 
   const allMembers = data ?? [];
+  const pendingMembers = useMemo(
+    () => allMembers.filter((a) => a.private_status === "Pending"),
+    [allMembers]
+  );
+
+  const nonPendingMembers = useMemo(
+    () => allMembers.filter((a) => a.private_status !== "Pending"),
+    [allMembers]
+  );
 
   const members = useMemo(() => {
-    if (!statusFilter) return allMembers;
+    if (statusFilter === "All") return allMembers;
     return allMembers.filter((a) => a.private_status === statusFilter);
   }, [allMembers, statusFilter]);
 
@@ -275,46 +284,59 @@ export default function ApplicationSummary({
     },
   });
 
+  const tablePending = useReactTable({
+    data: pendingMembers,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
+    getRowCanExpand: () => true,
+    onColumnFiltersChange: setColumnFilters,
+    getFilteredRowModel: getFilteredRowModel(),
+    state: {
+      columnFilters,
+    },
+  });
+
+  const tableNonPending = useReactTable({
+    data: nonPendingMembers,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
+    getRowCanExpand: () => true,
+    onColumnFiltersChange: setColumnFilters,
+    getFilteredRowModel: getFilteredRowModel(),
+    state: {
+      columnFilters,
+    },
+  });
+
   const tableColorsMap: Record<string, string> = {
-    Pending: "bg-yellow-100",
     Successful: "bg-green-100",
     Rejected: "bg-red-100",
   }
 
   return (
     <div>
-      <div className="flex justify-between items-center">
-        <div>
-          <Link
-            href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}`}
-          >
-            <div className="flex items-center gap-1">
-              <ArrowLeft className="w-4 h-4" />
-              {dict.common.back}
-            </div>
-          </Link>
-          <h1 className="text-2xl font-bold">
-            {dict.dashboard.campaigns.review_applications}
-          </h1>
-          <h2 className="text-lg font-medium">{campaign?.name}</h2>
-          <p className="text-sm text-gray-500">
-            {dateToString(campaign?.starts_at ?? "")} -{" "}
-            {dateToString(campaign?.ends_at ?? "")}
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          onClick={() => setSendModalOpen(true)}
-          className="gap-2"
-          disabled={
-            acceptedApplicants.length === 0 && rejectedApplicants.length === 0
-          }
+
+      <div>
+        <Link
+          href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}`}
         >
-          <Send className="size-4" />
-          {dict.dashboard.campaigns.send_outcome_emails ??
-            "Send outcome emails"}
-        </Button>
+          <div className="flex items-center gap-1">
+            <ArrowLeft className="w-4 h-4" />
+            {dict.common.back}
+          </div>
+        </Link>
+        <h1 className="text-2xl font-bold">
+          {dict.dashboard.campaigns.review_applications}
+        </h1>
+        <h2 className="text-lg font-medium">{campaign?.name}</h2>
+        <p className="text-sm text-gray-500">
+          {dateToString(campaign?.starts_at ?? "")} -{" "}
+          {dateToString(campaign?.ends_at ?? "")}
+        </p>
       </div>
+        
       <SendEmailsModal
         open={sendModalOpen}
         onOpenChange={setSendModalOpen}
@@ -367,18 +389,18 @@ export default function ApplicationSummary({
         </div>
 
         {/* Result Filter Button group */}
-        <div className="mb-2 flex items-center">
-          <ResultFilterButton onClick={() => handleStatusFilter(undefined)}>
-            All ({totalCount})
+        <div className="mb-4 flex items-center">
+          <ResultFilterButton onClick={() => handleStatusFilter("All")}>
+            All ({totalCount})  
           </ResultFilterButton>
           <ResultFilterButton
-            className="bg-destructive/15 hover:bg-destructive/20"
+            className="bg-red-500/15 hover:bg-red-500/20"
             onClick={() => handleStatusFilter("Rejected")}
           >
             Rejected ({rejectedCount})
           </ResultFilterButton>
           <ResultFilterButton
-            className="bg-constructive/20 hover:bg-constructive/30"
+            className="bg-green-500/15 hover:bg-green-500/20"
             onClick={() => handleStatusFilter("Successful")}
           >
             Offer ({acceptedCount})
@@ -388,23 +410,77 @@ export default function ApplicationSummary({
           </button>
         </div>
 
-        <ApplicationSummaryDataTable
-          label={statusFilter ? statusFilter : "All"}
-          color={statusFilter ? tableColorsMap[statusFilter] : "bg-gray-200"}
-          table={table}
-          renderSubComponent={({ row }) => (
-            <RatingsShelf
-              columns={getColumns(
-                dict,
-                roleIdsToNames,
-                ratingCategories ?? [],
-                handlePrivateStatusChange
+        <div>
+          {statusFilter === "All" ? (
+            <div className="flex flex-col gap-4">
+              <ApplicationSummaryDataTable
+                label="To Review"
+                color="bg-gray-200"
+                table={tablePending}
+                renderSubComponent={({ row }) => (
+                  <RatingsShelf
+                    columns={getColumns(
+                      dict,
+                      roleIdsToNames,
+                      ratingCategories ?? [],
+                      handlePrivateStatusChange
+                    )}
+                    ratings={row.original.ratings}
+                    dict={dict}
+                  />
+                )}
+              />
+
+              <Button
+                  variant="outline"
+                  onClick={() => setSendModalOpen(true)}
+                  className="gap-2"
+                  disabled={
+                    acceptedApplicants.length === 0 && rejectedApplicants.length === 0
+                  }
+                >
+                  <Send className="size-4" />
+                  {dict.dashboard.campaigns.send_outcome_emails ??
+                    "Send outcome emails"}
+              </Button>
+              <ApplicationSummaryDataTable
+                label="Review"
+                color="bg-gray-200"
+                table={tableNonPending}
+                renderSubComponent={({ row }) => (
+                  <RatingsShelf
+                    columns={getColumns(
+                      dict,
+                      roleIdsToNames,
+                      ratingCategories ?? [],
+                      handlePrivateStatusChange
+                    )}
+                    ratings={row.original.ratings}
+                    dict={dict}
+                  />
+                )}
+              />
+            </div>
+          ) : (
+            <ApplicationSummaryDataTable
+              label={statusFilter}
+              color={tableColorsMap[statusFilter]}
+              table={table}
+              renderSubComponent={({ row }) => (
+                <RatingsShelf
+                  columns={getColumns(
+                    dict,
+                    roleIdsToNames,
+                    ratingCategories ?? [],
+                    handlePrivateStatusChange
+                  )}
+                  ratings={row.original.ratings}
+                  dict={dict}
+                />
               )}
-              ratings={row.original.ratings}
-              dict={dict}
             />
           )}
-        />
+        </div>
       </div>
     </div>
   );
