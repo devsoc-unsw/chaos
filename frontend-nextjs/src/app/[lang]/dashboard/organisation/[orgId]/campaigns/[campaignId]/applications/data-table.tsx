@@ -14,21 +14,31 @@ import {
 interface ApplicationSummaryDataTableProp<TData> {
   label: string;
   table: Table<TData>;
+  color: string;
   renderSubComponent?: (props: { row: Row<TData> }) => React.ReactNode;
 }
 
 export function ApplicationSummaryDataTable<TData>({
   label,
+  color,
   table,
   renderSubComponent,
 }: ApplicationSummaryDataTableProp<TData>) {
+  const colorMap: Record<string, string> = {
+    'bg-yellow-100': 'border-yellow-100',
+    'bg-green-100': 'border-green-100',
+    'bg-red-100': 'border-red-100',
+  };
+
+  const borderColor = colorMap[color] || 'border-gray-200';
+
   return (
     <div>
-      <div>
+      <div className={`flex items-center justify-center w-24 px-2 py-2 ${color}`}>
         {/* Label */}
-        <p className="mb-4 text-sm font-semibold">{label}</p>
+        <p className="text-sm font-semibold">{label}</p>
       </div>
-      <div className="overflow-hidden rounded-md border border-2 border-red-500">
+      <div className={`overflow-hidden border border-3 ${borderColor}`}>
         <TableWrapper>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

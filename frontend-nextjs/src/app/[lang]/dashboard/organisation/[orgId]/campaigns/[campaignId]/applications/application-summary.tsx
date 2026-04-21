@@ -275,6 +275,12 @@ export default function ApplicationSummary({
     },
   });
 
+  const tableColorsMap: Record<string, string> = {
+    Pending: "bg-yellow-100",
+    Successful: "bg-green-100",
+    Rejected: "bg-red-100",
+  }
+
   return (
     <div>
       <div className="flex justify-between items-center">
@@ -384,6 +390,7 @@ export default function ApplicationSummary({
 
         <ApplicationSummaryDataTable
           label={statusFilter ? statusFilter : "All"}
+          color={statusFilter ? tableColorsMap[statusFilter] : "bg-gray-200"}
           table={table}
           renderSubComponent={({ row }) => (
             <RatingsShelf
