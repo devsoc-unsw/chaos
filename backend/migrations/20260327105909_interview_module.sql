@@ -1,28 +1,15 @@
 -- Add migration script here
-CREATE TABLE availability (
-    id SERIAL PRIMARY KEY,
+CREATE TABLE user_campaign_availabilities (
+  id BIGINT PRIMARY KEY,
+  user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  campaign_id BIGINT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE
+);
 
-    user_id INT NOT NULL,
-    role_id INT NOT NULL,
-    campaign_id INT NOT NULL,
-
-    start_time TIMESTAMPTZ NOT NULL,
-    end_time TIMESTAMPTZ NOT NULL,
-
-    CONSTRAINT fk_availability_user
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-
-    CONSTRAINT fk_availability_role
-        FOREIGN KEY (role_id) REFERENCES campaign_roles(id) ON DELETE RESTRICT,
-
-    CONSTRAINT fk_availability_campaign
-        FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE,
-
-    CONSTRAINT chk_availability_time
-        CHECK (end_time > start_time),
-
-    CONSTRAINT unique_user_availability
-    UNIQUE (user_id, campaign_id, start_time, end_time)
+CREATE TABLE availability_slots (
+  id SERIAL PRIMARY KEY,
+  availability_id BIGINT NOT NULL REFERENCES user_campaign_availabilities(id) ON DELETE CASCADE,
+  start_time TIMESTAMPTZ NOT NULL,
+  UNIQUE (availability_id, start_time)
 );
 
 CREATE TABLE interview_timeslots (
@@ -70,10 +57,10 @@ CREATE TABLE interview_timeslot_users (
 );
 
 CREATE INDEX idx_availability_campaign
-    ON availability(campaign_id);
+    ON user_campaign_availabilities(campaign_id);
 
 CREATE INDEX idx_availability_user
-    ON availability(user_id);
+    ON user_campaign_availabilities(user_id);
 
 CREATE INDEX idx_timeslots_campaign
     ON interview_timeslots(campaign_id);
