@@ -140,8 +140,7 @@ export default function ApplicationSummary({
   const queryClient = useQueryClient();
   const [sendModalOpen, setSendModalOpen] = useState(false);
 
-  // Use mockDict when in mock mode, otherwise use the prop dict
-  const dict = USE_MOCK_DATA ? mockDict : propsDict;
+  const dict = propsDict;
 
   const { data: campaign } = useQuery({
     queryKey: [`${campaignId}-campaign-details`],
@@ -226,20 +225,6 @@ export default function ApplicationSummary({
     if (statusFilter === "All") return allMembers;
     return allMembers.filter((a) => a.private_status === statusFilter);
   }, [allMembers, statusFilter]);
-
-  const totalCount = allMembers.length;
-  const pendingCount = useMemo(
-    () => allMembers.filter((a) => a.private_status === "Pending").length,
-    [allMembers]
-  );
-  const acceptedCount = useMemo(
-    () => allMembers.filter((a) => a.private_status === "Successful").length,
-    [allMembers]
-  );
-  const rejectedCount = useMemo(
-    () => allMembers.filter((a) => a.private_status === "Rejected").length,
-    [allMembers]
-  );
 
   const acceptedApplicants = useMemo(
     () =>
@@ -391,19 +376,19 @@ export default function ApplicationSummary({
         {/* Result Filter Button group */}
         <div className="mb-4 flex items-center">
           <ResultFilterButton onClick={() => handleStatusFilter("All")}>
-            All ({totalCount})  
+            All ({allMembers.length})  
           </ResultFilterButton>
           <ResultFilterButton
             className="bg-red-500/15 hover:bg-red-500/20"
             onClick={() => handleStatusFilter("Rejected")}
           >
-            Rejected ({rejectedCount})
+            Rejected ({rejectedApplicants.length})
           </ResultFilterButton>
           <ResultFilterButton
             className="bg-green-500/15 hover:bg-green-500/20"
             onClick={() => handleStatusFilter("Successful")}
           >
-            Offer ({acceptedCount})
+            Offer ({acceptedApplicants.length})
           </ResultFilterButton>
           <button className="cursor-pointer ml-4">
             <Plus className="size-4" />
@@ -412,11 +397,12 @@ export default function ApplicationSummary({
 
         <div>
           {statusFilter === "All" ? (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-5">
               <ApplicationSummaryDataTable
                 label="To Review"
                 color="bg-gray-200"
                 table={tablePending}
+                dict={dict}
                 renderSubComponent={({ row }) => (
                   <RatingsShelf
                     columns={getColumns(
@@ -431,22 +417,14 @@ export default function ApplicationSummary({
                 )}
               />
 
-              <Button
-                  variant="outline"
-                  onClick={() => setSendModalOpen(true)}
-                  className="gap-2"
-                  disabled={
-                    acceptedApplicants.length === 0 && rejectedApplicants.length === 0
-                  }
-                >
-                  <Send className="size-4" />
-                  {dict.dashboard.campaigns.send_outcome_emails ??
-                    "Send outcome emails"}
-              </Button>
               <ApplicationSummaryDataTable
                 label="Review"
                 color="bg-gray-200"
                 table={tableNonPending}
+                dict={dict}
+                setSendModalOpen={setSendModalOpen}
+                acceptedApplicants={acceptedApplicants}
+                rejectedApplicants={rejectedApplicants}
                 renderSubComponent={({ row }) => (
                   <RatingsShelf
                     columns={getColumns(
@@ -466,6 +444,10 @@ export default function ApplicationSummary({
               label={statusFilter}
               color={tableColorsMap[statusFilter]}
               table={table}
+              dict={dict}
+              setSendModalOpen={setSendModalOpen}
+              acceptedApplicants={acceptedApplicants}
+              rejectedApplicants={rejectedApplicants}
               renderSubComponent={({ row }) => (
                 <RatingsShelf
                   columns={getColumns(
