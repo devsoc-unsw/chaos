@@ -28,7 +28,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Send } from "lucide-react";
 import React from "react";
 import {
   ColumnDef,
@@ -430,6 +429,8 @@ export default function ApplicationSummary({
               setSendModalOpen={setSendModalOpen}
               acceptedApplicants={acceptedApplicants}
               rejectedApplicants={rejectedApplicants}
+              orgId={orgId}
+              campaignId={campaignId}
               renderSubComponent={({ row }) => (
                 <RatingsShelf
                   columns={getColumns(
