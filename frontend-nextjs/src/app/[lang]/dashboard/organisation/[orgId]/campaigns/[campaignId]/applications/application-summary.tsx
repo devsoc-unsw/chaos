@@ -10,7 +10,7 @@ import {
 } from "@/models/application";
 import { queueCampaignOutcomeEmails } from "@/models/email";
 import { getRatingCategories, RatingDetails } from "@/models/rating";
-import { getCampaign, getCampaignRoles, RoleDetails } from "@/models/campaign";
+import { getCampaign, getCampaignRoles } from "@/models/campaign";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Plus } from "lucide-react";
 import Link from "next/link";
@@ -45,11 +45,13 @@ import {
   mockApplicationRatingSummary,
   mockDict,
 } from "@/mocks/application-summary.mock";
+import { ApplicationSummaryDataTableAll } from "./data-table-all";
+import { ApplicationSummaryDataTableOffered } from "./data-table-offered";
 
 // Toggle this flag to use mock data instead of API calls
 const USE_MOCK_DATA = true;
 
-function RatingsShelf({
+export function RatingsShelf({
   columns,
   ratings,
   dict,
@@ -397,48 +399,28 @@ export default function ApplicationSummary({
 
         <div>
           {statusFilter === "All" ? (
-            <div className="flex flex-col gap-5">
-              <ApplicationSummaryDataTable
-                label="To Review"
-                color="bg-gray-200"
-                table={tablePending}
-                dict={dict}
-                renderSubComponent={({ row }) => (
-                  <RatingsShelf
-                    columns={getColumns(
-                      dict,
-                      roleIdsToNames,
-                      ratingCategories ?? [],
-                      handlePrivateStatusChange
-                    )}
-                    ratings={row.original.ratings}
-                    dict={dict}
-                  />
-                )}
-              />
-
-              <ApplicationSummaryDataTable
-                label="Review"
-                color="bg-gray-200"
-                table={tableNonPending}
-                dict={dict}
-                setSendModalOpen={setSendModalOpen}
-                acceptedApplicants={acceptedApplicants}
-                rejectedApplicants={rejectedApplicants}
-                renderSubComponent={({ row }) => (
-                  <RatingsShelf
-                    columns={getColumns(
-                      dict,
-                      roleIdsToNames,
-                      ratingCategories ?? [],
-                      handlePrivateStatusChange
-                    )}
-                    ratings={row.original.ratings}
-                    dict={dict}
-                  />
-                )}
-              />
-            </div>
+            <ApplicationSummaryDataTableAll 
+              tablePending={tablePending}
+              tableNonPending={tableNonPending}
+              dict={dict}
+              setSendModalOpen={setSendModalOpen}
+              roleIdsToNames={roleIdsToNames}
+              ratingCategories={ratingCategories ?? []}
+              handlePrivateStatusChange={handlePrivateStatusChange}
+              acceptedApplicants={acceptedApplicants}
+              rejectedApplicants={rejectedApplicants}
+            />
+          ) : statusFilter === "Successful" ? (
+            <ApplicationSummaryDataTableOffered 
+              table={table}
+              dict={dict}
+              setSendModalOpen={setSendModalOpen}
+              roleIdsToNames={roleIdsToNames}
+              ratingCategories={ratingCategories ?? []}
+              handlePrivateStatusChange={handlePrivateStatusChange}
+              acceptedApplicants={acceptedApplicants}
+              rejectedApplicants={rejectedApplicants}
+            />
           ) : (
             <ApplicationSummaryDataTable
               label={statusFilter}

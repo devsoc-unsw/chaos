@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import { Row, flexRender, type Table } from "@tanstack/react-table";
-import { Send } from "lucide-react";
+import { Menu, Send } from "lucide-react";
 import {
   Table as TableWrapper,
   TableBody,
@@ -48,6 +48,8 @@ export function ApplicationSummaryDataTable<TData>({
           {/* Label */}
           <p className="text-sm font-semibold">{label}</p>
         </div>
+
+        {/* Send Outcome Emails Button */}
         {setSendModalOpen && dict && (
           <Button
             variant="outline"
@@ -62,6 +64,21 @@ export function ApplicationSummaryDataTable<TData>({
               "Send outcome emails"}
           </Button>
         )}
+
+        {/* Sort By Dropdown */}
+        {label === "To Review" && <div className="flex items-center gap-4">
+          <p className="text-sm font-medium">
+            Sort by: Decision
+          </p>
+          <Button
+              variant="outline"
+              onClick={() => {}}
+              className="gap-2"
+            >
+              <Menu className="size-4" />
+              Start Queue
+            </Button>
+        </div>}
       </div>
       <div className={`overflow-hidden border border-3 ${borderColor}`}>
         <TableWrapper>
