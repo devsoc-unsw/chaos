@@ -1,7 +1,7 @@
 import { RatingsShelf } from "./application-summary";
 import { ApplicationSummaryDataTable } from "./data-table";
 import { getColumns } from "./columns";
-import { type Table } from "@tanstack/react-table";
+import { Row, type Table } from "@tanstack/react-table";
 import { ApplicationRatingSummary, ApplicationStatus } from "@/models/application";
 import { Dispatch, SetStateAction } from "react";
 
@@ -9,9 +9,7 @@ interface ApplicationSummaryDataTableAllProp<TData> {
   tablePending: Table<TData>;
   dict?: any;
   setSendModalOpen?: Dispatch<SetStateAction<boolean>>;
-  roleIdsToNames: Record<string, string>;
-  ratingCategories: any[];
-  handlePrivateStatusChange: (applicantId: string, status: ApplicationStatus) => Promise<void>;
+  renderSubComponent?: (props: { row: Row<TData> }) => React.ReactNode;
   tableNonPending: Table<TData>;
   acceptedApplicants?: any[];
   rejectedApplicants?: any[];
@@ -20,9 +18,7 @@ interface ApplicationSummaryDataTableAllProp<TData> {
 export function ApplicationSummaryDataTableAll<TData>({
   dict,
   setSendModalOpen,
-  roleIdsToNames,
-  ratingCategories,
-  handlePrivateStatusChange,
+  renderSubComponent,
   tablePending  ,
   tableNonPending,
   acceptedApplicants = [],
@@ -35,18 +31,7 @@ export function ApplicationSummaryDataTableAll<TData>({
         color="bg-gray-200"
         table={tablePending}
         dict={dict}
-        renderSubComponent={({ row }) => (
-          <RatingsShelf
-            columns={getColumns(
-              dict,
-              roleIdsToNames,
-              ratingCategories ?? [],
-              handlePrivateStatusChange
-            )}
-            ratings={row.original.ratings}
-            dict={dict}
-          />
-        )}
+        renderSubComponent={renderSubComponent}
       />
 
       <ApplicationSummaryDataTable
@@ -57,18 +42,7 @@ export function ApplicationSummaryDataTableAll<TData>({
         setSendModalOpen={setSendModalOpen}
         acceptedApplicants={acceptedApplicants}
         rejectedApplicants={rejectedApplicants}
-        renderSubComponent={({ row }) => (
-          <RatingsShelf
-            columns={getColumns(
-              dict,
-              roleIdsToNames,
-              ratingCategories ?? [],
-              handlePrivateStatusChange
-            )}
-            ratings={row.original.ratings}
-            dict={dict}
-          />
-        )}
+        renderSubComponent={renderSubComponent}
       />
     </div>
   );

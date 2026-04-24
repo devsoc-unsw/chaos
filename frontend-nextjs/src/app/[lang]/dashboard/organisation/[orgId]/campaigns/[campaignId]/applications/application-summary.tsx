@@ -403,9 +403,18 @@ export default function ApplicationSummary({
               tableNonPending={tableNonPending}
               dict={dict}
               setSendModalOpen={setSendModalOpen}
-              roleIdsToNames={roleIdsToNames}
-              ratingCategories={ratingCategories ?? []}
-              handlePrivateStatusChange={handlePrivateStatusChange}
+              renderSubComponent={({ row }) => (
+                <RatingsShelf
+                  columns={getColumns(
+                    dict,
+                    roleIdsToNames,
+                    ratingCategories ?? [],
+                    handlePrivateStatusChange
+                  )}
+                  ratings={row.original.ratings}
+                  dict={dict}
+                />
+              )}
               acceptedApplicants={acceptedApplicants}
               rejectedApplicants={rejectedApplicants}
             />
@@ -414,9 +423,18 @@ export default function ApplicationSummary({
               table={table}
               dict={dict}
               setSendModalOpen={setSendModalOpen}
-              roleIdsToNames={roleIdsToNames}
-              ratingCategories={ratingCategories ?? []}
-              handlePrivateStatusChange={handlePrivateStatusChange}
+              renderSubComponent={({ row }) => (
+                <RatingsShelf
+                  columns={getColumns(
+                    dict,
+                    roleIdsToNames,
+                    ratingCategories ?? [],
+                    handlePrivateStatusChange
+                  )}
+                  ratings={row.original.ratings}
+                  dict={dict}
+                />
+              )}
               acceptedApplicants={acceptedApplicants}
               rejectedApplicants={rejectedApplicants}
             />
