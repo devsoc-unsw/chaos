@@ -12,7 +12,7 @@ import { queueCampaignOutcomeEmails } from "@/models/email";
 import { getRatingCategories, RatingDetails } from "@/models/rating";
 import { getCampaign, getCampaignRoles } from "@/models/campaign";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, X } from "lucide-react";
 import Link from "next/link";
 import { getColumns } from "./columns";
 import { TableCell, TableRow } from "@/components/ui/table";
@@ -29,6 +29,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import React from "react";
+
+/// Filter state definition for dynamic view creation
+interface FilterConfig {
+  id: string;
+  label: string;
+  predicate: (app: ApplicationRatingSummary) => boolean;
+  color?: string;
+  hoverColor?: string;
+  isSpecial?: boolean; // For "All" view which shows multiple tables
+}
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -203,29 +213,53 @@ export default function ApplicationSummary({
     [mutatePrivateStatus]
   );
 
-  const [statusFilter, setStatusFilter] = useState<string>(
-    "All"
-  );
-
-  const handleStatusFilter = (status: string) => {
-    setStatusFilter(status);
-  };
-
   const allMembers = data ?? [];
-  const pendingMembers = useMemo(
-    () => allMembers.filter((a) => a.private_status === "Pending"),
+
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [customFilters, setCustomFilters] = useState<FilterConfig[]>([]);
+
+  /// Initialize default filter configurations
+  const defaultFilters = useMemo<FilterConfig[]>(() => [
+    {
+      id: "all",
+      label: "All",
+      predicate: () => true,
+      isSpecial: true,
+    },
+    {
+      id: "rejected",
+      label: "Rejected",
+      predicate: (a) => a.private_status === "Rejected",
+      color: "bg-red-100",
+      hoverColor: "hover:bg-red-200",
+    },
+    {
+      id: "successful",
+      label: "Successful",
+      predicate: (a) => a.private_status === "Successful",
+      color: "bg-green-100",
+      hoverColor: "hover:bg-green-200",
+    },
+  ], []);
+
+  /// All available filters (default + custom)
+  const allFilters = useMemo<FilterConfig[]>(
+    () => [...defaultFilters, ...customFilters],
+    [defaultFilters, customFilters]
+  );
+
+  /// Get count for a specific filter
+  const getFilterCount = useCallback(
+    (filter: FilterConfig) => allMembers.filter(filter.predicate).length,
     [allMembers]
   );
 
-  const nonPendingMembers = useMemo(
-    () => allMembers.filter((a) => a.private_status !== "Pending"),
-    [allMembers]
-  );
-
-  const members = useMemo(() => {
-    if (statusFilter === "All") return allMembers;
-    return allMembers.filter((a) => a.private_status === statusFilter);
-  }, [allMembers, statusFilter]);
+  /// Get filtered data for current status
+  const filteredMembers = useMemo(() => {
+    const currentFilter = allFilters.find((f) => f.id === statusFilter);
+    if (!currentFilter) return allMembers;
+    return allMembers.filter(currentFilter.predicate);
+  }, [allMembers, statusFilter, allFilters]);
 
   const acceptedApplicants = useMemo(
     () =>
@@ -257,8 +291,9 @@ export default function ApplicationSummary({
     [dict, roleIdsToNames, ratingCategories, handlePrivateStatusChange]
   );
 
-  const table = useReactTable({
-    data: members,
+  /// Create current filter's main table
+  const currentTable = useReactTable({
+    data: filteredMembers,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
@@ -270,8 +305,9 @@ export default function ApplicationSummary({
     },
   });
 
+  /// For "All" view, create separate tables for pending/non-pending
   const tablePending = useReactTable({
-    data: pendingMembers,
+    data: allMembers.filter((a) => a.private_status === "Pending"),
     columns,
     getCoreRowModel: getCoreRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
@@ -284,7 +320,7 @@ export default function ApplicationSummary({
   });
 
   const tableNonPending = useReactTable({
-    data: nonPendingMembers,
+    data: allMembers.filter((a) => a.private_status !== "Pending"),
     columns,
     getCoreRowModel: getCoreRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
@@ -296,10 +332,44 @@ export default function ApplicationSummary({
     },
   });
 
-  const tableColorsMap: Record<string, string> = {
-    Successful: "bg-green-100",
-    Rejected: "bg-red-100",
-  }
+  /// Handle adding a new custom filter
+  const handleAddFilter = useCallback(() => {
+    const newFilter: FilterConfig = {
+      id: `custom-${Date.now()}`,
+      label: `Filter ${customFilters.length + 1}`,
+      predicate: (a) => a.private_status === "Pending", // Default predicate
+      color: "bg-blue-100",
+      hoverColor: "hover:bg-blue-200",
+    };
+    setCustomFilters((prev) => [...prev, newFilter]);
+  }, [customFilters.length]);
+
+  /// Handle removing a custom filter
+  const handleRemoveFilter = useCallback((filterId: string) => {
+    setCustomFilters((prev) => prev.filter((f) => f.id !== filterId));
+    if (statusFilter === filterId) {
+      setStatusFilter("all");
+    }
+  }, [statusFilter]);
+
+  const handleStatusFilter = useCallback(
+    (status: string) => {
+      setStatusFilter(status);
+    },
+    []
+  );
+
+
+  const renderSubComponent = useCallback(
+    ({ row }: { row: any }) => (
+      <RatingsShelf
+        columns={columns}
+        ratings={row.original.ratings}
+        dict={dict}
+      />
+    ),
+    [columns, dict, statusFilter]
+  );
 
   return (
     <div>
@@ -341,11 +411,11 @@ export default function ApplicationSummary({
         <div className="flex items-center py-4 gap-2">
           <Select
             value={
-              (table.getColumn("applied_roles")?.getFilterValue() as string) ??
+              (currentTable.getColumn("applied_roles")?.getFilterValue() as string) ??
               "all"
             }
             onValueChange={(value) =>
-              table
+              currentTable
                 .getColumn("applied_roles")
                 ?.setFilterValue(value === "all" ? undefined : value)
             }
@@ -375,92 +445,64 @@ export default function ApplicationSummary({
         </div>
 
         {/* Result Filter Button group */}
-        <div className="mb-4 flex items-center">
-          <ResultFilterButton onClick={() => handleStatusFilter("All")}>
-            All ({allMembers.length})  
-          </ResultFilterButton>
-          <ResultFilterButton
-            className="bg-red-500/15 hover:bg-red-500/20"
-            onClick={() => handleStatusFilter("Rejected")}
+        <div className="mb-4 flex items-center flex-wrap gap-2">
+          {allFilters.map((filter) => (
+            <div key={filter.id} className="relative">
+              <ResultFilterButton
+                className={
+                    cn(filter.color, filter.hoverColor)
+                }
+                onClick={() => handleStatusFilter(filter.id)}
+              >
+                {filter.label} ({getFilterCount(filter)})
+              </ResultFilterButton>
+              {!filter.isSpecial && customFilters.some((f) => f.id === filter.id) && (
+                <button
+                  onClick={() => handleRemoveFilter(filter.id)}
+                  className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 text-white hover:bg-red-600"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+          ))}
+          <button
+            onClick={handleAddFilter}
+            className="cursor-pointer ml-2"
+            title="Add custom filter"
           >
-            Rejected ({rejectedApplicants.length})
-          </ResultFilterButton>
-          <ResultFilterButton
-            className="bg-green-500/15 hover:bg-green-500/20"
-            onClick={() => handleStatusFilter("Successful")}
-          >
-            Offer ({acceptedApplicants.length})
-          </ResultFilterButton>
-          <button className="cursor-pointer ml-4">
             <Plus className="size-4" />
           </button>
         </div>
 
         <div>
-          {statusFilter === "All" ? (
-            <ApplicationSummaryDataTableAll 
+          {statusFilter === "all" ? (
+            <ApplicationSummaryDataTableAll
               tablePending={tablePending}
               tableNonPending={tableNonPending}
               dict={dict}
               setSendModalOpen={setSendModalOpen}
-              renderSubComponent={({ row }) => (
-                <RatingsShelf
-                  columns={getColumns(
-                    dict,
-                    roleIdsToNames,
-                    ratingCategories ?? [],
-                    handlePrivateStatusChange
-                  )}
-                  ratings={row.original.ratings}
-                  dict={dict}
-                />
-              )}
-              acceptedApplicants={acceptedApplicants}
-              rejectedApplicants={rejectedApplicants}
-            />
-          ) : statusFilter === "Successful" ? (
-            <ApplicationSummaryDataTableOffered 
-              table={table}
-              dict={dict}
-              setSendModalOpen={setSendModalOpen}
-              renderSubComponent={({ row }) => (
-                <RatingsShelf
-                  columns={getColumns(
-                    dict,
-                    roleIdsToNames,
-                    ratingCategories ?? [],
-                    handlePrivateStatusChange
-                  )}
-                  ratings={row.original.ratings}
-                  dict={dict}
-                />
-              )}
+              renderSubComponent={renderSubComponent}
               acceptedApplicants={acceptedApplicants}
               rejectedApplicants={rejectedApplicants}
             />
           ) : (
             <ApplicationSummaryDataTable
-              label={statusFilter}
-              color={tableColorsMap[statusFilter]}
-              table={table}
+              label={
+                allFilters.find((f) => f.id === statusFilter)?.label ||
+                statusFilter
+              }
+              color={
+                allFilters.find((f) => f.id === statusFilter)?.color || ""
+              }
+              table={currentTable}
               dict={dict}
               setSendModalOpen={setSendModalOpen}
               acceptedApplicants={acceptedApplicants}
               rejectedApplicants={rejectedApplicants}
               orgId={orgId}
               campaignId={campaignId}
-              renderSubComponent={({ row }) => (
-                <RatingsShelf
-                  columns={getColumns(
-                    dict,
-                    roleIdsToNames,
-                    ratingCategories ?? [],
-                    handlePrivateStatusChange
-                  )}
-                  ratings={row.original.ratings}
-                  dict={dict}
-                />
-              )}
+              renderSubComponent={renderSubComponent}
             />
           )}
         </div>
