@@ -51,7 +51,7 @@ export function ApplicationSummaryDataTableAll<TData, TValue>({
         dict={dict}
         renderSubComponent={renderSubComponent}
         columns={columns}
-        data={data ?? []}
+        data={data.filter((m) => m.private_status !== "Pending")}
         roles={roles ?? []}
         setColumnFilters={setColumnFilters}
         columnFilters={columnFilters}

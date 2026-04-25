@@ -233,14 +233,21 @@ export default function ApplicationSummary({
     [defaultFilters, customFilters]
   );
 
-  // Get count for a specific filter
-  const getFilterCount = useCallback(
-    (filter: FilterConfig) => allMembers.filter(filter.predicate).length,
-    [allMembers]
-  );
-
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
     []
+  );
+
+  // Get count for a specific filter
+  const getFilterCount = useCallback(
+    (filter: FilterConfig) => {
+      const members = allMembers.filter(filter.predicate);
+      const roleFilter = columnFilters.find((f) => f.id === "applied_roles")?.value as string;
+      if (!roleFilter || roleFilter === "all") {
+        return members.length;
+      }
+      return members.filter((m) => m.applied_roles.includes(roleFilter)).length;
+    },
+    [allMembers, columnFilters]
   );
 
   const columns = useMemo(
@@ -280,7 +287,6 @@ export default function ApplicationSummary({
     },
     []
   );
-
 
   const renderSubComponent = useCallback(
     ({ row }: { row: any }) => (
