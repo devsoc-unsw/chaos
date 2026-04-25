@@ -8,7 +8,6 @@ import {
   updateApplicationPrivateStatus,
   ApplicationStatus,
 } from "@/models/application";
-import { queueCampaignOutcomeEmails } from "@/models/email";
 import { getRatingCategories, RatingDetails } from "@/models/rating";
 import { getCampaign, getCampaignRoles } from "@/models/campaign";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -18,7 +17,6 @@ import { getColumns } from "./columns";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { useMemo, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { SendEmailsModal, type SendEmailsApplicant } from "./send-email-modal";
 import {
   Select,
   SelectContent,
@@ -30,7 +28,7 @@ import {
 } from "@/components/ui/select";
 import React from "react";
 
-/// Filter state definition for dynamic view creation
+// Filter state definition for dynamic view creation
 interface FilterConfig {
   id: string;
   label: string;
@@ -105,20 +103,6 @@ export function RatingsShelf({
   );
 }
 
-function toApplicant(
-  app: ApplicationRatingSummary,
-  roleIdsToNames: Record<string, string>
-): SendEmailsApplicant {
-  const applied = app.applied_roles ?? [];
-  return {
-    id: app.application_id,
-    name: app.user_name,
-    email: app.user_email,
-    roleIds: applied,
-    roles: applied.map((rid) => roleIdsToNames[rid] ?? rid),
-  };
-}
-
 function ResultFilterButton({
   children,
   className,
@@ -149,7 +133,6 @@ export default function ApplicationSummary({
   dict: any;
 }) {
   const queryClient = useQueryClient();
-  const [sendModalOpen, setSendModalOpen] = useState(false);
 
   const dict = propsDict;
 
@@ -218,12 +201,14 @@ export default function ApplicationSummary({
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [customFilters, setCustomFilters] = useState<FilterConfig[]>([]);
 
-  /// Initialize default filter configurations
-  const defaultFilters = useMemo<FilterConfig[]>(() => [
+  // Initialize default filter configurations
+  const defaultFilters: FilterConfig[] = [
     {
       id: "all",
       label: "All",
       predicate: () => true,
+      color: "bg-gray-200",
+      hoverColor: "hover:bg-gray-300",
       isSpecial: true,
     },
     {
@@ -240,43 +225,21 @@ export default function ApplicationSummary({
       color: "bg-green-100",
       hoverColor: "hover:bg-green-200",
     },
-  ], []);
+  ];
 
-  /// All available filters (default + custom)
+  // All available filters (default + custom)
   const allFilters = useMemo<FilterConfig[]>(
     () => [...defaultFilters, ...customFilters],
     [defaultFilters, customFilters]
   );
 
-  /// Get count for a specific filter
+  // Get count for a specific filter
   const getFilterCount = useCallback(
     (filter: FilterConfig) => allMembers.filter(filter.predicate).length,
     [allMembers]
   );
 
-  /// Get filtered data for current status
-  const filteredMembers = useMemo(() => {
-    const currentFilter = allFilters.find((f) => f.id === statusFilter);
-    if (!currentFilter) return allMembers;
-    return allMembers.filter(currentFilter.predicate);
-  }, [allMembers, statusFilter, allFilters]);
-
-  const acceptedApplicants = useMemo(
-    () =>
-      allMembers
-        .filter((a) => a.private_status === "Successful")
-        .map((a) => toApplicant(a, roleIdsToNames)),
-    [allMembers, roleIdsToNames]
-  );
-  const rejectedApplicants = useMemo(
-    () =>
-      allMembers
-        .filter((a) => a.private_status === "Rejected")
-        .map((a) => toApplicant(a, roleIdsToNames)),
-    [allMembers, roleIdsToNames]
-  );
-
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
     []
   );
 
@@ -291,48 +254,7 @@ export default function ApplicationSummary({
     [dict, roleIdsToNames, ratingCategories, handlePrivateStatusChange]
   );
 
-  /// Create current filter's main table
-  const currentTable = useReactTable({
-    data: filteredMembers,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getExpandedRowModel: getExpandedRowModel(),
-    getRowCanExpand: () => true,
-    onColumnFiltersChange: setColumnFilters,
-    getFilteredRowModel: getFilteredRowModel(),
-    state: {
-      columnFilters,
-    },
-  });
-
-  /// For "All" view, create separate tables for pending/non-pending
-  const tablePending = useReactTable({
-    data: allMembers.filter((a) => a.private_status === "Pending"),
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getExpandedRowModel: getExpandedRowModel(),
-    getRowCanExpand: () => true,
-    onColumnFiltersChange: setColumnFilters,
-    getFilteredRowModel: getFilteredRowModel(),
-    state: {
-      columnFilters,
-    },
-  });
-
-  const tableNonPending = useReactTable({
-    data: allMembers.filter((a) => a.private_status !== "Pending"),
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getExpandedRowModel: getExpandedRowModel(),
-    getRowCanExpand: () => true,
-    onColumnFiltersChange: setColumnFilters,
-    getFilteredRowModel: getFilteredRowModel(),
-    state: {
-      columnFilters,
-    },
-  });
-
-  /// Handle adding a new custom filter
+  // Handle adding a new custom filter
   const handleAddFilter = useCallback(() => {
     const newFilter: FilterConfig = {
       id: `custom-${Date.now()}`,
@@ -344,7 +266,7 @@ export default function ApplicationSummary({
     setCustomFilters((prev) => [...prev, newFilter]);
   }, [customFilters.length]);
 
-  /// Handle removing a custom filter
+  // Handle removing a custom filter
   const handleRemoveFilter = useCallback((filterId: string) => {
     setCustomFilters((prev) => prev.filter((f) => f.id !== filterId));
     if (statusFilter === filterId) {
@@ -392,32 +314,26 @@ export default function ApplicationSummary({
           {dateToString(campaign?.ends_at ?? "")}
         </p>
       </div>
-        
-      <SendEmailsModal
-        open={sendModalOpen}
-        onOpenChange={setSendModalOpen}
-        orgId={orgId}
-        acceptedApplicants={acceptedApplicants}
-        rejectedApplicants={rejectedApplicants}
-        organisationName={campaign?.organisation_name}
-        campaignName={campaign?.name}
-        campaignEndsAt={campaign?.ends_at}
-        onSend={async (payload) => {
-          await queueCampaignOutcomeEmails(campaignId, payload);
-        }}
-      />
 
       <div className="mt-2">
         <div className="flex items-center py-4 gap-2">
           <Select
             value={
-              (currentTable.getColumn("applied_roles")?.getFilterValue() as string) ??
+              (columnFilters.find((f) => f.id === "applied_roles")?.value as string) ??
               "all"
             }
             onValueChange={(value) =>
-              currentTable
-                .getColumn("applied_roles")
-                ?.setFilterValue(value === "all" ? undefined : value)
+              setColumnFilters((prev) => {
+                // Remove existing role filters
+                const newFilters = prev.filter(
+                  (f) => f.id !== "applied_roles" || f.value === "all"
+                );
+                // Add the new role filter
+                if (value !== "all") {
+                  newFilters.push({ id: "applied_roles", value });
+                }
+                return newFilters;
+              })
             }
           >
             <SelectTrigger className="w-[180px]">
@@ -478,16 +394,24 @@ export default function ApplicationSummary({
         <div>
           {statusFilter === "all" ? (
             <ApplicationSummaryDataTableAll
-              tablePending={tablePending}
-              tableNonPending={tableNonPending}
+              columns={columns}
+              data={data ?? []}
+              roles={roles ?? []}
               dict={dict}
-              setSendModalOpen={setSendModalOpen}
+              setColumnFilters={setColumnFilters}
+              columnFilters={columnFilters}
+              orgId={orgId}
+              campaignId={campaignId}
               renderSubComponent={renderSubComponent}
-              acceptedApplicants={acceptedApplicants}
-              rejectedApplicants={rejectedApplicants}
             />
           ) : (
             <ApplicationSummaryDataTable
+              columns={columns}
+              data={data ?? []}
+              roles={roles ?? []}
+              dict={dict}
+              setColumnFilters={setColumnFilters}
+              columnFilters={columnFilters}
               label={
                 allFilters.find((f) => f.id === statusFilter)?.label ||
                 statusFilter
@@ -495,16 +419,12 @@ export default function ApplicationSummary({
               color={
                 allFilters.find((f) => f.id === statusFilter)?.color || ""
               }
-              table={currentTable}
-              dict={dict}
-              setSendModalOpen={setSendModalOpen}
-              acceptedApplicants={acceptedApplicants}
-              rejectedApplicants={rejectedApplicants}
               orgId={orgId}
               campaignId={campaignId}
               renderSubComponent={renderSubComponent}
-            />
-          )}
+              sendEmails={true}
+            />)
+          }
         </div>
       </div>
     </div>
