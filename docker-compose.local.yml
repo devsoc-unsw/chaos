@@ -28,12 +28,14 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_DB: chaos
+    ports:
+      - "5432:5432"
     networks:
       - chaos-network
     volumes:
       - chaos-postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d chaos"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d chaos" ]
       interval: 5s
       timeout: 5s
       retries: 5
