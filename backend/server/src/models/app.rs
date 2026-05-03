@@ -1,6 +1,7 @@
 use crate::handler::answer::AnswerHandler;
 use crate::handler::application::ApplicationHandler;
 use crate::handler::auth::{google_auth_init, google_callback, logout, DevLoginHandler};
+use crate::handler::availabilities::AvailabilitiesHandler;
 use crate::handler::campaign::CampaignHandler;
 use crate::handler::comment::CommentHandler;
 use crate::handler::email_template::EmailTemplateHandler;
@@ -11,6 +12,7 @@ use crate::handler::question::QuestionHandler;
 use crate::handler::rating::RatingHandler;
 use crate::handler::role::RoleHandler;
 use crate::handler::user::UserHandler;
+use crate::models::availabilities::Availability;
 use crate::models::email::{ChaosEmail, EmailCredentials};
 use crate::models::error::ChaosError;
 use crate::models::storage::Storage;
@@ -175,6 +177,11 @@ pub async fn init_app_state() -> AppState {
         is_dev_env,
         email_credentials,
     }
+}
+
+#[derive(Serialize)]
+pub struct AvailabilitiesMessage {
+    pub availabilities: Vec<Availability>,
 }
 
 pub async fn app() -> Result<(Router, AppState), ChaosError> {
@@ -530,6 +537,10 @@ pub async fn app() -> Result<(Router, AppState), ChaosError> {
         .route(
             "/api/v1/invite/:code",
             get(InviteHandler::get).post(InviteHandler::use_invite),
+        )
+        .route(
+            "/api/v1/availabilities/:user_id/:campaign_id",
+            get(AvailabilitiesHandler::get).patch(AvailabilitiesHandler::update),
         )
         .layer(cors)
         .with_state(state);
