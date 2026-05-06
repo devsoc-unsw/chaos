@@ -30,7 +30,7 @@ import ApplicationRatingForm from "./application-rating-form";
 function privateStatusLabel(status: ApplicationStatus): string {
     if (status === "Successful") return "Offer";
     if (status === "Rejected") return "Reject";
-    return "Applied";
+    return "Pending";
 }
 
 export default function ReviewCampaignApplications({
@@ -212,7 +212,12 @@ function SidebarItem({
                 selected && "bg-muted",
             )}
         >
-            <div className="w-5 h-5 rounded-sm bg-emerald-500 shrink-0 mt-0.5" />
+            <div className={cn(
+                "w-5 h-5 rounded-sm shrink-0 mt-0.5",
+                app.private_status === "Rejected" && "bg-red-500",
+                app.private_status === "Successful" && "bg-emerald-500",
+                app.private_status === "Pending" && "bg-yellow-400",
+            )} />
             <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold truncate">{app.user.name}</p>
                 <p className="text-xs text-muted-foreground">
@@ -286,7 +291,7 @@ function ApplicationPanel({
                                 <SelectValue placeholder="Decision" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="Pending">Applied</SelectItem>
+                                <SelectItem value="Pending">Pending</SelectItem>
                                 <SelectItem value="Successful">Offer</SelectItem>
                                 <SelectItem value="Rejected">Reject</SelectItem>
                             </SelectContent>

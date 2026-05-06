@@ -15,6 +15,34 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
+
+function StarDisplay({ value }: { value: number }) {
+    return (
+        <div className="flex gap-0.5">
+            {[1, 2, 3, 4, 5].map((star) => (
+                <svg
+                    key={star}
+                    className={cn(
+                        "w-4 h-4",
+                        star <= value
+                            ? "text-yellow-400 fill-yellow-400"
+                            : "fill-none text-muted-foreground",
+                    )}
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                >
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
+                    />
+                </svg>
+            ))}
+        </div>
+    );
+}
 
 function StarRow({ value, onChange }: { value: number; onChange: (v: number) => void }) {
     return (
@@ -180,6 +208,39 @@ export default function ApplicationRatingForm({
             <Button disabled={!hasChanges} onClick={handleSubmit}>
                 Submit
             </Button>
+
+            {hasRated && originalRating && (
+                <>
+                    <Separator />
+                    <div className="flex flex-col gap-3">
+                        <div className="flex items-center justify-between">
+                            <p className="text-sm font-semibold">Your rating</p>
+                            <p className="text-xs text-muted-foreground">
+                                {new Date(originalRating.updated_at).toLocaleDateString(undefined, {
+                                    day: "numeric",
+                                    month: "short",
+                                    year: "numeric",
+                                })}
+                            </p>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            {originalRating.category_ratings
+                                .filter((cr) => cr.rating !== null)
+                                .map((cr) => (
+                                    <div key={cr.id} className="flex items-center justify-between">
+                                        <p className="text-sm text-muted-foreground">{cr.category_name}</p>
+                                        <StarDisplay value={cr.rating!} />
+                                    </div>
+                                ))}
+                        </div>
+                        {originalRating.comment && (
+                            <p className="text-sm text-muted-foreground italic border-l-2 pl-3">
+                                {originalRating.comment}
+                            </p>
+                        )}
+                    </div>
+                </>
+            )}
         </div>
     );
 }
