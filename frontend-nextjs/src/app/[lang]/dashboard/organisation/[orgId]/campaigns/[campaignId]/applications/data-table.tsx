@@ -82,9 +82,7 @@ export function ApplicationSummaryDataTable<
   };
 
   const filteredMembers = useMemo(() => {
-    const result = data.filter((m) => m.private_status === label);
-    if (result.length === 0) return data;
-    return result;
+    return data.filter((m) => m.private_status === label);
   }, [data, label]);
 
   const table = useReactTable<TData>({
