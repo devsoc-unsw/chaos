@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
+import { getCurrentUser } from "@/lib";
 
 function StarDisplay({ value }: { value: number }) {
     return (
@@ -97,12 +98,17 @@ export default function ApplicationRatingForm({
         queryFn: () => getRatingCategories(campaignId),
     });
 
+    const { data: currentUser } = useQuery({
+        queryKey: ["user"],
+        queryFn: () => getCurrentUser(),
+    });
+
     const { data: applicationRating } = useQuery({
         queryKey: [`${applicationId}-application-rating`],
         queryFn: () => getCategoryRatingsByApplication(applicationId),
     });
 
-    const originalRating = applicationRating?.[0];
+    const originalRating = applicationRating?.find((r) => r.rater_id === currentUser?.id);
     const hasRated = originalRating !== undefined;
 
     const [categoryRatings, setCategoryRatings] = useState<NewCategoryRating[]>([]);
@@ -122,7 +128,7 @@ export default function ApplicationRatingForm({
             setCategoryRatings([]);
         }
         setComment(undefined);
-    }, [applicationId, applicationRating]);
+    }, [applicationId, applicationRating, currentUser?.id]);
 
     const getCategoryRatingValue = (categoryId: string): number => {
         const local = categoryRatings.find((cr) => cr.campaign_rating_category_id === categoryId);
@@ -179,6 +185,8 @@ export default function ApplicationRatingForm({
     };
 
     const hasChanges = categoryRatings.length > 0 || comment !== undefined;
+    // other users' ratings for the same application, excluding the our current user's rating
+    const otherRatings = applicationRating?.filter((r) => r.rater_id !== currentUser?.id) ?? [];
 
     return (
         <div className="flex flex-col gap-6">
@@ -238,6 +246,44 @@ export default function ApplicationRatingForm({
                                 {originalRating.comment}
                             </p>
                         )}
+                    </div>
+                </>
+            )}
+
+            {otherRatings.length > 0 && (
+                <>
+                    <Separator />
+                    <div className="flex flex-col gap-4">
+                        <p className="text-sm font-semibold">Team ratings</p>
+                        {otherRatings.map((rating) => (
+                            <div key={rating.id} className="flex flex-col gap-2">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-sm font-medium">{rating.rater_name}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {new Date(rating.updated_at).toLocaleDateString(undefined, {
+                                            day: "numeric",
+                                            month: "short",
+                                            year: "numeric",
+                                        })}
+                                    </p>
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                    {rating.category_ratings
+                                        .filter((cr) => cr.rating !== null)
+                                        .map((cr) => (
+                                            <div key={cr.id} className="flex items-center justify-between">
+                                                <p className="text-sm text-muted-foreground">{cr.category_name}</p>
+                                                <StarDisplay value={cr.rating!} />
+                                            </div>
+                                        ))}
+                                </div>
+                                {rating.comment && (
+                                    <p className="text-sm text-muted-foreground italic border-l-2 pl-3">
+                                        {rating.comment}
+                                    </p>
+                                )}
+                            </div>
+                        ))}
                     </div>
                 </>
             )}
