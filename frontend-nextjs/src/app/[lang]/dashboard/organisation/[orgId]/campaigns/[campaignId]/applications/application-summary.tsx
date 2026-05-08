@@ -40,23 +40,9 @@ interface FilterConfig {
 import {
   ColumnDef,
   ColumnFiltersState,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getExpandedRowModel,
-  useReactTable,
 } from "@tanstack/react-table";
-import {
-  mockCampaign,
-  mockRoles,
-  mockRatingCategories,
-  mockApplicationRatingSummary,
-  mockDict,
-} from "@/mocks/application-summary.mock";
 import { ApplicationSummaryDataTableAll } from "./data-table-all";
-import { ApplicationSummaryDataTableOffered } from "./data-table-offered";
 
-// Toggle this flag to use mock data instead of API calls
-const USE_MOCK_DATA = true;
 
 export function RatingsShelf({
   columns,
@@ -138,14 +124,12 @@ export default function ApplicationSummary({
 
   const { data: campaign } = useQuery({
     queryKey: [`${campaignId}-campaign-details`],
-    queryFn: () =>
-      USE_MOCK_DATA ? Promise.resolve(mockCampaign) : getCampaign(campaignId),
+    queryFn: () => getCampaign(campaignId),
   });
 
   const { data: roles } = useQuery({
     queryKey: [`${campaignId}-campaign-roles`],
-    queryFn: () =>
-      USE_MOCK_DATA ? Promise.resolve(mockRoles) : getCampaignRoles(campaignId),
+    queryFn: () => getCampaignRoles(campaignId),
   });
 
   const roleIdsToNames = useMemo(() => {
@@ -159,18 +143,12 @@ export default function ApplicationSummary({
 
   const { data } = useQuery({
     queryKey: [`${campaignId}-application-ratings-summary`],
-    queryFn: () =>
-      USE_MOCK_DATA
-        ? Promise.resolve(mockApplicationRatingSummary)
-        : getApplicationRatingsSummary(campaignId),
+    queryFn: () => getApplicationRatingsSummary(campaignId),
   });
 
   const { data: ratingCategories } = useQuery({
     queryKey: [`${campaignId}-rating-categories`],
-    queryFn: () =>
-      USE_MOCK_DATA
-        ? Promise.resolve(mockRatingCategories)
-        : getRatingCategories(campaignId),
+    queryFn: () => getRatingCategories(campaignId),
   });
 
   const { mutateAsync: mutatePrivateStatus } = useMutation({
