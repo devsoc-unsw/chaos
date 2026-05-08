@@ -26,6 +26,7 @@ import { ArrowLeft, Trash2, Play, MessageSquare, Form } from "lucide-react";
 import Link from "next/link";
 import ApplicationDetailsComponent from "./application-details";
 import ApplicationRatingForm from "./application-rating-form";
+import ApplicationDiscussionPanel from "./application-discussion-panel";
 
 function privateStatusLabel(status: ApplicationStatus): string {
     if (status === "Successful") return "Offer";
@@ -250,6 +251,7 @@ function ApplicationPanel({
     onDecision: (appId: string, status: ApplicationStatus) => void;
 }) {
     const [activeTab, setActiveTab] = useState<"application" | "review">("application");
+    const [discussionOpen, setDiscussionOpen] = useState(false);
     const sortedRoles = [...app.applied_roles].sort((a, b) => a.preference - b.preference);
     const [selectedRoleId, setSelectedRoleId] = useState<string | null>(
         sortedRoles[0]?.campaign_role_id ?? null
@@ -340,9 +342,17 @@ function ApplicationPanel({
                         </button>
                     ))}
                 </div>
-                <Button variant="ghost" size="sm" className="text-muted-foreground gap-1.5">
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setDiscussionOpen((o) => !o)}
+                    className={cn(
+                        "gap-1.5 transition-colors",
+                        discussionOpen ? "text-foreground" : "text-muted-foreground",
+                    )}
+                >
                     <MessageSquare className="w-4 h-4" />
-                    Comment
+                    Discussion
                 </Button>
             </div>
 
@@ -370,6 +380,13 @@ function ApplicationPanel({
                     </ScrollArea>
                 )}
             </div>
+
+            {discussionOpen && (
+                <ApplicationDiscussionPanel
+                    applicationId={app.id}
+                    onClose={() => setDiscussionOpen(false)}
+                />
+            )}
         </div>
     );
 }
