@@ -42,6 +42,7 @@ interface DataTableProps<TData, TValue> {
     color: string;
     label: string;
     sendEmails?: boolean;
+    skipStatusFilter?: boolean;
 }
 
 function toApplicant(
@@ -74,6 +75,7 @@ export function ApplicationSummaryDataTable<
   color,
   label,
   sendEmails,
+  skipStatusFilter,
 }: DataTableProps<TData, TValue>) {
   const router = useRouter();
   const colorMap: Record<string, string> = {
@@ -82,8 +84,9 @@ export function ApplicationSummaryDataTable<
   };
 
   const filteredMembers = useMemo(() => {
+    if (skipStatusFilter) return data;
     return data.filter((m) => m.private_status === label);
-  }, [data, label]);
+  }, [data, label, skipStatusFilter]);
 
   const table = useReactTable<TData>({
     data: filteredMembers,

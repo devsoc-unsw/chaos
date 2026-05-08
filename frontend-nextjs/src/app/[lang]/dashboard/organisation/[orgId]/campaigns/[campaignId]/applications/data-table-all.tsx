@@ -39,6 +39,7 @@ export function ApplicationSummaryDataTableAll<TData, TValue>({
         setColumnFilters={setColumnFilters}
         columnFilters={columnFilters}
         label="To Review"
+        skipStatusFilter
         color="bg-gray-200"
         orgId={orgId}
         campaignId={campaignId}
@@ -47,6 +48,7 @@ export function ApplicationSummaryDataTableAll<TData, TValue>({
 
       <ApplicationSummaryDataTable
         label="Review"
+        skipStatusFilter
         color="bg-gray-200"
         dict={dict}
         renderSubComponent={renderSubComponent}
