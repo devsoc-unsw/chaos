@@ -108,9 +108,6 @@ export default function ReviewCampaignApplications({
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" aria-label="Delete">
-                        <Trash2 className="w-4 h-4" />
-                    </Button>
                     <Button variant="outline" size="sm" onClick={handleNext}>
                         <Play className="w-3 h-3 mr-1 fill-current" />
                         Next

@@ -1,7 +1,6 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { useEffect, useState } from "react";
 
 import { ChevronDown, ChevronRight } from "lucide-react";
 
@@ -143,22 +142,11 @@ function PrivateStatusCell({
     dict: any;
     onPrivateStatusChange: (applicationId: string, status: ApplicationStatus) => Promise<void>;
 }) {
-    const [value, setValue] = useState<ApplicationStatus>(app.private_status ?? "Pending");
-    console.log(app);
-    useEffect(() => {
-        setValue(app.private_status ?? "Pending");
-    }, [app.private_status]);
-
-    const handleChange = async (newValue: ApplicationStatus) => {
-        setValue(newValue);
-        await onPrivateStatusChange(app.application_id, newValue);
-    };
-
     return (
         <div className="w-[140px]">
             <Select
-                value={value}
-                onValueChange={(v: ApplicationStatus) => handleChange(v)}
+                value={app.private_status ?? "Pending"}
+                onValueChange={(v: ApplicationStatus) => onPrivateStatusChange(app.application_id, v)}
             >
                 <SelectTrigger>
                     <SelectValue />
