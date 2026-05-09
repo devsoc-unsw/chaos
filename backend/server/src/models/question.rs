@@ -61,6 +61,8 @@ pub struct Question {
     pub roles: Vec<i64>, // (Possibly empty) list of roles the question is for
     pub required: bool,
 
+    pub short_answer_word_limit: Option<i32>,
+
     #[serde(flatten)]
     pub question_data: QuestionData,
 

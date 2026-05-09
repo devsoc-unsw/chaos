@@ -104,7 +104,7 @@ export default function CampaignQuestions({ campaignId, orgId, dict }: { campaig
     const addNewQuestion = async (type: QuestionType, roleId: string) => {
         const common = roleId === "common";
 
-        let newQuestion: Question = { id: snowflakeGenerator.generate().toString(), title: "", description: "", roles: common ? [] : [roleId], created_at: new Date().toISOString(), updated_at: new Date().toISOString(), question_type: type, data: { options: [{ id: snowflakeGenerator.generate().toString(), display_order: 1, text: "Default Option" }] }, common, required: false };
+        let newQuestion: Question = { id: snowflakeGenerator.generate().toString(), title: "", description: "", roles: common ? [] : [roleId], created_at: new Date().toISOString(), updated_at: new Date().toISOString(), question_type: type, data: { options: [{ id: snowflakeGenerator.generate().toString(), display_order: 1, text: "Default Option" }] }, common, required: false, short_answer_word_limit: null };
         if (type === 'ShortAnswer') {
             delete (newQuestion as any).data;
         }
@@ -482,6 +482,13 @@ function OptionDecorator({ questionType, index }: { questionType: string, index:
 function ShortAnswerQuestionCard({ question, currentRole, possibleRole, handleQuestionUpdate, dict }: { question?: Question, currentRole: string, possibleRole?: RoleDetails, handleQuestionUpdate: (action: "update" | "delete", question: Question) => Promise<void>, dict: any }) {
     const [title, setTitle] = useState(question?.title ?? "");
     const [required, setRequired] = useState(question?.required ?? false);
+    const [wordLimit, setWordLimit] = useState<number | null>(question?.short_answer_word_limit ?? null);
+
+    const updateWordLimit = async (value: string) => {
+        const parsed = value === "" ? null : parseInt(value, 10);
+        setWordLimit(parsed);
+        await handleQuestionUpdate('update', { ...question!, short_answer_word_limit: parsed });
+    };
 
     const updateTitle = async (title: string) => {
         setTitle(title);
@@ -534,6 +541,17 @@ function ShortAnswerQuestionCard({ question, currentRole, possibleRole, handleQu
                 }
                 <Button variant="destructive" onClick={handleDeleteQuestion}><Trash className="w-4 h-4" /></Button>
                 </div>
+            </div>
+            <div className="flex items-center gap-2 p-2">
+                <label className="text-sm text-gray-500 whitespace-nowrap">Word limit</label>
+                <Input
+                    type="text"
+                    inputMode="numeric"
+                    className="max-w-[120px]"
+                    placeholder="None"
+                    value={wordLimit ?? ""}
+                    onChange={(e) => updateWordLimit(e.target.value.replace(/[^0-9]/g, ""))}
+                />
             </div>
             <div className="flex flex-col gap-1 p-2">
                 <div className="border-b-2 border-dotted border-gray-500 max-w-[300px]">
