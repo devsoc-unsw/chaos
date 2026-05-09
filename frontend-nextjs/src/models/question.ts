@@ -8,6 +8,7 @@ export interface Question {
     common: boolean,
     roles: string[],
     required: boolean,
+    short_answer_word_limit: number | null,
     question_type: QuestionType,
     data: QuestionData,
     created_at: string,
