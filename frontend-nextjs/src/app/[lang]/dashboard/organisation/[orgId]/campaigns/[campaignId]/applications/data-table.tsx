@@ -42,6 +42,7 @@ interface DataTableProps<TData, TValue> {
     color: string;
     label: string;
     sendEmails?: boolean;
+    skipStatusFilter?: boolean;
 }
 
 function toApplicant(
@@ -74,6 +75,7 @@ export function ApplicationSummaryDataTable<
   color,
   label,
   sendEmails,
+  skipStatusFilter,
 }: DataTableProps<TData, TValue>) {
   const router = useRouter();
   const colorMap: Record<string, string> = {
@@ -81,11 +83,17 @@ export function ApplicationSummaryDataTable<
     'bg-red-100': 'border-red-100',
   };
 
+  const STATUS_ORDER: Record<string, number> = { Pending: 0, Successful: 1, Rejected: 2 };
+  const [sortBy, setSortBy] = useState<"decision" | "name">("decision");
+
+  // Filter and sort data based on status and selected sort option
   const filteredMembers = useMemo(() => {
-    const result = data.filter((m) => m.private_status === label);
-    if (result.length === 0) return data;
-    return result;
-  }, [data, label]);
+    const filtered = skipStatusFilter ? data : data.filter((m) => m.private_status === label);
+    return [...filtered].sort((a, b) => {
+      if (sortBy === "name") return a.user_name.localeCompare(b.user_name);
+      return (STATUS_ORDER[a.private_status] ?? 99) - (STATUS_ORDER[b.private_status] ?? 99);
+    });
+  }, [data, label, skipStatusFilter, sortBy]);
 
   const table = useReactTable<TData>({
     data: filteredMembers,
@@ -180,7 +188,7 @@ export function ApplicationSummaryDataTable<
           {label === "To Review" && <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 text-sm text-foreground">
               <span>Sort by:</span>
-              <Select defaultValue="decision">
+              <Select value={sortBy} onValueChange={(v) => setSortBy(v as "decision" | "name")}>
                 <SelectTrigger className="h-auto w-14 border-0 shadow-none bg-transparent p-0 focus:ring-0 text-sm underline [&_svg]:hidden">
                   <SelectValue/>
                 </SelectTrigger>
