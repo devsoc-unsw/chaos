@@ -37,6 +37,7 @@ export interface QuestionAndAnswer {
     answer: AnswerValue,
     question_type: QuestionType,
     required: boolean,
+    short_answer_word_limit: number | null,
     options: MultiOptionQuestionOption[],
     description: string | null,
 }
@@ -135,6 +136,7 @@ export function linkQuestionsAndAnswers(questions: Question[], answers: Answer[]
             answer: processedAnswer,
             question_type: question.question_type,
             required: question.required,
+            short_answer_word_limit: question.short_answer_word_limit,
             options: question.data?.options,
             description: question?.description,
         };

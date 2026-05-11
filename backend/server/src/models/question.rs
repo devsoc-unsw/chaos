@@ -446,6 +446,7 @@ impl Question {
         common: bool,
         roles: Vec<i64>,
         required: bool,
+        short_answer_word_limit: Option<i32>,
         question_data: QuestionData,
         transaction: &mut Transaction<'_, Postgres>,
         snowflake_generator: &mut SnowflakeIdGenerator,
@@ -457,7 +458,9 @@ impl Question {
             r#"
                 UPDATE questions SET
                     title = $2, description = $3, common = $4,
-                    required = $5, question_type = $6, updated_at = $7
+                    required = $5, question_type = $6, updated_at = $7,
+                    short_answer_word_limit = $8
+
                 WHERE id = $1
                 RETURNING question_type AS "question_type: QuestionType"
             "#,
@@ -467,7 +470,8 @@ impl Question {
             common,
             required,
             QuestionType::from_question_data(&question_data) as QuestionType,
-            Utc::now()
+            Utc::now(),
+            short_answer_word_limit
         )
         .fetch_one(transaction.deref_mut())
         .await?;
