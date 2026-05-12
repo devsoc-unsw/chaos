@@ -43,6 +43,7 @@ interface DataTableProps<TData, TValue> {
     label: string;
     sendEmails?: boolean;
     skipStatusFilter?: boolean;
+    showOfferStatus?: boolean;
 }
 
 function toApplicant(
@@ -76,6 +77,7 @@ export function ApplicationSummaryDataTable<
   label,
   sendEmails,
   skipStatusFilter,
+  showOfferStatus
 }: DataTableProps<TData, TValue>) {
   const router = useRouter();
   const colorMap: Record<string, string> = {

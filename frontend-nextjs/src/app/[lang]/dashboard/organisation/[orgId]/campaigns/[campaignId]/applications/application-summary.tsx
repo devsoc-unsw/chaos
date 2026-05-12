@@ -42,6 +42,7 @@ import {
   ColumnFiltersState,
 } from "@tanstack/react-table";
 import { ApplicationSummaryDataTableAll } from "./data-table-all";
+import { ApplicationSummaryDataTableOffered } from "./data-table-offered";
 
 
 export function RatingsShelf({
@@ -252,9 +253,9 @@ export default function ApplicationSummary({
         dict,
         roleIdsToNames,
         ratingCategories ?? [],
-        handlePrivateStatusChange
+        handlePrivateStatusChange,
       ),
-    [dict, roleIdsToNames, ratingCategories, handlePrivateStatusChange]
+    [dict, roleIdsToNames, ratingCategories, handlePrivateStatusChange, statusFilter]
   );
 
   // Handle adding a new custom filter
@@ -396,6 +397,18 @@ export default function ApplicationSummary({
         <div>
           {statusFilter === "all" ? (
             <ApplicationSummaryDataTableAll
+              columns={columns}
+              data={data ?? []}
+              roles={roles ?? []}
+              dict={dict}
+              setColumnFilters={setColumnFilters}
+              columnFilters={columnFilters}
+              orgId={orgId}
+              campaignId={campaignId}
+              renderSubComponent={renderSubComponent}
+            />
+          ) : statusFilter === "successful" ? (
+            <ApplicationSummaryDataTableOffered
               columns={columns}
               data={data ?? []}
               roles={roles ?? []}

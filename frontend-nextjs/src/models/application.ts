@@ -2,6 +2,7 @@ import { apiRequest } from "@/lib";
 import { UserDetails } from "./user";
 import { AppMessage } from "./app";
 import { RatingDetails } from "./rating";
+import { Offer } from "./offer";
 
 export interface ApplicationDetails {
   id: string;
@@ -83,6 +84,14 @@ export async function submitApplication(applicationId: string) {
   });
 }
 
+// Decision per port (by role_id)
+export type RoleDecision = {
+  application_id: string;
+  role_id: string;
+  status: ApplicationStatus;
+  updated_at: string;
+};
+
 export interface ApplicationRatingSummary {
   application_id: string;
   applied_roles: string[];
@@ -92,6 +101,8 @@ export interface ApplicationRatingSummary {
   private_status: ApplicationStatus;
   updated_at: string;
   ratings: RatingDetails[];
+  role_decisions?: RoleDecision[];
+  role_offer?: Offer | null;
 }
 
 export async function getApplicationRatingsSummary(
