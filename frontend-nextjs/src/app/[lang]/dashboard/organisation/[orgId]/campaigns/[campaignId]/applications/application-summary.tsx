@@ -69,7 +69,7 @@ export function RatingsShelf({
     <>
       {ratings.map((rating) => (
         <TableRow key={rating.id}>
-          <TableCell className="align-top" colSpan={4}>
+          <TableCell className="align-top" colSpan={3}>
             <span className="font-medium">{rating.rater_name}</span>
             <p className="text-sm text-gray-700">{rating.comment}</p>
           </TableCell>
