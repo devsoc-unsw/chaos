@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 function ApplicantLinkCell({ app }: { app: ApplicationRatingSummary }) {
   const pathname = usePathname();
@@ -133,6 +134,12 @@ export function getColumns(
     ];
 }
 
+const STATUS_BACKGROUND_COLORS: Record<ApplicationStatus | "Pending", string> = {
+    "Successful": "bg-green-100 border-green-300",
+    "Rejected": "bg-red-100 border-red-300",
+    "Pending": "bg-gray-100 border-gray-300",
+};
+
 function PrivateStatusCell({
     app,
     dict,
@@ -142,13 +149,15 @@ function PrivateStatusCell({
     dict: any;
     onPrivateStatusChange: (applicationId: string, status: ApplicationStatus) => Promise<void>;
 }) {
+    const status = (app.private_status ?? "Pending") as ApplicationStatus | "Pending";
+    
     return (
         <div className="w-[140px]">
             <Select
-                value={app.private_status ?? "Pending"}
+                value={status}
                 onValueChange={(v: ApplicationStatus) => onPrivateStatusChange(app.application_id, v)}
             >
-                <SelectTrigger>
+                <SelectTrigger className={cn(STATUS_BACKGROUND_COLORS[status], "")}>
                     <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
