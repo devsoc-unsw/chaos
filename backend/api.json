@@ -1447,6 +1447,11 @@
                       "type": "string",
                       "example": "2d19617b-46fd-4927-9f53-77d69232ba5d"
                     },
+                    "cover_image_url": {
+                      "type": "string",
+                      "description": "Time-limited presigned URL to download the banner when cover_image is set",
+                      "nullable": true
+                    },
                     "description": {
                       "type": "string",
                       "example": "Are you excited to make a difference?"

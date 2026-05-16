@@ -75,9 +75,9 @@ export default function ReviewCampaignApplications({ campaignId, orgId, dict }: 
 
             {/* Application review component */}
             <ResizablePanelGroup direction="horizontal">
-                <div className="flex w-full min-h-[50vh] rounded-lg border overflow-hidden max-h-[80vh] mb-10">
+                <div className="flex w-full h-[80vh] rounded-lg border overflow-hidden max-h-[80vh] mb-10">
                     <ResizablePanel defaultSize={20}>
-                        <div className="">
+                        <div className="h-full min-h-0">
                             <ScrollArea className="h-full">
                                 {applications?.map((application: ApplicationDetails) => (
                                     <div

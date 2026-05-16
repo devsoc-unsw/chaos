@@ -120,11 +120,19 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
         processMarkdown();
     }, [campaign?.description]);
 
+    const existingBannerSrc =
+        campaign?.cover_image_url ||
+        (campaign?.cover_image && /^https?:\/\//i.test(campaign.cover_image)
+            ? campaign.cover_image
+            : null) ||
+        "/placeholder.svg";
+
+
     return (
 
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8 animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
             <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
-                <img className="w-full max-h-52 object-cover" src={"/placeholder.svg"} alt={`${campaign?.name} cover image`} />
+                <img className="w-full max-h-52 object-cover" src={existingBannerSrc} alt={`${campaign?.name} cover image`} />
                 <div className="flex flex-col gap-3 border-t px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                     <div className="flex flex-col gap-1">
                         <h1 className="text-2xl font-semibold tracking-tight text-gray-900">

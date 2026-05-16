@@ -48,7 +48,7 @@ export default function CampaignNewForm({ orgId, dict }: { orgId: string, dict: 
         const campaignId = res.id;
         const bannerUpdate = await setCampaignCoverImage(campaignId);
         
-        uploadFile(bannerUpdate.upload_url, selectedImage);
+        await uploadFile(bannerUpdate.upload_url, selectedImage);
 
         await queryClient.invalidateQueries({ queryKey: [`${orgId}-campaigns`] });
         await createCategory('general', campaignId);

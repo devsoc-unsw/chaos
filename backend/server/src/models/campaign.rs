@@ -116,6 +116,16 @@ pub struct CampaignDetails {
     pub max_roles_per_application: Option<i32>,
 }
 
+/// API view of [`CampaignDetails`] with a time-limited URL to fetch the banner from object storage.
+#[derive(Serialize)]
+pub struct CampaignDetailsResponse {
+    #[serde(flatten)]
+    pub campaign: CampaignDetails,
+    /// Presigned GET URL when `cover_image` is set (short-lived; see `Storage::generate_get_url`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cover_image_url: Option<String>,
+}
+
 /// Simplified view of a campaign for organization listings.
 ///
 /// Contains only the essential information needed when displaying campaigns
@@ -280,6 +290,20 @@ pub struct AttachmentUpload {
 }
 
 impl Campaign {
+    /// Returns a presigned GET URL for the banner object at `/banner/{campaign_id}/{cover_image}`, if any.
+    pub async fn cover_image_presigned_get_url(
+        campaign_id: i64,
+        cover_image: Option<Uuid>,
+        bucket: &Bucket,
+    ) -> Result<Option<String>, ChaosError> {
+        match cover_image {
+            Some(uuid) => Ok(Some(
+                Storage::generate_get_url(format!("/banner/{campaign_id}/{uuid}"), bucket).await?,
+            )),
+            None => Ok(None),
+        }
+    }
+
     /// Retrieves all campaigns in the system.
     ///
     /// # Arguments
@@ -526,26 +550,46 @@ impl Campaign {
         if campaign.published {
             return Err(ChaosError::BadRequest);
         }
+    
         let dt = Utc::now();
-        let image_id = Uuid::new_v4();
+    
+        // Reuse existing image_id if present, otherwise generate a new one
+        let image_id = campaign.cover_image.unwrap_or_else(Uuid::new_v4);
+    
         let current_time = dt;
-
-        sqlx::query!(
-            "
-                UPDATE campaigns
-                SET cover_image = $1, updated_at = $2
-                WHERE id = $3 RETURNING id
-            ",
-            image_id,
-            current_time,
-            id
-        )
-        .fetch_one(transaction.deref_mut())
-        .await?;
-
+    
+        // Only update if it's a new image_id (optional optimization)
+        if campaign.cover_image.is_none() {
+            _ = sqlx::query!(
+                "
+                    UPDATE campaigns
+                    SET cover_image = $1, updated_at = $2
+                    WHERE id = $3
+                ",
+                image_id,
+                current_time,
+                id
+            )
+            .execute(transaction.deref_mut())
+            .await?;
+        } else {
+            // Use the existing image_id
+            _ = sqlx::query!(
+                "
+                    UPDATE campaigns
+                    SET updated_at = $1
+                    WHERE id = $2
+                ",
+                current_time,
+                id
+            )
+            .execute(transaction.deref_mut())
+            .await?;
+        }
+    
         let upload_url =
             Storage::generate_put_url(format!("/banner/{id}/{image_id}"), storage_bucket).await?;
-
+    
         Ok(CampaignBannerUpdate { upload_url })
     }
 

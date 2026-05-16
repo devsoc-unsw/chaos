@@ -22,7 +22,7 @@ export default function TabSwitcher({
   const canGoNext = currentIndex >= 0 && currentIndex < tabOrder.length - 1;
 
   return (
-    <div className="absolute bottom-0 left-0 z-10 flex items-center gap-1 p-4">
+    <div className="absolute bottom-0 left-0 z-10 md:flex hidden items-center gap-1 p-4">
       <button
         aria-label="Previous tab"
         disabled={!canGoPrev}
