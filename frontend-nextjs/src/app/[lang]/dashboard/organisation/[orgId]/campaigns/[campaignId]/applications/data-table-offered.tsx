@@ -41,7 +41,7 @@ export function ApplicationSummaryDataTableOffered<TData, TValue>({
     return {
       ...app,
       offer_role: offer ? offer.role_name : null,
-      offer_status: offer ? offer.status : null,
+      offer_status: offer ? offer.status : "Draft",
     };
   });
 
@@ -66,7 +66,7 @@ export function ApplicationSummaryDataTableOffered<TData, TValue>({
       <ApplicationSummaryDataTable
         label="Outcome"
         color="bg-green-100"
-        data={combinedData}
+        data={combinedData.filter((app) => app.offer_status !== null) ?? []}
         dict={dict}
         renderSubComponent={renderSubComponent}
         columns={columns}
