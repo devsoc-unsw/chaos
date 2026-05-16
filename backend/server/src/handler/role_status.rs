@@ -25,7 +25,7 @@ impl RoleStatusHandler {
     ///
     /// # Returns
     /// A success message.
-    pub async fn create_comment(
+    pub async fn update_role_status(
         Path(application_id): Path<i64>,
         Path(campaign_role_id): Path<i64>,
         // TODO: Replace the AuthUser extractor with something that enforces the desired permissions.
