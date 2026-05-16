@@ -179,10 +179,13 @@ pub struct ApplicationRoleUpdate {
 #[sqlx(type_name = "application_status", rename_all = "PascalCase")]
 pub enum ApplicationStatus {
     /// Application is pending review
+    #[serde(alias = "pending")]
     Pending,
     /// Application has been rejected
+    #[serde(alias = "rejected")]
     Rejected,
     /// Application has been successful
+    #[serde(alias = "successful")]
     Successful,
 }
 

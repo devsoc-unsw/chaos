@@ -8,6 +8,13 @@ use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Postgres, Transaction};
 use std::ops::DerefMut;
 
+/// Data structure for updating a user's per-campaign-role status.
+#[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
+pub struct UpdateRoleStatus {
+    /// The new status of the applicant for the specified campaign role.
+    pub status: ApplicationStatus,
+}
+
 /// An applicant's status for a specific role.
 #[derive(Deserialize, Serialize, Clone, FromRow, Debug)]
 pub struct RoleStatus {
@@ -30,7 +37,7 @@ impl RoleStatus {
     /// * `new_status` - The new status for this applicant in this particular role.
     /// * `transaction` - Database transaction to use.
     ///
-    pub async fn create(
+    pub async fn update_status(
         application_id: i64,
         campaign_role_id: i64,
         new_status: ApplicationStatus,
