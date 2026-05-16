@@ -44,7 +44,6 @@ import {
 import { ApplicationSummaryDataTableAll } from "./data-table-all";
 import { ApplicationSummaryDataTableOffered } from "./data-table-offered";
 import { SendEmailsApplicant } from "./send-email-modal";
-import { OfferDetails } from "@/models/offer";
 
 export function RatingsShelf({
   columns,

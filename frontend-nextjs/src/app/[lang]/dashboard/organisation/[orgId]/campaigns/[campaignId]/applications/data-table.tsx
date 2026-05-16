@@ -2,7 +2,7 @@
 
 import React, { Dispatch, SetStateAction, useState } from "react";
 import { useRouter } from "next/navigation";
-import { 
+import {
   ColumnDef,
   ColumnFiltersState,
   Row,
@@ -11,7 +11,7 @@ import {
   getFilteredRowModel,
   getExpandedRowModel,
   useReactTable,
- } from "@tanstack/react-table";
+} from "@tanstack/react-table";
 import { Menu, Send } from "lucide-react";
 import {
   Table as TableWrapper,
@@ -23,27 +23,27 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getCampaign, RoleDetails } from "@/models/campaign";
+import { getCampaign } from "@/models/campaign";
 import { SendEmailsApplicant, SendEmailsModal } from "./send-email-modal";
 import { useQuery } from "@tanstack/react-query";
 import { queueCampaignOutcomeEmails } from "@/models/email";
 
 interface DataTableProps<TData, TValue> {
-    columns: ColumnDef<TData, TValue>[];
-    data: TData[];
-    dict: any;
-    setColumnFilters: Dispatch<SetStateAction<ColumnFiltersState>>;
-    columnFilters: ColumnFiltersState;
-    renderSubComponent?: (props: { row: Row<TData> }) => React.ReactNode;
-    orgId: string;
-    campaignId: string;
-    color: string;
-    label: string;
-    sendEmails?: boolean;
-    acceptedApplicants?: SendEmailsApplicant[];
-    rejectedApplicants?: SendEmailsApplicant[];
-    sortBy?: "decision" | "name";
-    setSortBy?: Dispatch<SetStateAction<"decision" | "name">>;
+  columns: ColumnDef<TData, TValue>[];
+  data: TData[];
+  dict: any;
+  setColumnFilters: Dispatch<SetStateAction<ColumnFiltersState>>;
+  columnFilters: ColumnFiltersState;
+  renderSubComponent?: (props: { row: Row<TData> }) => React.ReactNode;
+  orgId: string;
+  campaignId: string;
+  color: string;
+  label: string;
+  sendEmails?: boolean;
+  acceptedApplicants?: SendEmailsApplicant[];
+  rejectedApplicants?: SendEmailsApplicant[];
+  sortBy?: "decision" | "name";
+  setSortBy?: Dispatch<SetStateAction<"decision" | "name">>;
 }
 
 export function ApplicationSummaryDataTable<
@@ -104,20 +104,20 @@ export function ApplicationSummaryDataTable<
         <div className="flex mb-2">
           {/* Send Outcome Emails Button */}
           {sendEmails && (
-          <>
-            <Button
-              variant="outline"
-              onClick={() => setSendModalOpen(true)}
-              className="gap-2"
-              disabled={
-                acceptedApplicants.length === 0 && rejectedApplicants.length === 0
-              }
-            >
-              <Send className="size-4" />
-              {dict.dashboard.campaigns.send_outcome_emails ??
-                "Send outcome emails"}
-            </Button>
-            <SendEmailsModal
+            <>
+              <Button
+                variant="outline"
+                onClick={() => setSendModalOpen(true)}
+                className="gap-2"
+                disabled={
+                  acceptedApplicants.length === 0 && rejectedApplicants.length === 0
+                }
+              >
+                <Send className="size-4" />
+                {dict.dashboard.campaigns.send_outcome_emails ??
+                  "Send outcome emails"}
+              </Button>
+              <SendEmailsModal
                 open={sendModalOpen}
                 onOpenChange={setSendModalOpen}
                 orgId={orgId}
@@ -130,7 +130,7 @@ export function ApplicationSummaryDataTable<
                   await queueCampaignOutcomeEmails(campaignId, payload);
                 }}
               />
-          </>
+            </>
           )}
 
           {/* Sort By Dropdown */}
@@ -139,7 +139,7 @@ export function ApplicationSummaryDataTable<
               <span>Sort by:</span>
               <Select value={sortBy} onValueChange={(v) => setSortBy(v as "decision" | "name")}>
                 <SelectTrigger className="h-auto w-14 border-0 shadow-none bg-transparent p-0 focus:ring-0 text-sm underline [&_svg]:hidden">
-                  <SelectValue/>
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="decision">Decision</SelectItem>
@@ -150,12 +150,12 @@ export function ApplicationSummaryDataTable<
             {orgId && campaignId && (
               <Button
                 variant="outline"
-                onClick={() => router.push(`/dashboard/organisation/${orgId}/campaigns/${campaignId}/review`) }
+                onClick={() => router.push(`/dashboard/organisation/${orgId}/campaigns/${campaignId}/review`)}
                 className="gap-2"
               >
                 <Menu className="size-4" />
-              Start Queue
-            </Button>
+                Start Queue
+              </Button>
             )}
           </div>}
         </div>
@@ -173,9 +173,9 @@ export function ApplicationSummaryDataTable<
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   );
                 })}

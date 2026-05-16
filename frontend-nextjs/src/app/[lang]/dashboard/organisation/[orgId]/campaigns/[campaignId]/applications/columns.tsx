@@ -79,7 +79,8 @@ export function getColumns(
     },
     {
       header: dict.common.roles,
-      id: "roles",
+      accessorKey: "applied_roles",
+      filterFn: "arrIncludes",
       cell: ({ row }) => {
         const data = row.original;
         if (data.offer_role) {
@@ -119,17 +120,14 @@ export function getColumns(
         const data = row.original;
         if (data.offer_status) {
           return <span className={STATUS_COLOR_CLASSES[data.offer_status as OfferStatus]}>{data.offer_status}</span>;
-        } else {
-          return (
-            <PrivateStatusCell
-              app={data as ApplicationRatingSummary}
-              dict={dict}
-              onPrivateStatusChange={onStatusChange}
-            />
-          );
         }
-
-        return null;
+        return (
+          <PrivateStatusCell
+            app={data as ApplicationRatingSummary}
+            dict={dict}
+            onPrivateStatusChange={onStatusChange}
+          />
+        );
       },
     },
     {
