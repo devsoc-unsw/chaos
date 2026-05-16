@@ -43,7 +43,8 @@ import {
 } from "@tanstack/react-table";
 import { ApplicationSummaryDataTableAll } from "./data-table-all";
 import { ApplicationSummaryDataTableOffered } from "./data-table-offered";
-
+import { SendEmailsApplicant } from "./send-email-modal";
+import { OfferDetails } from "@/models/offer";
 
 export function RatingsShelf({
   columns,
@@ -108,6 +109,20 @@ function ResultFilterButton({
       {children}
     </Button>
   );
+}
+
+function toApplicant(
+  app: ApplicationRatingSummary,
+  roleIdsToNames: Record<string, string>
+): SendEmailsApplicant {
+  const applied = app.applied_roles ?? [];
+  return {
+    id: app.application_id,
+    name: app.user_name,
+    email: app.user_email,
+    roleIds: applied,
+    roles: applied.map((rid) => roleIdsToNames[rid] ?? rid),
+  };
 }
 
 export default function ApplicationSummary({
@@ -296,9 +311,21 @@ export default function ApplicationSummary({
     [columns, dict, statusFilter]
   );
 
-  return (
-    <div>
+  const acceptedApplicants = useMemo(
+    () =>
+      data?.filter((a) => a.private_status === "Successful")
+        .map((a) => toApplicant(a, roleIdsToNames)),
+    [data, roleIdsToNames]
+  );
+  const rejectedApplicants = useMemo(
+    () =>
+      data?.filter((a) => a.private_status === "Rejected")
+        .map((a) => toApplicant(a, roleIdsToNames)),
+    [data, roleIdsToNames]
+  );
 
+  return (
+    <>
       <div>
         <Link
           href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}`}
@@ -369,7 +396,7 @@ export default function ApplicationSummary({
             <div key={filter.id} className="relative">
               <ResultFilterButton
                 className={
-                    cn(filter.color, filter.hoverColor)
+                  cn(filter.color, filter.hoverColor)
                 }
                 onClick={() => handleStatusFilter(filter.id)}
               >
@@ -397,33 +424,37 @@ export default function ApplicationSummary({
         <div>
           {statusFilter === "all" ? (
             <ApplicationSummaryDataTableAll
-              columns={columns}
+              columns={columns as ColumnDef<ApplicationRatingSummary>[]}
               data={data ?? []}
-              roles={roles ?? []}
               dict={dict}
               setColumnFilters={setColumnFilters}
               columnFilters={columnFilters}
               orgId={orgId}
               campaignId={campaignId}
               renderSubComponent={renderSubComponent}
+              acceptedApplicants={acceptedApplicants}
+              rejectedApplicants={rejectedApplicants}
             />
           ) : statusFilter === "successful" ? (
             <ApplicationSummaryDataTableOffered
               columns={columns}
-              data={data ?? []}
-              roles={roles ?? []}
+              data={data?.filter((m) => m.private_status === "Successful") ?? []}
               dict={dict}
               setColumnFilters={setColumnFilters}
               columnFilters={columnFilters}
               orgId={orgId}
               campaignId={campaignId}
               renderSubComponent={renderSubComponent}
+              acceptedApplicants={acceptedApplicants}
+              rejectedApplicants={rejectedApplicants}
             />
           ) : (
             <ApplicationSummaryDataTable
               columns={columns}
-              data={data ?? []}
-              roles={roles ?? []}
+              data={data?.filter((m) => {
+                const status = allFilters.find((f) => f.id === statusFilter)?.label;
+                return m.private_status === status;
+              }) ?? []}
               dict={dict}
               setColumnFilters={setColumnFilters}
               columnFilters={columnFilters}
@@ -438,10 +469,12 @@ export default function ApplicationSummary({
               campaignId={campaignId}
               renderSubComponent={renderSubComponent}
               sendEmails={true}
+              acceptedApplicants={acceptedApplicants}
+              rejectedApplicants={rejectedApplicants}
             />)
           }
         </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -1,39 +1,56 @@
 import { ApplicationSummaryDataTable } from "./data-table";
-import { ColumnDef, ColumnFiltersState, Row, type Table } from "@tanstack/react-table";
-import { ApplicationRatingSummary } from "@/models/application";
+import { ColumnDef, ColumnFiltersState, Row } from "@tanstack/react-table";
 import { Dispatch, SetStateAction } from "react";
-import { RoleDetails } from "@/models/campaign";
+import { useQuery } from "@tanstack/react-query";
+import { getOffersByCampaign, OfferDetails } from "@/models/offer";
+import { SendEmailsApplicant } from "./send-email-modal";
+import { ApplicationRatingSummary } from "@/models/application";
 
 interface ApplicationSummaryDataTableOfferedProp<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   dict: any;
   data: TData[];
-  roles: RoleDetails[];
   setColumnFilters: Dispatch<SetStateAction<ColumnFiltersState>>;
   columnFilters: ColumnFiltersState;
   renderSubComponent?: (props: { row: Row<TData> }) => React.ReactNode;
   orgId: string;
   campaignId: string;
+  acceptedApplicants?: SendEmailsApplicant[];
+  rejectedApplicants?: SendEmailsApplicant[];
 }
 
 export function ApplicationSummaryDataTableOffered<TData, TValue>({
   columns,
   data,
   dict,
-  roles,
   setColumnFilters,
   columnFilters,
   renderSubComponent,
   orgId,
   campaignId,
+  acceptedApplicants = [],
+  rejectedApplicants = [],
 }: ApplicationSummaryDataTableOfferedProp<ApplicationRatingSummary, TValue>) {
+  const { data: offers } = useQuery({
+    queryKey: [`${campaignId}-offer-details`],
+    queryFn: () => getOffersByCampaign(campaignId),
+  });
+
+  const combinedData: ApplicationRatingSummary[] = data.map((app) => {
+    const offer = offers?.find((o) => o.application_id === app.application_id);
+    return {
+      ...app,
+      offer_role: offer ? offer.role_name : null,
+      offer_status: offer ? offer.status : null,
+    };
+  });
+
   return (
     <div className="flex flex-col gap-5">
       <ApplicationSummaryDataTable
         label="Offered"
         color="bg-green-100"
-        data={data.filter((m) => m.private_status === "Successful")}
-        roles={roles ?? []}
+        data={data ?? []}
         dict={dict}
         renderSubComponent={renderSubComponent}
         columns={columns}
@@ -41,14 +58,15 @@ export function ApplicationSummaryDataTableOffered<TData, TValue>({
         columnFilters={columnFilters}
         orgId={orgId}
         campaignId={campaignId}
-        skipStatusFilter
+        sendEmails={true}
+        acceptedApplicants={acceptedApplicants}
+        rejectedApplicants={rejectedApplicants}
       />
 
       <ApplicationSummaryDataTable
         label="Outcome"
         color="bg-green-100"
-        data={data.filter((m) => m.private_status === "Successful")}
-        roles={roles ?? []}
+        data={combinedData}
         dict={dict}
         renderSubComponent={renderSubComponent}
         columns={columns}
@@ -56,8 +74,8 @@ export function ApplicationSummaryDataTableOffered<TData, TValue>({
         columnFilters={columnFilters}
         orgId={orgId}
         campaignId={campaignId}
-        skipStatusFilter
-        showOfferStatus
+        acceptedApplicants={acceptedApplicants}
+        rejectedApplicants={rejectedApplicants}
       />
     </div>
   );

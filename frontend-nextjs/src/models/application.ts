@@ -2,7 +2,7 @@ import { apiRequest } from "@/lib";
 import { UserDetails } from "./user";
 import { AppMessage } from "./app";
 import { RatingDetails } from "./rating";
-import { Offer } from "./offer";
+import { OfferDetails, OfferStatus } from "./offer";
 
 export interface ApplicationDetails {
   id: string;
@@ -101,8 +101,8 @@ export interface ApplicationRatingSummary {
   private_status: ApplicationStatus;
   updated_at: string;
   ratings: RatingDetails[];
-  role_decisions?: RoleDecision[];
-  role_offer?: Offer | null;
+  offer_role?: string | null;
+  offer_status?: OfferStatus | null;
 }
 
 export async function getApplicationRatingsSummary(

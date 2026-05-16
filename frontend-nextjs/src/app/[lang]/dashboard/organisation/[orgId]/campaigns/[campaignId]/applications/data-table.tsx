@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Dispatch, SetStateAction, useMemo, useState } from "react";
+import React, { Dispatch, SetStateAction, useState } from "react";
 import { useRouter } from "next/navigation";
 import { 
   ColumnDef,
@@ -24,7 +24,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getCampaign, RoleDetails } from "@/models/campaign";
-import { ApplicationRatingSummary } from "@/models/application";
 import { SendEmailsApplicant, SendEmailsModal } from "./send-email-modal";
 import { useQuery } from "@tanstack/react-query";
 import { queueCampaignOutcomeEmails } from "@/models/email";
@@ -32,7 +31,6 @@ import { queueCampaignOutcomeEmails } from "@/models/email";
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
-    roles: RoleDetails[];
     dict: any;
     setColumnFilters: Dispatch<SetStateAction<ColumnFiltersState>>;
     columnFilters: ColumnFiltersState;
@@ -42,31 +40,18 @@ interface DataTableProps<TData, TValue> {
     color: string;
     label: string;
     sendEmails?: boolean;
-    skipStatusFilter?: boolean;
-    showOfferStatus?: boolean;
-}
-
-function toApplicant(
-  app: ApplicationRatingSummary,
-  roleIdsToNames: Record<string, string>
-): SendEmailsApplicant {
-  const applied = app.applied_roles ?? [];
-  return {
-    id: app.application_id,
-    name: app.user_name,
-    email: app.user_email,
-    roleIds: applied,
-    roles: applied.map((rid) => roleIdsToNames[rid] ?? rid),
-  };
+    acceptedApplicants?: SendEmailsApplicant[];
+    rejectedApplicants?: SendEmailsApplicant[];
+    sortBy?: "decision" | "name";
+    setSortBy?: Dispatch<SetStateAction<"decision" | "name">>;
 }
 
 export function ApplicationSummaryDataTable<
-  TData extends ApplicationRatingSummary,
+  TData,
   TValue
 >({
   columns,
   data,
-  roles,
   dict,
   columnFilters,
   setColumnFilters,
@@ -76,8 +61,10 @@ export function ApplicationSummaryDataTable<
   color,
   label,
   sendEmails,
-  skipStatusFilter,
-  showOfferStatus
+  acceptedApplicants = [],
+  rejectedApplicants = [],
+  sortBy,
+  setSortBy
 }: DataTableProps<TData, TValue>) {
   const router = useRouter();
   const colorMap: Record<string, string> = {
@@ -85,20 +72,8 @@ export function ApplicationSummaryDataTable<
     'bg-red-100': 'border-red-100',
   };
 
-  const STATUS_ORDER: Record<string, number> = { Pending: 0, Successful: 1, Rejected: 2 };
-  const [sortBy, setSortBy] = useState<"decision" | "name">("decision");
-
-  // Filter and sort data based on status and selected sort option
-  const filteredMembers = useMemo(() => {
-    const filtered = skipStatusFilter ? data : data.filter((m) => m.private_status === label);
-    return [...filtered].sort((a, b) => {
-      if (sortBy === "name") return a.user_name.localeCompare(b.user_name);
-      return (STATUS_ORDER[a.private_status] ?? 99) - (STATUS_ORDER[b.private_status] ?? 99);
-    });
-  }, [data, label, skipStatusFilter, sortBy]);
-
   const table = useReactTable<TData>({
-    data: filteredMembers,
+    data,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
@@ -111,34 +86,6 @@ export function ApplicationSummaryDataTable<
   });
 
   const borderColor = colorMap[color] || 'border-gray-200';
-
-  const roleIdsToNames = useMemo(
-    () =>
-      roles.reduce(
-        (acc, role) => {
-          acc[role.id] = role.name;
-          return acc;
-        },
-        {} as Record<string, string>
-      ),
-    [roles]
-  );
-
-  const members = data ?? [];
-  const acceptedApplicants = useMemo(
-    () =>
-      members
-        .filter((a) => a.private_status === "Successful")
-        .map((a) => toApplicant(a, roleIdsToNames)),
-    [members, roleIdsToNames]
-  );
-  const rejectedApplicants = useMemo(
-    () =>
-      members
-        .filter((a) => a.private_status === "Rejected")
-        .map((a) => toApplicant(a, roleIdsToNames)),
-    [members, roleIdsToNames]
-  );
 
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const { data: campaign } = useQuery({
@@ -187,7 +134,7 @@ export function ApplicationSummaryDataTable<
           )}
 
           {/* Sort By Dropdown */}
-          {label === "To Review" && <div className="flex items-center gap-2">
+          {label === "To Review" && setSortBy && <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 text-sm text-foreground">
               <span>Sort by:</span>
               <Select value={sortBy} onValueChange={(v) => setSortBy(v as "decision" | "name")}>

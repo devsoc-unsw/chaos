@@ -1,6 +1,5 @@
 import {
-  ApplicationRatingSummary,
-  ApplicationStatus,
+  ApplicationRatingSummary
 } from "@/models/application";
 import { RatingCategory, RatingDetails } from "@/models/rating";
 import { CampaignDetails, RoleDetails } from "@/models/campaign";
