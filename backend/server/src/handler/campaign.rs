@@ -50,9 +50,12 @@ impl CampaignHandler {
         // no need for AuthUser as this is public
     ) -> Result<impl IntoResponse, ChaosError> {
         let campaign = Campaign::get(id, &mut transaction.tx).await?;
-        let cover_image_url =
-            Campaign::cover_image_presigned_get_url(id, campaign.cover_image, &state.storage_bucket)
-                .await?;
+        let cover_image_url = Campaign::cover_image_presigned_get_url(
+            id,
+            campaign.cover_image,
+            &state.storage_bucket,
+        )
+        .await?;
         transaction.tx.commit().await?;
         Ok((
             StatusCode::OK,
