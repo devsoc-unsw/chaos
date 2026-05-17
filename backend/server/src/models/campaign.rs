@@ -550,14 +550,14 @@ impl Campaign {
         if campaign.published {
             return Err(ChaosError::BadRequest);
         }
-    
+
         let dt = Utc::now();
-    
+
         // Reuse existing image_id if present, otherwise generate a new one
         let image_id = campaign.cover_image.unwrap_or_else(Uuid::new_v4);
-    
+
         let current_time = dt;
-    
+
         // Only update if it's a new image_id (optional optimization)
         if campaign.cover_image.is_none() {
             _ = sqlx::query!(
@@ -586,10 +586,10 @@ impl Campaign {
             .execute(transaction.deref_mut())
             .await?;
         }
-    
+
         let upload_url =
             Storage::generate_put_url(format!("/banner/{id}/{image_id}"), storage_bucket).await?;
-    
+
         Ok(CampaignBannerUpdate { upload_url })
     }
 
