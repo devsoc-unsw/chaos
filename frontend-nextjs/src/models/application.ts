@@ -84,12 +84,11 @@ export async function submitApplication(applicationId: string) {
   });
 }
 
-// Decision per port (by role_id)
-export type RoleDecision = {
+// Decision per role
+export type RoleStatus = {
   application_id: string;
-  role_id: string;
+  campaign_role_id: string;
   status: ApplicationStatus;
-  updated_at: string;
 };
 
 export interface ApplicationRatingSummary {
@@ -122,6 +121,29 @@ export async function updateApplicationPrivateStatus(
     {
       method: "PATCH",
       body: status,
+    },
+  );
+}
+
+export async function getApplicationRoleStatus(
+  applicationId: string,
+  campaignRoleId: string,
+): Promise<RoleStatus> {
+  return await apiRequest<RoleStatus>(
+    `/api/v1/application/${applicationId}/rolestatus/${campaignRoleId}`,
+  );
+}
+
+export async function updateApplicationRoleStatus(
+  applicationId: string,
+  campaignRoleId: string,
+  status: ApplicationStatus,
+): Promise<AppMessage> {
+  return await apiRequest<AppMessage>(
+    `/api/v1/application/${applicationId}/rolestatus/${campaignRoleId}`,
+    {
+      method: "PUT",
+      body: { status },
     },
   );
 }
