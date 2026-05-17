@@ -125,12 +125,11 @@ export async function updateApplicationPrivateStatus(
   );
 }
 
-export async function getApplicationRoleStatus(
+export async function getApplicationRoleStatuses(
   applicationId: string,
-  campaignRoleId: string,
-): Promise<RoleStatus> {
-  return await apiRequest<RoleStatus>(
-    `/api/v1/application/${applicationId}/rolestatus/${campaignRoleId}`,
+): Promise<RoleStatus[]> {
+  return await apiRequest<RoleStatus[]>(
+    `/api/v1/application/${applicationId}/rolestatus`,
   );
 }
 
