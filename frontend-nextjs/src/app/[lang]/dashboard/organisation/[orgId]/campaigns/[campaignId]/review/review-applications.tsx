@@ -80,9 +80,9 @@ export default function ReviewCampaignApplications({
   };
 
   const handleDecision = async (appId: string, roleId: string, status: ApplicationStatus) => {
-    console.log("Updating decision for app", appId, "role", roleId, "to status", status);
     await updateApplicationRoleStatus(appId, roleId, status);
-    await queryClient.invalidateQueries({ queryKey: [`${campaignId}-campaign-applications`] });
+    // await queryClient.invalidateQueries({ queryKey: [`${campaignId}-campaign-applications`] });
+    await queryClient.invalidateQueries({ queryKey: [`${appId}-application-role-statuses`] });
   };
 
   return (
@@ -289,7 +289,7 @@ function ApplicationPanel({
               <StarDisplay value={avgRating} />
             </div>
             <Select
-              value={roleStatuses?.find((r) => r.campaign_role_id === selectedRoleId)?.status ?? "Pending"}
+              value={roleStatuses?.find((rs) => rs.campaign_role_id === selectedRoleId)?.status ?? "Pending"}
               onValueChange={(v) => onDecision(app.id, selectedRoleId as string, v as ApplicationStatus)}
             >
               <SelectTrigger className="h-8 w-32 text-sm">
