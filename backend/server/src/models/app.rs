@@ -457,19 +457,19 @@ pub async fn app() -> Result<(Router, AppState), ChaosError> {
             patch(ApplicationHandler::set_private_status),
         )
         .route(
-            "/api/v1/application/:application_id/rolestatus/:campaignRoleId",
+            "/api/v1/application/:application_id/rolestatus/:campaign_role_id",
             put(RoleStatusHandler::update_role_status),
         )
         .route(
-            "/api/v1/application/:applicationId/rolestatus",
+            "/api/v1/application/:application_id/rolestatus",
             get(RoleStatusHandler::get_role_statuses_for_application),
         )
         .route(
-            "/api/v1/campaign/:campaignId/rolestatus/:campaignRoleId`",
+            "/api/v1/campaign/:campaign_id/rolestatus/:campaign_role_id`",
             get(RoleStatusHandler::get_role_statuses_for_campaign_role),
         )
         .route(
-            "/api/v1/campaign/:campaignId/rolestatus`",
+            "/api/v1/campaign/:campaign_id/rolestatus`",
             get(RoleStatusHandler::get_role_statuses_for_campaign),
         )
         .route(
