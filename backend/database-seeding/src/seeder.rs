@@ -1,32 +1,38 @@
+use chrono::{DateTime, Utc};
+use server::models::answer::*;
 use server::models::app::init_app_state;
 use server::models::app::AppState;
+use server::models::application::{Application, ApplicationRole, NewApplication};
+use server::models::campaign::Campaign;
 use server::models::offer::Offer;
-use server::models::rating::{Rating, NewRating, NewCategoryRating, NewApplicationRating, NewApplicationCategoryRating};
-use server::models::user::{User, UserRole};
-use server::models::organisation::{Organisation};
-use server::models::role::{Role, RoleUpdate};
-use server::models::campaign::{Campaign};
+use server::models::organisation::Organisation;
 use server::models::question::*;
-use server::models::answer::*;
-use server::models::application::{Application, NewApplication, ApplicationRole};
-use chrono::{DateTime, Utc};
-
+use server::models::rating::{
+    NewApplicationCategoryRating, NewApplicationRating, NewCategoryRating, NewRating, Rating,
+};
+use server::models::role::{Role, RoleUpdate};
+use server::models::user::{User, UserRole};
 
 /// Struct which hold AppState that contains database connection
 pub struct Seeder {
-    pub app_state: AppState
+    pub app_state: AppState,
 }
 
 pub async fn init() -> Seeder {
-        let seeder = Seeder {
-            app_state: init_app_state().await
-        };
+    let seeder = Seeder {
+        app_state: init_app_state().await,
+    };
 
-        seeder
-    }
+    seeder
+}
 
 pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
-    let mut tx = seeder.app_state.db.begin().await.expect("Error beginning DB transaction");
+    let mut tx = seeder
+        .app_state
+        .db
+        .begin()
+        .await
+        .expect("Error beginning DB transaction");
 
     // Super User
     let users = vec![
@@ -77,56 +83,78 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
     ];
 
     for user in users {
-        User::create_user(user, &mut tx).await.expect("Failed seeding Root User");
+        User::create_user(user, &mut tx)
+            .await
+            .expect("Failed seeding Root User");
     }
 
     let org_id = Organisation::create(
         1, // User number 1, i.e. Developer
-        "devsoc".to_string(), 
+        "devsoc".to_string(),
         "UNSW DevSoc".to_string(),
         "contact@devsoc.app".to_string(),
         Some("https://devsoc.app".to_string()),
-        &mut seeder.app_state.snowflake_generator, 
-        &mut tx).await.expect("Failed seeding Organisation");
+        &mut seeder.app_state.snowflake_generator,
+        &mut tx,
+    )
+    .await
+    .expect("Failed seeding Organisation");
 
-    Organisation::update_admins(org_id, 
-        vec![1, 2], 
-        &mut tx).await.expect("Failed updating Organisation Admin");
+    Organisation::update_admins(org_id, vec![1, 2], &mut tx)
+        .await
+        .expect("Failed updating Organisation Admin");
 
     let campaign_id = Organisation::create_campaign(
-            org_id,
-            "subcommittee-recruitment-2025".to_string(),
-            "Subcommittee Recruitment 2025".to_string(),
-            Some("This Campaign will MAKE EVERYONE EMPLOYEED".to_string()),
-            DateTime::<Utc>::from_naive_utc_and_offset(
-                chrono::NaiveDate::from_ymd_opt(2024, 1, 1).unwrap().and_hms_milli_opt(0, 0, 0, 0).unwrap(),
-                Utc,
-            )
-            ,
-            DateTime::<Utc>::from_naive_utc_and_offset(
-                chrono::NaiveDate::from_ymd_opt(2040, 1, 1).unwrap().and_hms_milli_opt(0, 0, 0, 0).unwrap(),
-                Utc,
-            ),
-            Some(DateTime::<Utc>::from_naive_utc_and_offset(
-                chrono::NaiveDate::from_ymd_opt(2041, 1, 1).unwrap().and_hms_milli_opt(0, 0, 0, 0).unwrap(),
-                Utc,
-            )),
-            Some(DateTime::<Utc>::from_naive_utc_and_offset(
-                chrono::NaiveDate::from_ymd_opt(2042, 1, 1).unwrap().and_hms_milli_opt(0, 0, 0, 0).unwrap(),
-                Utc,
-            )),
-            Some("in-person".to_string()),
-            Some(DateTime::<Utc>::from_naive_utc_and_offset(
-                chrono::NaiveDate::from_ymd_opt(2043, 1, 1).unwrap().and_hms_milli_opt(0, 0, 0, 0).unwrap(),
-                Utc,
-            )),
-            Some("Resume required".to_string()),
-            &mut tx,
-            &mut seeder.app_state.snowflake_generator,
-        )
-        .await.expect("Failed seeding Campaign");
+        org_id,
+        "subcommittee-recruitment-2025".to_string(),
+        "Subcommittee Recruitment 2025".to_string(),
+        Some("This Campaign will MAKE EVERYONE EMPLOYEED".to_string()),
+        DateTime::<Utc>::from_naive_utc_and_offset(
+            chrono::NaiveDate::from_ymd_opt(2024, 1, 1)
+                .unwrap()
+                .and_hms_milli_opt(0, 0, 0, 0)
+                .unwrap(),
+            Utc,
+        ),
+        DateTime::<Utc>::from_naive_utc_and_offset(
+            chrono::NaiveDate::from_ymd_opt(2040, 1, 1)
+                .unwrap()
+                .and_hms_milli_opt(0, 0, 0, 0)
+                .unwrap(),
+            Utc,
+        ),
+        Some(DateTime::<Utc>::from_naive_utc_and_offset(
+            chrono::NaiveDate::from_ymd_opt(2041, 1, 1)
+                .unwrap()
+                .and_hms_milli_opt(0, 0, 0, 0)
+                .unwrap(),
+            Utc,
+        )),
+        Some(DateTime::<Utc>::from_naive_utc_and_offset(
+            chrono::NaiveDate::from_ymd_opt(2042, 1, 1)
+                .unwrap()
+                .and_hms_milli_opt(0, 0, 0, 0)
+                .unwrap(),
+            Utc,
+        )),
+        Some("in-person".to_string()),
+        Some(DateTime::<Utc>::from_naive_utc_and_offset(
+            chrono::NaiveDate::from_ymd_opt(2043, 1, 1)
+                .unwrap()
+                .and_hms_milli_opt(0, 0, 0, 0)
+                .unwrap(),
+            Utc,
+        )),
+        Some("Resume required".to_string()),
+        &mut tx,
+        &mut seeder.app_state.snowflake_generator,
+    )
+    .await
+    .expect("Failed seeding Campaign");
 
-    _ = Campaign::publish(campaign_id, &mut tx).await.expect("Failed publishing");
+    _ = Campaign::publish(campaign_id, &mut tx)
+        .await
+        .expect("Failed publishing");
 
     let role_id_1 = Role::create(
         campaign_id,
@@ -140,7 +168,8 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
         &mut tx,
         &mut seeder.app_state.snowflake_generator,
     )
-    .await.expect("Failed seeding Role 1");
+    .await
+    .expect("Failed seeding Role 1");
 
     let role_id_2 = Role::create(
         campaign_id,
@@ -154,14 +183,16 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
         &mut tx,
         &mut seeder.app_state.snowflake_generator,
     )
-    .await.expect("Failed seeding Role 2");
-        let rating_category_id_1 = Rating::create_category(
+    .await
+    .expect("Failed seeding Role 2");
+    let rating_category_id_1 = Rating::create_category(
         "Bedrotting".to_string(),
         campaign_id,
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
-    .await.expect("Failed seeding Rating Category 1");
+    .await
+    .expect("Failed seeding Rating Category 1");
 
     let rating_category_id_2 = Rating::create_category(
         "Vibe Coding".to_string(),
@@ -169,7 +200,8 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
-    .await.expect("Failed seeding Rating Category 2");
+    .await
+    .expect("Failed seeding Rating Category 2");
 
     let rating_category_id_3 = Rating::create_category(
         "Rizzler".to_string(),
@@ -177,8 +209,9 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
-    .await.expect("Failed seeding Rating Category 3");
-  
+    .await
+    .expect("Failed seeding Rating Category 3");
+
     let question_id_1 = Question::create(
         campaign_id,
         "What year are you in?".to_string(),
@@ -187,37 +220,35 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
         true,
         None,
         true,
-        QuestionData::DropDown(
-            MultiOptionData {
-                options: vec![
-                    MultiOptionQuestionOption {
-                        id: 0,
-                        text: "1".to_string(),
-                        display_order: 1,
-                    },
-                    MultiOptionQuestionOption {
-                        id: 0,
-                        text: "2".to_string(),
-                        display_order: 2,
-                    },
-                    MultiOptionQuestionOption {
-                        id: 0,
-                        text: "3".to_string(),
-                        display_order: 3,
-                    },
-                    MultiOptionQuestionOption {
-                        id: 0,
-                        text: "4+".to_string(),
-                        display_order: 4,
-                    },
-                ]
-            },
-        ),
+        QuestionData::DropDown(MultiOptionData {
+            options: vec![
+                MultiOptionQuestionOption {
+                    id: 0,
+                    text: "1".to_string(),
+                    display_order: 1,
+                },
+                MultiOptionQuestionOption {
+                    id: 0,
+                    text: "2".to_string(),
+                    display_order: 2,
+                },
+                MultiOptionQuestionOption {
+                    id: 0,
+                    text: "3".to_string(),
+                    display_order: 3,
+                },
+                MultiOptionQuestionOption {
+                    id: 0,
+                    text: "4+".to_string(),
+                    display_order: 4,
+                },
+            ],
+        }),
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
-    .await.expect("Failed seeding Question 1");
-
+    .await
+    .expect("Failed seeding Question 1");
 
     let question_id_2 = Question::create(
         campaign_id,
@@ -230,7 +261,8 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
-    .await.expect("Failed seeding Question 1");
+    .await
+    .expect("Failed seeding Question 1");
 
     let question_id_3 = Question::create(
         campaign_id,
@@ -239,43 +271,40 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
         false,
         Some(vec![role_id_1, role_id_2]),
         true,
-        QuestionData::MultiSelect(
-            MultiOptionData {
-                options: vec![
-                    MultiOptionQuestionOption {
-                        id: 0,
-                        text: "Rust".to_string(),
-                        display_order: 1,
-                    },
-                    MultiOptionQuestionOption {
-                        id: 0,
-                        text: "Python".to_string(),
-                        display_order: 2,
-                    },
-                    MultiOptionQuestionOption {
-                        id: 0,
-                        text: "JavaScript".to_string(),
-                        display_order: 3,
-                    },
-                    
-                    MultiOptionQuestionOption {
-                        id: 0,
-                        text: "Java".to_string(),
-                        display_order: 4,
-                    },
-                    
-                    MultiOptionQuestionOption {
-                        id: 0,
-                        text: "C++".to_string(),
-                        display_order: 5,
-                    },
-                ]
-            }
-        ),
+        QuestionData::MultiSelect(MultiOptionData {
+            options: vec![
+                MultiOptionQuestionOption {
+                    id: 0,
+                    text: "Rust".to_string(),
+                    display_order: 1,
+                },
+                MultiOptionQuestionOption {
+                    id: 0,
+                    text: "Python".to_string(),
+                    display_order: 2,
+                },
+                MultiOptionQuestionOption {
+                    id: 0,
+                    text: "JavaScript".to_string(),
+                    display_order: 3,
+                },
+                MultiOptionQuestionOption {
+                    id: 0,
+                    text: "Java".to_string(),
+                    display_order: 4,
+                },
+                MultiOptionQuestionOption {
+                    id: 0,
+                    text: "C++".to_string(),
+                    display_order: 5,
+                },
+            ],
+        }),
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
-    .await.expect("Failed seeding Question 3");
+    .await
+    .expect("Failed seeding Question 3");
 
     let question_id_4 = Question::create(
         campaign_id,
@@ -284,31 +313,30 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
         true,
         None,
         true,
-        QuestionData::MultiChoice(
-            MultiOptionData {
-                options: vec![
-                    MultiOptionQuestionOption {
-                        id: 0,
-                        text: "Email".to_string(),
-                        display_order: 1,
-                    },
-                    MultiOptionQuestionOption {
-                        id: 0,
-                        text: "Word of Mouth".to_string(),
-                        display_order: 2,
-                    },
-                    MultiOptionQuestionOption {
-                        id: 0,
-                        text: "Social Media".to_string(),
-                        display_order: 3,
-                    },
-                ]
-            }
-        ),
+        QuestionData::MultiChoice(MultiOptionData {
+            options: vec![
+                MultiOptionQuestionOption {
+                    id: 0,
+                    text: "Email".to_string(),
+                    display_order: 1,
+                },
+                MultiOptionQuestionOption {
+                    id: 0,
+                    text: "Word of Mouth".to_string(),
+                    display_order: 2,
+                },
+                MultiOptionQuestionOption {
+                    id: 0,
+                    text: "Social Media".to_string(),
+                    display_order: 3,
+                },
+            ],
+        }),
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
-        .await.expect("Failed seeding Question 4");
+    .await
+    .expect("Failed seeding Question 4");
 
     let question_id_5 = Question::create(
         campaign_id,
@@ -317,75 +345,71 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
         false,
         Some(vec![role_id_1, role_id_2]),
         true,
-        QuestionData::Ranking(
-            MultiOptionData {
-                options: vec![
-                    MultiOptionQuestionOption {
-                        id: 0,
-                        text: "Rust".to_string(),
-                        display_order: 1,
-                    },
-                    MultiOptionQuestionOption {
-                        id: 0,
-                        text: "JavaScript".to_string(),
-                        display_order: 2,
-                    },
-                    MultiOptionQuestionOption {
-                        id: 0,
-                        text: "Python".to_string(),
-                        display_order: 3,
-                    },
-                ]
-            }
-        ),
+        QuestionData::Ranking(MultiOptionData {
+            options: vec![
+                MultiOptionQuestionOption {
+                    id: 0,
+                    text: "Rust".to_string(),
+                    display_order: 1,
+                },
+                MultiOptionQuestionOption {
+                    id: 0,
+                    text: "JavaScript".to_string(),
+                    display_order: 2,
+                },
+                MultiOptionQuestionOption {
+                    id: 0,
+                    text: "Python".to_string(),
+                    display_order: 3,
+                },
+            ],
+        }),
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
-        .await.expect("Failed seeding Question 4");
+    .await
+    .expect("Failed seeding Question 4");
 
     let application_id_1 = Application::create(
         campaign_id,
         2,
         NewApplication {
-            applied_roles: vec![
-                ApplicationRole {
-                    id: 0,
-                    application_id: 0,
-                    campaign_role_id: role_id_1,
-                    preference: 1,
-                }
-            ]
+            applied_roles: vec![ApplicationRole {
+                application_id: 0,
+                campaign_role_id: role_id_1,
+                preference: 1,
+            }],
         },
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
-    .await.expect("Failed seeding Application 1");
+    .await
+    .expect("Failed seeding Application 1");
 
     let application_id_2 = Application::create(
         campaign_id,
         3,
         NewApplication {
-            applied_roles: vec![
-                ApplicationRole {
-                    id: 0,
-                    application_id: 0,
-                    campaign_role_id: role_id_2,
-                    preference: 1,
-                }
-            ]
+            applied_roles: vec![ApplicationRole {
+                application_id: 0,
+                campaign_role_id: role_id_2,
+                preference: 1,
+            }],
         },
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
-    .await.expect("Failed seeding Application 1");
+    .await
+    .expect("Failed seeding Application 1");
 
-    let qtn_1_data = Question::get(question_id_1, &mut tx).await.expect("Failed getting Question 1");
+    let qtn_1_data = Question::get(question_id_1, &mut tx)
+        .await
+        .expect("Failed getting Question 1");
 
-    let qtn_1_options = 
-        match qtn_1_data.question_data {
-            QuestionData::DropDown(options) => options.options,
-            _ => panic!("Question 1 is not a DropDown question"),
-        };
+    let qtn_1_options = match qtn_1_data.question_data {
+        QuestionData::DropDown(options) => options.options,
+        _ => panic!("Question 1 is not a DropDown question"),
+    };
 
     Answer::create(
         application_id_1,
@@ -394,7 +418,8 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
-    .await.expect("Failed seeding Answer 1");
+    .await
+    .expect("Failed seeding Answer 1");
 
     Answer::create(
         application_id_2,
@@ -403,24 +428,30 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
-    .await.expect("Failed seeding Answer 2");
+    .await
+    .expect("Failed seeding Answer 2");
 
     Answer::create(
         application_id_1,
         question_id_2,
-        AnswerData::ShortAnswer("A Moand is a Monoid in the Category of Endofunctors, what else do you want?".to_string()),
+        AnswerData::ShortAnswer(
+            "A Moand is a Monoid in the Category of Endofunctors, what else do you want?"
+                .to_string(),
+        ),
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
-    .await.expect("Failed seeding Answer 3");
+    .await
+    .expect("Failed seeding Answer 3");
 
-    let qtn_3_data = Question::get(question_id_3, &mut tx).await.expect("Failed getting Question 3");
+    let qtn_3_data = Question::get(question_id_3, &mut tx)
+        .await
+        .expect("Failed getting Question 3");
 
-    let qtn_3_options = 
-        match qtn_3_data.question_data {
-            QuestionData::MultiSelect(options) => options.options,
-            _ => panic!("Question 3 is not a MultiSelect question"),
-        };
+    let qtn_3_options = match qtn_3_data.question_data {
+        QuestionData::MultiSelect(options) => options.options,
+        _ => panic!("Question 3 is not a MultiSelect question"),
+    };
 
     Answer::create(
         application_id_1,
@@ -429,7 +460,8 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
-    .await.expect("Failed seeding Answer 3");
+    .await
+    .expect("Failed seeding Answer 3");
 
     let app_rating_id_1 = Rating::create_application_rating(
         Some("This guy has massive aura, but does not know how to vibe code".to_string()),
@@ -438,7 +470,8 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
-    .await.expect("Failed seeding Application Rating 1");
+    .await
+    .expect("Failed seeding Application Rating 1");
 
     Rating::create_category_rating(
         NewApplicationCategoryRating {
@@ -449,7 +482,8 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
-    .await.expect("Failed seeding Category Rating of Bedrotting");
+    .await
+    .expect("Failed seeding Category Rating of Bedrotting");
 
     Rating::create_category_rating(
         NewApplicationCategoryRating {
@@ -460,7 +494,8 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
-    .await.expect("Failed seeding Category Rating of Vibe Coding");
+    .await
+    .expect("Failed seeding Category Rating of Vibe Coding");
 
     Rating::create_category_rating(
         NewApplicationCategoryRating {
@@ -471,7 +506,8 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
-    .await.expect("Failed seeding Category Rating of Rizzler");
+    .await
+    .expect("Failed seeding Category Rating of Rizzler");
 
     // let app_rating_id_2 = Rating::create_application_rating(
     //     NewApplicationRating {
@@ -527,8 +563,8 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
     //     &mut tx,
     // )
     // .await.expect("Failed seeding Application Rating 3");
-    
-    let template = 
+
+    let template =
     "
 Hello {{name}},
 
@@ -540,28 +576,34 @@ Best regards,
 The {{organisation_name}} Team
     ".to_string();
 
-
     let email_template_id = Organisation::create_email_template(
-        org_id, 
+        org_id,
         "Offer".to_string(),
         "[DevSoc] Position Offer".to_string(),
-        template, 
-        &mut tx, 
-        &mut seeder.app_state.snowflake_generator)
-        .await.expect("Failed seeding Email Template");
+        template,
+        &mut tx,
+        &mut seeder.app_state.snowflake_generator,
+    )
+    .await
+    .expect("Failed seeding Email Template");
 
     Offer::create(
-        campaign_id, 
-        application_id_1, 
-        email_template_id, 
-        role_id_1, 
+        campaign_id,
+        application_id_1,
+        email_template_id,
+        role_id_1,
         DateTime::<Utc>::from_naive_utc_and_offset(
-                chrono::NaiveDate::from_ymd_opt(2024, 2, 1).unwrap().and_hms_milli_opt(0, 0, 0, 0).unwrap(),
-                Utc,
-            ), 
+            chrono::NaiveDate::from_ymd_opt(2024, 2, 1)
+                .unwrap()
+                .and_hms_milli_opt(0, 0, 0, 0)
+                .unwrap(),
+            Utc,
+        ),
         &mut tx,
-        &mut seeder.app_state.snowflake_generator)
-        .await.expect("Failed seeding Offer");
+        &mut seeder.app_state.snowflake_generator,
+    )
+    .await
+    .expect("Failed seeding Offer");
 
     tx.commit().await.expect("Failed to commit DB transaction");
 }

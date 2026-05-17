@@ -10,6 +10,7 @@ use crate::handler::organisation::OrganisationHandler;
 use crate::handler::question::QuestionHandler;
 use crate::handler::rating::RatingHandler;
 use crate::handler::role::RoleHandler;
+use crate::handler::role_status::RoleStatusHandler;
 use crate::handler::user::UserHandler;
 use crate::models::email::{ChaosEmail, EmailCredentials};
 use crate::models::error::ChaosError;
@@ -454,6 +455,22 @@ pub async fn app() -> Result<(Router, AppState), ChaosError> {
         .route(
             "/api/v1/application/:application_id/private",
             patch(ApplicationHandler::set_private_status),
+        )
+        .route(
+            "/api/v1/application/:application_id/rolestatus/:campaignRoleId",
+            put(RoleStatusHandler::update_role_status),
+        )
+        .route(
+            "/api/v1/application/:applicationId/rolestatus",
+            get(RoleStatusHandler::get_role_statuses_for_application),
+        )
+        .route(
+            "/api/v1/campaign/:campaignId/rolestatus/:campaignRoleId`",
+            get(RoleStatusHandler::get_role_statuses_for_campaign_role),
+        )
+        .route(
+            "/api/v1/campaign/:campaignId/rolestatus`",
+            get(RoleStatusHandler::get_role_statuses_for_campaign),
         )
         .route(
             "/api/v1/application/:application_id/answers/common",
