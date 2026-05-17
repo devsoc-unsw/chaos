@@ -26,8 +26,7 @@ impl RoleStatusHandler {
     /// # Returns
     /// A success message.
     pub async fn update_role_status(
-        Path(application_id): Path<i64>,
-        Path(campaign_role_id): Path<i64>,
+        Path((application_id, campaign_role_id)): Path<(i64, i64)>,
         // TODO: Replace the AuthUser extractor with something that enforces the desired permissions.
         _admin: AuthUser,
         mut transaction: DBTransaction<'_>,
@@ -82,8 +81,7 @@ impl RoleStatusHandler {
     /// # Returns
     /// The per-role statuses for the campaign role.
     pub async fn get_role_statuses_for_campaign_role(
-        Path(campaign_id): Path<i64>,
-        Path(campaign_role_id): Path<i64>,
+        Path((campaign_id, campaign_role_id)): Path<(i64, i64)>,
         // TODO: Replace the CampaignOrgMember extractor with something that enforces the desired permissions.
         _admin: CampaignOrgMember,
         mut transaction: DBTransaction<'_>,
