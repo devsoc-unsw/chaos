@@ -458,7 +458,7 @@ function MultiOptionQuestionCard({ question, currentRole, possibleRole, handleQu
                                 (e.target as HTMLInputElement).value = '';
                             }
                         }} />
-                        <p className="text-xs text-gray-500">{dict.dashboard.campaigns.questions.option_help}</p>
+                        <p className="text-xs text-foreground">{dict.dashboard.campaigns.questions.option_help}</p>
                     </div>
                 </div>
             </div>
@@ -543,7 +543,7 @@ function ShortAnswerQuestionCard({ question, currentRole, possibleRole, handleQu
                 </div>
             </div>
             <div className="flex items-center gap-2 p-2">
-                <label className="text-sm text-gray-500 whitespace-nowrap">Word limit</label>
+                <label className="text-sm text-foreground whitespace-nowrap">Word limit</label>
                 <Input
                     type="text"
                     inputMode="numeric"
@@ -555,7 +555,7 @@ function ShortAnswerQuestionCard({ question, currentRole, possibleRole, handleQu
             </div>
             <div className="flex flex-col gap-1 p-2">
                 <div className="border-b-2 border-dotted border-gray-500 max-w-[300px]">
-                    <p className="text-sm text-gray-500">{dict.dashboard.campaigns.questions.answer_text}</p>
+                    <p className="text-sm text-foreground">{dict.dashboard.campaigns.questions.answer_text}</p>
                 </div>
             </div>
         </div>
