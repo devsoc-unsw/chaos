@@ -4,7 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ApplicationRatingSummary, ApplicationStatus } from "@/models/application";
+import { ApplicationRatingSummary, ApplicationStatus, RoleStatus } from "@/models/application";
 import { RatingCategory } from "@/models/rating";
 import {
   Select,
@@ -37,7 +37,9 @@ export function getColumns(
   dict: any,
   roleIdsToNames: Record<string, string>,
   ratingCategories: RatingCategory[],
-  onStatusChange: (applicationId: string, status: ApplicationStatus) => Promise<void>
+  onStatusChange: (applicationId: string, campaignRoleId: string, status: ApplicationStatus) => Promise<void>,
+  filteredRoleId: string | null,
+  roleStatusesMap: Record<string, RoleStatus[]>,
 ): ColumnDef<ApplicationRatingSummary>[] {
   const ratingColumns = ratingCategories.map((category) => {
     return {
@@ -126,6 +128,8 @@ export function getColumns(
             app={data as ApplicationRatingSummary}
             dict={dict}
             onPrivateStatusChange={onStatusChange}
+            filteredRoleId={filteredRoleId}
+            roleStatuses={roleStatusesMap[data.application_id] ?? []}
           />
         );
       },
@@ -156,22 +160,37 @@ function PrivateStatusCell({
   app,
   dict,
   onPrivateStatusChange,
+  filteredRoleId,
+  roleStatuses,
 }: {
   app: ApplicationRatingSummary;
   dict: any;
-  onPrivateStatusChange: (applicationId: string, status: ApplicationStatus) => Promise<void>;
+  onPrivateStatusChange: (applicationId: string, campaignRoleId: string, status: ApplicationStatus) => Promise<void>;
+  filteredRoleId: string | null;
+  roleStatuses: RoleStatus[];
 }) {
   const STATUS_BACKGROUND_COLORS: Record<ApplicationStatus | "Pending", string> = {
     "Successful": "bg-green-100 border-green-300",
     "Rejected": "bg-red-100 border-red-300",
     "Pending": "bg-gray-100 border-gray-300",
   };
-  const status = (app.private_status ?? "Pending") as ApplicationStatus | "Pending";
+
+  // No specific role is filtered, don't show the status dropdown
+  if (!filteredRoleId) {
+    return <span className="text-gray-500">-</span>;
+  }
+
+  // Get the status for the filtered role
+  const roleStatus = roleStatuses.find((rs) => rs.campaign_role_id === filteredRoleId);
+  const status = (roleStatus?.status ?? "Pending") as ApplicationStatus | "Pending";
+
   return (
     <div className="w-[140px]">
       <Select
         value={status}
-        onValueChange={(v: ApplicationStatus) => onPrivateStatusChange(app.application_id, v)}
+        onValueChange={(v: ApplicationStatus) =>
+          onPrivateStatusChange(app.application_id, filteredRoleId, v)
+        }
       >
         <SelectTrigger className={cn(STATUS_BACKGROUND_COLORS[status], "")}>
           <SelectValue />

@@ -81,7 +81,7 @@ export default function ReviewCampaignApplications({
 
   const handleDecision = async (appId: string, roleId: string, status: ApplicationStatus) => {
     await updateApplicationRoleStatus(appId, roleId, status);
-    // await queryClient.invalidateQueries({ queryKey: [`${campaignId}-campaign-applications`] });
+    await queryClient.invalidateQueries({ queryKey: [`${campaignId}-campaign-applications`] });
     await queryClient.invalidateQueries({ queryKey: [`${appId}-application-role-statuses`] });
   };
 

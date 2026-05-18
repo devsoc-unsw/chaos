@@ -7,6 +7,9 @@ import {
   getApplicationRatingsSummary,
   updateApplicationPrivateStatus,
   ApplicationStatus,
+  updateApplicationRoleStatus,
+  RoleStatus,
+  getApplicationRoleStatusesBatch,
 } from "@/models/application";
 import { getRatingCategories, RatingDetails } from "@/models/rating";
 import { getCampaign, getCampaignRoles } from "@/models/campaign";
@@ -166,15 +169,26 @@ export default function ApplicationSummary({
     queryFn: () => getRatingCategories(campaignId),
   });
 
+  const { data: roleStatusesMap } = useQuery({
+    queryKey: [`${campaignId}-application-role-statuses-batch`],
+    queryFn: async () => {
+      if (!data || data.length === 0) return {};
+      return getApplicationRoleStatusesBatch(data.map((app) => app.application_id));
+    },
+    enabled: !!data && data.length > 0,
+  });
+
   const { mutateAsync: mutatePrivateStatus } = useMutation({
     mutationFn: ({
       applicationId,
+      campaignRoleId,
       status,
     }: {
       applicationId: string;
+      campaignRoleId: string;
       status: ApplicationStatus;
-    }) => updateApplicationPrivateStatus(applicationId, status),
-    onMutate: async ({ applicationId, status }) => {
+    }) => updateApplicationRoleStatus(applicationId, campaignRoleId, status),
+    onMutate: async ({ applicationId, campaignRoleId, status }) => {
       const queryKey = [`${campaignId}-application-ratings-summary`];
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<ApplicationRatingSummary[]>(queryKey);
@@ -201,8 +215,8 @@ export default function ApplicationSummary({
   });
 
   const handlePrivateStatusChange = useCallback(
-    async (applicationId: string, status: ApplicationStatus) => {
-      await mutatePrivateStatus({ applicationId, status });
+    async (applicationId: string, campaignRoleId: string, status: ApplicationStatus) => {
+      await mutatePrivateStatus({ applicationId, campaignRoleId, status });
     },
     [mutatePrivateStatus]
   );
@@ -211,6 +225,16 @@ export default function ApplicationSummary({
 
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [customFilters, setCustomFilters] = useState<FilterConfig[]>([]);
+
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
+    []
+  );
+
+  // Extract filtered role ID from columnFilters
+  const filteredRoleId = useMemo(() => {
+    const roleFilter = columnFilters.find((f) => f.id === "applied_roles")?.value as string | undefined;
+    return (roleFilter && roleFilter !== "all") ? roleFilter : null;
+  }, [columnFilters]);
 
   // Initialize default filter configurations
   const defaultFilters: FilterConfig[] = [
@@ -243,12 +267,6 @@ export default function ApplicationSummary({
     () => [...defaultFilters, ...customFilters],
     [defaultFilters, customFilters]
   );
-
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
-    []
-  );
-
-  // Get count for a specific filter
   const getFilterCount = useCallback(
     (filter: FilterConfig) => {
       const members = allMembers.filter(filter.predicate);
@@ -268,8 +286,10 @@ export default function ApplicationSummary({
         roleIdsToNames,
         ratingCategories ?? [],
         handlePrivateStatusChange,
+        filteredRoleId,
+        roleStatusesMap ?? {},
       ),
-    [dict, roleIdsToNames, ratingCategories, handlePrivateStatusChange, statusFilter]
+    [dict, roleIdsToNames, ratingCategories, handlePrivateStatusChange, filteredRoleId, roleStatusesMap, statusFilter]
   );
 
   // Handle adding a new custom filter

@@ -146,3 +146,18 @@ export async function updateApplicationRoleStatus(
     },
   );
 }
+
+export async function getApplicationRoleStatusesBatch(
+  applicationIds: string[],
+): Promise<Record<string, RoleStatus[]>> {
+  const results = await Promise.all(
+    applicationIds.map((id) => getApplicationRoleStatuses(id))
+  );
+  
+  const roleStatusMap: Record<string, RoleStatus[]> = {};
+  applicationIds.forEach((id, index) => {
+    roleStatusMap[id] = results[index];
+  });
+  
+  return roleStatusMap;
+}
