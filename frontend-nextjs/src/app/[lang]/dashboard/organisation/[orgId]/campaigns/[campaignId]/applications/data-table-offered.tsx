@@ -17,6 +17,8 @@ interface ApplicationSummaryDataTableOfferedProp<TData, TValue> {
   campaignId: string;
   acceptedApplicants?: SendEmailsApplicant[];
   rejectedApplicants?: SendEmailsApplicant[];
+  filteredRoleId: string | null;
+  roleIdsToNames: Record<string, string>;
 }
 
 export function ApplicationSummaryDataTableOffered<TData, TValue>({
@@ -30,6 +32,8 @@ export function ApplicationSummaryDataTableOffered<TData, TValue>({
   campaignId,
   acceptedApplicants = [],
   rejectedApplicants = [],
+  filteredRoleId = null,
+  roleIdsToNames = {},
 }: ApplicationSummaryDataTableOfferedProp<ApplicationRatingSummary, TValue>) {
   const { data: offers } = useQuery({
     queryKey: [`${campaignId}-offer-details`],
@@ -37,10 +41,10 @@ export function ApplicationSummaryDataTableOffered<TData, TValue>({
   });
 
   const combinedData: ApplicationRatingSummary[] = data.map((app) => {
-    const offer = offers?.find((o) => o.application_id === app.application_id);
+    const offer = offers?.find((o) => o.application_id === app.application_id && o.role_id === filteredRoleId);
     return {
       ...app,
-      offer_role: offer ? offer.role_name : null,
+      offer_role: offer ? offer.role_name : roleIdsToNames[filteredRoleId as string] || null,
       offer_status: offer ? offer.status : "Draft",
     };
   });
