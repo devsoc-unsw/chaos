@@ -219,8 +219,6 @@ export default function ApplicationSummary({
   const allMembers = data ?? [];
 
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [customFilters, setCustomFilters] = useState<FilterConfig[]>([]);
-
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
     []
   );
@@ -246,7 +244,7 @@ export default function ApplicationSummary({
   );
 
   // Initialize default filter configurations
-  const defaultFilters: FilterConfig[] = [
+  const statusFilters: FilterConfig[] = [
     {
       id: "all",
       label: "All",
@@ -267,12 +265,6 @@ export default function ApplicationSummary({
       hoverColor: "hover:bg-green-200",
     },
   ];
-
-  // All available filters (default + custom)
-  const allFilters = useMemo<FilterConfig[]>(
-    () => [...defaultFilters, ...customFilters],
-    [defaultFilters, customFilters]
-  );
 
   const getFilterCount = useCallback(
     (filter: FilterConfig) => {
@@ -410,7 +402,7 @@ export default function ApplicationSummary({
 
         {/* Result Filter Button group */}
         <div className="mb-4 flex items-center flex-wrap gap-2">
-          {allFilters.map((filter) => (
+          {statusFilters.map((filter) => (
             <div key={filter.id} className="relative">
               <ResultFilterButton
                 className={
@@ -420,14 +412,6 @@ export default function ApplicationSummary({
               >
                 {filter.label} ({getFilterCount(filter)})
               </ResultFilterButton>
-              {!filter.isSpecial && customFilters.some((f) => f.id === filter.id) && (
-                <button
-                  onClick={() => { }}
-                  className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 text-white hover:bg-red-600"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              )}
             </div>
           ))}
           <button
@@ -475,7 +459,7 @@ export default function ApplicationSummary({
               columns={columns}
               data={data?.filter((m) => {
                 if (!filteredRoleId) return false;
-                const targetStatus = allFilters.find((f) => f.id === statusFilter)?.label as ApplicationStatus;
+                const targetStatus = statusFilters.find((f) => f.id === statusFilter)?.label as ApplicationStatus;
                 const status = getAppRoleStatus(m.application_id, filteredRoleId);
                 return status === targetStatus;
               }) ?? []}
@@ -483,11 +467,11 @@ export default function ApplicationSummary({
               setColumnFilters={setColumnFilters}
               columnFilters={columnFilters}
               label={
-                allFilters.find((f) => f.id === statusFilter)?.label ||
+                statusFilters.find((f) => f.id === statusFilter)?.label ||
                 statusFilter
               }
               color={
-                allFilters.find((f) => f.id === statusFilter)?.color || ""
+                statusFilters.find((f) => f.id === statusFilter)?.color || ""
               }
               orgId={orgId}
               campaignId={campaignId}
