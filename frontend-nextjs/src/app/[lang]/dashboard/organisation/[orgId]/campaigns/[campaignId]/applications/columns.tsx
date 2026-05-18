@@ -40,6 +40,7 @@ export function getColumns(
   onStatusChange: (applicationId: string, campaignRoleId: string, status: ApplicationStatus) => Promise<void>,
   filteredRoleId: string | null,
   roleStatusesMap: Record<string, RoleStatus[]>,
+  mutatingItem: { appId: string; roleId: string } | null,
 ): ColumnDef<ApplicationRatingSummary>[] {
   const ratingColumns = ratingCategories.map((category) => {
     return {
@@ -130,6 +131,7 @@ export function getColumns(
             onPrivateStatusChange={onStatusChange}
             filteredRoleId={filteredRoleId}
             roleStatuses={roleStatusesMap[data.application_id] ?? []}
+            isMutating={mutatingItem?.appId === data.application_id && mutatingItem?.roleId === filteredRoleId}
           />
         );
       },
@@ -162,12 +164,14 @@ function PrivateStatusCell({
   onPrivateStatusChange,
   filteredRoleId,
   roleStatuses,
+  isMutating,
 }: {
   app: ApplicationRatingSummary;
   dict: any;
   onPrivateStatusChange: (applicationId: string, campaignRoleId: string, status: ApplicationStatus) => Promise<void>;
   filteredRoleId: string | null;
   roleStatuses: RoleStatus[];
+  isMutating?: boolean;
 }) {
   const STATUS_BACKGROUND_COLORS: Record<ApplicationStatus | "Pending", string> = {
     "Successful": "bg-green-100 border-green-300",
@@ -191,8 +195,9 @@ function PrivateStatusCell({
         onValueChange={(v: ApplicationStatus) =>
           onPrivateStatusChange(app.application_id, filteredRoleId, v)
         }
+        disabled={isMutating}
       >
-        <SelectTrigger className={cn(STATUS_BACKGROUND_COLORS[status], "")}>
+        <SelectTrigger className={cn(STATUS_BACKGROUND_COLORS[status], isMutating && "opacity-50 cursor-not-allowed")}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

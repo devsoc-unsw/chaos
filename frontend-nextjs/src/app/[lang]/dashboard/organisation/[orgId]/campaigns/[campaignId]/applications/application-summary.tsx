@@ -189,28 +189,23 @@ export default function ApplicationSummary({
       status: ApplicationStatus;
     }) => updateApplicationRoleStatus(applicationId, campaignRoleId, status),
     onMutate: async ({ applicationId, campaignRoleId, status }) => {
-      const queryKey = [`${campaignId}-application-ratings-summary`];
-      await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData<ApplicationRatingSummary[]>(queryKey);
-      queryClient.setQueryData<ApplicationRatingSummary[]>(queryKey, (old) =>
-        old?.map((a) =>
-          a.application_id === applicationId ? { ...a, private_status: status } : a
-        )
-      );
-      return { previous };
+      // Track that this item is being mutated - just for UI state, no cache updates
+      setMutatingItem({ appId: applicationId, roleId: campaignRoleId });
     },
     onError: (_err, _vars, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(
-          [`${campaignId}-application-ratings-summary`],
-          context.previous
-        );
-      }
+      // Clear the mutating item state
+      setMutatingItem(null);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: [`${campaignId}-application-ratings-summary`],
-      });
+      // Clear the mutating item state
+      setMutatingItem(null);
+
+      // After mutation completes, refetch both caches to get fresh data
+      const summaryKey = [`${campaignId}-application-ratings-summary`];
+      const roleStatusesKey = [`${campaignId}-application-role-statuses-batch`];
+
+      queryClient.invalidateQueries({ queryKey: summaryKey });
+      queryClient.invalidateQueries({ queryKey: roleStatusesKey });
     },
   });
 
@@ -229,6 +224,9 @@ export default function ApplicationSummary({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
     []
   );
+
+  // Track which item is currently being mutated to prevent flickering
+  const [mutatingItem, setMutatingItem] = useState<{ appId: string; roleId: string } | null>(null);
 
   // Extract filtered role ID from columnFilters
   const filteredRoleId = useMemo(() => {
@@ -288,8 +286,9 @@ export default function ApplicationSummary({
         handlePrivateStatusChange,
         filteredRoleId,
         roleStatusesMap ?? {},
+        mutatingItem,
       ),
-    [dict, roleIdsToNames, ratingCategories, handlePrivateStatusChange, filteredRoleId, roleStatusesMap, statusFilter]
+    [dict, roleIdsToNames, ratingCategories, handlePrivateStatusChange, filteredRoleId, roleStatusesMap, statusFilter, mutatingItem]
   );
 
   // Handle adding a new custom filter
