@@ -436,6 +436,8 @@ export default function ApplicationSummary({
               renderSubComponent={renderSubComponent}
               acceptedApplicants={acceptedApplicants}
               rejectedApplicants={rejectedApplicants}
+              filteredRoleId={filteredRoleId}
+              getAppRoleStatus={getAppRoleStatus}
             />
           ) : statusFilter === "successful" ? (
             <ApplicationSummaryDataTableOffered

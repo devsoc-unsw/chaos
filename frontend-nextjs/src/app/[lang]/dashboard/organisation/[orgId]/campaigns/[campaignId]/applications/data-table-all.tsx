@@ -2,8 +2,8 @@
 
 import { ApplicationSummaryDataTable } from "./data-table";
 import { ColumnDef, ColumnFiltersState, Row } from "@tanstack/react-table";
-import { ApplicationRatingSummary } from "@/models/application";
-import { Dispatch, SetStateAction, useMemo, useState } from "react";
+import { ApplicationRatingSummary, ApplicationStatus, getApplicationRoleStatuses } from "@/models/application";
+import { Dispatch, SetStateAction, useCallback, useMemo, useState } from "react";
 import { SendEmailsApplicant } from "./send-email-modal";
 
 interface ApplicationSummaryDataTableAllProp<TData, TValue> {
@@ -17,6 +17,8 @@ interface ApplicationSummaryDataTableAllProp<TData, TValue> {
   campaignId: string;
   acceptedApplicants?: SendEmailsApplicant[];
   rejectedApplicants?: SendEmailsApplicant[];
+  getAppRoleStatus: (applicationId: string, roleId: string) => ApplicationStatus | null;
+  filteredRoleId: string | null;
 }
 
 export function ApplicationSummaryDataTableAll<TData, TValue>({
@@ -30,22 +32,41 @@ export function ApplicationSummaryDataTableAll<TData, TValue>({
   campaignId,
   acceptedApplicants = [],
   rejectedApplicants = [],
+  filteredRoleId = null,
+  getAppRoleStatus
 }: ApplicationSummaryDataTableAllProp<ApplicationRatingSummary, TValue>) {
   const STATUS_ORDER: Record<string, number> = { Pending: 0, Successful: 1, Rejected: 2 };
   const [sortBy, setSortBy] = useState<"decision" | "name">("decision");
-  const filteredMembers = useMemo(() => {
-    const filtered = data.filter((m) => m.private_status === "Pending");
-    return filtered.sort((a, b) => {
-      if (sortBy === "name") return a.user_name.localeCompare(b.user_name);
-      return (STATUS_ORDER[a.private_status] ?? 99) - (STATUS_ORDER[b.private_status] ?? 99);
+
+  const pendingMembers = useMemo(() => {
+    return data.filter((m) => {
+      if (!filteredRoleId) return true;
+      const status = getAppRoleStatus(m.application_id, filteredRoleId);
+      return status === "Pending";
     });
-  }, [data, sortBy]);
+  }, [data, filteredRoleId, getAppRoleStatus]);
+
+  const nonPendingMembers = useMemo(() => {
+    return data.filter((m) => {
+      if (!filteredRoleId) return true;
+      const status = getAppRoleStatus(m.application_id, filteredRoleId);
+      return status !== "Pending";
+    });
+  }, [data, filteredRoleId, getAppRoleStatus]);
+
+  const filteredMembers = useCallback((members: ApplicationRatingSummary[]) => {
+    return [...members].sort((a, b) => {
+      if (sortBy === "name") return a.user_name.localeCompare(b.user_name);
+      return (STATUS_ORDER[getAppRoleStatus(a.application_id, filteredRoleId as string) as ApplicationStatus] ?? 99)
+        - (STATUS_ORDER[getAppRoleStatus(b.application_id, filteredRoleId as string) as ApplicationStatus] ?? 99);
+    });
+  }, [sortBy, filteredRoleId, getAppRoleStatus]);
 
   return (
     <div className="flex flex-col gap-5">
       <ApplicationSummaryDataTable
         columns={columns}
-        data={filteredMembers}
+        data={filteredMembers(pendingMembers)}
         dict={dict}
         setColumnFilters={setColumnFilters}
         columnFilters={columnFilters}
@@ -66,7 +87,7 @@ export function ApplicationSummaryDataTableAll<TData, TValue>({
         dict={dict}
         renderSubComponent={renderSubComponent}
         columns={columns}
-        data={data.filter((m) => m.private_status !== "Pending")}
+        data={filteredMembers(nonPendingMembers)}
         setColumnFilters={setColumnFilters}
         columnFilters={columnFilters}
         orgId={orgId}
