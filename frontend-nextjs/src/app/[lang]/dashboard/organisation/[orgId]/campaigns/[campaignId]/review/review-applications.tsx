@@ -308,6 +308,7 @@ function ApplicationPanel({
         <div className="flex items-center gap-3 mt-3 pb-3 flex-wrap">
           {sortedRoles.map((role, i) => (
             <div key={role.campaign_role_id} className="flex items-center gap-1">
+              <span className="text-xs text-muted-foreground">{i + 1}.</span>
               <button
                 type="button"
                 onClick={() => setSelectedRoleId(role.campaign_role_id)}
@@ -320,7 +321,6 @@ function ApplicationPanel({
               >
                 {role.role_name}
               </button>
-              <span className="text-xs text-muted-foreground">{i + 1}.</span>
             </div>
           ))}
         </div>
