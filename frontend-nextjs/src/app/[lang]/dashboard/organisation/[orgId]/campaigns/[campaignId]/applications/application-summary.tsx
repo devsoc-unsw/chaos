@@ -35,11 +35,11 @@ import React from "react";
 interface FilterConfig {
   id: string;
   label: string;
-  predicate: (app: ApplicationRatingSummary) => boolean;
   color?: string;
   hoverColor?: string;
   isSpecial?: boolean; // For "All" view which shows multiple tables
 }
+
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -189,7 +189,7 @@ export default function ApplicationSummary({
       status: ApplicationStatus;
     }) => updateApplicationRoleStatus(applicationId, campaignRoleId, status),
     onMutate: async ({ applicationId, campaignRoleId, status }) => {
-      // Track that this item is being mutated - just for UI state, no cache updates
+      // Track that this item is being mutated (just for UI state, no cache updates)
       setMutatingItem({ appId: applicationId, roleId: campaignRoleId });
     },
     onError: (_err, _vars, context) => {
@@ -234,12 +234,22 @@ export default function ApplicationSummary({
     return (roleFilter && roleFilter !== "all") ? roleFilter : null;
   }, [columnFilters]);
 
+  // Helper to get the status for an application in a specific role
+  const getAppRoleStatus = useCallback(
+    (appId: string, roleId: string | null): ApplicationStatus | null => {
+      if (!roleId) return null;
+      const roleStatuses = roleStatusesMap?.[appId];
+      if (!roleStatuses) return null;
+      return roleStatuses.find((rs) => rs.campaign_role_id === roleId)?.status ?? null;
+    },
+    [roleStatusesMap]
+  );
+
   // Initialize default filter configurations
   const defaultFilters: FilterConfig[] = [
     {
       id: "all",
       label: "All",
-      predicate: () => true,
       color: "bg-gray-200",
       hoverColor: "hover:bg-gray-300",
       isSpecial: true,
@@ -247,14 +257,12 @@ export default function ApplicationSummary({
     {
       id: "rejected",
       label: "Rejected",
-      predicate: (a) => a.private_status === "Rejected",
       color: "bg-red-100",
       hoverColor: "hover:bg-red-200",
     },
     {
       id: "successful",
       label: "Successful",
-      predicate: (a) => a.private_status === "Successful",
       color: "bg-green-100",
       hoverColor: "hover:bg-green-200",
     },
@@ -265,16 +273,28 @@ export default function ApplicationSummary({
     () => [...defaultFilters, ...customFilters],
     [defaultFilters, customFilters]
   );
+
   const getFilterCount = useCallback(
     (filter: FilterConfig) => {
-      const members = allMembers.filter(filter.predicate);
-      const roleFilter = columnFilters.find((f) => f.id === "applied_roles")?.value as string;
-      if (!roleFilter || roleFilter === "all") {
-        return members.length;
+      // If no role is filtered, can't count by status filters other than "all"
+      if (!filteredRoleId && filter.id !== "all") {
+        return 0;
       }
-      return members.filter((m) => m.applied_roles.includes(roleFilter)).length;
+
+      if (filter.id === "all") {
+        return allMembers.filter((m) => m.applied_roles.includes(filteredRoleId!)).length;
+      }
+
+      // Count applications matching this status for the filtered role
+      const targetStatus = filter.label as ApplicationStatus;
+      const count = allMembers.filter((m) => {
+        const status = getAppRoleStatus(m.application_id, filteredRoleId);
+        return status === targetStatus;
+      }).length;
+
+      return count;
     },
-    [allMembers, columnFilters]
+    [allMembers, filteredRoleId, getAppRoleStatus]
   );
 
   const columns = useMemo(
@@ -290,26 +310,6 @@ export default function ApplicationSummary({
       ),
     [dict, roleIdsToNames, ratingCategories, handlePrivateStatusChange, filteredRoleId, roleStatusesMap, statusFilter, mutatingItem]
   );
-
-  // Handle adding a new custom filter
-  const handleAddFilter = useCallback(() => {
-    const newFilter: FilterConfig = {
-      id: `custom-${Date.now()}`,
-      label: `Filter ${customFilters.length + 1}`,
-      predicate: (a) => a.private_status === "Pending", // Default predicate
-      color: "bg-blue-100",
-      hoverColor: "hover:bg-blue-200",
-    };
-    setCustomFilters((prev) => [...prev, newFilter]);
-  }, [customFilters.length]);
-
-  // Handle removing a custom filter
-  const handleRemoveFilter = useCallback((filterId: string) => {
-    setCustomFilters((prev) => prev.filter((f) => f.id !== filterId));
-    if (statusFilter === filterId) {
-      setStatusFilter("all");
-    }
-  }, [statusFilter]);
 
   const handleStatusFilter = useCallback(
     (status: string) => {
@@ -422,7 +422,7 @@ export default function ApplicationSummary({
               </ResultFilterButton>
               {!filter.isSpecial && customFilters.some((f) => f.id === filter.id) && (
                 <button
-                  onClick={() => handleRemoveFilter(filter.id)}
+                  onClick={() => { }}
                   className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 text-white hover:bg-red-600"
                 >
                   <X className="w-3 h-3" />
@@ -431,7 +431,7 @@ export default function ApplicationSummary({
             </div>
           ))}
           <button
-            onClick={handleAddFilter}
+            onClick={() => { }}
             className="cursor-pointer ml-2"
             title="Add custom filter"
           >
@@ -456,7 +456,11 @@ export default function ApplicationSummary({
           ) : statusFilter === "successful" ? (
             <ApplicationSummaryDataTableOffered
               columns={columns}
-              data={data?.filter((m) => m.private_status === "Successful") ?? []}
+              data={data?.filter((m) => {
+                if (!filteredRoleId) return false;
+                const status = getAppRoleStatus(m.application_id, filteredRoleId);
+                return status === "Successful";
+              }) ?? []}
               dict={dict}
               setColumnFilters={setColumnFilters}
               columnFilters={columnFilters}
@@ -470,8 +474,10 @@ export default function ApplicationSummary({
             <ApplicationSummaryDataTable
               columns={columns}
               data={data?.filter((m) => {
-                const status = allFilters.find((f) => f.id === statusFilter)?.label;
-                return m.private_status === status;
+                if (!filteredRoleId) return false;
+                const targetStatus = allFilters.find((f) => f.id === statusFilter)?.label as ApplicationStatus;
+                const status = getAppRoleStatus(m.application_id, filteredRoleId);
+                return status === targetStatus;
               }) ?? []}
               dict={dict}
               setColumnFilters={setColumnFilters}
