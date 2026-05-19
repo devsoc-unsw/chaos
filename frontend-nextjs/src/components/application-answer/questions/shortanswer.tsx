@@ -57,7 +57,7 @@ export default function  ShortAnswer({
 
         try {
             await submitAnswer(question, value, applicationId, answerId)
-            setPreviousAnswer(trimmedPrev || null)
+            setPreviousAnswer(trimmed === '' ? null : trimmed)
         } catch (err) {
             console.error("Short answer update failed:", err);
         }

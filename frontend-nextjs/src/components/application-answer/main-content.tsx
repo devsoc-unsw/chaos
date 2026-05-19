@@ -56,24 +56,65 @@ export default function MainContent({
         : (questions && answers ? linkQuestionsAndAnswers(questions, answers) : []);
   
     // submits answer to a question
+    const resyncQuestionFromServer = async (question: QuestionAndAnswer) => {
+      const answersKey = generalTab
+        ? [`${applicationId}-common-answers`]
+        : [`${applicationId}-${activeTab}-role-answers`];
+      const questionsKey = generalTab
+        ? [`${campaignId}-common-questions`]
+        : [`${campaignId}-${activeTab}-role-questions`];
+
+      await queryClient.invalidateQueries({ queryKey: answersKey });
+
+      const [qs, ans] = await Promise.all([
+        queryClient.fetchQuery({
+          queryKey: questionsKey,
+          queryFn: () =>
+            generalTab
+              ? getAllCommonQuestions(campaignId)
+              : getAllRoleQuestions(campaignId, activeTab),
+        }),
+        queryClient.fetchQuery({
+          queryKey: answersKey,
+          queryFn: () =>
+            generalTab
+              ? getAllCommonAnswers(applicationId)
+              : getAllRoleAnswers(applicationId, activeTab),
+        }),
+      ]);
+
+      const fresh = linkQuestionsAndAnswers(qs, ans).find(
+        (q) => q.question_id === question.question_id
+      );
+      updateRoleAnswers(fresh ?? question);
+    };
+
     const submitAnswer = async (
       question: QuestionAndAnswer,
       value: AnswerValue,
       applicationId: string,
       answerId: string | undefined
     ):Promise<void>  =>  {
+      const effectiveAnswerId = answerId ?? question.answer_id;
       const updatedQA: QuestionAndAnswer = {
         ...question,
         answer: value,
       };
 
+      let payload;
       try {
-        const payload = buildAnswerPayload(question, value);
+        payload = buildAnswerPayload(question, value);
+      } catch (err) {
+        console.error("Failed to build answer payload", err);
+        toast.error("Failed to submit answer");
+        return;
+      }
 
+      try {
         // HANDLE EMPTY QUESTION
         if (payload.answer_data === null) {
-          if (answerId) {
-            await deleteAnswer(answerId);
+          if (effectiveAnswerId) {
+            await deleteAnswer(effectiveAnswerId);
             if (generalTab) {
               await queryClient.invalidateQueries({
                 queryKey: [`${applicationId}-common-answers`]
@@ -91,19 +132,42 @@ export default function MainContent({
           };
           updateRoleAnswers(deletedQA);
           return
+        }
+
+        if (effectiveAnswerId) {
+          await updateAnswer(effectiveAnswerId, payload);
+          updateRoleAnswers(updatedQA);
         } else {
-          if (answerId) {
-            await updateAnswer(answerId, payload)
-          } else {
-            await createAnswer(applicationId, payload)
+          const created = await createAnswer(applicationId, payload);
+          updateRoleAnswers({ ...updatedQA, answer_id: String(created.id) });
+        }
+      } catch (err) {
+        if (!effectiveAnswerId) {
+          try {
+            const answers = generalTab
+              ? await getAllCommonAnswers(applicationId)
+              : await getAllRoleAnswers(applicationId, activeTab);
+            const found = answers.find(
+              (a) => String(a.question_id) === String(question.question_id)
+            );
+            if (found) {
+              await updateAnswer(found.id, payload);
+              updateRoleAnswers({ ...updatedQA, answer_id: String(found.id) });
+              return;
+            }
+          } catch (recoveryErr) {
+            console.error("Recovery update failed:", recoveryErr);
           }
         }
-        updateRoleAnswers(updatedQA);
-      } catch (err) {
-        // roll back answers on error so that frontend and backend aren't out of sync
+
         console.error("Failed to submit answer", err);
         toast.error("Failed to submit answer");
-        updateRoleAnswers(question);
+        try {
+          await resyncQuestionFromServer(question);
+        } catch (resyncErr) {
+          console.error("Failed to resync answer from server", resyncErr);
+          updateRoleAnswers(question);
+        }
       }
     }
 
