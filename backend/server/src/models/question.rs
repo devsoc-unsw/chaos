@@ -61,6 +61,8 @@ pub struct Question {
     pub roles: Vec<i64>, // (Possibly empty) list of roles the question is for
     pub required: bool,
 
+    pub short_answer_word_limit: Option<i32>,
+
     #[serde(flatten)]
     pub question_data: QuestionData,
 
@@ -84,7 +86,7 @@ pub struct QuestionRawData {
     common: bool, // Common question are shown at the start
     roles: Vec<i64>,
     required: bool,
-
+    short_answer_word_limit: Option<i32>,
     question_type: QuestionType,
     multi_option_data: Option<sqlx::types::Json<Vec<MultiOptionQuestionOption>>>,
 
@@ -174,6 +176,7 @@ impl Question {
                     q.common,
                     COALESCE(array_remove(array_agg(DISTINCT qr.role_id), NULL), '{}') AS "roles!: Vec<i64>",
                     q.required,
+                    q.short_answer_word_limit,
                     q.question_type AS "question_type: QuestionType",
                     q.created_at,
                     q.updated_at,
@@ -215,6 +218,7 @@ impl Question {
             common: question_raw_data.common,
             roles: question_raw_data.roles,
             required: question_raw_data.required,
+            short_answer_word_limit: question_raw_data.short_answer_word_limit,
             question_data,
             created_at: question_raw_data.created_at,
             updated_at: question_raw_data.updated_at,
@@ -235,6 +239,7 @@ impl Question {
                     q.common,
                     COALESCE(array_remove(array_agg(DISTINCT qr.role_id), NULL), '{}') AS "roles!: Vec<i64>",
                     q.required,
+                    q.short_answer_word_limit,
                     q.question_type AS "question_type: QuestionType",
                     q.created_at,
                     q.updated_at,
@@ -278,6 +283,7 @@ impl Question {
                     common: question_raw_data.common,
                     roles: question_raw_data.roles,
                     required: question_raw_data.required,
+                    short_answer_word_limit: question_raw_data.short_answer_word_limit,
                     question_data,
                     created_at: question_raw_data.created_at,
                     updated_at: question_raw_data.updated_at,
@@ -306,6 +312,7 @@ impl Question {
                         '{}'
                     ) AS "roles!: Vec<i64>",
                     q.required,
+                    q.short_answer_word_limit,
                     q.question_type AS "question_type: QuestionType",
                     q.created_at,
                     q.updated_at,
@@ -352,6 +359,7 @@ impl Question {
                     common: question_raw_data.common,
                     roles: question_raw_data.roles,
                     required: question_raw_data.required,
+                    short_answer_word_limit: question_raw_data.short_answer_word_limit,
                     question_data,
                     created_at: question_raw_data.created_at,
                     updated_at: question_raw_data.updated_at,
@@ -376,6 +384,7 @@ impl Question {
                     q.common,
                     COALESCE(array_remove(array_agg(DISTINCT qr.role_id), NULL), '{}') AS "roles!: Vec<i64>",
                     q.required,
+                    q.short_answer_word_limit,
                     q.question_type AS "question_type: QuestionType",
                     q.created_at,
                     q.updated_at,
@@ -419,6 +428,7 @@ impl Question {
                     common: question_raw_data.common,
                     roles: question_raw_data.roles,
                     required: question_raw_data.required,
+                    short_answer_word_limit: question_raw_data.short_answer_word_limit,
                     question_data,
                     created_at: question_raw_data.created_at,
                     updated_at: question_raw_data.updated_at,
@@ -436,6 +446,7 @@ impl Question {
         common: bool,
         roles: Vec<i64>,
         required: bool,
+        short_answer_word_limit: Option<i32>,
         question_data: QuestionData,
         transaction: &mut Transaction<'_, Postgres>,
         snowflake_generator: &mut SnowflakeIdGenerator,
@@ -447,7 +458,9 @@ impl Question {
             r#"
                 UPDATE questions SET
                     title = $2, description = $3, common = $4,
-                    required = $5, question_type = $6, updated_at = $7
+                    required = $5, question_type = $6, updated_at = $7,
+                    short_answer_word_limit = $8
+
                 WHERE id = $1
                 RETURNING question_type AS "question_type: QuestionType"
             "#,
@@ -457,7 +470,8 @@ impl Question {
             common,
             required,
             QuestionType::from_question_data(&question_data) as QuestionType,
-            Utc::now()
+            Utc::now(),
+            short_answer_word_limit
         )
         .fetch_one(transaction.deref_mut())
         .await?;
