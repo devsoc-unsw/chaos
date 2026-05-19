@@ -53,7 +53,7 @@ impl RoleStatus {
             application_id,
             campaign_role_id,
         )
-        .fetch_one(transaction.deref_mut())
+        .execute(transaction.deref_mut())
         .await?;
 
         Ok(())
