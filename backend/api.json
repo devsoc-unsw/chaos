@@ -6,7 +6,7 @@
   },
   "servers": [
     {
-      "url": "https://chaos.csesoc.app/api",
+      "url": "https://chaos.devsoc.app/api",
       "description": "Production server"
     },
     {
@@ -371,7 +371,7 @@
                 "properties": {
                   "slug": {
                     "type": "string",
-                    "description": "ASCII string for URL like https://chaos.csesoc.app/s/unsw-devsoc",
+                    "description": "ASCII string for URL like https://chaos.devsoc.app/s/unsw-devsoc",
                     "example": "unsw-devsoc"
                   },
                   "name": {
