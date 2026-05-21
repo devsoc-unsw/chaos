@@ -3,7 +3,7 @@ info:
   title: Chaos API
   version: 1.0.0
 servers:
-  - url: https://chaos.csesoc.app/api
+  - url: https://chaos.devsoc.app/api
     description: Production server
   - url: http://localhost:3000/api
     description: Local server
@@ -770,7 +770,7 @@ paths:
           $ref: "#/components/responses/NotLoggedIn"
 
   /rating/{id}:
-    
+
   # /rating/{id}:
   #   get:
   #     operationId: getRatingById
@@ -3083,7 +3083,7 @@ components:
     #       type: string
     #       nullable: true
     #       example: Good answer to this question
-  
+
     UserAvgApplicationRating:
       type: object
       properties:
