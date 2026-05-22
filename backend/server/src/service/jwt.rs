@@ -161,20 +161,20 @@ mod tests {
     //
     //  ID    Value      Expected         Test                                    Status
     //  BV01  i64::MIN   stored verbatim  –                                       not covered
-    //  BV02  -1         stored verbatim  encodes_negative_user_id                ✓
-    //  BV03   0         stored verbatim  encodes_empty_username                  ✓
-    //  BV04   1         stored verbatim  payload_fields_match_internal_constants ✓
+    //  BV02  -1         stored verbatim  encodes_negative_user_id                OK
+    //  BV03   0         stored verbatim  encodes_empty_username                  OK
+    //  BV04   1         stored verbatim  payload_fields_match_internal_constants OK
     //  BV05  i64::MAX   stored verbatim  –                                       not covered
     //
     // token expiry – boundary around now (default_validation leeway = 60 s)
     // Valid window: exp > (now − leeway).  Partition boundary is at now − 60 s.
     //
     //  ID    exp value               Side of boundary      Expected  Test                               Status
-    //  BV06  now + 604800 (7 days)   well inside valid     Some      timestamps_reflect_seven_day_expiry ✓
+    //  BV06  now + 604800 (7 days)   well inside valid     Some      timestamps_reflect_seven_day_expiry OK
     //  BV07  now + 1                 just inside valid     Some      –                                   not covered
     //  BV08  now − 59               inside leeway         Some      –                                   not covered
-    //  BV09  now − 61               just past leeway      None      returns_none_for_expired_token      ✓
-    //  BV10  now − 3600             well past expiry      None      returns_none_for_expired_token      ✓
+    //  BV09  now − 61               just past leeway      None      returns_none_for_expired_token      OK
+    //  BV10  now − 3600             well past expiry      None      returns_none_for_expired_token      OK
     //
     // ── KNOWN GAPS ────────────────────────────────────────────────────────────
     //
@@ -232,7 +232,7 @@ mod tests {
 
     // ── AuthorizationJwtPayload field coverage ────────────────────────────────
 
-    /// White-box: verifies every field in AuthorizationJwtPayload is set
+    ///  verifies every field in AuthorizationJwtPayload is set
     /// correctly by encode_auth_token, including hardcoded internals.
     #[test]
     fn payload_fields_match_internal_constants() {
@@ -250,7 +250,7 @@ mod tests {
         assert_ne!(payload.jti, uuid::Uuid::nil());
     }
 
-    /// White-box: iat and nbf are both set to current_time; exp = iat + 604800.
+    ///  iat and nbf are both set to current_time; exp = iat + 604800.
     #[test]
     fn timestamps_reflect_seven_day_expiry() {
         let before = now_secs();
@@ -275,7 +275,7 @@ mod tests {
         );
     }
 
-    /// White-box: every call must produce a distinct jti (Uuid::new_v4).
+    ///  every call must produce a distinct jti (Uuid::new_v4).
     #[test]
     fn each_token_gets_unique_jti() {
         let (enc, dec) = test_keys();
@@ -291,7 +291,7 @@ mod tests {
 
     // ── encode_auth_token ─────────────────────────────────────────────────────
 
-    /// White-box: negative user IDs are stored correctly (i64 range).
+    ///  negative user IDs are stored correctly (i64 range).
     #[test]
     fn encodes_negative_user_id() {
         let (enc, dec) = test_keys();
@@ -300,7 +300,7 @@ mod tests {
         assert_eq!(payload.sub, -1);
     }
 
-    /// White-box: an empty username string is accepted (no validation inside encode).
+    ///  an empty username string is accepted (no validation inside encode).
     #[test]
     fn encodes_empty_username() {
         let (enc, dec) = test_keys();
@@ -311,7 +311,7 @@ mod tests {
 
     // ── decode_auth_token ─────────────────────────────────────────────────────
 
-    /// White-box: a token signed with a different secret must return None.
+    ///  a token signed with a different secret must return None.
     #[test]
     fn returns_none_for_wrong_secret() {
         let (enc, _) = test_keys();
@@ -323,7 +323,7 @@ mod tests {
         assert!(decode_auth_token(&token, &wrong_dec, &default_validation()).is_none());
     }
 
-    /// White-box: appending a character to the token breaks the signature check.
+    ///  appending a character to the token breaks the signature check.
     #[test]
     fn returns_none_for_tampered_signature() {
         let (enc, dec) = test_keys();
@@ -332,7 +332,7 @@ mod tests {
         assert!(decode_auth_token(&tampered, &dec, &default_validation()).is_none());
     }
 
-    /// White-box: audience mismatch results in None (jsonwebtoken validates aud claim).
+    ///  audience mismatch results in None (jsonwebtoken validates aud claim).
     #[test]
     fn returns_none_for_wrong_audience() {
         let (enc, dec) = test_keys();
@@ -342,7 +342,7 @@ mod tests {
         assert!(decode_auth_token(&token, &dec, &bad_aud).is_none());
     }
 
-    /// White-box: a completely invalid string (not Base64-URL JWT) returns None.
+    ///  a completely invalid string (not Base64-URL JWT) returns None.
     #[test]
     fn returns_none_for_invalid_token_string() {
         let (_, dec) = test_keys();
@@ -350,7 +350,7 @@ mod tests {
         assert!(decode_auth_token("", &dec, &default_validation()).is_none());
     }
 
-    /// White-box: altering the header segment (first part) invalidates the token.
+    ///  altering the header segment (first part) invalidates the token.
     #[test]
     fn returns_none_for_tampered_header() {
         let (enc, dec) = test_keys();
@@ -361,7 +361,7 @@ mod tests {
         assert!(decode_auth_token(&tampered, &dec, &default_validation()).is_none());
     }
 
-    /// White-box: altering the payload segment invalidates the signature.
+    ///  altering the payload segment invalidates the signature.
     #[test]
     fn returns_none_for_tampered_payload() {
         let (enc, dec) = test_keys();
@@ -371,7 +371,7 @@ mod tests {
         assert!(decode_auth_token(&tampered, &dec, &default_validation()).is_none());
     }
 
-    /// White-box: a token with an `exp` in the past must be rejected.
+    ///  a token with an `exp` in the past must be rejected.
     #[test]
     fn returns_none_for_expired_token() {
         let (enc, dec) = test_keys();
@@ -391,7 +391,7 @@ mod tests {
         assert!(decode_auth_token(&token, &dec, &default_validation()).is_none());
     }
 
-    /// White-box: a token signed with HS256 must be rejected when validated against HS384.
+    ///  a token signed with HS256 must be rejected when validated against HS384.
     #[test]
     fn returns_none_for_wrong_algorithm() {
         let (enc, dec) = test_keys();
