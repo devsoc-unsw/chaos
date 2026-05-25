@@ -483,9 +483,11 @@ export default function ApplicationSummary({
             <ApplicationSummaryDataTableOffered
               columns={columns}
               data={data?.filter((m) => {
-                if (!filteredRoleId) return false;
-                const status = getAppRoleStatus(m.application_id, filteredRoleId);
-                return status === "Successful";
+                if (filteredRoleId) {
+                  const status = getAppRoleStatus(m.application_id, filteredRoleId);
+                  return status === "Successful";
+                }
+                return m.private_status === "Successful";
               }) ?? []}
               dict={dict}
               setColumnFilters={setColumnFilters}
@@ -502,10 +504,12 @@ export default function ApplicationSummary({
             <ApplicationSummaryDataTable
               columns={columns}
               data={data?.filter((m) => {
-                if (!filteredRoleId) return false;
                 const targetStatus = statusFilters.find((f) => f.id === statusFilter)?.label as ApplicationStatus;
-                const status = getAppRoleStatus(m.application_id, filteredRoleId);
-                return status === targetStatus;
+                if (filteredRoleId) {
+                  const status = getAppRoleStatus(m.application_id, filteredRoleId);
+                  return status === targetStatus;
+                }
+                return m.private_status === targetStatus;
               }) ?? []}
               dict={dict}
               setColumnFilters={setColumnFilters}
