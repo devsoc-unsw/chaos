@@ -228,7 +228,7 @@ export default function ApplicationSummary({
       const newApplicationStatus = calculateApplicationStatusFromRoles(allRoleStatuses);
 
       // Update the application status to sync
-      await updateApplicationStatus(applicationId, newApplicationStatus);
+      await updateApplicationPrivateStatus(applicationId, newApplicationStatus);
     },
     onMutate: async ({ applicationId, campaignRoleId, status }) => {
       // Track that this item is being mutated (just for UI state, no cache updates)
@@ -365,13 +365,13 @@ export default function ApplicationSummary({
 
   const acceptedApplicants = useMemo(
     () =>
-      data?.filter((a) => a.status === "Successful")
+      data?.filter((a) => a.private_status === "Successful")
         .map((a) => toApplicant(a, roleIdsToNames)),
     [data, roleIdsToNames]
   );
   const rejectedApplicants = useMemo(
     () =>
-      data?.filter((a) => a.status === "Rejected")
+      data?.filter((a) => a.private_status === "Rejected")
         .map((a) => toApplicant(a, roleIdsToNames)),
     [data, roleIdsToNames]
   );
