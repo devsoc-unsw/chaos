@@ -74,7 +74,7 @@ export function getColumns(
     {
       header: dict.dashboard.campaigns.application_summary_page.applicant_name,
       accessorKey: "user_name",
-      cell: ({ row }) => <ApplicantLinkCell app={row.original} />,
+      cell: ({ row }) => <span>{row.original.user_name}</span>,
     },
     {
       header: dict.common.email,
