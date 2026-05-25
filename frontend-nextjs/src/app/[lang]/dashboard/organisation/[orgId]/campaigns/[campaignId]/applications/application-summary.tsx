@@ -10,6 +10,8 @@ import {
   updateApplicationRoleStatus,
   RoleStatus,
   getApplicationRoleStatusesBatch,
+  getApplicationRoleStatuses,
+  updateApplicationStatus,
 } from "@/models/application";
 import { getRatingCategories, RatingDetails } from "@/models/rating";
 import { getCampaign, getCampaignRoles } from "@/models/campaign";
@@ -127,6 +129,34 @@ function toApplicant(
   };
 }
 
+/**
+ * Calculate the application status based on all role statuses.
+ * Logic:
+ * - If ANY role is "Successful" → application status = "Successful"
+ * - Else if ANY role is "Pending" → application status = "Pending"
+ * - Else → application status = "Rejected" (all roles rejected)
+ */
+function calculateApplicationStatusFromRoles(
+  roleStatuses: RoleStatus[],
+): ApplicationStatus {
+  if (roleStatuses.length === 0) {
+    return "Pending";
+  }
+
+  // If any role is Successful, the application is Successful
+  if (roleStatuses.some((rs) => rs.status === "Successful")) {
+    return "Successful";
+  }
+
+  // If any role is Pending, the application is Pending
+  if (roleStatuses.some((rs) => rs.status === "Pending")) {
+    return "Pending";
+  }
+
+  // All roles are Rejected
+  return "Rejected";
+}
+
 export default function ApplicationSummary({
   campaignId,
   orgId,
@@ -179,7 +209,7 @@ export default function ApplicationSummary({
   });
 
   const { mutateAsync: mutatePrivateStatus } = useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       applicationId,
       campaignRoleId,
       status,
@@ -187,10 +217,22 @@ export default function ApplicationSummary({
       applicationId: string;
       campaignRoleId: string;
       status: ApplicationStatus;
-    }) => updateApplicationRoleStatus(applicationId, campaignRoleId, status),
+    }) => {
+      // Update the role status
+      await updateApplicationRoleStatus(applicationId, campaignRoleId, status);
+
+      // Fetch all role statuses for this application
+      const allRoleStatuses = await getApplicationRoleStatuses(applicationId);
+
+      // Calculate the new application status
+      const newApplicationStatus = calculateApplicationStatusFromRoles(allRoleStatuses);
+
+      // Update the application status to sync
+      await updateApplicationStatus(applicationId, newApplicationStatus);
+    },
     onMutate: async ({ applicationId, campaignRoleId, status }) => {
       // Track that this item is being mutated (just for UI state, no cache updates)
-      setMutatingItem({ appId: applicationId, roleId: campaignRoleId });
+      setMutatingItem({ appId: applicationId, roleId: campaignRoleId, status });
     },
     onError: (_err, _vars, context) => {
       // Clear the mutating item state
@@ -224,7 +266,7 @@ export default function ApplicationSummary({
   );
 
   // Track which item is currently being mutated to prevent flickering
-  const [mutatingItem, setMutatingItem] = useState<{ appId: string; roleId: string } | null>(null);
+  const [mutatingItem, setMutatingItem] = useState<{ appId: string; roleId: string; status: ApplicationStatus } | null>(null);
 
   // Extract filtered role ID from columnFilters
   const filteredRoleId = useMemo(() => {
@@ -323,13 +365,13 @@ export default function ApplicationSummary({
 
   const acceptedApplicants = useMemo(
     () =>
-      data?.filter((a) => a.private_status === "Successful")
+      data?.filter((a) => a.status === "Successful")
         .map((a) => toApplicant(a, roleIdsToNames)),
     [data, roleIdsToNames]
   );
   const rejectedApplicants = useMemo(
     () =>
-      data?.filter((a) => a.private_status === "Rejected")
+      data?.filter((a) => a.status === "Rejected")
         .map((a) => toApplicant(a, roleIdsToNames)),
     [data, roleIdsToNames]
   );

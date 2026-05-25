@@ -125,6 +125,19 @@ export async function updateApplicationPrivateStatus(
   );
 }
 
+export async function updateApplicationStatus(
+  applicationId: string,
+  status: ApplicationStatus,
+): Promise<AppMessage> {
+  return await apiRequest<AppMessage>(
+    `/api/v1/application/${applicationId}/status`,
+    {
+      method: "PATCH",
+      body: status,
+    },
+  );
+}
+
 export async function getApplicationRoleStatuses(
   applicationId: string,
 ): Promise<RoleStatus[]> {
