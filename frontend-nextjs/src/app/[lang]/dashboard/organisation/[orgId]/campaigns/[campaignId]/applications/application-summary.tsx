@@ -309,27 +309,25 @@ export default function ApplicationSummary({
   ];
 
   const getFilterCount = useCallback(
-    (filter: FilterConfig) => {
-      // If no role is filtered, can't count by status filters other than "all"
-      if (!filteredRoleId && filter.id !== "all") {
-        return 0;
+  (filter: FilterConfig) => {
+    if (filter.id === "all") {
+      return filteredRoleId
+        ? allMembers.filter((m) => m.applied_roles.includes(filteredRoleId)).length
+        : allMembers.length;
+    }
+
+    const targetStatus = filter.label as ApplicationStatus;
+
+    return allMembers.filter((m) => {
+      if (filteredRoleId) {
+        return getAppRoleStatus(m.application_id, filteredRoleId) === targetStatus;
       }
 
-      if (filter.id === "all") {
-        return allMembers.filter((m) => m.applied_roles.includes(filteredRoleId!)).length;
-      }
-
-      // Count applications matching this status for the filtered role
-      const targetStatus = filter.label as ApplicationStatus;
-      const count = allMembers.filter((m) => {
-        const status = getAppRoleStatus(m.application_id, filteredRoleId);
-        return status === targetStatus;
-      }).length;
-
-      return count;
-    },
-    [allMembers, filteredRoleId, getAppRoleStatus]
-  );
+      return m.private_status === targetStatus;
+    }).length;
+  },
+  [allMembers, filteredRoleId, getAppRoleStatus]
+);
 
   const columns = useMemo(
     () =>
