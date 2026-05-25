@@ -120,7 +120,7 @@ export default function ReviewCampaignApplications({
       <div className="flex flex-1 min-h-0 rounded-lg border overflow-hidden mb-4">
         {/* Sidebar */}
         <div className="w-52 shrink-0 border-r flex flex-col overflow-hidden">
-          <ScrollArea className="flex-1">
+          <ScrollArea className="flex-1 min-h-0">
             {upNext.length > 0 && (
               <div>
                 <p className="px-3 pt-3 pb-1 text-xs font-semibold text-muted-foreground">
