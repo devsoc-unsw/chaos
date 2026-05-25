@@ -107,7 +107,7 @@ function ResultFilterButton({
   return (
     <Button
       variant="outline"
-      className={cn("ml-2 w-24", className)}
+      className={cn("w-30", className)}
       onClick={onClick}
     >
       {children}
@@ -443,7 +443,7 @@ export default function ApplicationSummary({
         </div>
 
         {/* Result Filter Button group */}
-        <div className="mb-4 flex items-center flex-wrap gap-2">
+        <div className="mb-4 flex items-center flex-wrap gap-3">
           {statusFilters.map((filter) => (
             <div key={filter.id} className="relative">
               <ResultFilterButton

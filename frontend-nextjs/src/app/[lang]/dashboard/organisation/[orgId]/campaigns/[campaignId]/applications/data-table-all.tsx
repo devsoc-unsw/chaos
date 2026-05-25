@@ -82,7 +82,7 @@ export function ApplicationSummaryDataTableAll<TData, TValue>({
       />
 
       <ApplicationSummaryDataTable
-        label="Review"
+        label="Reviewed"
         color="bg-gray-200"
         dict={dict}
         renderSubComponent={renderSubComponent}
