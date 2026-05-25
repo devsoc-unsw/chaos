@@ -155,6 +155,7 @@
         "accept": "Accept",
         "reject": "Reject",
         "pending": "Pending",
+        "interview": "Interview",
         "filter_emails": "Filter emails...",
         "filter_by_role": "Filter by role",
         "all_roles": "All roles",

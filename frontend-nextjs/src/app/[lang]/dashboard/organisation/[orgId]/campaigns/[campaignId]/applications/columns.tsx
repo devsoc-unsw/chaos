@@ -173,10 +173,12 @@ function PrivateStatusCell({
   roleStatuses: RoleStatus[];
   isMutating?: boolean;
 }) {
-  const STATUS_BACKGROUND_COLORS: Record<ApplicationStatus | "Pending", string> = {
+  // TODO: Consider switching the colour used by interview
+  const STATUS_BACKGROUND_COLORS: Record<ApplicationStatus, string> = {
     "Successful": "bg-green-100 border-green-300",
     "Rejected": "bg-red-100 border-red-300",
     "Pending": "bg-gray-100 border-gray-300",
+    "Interview": "bg-gray-100 border-gray-300"
   };
 
   // No specific role is filtered, don't show the status dropdown
@@ -206,6 +208,9 @@ function PrivateStatusCell({
           </SelectItem>
           <SelectItem value="Rejected" className="focus:bg-muted">
             {dict.dashboard.campaigns.application_summary_page.reject ?? "Reject"}
+          </SelectItem>
+          <SelectItem value="Interview" className="focus:bg-muted">
+            {dict.dashboard.campaigns.application_summary_page.interview ?? "Interview"}
           </SelectItem>
           <SelectItem value="Pending" className="focus:bg-muted">
             {dict.dashboard.campaigns.application_summary_page.pending ?? "Pending"}
