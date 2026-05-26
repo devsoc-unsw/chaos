@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SidebarItem } from "../../../../../../../../../components/application-review/sidebar-item";
+import { SidebarItem } from "@/components/application-review/sidebar-item";
 import { privateStatusLabel } from "@/lib/utils";
 
 export function ReviewSidebar({
