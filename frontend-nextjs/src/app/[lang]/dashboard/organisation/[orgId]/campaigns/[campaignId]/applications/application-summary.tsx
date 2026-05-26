@@ -10,6 +10,8 @@ import {
   updateApplicationRoleStatus,
   RoleStatus,
   getApplicationRoleStatusesBatch,
+  getApplicationRoleStatuses,
+  updateApplicationStatus,
 } from "@/models/application";
 import { getRatingCategories, RatingDetails } from "@/models/rating";
 import { getCampaign, getCampaignRoles } from "@/models/campaign";
@@ -40,10 +42,7 @@ interface FilterConfig {
   isSpecial?: boolean; // For "All" view which shows multiple tables
 }
 
-import {
-  ColumnDef,
-  ColumnFiltersState,
-} from "@tanstack/react-table";
+import { ColumnDef, ColumnFiltersState } from "@tanstack/react-table";
 import { ApplicationSummaryDataTableAll } from "./data-table-all";
 import { ApplicationSummaryDataTableOffered } from "./data-table-offered";
 import { SendEmailsApplicant } from "./send-email-modal";
@@ -105,7 +104,7 @@ function ResultFilterButton({
   return (
     <Button
       variant="outline"
-      className={cn("ml-2 w-24", className)}
+      className={cn("w-30", className)}
       onClick={onClick}
     >
       {children}
@@ -115,7 +114,7 @@ function ResultFilterButton({
 
 function toApplicant(
   app: ApplicationRatingSummary,
-  roleIdsToNames: Record<string, string>
+  roleIdsToNames: Record<string, string>,
 ): SendEmailsApplicant {
   const applied = app.applied_roles ?? [];
   return {
@@ -125,6 +124,39 @@ function toApplicant(
     roleIds: applied,
     roles: applied.map((rid) => roleIdsToNames[rid] ?? rid),
   };
+}
+
+/**
+ * Calculate the application status based on all role statuses.
+ * Logic:
+ * - If ANY role is "Successful" → application status = "Successful"
+ * - Else if ANY role is "Pending" → application status = "Pending"
+ * - Else → application status = "Rejected" (all roles rejected)
+ */
+function calculateApplicationStatusFromRoles(
+  roleStatuses: RoleStatus[],
+): ApplicationStatus {
+  if (roleStatuses.length === 0) {
+    return "Pending";
+  }
+
+  // If any role is Successful, the application is Successful
+  if (roleStatuses.some((rs) => rs.status === "Successful")) {
+    return "Successful";
+  }
+
+  // If any role is Interview, the application is Interview
+  if (roleStatuses.some((rs) => rs.status === "Interview")) {
+    return "Interview";
+  }
+
+  // If any role is Pending, the application is Pending
+  if (roleStatuses.some((rs) => rs.status === "Pending")) {
+    return "Pending";
+  }
+
+  // All roles are Rejected
+  return "Rejected";
 }
 
 export default function ApplicationSummary({
@@ -152,12 +184,17 @@ export default function ApplicationSummary({
 
   const roleIdsToNames = useMemo(() => {
     return (
-      roles?.reduce((acc, role) => {
-        acc[role.id] = role.name;
-        return acc;
-      }, {} as Record<string, string>) ?? {}
+      roles?.reduce(
+        (acc, role) => {
+          acc[role.id] = role.name;
+          return acc;
+        },
+        {} as Record<string, string>,
+      ) ?? {}
     );
   }, [roles]);
+
+  const roleOrder = useMemo(() => (roles ?? []).map((r: any) => r.id), [roles]);
 
   const { data } = useQuery({
     queryKey: [`${campaignId}-application-ratings-summary`],
@@ -173,13 +210,15 @@ export default function ApplicationSummary({
     queryKey: [`${campaignId}-application-role-statuses-batch`],
     queryFn: async () => {
       if (!data || data.length === 0) return {};
-      return getApplicationRoleStatusesBatch(data.map((app) => app.application_id));
+      return getApplicationRoleStatusesBatch(
+        data.map((app) => app.application_id),
+      );
     },
     enabled: !!data && data.length > 0,
   });
 
   const { mutateAsync: mutatePrivateStatus } = useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       applicationId,
       campaignRoleId,
       status,
@@ -187,10 +226,23 @@ export default function ApplicationSummary({
       applicationId: string;
       campaignRoleId: string;
       status: ApplicationStatus;
-    }) => updateApplicationRoleStatus(applicationId, campaignRoleId, status),
+    }) => {
+      // Update the role status
+      await updateApplicationRoleStatus(applicationId, campaignRoleId, status);
+
+      // Fetch all role statuses for this application
+      const allRoleStatuses = await getApplicationRoleStatuses(applicationId);
+
+      // Calculate the new application status
+      const newApplicationStatus =
+        calculateApplicationStatusFromRoles(allRoleStatuses);
+
+      // Update the application status to sync
+      await updateApplicationPrivateStatus(applicationId, newApplicationStatus);
+    },
     onMutate: async ({ applicationId, campaignRoleId, status }) => {
       // Track that this item is being mutated (just for UI state, no cache updates)
-      setMutatingItem({ appId: applicationId, roleId: campaignRoleId });
+      setMutatingItem({ appId: applicationId, roleId: campaignRoleId, status });
     },
     onError: (_err, _vars, context) => {
       // Clear the mutating item state
@@ -210,26 +262,33 @@ export default function ApplicationSummary({
   });
 
   const handlePrivateStatusChange = useCallback(
-    async (applicationId: string, campaignRoleId: string, status: ApplicationStatus) => {
+    async (
+      applicationId: string,
+      campaignRoleId: string,
+      status: ApplicationStatus,
+    ) => {
       await mutatePrivateStatus({ applicationId, campaignRoleId, status });
     },
-    [mutatePrivateStatus]
+    [mutatePrivateStatus],
   );
 
   const allMembers = data ?? [];
 
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
-    []
-  );
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   // Track which item is currently being mutated to prevent flickering
-  const [mutatingItem, setMutatingItem] = useState<{ appId: string; roleId: string } | null>(null);
+  const [mutatingItem, setMutatingItem] = useState<{
+    appId: string;
+    roleId: string;
+    status: ApplicationStatus;
+  } | null>(null);
 
   // Extract filtered role ID from columnFilters
   const filteredRoleId = useMemo(() => {
-    const roleFilter = columnFilters.find((f) => f.id === "applied_roles")?.value as string | undefined;;
-    return (roleFilter && roleFilter !== "all") ? roleFilter : null;
+    const roleFilter = columnFilters.find((f) => f.id === "applied_roles")
+      ?.value as string | undefined;
+    return roleFilter && roleFilter !== "all" ? roleFilter : null;
   }, [columnFilters]);
 
   // Helper to get the status for an application in a specific role
@@ -238,9 +297,12 @@ export default function ApplicationSummary({
       if (!roleId) return null;
       const roleStatuses = roleStatusesMap?.[appId];
       if (!roleStatuses) return null;
-      return roleStatuses.find((rs) => rs.campaign_role_id === roleId)?.status ?? null;
+      return (
+        roleStatuses.find((rs) => rs.campaign_role_id === roleId)?.status ??
+        null
+      );
     },
-    [roleStatusesMap]
+    [roleStatusesMap],
   );
 
   // Initialize default filter configurations
@@ -268,25 +330,26 @@ export default function ApplicationSummary({
 
   const getFilterCount = useCallback(
     (filter: FilterConfig) => {
-      // If no role is filtered, can't count by status filters other than "all"
-      if (!filteredRoleId && filter.id !== "all") {
-        return 0;
-      }
-
       if (filter.id === "all") {
-        return allMembers.filter((m) => m.applied_roles.includes(filteredRoleId!)).length;
+        return filteredRoleId
+          ? allMembers.filter((m) => m.applied_roles.includes(filteredRoleId))
+              .length
+          : allMembers.length;
       }
 
-      // Count applications matching this status for the filtered role
       const targetStatus = filter.label as ApplicationStatus;
-      const count = allMembers.filter((m) => {
-        const status = getAppRoleStatus(m.application_id, filteredRoleId);
-        return status === targetStatus;
-      }).length;
 
-      return count;
+      return allMembers.filter((m) => {
+        if (filteredRoleId) {
+          return (
+            getAppRoleStatus(m.application_id, filteredRoleId) === targetStatus
+          );
+        }
+
+        return m.private_status === targetStatus;
+      }).length;
     },
-    [allMembers, filteredRoleId, getAppRoleStatus]
+    [allMembers, filteredRoleId, getAppRoleStatus],
   );
 
   const columns = useMemo(
@@ -294,21 +357,28 @@ export default function ApplicationSummary({
       getColumns(
         dict,
         roleIdsToNames,
+        roleOrder,
         ratingCategories ?? [],
         handlePrivateStatusChange,
         filteredRoleId,
         roleStatusesMap ?? {},
         mutatingItem,
       ),
-    [dict, roleIdsToNames, ratingCategories, handlePrivateStatusChange, filteredRoleId, roleStatusesMap, statusFilter, mutatingItem]
+    [
+      dict,
+      roleIdsToNames,
+      ratingCategories,
+      handlePrivateStatusChange,
+      filteredRoleId,
+      roleStatusesMap,
+      statusFilter,
+      mutatingItem,
+    ],
   );
 
-  const handleStatusFilter = useCallback(
-    (status: string) => {
-      setStatusFilter(status);
-    },
-    []
-  );
+  const handleStatusFilter = useCallback((status: string) => {
+    setStatusFilter(status);
+  }, []);
 
   const renderSubComponent = useCallback(
     ({ row }: { row: any }) => (
@@ -318,28 +388,28 @@ export default function ApplicationSummary({
         dict={dict}
       />
     ),
-    [columns, dict, statusFilter]
+    [columns, dict, statusFilter],
   );
 
   const acceptedApplicants = useMemo(
     () =>
-      data?.filter((a) => a.private_status === "Successful")
+      data
+        ?.filter((a) => a.private_status === "Successful")
         .map((a) => toApplicant(a, roleIdsToNames)),
-    [data, roleIdsToNames]
+    [data, roleIdsToNames],
   );
   const rejectedApplicants = useMemo(
     () =>
-      data?.filter((a) => a.private_status === "Rejected")
+      data
+        ?.filter((a) => a.private_status === "Rejected")
         .map((a) => toApplicant(a, roleIdsToNames)),
-    [data, roleIdsToNames]
+    [data, roleIdsToNames],
   );
 
   return (
     <>
       <div>
-        <Link
-          href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}`}
-        >
+        <Link href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}`}>
           <div className="flex items-center gap-1">
             <ArrowLeft className="w-4 h-4" />
             {dict.common.back}
@@ -359,14 +429,14 @@ export default function ApplicationSummary({
         <div className="flex items-center py-4 gap-2">
           <Select
             value={
-              (columnFilters.find((f) => f.id === "applied_roles")?.value as string) ??
-              "all"
+              (columnFilters.find((f) => f.id === "applied_roles")
+                ?.value as string) ?? "all"
             }
             onValueChange={(value) =>
               setColumnFilters((prev) => {
                 // Remove existing role filters
                 const newFilters = prev.filter(
-                  (f) => f.id !== "applied_roles" || f.value === "all"
+                  (f) => f.id !== "applied_roles" || f.value === "all",
                 );
                 // Add the new role filter
                 if (value !== "all") {
@@ -401,13 +471,11 @@ export default function ApplicationSummary({
         </div>
 
         {/* Result Filter Button group */}
-        <div className="mb-4 flex items-center flex-wrap gap-2">
+        <div className="mb-4 flex items-center flex-wrap gap-3">
           {statusFilters.map((filter) => (
             <div key={filter.id} className="relative">
               <ResultFilterButton
-                className={
-                  cn(filter.color, filter.hoverColor)
-                }
+                className={cn(filter.color, filter.hoverColor)}
                 onClick={() => handleStatusFilter(filter.id)}
               >
                 {filter.label} ({getFilterCount(filter)})
@@ -415,7 +483,7 @@ export default function ApplicationSummary({
             </div>
           ))}
           <button
-            onClick={() => { }}
+            onClick={() => {}}
             className="cursor-pointer ml-2"
             title="Add custom filter"
           >
@@ -442,11 +510,18 @@ export default function ApplicationSummary({
           ) : statusFilter === "successful" ? (
             <ApplicationSummaryDataTableOffered
               columns={columns}
-              data={data?.filter((m) => {
-                if (!filteredRoleId) return false;
-                const status = getAppRoleStatus(m.application_id, filteredRoleId);
-                return status === "Successful";
-              }) ?? []}
+              data={
+                data?.filter((m) => {
+                  if (filteredRoleId) {
+                    const status = getAppRoleStatus(
+                      m.application_id,
+                      filteredRoleId,
+                    );
+                    return status === "Successful";
+                  }
+                  return m.private_status === "Successful";
+                }) ?? []
+              }
               dict={dict}
               setColumnFilters={setColumnFilters}
               columnFilters={columnFilters}
@@ -461,12 +536,21 @@ export default function ApplicationSummary({
           ) : (
             <ApplicationSummaryDataTable
               columns={columns}
-              data={data?.filter((m) => {
-                if (!filteredRoleId) return false;
-                const targetStatus = statusFilters.find((f) => f.id === statusFilter)?.label as ApplicationStatus;
-                const status = getAppRoleStatus(m.application_id, filteredRoleId);
-                return status === targetStatus;
-              }) ?? []}
+              data={
+                data?.filter((m) => {
+                  const targetStatus = statusFilters.find(
+                    (f) => f.id === statusFilter,
+                  )?.label as ApplicationStatus;
+                  if (filteredRoleId) {
+                    const status = getAppRoleStatus(
+                      m.application_id,
+                      filteredRoleId,
+                    );
+                    return status === targetStatus;
+                  }
+                  return m.private_status === targetStatus;
+                }) ?? []
+              }
               dict={dict}
               setColumnFilters={setColumnFilters}
               columnFilters={columnFilters}
@@ -483,8 +567,8 @@ export default function ApplicationSummary({
               sendEmails={true}
               acceptedApplicants={acceptedApplicants}
               rejectedApplicants={rejectedApplicants}
-            />)
-          }
+            />
+          )}
         </div>
       </div>
     </>

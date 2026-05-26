@@ -14,13 +14,14 @@ export interface ApplicationDetails {
   current_user_rated: boolean;
 }
 
-export type ApplicationStatus = "Pending" | "Rejected" | "Successful";
+export type ApplicationStatus = "Pending" | "Rejected" | "Successful" | "Interview";
 
 export interface ApplicationAppliedRoleDetails {
   campaign_role_id: string;
   role_name: string;
   preference: number;
 }
+
 export async function createOrGetApplication(
   campaignId: string,
 ): Promise<{ application_id: string }> {
@@ -47,6 +48,7 @@ export async function getInProgressApplication(
     `/api/v1/application/${applicationId}/inprogress`,
   );
 }
+
 // export async function getApplicationRating(applicationId: string): Promise<RatingDetails> {
 //     return await apiRequest<RatingDetails>(`/api/v1/application/${applicationId}/rating`);
 // }
@@ -125,6 +127,19 @@ export async function updateApplicationPrivateStatus(
   );
 }
 
+export async function updateApplicationStatus(
+  applicationId: string,
+  status: ApplicationStatus,
+): Promise<AppMessage> {
+  return await apiRequest<AppMessage>(
+    `/api/v1/application/${applicationId}/status`,
+    {
+      method: "PATCH",
+      body: status,
+    },
+  );
+}
+
 export async function getApplicationRoleStatuses(
   applicationId: string,
 ): Promise<RoleStatus[]> {
@@ -153,11 +168,11 @@ export async function getApplicationRoleStatusesBatch(
   const results = await Promise.all(
     applicationIds.map((id) => getApplicationRoleStatuses(id))
   );
-  
+
   const roleStatusMap: Record<string, RoleStatus[]> = {};
   applicationIds.forEach((id, index) => {
     roleStatusMap[id] = results[index];
   });
-  
+
   return roleStatusMap;
 }

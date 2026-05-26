@@ -134,7 +134,7 @@ export function ApplicationSummaryDataTable<
           )}
 
           {/* Sort By Dropdown */}
-          {label === "To Review" && setSortBy && <div className="flex items-center gap-2">
+          {(label === "To Review" || label === "All") && setSortBy && <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 text-sm text-foreground">
               <span>Sort by:</span>
               <Select value={sortBy} onValueChange={(v) => setSortBy(v as "decision" | "name" | "portfolio")}>

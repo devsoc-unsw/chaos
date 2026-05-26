@@ -5,7 +5,6 @@ import { ColumnDef, ColumnFiltersState, Row } from "@tanstack/react-table";
 import {
   ApplicationRatingSummary,
   ApplicationStatus,
-  getApplicationRoleStatuses,
 } from "@/models/application";
 import {
   Dispatch,
@@ -49,9 +48,10 @@ export function ApplicationSummaryDataTableAll<TData, TValue>({
   getAppRoleStatus,
 }: ApplicationSummaryDataTableAllProp<ApplicationRatingSummary, TValue>) {
   const STATUS_ORDER: Record<string, number> = {
-    Pending: 0,
-    Successful: 1,
-    Rejected: 2,
+    Rejected: 0,
+    Pending: 1,
+    Interview: 2,
+    Successful: 3,
   };
   const [sortBy, setSortBy] = useState<"decision" | "name" | "portfolio">(
     "decision",
@@ -59,17 +59,22 @@ export function ApplicationSummaryDataTableAll<TData, TValue>({
 
   const pendingMembers = useMemo(() => {
     return data.filter((m) => {
-      if (!filteredRoleId) return true;
-      const status = getAppRoleStatus(m.application_id, filteredRoleId);
-      return status === "Pending";
+      if (filteredRoleId) {
+        const status = getAppRoleStatus(m.application_id, filteredRoleId);
+        return status === "Pending";
+      }
+
+      return m.private_status === "Pending";
     });
   }, [data, filteredRoleId, getAppRoleStatus]);
 
   const nonPendingMembers = useMemo(() => {
     return data.filter((m) => {
-      if (!filteredRoleId) return true;
-      const status = getAppRoleStatus(m.application_id, filteredRoleId);
-      return status !== "Pending";
+      if (filteredRoleId) {
+        const status = getAppRoleStatus(m.application_id, filteredRoleId);
+        return status !== "Pending";
+      }
+      return m.private_status !== "Pending";
     });
   }, [data, filteredRoleId, getAppRoleStatus]);
 
@@ -77,20 +82,37 @@ export function ApplicationSummaryDataTableAll<TData, TValue>({
     (members: ApplicationRatingSummary[]) => {
       return [...members].sort((a, b) => {
         if (sortBy === "name") return a.user_name.localeCompare(b.user_name);
-        if (sortBy === "portfolio")
-          return (a.applied_roles[0] ?? "").localeCompare(
-            b.applied_roles[0] ?? "",
+        if (sortBy === "portfolio") {
+          for (let i = 0; i < 3; i++) {
+            const roleA = (a.applied_roles?.[i] ?? "").toString();
+            const roleB = (b.applied_roles?.[i] ?? "").toString();
+            const cmp = roleA.localeCompare(roleB);
+            if (cmp !== 0) return cmp;
+          }
+          return 0;
+        }
+
+        if (!filteredRoleId) {
+          console.log(
+            STATUS_ORDER[a.private_status],
+            STATUS_ORDER[b.private_status],
           );
+          return (
+            (STATUS_ORDER[b.private_status] ?? 99) -
+            (STATUS_ORDER[a.private_status] ?? 99)
+          );
+        }
+
         return (
           (STATUS_ORDER[
             getAppRoleStatus(
-              a.application_id,
+              b.application_id,
               filteredRoleId as string,
             ) as ApplicationStatus
           ] ?? 99) -
           (STATUS_ORDER[
             getAppRoleStatus(
-              b.application_id,
+              a.application_id,
               filteredRoleId as string,
             ) as ApplicationStatus
           ] ?? 99)
@@ -101,9 +123,9 @@ export function ApplicationSummaryDataTableAll<TData, TValue>({
   );
 
   return (
-    <div className="flex flex-col gap-5">
+    <>
       {filteredRoleId ? (
-        <div>
+        <div className="flex flex-col gap-5">
           <ApplicationSummaryDataTable
             columns={columns}
             data={filteredMembers(pendingMembers)}
@@ -120,8 +142,9 @@ export function ApplicationSummaryDataTableAll<TData, TValue>({
             sortBy={sortBy}
             setSortBy={setSortBy}
           />
+
           <ApplicationSummaryDataTable
-            label="Review"
+            label="Reviewed"
             color="bg-gray-200"
             dict={dict}
             renderSubComponent={renderSubComponent}
@@ -137,9 +160,10 @@ export function ApplicationSummaryDataTableAll<TData, TValue>({
           />
         </div>
       ) : (
-        <ApplicationSummaryDataTable
+        <div>
+          <ApplicationSummaryDataTable
             columns={columns}
-            data={data}
+            data={filteredMembers(data)}
             dict={dict}
             setColumnFilters={setColumnFilters}
             columnFilters={columnFilters}
@@ -153,7 +177,8 @@ export function ApplicationSummaryDataTableAll<TData, TValue>({
             sortBy={sortBy}
             setSortBy={setSortBy}
           />
+        </div>
       )}
-    </div>
+    </>
   );
 }

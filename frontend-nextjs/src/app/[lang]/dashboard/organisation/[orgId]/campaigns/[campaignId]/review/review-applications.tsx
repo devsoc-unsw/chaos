@@ -29,9 +29,16 @@ import ApplicationRatingForm from "./application-rating-form";
 import ApplicationDiscussionPanel from "./application-discussion-panel";
 
 function privateStatusLabel(status: ApplicationStatus): string {
-  if (status === "Successful") return "Offer";
-  if (status === "Rejected") return "Reject";
-  return "Pending";
+  switch (status) {
+    case "Successful":
+      return "Offer";
+    case "Rejected":
+      return "Reject";
+    case "Pending":
+      return "Pending";
+    case "Interview":
+      return "Interview";
+  }
 }
 
 export default function ReviewCampaignApplications({
@@ -297,6 +304,7 @@ function ApplicationPanel({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Pending">Pending</SelectItem>
+                <SelectItem value="Interview">Interview</SelectItem>
                 <SelectItem value="Successful">Offer</SelectItem>
                 <SelectItem value="Rejected">Reject</SelectItem>
               </SelectContent>

@@ -187,6 +187,9 @@ pub enum ApplicationStatus {
     /// Application has been successful
     #[serde(alias = "successful")]
     Successful,
+    /// Application has proceeded to the interview stage
+    #[serde(alias = "interview")]
+    Interview,
 }
 
 /// Individual rating data for a specific application.
