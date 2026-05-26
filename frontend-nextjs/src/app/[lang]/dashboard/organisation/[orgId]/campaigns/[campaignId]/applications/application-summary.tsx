@@ -228,7 +228,7 @@ export default function ApplicationSummary({
 
   // Extract filtered role ID from columnFilters
   const filteredRoleId = useMemo(() => {
-    const roleFilter = columnFilters.find((f) => f.id === "applied_roles")?.value as string | undefined;
+    const roleFilter = columnFilters.find((f) => f.id === "applied_roles")?.value as string | undefined;;
     return (roleFilter && roleFilter !== "all") ? roleFilter : null;
   }, [columnFilters]);
 

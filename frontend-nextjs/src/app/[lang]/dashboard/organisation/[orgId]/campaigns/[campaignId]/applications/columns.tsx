@@ -40,6 +40,7 @@ export function getColumns(
   onStatusChange: (applicationId: string, campaignRoleId: string, status: ApplicationStatus) => Promise<void>,
   filteredRoleId: string | null,
   roleStatusesMap: Record<string, RoleStatus[]>,
+  finalStatus: ApplicationStatus | null,
   mutatingItem: { appId: string; roleId: string } | null,
 ): ColumnDef<ApplicationRatingSummary>[] {
   const ratingColumns = ratingCategories.map((category) => {
@@ -125,10 +126,11 @@ export function getColumns(
           return <span className={STATUS_COLOR_CLASSES[data.offer_status as OfferStatus]}>{data.offer_status}</span>;
         }
         return (
-          <PrivateStatusCell
+          <StatusCell
             app={data as ApplicationRatingSummary}
             dict={dict}
             onPrivateStatusChange={onStatusChange}
+            finalStatus={finalStatus}
             filteredRoleId={filteredRoleId}
             roleStatuses={roleStatusesMap[data.application_id] ?? []}
             isMutating={mutatingItem?.appId === data.application_id && mutatingItem?.roleId === filteredRoleId}
@@ -158,10 +160,11 @@ export function getColumns(
   ];
 }
 
-function PrivateStatusCell({
+function StatusCell({
   app,
   dict,
   onPrivateStatusChange,
+  finalStatus,
   filteredRoleId,
   roleStatuses,
   isMutating,
@@ -169,6 +172,7 @@ function PrivateStatusCell({
   app: ApplicationRatingSummary;
   dict: any;
   onPrivateStatusChange: (applicationId: string, campaignRoleId: string, status: ApplicationStatus) => Promise<void>;
+  finalStatus: ApplicationStatus | null;
   filteredRoleId: string | null;
   roleStatuses: RoleStatus[];
   isMutating?: boolean;
@@ -181,7 +185,30 @@ function PrivateStatusCell({
 
   // No specific role is filtered, don't show the status dropdown
   if (!filteredRoleId) {
-    return <span className="text-gray-500">-</span>;
+    return <div className="w-[140px]">
+      <Select
+        value={finalStatus ?? "Pending"}
+        onValueChange={(v: ApplicationStatus) =>
+          onPrivateStatusChange(app.application_id, filteredRoleId, v)
+        }
+        disabled={isMutating}
+      >
+        <SelectTrigger className={cn(STATUS_BACKGROUND_COLORS[finalStatus ?? "Pending"], isMutating && "opacity-50 cursor-not-allowed")}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="Successful" className="focus:bg-muted">
+            {dict.dashboard.campaigns.application_summary_page.accept ?? "Accept"}
+          </SelectItem>
+          <SelectItem value="Rejected" className="focus:bg-muted">
+            {dict.dashboard.campaigns.application_summary_page.reject ?? "Reject"}
+          </SelectItem>
+          <SelectItem value="Pending" className="focus:bg-muted">
+            {dict.dashboard.campaigns.application_summary_page.pending ?? "Pending"}
+          </SelectItem>
+        </SelectContent>
+      </Select>
+    </div>;
   }
 
   // Get the status for the filtered role
