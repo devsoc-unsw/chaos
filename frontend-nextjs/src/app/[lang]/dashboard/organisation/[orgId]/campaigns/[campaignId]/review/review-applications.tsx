@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getCampaign, getCampaignApplications } from "@/models/campaign";
+import { getCampaign, getCampaignApplications, getCampaignRoles } from "@/models/campaign";
 import { ApplicationDetails, ApplicationStatus, getApplicationRoleStatuses, updateApplicationRoleStatus } from "@/models/application";
 import { getCategoryRatingsByApplication } from "@/models/rating";
 import { dateToString, cn } from "@/lib/utils";
@@ -53,6 +53,7 @@ export default function ReviewCampaignApplications({
   const queryClient = useQueryClient();
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
   const [ratedApplications, setRatedApplications] = useState<Record<string, boolean>>({});
+  const [portFilter, setPortFilter] = useState<string>("all");
 
   const { data: campaign } = useQuery({
     queryKey: [`${campaignId}-campaign-details`],
@@ -64,6 +65,11 @@ export default function ReviewCampaignApplications({
     queryFn: () => getCampaignApplications(campaignId),
   });
 
+  const { data: campaignRoles } = useQuery({
+    queryKey: [`${campaignId}-campaign-roles`],
+    queryFn: () => getCampaignRoles(campaignId),
+  });
+
   useEffect(() => {
     if (!applications) return;
     setRatedApplications((prev) => {
@@ -73,17 +79,23 @@ export default function ReviewCampaignApplications({
     });
   }, [applications]);
 
-  const upNext = (applications ?? []).filter((a) => !ratedApplications[a.id]);
-  const reviewed = (applications ?? []).filter((a) => ratedApplications[a.id]);
+  const filteredApplications = (applications ?? []).filter((a) =>
+    portFilter === "all"
+      ? true
+      : a.applied_roles.some((r) => r.campaign_role_id === portFilter),
+  );
 
-  const selectedApp = applications?.find((a) => a.id === selectedAppId);
-  const selectedIndex = applications?.findIndex((a) => a.id === selectedAppId) ?? -1;
-  const totalCount = applications?.length ?? 0;
+  const upNext = filteredApplications.filter((a) => !ratedApplications[a.id]);
+  const reviewed = filteredApplications.filter((a) => ratedApplications[a.id]);
+
+  const selectedApp = filteredApplications.find((a) => a.id === selectedAppId);
+  const selectedIndex = filteredApplications.findIndex((a) => a.id === selectedAppId);
+  const totalCount = filteredApplications.length;
 
   const handleNext = () => {
-    if (!applications || applications.length === 0) return;
-    const nextIndex = selectedIndex === -1 ? 0 : (selectedIndex + 1) % applications.length;
-    setSelectedAppId(applications[nextIndex].id);
+    if (filteredApplications.length === 0) return;
+    const nextIndex = selectedIndex === -1 ? 0 : (selectedIndex + 1) % filteredApplications.length;
+    setSelectedAppId(filteredApplications[nextIndex].id);
   };
 
   const handleDecision = async (appId: string, roleId: string, status: ApplicationStatus) => {
@@ -127,6 +139,21 @@ export default function ReviewCampaignApplications({
       <div className="flex flex-1 min-h-0 rounded-lg border overflow-hidden mb-4">
         {/* Sidebar */}
         <div className="w-52 shrink-0 border-r flex flex-col overflow-hidden">
+          <div className="px-3 py-2 border-b shrink-0">
+            <Select value={portFilter} onValueChange={setPortFilter}>
+              <SelectTrigger className="h-8 w-full text-sm">
+                <SelectValue placeholder="Filter by port" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All ports</SelectItem>
+                {campaignRoles?.map((role) => (
+                  <SelectItem key={role.id} value={role.id}>
+                    {role.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <ScrollArea className="flex-1 min-h-0">
             {upNext.length > 0 && (
               <div>
