@@ -40,17 +40,22 @@ export function ApplicationSummaryDataTableAll<TData, TValue>({
 
   const pendingMembers = useMemo(() => {
     return data.filter((m) => {
-      if (!filteredRoleId) return true;
-      const status = getAppRoleStatus(m.application_id, filteredRoleId);
-      return status === "Pending";
+      if (filteredRoleId) {
+        const status = getAppRoleStatus(m.application_id, filteredRoleId);
+        return status === "Pending";
+      }
+
+      return m.private_status === "Pending";
     });
   }, [data, filteredRoleId, getAppRoleStatus]);
 
   const nonPendingMembers = useMemo(() => {
     return data.filter((m) => {
-      if (!filteredRoleId) return true;
-      const status = getAppRoleStatus(m.application_id, filteredRoleId);
-      return status !== "Pending";
+      if (filteredRoleId) {
+        const status = getAppRoleStatus(m.application_id, filteredRoleId);
+        return status !== "Pending";
+      }
+      return m.private_status !== "Pending";
     });
   }, [data, filteredRoleId, getAppRoleStatus]);
 

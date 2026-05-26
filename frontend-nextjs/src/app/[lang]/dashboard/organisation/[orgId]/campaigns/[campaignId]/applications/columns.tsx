@@ -183,7 +183,7 @@ function PrivateStatusCell({
 
   // No specific role is filtered, don't show the status dropdown
   if (!filteredRoleId) {
-    return <span className="text-gray-500">-</span>;
+    return <span>{app.private_status}</span>;
   }
 
   // Get the status for the filtered role

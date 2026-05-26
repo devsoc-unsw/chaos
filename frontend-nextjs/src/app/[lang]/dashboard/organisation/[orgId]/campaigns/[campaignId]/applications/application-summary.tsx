@@ -228,7 +228,7 @@ export default function ApplicationSummary({
       const newApplicationStatus = calculateApplicationStatusFromRoles(allRoleStatuses);
 
       // Update the application status to sync
-      await updateApplicationStatus(applicationId, newApplicationStatus);
+      await updateApplicationPrivateStatus(applicationId, newApplicationStatus);
     },
     onMutate: async ({ applicationId, campaignRoleId, status }) => {
       // Track that this item is being mutated (just for UI state, no cache updates)
@@ -309,27 +309,25 @@ export default function ApplicationSummary({
   ];
 
   const getFilterCount = useCallback(
-    (filter: FilterConfig) => {
-      // If no role is filtered, can't count by status filters other than "all"
-      if (!filteredRoleId && filter.id !== "all") {
-        return 0;
+  (filter: FilterConfig) => {
+    if (filter.id === "all") {
+      return filteredRoleId
+        ? allMembers.filter((m) => m.applied_roles.includes(filteredRoleId)).length
+        : allMembers.length;
+    }
+
+    const targetStatus = filter.label as ApplicationStatus;
+
+    return allMembers.filter((m) => {
+      if (filteredRoleId) {
+        return getAppRoleStatus(m.application_id, filteredRoleId) === targetStatus;
       }
 
-      if (filter.id === "all") {
-        return allMembers.filter((m) => m.applied_roles.includes(filteredRoleId!)).length;
-      }
-
-      // Count applications matching this status for the filtered role
-      const targetStatus = filter.label as ApplicationStatus;
-      const count = allMembers.filter((m) => {
-        const status = getAppRoleStatus(m.application_id, filteredRoleId);
-        return status === targetStatus;
-      }).length;
-
-      return count;
-    },
-    [allMembers, filteredRoleId, getAppRoleStatus]
-  );
+      return m.private_status === targetStatus;
+    }).length;
+  },
+  [allMembers, filteredRoleId, getAppRoleStatus]
+);
 
   const columns = useMemo(
     () =>
@@ -365,13 +363,13 @@ export default function ApplicationSummary({
 
   const acceptedApplicants = useMemo(
     () =>
-      data?.filter((a) => a.status === "Successful")
+      data?.filter((a) => a.private_status === "Successful")
         .map((a) => toApplicant(a, roleIdsToNames)),
     [data, roleIdsToNames]
   );
   const rejectedApplicants = useMemo(
     () =>
-      data?.filter((a) => a.status === "Rejected")
+      data?.filter((a) => a.private_status === "Rejected")
         .map((a) => toApplicant(a, roleIdsToNames)),
     [data, roleIdsToNames]
   );
@@ -485,9 +483,11 @@ export default function ApplicationSummary({
             <ApplicationSummaryDataTableOffered
               columns={columns}
               data={data?.filter((m) => {
-                if (!filteredRoleId) return false;
-                const status = getAppRoleStatus(m.application_id, filteredRoleId);
-                return status === "Successful";
+                if (filteredRoleId) {
+                  const status = getAppRoleStatus(m.application_id, filteredRoleId);
+                  return status === "Successful";
+                }
+                return m.private_status === "Successful";
               }) ?? []}
               dict={dict}
               setColumnFilters={setColumnFilters}
@@ -504,10 +504,12 @@ export default function ApplicationSummary({
             <ApplicationSummaryDataTable
               columns={columns}
               data={data?.filter((m) => {
-                if (!filteredRoleId) return false;
                 const targetStatus = statusFilters.find((f) => f.id === statusFilter)?.label as ApplicationStatus;
-                const status = getAppRoleStatus(m.application_id, filteredRoleId);
-                return status === targetStatus;
+                if (filteredRoleId) {
+                  const status = getAppRoleStatus(m.application_id, filteredRoleId);
+                  return status === targetStatus;
+                }
+                return m.private_status === targetStatus;
               }) ?? []}
               dict={dict}
               setColumnFilters={setColumnFilters}
