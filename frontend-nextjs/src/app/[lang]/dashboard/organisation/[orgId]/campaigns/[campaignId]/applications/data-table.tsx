@@ -42,8 +42,8 @@ interface DataTableProps<TData, TValue> {
   sendEmails?: boolean;
   acceptedApplicants?: SendEmailsApplicant[];
   rejectedApplicants?: SendEmailsApplicant[];
-  sortBy?: "decision" | "name";
-  setSortBy?: Dispatch<SetStateAction<"decision" | "name">>;
+  sortBy?: "decision" | "name" | "portfolio";
+  setSortBy?: Dispatch<SetStateAction<"decision" | "name" | "portfolio">>;
 }
 
 export function ApplicationSummaryDataTable<
@@ -134,16 +134,17 @@ export function ApplicationSummaryDataTable<
           )}
 
           {/* Sort By Dropdown */}
-          {label === "To Review" && setSortBy && <div className="flex items-center gap-2">
+          {(label === "To Review" || label === "All") && setSortBy && <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 text-sm text-foreground">
               <span>Sort by:</span>
-              <Select value={sortBy} onValueChange={(v) => setSortBy(v as "decision" | "name")}>
+              <Select value={sortBy} onValueChange={(v) => setSortBy(v as "decision" | "name" | "portfolio")}>
                 <SelectTrigger className="h-auto w-14 border-0 shadow-none bg-transparent p-0 focus:ring-0 text-sm underline [&_svg]:hidden">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="decision">Decision</SelectItem>
                   <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="portfolio">Portfolio</SelectItem>
                 </SelectContent>
               </Select>
             </div>
