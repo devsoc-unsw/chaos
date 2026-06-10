@@ -20,7 +20,6 @@
 pub mod answer;
 pub mod application;
 pub mod auth;
-pub mod availabilities;
 pub mod campaign;
 pub mod comment;
 pub mod email_template;
