@@ -31,7 +31,7 @@ import Image from "next/image";
 
 export default function CampaignSettings({ campaignId, orgId, dict }: { campaignId: string, orgId: string, dict: any }) {
     const queryClient = useQueryClient();
-    const DESCRIPTION_WORD_LIMIT = 100;
+    const DESCRIPTION_CHAR_LIMIT = 200;
 
     const { data: campaign } = useQuery({
         queryKey: [`${campaignId}-campaign-details`],
@@ -126,8 +126,8 @@ export default function CampaignSettings({ campaignId, orgId, dict }: { campaign
     });
 
     const handleCampaignDetailsUpdate = (overrides?: Partial<CampaignUpdate>) => {
-        if (getWordCount(campaignDescription) > DESCRIPTION_WORD_LIMIT) {
-            toast.error(`Description must be under ${DESCRIPTION_WORD_LIMIT} words`);
+        if (campaignDescription.length > DESCRIPTION_CHAR_LIMIT) {
+            toast.error(`Description must be under ${DESCRIPTION_CHAR_LIMIT} characters`);
             return;
         }
         mutateUpdateCampaignDetails({
@@ -202,8 +202,8 @@ export default function CampaignSettings({ campaignId, orgId, dict }: { campaign
                         value={campaignDescription}
                         onChange={(e) => setCampaignDescription(e.target.value)}
                         onBlur={() => handleCampaignDetailsUpdate()} />
-                    <p className={`text-sm mt-1 ${getWordCount(campaignDescription) > DESCRIPTION_WORD_LIMIT ? "text-destructive font-bold" : "text-muted-foreground"}`}>
-                        {getWordCount(campaignDescription)} / {DESCRIPTION_WORD_LIMIT} words
+                    <p className={`text-sm mt-1 ${campaignDescription.length > DESCRIPTION_CHAR_LIMIT ? "text-destructive font-bold" : "text-muted-foreground"}`}>
+                        {campaignDescription.length} / {DESCRIPTION_CHAR_LIMIT} characters
                     </p>
                 </div>
 

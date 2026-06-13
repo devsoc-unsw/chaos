@@ -69,8 +69,3 @@ export function privateStatusLabel(status: ApplicationStatus): string {
       return "Interview";
   }
 }
-
-export function getWordCount (text: string) {
-  if (!text) return 0;
-  return text.trim().split(/\s+/).length;
-};
