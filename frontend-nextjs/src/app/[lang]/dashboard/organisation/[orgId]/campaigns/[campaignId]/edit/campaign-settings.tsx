@@ -127,7 +127,6 @@ export default function CampaignSettings({ campaignId, orgId, dict }: { campaign
 
     const handleCampaignDetailsUpdate = (overrides?: Partial<CampaignUpdate>) => {
         if (campaignDescription.length > DESCRIPTION_CHAR_LIMIT) {
-            toast.error(`Description must be under ${DESCRIPTION_CHAR_LIMIT} characters`);
             return;
         }
         mutateUpdateCampaignDetails({
