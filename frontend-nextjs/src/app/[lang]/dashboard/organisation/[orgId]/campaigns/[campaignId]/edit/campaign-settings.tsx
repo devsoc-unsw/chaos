@@ -7,7 +7,7 @@ import { getRatingCategories, createCategory, updateCategory, deleteCategory, Ra
 import { Button } from "@/components/ui/button";
 import { Copy, Pencil, Trash, Share, BookOpenCheck, Check, Plus, FormIcon, CircleCheck, Upload, X, FileText, BarChart, ArrowLeft } from "lucide-react";
 import { ButtonGroup } from "@/components/ui/button-group";
-import { cn } from "@/lib/utils";
+import { cn, getWordCount } from "@/lib/utils";
 import {
     Table,
     TableBody,
@@ -31,6 +31,7 @@ import Image from "next/image";
 
 export default function CampaignSettings({ campaignId, orgId, dict }: { campaignId: string, orgId: string, dict: any }) {
     const queryClient = useQueryClient();
+    const DESCRIPTION_WORD_LIMIT = 100;
 
     const { data: campaign } = useQuery({
         queryKey: [`${campaignId}-campaign-details`],
@@ -125,6 +126,10 @@ export default function CampaignSettings({ campaignId, orgId, dict }: { campaign
     });
 
     const handleCampaignDetailsUpdate = (overrides?: Partial<CampaignUpdate>) => {
+        if (getWordCount(campaignDescription) > DESCRIPTION_WORD_LIMIT) {
+            toast.error(`Description must be under ${DESCRIPTION_WORD_LIMIT} words`);
+            return;
+        }
         mutateUpdateCampaignDetails({
             name: campaignName,
             slug: campaignSlug,
@@ -193,7 +198,13 @@ export default function CampaignSettings({ campaignId, orgId, dict }: { campaign
 
                 <div className="flex flex-col gap-1">
                     <Label htmlFor="campaign-description">{dict.common.description}</Label>
-                    <Textarea className="min-h-[300px]" value={campaignDescription} onChange={(e) => setCampaignDescription(e.target.value)} onBlur={() => handleCampaignDetailsUpdate()} />
+                    <Textarea className="min-h-[300px]"
+                        value={campaignDescription}
+                        onChange={(e) => setCampaignDescription(e.target.value)}
+                        onBlur={() => handleCampaignDetailsUpdate()} />
+                    <p className={`text-sm mt-1 ${getWordCount(campaignDescription) > DESCRIPTION_WORD_LIMIT ? "text-destructive font-bold" : "text-muted-foreground"}`}>
+                        {getWordCount(campaignDescription)} / {DESCRIPTION_WORD_LIMIT} words
+                    </p>
                 </div>
 
                 <div className="flex flex-col gap-1">
