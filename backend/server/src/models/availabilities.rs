@@ -152,7 +152,7 @@ impl Availabilities {
     /// # Returns
     /// Returns a `Result` containing either
     /// * `Ok(i64)` - the UC id
-    /// * `Err(ChaosError)` - If no such user user campaign pair is found
+    /// * `Err(ChaosError)` - If no such user campaign pair is found
 
     pub async fn get_user_campaign_id(
         user_id: i64,
