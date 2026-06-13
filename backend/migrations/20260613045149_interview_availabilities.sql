@@ -13,13 +13,13 @@ CREATE TABLE availability_slots (
 );
 
 CREATE INDEX idx_user_campaign_availabilities
-    ON user_campaign_availabilities(user_id)
+    ON user_campaign_availabilities(user_id);
 
 CREATE INDEX idx_user_campaign_availabilities
-    ON user_campaign_availabilities(campaign_id)
+    ON user_campaign_availabilities(campaign_id);
 
 CREATE INDEX idx_availability_slots
-    ON availability_slots(availability_id)
+    ON availability_slots(availability_id);
 
 CREATE INDEX idx_availability_slots
-    ON availability_slots(start_time)
+    ON availability_slots(start_time);
