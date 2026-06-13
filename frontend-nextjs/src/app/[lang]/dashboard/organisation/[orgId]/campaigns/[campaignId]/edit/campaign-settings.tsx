@@ -5,17 +5,7 @@ import { CampaignUpdate, createCampaignRole, getCampaign, getCampaignRoles, upda
 import { uploadFile } from "@/models/file";
 import { getRatingCategories, createCategory, updateCategory, deleteCategory, RatingCategory } from "@/models/rating";
 import { Button } from "@/components/ui/button";
-import { Copy, Pencil, Trash, Share, BookOpenCheck, Check, Plus, FormIcon, CircleCheck, Upload, X, FileText, BarChart, ArrowLeft } from "lucide-react";
-import { ButtonGroup } from "@/components/ui/button-group";
-import { cn, getWordCount } from "@/lib/utils";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
+import { Plus, Upload, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
