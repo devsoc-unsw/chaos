@@ -197,11 +197,16 @@ export default function CampaignSettings({ campaignId, orgId, dict }: { campaign
 
                 <div className="flex flex-col gap-1">
                     <Label htmlFor="campaign-description">{dict.common.description}</Label>
+                    {campaignDescription.length > DESCRIPTION_CHAR_LIMIT && (
+                        <p className={`text-sm mt-1 text-destructive font-medium`}>
+                            Character limit exceeded. Please shorten your description.
+                        </p>
+                    )}
                     <Textarea className="min-h-[300px]"
                         value={campaignDescription}
                         onChange={(e) => setCampaignDescription(e.target.value)}
                         onBlur={() => handleCampaignDetailsUpdate()} />
-                    <p className={`text-sm mt-1 ${campaignDescription.length > DESCRIPTION_CHAR_LIMIT ? "text-destructive font-bold" : "text-muted-foreground"}`}>
+                    <p className={`text-sm mt-1 ${campaignDescription.length > DESCRIPTION_CHAR_LIMIT ? "text-destructive font-medium" : "text-muted-foreground"}`}>
                         {campaignDescription.length} / {DESCRIPTION_CHAR_LIMIT} characters
                     </p>
                 </div>
