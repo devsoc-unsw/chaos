@@ -5,17 +5,7 @@ import { CampaignUpdate, createCampaignRole, getCampaign, getCampaignRoles, upda
 import { uploadFile } from "@/models/file";
 import { getRatingCategories, createCategory, updateCategory, deleteCategory, RatingCategory } from "@/models/rating";
 import { Button } from "@/components/ui/button";
-import { Copy, Pencil, Trash, Share, BookOpenCheck, Check, Plus, FormIcon, CircleCheck, Upload, X, FileText, BarChart, ArrowLeft } from "lucide-react";
-import { ButtonGroup } from "@/components/ui/button-group";
-import { cn } from "@/lib/utils";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
+import { Plus, Upload, ArrowLeft, Trash } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
@@ -31,6 +21,7 @@ import Image from "next/image";
 
 export default function CampaignSettings({ campaignId, orgId, dict }: { campaignId: string, orgId: string, dict: any }) {
     const queryClient = useQueryClient();
+    const DESCRIPTION_CHAR_LIMIT = 200;
 
     const { data: campaign } = useQuery({
         queryKey: [`${campaignId}-campaign-details`],
@@ -125,6 +116,9 @@ export default function CampaignSettings({ campaignId, orgId, dict }: { campaign
     });
 
     const handleCampaignDetailsUpdate = (overrides?: Partial<CampaignUpdate>) => {
+        if (campaignDescription.length > DESCRIPTION_CHAR_LIMIT) {
+            return;
+        }
         mutateUpdateCampaignDetails({
             name: campaignName,
             slug: campaignSlug,
@@ -193,7 +187,18 @@ export default function CampaignSettings({ campaignId, orgId, dict }: { campaign
 
                 <div className="flex flex-col gap-1">
                     <Label htmlFor="campaign-description">{dict.common.description}</Label>
-                    <Textarea className="min-h-[300px]" value={campaignDescription} onChange={(e) => setCampaignDescription(e.target.value)} onBlur={() => handleCampaignDetailsUpdate()} />
+                    {campaignDescription.length > DESCRIPTION_CHAR_LIMIT && (
+                        <p className={`text-sm mt-1 text-destructive font-medium`}>
+                            Character limit exceeded. Please shorten your description.
+                        </p>
+                    )}
+                    <Textarea className="min-h-[300px]"
+                        value={campaignDescription}
+                        onChange={(e) => setCampaignDescription(e.target.value)}
+                        onBlur={() => handleCampaignDetailsUpdate()} />
+                    <p className={`text-sm mt-1 ${campaignDescription.length > DESCRIPTION_CHAR_LIMIT ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                        {campaignDescription.length} / {DESCRIPTION_CHAR_LIMIT} characters
+                    </p>
                 </div>
 
                 <div className="flex flex-col gap-1">
