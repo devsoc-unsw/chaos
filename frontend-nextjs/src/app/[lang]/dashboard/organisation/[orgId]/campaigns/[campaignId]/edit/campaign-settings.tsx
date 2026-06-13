@@ -5,7 +5,7 @@ import { CampaignUpdate, createCampaignRole, getCampaign, getCampaignRoles, upda
 import { uploadFile } from "@/models/file";
 import { getRatingCategories, createCategory, updateCategory, deleteCategory, RatingCategory } from "@/models/rating";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload, ArrowLeft } from "lucide-react";
+import { Plus, Upload, ArrowLeft, Trash } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
