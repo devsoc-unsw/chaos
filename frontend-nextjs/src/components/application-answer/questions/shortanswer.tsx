@@ -18,6 +18,10 @@ export default function  ShortAnswer({
 }) {
     const [value, setValue] = useState(question.answer);
     const [previousAnswer, setPreviousAnswer] = useState(question.answer === "No Answer" ? null : question.answer)    
+    const [wordCount, setWordCount] = useState(() => {
+        if (!question.answer || question.answer === "No Answer") return 0;
+        return question.answer.split(/\s+/).filter((word: string) => word.length !== 0).length;
+    });
 
     useEffect(() => {
         if (question.answer === 'No Answer') {
@@ -30,7 +34,18 @@ export default function  ShortAnswer({
     }, [question.answer, question.answer_id]);
 
     const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
-        setValue(e.target.value);
+        const currentValue = e.target.value;
+        const words = currentValue.split(/\s+/).filter((word) => word.length !== 0);
+
+        if (question.short_answer_word_limit && words.length > question.short_answer_word_limit) {
+            const trimmed = words.slice(0, question.short_answer_word_limit).join(" ");
+            setValue(trimmed);
+            setWordCount(question.short_answer_word_limit);
+            return;
+        }
+
+        setValue(currentValue);
+        setWordCount(words.length);
     }
 
     const handleBlur = async () => {
@@ -42,7 +57,7 @@ export default function  ShortAnswer({
 
         try {
             await submitAnswer(question, value, applicationId, answerId)
-            setPreviousAnswer(trimmedPrev || null)
+            setPreviousAnswer(trimmed === '' ? null : trimmed)
         } catch (err) {
             console.error("Short answer update failed:", err);
         }
@@ -65,6 +80,11 @@ export default function  ShortAnswer({
                 placeholder={question ? dict.applicationpage.youranswer : "Your answer"}
                 className={`w-full resize-y transition-all duration-200 hover:border-primary focus:border-primary max-w-4xl`}
             />
+            {question.short_answer_word_limit && (
+                <p className={`text-sm mt-1 ${wordCount >= question.short_answer_word_limit ? "text-destructive font-bold" : "text-muted-foreground"}`}>
+                    {wordCount} / {question.short_answer_word_limit} words
+                    </p>
+                )}
         </div>
     )
 }

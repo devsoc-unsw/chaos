@@ -19,6 +19,8 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
 
     if (!campaignData) return notFound();
 
+    const campaignClosed = new Date(campaignData.ends_at) <= new Date();
+
     const { data: roleData } = useQuery({
         queryKey: [`${campaignData?.id}-campaign-roles`],
         queryFn: () => getCampaignRoles(campaignData!.id.toString())
@@ -34,7 +36,13 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
             {/* Hero Section */}
             <div className="relative h-[280px] overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5 sm:h-[340px] lg:h-[400px]">
                 <img
-                    src={campaignData.cover_image || '/placeholder.svg'}
+                    src={
+                        campaignData.cover_image_url ||
+                        (campaignData.cover_image?.startsWith("http")
+                            ? campaignData.cover_image
+                            : null) ||
+                        "/placeholder.svg"
+                    }
                     alt="Campaign cover"
                     className="absolute inset-0 w-full h-full object-cover opacity-30"
                 />
@@ -354,11 +362,20 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
                                 </div>
 
                                 {/* TODO: If user is logged in, check for existing application and change text to "Continue Application" */}
-                                <Link href={`/${lang}/campaign/apply/${campaignData.id}`}>
-                                    <Button className="w-full cursor-pointer mb-2" size="lg">
-                                        {dict.common.apply}
-                                    </Button>
-                                </Link>
+                                {/* TODO: If campaign is closed, show a messaging informing users of such */}
+                                {
+                                    campaignClosed ? (
+                                        <Button className="w-full cursor-pointer mb-2" size="lg" disabled>
+                                            {dict.common.apply}
+                                        </Button>
+                                    ) : (
+                                        <Link href={`/${lang}/campaign/apply/${campaignData.id}`}>
+                                            <Button className="w-full cursor-pointer mb-2" size="lg">
+                                                {dict.common.apply}
+                                            </Button>
+                                        </Link>
+                                    )
+                                }
                             </div>
                         </div>
                     </div>

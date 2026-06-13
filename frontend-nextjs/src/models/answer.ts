@@ -37,8 +37,8 @@ export async function updateAnswer(answerId: string, body: any): Promise<void> {
   });
 }
 
-export function createAnswer(applicationId: string, body: any) {
-  return apiRequest(`/api/v1/application/${applicationId}/answer`, {
+export function createAnswer(applicationId: string, body: any): Promise<{ id: string | number }> {
+  return apiRequest<{ id: string | number }>(`/api/v1/application/${applicationId}/answer`, {
     method: "POST",
     body,
   });

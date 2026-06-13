@@ -23,6 +23,7 @@ pub mod organisation;
 pub mod question;
 pub mod rating;
 pub mod role;
+pub mod role_status;
 pub mod seeder;
 pub mod serde_string;
 pub mod storage;

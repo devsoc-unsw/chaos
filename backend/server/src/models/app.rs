@@ -3,6 +3,7 @@ use crate::handler::application::ApplicationHandler;
 use crate::handler::auth::{google_auth_init, google_callback, logout, DevLoginHandler};
 use crate::handler::availabilities::AvailabilitiesHandler;
 use crate::handler::campaign::CampaignHandler;
+use crate::handler::comment::CommentHandler;
 use crate::handler::email_template::EmailTemplateHandler;
 use crate::handler::invite::InviteHandler;
 use crate::handler::offer::OfferHandler;
@@ -10,6 +11,7 @@ use crate::handler::organisation::OrganisationHandler;
 use crate::handler::question::QuestionHandler;
 use crate::handler::rating::RatingHandler;
 use crate::handler::role::RoleHandler;
+use crate::handler::role_status::RoleStatusHandler;
 use crate::handler::user::UserHandler;
 use crate::models::availabilities::Availability;
 use crate::models::email::{ChaosEmail, EmailCredentials};
@@ -462,6 +464,22 @@ pub async fn app() -> Result<(Router, AppState), ChaosError> {
             patch(ApplicationHandler::set_private_status),
         )
         .route(
+            "/api/v1/application/:application_id/rolestatus/:campaign_role_id",
+            put(RoleStatusHandler::update_role_status),
+        )
+        .route(
+            "/api/v1/application/:application_id/rolestatus",
+            get(RoleStatusHandler::get_role_statuses_for_application),
+        )
+        .route(
+            "/api/v1/campaign/:campaign_id/rolestatus/:campaign_role_id`",
+            get(RoleStatusHandler::get_role_statuses_for_campaign_role),
+        )
+        .route(
+            "/api/v1/campaign/:campaign_id/rolestatus`",
+            get(RoleStatusHandler::get_role_statuses_for_campaign),
+        )
+        .route(
             "/api/v1/application/:application_id/answers/common",
             get(AnswerHandler::get_all_common_by_application),
         )
@@ -480,6 +498,22 @@ pub async fn app() -> Result<(Router, AppState), ChaosError> {
         .route(
             "/api/v1/application/:application_id/submit",
             post(ApplicationHandler::submit),
+        )
+        .route(
+            "/api/v1/application/:application_id/comment",
+            post(CommentHandler::create_comment),
+        )
+        .route(
+            "/api/v1/application/:application_id/comment/:comment_id",
+            put(CommentHandler::edit_comment),
+        )
+        .route(
+            "/api/v1/application/:application_id/comment/:comment_id",
+            delete(CommentHandler::delete_comment),
+        )
+        .route(
+            "/api/v1/application/:application_id/comment",
+            get(CommentHandler::get_comments_by_application),
         )
         .route(
             "/api/v1/answer/:answer_id",

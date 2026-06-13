@@ -6,7 +6,7 @@
   },
   "servers": [
     {
-      "url": "https://chaos.csesoc.app/api",
+      "url": "https://chaos.devsoc.app/api",
       "description": "Production server"
     },
     {
@@ -371,7 +371,7 @@
                 "properties": {
                   "slug": {
                     "type": "string",
-                    "description": "ASCII string for URL like https://chaos.csesoc.app/s/unsw-devsoc",
+                    "description": "ASCII string for URL like https://chaos.devsoc.app/s/unsw-devsoc",
                     "example": "unsw-devsoc"
                   },
                   "name": {
@@ -1446,6 +1446,11 @@
                     "cover_image": {
                       "type": "string",
                       "example": "2d19617b-46fd-4927-9f53-77d69232ba5d"
+                    },
+                    "cover_image_url": {
+                      "type": "string",
+                      "description": "Time-limited presigned URL to download the banner when cover_image is set",
+                      "nullable": true
                     },
                     "description": {
                       "type": "string",

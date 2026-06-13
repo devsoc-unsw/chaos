@@ -14,6 +14,7 @@ import { getAllCommonQuestions, linkQuestionsAndAnswers, Question, QuestionAndAn
 import { getAllRoleAnswers } from "@/models/answer";
 import { getAllRoleQuestions } from "@/models/question";
 import { redirect, useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface ApplicationReviewProps {
   campaignId: string;
@@ -99,7 +100,7 @@ export default function ApplicationReview({
       }
 
       for (const roleId of roleIds) {
-        //if (newQAMap.has(roleId)) continue;
+        if (newQAMap.has(roleId)) continue;
         const roleQs: Question[] | undefined = queryClient.getQueryData([`${campaignId}-${roleId}-role-questions`])
         const roleAnswers: Answer[] | undefined = queryClient.getQueryData([`${applicationId}-${roleId}-role-answers`])
         if (roleQs && roleAnswers) {
@@ -234,6 +235,7 @@ export default function ApplicationReview({
       router.push(`/campaign/apply/${campaignId}/finish`);
     } catch (e) {
       console.error("Submission failed: ", e);
+      toast.error("Failed to submit application. Please try again.");
     }
   }
 
