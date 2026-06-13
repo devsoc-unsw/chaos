@@ -12,14 +12,14 @@ CREATE TABLE availability_slots (
   UNIQUE (availability_id, start_time)
 );
 
-CREATE INDEX idx_user_campaign_availabilities
+CREATE INDEX idx_user_campaign_availabilities_user
     ON user_campaign_availabilities(user_id);
 
-CREATE INDEX idx_user_campaign_availabilities
+CREATE INDEX idx_user_campaign_availabilities_campaign
     ON user_campaign_availabilities(campaign_id);
 
-CREATE INDEX idx_availability_slots
+CREATE INDEX idx_availability_slots_id
     ON availability_slots(availability_id);
 
-CREATE INDEX idx_availability_slots
+CREATE INDEX idx_availability_slots_start_time
     ON availability_slots(start_time);
