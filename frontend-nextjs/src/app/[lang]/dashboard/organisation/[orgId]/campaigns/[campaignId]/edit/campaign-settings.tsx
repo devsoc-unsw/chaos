@@ -324,7 +324,7 @@ function RoleCard({ role, updateRole, deleteRole, dict }: { role: RoleDetails, u
                 </div>
                 <div className="w-24">
                     <Label className="text-xs text-muted-foreground">{dict.common.min}</Label>
-                    <Input type="number" value={minAvailable} onChange={(e) => setMinAvailable(parseInt(e.target.value) || 0)} onBlur={handleUpdate} />
+                    <Input type="number" min={0} value={minAvailable} onChange={(e) => setMinAvailable(parseInt(e.target.value) || 0)} onBlur={handleUpdate} />
                 </div>
                 <div className="w-24">
                     <Label className="text-xs text-muted-foreground">{dict.common.max}</Label>
