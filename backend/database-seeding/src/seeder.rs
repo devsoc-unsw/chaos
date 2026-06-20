@@ -414,7 +414,7 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
     Answer::create(
         application_id_1,
         question_id_1,
-        AnswerData::DropDown(qtn_1_options[0].id),
+        NewAnswerData::DropDown(qtn_1_options[0].id),
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
@@ -424,7 +424,7 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
     Answer::create(
         application_id_2,
         question_id_1,
-        AnswerData::DropDown(qtn_1_options[0].id),
+        NewAnswerData::DropDown(qtn_1_options[0].id),
         &mut seeder.app_state.snowflake_generator,
         &mut tx,
     )
@@ -434,7 +434,7 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
     Answer::create(
         application_id_1,
         question_id_2,
-        AnswerData::ShortAnswer(
+        NewAnswerData::ShortAnswer(
             "A Moand is a Monoid in the Category of Endofunctors, what else do you want?"
                 .to_string(),
         ),
@@ -453,15 +453,16 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
         _ => panic!("Question 3 is not a MultiSelect question"),
     };
 
-    Answer::create(
-        application_id_1,
-        question_id_3,
-        AnswerData::MultiSelect(vec![qtn_3_options[0].id, qtn_3_options[1].id]),
-        &mut seeder.app_state.snowflake_generator,
-        &mut tx,
-    )
-    .await
-    .expect("Failed seeding Answer 3");
+    // Answer::create(
+    //     application_id_1,
+    //     question_id_3,
+    //     NewAnswerData::MultiSelect(vec![
+    //         qtn_3_options[0].id, qtn_3_options[1].id]),
+    //     &mut seeder.app_state.snowflake_generator,
+    //     &mut tx,
+    // )
+    // .await
+    // .expect("Failed seeding Answer 3");
 
     let app_rating_id_1 = Rating::create_application_rating(
         Some("This guy has massive aura, but does not know how to vibe code".to_string()),

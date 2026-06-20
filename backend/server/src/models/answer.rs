@@ -8,8 +8,9 @@ use crate::models::error::ChaosError;
 use crate::models::question::QuestionType;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
 use snowflake::SnowflakeIdGenerator;
-use sqlx::{Postgres, Transaction};
+use sqlx::{types::Json, Postgres, Transaction};
 use std::ops::DerefMut;
 
 /// Represents an answer in the system.
@@ -48,25 +49,7 @@ pub struct Answer {
     updated_at: DateTime<Utc>,
 }
 
-/// A view type which collects an answer in the system along with it's
-/// associated role.
-#[derive(Deserialize, Serialize)]
-pub struct AnswerWithRole {
-    #[serde(serialize_with = "crate::models::serde_string::serialize")]
-    id: i64,
-    /// ID of the question this answer is for
-    #[serde(serialize_with = "crate::models::serde_string::serialize")]
-    question_id: i64,
-
-    /// The actual answer data, flattened in serialization
-    #[serde(flatten)]
-    data: AnswerData,
-
-    // role ID
-    #[serde(serialize_with = "crate::models::serde_string::serialize")]
-    role_id: i64,
-}
-/// Data structure for creating a new answer.
+/// Data structure representing an answer being created / updated.
 ///
 /// Contains the question ID and the answer data.
 #[derive(Deserialize, Serialize)]
@@ -77,15 +60,15 @@ pub struct NewAnswer {
 
     /// The actual answer data, flattened in serialization
     #[serde(flatten)]
-    pub data: AnswerData,
+    pub data: NewAnswerData,
 }
 
-/// Raw answer data from the database.
+/// A raw answer from the database.
 ///
 /// Contains all fields needed to construct an Answer structure,
 /// including the question type and various answer formats.
 #[derive(Deserialize, sqlx::FromRow)]
-pub struct AnswerRawData {
+pub struct RawAnswer {
     /// Unique identifier for the answer
     id: i64,
     /// ID of the question this answer is for
@@ -95,7 +78,7 @@ pub struct AnswerRawData {
     /// Text answer for short answer questions
     short_answer_answer: Option<String>,
     /// Selected options for multiple choice/select questions
-    multi_option_answers: Option<Vec<i64>>,
+    multi_option_answers: Option<Json<Vec<MultiChoiceAnswer>>>,
     /// Ranked options for ranking questions
     ranking_answers: Option<Vec<i64>>,
     /// When the answer was created
@@ -114,7 +97,7 @@ pub struct AnswerTypeApplicationId {
 }
 
 impl Answer {
-    /// Creates a new answer.
+    /// Creates a new answer, overwriting any answer that may already exist.
     ///
     /// # Arguments
     ///
@@ -130,12 +113,14 @@ impl Answer {
     pub async fn create(
         application_id: i64,
         question_id: i64,
-        data: AnswerData,
+        data: NewAnswerData,
         snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<i64, ChaosError> {
+        // Validate answer data
         data.validate()?;
 
+        // Delete any existing answer that may exist
         sqlx::query!(
             "
                 DELETE FROM answers
@@ -148,6 +133,7 @@ impl Answer {
         .await?;
         let id = snowflake_generator.real_time_generate();
 
+        // Insert new answer into database
         sqlx::query!(
             "
                 INSERT INTO answers (id, application_id, question_id)
@@ -160,17 +146,19 @@ impl Answer {
         .execute(transaction.deref_mut())
         .await?;
 
+        // Insert question-type specific answer info into database
         data.insert_into_db(id, transaction).await?;
 
+        // Return answer ID
         Ok(id)
     }
 
-    /// Retrieves an answer by its ID.
+    /// Retrieve an answer using its ID.
     ///
     /// # Arguments
     ///
-    /// * `id` - ID of the answer to retrieve
-    /// * `transaction` - Database transaction to use
+    /// * `id` - The ID of the answer to retrieve.
+    /// * `transaction` - The database transaction to use.
     ///
     /// # Returns
     ///
@@ -179,8 +167,9 @@ impl Answer {
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Answer, ChaosError> {
-        let answer_raw_data = sqlx::query_as!(
-            AnswerRawData,
+        // Fetch raw answer from database
+        let raw_answer = sqlx::query_as!(
+            RawAnswer,
             r#"
                 SELECT
                     a.id,
@@ -189,9 +178,14 @@ impl Answer {
                     a.created_at,
                     a.updated_at,
                     COALESCE(saa.text, '') AS short_answer_answer,
-                    array_remove(array_agg(
-                        moao.option_id
-                    ), NULL) AS multi_option_answers,
+                    jsonb_agg(
+                        jsonb_build_object(
+                            'option_id', moao.option_id,
+                            'value', COALESCE(moqo.text, moao.custom_value),
+                            'is_custom', CASE WHEN moao.option_id IS NULL THEN true ELSE false END
+                        )
+                    ) FILTER ( WHERE moao.option_id IS NOT NULL OR moqo.text IS NOT NULL)
+                        AS "multi_option_answers: Json<Vec<MultiChoiceAnswer>>",
                     array_remove(array_agg(
                         rar.option_id ORDER BY rar.rank
                     ), NULL) AS ranking_answers
@@ -201,6 +195,8 @@ impl Answer {
                         LEFT JOIN
                     multi_option_answer_options moao ON moao.answer_id = a.id
                         AND q.question_type IN ('MultiChoice', 'MultiSelect', 'DropDown')
+                        LEFT JOIN
+                    multi_option_question_options moqo ON moqo.id = moao.option_id
                         LEFT JOIN
                     short_answer_answers saa ON saa.answer_id = a.id
                         AND q.question_type = 'ShortAnswer'
@@ -216,20 +212,8 @@ impl Answer {
         .fetch_one(transaction.deref_mut())
         .await?;
 
-        let answer_data = AnswerData::from_answer_raw_data(
-            answer_raw_data.question_type,
-            answer_raw_data.short_answer_answer,
-            answer_raw_data.multi_option_answers,
-            answer_raw_data.ranking_answers,
-        );
-
-        Ok(Answer {
-            id,
-            question_id: answer_raw_data.question_id,
-            data: answer_data,
-            created_at: answer_raw_data.created_at,
-            updated_at: answer_raw_data.updated_at,
-        })
+        // Return full answer instance
+        Ok(raw_answer.into())
     }
 
     /// Retrieves all common answers for an application.
@@ -248,8 +232,9 @@ impl Answer {
         application_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<Answer>, ChaosError> {
-        let answer_raw_data = sqlx::query_as!(
-            AnswerRawData,
+        // Fetch raw answers from database
+        let raw_answers = sqlx::query_as!(
+            RawAnswer,
             r#"
                 SELECT
                     a.id,
@@ -258,9 +243,14 @@ impl Answer {
                     a.created_at,
                     a.updated_at,
                     COALESCE(saa.text, '') AS short_answer_answer,
-                    array_remove(array_agg(
-                        moao.option_id
-                    ), NULL) AS multi_option_answers,
+                    jsonb_agg(
+                        jsonb_build_object(
+                            'option_id', moao.option_id,
+                            'value', COALESCE(moqo.text, moao.custom_value),
+                            'is_custom', CASE WHEN moao.option_id IS NULL THEN true ELSE false END
+                        )
+                    ) FILTER ( WHERE moao.option_id IS NOT NULL OR moqo.text IS NOT NULL)
+                        AS "multi_option_answers: Json<Vec<MultiChoiceAnswer>>",
                     array_remove(array_agg(
                         rar.option_id ORDER BY rar.rank
                     ), NULL) AS ranking_answers
@@ -270,7 +260,8 @@ impl Answer {
                         LEFT JOIN
                     multi_option_answer_options moao ON moao.answer_id = a.id
                         AND q.question_type IN ('MultiChoice', 'MultiSelect', 'DropDown')
-
+                        LEFT JOIN
+                    multi_option_question_options moqo ON moqo.id = moao.option_id
                         LEFT JOIN
                     short_answer_answers saa ON saa.answer_id = a.id
                         AND q.question_type = 'ShortAnswer'
@@ -287,24 +278,10 @@ impl Answer {
         .fetch_all(transaction.deref_mut())
         .await?;
 
-        let answers = answer_raw_data
+        // Convert raw answers into full answer instances
+        let answers = raw_answers
             .into_iter()
-            .map(|answer_raw_data| {
-                let answer_data = AnswerData::from_answer_raw_data(
-                    answer_raw_data.question_type,
-                    answer_raw_data.short_answer_answer,
-                    answer_raw_data.multi_option_answers,
-                    answer_raw_data.ranking_answers,
-                );
-
-                Answer {
-                    id: answer_raw_data.id,
-                    question_id: answer_raw_data.question_id,
-                    data: answer_data,
-                    created_at: answer_raw_data.created_at,
-                    updated_at: answer_raw_data.updated_at,
-                }
-            })
+            .map(|raw_answer| raw_answer.into())
             .collect();
 
         Ok(answers)
@@ -326,8 +303,9 @@ impl Answer {
         role_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<Answer>, ChaosError> {
-        let answer_raw_data = sqlx::query_as!(
-            AnswerRawData,
+        // Fetch raw answers from database
+        let raw_answers = sqlx::query_as!(
+            RawAnswer,
             r#"
                 SELECT
                     a.id,
@@ -336,9 +314,14 @@ impl Answer {
                     a.created_at,
                     a.updated_at,
                     COALESCE(saa.text, '') AS short_answer_answer,
-                    array_remove(array_agg(
-                        moao.option_id
-                    ), NULL) AS multi_option_answers,
+                    jsonb_agg(
+                        jsonb_build_object(
+                            'option_id', moao.option_id,
+                            'value', COALESCE(moqo.text, moao.custom_value),
+                            'is_custom', CASE WHEN moao.option_id IS NULL THEN true ELSE false END
+                        )
+                    ) FILTER ( WHERE moao.option_id IS NOT NULL OR moqo.text IS NOT NULL)
+                        AS "multi_option_answers: Json<Vec<MultiChoiceAnswer>>",
                     array_remove(array_agg(
                         rar.option_id ORDER BY rar.rank
                     ), NULL) AS ranking_answers
@@ -349,7 +332,8 @@ impl Answer {
                         LEFT JOIN
                     multi_option_answer_options moao ON moao.answer_id = a.id
                         AND q.question_type IN ('MultiChoice', 'MultiSelect', 'DropDown')
-
+                        LEFT JOIN
+                    multi_option_question_options moqo ON moqo.id = moao.option_id
                         LEFT JOIN
                     short_answer_answers saa ON saa.answer_id = a.id
                         AND q.question_type = 'ShortAnswer'
@@ -367,24 +351,10 @@ impl Answer {
         .fetch_all(transaction.deref_mut())
         .await?;
 
-        let answers = answer_raw_data
+        // Convert raw answers into full answer instances
+        let answers = raw_answers
             .into_iter()
-            .map(|answer_raw_data| {
-                let answer_data = AnswerData::from_answer_raw_data(
-                    answer_raw_data.question_type,
-                    answer_raw_data.short_answer_answer,
-                    answer_raw_data.multi_option_answers,
-                    answer_raw_data.ranking_answers,
-                );
-
-                Answer {
-                    id: answer_raw_data.id,
-                    question_id: answer_raw_data.question_id,
-                    data: answer_data,
-                    created_at: answer_raw_data.created_at,
-                    updated_at: answer_raw_data.updated_at,
-                }
-            })
+            .map(|raw_answer| raw_answer.into())
             .collect();
 
         Ok(answers)
@@ -403,13 +373,12 @@ impl Answer {
     /// * `Result<(), ChaosError>` - Success or error
     pub async fn update(
         id: i64,
-        data: AnswerData,
+        data: NewAnswerData,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        if !data.is_empty() {
-            data.validate()?;
-        }
+        data.validate()?;
 
+        // Fetch current answer from the database
         let answer = sqlx::query_as!(
             AnswerTypeApplicationId,
             r#"
@@ -423,13 +392,14 @@ impl Answer {
         .fetch_one(transaction.deref_mut())
         .await?;
 
-        let old_data = AnswerData::from_question_type(&answer.question_type);
+        // Remove any old answer data that may exist from the database
+        let old_data = AnswerData::create_stub(&answer.question_type);
         old_data.delete_from_db(id, transaction).await?;
 
-        if !data.is_empty() {
-            data.insert_into_db(id, transaction).await?;
-        }
+        // Insert new answer data into the database
+        data.insert_into_db(id, transaction).await?;
 
+        // Update application updated at time
         sqlx::query!(
             "UPDATE applications SET updated_at = $1 WHERE id = $2",
             Utc::now(),
@@ -463,7 +433,19 @@ impl Answer {
     }
 }
 
-/// Represents the different types of answer data.
+impl From<RawAnswer> for Answer {
+    fn from(value: RawAnswer) -> Self {
+        Self {
+            id: value.id,
+            question_id: value.question_id,
+            created_at: value.created_at,
+            updated_at: value.updated_at,
+            data: AnswerData::from_raw_answer(value),
+        }
+    }
+}
+
+/// Represents the different types of answer data (to be returned).
 ///
 /// Each variant corresponds to a different question type and contains
 /// the appropriate data format for that type.
@@ -473,13 +455,33 @@ pub enum AnswerData {
     /// Text answer for short answer questions
     ShortAnswer(String),
     /// Single selected option for multiple choice questions
-    #[serde(serialize_with = "crate::models::serde_string::serialize")]
-    #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
-    MultiChoice(i64),
+    MultiChoice(MultiChoiceAnswer),
     /// Multiple selected options for multi-select questions
+    MultiSelect(Vec<MultiChoiceAnswer>),
+    /// Single selected option for dropdown questions
+    DropDown(MultiChoiceAnswer),
+    /// Ranked list of options for ranking questions
     #[serde(serialize_with = "crate::models::serde_string::serialize_vec")]
     #[serde(deserialize_with = "crate::models::serde_string::deserialize_vec")]
-    MultiSelect(Vec<i64>),
+    Ranking(Vec<i64>),
+}
+
+/// Represents the different types of answer data.
+///
+/// Each variant corresponds to a different question type and contains
+/// the appropriate data format for that type.
+///
+/// This only accepts choice IDs for multi-choice questions, over the full format returned
+/// by the API.
+#[derive(Deserialize, Serialize)]
+#[serde(tag = "answer_type", content = "answer_data")]
+pub enum NewAnswerData {
+    /// Text answer for short answer questions
+    ShortAnswer(String),
+    /// Single selected option for multiple choice questions
+    MultiChoice(NewMultiChoiceAnswer),
+    /// Multiple selected options for multi-select questions
+    MultiSelect(Vec<NewMultiChoiceAnswer>),
     /// Single selected option for dropdown questions
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
     #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
@@ -491,176 +493,79 @@ pub enum AnswerData {
 }
 
 impl AnswerData {
-    /// Creates a new AnswerData instance based on a question type.
+    /// Creates a new AnswerData stub instance for a given question type.
     ///
     /// # Arguments
     ///
-    /// * `question_type` - Type of the question
+    /// * `question_type` - The type of question to create a stub for.
     ///
     /// # Returns
     ///
-    /// * `AnswerData` - New answer data instance
-    fn from_question_type(question_type: &QuestionType) -> Self {
+    /// * `AnswerData` - The newly created stub answer data instance.
+    fn create_stub(question_type: &QuestionType) -> Self {
         match question_type {
             QuestionType::ShortAnswer => AnswerData::ShortAnswer("".to_string()),
-            QuestionType::MultiChoice => AnswerData::MultiChoice(0),
-            QuestionType::MultiSelect => AnswerData::MultiSelect(Vec::<i64>::new()),
-            QuestionType::DropDown => AnswerData::DropDown(0),
+            QuestionType::MultiChoice => AnswerData::MultiChoice(MultiChoiceAnswer::from_id(0)),
+            QuestionType::MultiSelect => AnswerData::MultiSelect(Vec::<MultiChoiceAnswer>::new()),
+            QuestionType::DropDown => AnswerData::DropDown(MultiChoiceAnswer::from_id(0)),
             QuestionType::Ranking => AnswerData::Ranking(Vec::<i64>::new()),
         }
     }
 
-    /// Creates an AnswerData instance from raw database data.
+    /// Create an AnswerData instance using a raw answer from the database.
     ///
     /// # Arguments
     ///
-    /// * `question_type` - Type of the question
-    /// * `short_answer_answer` - Text answer for short answer questions
-    /// * `multi_option_answers` - Selected options for multiple choice/select questions
-    /// * `ranking_answers` - Ranked options for ranking questions
+    /// * `raw_data` - The raw answer to turn into an answer data instance.
     ///
     /// # Returns
     ///
-    /// * `AnswerData` - New answer data instance
-    fn from_answer_raw_data(
-        question_type: QuestionType,
-        short_answer_answer: Option<String>,
-        multi_option_answers: Option<Vec<i64>>,
-        ranking_answers: Option<Vec<i64>>,
-    ) -> Self {
-        match question_type {
-            QuestionType::ShortAnswer => {
-                let answer =
-                    short_answer_answer.expect("Data should exist for ShortAnswer variant");
-                AnswerData::ShortAnswer(answer)
-            }
-            QuestionType::MultiChoice | QuestionType::MultiSelect | QuestionType::DropDown => {
-                let options =
-                    multi_option_answers.expect("Data should exist for MultiOptionData variants");
-
-                match question_type {
-                    QuestionType::MultiChoice => AnswerData::MultiChoice(options[0]),
-                    QuestionType::MultiSelect => AnswerData::MultiSelect(options),
-                    QuestionType::DropDown => AnswerData::DropDown(options[0]),
-                    _ => AnswerData::ShortAnswer("".to_string()), // Should never be reached, hence return ShortAnswer
-                }
-            }
-            QuestionType::Ranking => {
-                let options = ranking_answers.expect("Data should exist for Ranking variant");
-                AnswerData::Ranking(options)
-            }
+    /// * `AnswerData` - The newly created AnswerData instance.
+    fn from_raw_answer(answer: RawAnswer) -> Self {
+        match answer.question_type {
+            QuestionType::ShortAnswer => AnswerData::ShortAnswer(
+                answer
+                    .short_answer_answer
+                    .expect("Data should exist for ShortAnswer variant"),
+            ),
+            QuestionType::MultiChoice => AnswerData::MultiChoice(
+                answer
+                    .multi_option_answers
+                    .expect("Data should exist for MultiChoice variant")
+                    .0
+                    .into_iter()
+                    .next()
+                    .unwrap(),
+            ),
+            QuestionType::MultiSelect => AnswerData::MultiSelect(
+                answer
+                    .multi_option_answers
+                    .expect("Data should exist for MultiSelect variant")
+                    .0,
+            ),
+            QuestionType::DropDown => AnswerData::DropDown(
+                answer
+                    .multi_option_answers
+                    .expect("Data should exist for DropDown variant")
+                    .0
+                    .into_iter()
+                    .next()
+                    .unwrap(),
+            ),
+            QuestionType::Ranking => AnswerData::Ranking(
+                answer
+                    .ranking_answers
+                    .expect("Data should exist for Ranking variant"),
+            ),
         }
     }
 
-    pub fn is_empty(&self) -> bool {
-        match self {
-            AnswerData::ShortAnswer(text) => text.is_empty(),
-            AnswerData::MultiSelect(options) | AnswerData::Ranking(options) => options.is_empty(),
-            AnswerData::MultiChoice(_option_id) => false,
-            AnswerData::DropDown(option_id) => *option_id == 0,
-        }
-    }
-
-    /// Validates the answer data.
-    ///
-    /// # Returns
-    ///
-    /// * `Result<(), ChaosError>` - Success if valid, error if not
-    pub fn validate(&self) -> Result<(), ChaosError> {
-        match self {
-            Self::ShortAnswer(text) => {
-                if text.is_empty() {
-                    return Err(ChaosError::BadRequest);
-                }
-            }
-            Self::MultiSelect(data) | Self::Ranking(data) => {
-                if data.is_empty() {
-                    return Err(ChaosError::BadRequest);
-                }
-            }
-            _ => {}
-        }
-
-        Ok(())
-    }
-
-    /// Inserts the answer data into the database.
+    /// Deletes the answer data from the database, given the ID of the answer it is for.
     ///
     /// # Arguments
     ///
-    /// * `answer_id` - ID of the answer to insert data for
-    /// * `transaction` - Database transaction to use
-    ///
-    /// # Returns
-    ///
-    /// * `Result<(), ChaosError>` - Success or error
-    pub async fn insert_into_db(
-        self,
-        answer_id: i64,
-        transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<(), ChaosError> {
-        match self {
-            Self::ShortAnswer(text) => {
-                sqlx::query!(
-                    "INSERT INTO short_answer_answers (text, answer_id) VALUES ($1, $2)",
-                    text,
-                    answer_id
-                )
-                .execute(transaction.deref_mut())
-                .await?;
-
-                Ok(())
-            }
-            Self::MultiChoice(option_id) | Self::DropDown(option_id) => {
-                sqlx::query!(
-                    "INSERT INTO multi_option_answer_options (option_id, answer_id) VALUES ($1, $2)",
-                    option_id,
-                    answer_id
-                )
-                    .execute(transaction.deref_mut())
-                    .await?;
-
-                Ok(())
-            }
-            Self::MultiSelect(option_ids) => {
-                let mut query_builder = sqlx::QueryBuilder::new(
-                    "INSERT INTO multi_option_answer_options (option_id, answer_id)",
-                );
-
-                query_builder.push_values(option_ids, |mut b, option_id| {
-                    b.push_bind(option_id).push_bind(answer_id);
-                });
-
-                let query = query_builder.build();
-                query.execute(transaction.deref_mut()).await?;
-
-                Ok(())
-            }
-            Self::Ranking(option_ids) => {
-                let mut query_builder = sqlx::QueryBuilder::new(
-                    "INSERT INTO ranking_answer_rankings (option_id, rank, answer_id)",
-                );
-
-                let mut rank = 1;
-                query_builder.push_values(option_ids, |mut b, option_id| {
-                    b.push_bind(option_id).push_bind(rank).push_bind(answer_id);
-                    rank += 1;
-                });
-
-                let query = query_builder.build();
-                query.execute(transaction.deref_mut()).await?;
-
-                Ok(())
-            }
-        }
-    }
-
-    /// Deletes the answer data from the database.
-    ///
-    /// # Arguments
-    ///
-    /// * `answer_id` - ID of the answer to delete data for
-    /// * `transaction` - Database transaction to use
+    /// * `answer_id` - The ID of the answer to delete data for.
+    /// * `transaction` - The database transaction to use.
     ///
     /// # Returns
     ///
@@ -698,5 +603,195 @@ impl AnswerData {
         }
 
         Ok(())
+    }
+}
+
+impl NewAnswerData {
+    /// Return whether the new answer data is empty.
+    ///
+    /// # Returns
+    ///
+    /// * `boolean` - Whether the new answer data is empty.
+    pub fn is_empty(&self) -> bool {
+        match self {
+            NewAnswerData::ShortAnswer(text) => text.is_empty(),
+            NewAnswerData::MultiSelect(answers) => answers.is_empty(),
+            NewAnswerData::MultiChoice(answer) => false,
+            NewAnswerData::Ranking(options) => options.is_empty(),
+            NewAnswerData::DropDown(answer) => *answer == 0,
+        }
+    }
+
+    /// Validates the answer data.
+    ///
+    /// # Returns
+    ///
+    /// * `Result<(), ChaosError>` - Success if valid, error if not
+    pub fn validate(&self) -> Result<(), ChaosError> {
+        // Check if the answer is empty
+        if self.is_empty() {
+            return Err(ChaosError::BadRequest);
+        }
+
+        // Check if multi-choice answers are valid
+        match self {
+            Self::MultiChoice(new_answer) if !new_answer.is_valid() => {
+                return Err(ChaosError::BadRequest)
+            }
+            Self::MultiSelect(new_answers)
+                if new_answers.iter().any(|answer| !answer.is_valid()) =>
+            {
+                return Err(ChaosError::BadRequest)
+            }
+            _ => (),
+        };
+
+        Ok(())
+    }
+
+    /// Inserts the answer data into the database.
+    ///
+    /// # Arguments
+    ///
+    /// * `answer_id` - ID of the answer to insert data for
+    /// * `transaction` - Database transaction to use
+    ///
+    /// # Returns
+    ///
+    /// * `Result<(), ChaosError>` - Success or error
+    pub async fn insert_into_db(
+        self,
+        answer_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), ChaosError> {
+        match self {
+            Self::ShortAnswer(text) => {
+                sqlx::query!(
+                    "INSERT INTO short_answer_answers (text, answer_id) VALUES ($1, $2)",
+                    text,
+                    answer_id
+                )
+                .execute(transaction.deref_mut())
+                .await?;
+
+                Ok(())
+            }
+            Self::MultiChoice(new_answer) => {
+                sqlx::query!(
+                    "INSERT INTO multi_option_answer_options (option_id, answer_id, custom_value) VALUES ($1, $2, $3)",
+                    new_answer.option_id,
+                    answer_id,
+                    new_answer.custom_value,
+                )
+                        .execute(transaction.deref_mut())
+                        .await?;
+
+                Ok(())
+            }
+            Self::MultiSelect(option_ids) => {
+                let mut query_builder = sqlx::QueryBuilder::new(
+                    "INSERT INTO multi_option_answer_options (option_id, answer_id, custom_value)",
+                );
+
+                query_builder.push_values(option_ids, |mut b, new_answer| {
+                    b.push_bind(new_answer.option_id)
+                        .push_bind(answer_id)
+                        .push_bind(new_answer.custom_value);
+                });
+
+                let query = query_builder.build();
+                query.execute(transaction.deref_mut()).await?;
+
+                Ok(())
+            }
+            Self::DropDown(option_id) => {
+                sqlx::query!(
+                    "INSERT INTO multi_option_answer_options (option_id, answer_id) VALUES ($1, $2)",
+                    option_id,
+                    answer_id
+                )
+                    .execute(transaction.deref_mut())
+                    .await?;
+
+                Ok(())
+            }
+            Self::Ranking(option_ids) => {
+                let mut query_builder = sqlx::QueryBuilder::new(
+                    "INSERT INTO ranking_answer_rankings (option_id, rank, answer_id)",
+                );
+
+                let mut rank = 1;
+                query_builder.push_values(option_ids, |mut b, option_id| {
+                    b.push_bind(option_id).push_bind(rank).push_bind(answer_id);
+                    rank += 1;
+                });
+
+                let query = query_builder.build();
+                query.execute(transaction.deref_mut()).await?;
+
+                Ok(())
+            }
+        }
+    }
+}
+
+/// Represents a single multiple choice answer, for either the multichoice or multiselect question types.
+#[derive(Deserialize, Serialize)]
+#[serde_as]
+pub struct MultiChoiceAnswer {
+    /// The ID of the answer option, or null if this was a custom entry.
+    #[serde_as(as = "Option<DisplayFromStr>")]
+    pub option_id: Option<i64>,
+
+    /// The value of the answer.
+    pub value: String,
+
+    /// Whether the answer is a custom response.
+    pub is_custom: bool,
+}
+
+/// Represents a single new multiple choice answer, for submitting an answer to either the multichoice or multiselect question types.
+#[derive(Deserialize, Serialize)]
+#[serde_as]
+pub struct NewMultiChoiceAnswer {
+    /// The ID of the answer option, or null if this is a custom entry.
+    #[serde_as(as = "Option<DisplayFromStr>")]
+    pub option_id: Option<i64>,
+
+    /// The custom value of the answer, if this is a custom entry.
+    pub custom_value: Option<String>,
+}
+
+impl MultiChoiceAnswer {
+    /// Create a new blank multiple choice answer with the provided ID.
+    ///
+    /// The text of this answer is empty, and `is_custom` is false.
+    ///
+    /// # Arguments
+    ///
+    /// * `option_id` - The option ID to use for this answer.
+    ///
+    /// # Returns
+    ///
+    /// * `MultiChoiceAnswer` - The new multiple choice answer.
+    pub fn from_id(option_id: i64) -> MultiChoiceAnswer {
+        MultiChoiceAnswer {
+            option_id: Some(option_id),
+            value: String::new(),
+            is_custom: false,
+        }
+    }
+}
+
+impl NewMultiChoiceAnswer {
+    /// Return whether this multiple choice answer is valid (either an option ID or custom value is provided).
+    pub fn is_valid(&self) -> bool {
+        if self.option_id.is_some() {
+            self.custom_value.is_none()
+        } else if let Some(custom_value) = &self.custom_value {
+            !custom_value.is_empty()
+        } else {
+            false
+        }
     }
 }
