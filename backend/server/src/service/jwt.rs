@@ -121,8 +121,8 @@ mod tests {
     // =========================================================================
     //
     // Functions under test
-    //   · encode_auth_token(username, user_id, encoding_key, jwt_header) -> String
-    //   · decode_auth_token(token, decoding_key, jwt_validator) -> Option<AuthorizationJwtPayload>
+    //   encode_auth_token(username, user_id, encoding_key, jwt_header) -> String
+    //   decode_auth_token(token, decoding_key, jwt_validator) -> Option<AuthorizationJwtPayload>
     //
     // ── EQUIVALENCE PARTITIONING ──────────────────────────────────────────────
     //
@@ -178,24 +178,24 @@ mod tests {
     //
     // ── KNOWN GAPS ────────────────────────────────────────────────────────────
     //
-    //  · BV01 / BV05 — extreme user_id values (i64::MIN, i64::MAX) are not tested.
+    //  BV01 / BV05 — extreme user_id values (i64::MIN, i64::MAX) are not tested.
     //    JSON represents numbers as floating-point internally, and some parsers
     //    silently lose precision beyond ±2^53. No test currently verifies that
     //    the decoded sub claim survives a round-trip at the i64 extremes.
     //
-    //  · BV07 / BV08 — the exact leeway boundary is not tested.
+    //  BV07 / BV08 — the exact leeway boundary is not tested.
     //    default_validation() applies a 60-second grace period to expiry checks,
     //    so a token expired 59 seconds ago is still valid and one expired 61 seconds
     //    ago is not. No test sits at either side of that boundary, so a leeway
     //    misconfiguration would go undetected.
     //
-    //  · "alg:none" attack — no test explicitly rejects an unsigned token.
+    //  "alg:none" attack — no test explicitly rejects an unsigned token.
     //    An attacker can forge a JWT by setting the algorithm to "none" and omitting
     //    the signature, allowing arbitrary claims. The jsonwebtoken crate blocks
     //    this by default, but without a test asserting the rejection, that
     //    protection is invisible and could be silently removed by a config change.
     //
-    //  · nbf (not-before) claim is stored in every token but never enforced.
+    //  nbf (not-before) claim is stored in every token but never enforced.
     //    Validation::new() sets validate_nbf = false, so a token with nbf set to
     //    tomorrow would be accepted today. This has no impact while encode_auth_token
     //    always sets nbf to the current time, but if that ever changes the decoder
