@@ -184,86 +184,86 @@ export default function ApplicationDiscussionPanel({
 
             {/* Panel */}
             <div className="fixed inset-y-0 right-0 z-50 w-96 bg-background border-l shadow-2xl flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 h-14 border-b shrink-0">
-                <h3 className="text-sm font-semibold">Discussion</h3>
-                <button
-                    type="button"
-                    onClick={onClose}
-                    className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                >
-                    <X className="w-4 h-4" />
-                </button>
-            </div>
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto py-2">
-                {isPending ? (
-                    <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-                        Loading...
-                    </div>
-                ) : comments.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full gap-1 px-6 text-center">
-                        <p className="text-sm font-medium text-muted-foreground">No comments yet</p>
-                        <p className="text-xs text-muted-foreground">
-                            Start the discussion about this candidate.
-                        </p>
-                    </div>
-                ) : (
-                    <>
-                        {comments.map((comment) => (
-                            <CommentItem
-                                key={comment.id}
-                                comment={comment}
-                                currentUserId={currentUser?.id}
-                                applicationId={applicationId}
-                                onReply={handleReply}
-                            />
-                        ))}
-                        <div ref={bottomRef} />
-                    </>
-                )}
-            </div>
-
-            {/* Input area */}
-            <div className="border-t px-3 py-3 shrink-0">
-                {replyingTo && (
-                    <div className="flex items-center gap-2 mb-2 px-3 py-1.5 rounded-md bg-muted text-xs text-muted-foreground">
-                        <CornerUpLeft className="w-3 h-3 shrink-0" />
-                        <span className="flex-1 truncate">
-                            Replying to{" "}
-                            <span className="font-semibold text-foreground">
-                                {replyingTo.name}
-                            </span>
-                        </span>
-                        <button
-                            type="button"
-                            onClick={() => setReplyingTo(null)}
-                            className="hover:text-foreground transition-colors"
-                        >
-                            <X className="w-3 h-3" />
-                        </button>
-                    </div>
-                )}
-                <form onSubmit={handleSubmit} className="flex items-center gap-2">
-                    <input
-                        ref={inputRef}
-                        className="flex-1 text-sm bg-muted rounded-full px-4 py-2 outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground"
-                        placeholder="Write a comment…"
-                        value={text}
-                        onChange={(e) => setText(e.target.value)}
-                        disabled={isSubmitting}
-                    />
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 h-14 border-b shrink-0">
+                    <h3 className="text-sm font-semibold">Discussion</h3>
                     <button
-                        type="submit"
-                        disabled={!text.trim() || isSubmitting}
-                        className="p-2 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 transition-colors shrink-0"
+                        type="button"
+                        onClick={onClose}
+                        className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                     >
-                        <SendHorizontal className="w-4 h-4" />
+                        <X className="w-4 h-4" />
                     </button>
-                </form>
+                </div>
+
+                {/* Messages */}
+                <div className="flex-1 overflow-y-auto py-2">
+                    {isPending ? (
+                        <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+                            Loading...
+                        </div>
+                    ) : comments.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-full gap-1 px-6 text-center">
+                            <p className="text-sm font-medium text-muted-foreground">No comments yet</p>
+                            <p className="text-xs text-muted-foreground">
+                                Start the discussion about this candidate.
+                            </p>
+                        </div>
+                    ) : (
+                        <>
+                            {comments.map((comment) => (
+                                <CommentItem
+                                    key={comment.id}
+                                    comment={comment}
+                                    currentUserId={currentUser?.id}
+                                    applicationId={applicationId}
+                                    onReply={handleReply}
+                                />
+                            ))}
+                            <div ref={bottomRef} />
+                        </>
+                    )}
+                </div>
+
+                {/* Input area */}
+                <div className="border-t px-3 py-3 shrink-0">
+                    {replyingTo && (
+                        <div className="flex items-center gap-2 mb-2 px-3 py-1.5 rounded-md bg-muted text-xs text-muted-foreground">
+                            <CornerUpLeft className="w-3 h-3 shrink-0" />
+                            <span className="flex-1 truncate">
+                                Replying to{" "}
+                                <span className="font-semibold text-foreground">
+                                    {replyingTo.name}
+                                </span>
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => setReplyingTo(null)}
+                                className="hover:text-foreground transition-colors"
+                            >
+                                <X className="w-3 h-3" />
+                            </button>
+                        </div>
+                    )}
+                    <form onSubmit={handleSubmit} className="flex items-center gap-2">
+                        <input
+                            ref={inputRef}
+                            className="flex-1 text-sm bg-muted rounded-full px-4 py-2 outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground"
+                            placeholder="Write a comment…"
+                            value={text}
+                            onChange={(e) => setText(e.target.value)}
+                            disabled={isSubmitting}
+                        />
+                        <button
+                            type="submit"
+                            disabled={!text.trim() || isSubmitting}
+                            className="p-2 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 transition-colors shrink-0"
+                        >
+                            <SendHorizontal className="w-4 h-4" />
+                        </button>
+                    </form>
+                </div>
             </div>
-        </div>
         </>
     );
 }

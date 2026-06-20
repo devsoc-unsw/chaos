@@ -23,6 +23,16 @@ import ApplicationDetailsComponent from "../application-details";
 import ApplicationRatingForm from "../application-rating-form";
 import ApplicationDiscussionPanel from "../application-discussion-panel";
 import { StarDisplay } from "@/components/application-review/star-display";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer"
 
 export function ApplicationPanel({
   app,
@@ -126,7 +136,6 @@ export function ApplicationPanel({
           ))}
         </div>
       </div>
-
       {/* Tab bar */}
       <div className="flex items-center justify-between border-b px-6 shrink-0">
         <div className="flex">
@@ -185,12 +194,23 @@ export function ApplicationPanel({
         )}
       </div>
 
-      {discussionOpen && (
-        <ApplicationDiscussionPanel
-          applicationId={app.id}
-          onClose={() => setDiscussionOpen(false)}
-        />
-      )}
+
+      <Drawer direction="right" open={discussionOpen} onOpenChange={setDiscussionOpen}>
+        <DrawerContent
+          className="sm:max-w-lg"
+        >
+          <DrawerHeader>
+            <DrawerTitle>Discussion</DrawerTitle>
+            <DrawerDescription>
+              Discuss this application with your team.
+            </DrawerDescription>
+          </DrawerHeader>
+          <ApplicationDiscussionPanel
+            applicationId={app.id}
+            onClose={() => setDiscussionOpen(false)}
+          />
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
