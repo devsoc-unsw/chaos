@@ -153,13 +153,11 @@ export function ApplicationPanel({
           ))}
         </div>
         <Button
-          variant="ghost"
+          // variant="success"
+
           size="sm"
           onClick={() => setDiscussionOpen((o) => !o)}
-          className={cn(
-            "gap-1.5 transition-colors",
-            discussionOpen ? "text-foreground" : "text-muted-foreground",
-          )}
+          className="gap-1.5 transition-colors"
         >
           <MessageSquare className="w-4 h-4" />
           Discussion
@@ -198,13 +196,9 @@ export function ApplicationPanel({
         >
           <DrawerHeader className="flex flex-row items-center justify-between px-4 border-b">
             <DrawerTitle>Discussion</DrawerTitle>
-            <DrawerClose>
-              <button
-                type="button"
-                className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
+            <DrawerClose className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="w-4 h-4" />
             </DrawerClose>
           </DrawerHeader>
           <ApplicationDiscussionPanel
