@@ -159,9 +159,15 @@ export default function ApplicationDiscussionPanel({
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [comments]);
 
+    useEffect(() => {
+        // Focus on input after submitting a comment
+        if (!isSubmitting) {
+            inputRef.current?.focus();
+        }
+    }, [isSubmitting]);
+
     const handleReply = (comment: CommentDetails) => {
         setReplyingTo(comment);
-        inputRef.current?.focus();
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -176,28 +182,10 @@ export default function ApplicationDiscussionPanel({
 
     return (
         <>
-            {/* Click-away backdrop */}
-            <div
-                className="fixed inset-0 z-40"
-                onClick={onClose}
-            />
-
             {/* Panel */}
-            <div className="fixed inset-y-0 right-0 z-50 w-96 bg-background border-l shadow-2xl flex flex-col">
-                {/* Header */}
-                <div className="flex items-center justify-between px-4 h-14 border-b shrink-0">
-                    <h3 className="text-sm font-semibold">Discussion</h3>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        <X className="w-4 h-4" />
-                    </button>
-                </div>
-
+            <div className="h-full w-96 bg-background border-l shadow-2xl flex flex-col overflow-hidden">
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto py-2">
+                <div className="flex-1 overflow-y-auto py-2 min-h-0">
                     {isPending ? (
                         <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
                             Loading...

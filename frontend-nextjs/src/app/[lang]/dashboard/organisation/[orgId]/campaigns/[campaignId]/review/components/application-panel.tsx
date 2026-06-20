@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ApplicationDetailsComponent from "../application-details";
 import ApplicationRatingForm from "../application-rating-form";
@@ -27,11 +27,8 @@ import {
   Drawer,
   DrawerClose,
   DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
   DrawerHeader,
   DrawerTitle,
-  DrawerTrigger,
 } from "@/components/ui/drawer"
 
 export function ApplicationPanel({
@@ -199,11 +196,16 @@ export function ApplicationPanel({
         <DrawerContent
           className="sm:max-w-lg"
         >
-          <DrawerHeader>
+          <DrawerHeader className="flex flex-row items-center justify-between px-4 border-b">
             <DrawerTitle>Discussion</DrawerTitle>
-            <DrawerDescription>
-              Discuss this application with your team.
-            </DrawerDescription>
+            <DrawerClose>
+              <button
+                type="button"
+                className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </DrawerClose>
           </DrawerHeader>
           <ApplicationDiscussionPanel
             applicationId={app.id}
