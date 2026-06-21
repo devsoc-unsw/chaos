@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createQuestion, deleteQuestion, getAllCommonQuestions, getAllRoleQuestions, MultiOptionQuestionOption, Question, QuestionType, updateQuestion } from "@/models/question";
 import { useState } from "react";
+import { ButtonGroup } from "@/components/ui/button-group";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
@@ -447,19 +448,11 @@ function MultiOptionQuestionCard({ question, currentRole, possibleRole, handleQu
                 <div
                     className="p-2 flex items-start gap-2"
                 >
-                    <GripVertical className="w-4 h-4 mt-1" />
-                    <div className="mt-1">
-                        <OptionDecorator questionType={questionType} index={options.length} />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <input className="w-full focus:outline-none border-b-2 border-dotted border-gray-500 max-w-[300px]" placeholder={dict.dashboard.campaigns.questions.add_option} onKeyDown={async (e) => {
-                            if (e.key === 'Enter') {
-                                await addOption((e.target as HTMLInputElement).value);
-                                (e.target as HTMLInputElement).value = '';
-                            }
-                        }} />
-                        <p className="text-xs text-foreground">{dict.dashboard.campaigns.questions.option_help}</p>
-                    </div>
+                    <ButtonGroup className="w-full sm:w-auto flex-col sm:flex-row gap-2 sm:gap-0 [&>*]:w-full sm:[&>*]:w-auto" onClick={async () => await addOption(dict.dashboard.campaigns.questions.new_option)}>
+                        <Button className="w-full justify-center sm:w-auto">
+                            {dict.dashboard.campaigns.questions.add_option}
+                        </Button>
+                    </ButtonGroup>
                 </div>
             </div>
         </div>
