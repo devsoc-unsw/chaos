@@ -263,7 +263,7 @@ impl RoleUpdate {
             .map_err(|_| ChaosError::InternalServerError)?;
 
         if self.name.is_empty()
-            || self.min_available < 1
+            || self.min_available < 0
             || self.max_available < 1
             || self.min_available > self.max_available
             || self.name.len() > role_name_max_chars
