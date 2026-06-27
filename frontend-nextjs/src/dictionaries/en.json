@@ -130,6 +130,7 @@
         "answer_text": "Answer Text",
         "add_option": "Add Option",
         "option_help": "Press Enter to add option",
+        "new_option": "New Option",
         "question_updated": "Question updated",
         "question_deleted": "Question deleted",
         "update_success": "The question has been updated successfully.",
