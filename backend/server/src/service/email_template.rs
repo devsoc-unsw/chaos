@@ -113,14 +113,20 @@ mod tests {
                 .unwrap();
         }
 
-        for (id, slug, name) in [(10_i64, "org-a", "Org A"), (20_i64, "org-b", "Org B")] {
-            sqlx::query("INSERT INTO organisations (id, slug, name) VALUES ($1, $2, $3)")
-                .bind(id)
-                .bind(slug)
-                .bind(name)
-                .execute(pool)
-                .await
-                .unwrap();
+        for (id, slug, name, contact_email) in [
+            (10_i64, "org-a", "Org A", "contact@org-a.com"),
+            (20_i64, "org-b", "Org B", "contact@org-b.com"),
+        ] {
+            sqlx::query(
+                "INSERT INTO organisations (id, slug, name, contact_email) VALUES ($1, $2, $3, $4)",
+            )
+            .bind(id)
+            .bind(slug)
+            .bind(name)
+            .bind(contact_email)
+            .execute(pool)
+            .await
+            .unwrap();
         }
 
         for (org_id, user_id, role) in [
