@@ -17,12 +17,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ApplicationDetailsComponent from "../application-details";
 import ApplicationRatingForm from "../application-rating-form";
 import ApplicationDiscussionPanel from "../application-discussion-panel";
 import { StarDisplay } from "@/components/application-review/star-display";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer"
 
 export function ApplicationPanel({
   app,
@@ -126,7 +133,6 @@ export function ApplicationPanel({
           ))}
         </div>
       </div>
-
       {/* Tab bar */}
       <div className="flex items-center justify-between border-b px-6 shrink-0">
         <div className="flex">
@@ -147,13 +153,11 @@ export function ApplicationPanel({
           ))}
         </div>
         <Button
-          variant="ghost"
+          // variant="success"
+
           size="sm"
           onClick={() => setDiscussionOpen((o) => !o)}
-          className={cn(
-            "gap-1.5 transition-colors",
-            discussionOpen ? "text-foreground" : "text-muted-foreground",
-          )}
+          className="gap-1.5 transition-colors"
         >
           <MessageSquare className="w-4 h-4" />
           Discussion
@@ -185,12 +189,24 @@ export function ApplicationPanel({
         )}
       </div>
 
-      {discussionOpen && (
-        <ApplicationDiscussionPanel
-          applicationId={app.id}
-          onClose={() => setDiscussionOpen(false)}
-        />
-      )}
+
+      <Drawer direction="right" open={discussionOpen} onOpenChange={setDiscussionOpen}>
+        <DrawerContent
+          className="sm:max-w-lg"
+        >
+          <DrawerHeader className="flex flex-row items-center justify-between px-4 border-b">
+            <DrawerTitle>Discussion</DrawerTitle>
+            <DrawerClose className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </DrawerClose>
+          </DrawerHeader>
+          <ApplicationDiscussionPanel
+            applicationId={app.id}
+            onClose={() => setDiscussionOpen(false)}
+          />
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
