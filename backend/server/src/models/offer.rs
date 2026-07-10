@@ -370,3 +370,76 @@ impl Offer {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    // =========================================================================
+    // TEST PLAN – Equivalence Partitioning (EP) & Boundary Value Analysis (BVA)
+    // =========================================================================
+    //
+    // Functions under test
+    //   · OfferStatus (serde) – PascalCase on the wire for each lifecycle state.
+    //
+    // ── EQUIVALENCE PARTITIONING ──────────────────────────────────────────────
+    //
+    // serialize / deserialize – variant <-> canonical PascalCase string
+    //
+    //  ID    Variant     Expected JSON   Test
+    //  EP01  Draft       "Draft"         serialises_each_variant / round_trips_each_variant
+    //  EP02  Sent        "Sent"          serialises_each_variant / round_trips_each_variant
+    //  EP03  Accepted    "Accepted"      serialises_each_variant / round_trips_each_variant
+    //  EP04  Declined    "Declined"      serialises_each_variant / round_trips_each_variant
+    //  EP05  "bogus"     unknown         Err                      returns_error_for_unknown_variant
+    //
+    // ── BOUNDARY VALUE ANALYSIS ───────────────────────────────────────────────
+    //
+    //  Not applicable: a closed set of four unordered lifecycle states, each its
+    //  own equivalence class enumerated above.
+    //
+    // ── KNOWN GAPS ────────────────────────────────────────────────────────────
+    //
+    //  · The sqlx::Type mapping to the Postgres `offer_status` enum is not tested
+    //    here (needs a DB); only the serde JSON contract is covered. Valid state
+    //    transitions (Draft -> Sent -> Accepted/Declined) are enforced in the
+    //    handler/DB layer, not by this type, and are out of scope.
+    // =========================================================================
+
+    use super::*;
+
+    /// White-box: every variant serialises to its PascalCase name.
+    #[test]
+    fn serialises_each_variant() {
+        assert_eq!(
+            serde_json::to_value(OfferStatus::Draft).unwrap(),
+            serde_json::json!("Draft")
+        );
+        assert_eq!(
+            serde_json::to_value(OfferStatus::Sent).unwrap(),
+            serde_json::json!("Sent")
+        );
+        assert_eq!(
+            serde_json::to_value(OfferStatus::Accepted).unwrap(),
+            serde_json::json!("Accepted")
+        );
+        assert_eq!(
+            serde_json::to_value(OfferStatus::Declined).unwrap(),
+            serde_json::json!("Declined")
+        );
+    }
+
+    /// White-box: each PascalCase string deserialises back to its variant.
+    #[test]
+    fn round_trips_each_variant() {
+        let sent: OfferStatus = serde_json::from_value(serde_json::json!("Sent")).unwrap();
+        assert!(matches!(sent, OfferStatus::Sent));
+        let declined: OfferStatus = serde_json::from_value(serde_json::json!("Declined")).unwrap();
+        assert!(matches!(declined, OfferStatus::Declined));
+    }
+
+    /// White-box: an unrecognised string is rejected by serde.
+    #[test]
+    fn returns_error_for_unknown_variant() {
+        let result: Result<OfferStatus, _> = serde_json::from_value(serde_json::json!("bogus"));
+        assert!(result.is_err());
+    }
+}

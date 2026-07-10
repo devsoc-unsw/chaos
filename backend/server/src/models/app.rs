@@ -564,3 +564,88 @@ pub async fn app() -> Result<(Router, AppState), ChaosError> {
 
     Ok((router, state_clone))
 }
+
+#[cfg(test)]
+mod tests {
+    // =========================================================================
+    // TEST PLAN – Equivalence Partitioning (EP) & Boundary Value Analysis (BVA)
+    // =========================================================================
+    //
+    // Functions under test
+    //   · <AppMessage<T> as IntoResponse>::into_response(self) -> Response
+    //
+    // AppMessage is the single wire envelope for every handler result. Each
+    // variant fixes one HTTP status; success wraps the value under `message`,
+    // failures under `error`. The status per variant is the contract tested here.
+    //
+    // ── EQUIVALENCE PARTITIONING ──────────────────────────────────────────────
+    //
+    // into_response – message variant -> HTTP status
+    //
+    //  ID    Variant               Expected status              Test
+    //  EP01  OkMessage             200 OK                       ok_message_is_200
+    //  EP02  BadRequestMessage     400 BAD_REQUEST              bad_request_is_400
+    //  EP03  NotFoundMessage       404 NOT_FOUND                not_found_is_404
+    //  EP04  ErrorMessage          500 INTERNAL_SERVER_ERROR    error_is_500
+    //  EP05  NotLoggedInMessage    401 UNAUTHORIZED             not_logged_in_is_401
+    //  EP06  UnauthorizedMessage   403 FORBIDDEN                unauthorized_is_403
+    //
+    // ── BOUNDARY VALUE ANALYSIS ───────────────────────────────────────────────
+    //
+    //  Not applicable: the input is a closed set of six variants with no ordered
+    //  or numeric dimension, so every case is an equivalence class of size one and
+    //  is enumerated above. No boundary between adjacent values exists.
+    //
+    // ── KNOWN GAPS ────────────────────────────────────────────────────────────
+    //
+    //  · The JSON body shape (`{"message":..}` for success vs `{"error":..}` for
+    //    failures) is not asserted here, as reading the body requires async body
+    //    collection; only the status line is verified. A regression that swapped
+    //    the two wrappers would pass these tests.
+    // =========================================================================
+
+    use super::*;
+    use axum::http::StatusCode;
+
+    /// White-box: a success envelope carries 200 OK.
+    #[test]
+    fn ok_message_is_200() {
+        let resp = AppMessage::OkMessage("hi").into_response();
+        assert_eq!(resp.status(), StatusCode::OK);
+    }
+
+    /// White-box: a bad-request envelope carries 400.
+    #[test]
+    fn bad_request_is_400() {
+        let resp = AppMessage::BadRequestMessage("nope").into_response();
+        assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+    }
+
+    /// White-box: a not-found envelope carries 404.
+    #[test]
+    fn not_found_is_404() {
+        let resp = AppMessage::NotFoundMessage("gone").into_response();
+        assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+    }
+
+    /// White-box: a generic error envelope carries 500.
+    #[test]
+    fn error_is_500() {
+        let resp = AppMessage::ErrorMessage("boom").into_response();
+        assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    /// White-box: an unauthenticated envelope carries 401.
+    #[test]
+    fn not_logged_in_is_401() {
+        let resp = AppMessage::NotLoggedInMessage("who?").into_response();
+        assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    /// White-box: an unauthorised envelope carries 403.
+    #[test]
+    fn unauthorized_is_403() {
+        let resp = AppMessage::UnauthorizedMessage("no").into_response();
+        assert_eq!(resp.status(), StatusCode::FORBIDDEN);
+    }
+}

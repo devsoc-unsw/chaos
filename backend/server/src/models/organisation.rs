@@ -1019,3 +1019,56 @@ impl Organisation {
         Ok(None)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    // =========================================================================
+    // TEST PLAN – Equivalence Partitioning (EP) & Boundary Value Analysis (BVA)
+    // =========================================================================
+    //
+    // Functions under test
+    //   · OrganisationRole (serde) – PascalCase on the wire (User, Admin).
+    //
+    // ── EQUIVALENCE PARTITIONING ──────────────────────────────────────────────
+    //
+    //  ID    Variant   Expected JSON   Test
+    //  EP01  User      "User"          round_trips_each_variant
+    //  EP02  Admin     "Admin"         round_trips_each_variant
+    //  EP03  "bogus"   unknown -> Err  returns_error_for_unknown_variant
+    //
+    // ── BOUNDARY VALUE ANALYSIS ───────────────────────────────────────────────
+    //
+    //  Not applicable: two unordered variants, each its own equivalence class.
+    //
+    // ── KNOWN GAPS ────────────────────────────────────────────────────────────
+    //
+    //  · The sqlx::Type mapping to the Postgres `organisation_role` enum is not
+    //    tested here (needs a DB); only the serde JSON contract is covered.
+    // =========================================================================
+
+    use super::*;
+
+    /// White-box: each variant serialises to and deserialises from PascalCase.
+    #[test]
+    fn round_trips_each_variant() {
+        assert_eq!(
+            serde_json::to_value(OrganisationRole::User).unwrap(),
+            serde_json::json!("User")
+        );
+        assert_eq!(
+            serde_json::to_value(OrganisationRole::Admin).unwrap(),
+            serde_json::json!("Admin")
+        );
+
+        let role: OrganisationRole = serde_json::from_value(serde_json::json!("Admin")).unwrap();
+        assert!(matches!(role, OrganisationRole::Admin));
+    }
+
+    /// White-box: an unrecognised string is rejected by serde.
+    #[test]
+    fn returns_error_for_unknown_variant() {
+        let result: Result<OrganisationRole, _> =
+            serde_json::from_value(serde_json::json!("bogus"));
+        assert!(result.is_err());
+    }
+}

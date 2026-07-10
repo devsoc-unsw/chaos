@@ -228,3 +228,63 @@ impl EmailQueue {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    // =========================================================================
+    // TEST PLAN – Equivalence Partitioning (EP) & Boundary Value Analysis (BVA)
+    // =========================================================================
+    //
+    // Functions under test
+    //   · EmailType (serde) – PascalCase on the wire (Interview, Accept, Reject).
+    //
+    // ── EQUIVALENCE PARTITIONING ──────────────────────────────────────────────
+    //
+    //  ID    Variant     Expected JSON   Test
+    //  EP01  Interview   "Interview"     round_trips_each_variant
+    //  EP02  Accept      "Accept"        round_trips_each_variant
+    //  EP03  Reject      "Reject"        round_trips_each_variant
+    //  EP04  "bogus"     unknown -> Err  returns_error_for_unknown_variant
+    //
+    // ── BOUNDARY VALUE ANALYSIS ───────────────────────────────────────────────
+    //
+    //  Not applicable: three unordered outcome variants, each its own class.
+    //
+    // ── KNOWN GAPS ────────────────────────────────────────────────────────────
+    //
+    //  · setup_credentials()/new_connection()/send_message()/EmailQueue are not
+    //    tested here: they depend on env vars, a live SMTP relay, and a DB. Only
+    //    the EmailType serde contract is pure and covered. The `to`-header format
+    //    branch inside send_message (`"name <addr>"` vs bare address) is embedded
+    //    in the async send path and is not isolatable without a refactor.
+    // =========================================================================
+
+    use super::*;
+
+    /// White-box: each variant serialises to and deserialises from PascalCase.
+    #[test]
+    fn round_trips_each_variant() {
+        assert_eq!(
+            serde_json::to_value(EmailType::Interview).unwrap(),
+            serde_json::json!("Interview")
+        );
+        assert_eq!(
+            serde_json::to_value(EmailType::Accept).unwrap(),
+            serde_json::json!("Accept")
+        );
+        assert_eq!(
+            serde_json::to_value(EmailType::Reject).unwrap(),
+            serde_json::json!("Reject")
+        );
+
+        let parsed: EmailType = serde_json::from_value(serde_json::json!("Reject")).unwrap();
+        assert!(matches!(parsed, EmailType::Reject));
+    }
+
+    /// White-box: an unrecognised string is rejected by serde.
+    #[test]
+    fn returns_error_for_unknown_variant() {
+        let result: Result<EmailType, _> = serde_json::from_value(serde_json::json!("bogus"));
+        assert!(result.is_err());
+    }
+}

@@ -865,3 +865,173 @@ impl CampaignUpdate {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    // =========================================================================
+    // TEST PLAN – Equivalence Partitioning (EP) & Boundary Value Analysis (BVA)
+    // =========================================================================
+    //
+    // Functions under test
+    //   · CampaignUpdate::validate(&self) -> Result<(), ChaosError>
+    //
+    // validate() reads two length caps from the environment
+    // (CAMPAIGN_NAME_MAX_CHARS, CAMPAIGN_DESCRIPTION_MAX_CHARS), pinned via
+    // set_env() in each test. It rejects the update if ANY of: name too long,
+    // description too long, name empty, slug empty, or starts_at >= ends_at.
+    //
+    // ── EQUIVALENCE PARTITIONING ──────────────────────────────────────────────
+    //
+    // validate – one class per rejection clause plus the accept class
+    //
+    //  ID    Field state                     Class              Expected          Test
+    //  EP01  all fields in range             valid              Ok(())            accepts_valid_campaign
+    //  EP02  name = ""                       empty name         Err(BadRequest)   rejects_empty_name
+    //  EP03  slug = ""                       empty slug         Err(BadRequest)   rejects_empty_slug
+    //  EP04  name longer than cap            name too long      Err(BadRequest)   rejects_overlong_name
+    //  EP05  description longer than cap      desc too long      Err(BadRequest)   rejects_overlong_description
+    //  EP06  starts_at > ends_at             inverted window    Err(BadRequest)   rejects_start_after_end
+    //  EP07  starts_at == ends_at            zero-length window  Err(BadRequest)   rejects_equal_start_end
+    //
+    // ── BOUNDARY VALUE ANALYSIS ───────────────────────────────────────────────
+    //
+    // starts_at vs ends_at – guard is `starts_at >= ends_at`, so equality is the
+    // first rejected point and starts_at just below ends_at is the last accepted.
+    //
+    //  ID    Relationship        Expected          Test                     Status
+    //  BV01  starts == ends      Err(BadRequest)   rejects_equal_start_end  OK
+    //  BV02  starts <  ends      Ok(())            accepts_valid_campaign   OK
+    //
+    // name length vs CAMPAIGN_NAME_MAX_CHARS (=10 in tests) – guard is `len > cap`.
+    //
+    //  ID    Value       Expected          Test                    Status
+    //  BV03  len 10      Ok(())            accepts_name_at_cap     OK
+    //  BV04  len 11      Err(BadRequest)   rejects_overlong_name   OK
+    //
+    // ── KNOWN GAPS ────────────────────────────────────────────────────────────
+    //
+    //  · The interview/outcome Option fields are not read by validate() and so are
+    //    left at None; any future validation over them is untested. As with role
+    //    validation, unset or non-numeric env caps (panic / InternalServerError)
+    //    are not exercised, and the process-global vars assume no concurrent
+    //    mutation of CAMPAIGN_* by other tests.
+    // =========================================================================
+
+    use super::*;
+    use chrono::{TimeZone, Utc};
+
+    // ── helpers ──────────────────────────────────────────────────────────────
+
+    /// Pins the two env caps validate() reads to fixed, well-formed values.
+    fn set_env() {
+        std::env::set_var("CAMPAIGN_NAME_MAX_CHARS", "10");
+        std::env::set_var("CAMPAIGN_DESCRIPTION_MAX_CHARS", "20");
+    }
+
+    /// A CampaignUpdate that passes every clause; tests mutate one field.
+    fn valid_campaign() -> CampaignUpdate {
+        CampaignUpdate {
+            slug: "camp".to_string(),
+            name: "Camp".to_string(),
+            description: "A campaign".to_string(),
+            starts_at: Utc.with_ymd_and_hms(2026, 1, 1, 0, 0, 0).unwrap(),
+            ends_at: Utc.with_ymd_and_hms(2026, 2, 1, 0, 0, 0).unwrap(),
+            interview_period_starts_at: None,
+            interview_period_ends_at: None,
+            interview_format: None,
+            outcomes_released_at: None,
+            application_requirements: None,
+        }
+    }
+
+    // ── accept class ──────────────────────────────────────────────────────────
+
+    /// White-box: an all-in-range update passes every guard.
+    #[test]
+    fn accepts_valid_campaign() {
+        set_env();
+        assert!(matches!(valid_campaign().validate(), Ok(())));
+    }
+
+    /// White-box: a name exactly at the cap length is not "too long".
+    #[test]
+    fn accepts_name_at_cap() {
+        set_env();
+        let campaign = CampaignUpdate {
+            name: "a".repeat(10),
+            ..valid_campaign()
+        };
+        assert!(matches!(campaign.validate(), Ok(())));
+    }
+
+    // ── reject classes ────────────────────────────────────────────────────────
+
+    /// White-box: an empty name trips the `name.is_empty()` clause.
+    #[test]
+    fn rejects_empty_name() {
+        set_env();
+        let campaign = CampaignUpdate {
+            name: String::new(),
+            ..valid_campaign()
+        };
+        assert!(matches!(campaign.validate(), Err(ChaosError::BadRequest)));
+    }
+
+    /// White-box: an empty slug trips the `slug.is_empty()` clause.
+    #[test]
+    fn rejects_empty_slug() {
+        set_env();
+        let campaign = CampaignUpdate {
+            slug: String::new(),
+            ..valid_campaign()
+        };
+        assert!(matches!(campaign.validate(), Err(ChaosError::BadRequest)));
+    }
+
+    /// White-box: a name one char over the cap trips the length clause.
+    #[test]
+    fn rejects_overlong_name() {
+        set_env();
+        let campaign = CampaignUpdate {
+            name: "a".repeat(11),
+            ..valid_campaign()
+        };
+        assert!(matches!(campaign.validate(), Err(ChaosError::BadRequest)));
+    }
+
+    /// White-box: a description over its cap trips the description length clause.
+    #[test]
+    fn rejects_overlong_description() {
+        set_env();
+        let campaign = CampaignUpdate {
+            description: "a".repeat(21),
+            ..valid_campaign()
+        };
+        assert!(matches!(campaign.validate(), Err(ChaosError::BadRequest)));
+    }
+
+    /// White-box: starts_at strictly after ends_at trips the ordering clause.
+    #[test]
+    fn rejects_start_after_end() {
+        set_env();
+        let campaign = CampaignUpdate {
+            starts_at: Utc.with_ymd_and_hms(2026, 3, 1, 0, 0, 0).unwrap(),
+            ends_at: Utc.with_ymd_and_hms(2026, 2, 1, 0, 0, 0).unwrap(),
+            ..valid_campaign()
+        };
+        assert!(matches!(campaign.validate(), Err(ChaosError::BadRequest)));
+    }
+
+    /// White-box: equal start and end is rejected by the `>=` boundary.
+    #[test]
+    fn rejects_equal_start_end() {
+        set_env();
+        let instant = Utc.with_ymd_and_hms(2026, 1, 1, 0, 0, 0).unwrap();
+        let campaign = CampaignUpdate {
+            starts_at: instant,
+            ends_at: instant,
+            ..valid_campaign()
+        };
+        assert!(matches!(campaign.validate(), Err(ChaosError::BadRequest)));
+    }
+}

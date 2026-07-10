@@ -282,3 +282,209 @@ impl RoleUpdate {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    // =========================================================================
+    // TEST PLAN – Equivalence Partitioning (EP) & Boundary Value Analysis (BVA)
+    // =========================================================================
+    //
+    // Functions under test
+    //   · RoleUpdate::validate(&self) -> Result<(), ChaosError>
+    //
+    // validate() reads three limits from the environment
+    // (ROLE_NAME_MAX_CHARS, ROLE_DESCRIPTION_MAX_CHARS, ROLE_POSITIONS_AVAILABLE_MAX),
+    // so every test first pins them to fixed values via set_env(). It rejects the
+    // update if ANY of: name empty, min<0, max<1, min>max, name too long, min or
+    // max above the positions cap, or description too long.
+    //
+    // ── EQUIVALENCE PARTITIONING ──────────────────────────────────────────────
+    //
+    // validate – one class per rejection clause plus the accept class
+    //
+    //  ID    Field state                          Class            Expected          Test
+    //  EP01  all fields in range                  valid            Ok(())            accepts_valid_role
+    //  EP02  name = ""                            empty name       Err(BadRequest)   rejects_empty_name
+    //  EP03  min_available = -1                   negative min     Err(BadRequest)   rejects_negative_min
+    //  EP04  max_available = 0                    max below 1      Err(BadRequest)   rejects_max_below_one
+    //  EP05  min > max (3 > 2)                    inverted range   Err(BadRequest)   rejects_min_greater_than_max
+    //  EP06  name longer than cap                 name too long    Err(BadRequest)   rejects_overlong_name
+    //  EP07  max above positions cap              over cap         Err(BadRequest)   rejects_positions_over_cap
+    //  EP08  description longer than cap           desc too long    Err(BadRequest)   rejects_overlong_description
+    //  EP09  description = None                    no description   Ok(())            accepts_valid_role
+    //
+    // ── BOUNDARY VALUE ANALYSIS ───────────────────────────────────────────────
+    //
+    // min_available (i32) – guard is `min_available < 0`, boundary at 0.
+    //
+    //  ID    Value   Expected          Test                    Status
+    //  BV01  -1      Err(BadRequest)   rejects_negative_min    OK
+    //  BV02  0       Ok(())            accepts_min_zero        OK
+    //
+    // max_available (i32) – guard is `max_available < 1`, boundary at 1.
+    //
+    //  ID    Value   Expected          Test                    Status
+    //  BV03  0       Err(BadRequest)   rejects_max_below_one   OK
+    //  BV04  1       Ok(())            accepts_max_one         OK
+    //
+    // name length vs ROLE_NAME_MAX_CHARS (=10 in tests) – guard is `len > cap`.
+    //
+    //  ID    Value       Expected          Test                    Status
+    //  BV05  len 10      Ok(())            accepts_name_at_cap     OK
+    //  BV06  len 11      Err(BadRequest)   rejects_overlong_name   OK
+    //
+    // ── KNOWN GAPS ────────────────────────────────────────────────────────────
+    //
+    //  · When an env limit is unset or non-numeric, validate() panics on the
+    //    `.expect()` or returns InternalServerError from the parse map_err. These
+    //    tests always set well-formed limits, so the misconfiguration paths are
+    //    not exercised. Because the vars are process-global, these tests also
+    //    assume no other test mutates ROLE_* concurrently.
+    // =========================================================================
+
+    use super::*;
+
+    // ── helpers ──────────────────────────────────────────────────────────────
+
+    /// Pins the three env limits validate() reads to fixed, well-formed values.
+    fn set_env() {
+        std::env::set_var("ROLE_NAME_MAX_CHARS", "10");
+        std::env::set_var("ROLE_DESCRIPTION_MAX_CHARS", "20");
+        std::env::set_var("ROLE_POSITIONS_AVAILABLE_MAX", "50");
+    }
+
+    /// A RoleUpdate that passes every clause; individual tests mutate one field.
+    fn valid_role() -> RoleUpdate {
+        RoleUpdate {
+            name: "Reviewer".to_string(),
+            description: None,
+            min_available: 1,
+            max_available: 5,
+            finalised: false,
+        }
+    }
+
+    // ── accept class ──────────────────────────────────────────────────────────
+
+    /// White-box: an all-in-range update (no description) passes every guard.
+    #[test]
+    fn accepts_valid_role() {
+        set_env();
+        assert!(matches!(valid_role().validate(), Ok(())));
+    }
+
+    /// White-box: min_available = 0 sits on the accepted side of `< 0`.
+    #[test]
+    fn accepts_min_zero() {
+        set_env();
+        let role = RoleUpdate {
+            min_available: 0,
+            ..valid_role()
+        };
+        assert!(matches!(role.validate(), Ok(())));
+    }
+
+    /// White-box: max_available = 1 sits on the accepted side of `< 1`.
+    #[test]
+    fn accepts_max_one() {
+        set_env();
+        let role = RoleUpdate {
+            min_available: 0,
+            max_available: 1,
+            ..valid_role()
+        };
+        assert!(matches!(role.validate(), Ok(())));
+    }
+
+    /// White-box: a name exactly at the cap length is not "too long".
+    #[test]
+    fn accepts_name_at_cap() {
+        set_env();
+        let role = RoleUpdate {
+            name: "a".repeat(10),
+            ..valid_role()
+        };
+        assert!(matches!(role.validate(), Ok(())));
+    }
+
+    // ── reject classes ────────────────────────────────────────────────────────
+
+    /// White-box: an empty name trips the `name.is_empty()` clause.
+    #[test]
+    fn rejects_empty_name() {
+        set_env();
+        let role = RoleUpdate {
+            name: String::new(),
+            ..valid_role()
+        };
+        assert!(matches!(role.validate(), Err(ChaosError::BadRequest)));
+    }
+
+    /// White-box: a negative minimum trips the `min_available < 0` clause.
+    #[test]
+    fn rejects_negative_min() {
+        set_env();
+        let role = RoleUpdate {
+            min_available: -1,
+            ..valid_role()
+        };
+        assert!(matches!(role.validate(), Err(ChaosError::BadRequest)));
+    }
+
+    /// White-box: a maximum below one trips the `max_available < 1` clause.
+    #[test]
+    fn rejects_max_below_one() {
+        set_env();
+        let role = RoleUpdate {
+            min_available: 0,
+            max_available: 0,
+            ..valid_role()
+        };
+        assert!(matches!(role.validate(), Err(ChaosError::BadRequest)));
+    }
+
+    /// White-box: min greater than max trips the `min > max` clause.
+    #[test]
+    fn rejects_min_greater_than_max() {
+        set_env();
+        let role = RoleUpdate {
+            min_available: 3,
+            max_available: 2,
+            ..valid_role()
+        };
+        assert!(matches!(role.validate(), Err(ChaosError::BadRequest)));
+    }
+
+    /// White-box: a name one char over the cap trips the length clause.
+    #[test]
+    fn rejects_overlong_name() {
+        set_env();
+        let role = RoleUpdate {
+            name: "a".repeat(11),
+            ..valid_role()
+        };
+        assert!(matches!(role.validate(), Err(ChaosError::BadRequest)));
+    }
+
+    /// White-box: a maximum above the positions cap trips the cap clause.
+    #[test]
+    fn rejects_positions_over_cap() {
+        set_env();
+        let role = RoleUpdate {
+            max_available: 51,
+            ..valid_role()
+        };
+        assert!(matches!(role.validate(), Err(ChaosError::BadRequest)));
+    }
+
+    /// White-box: a description over its cap trips the second, description guard.
+    #[test]
+    fn rejects_overlong_description() {
+        set_env();
+        let role = RoleUpdate {
+            description: Some("a".repeat(21)),
+            ..valid_role()
+        };
+        assert!(matches!(role.validate(), Err(ChaosError::BadRequest)));
+    }
+}

@@ -340,3 +340,55 @@ impl User {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    // =========================================================================
+    // TEST PLAN – Equivalence Partitioning (EP) & Boundary Value Analysis (BVA)
+    // =========================================================================
+    //
+    // Functions under test
+    //   · UserRole (serde) – PascalCase on the wire (User, SuperUser).
+    //
+    // ── EQUIVALENCE PARTITIONING ──────────────────────────────────────────────
+    //
+    //  ID    Variant     Expected JSON   Test
+    //  EP01  User        "User"          round_trips_each_variant
+    //  EP02  SuperUser   "SuperUser"     round_trips_each_variant
+    //  EP03  "bogus"     unknown -> Err  returns_error_for_unknown_variant
+    //
+    // ── BOUNDARY VALUE ANALYSIS ───────────────────────────────────────────────
+    //
+    //  Not applicable: two unordered variants, each its own equivalence class.
+    //
+    // ── KNOWN GAPS ────────────────────────────────────────────────────────────
+    //
+    //  · The sqlx::Type mapping to the Postgres `user_role` enum is not tested
+    //    here (needs a DB); only the serde JSON contract is covered.
+    // =========================================================================
+
+    use super::*;
+
+    /// White-box: each variant serialises to and deserialises from PascalCase.
+    #[test]
+    fn round_trips_each_variant() {
+        assert_eq!(
+            serde_json::to_value(UserRole::User).unwrap(),
+            serde_json::json!("User")
+        );
+        assert_eq!(
+            serde_json::to_value(UserRole::SuperUser).unwrap(),
+            serde_json::json!("SuperUser")
+        );
+
+        let role: UserRole = serde_json::from_value(serde_json::json!("SuperUser")).unwrap();
+        assert!(matches!(role, UserRole::SuperUser));
+    }
+
+    /// White-box: an unrecognised string is rejected by serde.
+    #[test]
+    fn returns_error_for_unknown_variant() {
+        let result: Result<UserRole, _> = serde_json::from_value(serde_json::json!("bogus"));
+        assert!(result.is_err());
+    }
+}

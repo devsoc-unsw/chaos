@@ -1039,3 +1039,89 @@ where
         Ok(OpenApplicationByAnswerId)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    // =========================================================================
+    // TEST PLAN – Equivalence Partitioning (EP) & Boundary Value Analysis (BVA)
+    // =========================================================================
+    //
+    // Functions under test
+    //   · ApplicationStatus (serde) – PascalCase on the wire, with lowercase
+    //     #[serde(alias = "...")] accepted on input for each variant.
+    //
+    // ── EQUIVALENCE PARTITIONING ──────────────────────────────────────────────
+    //
+    // serialize – variant -> canonical PascalCase string
+    //
+    //  ID    Variant       Expected JSON     Test
+    //  EP01  Pending       "Pending"         serialises_each_variant_as_pascal_case
+    //  EP02  Rejected      "Rejected"        serialises_each_variant_as_pascal_case
+    //  EP03  Successful    "Successful"      serialises_each_variant_as_pascal_case
+    //  EP04  Interview     "Interview"       serialises_each_variant_as_pascal_case
+    //
+    // deserialize – accepted input spellings
+    //
+    //  ID    Input          Class              Expected      Test
+    //  EP05  "Pending"      canonical          Pending       deserialises_canonical_spelling
+    //  EP06  "pending"      lowercase alias    Pending       deserialises_lowercase_alias
+    //  EP07  "bogus"        unknown variant    Err           returns_error_for_unknown_variant
+    //
+    // ── BOUNDARY VALUE ANALYSIS ───────────────────────────────────────────────
+    //
+    //  Not applicable: ApplicationStatus is a closed set of four unordered
+    //  variants; each is its own equivalence class and is enumerated above.
+    //
+    // ── KNOWN GAPS ────────────────────────────────────────────────────────────
+    //
+    //  · The sqlx::Type mapping to the Postgres `application_status` enum is not
+    //    exercised here (needs a DB); only the serde JSON contract is covered.
+    // =========================================================================
+
+    use super::*;
+
+    /// White-box: every variant serialises to its PascalCase name.
+    #[test]
+    fn serialises_each_variant_as_pascal_case() {
+        assert_eq!(
+            serde_json::to_value(ApplicationStatus::Pending).unwrap(),
+            serde_json::json!("Pending")
+        );
+        assert_eq!(
+            serde_json::to_value(ApplicationStatus::Rejected).unwrap(),
+            serde_json::json!("Rejected")
+        );
+        assert_eq!(
+            serde_json::to_value(ApplicationStatus::Successful).unwrap(),
+            serde_json::json!("Successful")
+        );
+        assert_eq!(
+            serde_json::to_value(ApplicationStatus::Interview).unwrap(),
+            serde_json::json!("Interview")
+        );
+    }
+
+    /// White-box: the canonical PascalCase spelling deserialises back.
+    #[test]
+    fn deserialises_canonical_spelling() {
+        let status: ApplicationStatus =
+            serde_json::from_value(serde_json::json!("Interview")).unwrap();
+        assert!(matches!(status, ApplicationStatus::Interview));
+    }
+
+    /// White-box: the lowercase alias is also accepted on input.
+    #[test]
+    fn deserialises_lowercase_alias() {
+        let status: ApplicationStatus =
+            serde_json::from_value(serde_json::json!("pending")).unwrap();
+        assert!(matches!(status, ApplicationStatus::Pending));
+    }
+
+    /// White-box: an unrecognised string is rejected by serde.
+    #[test]
+    fn returns_error_for_unknown_variant() {
+        let result: Result<ApplicationStatus, _> =
+            serde_json::from_value(serde_json::json!("bogus"));
+        assert!(result.is_err());
+    }
+}

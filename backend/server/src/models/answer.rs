@@ -700,3 +700,939 @@ impl AnswerData {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    // =========================================================================
+    // TEST PLAN – Equivalence Partitioning (EP) & Boundary Value Analysis (BVA)
+    // =========================================================================
+    //
+    // Functions under test
+    //   · AnswerData::validate(&self) -> Result<(), ChaosError>
+    //   · AnswerData::is_empty(&self) -> bool
+    //   · AnswerData::from_question_type(&QuestionType) -> AnswerData
+    //   · AnswerData::from_answer_raw_data(QuestionType, Option<String>,
+    //                 Option<Vec<i64>>, Option<Vec<i64>>) -> AnswerData
+    //   · AnswerData (serde) – tag = "answer_type", content = "answer_data",
+    //                 i64 (de)serialised as string via serde_string
+    //
+    // ── EQUIVALENCE PARTITIONING ──────────────────────────────────────────────
+    //
+    // validate – the five variants split into "validated" and "always-Ok" classes
+    //
+    //  ID    Input                       Class               Expected            Test
+    //  EP01  ShortAnswer("text")         non-empty text      Ok(())              short_answer_with_text_is_valid
+    //  EP02  ShortAnswer("")             empty text          Err(BadRequest)     returns_bad_request_for_empty_short_answer
+    //  EP03  MultiSelect([1,2])          non-empty options   Ok(())              multi_select_with_options_is_valid
+    //  EP04  MultiSelect([])             empty options       Err(BadRequest)     returns_bad_request_for_empty_multi_select
+    //  EP05  Ranking([1,2])              non-empty options   Ok(())              ranking_with_options_is_valid
+    //  EP06  Ranking([])                 empty options       Err(BadRequest)     returns_bad_request_for_empty_ranking
+    //  EP07  MultiChoice(0)              always-Ok class     Ok(())              multi_choice_is_always_valid
+    //  EP08  DropDown(0)                 always-Ok class     Ok(())              drop_down_is_always_valid
+    //
+    // is_empty – emptiness predicate per variant
+    //
+    //  ID    Input                       Expected   Test
+    //  EP09  ShortAnswer("")             true       short_answer_emptiness_tracks_text
+    //  EP10  ShortAnswer("x")            false      short_answer_emptiness_tracks_text
+    //  EP11  MultiSelect([]) / Ranking([]) true     vec_variants_empty_when_no_options
+    //  EP12  MultiSelect([1]) / Ranking([1]) false  vec_variants_non_empty_with_options
+    //  EP13  MultiChoice(0)              false      multi_choice_is_never_empty
+    //  EP14  DropDown(0)                 true       drop_down_emptiness_tracks_zero_sentinel
+    //  EP15  DropDown(5)                 false      drop_down_emptiness_tracks_zero_sentinel
+    //
+    // from_question_type – exhaustive mapping QuestionType -> default AnswerData
+    //
+    //  ID    Input                       Expected default      Test
+    //  EP16  ShortAnswer                 ShortAnswer("")       from_question_type_builds_each_default
+    //  EP17  MultiChoice                 MultiChoice(0)        from_question_type_builds_each_default
+    //  EP18  MultiSelect                 MultiSelect([])       from_question_type_builds_each_default
+    //  EP19  DropDown                    DropDown(0)           from_question_type_builds_each_default
+    //  EP20  Ranking                     Ranking([])           from_question_type_builds_each_default
+    //
+    // from_answer_raw_data – reconstruction from DB columns
+    //
+    //  ID    (type, short, multi, ranking)                Expected           Test
+    //  EP21  (ShortAnswer, Some("hi"), -, -)              ShortAnswer("hi")  from_raw_builds_short_answer
+    //  EP22  (MultiChoice, -, Some([7,8]), -)             MultiChoice(7)     from_raw_takes_first_option_for_single_select
+    //  EP23  (DropDown,    -, Some([9]),  -)              DropDown(9)        from_raw_takes_first_option_for_single_select
+    //  EP24  (MultiSelect, -, Some([1,2]),-)              MultiSelect([1,2]) from_raw_keeps_all_options_for_multi_select
+    //  EP25  (Ranking,     -, -, Some([3,1,2]))           Ranking([3,1,2])   from_raw_preserves_ranking_order
+    //  EP26  (ShortAnswer, None, -, -)                    panic              panics_when_short_answer_column_missing
+    //  EP27  (MultiChoice, -, None, -)                    panic              panics_when_multi_option_column_missing
+    //  EP28  (Ranking,     -, -, None)                    panic              panics_when_ranking_column_missing
+    //
+    // serde – round-trip of the externally-tagged representation
+    //
+    //  ID    Variant            JSON                                              Test
+    //  EP29  MultiChoice(7)     {"answer_type":"MultiChoice","answer_data":"7"}   serialises_id_as_string
+    //  EP30  MultiSelect([1,2]) {..,"answer_data":["1","2"]}                      serialises_vec_as_string_array
+    //  EP31  ShortAnswer("hi")  {..,"answer_data":"hi"}                           short_answer_round_trips
+    //  EP32  numeric id input   {"answer_data":7}                                 deserialises_numeric_id
+    //
+    // ── BOUNDARY VALUE ANALYSIS ───────────────────────────────────────────────
+    //
+    // collection length (Vec<i64> / String) – boundary between empty and non-empty
+    // is what validate() and is_empty() pivot on.
+    //
+    //  ID    Value                  Function    Expected            Test                          Status
+    //  BV01  ShortAnswer len 0      validate    Err(BadRequest)     returns_bad_request_for_empty_short_answer   OK
+    //  BV02  ShortAnswer len 1      validate    Ok(())              short_answer_with_text_is_valid              OK
+    //  BV03  MultiSelect len 0      validate    Err(BadRequest)     returns_bad_request_for_empty_multi_select   OK
+    //  BV04  MultiSelect len 1      validate    Ok(())              multi_select_with_options_is_valid           OK
+    //  BV05  Ranking len 0          validate    Err(BadRequest)     returns_bad_request_for_empty_ranking        OK
+    //  BV06  Ranking len 1          validate    Ok(())              ranking_with_options_is_valid                OK
+    //
+    // DropDown option_id (i64) – 0 is the "unset" sentinel for is_empty().
+    //
+    //  ID    Value    Expected   Test                                        Status
+    //  BV07  0        true       drop_down_emptiness_tracks_zero_sentinel    OK
+    //  BV08  1        false      drop_down_emptiness_tracks_zero_sentinel    OK
+    //
+    // multi_option vec length in from_answer_raw_data – the single-select
+    // variants index `options[0]`, so an empty vec is an out-of-bounds boundary.
+    //
+    //  ID    Value                          Expected   Test                                     Status
+    //  BV09  (MultiChoice, Some([]))        panic      panics_when_single_select_column_empty   OK
+    //  BV10  (MultiChoice, Some([7]))       MultiChoice(7) from_raw_takes_first_option_for_single_select OK
+    //
+    // ── KNOWN GAPS ────────────────────────────────────────────────────────────
+    //
+    //  · The async DB methods (create, get, get_all_common_by_application,
+    //    get_all_by_application_and_role, update, delete) are untested here.
+    //    They require a Postgres pool and a deep seed graph (organisation →
+    //    campaign → application → question → options) to exercise, so they belong
+    //    in an integration suite using `#[sqlx::test]`. Until added, the SQL JOINs,
+    //    the DELETE-then-INSERT replace semantics in create(), and the
+    //    application `updated_at` bump in update() are unverified, so a regression
+    //    in any of those queries would ship undetected.
+    //
+    //  · validate() and is_empty() disagree on MultiChoice and DropDown:
+    //    MultiChoice(0) is never empty yet always valid, while DropDown(0) IS
+    //    empty yet still validates Ok. The 0 sentinel is never rejected by
+    //    validate(), so a single-select answer pointing at the non-existent
+    //    option 0 passes validation and is only caught (if at all) by a DB
+    //    foreign-key. This asymmetry is asserted but its product-level
+    //    correctness is out of scope here.
+    //
+    //  · from_answer_raw_data has an unreachable `_ => ShortAnswer("")` arm inside
+    //    the single-select match. It cannot be hit given the outer match guard, so
+    //    it is left uncovered by design.
+    // =========================================================================
+
+    use super::*;
+
+    // ── AnswerData::validate ──────────────────────────────────────────────────
+
+    /// White-box: a ShortAnswer with non-empty text skips the empty-text guard.
+    #[test]
+    fn short_answer_with_text_is_valid() {
+        let result = AnswerData::ShortAnswer("an answer".to_string()).validate();
+        assert!(matches!(result, Ok(())), "non-empty text should validate");
+    }
+
+    /// White-box: an empty ShortAnswer string trips the `text.is_empty()` guard.
+    #[test]
+    fn returns_bad_request_for_empty_short_answer() {
+        let result = AnswerData::ShortAnswer(String::new()).validate();
+        assert!(matches!(result, Err(ChaosError::BadRequest)));
+    }
+
+    /// White-box: a MultiSelect with at least one option passes the empty-vec guard.
+    #[test]
+    fn multi_select_with_options_is_valid() {
+        let result = AnswerData::MultiSelect(vec![1]).validate();
+        assert!(matches!(result, Ok(())));
+    }
+
+    /// White-box: an empty MultiSelect vec trips the `data.is_empty()` guard.
+    #[test]
+    fn returns_bad_request_for_empty_multi_select() {
+        let result = AnswerData::MultiSelect(Vec::new()).validate();
+        assert!(matches!(result, Err(ChaosError::BadRequest)));
+    }
+
+    /// White-box: a Ranking with at least one option passes the empty-vec guard.
+    #[test]
+    fn ranking_with_options_is_valid() {
+        let result = AnswerData::Ranking(vec![1]).validate();
+        assert!(matches!(result, Ok(())));
+    }
+
+    /// White-box: an empty Ranking vec trips the shared `data.is_empty()` guard.
+    #[test]
+    fn returns_bad_request_for_empty_ranking() {
+        let result = AnswerData::Ranking(Vec::new()).validate();
+        assert!(matches!(result, Err(ChaosError::BadRequest)));
+    }
+
+    /// White-box: MultiChoice falls into the `_ => {}` arm and is never rejected.
+    #[test]
+    fn multi_choice_is_always_valid() {
+        assert!(matches!(AnswerData::MultiChoice(0).validate(), Ok(())));
+        assert!(matches!(AnswerData::MultiChoice(42).validate(), Ok(())));
+    }
+
+    /// White-box: DropDown falls into the `_ => {}` arm and is never rejected.
+    #[test]
+    fn drop_down_is_always_valid() {
+        assert!(matches!(AnswerData::DropDown(0).validate(), Ok(())));
+        assert!(matches!(AnswerData::DropDown(42).validate(), Ok(())));
+    }
+
+    // ── AnswerData::is_empty ──────────────────────────────────────────────────
+
+    /// White-box: ShortAnswer emptiness mirrors the inner string's emptiness.
+    #[test]
+    fn short_answer_emptiness_tracks_text() {
+        assert!(AnswerData::ShortAnswer(String::new()).is_empty());
+        assert!(!AnswerData::ShortAnswer("x".to_string()).is_empty());
+    }
+
+    /// White-box: MultiSelect and Ranking report empty when their vecs are empty.
+    #[test]
+    fn vec_variants_empty_when_no_options() {
+        assert!(AnswerData::MultiSelect(Vec::new()).is_empty());
+        assert!(AnswerData::Ranking(Vec::new()).is_empty());
+    }
+
+    /// White-box: MultiSelect and Ranking report non-empty with one or more options.
+    #[test]
+    fn vec_variants_non_empty_with_options() {
+        assert!(!AnswerData::MultiSelect(vec![1]).is_empty());
+        assert!(!AnswerData::Ranking(vec![1]).is_empty());
+    }
+
+    /// White-box: MultiChoice hardcodes `false` regardless of the option id (even 0).
+    #[test]
+    fn multi_choice_is_never_empty() {
+        assert!(!AnswerData::MultiChoice(0).is_empty());
+        assert!(!AnswerData::MultiChoice(99).is_empty());
+    }
+
+    /// White-box: DropDown treats option id 0 as the "unset" sentinel for emptiness.
+    #[test]
+    fn drop_down_emptiness_tracks_zero_sentinel() {
+        assert!(
+            AnswerData::DropDown(0).is_empty(),
+            "0 is the unset sentinel and must read as empty"
+        );
+        assert!(!AnswerData::DropDown(5).is_empty());
+    }
+
+    // ── AnswerData::from_question_type ────────────────────────────────────────
+
+    /// White-box: each QuestionType maps to its zero-value AnswerData default.
+    #[test]
+    fn from_question_type_builds_each_default() {
+        match AnswerData::from_question_type(&QuestionType::ShortAnswer) {
+            AnswerData::ShortAnswer(s) => assert_eq!(s, ""),
+            _ => panic!("ShortAnswer should map to AnswerData::ShortAnswer"),
+        }
+        match AnswerData::from_question_type(&QuestionType::MultiChoice) {
+            AnswerData::MultiChoice(id) => assert_eq!(id, 0),
+            _ => panic!("MultiChoice should map to AnswerData::MultiChoice"),
+        }
+        match AnswerData::from_question_type(&QuestionType::MultiSelect) {
+            AnswerData::MultiSelect(v) => assert!(v.is_empty()),
+            _ => panic!("MultiSelect should map to AnswerData::MultiSelect"),
+        }
+        match AnswerData::from_question_type(&QuestionType::DropDown) {
+            AnswerData::DropDown(id) => assert_eq!(id, 0),
+            _ => panic!("DropDown should map to AnswerData::DropDown"),
+        }
+        match AnswerData::from_question_type(&QuestionType::Ranking) {
+            AnswerData::Ranking(v) => assert!(v.is_empty()),
+            _ => panic!("Ranking should map to AnswerData::Ranking"),
+        }
+    }
+
+    // ── AnswerData::from_answer_raw_data ──────────────────────────────────────
+
+    /// White-box: ShortAnswer reconstruction unwraps the short_answer column.
+    #[test]
+    fn from_raw_builds_short_answer() {
+        let data = AnswerData::from_answer_raw_data(
+            QuestionType::ShortAnswer,
+            Some("hello".to_string()),
+            None,
+            None,
+        );
+        match data {
+            AnswerData::ShortAnswer(s) => assert_eq!(s, "hello"),
+            _ => panic!("expected ShortAnswer variant"),
+        }
+    }
+
+    /// White-box: single-select variants keep only `options[0]` from the vec.
+    #[test]
+    fn from_raw_takes_first_option_for_single_select() {
+        let multi_choice = AnswerData::from_answer_raw_data(
+            QuestionType::MultiChoice,
+            None,
+            Some(vec![7, 8]),
+            None,
+        );
+        match multi_choice {
+            AnswerData::MultiChoice(id) => {
+                assert_eq!(id, 7, "MultiChoice keeps only the first option")
+            }
+            _ => panic!("expected MultiChoice variant"),
+        }
+
+        let drop_down =
+            AnswerData::from_answer_raw_data(QuestionType::DropDown, None, Some(vec![9]), None);
+        match drop_down {
+            AnswerData::DropDown(id) => assert_eq!(id, 9),
+            _ => panic!("expected DropDown variant"),
+        }
+    }
+
+    /// White-box: MultiSelect reconstruction retains every option in order.
+    #[test]
+    fn from_raw_keeps_all_options_for_multi_select() {
+        let data = AnswerData::from_answer_raw_data(
+            QuestionType::MultiSelect,
+            None,
+            Some(vec![1, 2, 3]),
+            None,
+        );
+        match data {
+            AnswerData::MultiSelect(v) => assert_eq!(v, vec![1, 2, 3]),
+            _ => panic!("expected MultiSelect variant"),
+        }
+    }
+
+    /// White-box: Ranking reconstruction preserves the order of the ranking column.
+    #[test]
+    fn from_raw_preserves_ranking_order() {
+        let data =
+            AnswerData::from_answer_raw_data(QuestionType::Ranking, None, None, Some(vec![3, 1, 2]));
+        match data {
+            AnswerData::Ranking(v) => {
+                assert_eq!(v, vec![3, 1, 2], "ranking order must be preserved as stored")
+            }
+            _ => panic!("expected Ranking variant"),
+        }
+    }
+
+    /// White-box: a missing short_answer column makes the `.expect()` panic.
+    #[test]
+    #[should_panic(expected = "Data should exist for ShortAnswer variant")]
+    fn panics_when_short_answer_column_missing() {
+        AnswerData::from_answer_raw_data(QuestionType::ShortAnswer, None, None, None);
+    }
+
+    /// White-box: a missing multi_option column makes the `.expect()` panic.
+    #[test]
+    #[should_panic(expected = "Data should exist for MultiOptionData variants")]
+    fn panics_when_multi_option_column_missing() {
+        AnswerData::from_answer_raw_data(QuestionType::MultiChoice, None, None, None);
+    }
+
+    /// White-box: a missing ranking column makes the `.expect()` panic.
+    #[test]
+    #[should_panic(expected = "Data should exist for Ranking variant")]
+    fn panics_when_ranking_column_missing() {
+        AnswerData::from_answer_raw_data(QuestionType::Ranking, None, None, None);
+    }
+
+    /// White-box: an empty single-select vec is an out-of-bounds `options[0]` access.
+    #[test]
+    #[should_panic]
+    fn panics_when_single_select_column_empty() {
+        AnswerData::from_answer_raw_data(QuestionType::MultiChoice, None, Some(Vec::new()), None);
+    }
+
+    // ── AnswerData serde ──────────────────────────────────────────────────────
+
+    /// White-box: a single i64 id serialises as a JSON string under answer_data.
+    #[test]
+    fn serialises_id_as_string() {
+        let json = serde_json::to_value(AnswerData::MultiChoice(7)).unwrap();
+        assert_eq!(
+            json,
+            serde_json::json!({ "answer_type": "MultiChoice", "answer_data": "7" })
+        );
+    }
+
+    /// White-box: a Vec<i64> serialises as an array of JSON strings.
+    #[test]
+    fn serialises_vec_as_string_array() {
+        let json = serde_json::to_value(AnswerData::MultiSelect(vec![1, 2])).unwrap();
+        assert_eq!(
+            json,
+            serde_json::json!({ "answer_type": "MultiSelect", "answer_data": ["1", "2"] })
+        );
+    }
+
+    /// White-box: a ShortAnswer survives a serialize → deserialize round-trip.
+    #[test]
+    fn short_answer_round_trips() {
+        let json = serde_json::to_value(AnswerData::ShortAnswer("hi".to_string())).unwrap();
+        assert_eq!(
+            json,
+            serde_json::json!({ "answer_type": "ShortAnswer", "answer_data": "hi" })
+        );
+
+        let back: AnswerData = serde_json::from_value(json).unwrap();
+        match back {
+            AnswerData::ShortAnswer(s) => assert_eq!(s, "hi"),
+            _ => panic!("expected ShortAnswer after round-trip"),
+        }
+    }
+
+    /// White-box: serde_string::deserialize also accepts a bare JSON number for ids.
+    #[test]
+    fn deserialises_numeric_id() {
+        let back: AnswerData =
+            serde_json::from_value(serde_json::json!({ "answer_type": "DropDown", "answer_data": 7 }))
+                .unwrap();
+        match back {
+            AnswerData::DropDown(id) => assert_eq!(id, 7),
+            _ => panic!("expected DropDown variant"),
+        }
+    }
+}
+
+#[cfg(test)]
+mod db_tests {
+    // =========================================================================
+    // TEST PLAN – Equivalence Partitioning (EP) & Boundary Value Analysis (BVA)
+    // =========================================================================
+    //
+    // Functions under test
+    //   · Answer::create(app_id, q_id, AnswerData, &mut gen, &mut tx) -> Result<i64, ChaosError>
+    //   · Answer::get(id, &mut tx) -> Result<Answer, ChaosError>
+    //   · Answer::get_all_common_by_application(app_id, &mut tx) -> Result<Vec<Answer>, ChaosError>
+    //   · Answer::get_all_by_application_and_role(app_id, role_id, &mut tx) -> Result<Vec<Answer>, ChaosError>
+    //   · Answer::update(id, AnswerData, &mut tx) -> Result<(), ChaosError>
+    //   · Answer::delete(id, &mut tx) -> Result<(), ChaosError>
+    //
+    // The seed graph (org 1 → campaign 1 → role 1 → application 1) is shared by
+    // every test. Questions: q100 ShortAnswer common, q200 MultiChoice role-only,
+    // q300 Ranking common. Options 201/202 belong to q200, 301/302 to q300.
+    //
+    // ── EQUIVALENCE PARTITIONING ──────────────────────────────────────────────
+    //
+    // create – validity & replace semantics
+    //
+    //  ID    Input                                   Expected                         Test
+    //  EP01  valid ShortAnswer, fresh app/question   Ok(id) + row in child table      create_inserts_short_answer
+    //  EP02  valid MultiChoice for a new answer      Ok(id) + option row              create_inserts_multi_choice_option
+    //  EP03  second create for same app+question     Ok(id) + exactly one answer left create_replaces_existing_answer
+    //  EP04  invalid (empty ShortAnswer)             Err(BadRequest) + nothing written returns_bad_request_for_invalid_create
+    //
+    // get – key existence
+    //
+    //  ID    Input                       Expected                              Test
+    //  EP05  question with one answer    Ok(Answer) carrying that answer data  get_returns_created_answer
+    //  EP06  question id with no answer  Err(DatabaseError(RowNotFound))       returns_error_for_missing_answer
+    //
+    // get_all_common_by_application – common flag partition
+    //
+    //  ID    Setup                                   Expected                  Test
+    //  EP07  answers on common + non-common qs       only common answers back  get_all_common_returns_only_common
+    //
+    // get_all_by_application_and_role – role + non-common partition
+    //
+    //  ID    Setup                                   Expected                  Test
+    //  EP08  answer on a role-scoped non-common q    that answer back, no common ones  get_all_by_role_returns_role_answers
+    //
+    // update – non-empty vs empty replacement
+    //
+    //  ID    Input                       Expected                                  Test
+    //  EP09  non-empty new ShortAnswer   child row replaced, app updated_at bumped update_replaces_answer_data
+    //  EP10  empty ShortAnswer           child row cleared, no new row inserted     update_with_empty_data_clears_answer
+    //
+    // delete – key existence
+    //
+    //  ID    Input              Expected                          Test
+    //  EP11  existing answer    Ok(()) + answer row removed       delete_removes_answer
+    //  EP12  missing answer id  Err(DatabaseError(RowNotFound))   returns_error_for_missing_delete
+    //
+    // ── BOUNDARY VALUE ANALYSIS ───────────────────────────────────────────────
+    //
+    // answer count per (application, question) – create() runs DELETE-then-INSERT,
+    // so the boundary is "at most one answer survives" no matter how many creates.
+    //
+    //  ID    Sequence                       Expected answer count   Test                          Status
+    //  BV01  one create                     1                       create_inserts_short_answer   OK
+    //  BV02  two creates, same app+question 1                       create_replaces_existing_answer OK
+    //
+    // child-table rows after update with empty data – boundary between "data
+    // present" and "data cleared".
+    //
+    //  ID    Input                Child rows   Test                              Status
+    //  BV03  update non-empty     1            update_replaces_answer_data       OK
+    //  BV04  update empty         0            update_with_empty_data_clears_answer OK
+    //
+    // ── KNOWN GAPS ────────────────────────────────────────────────────────────
+    //
+    //  · Answer::get filters on `q.id = $1`, i.e. it is keyed by QUESTION id, not
+    //    answer id, and sets the returned Answer.id to that same input. With more
+    //    than one application answering the same question its `fetch_one` would
+    //    error on multiple rows. These tests only ever seed a single application,
+    //    so the single-application happy path is covered but the multi-application
+    //    fan-out (and the id-vs-question-id confusion) is left as a documented gap.
+    //
+    //  · The deferred foreign keys from the answer child tables to
+    //    multi_option_question_options are only enforced at COMMIT. Because
+    //    `#[sqlx::test]` rolls its transaction back, an answer pointing at a
+    //    non-existent option id would NOT be rejected here. Referential integrity
+    //    of option ids is therefore not exercised by this suite.
+    //
+    //  · Concurrency, the `submitted`/`status` application columns, and the
+    //    cross-table cascade on delete are out of scope.
+    // =========================================================================
+
+    use super::*;
+    use sqlx::PgPool;
+
+    // ── helpers ──────────────────────────────────────────────────────────────
+
+    /// Builds org 1 → campaign 1 → role 1 → application 1, plus questions q100
+    /// (ShortAnswer, common), q200 (MultiChoice, role-scoped) and q300 (Ranking,
+    /// common) with their options. Deterministic: fixed ids, no clock input.
+    async fn seed(pool: &PgPool) {
+        sqlx::query("INSERT INTO users (id, email, name) VALUES (1, 'applicant@test.com', 'Applicant')")
+            .execute(pool)
+            .await
+            .unwrap();
+
+        sqlx::query(
+            "INSERT INTO organisations (id, slug, name, contact_email)
+             VALUES (1, 'org', 'Org', 'contact@test.com')",
+        )
+        .execute(pool)
+        .await
+        .unwrap();
+
+        sqlx::query(
+            "INSERT INTO campaigns (id, organisation_id, slug, name, starts_at, ends_at, published)
+             VALUES (1, 1, 'camp', 'Camp', NOW() - INTERVAL '1 day', NOW() + INTERVAL '1 day', true)",
+        )
+        .execute(pool)
+        .await
+        .unwrap();
+
+        sqlx::query(
+            "INSERT INTO campaign_roles (id, campaign_id, name, min_available, max_available, finalised)
+             VALUES (1, 1, 'Role', 1, 5, false)",
+        )
+        .execute(pool)
+        .await
+        .unwrap();
+
+        sqlx::query("INSERT INTO applications (id, campaign_id, user_id) VALUES (1, 1, 1)")
+            .execute(pool)
+            .await
+            .unwrap();
+
+        // questions: (id, title, common, required, question_type)
+        for (id, title, common, qtype) in [
+            (100_i64, "Short", true, "ShortAnswer"),
+            (200_i64, "Choice", false, "MultiChoice"),
+            (300_i64, "Rank", true, "Ranking"),
+        ] {
+            sqlx::query(
+                "INSERT INTO questions (id, title, common, required, question_type, campaign_id)
+                 VALUES ($1, $2, $3, true, $4::question_type, 1)",
+            )
+            .bind(id)
+            .bind(title)
+            .bind(common)
+            .bind(qtype)
+            .execute(pool)
+            .await
+            .unwrap();
+        }
+
+        // options for the multi-option questions
+        for (id, text, question_id, order) in [
+            (201_i64, "A", 200_i64, 0_i32),
+            (202_i64, "B", 200_i64, 1_i32),
+            (301_i64, "X", 300_i64, 0_i32),
+            (302_i64, "Y", 300_i64, 1_i32),
+        ] {
+            sqlx::query(
+                "INSERT INTO multi_option_question_options (id, text, question_id, display_order)
+                 VALUES ($1, $2, $3, $4)",
+            )
+            .bind(id)
+            .bind(text)
+            .bind(question_id)
+            .bind(order)
+            .execute(pool)
+            .await
+            .unwrap();
+        }
+
+        // q200 is scoped to role 1
+        sqlx::query("INSERT INTO question_roles (question_id, role_id) VALUES (200, 1)")
+            .execute(pool)
+            .await
+            .unwrap();
+    }
+
+    /// Number of answer rows for a given (application, question) pair.
+    async fn answer_count(tx: &mut Transaction<'_, Postgres>, app_id: i64, q_id: i64) -> i64 {
+        sqlx::query_scalar(
+            "SELECT COUNT(*) FROM answers WHERE application_id = $1 AND question_id = $2",
+        )
+        .bind(app_id)
+        .bind(q_id)
+        .fetch_one(&mut **tx)
+        .await
+        .unwrap()
+    }
+
+    /// The (answer_type, answer_data) pair of an Answer, read via its serde form.
+    fn typed_data(answer: &Answer) -> (String, serde_json::Value) {
+        let json = serde_json::to_value(answer).unwrap();
+        (
+            json["answer_type"].as_str().unwrap().to_string(),
+            json["answer_data"].clone(),
+        )
+    }
+
+    /// The question_id strings carried by a serialised list of answers.
+    fn question_ids(answers: &[Answer]) -> Vec<String> {
+        serde_json::to_value(answers)
+            .unwrap()
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|a| a["question_id"].as_str().unwrap().to_string())
+            .collect()
+    }
+
+    // ── Answer::create ────────────────────────────────────────────────────────
+
+    /// White-box: create writes the answer row and its ShortAnswer child row.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn create_inserts_short_answer(pool: PgPool) {
+        seed(&pool).await;
+        let mut tx = pool.begin().await.unwrap();
+        let mut gen = SnowflakeIdGenerator::new(1, 1);
+
+        let id = Answer::create(
+            1,
+            100,
+            AnswerData::ShortAnswer("hello".to_string()),
+            &mut gen,
+            &mut tx,
+        )
+        .await
+        .unwrap();
+
+        assert_eq!(answer_count(&mut tx, 1, 100).await, 1);
+        let text: String =
+            sqlx::query_scalar("SELECT text FROM short_answer_answers WHERE answer_id = $1")
+                .bind(id)
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap();
+        assert_eq!(text, "hello");
+    }
+
+    /// White-box: a MultiChoice create lands a single row in the option table.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn create_inserts_multi_choice_option(pool: PgPool) {
+        seed(&pool).await;
+        let mut tx = pool.begin().await.unwrap();
+        let mut gen = SnowflakeIdGenerator::new(1, 1);
+
+        let id = Answer::create(1, 200, AnswerData::MultiChoice(201), &mut gen, &mut tx)
+            .await
+            .unwrap();
+
+        let option: i64 =
+            sqlx::query_scalar("SELECT option_id FROM multi_option_answer_options WHERE answer_id = $1")
+                .bind(id)
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap();
+        assert_eq!(option, 201);
+    }
+
+    /// White-box: create's DELETE-then-INSERT leaves only the newest answer.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn create_replaces_existing_answer(pool: PgPool) {
+        seed(&pool).await;
+        let mut tx = pool.begin().await.unwrap();
+        let mut gen = SnowflakeIdGenerator::new(1, 1);
+
+        Answer::create(
+            1,
+            100,
+            AnswerData::ShortAnswer("first".to_string()),
+            &mut gen,
+            &mut tx,
+        )
+        .await
+        .unwrap();
+        Answer::create(
+            1,
+            100,
+            AnswerData::ShortAnswer("second".to_string()),
+            &mut gen,
+            &mut tx,
+        )
+        .await
+        .unwrap();
+
+        assert_eq!(
+            answer_count(&mut tx, 1, 100).await,
+            1,
+            "the second create must replace, not append"
+        );
+        let text: String =
+            sqlx::query_scalar("SELECT text FROM short_answer_answers WHERE answer_id = (SELECT id FROM answers WHERE application_id = 1 AND question_id = 100)")
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap();
+        assert_eq!(text, "second");
+    }
+
+    /// White-box: invalid data fails validate() before any row is written.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn returns_bad_request_for_invalid_create(pool: PgPool) {
+        seed(&pool).await;
+        let mut tx = pool.begin().await.unwrap();
+        let mut gen = SnowflakeIdGenerator::new(1, 1);
+
+        let result = Answer::create(
+            1,
+            100,
+            AnswerData::ShortAnswer(String::new()),
+            &mut gen,
+            &mut tx,
+        )
+        .await;
+
+        assert!(matches!(result, Err(ChaosError::BadRequest)));
+        assert_eq!(
+            answer_count(&mut tx, 1, 100).await,
+            0,
+            "a rejected create must not write an answer row"
+        );
+    }
+
+    // ── Answer::get ───────────────────────────────────────────────────────────
+
+    /// White-box: get reconstructs the AnswerData stored for the question.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn get_returns_created_answer(pool: PgPool) {
+        seed(&pool).await;
+        let mut tx = pool.begin().await.unwrap();
+        let mut gen = SnowflakeIdGenerator::new(1, 1);
+        Answer::create(1, 200, AnswerData::MultiChoice(201), &mut gen, &mut tx)
+            .await
+            .unwrap();
+
+        let answer = Answer::get(200, &mut tx).await.unwrap();
+
+        let (answer_type, answer_data) = typed_data(&answer);
+        assert_eq!(answer_type, "MultiChoice");
+        assert_eq!(answer_data, serde_json::json!("201"));
+    }
+
+    /// White-box: a question with no answer yields fetch_one's RowNotFound.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn returns_error_for_missing_answer(pool: PgPool) {
+        seed(&pool).await;
+        let mut tx = pool.begin().await.unwrap();
+
+        let result = Answer::get(100, &mut tx).await;
+
+        assert!(matches!(
+            result,
+            Err(ChaosError::DatabaseError(sqlx::Error::RowNotFound))
+        ));
+    }
+
+    // ── Answer::get_all_common_by_application ─────────────────────────────────
+
+    /// White-box: only answers to common questions are returned, non-common excluded.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn get_all_common_returns_only_common(pool: PgPool) {
+        seed(&pool).await;
+        let mut tx = pool.begin().await.unwrap();
+        let mut gen = SnowflakeIdGenerator::new(1, 1);
+        Answer::create(
+            1,
+            100,
+            AnswerData::ShortAnswer("common".to_string()),
+            &mut gen,
+            &mut tx,
+        )
+        .await
+        .unwrap();
+        Answer::create(1, 200, AnswerData::MultiChoice(201), &mut gen, &mut tx)
+            .await
+            .unwrap();
+        Answer::create(1, 300, AnswerData::Ranking(vec![301, 302]), &mut gen, &mut tx)
+            .await
+            .unwrap();
+
+        let answers = Answer::get_all_common_by_application(1, &mut tx)
+            .await
+            .unwrap();
+
+        let mut ids = question_ids(&answers);
+        ids.sort();
+        assert_eq!(
+            ids,
+            vec!["100".to_string(), "300".to_string()],
+            "only the two common-question answers should be returned"
+        );
+    }
+
+    // ── Answer::get_all_by_application_and_role ───────────────────────────────
+
+    /// White-box: role-scoped non-common answers come back; common ones do not.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn get_all_by_role_returns_role_answers(pool: PgPool) {
+        seed(&pool).await;
+        let mut tx = pool.begin().await.unwrap();
+        let mut gen = SnowflakeIdGenerator::new(1, 1);
+        Answer::create(
+            1,
+            100,
+            AnswerData::ShortAnswer("common".to_string()),
+            &mut gen,
+            &mut tx,
+        )
+        .await
+        .unwrap();
+        Answer::create(1, 200, AnswerData::MultiChoice(201), &mut gen, &mut tx)
+            .await
+            .unwrap();
+
+        let answers = Answer::get_all_by_application_and_role(1, 1, &mut tx)
+            .await
+            .unwrap();
+
+        assert_eq!(
+            question_ids(&answers),
+            vec!["200".to_string()],
+            "only the role-scoped non-common answer should be returned"
+        );
+    }
+
+    // ── Answer::update ────────────────────────────────────────────────────────
+
+    /// White-box: non-empty update swaps the child row and bumps app updated_at.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn update_replaces_answer_data(pool: PgPool) {
+        seed(&pool).await;
+        let mut tx = pool.begin().await.unwrap();
+        let mut gen = SnowflakeIdGenerator::new(1, 1);
+        let id = Answer::create(
+            1,
+            100,
+            AnswerData::ShortAnswer("old".to_string()),
+            &mut gen,
+            &mut tx,
+        )
+        .await
+        .unwrap();
+        let before: DateTime<Utc> =
+            sqlx::query_scalar("SELECT updated_at FROM applications WHERE id = 1")
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap();
+
+        Answer::update(id, AnswerData::ShortAnswer("new".to_string()), &mut tx)
+            .await
+            .unwrap();
+
+        let text: String =
+            sqlx::query_scalar("SELECT text FROM short_answer_answers WHERE answer_id = $1")
+                .bind(id)
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap();
+        assert_eq!(text, "new");
+        let rows: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM short_answer_answers WHERE answer_id = $1")
+                .bind(id)
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap();
+        assert_eq!(rows, 1, "the old child row must be replaced, not duplicated");
+        let after: DateTime<Utc> =
+            sqlx::query_scalar("SELECT updated_at FROM applications WHERE id = 1")
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap();
+        assert!(after > before, "update must move the application's updated_at forward");
+    }
+
+    /// White-box: empty data skips validation, deletes the old row, inserts none.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn update_with_empty_data_clears_answer(pool: PgPool) {
+        seed(&pool).await;
+        let mut tx = pool.begin().await.unwrap();
+        let mut gen = SnowflakeIdGenerator::new(1, 1);
+        let id = Answer::create(
+            1,
+            100,
+            AnswerData::ShortAnswer("old".to_string()),
+            &mut gen,
+            &mut tx,
+        )
+        .await
+        .unwrap();
+
+        Answer::update(id, AnswerData::ShortAnswer(String::new()), &mut tx)
+            .await
+            .unwrap();
+
+        let rows: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM short_answer_answers WHERE answer_id = $1")
+                .bind(id)
+                .fetch_one(&mut *tx)
+                .await
+                .unwrap();
+        assert_eq!(rows, 0, "empty update must clear the child row");
+    }
+
+    // ── Answer::delete ────────────────────────────────────────────────────────
+
+    /// White-box: delete removes the answer row for an existing id.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn delete_removes_answer(pool: PgPool) {
+        seed(&pool).await;
+        let mut tx = pool.begin().await.unwrap();
+        let mut gen = SnowflakeIdGenerator::new(1, 1);
+        let id = Answer::create(
+            1,
+            100,
+            AnswerData::ShortAnswer("bye".to_string()),
+            &mut gen,
+            &mut tx,
+        )
+        .await
+        .unwrap();
+
+        Answer::delete(id, &mut tx).await.unwrap();
+
+        assert_eq!(answer_count(&mut tx, 1, 100).await, 0);
+    }
+
+    /// White-box: deleting a non-existent id surfaces fetch_one's RowNotFound.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn returns_error_for_missing_delete(pool: PgPool) {
+        seed(&pool).await;
+        let mut tx = pool.begin().await.unwrap();
+
+        let result = Answer::delete(999, &mut tx).await;
+
+        assert!(matches!(
+            result,
+            Err(ChaosError::DatabaseError(sqlx::Error::RowNotFound))
+        ));
+    }
+}

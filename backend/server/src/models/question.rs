@@ -684,3 +684,238 @@ impl QuestionData {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    // =========================================================================
+    // TEST PLAN – Equivalence Partitioning (EP) & Boundary Value Analysis (BVA)
+    // =========================================================================
+    //
+    // Functions under test
+    //   · QuestionData::validate(&self) -> Result<(), ChaosError>
+    //   · QuestionData::from_question_type(&QuestionType) -> QuestionData
+    //   · QuestionData::from_question_raw_data(QuestionType,
+    //         Option<Json<Vec<MultiOptionQuestionOption>>>) -> QuestionData
+    //   · QuestionType::from_question_data(&QuestionData) -> QuestionType
+    //   · QuestionData (serde) – tag = "question_type", content = "data"
+    //
+    // ── EQUIVALENCE PARTITIONING ──────────────────────────────────────────────
+    //
+    // validate – ShortAnswer is always Ok; the four option types require ≥1 option
+    //
+    //  ID    Input                          Class            Expected          Test
+    //  EP01  ShortAnswer                    no options       Ok(())            short_answer_is_always_valid
+    //  EP02  MultiChoice(options=[o])       non-empty        Ok(())            option_types_with_options_are_valid
+    //  EP03  MultiSelect/DropDown/Ranking([o]) non-empty     Ok(())            option_types_with_options_are_valid
+    //  EP04  MultiChoice(options=[])        empty            Err(BadRequest)   returns_bad_request_for_empty_options
+    //  EP05  Ranking(options=[])            empty            Err(BadRequest)   returns_bad_request_for_empty_options
+    //
+    // from_question_type – exhaustive QuestionType -> default QuestionData
+    //
+    //  ID    Input        Expected default variant (empty options)   Test
+    //  EP06  ShortAnswer  ShortAnswer                                from_question_type_builds_each_default
+    //  EP07  MultiChoice  MultiChoice([])                            from_question_type_builds_each_default
+    //  EP08  MultiSelect  MultiSelect([])                            from_question_type_builds_each_default
+    //  EP09  DropDown     DropDown([])                               from_question_type_builds_each_default
+    //  EP10  Ranking      Ranking([])                                from_question_type_builds_each_default
+    //
+    // from_question_data – exhaustive QuestionData -> QuestionType tag
+    //
+    //  ID    Input variant   Expected type   Test
+    //  EP11  each variant    matching type   from_question_data_maps_each_variant
+    //
+    // from_question_raw_data – reconstruction from the DB question_type + jsonb
+    //
+    //  ID    (type, json)                    Expected             Test
+    //  EP12  (ShortAnswer, None)             ShortAnswer          from_raw_builds_short_answer
+    //  EP13  (MultiChoice, Some([opt]))      MultiChoice([opt])   from_raw_builds_option_variant
+    //  EP14  (MultiChoice, None)             panic                panics_when_option_json_missing
+    //
+    // serde – externally-tagged round-trip
+    //
+    //  ID    Variant                        JSON shape                        Test
+    //  EP15  ShortAnswer                    {"question_type":"ShortAnswer"}   short_answer_serialises_without_data
+    //  EP16  MultiChoice(opt id 5)          option id emitted as "5"          option_id_serialises_as_string
+    //
+    // ── BOUNDARY VALUE ANALYSIS ───────────────────────────────────────────────
+    //
+    // options.len() – validate() pivots on empty vs non-empty for option types.
+    //
+    //  ID    Value            Expected          Test                              Status
+    //  BV01  len 0            Err(BadRequest)   returns_bad_request_for_empty_options   OK
+    //  BV02  len 1            Ok(())            option_types_with_options_are_valid     OK
+    //
+    // ── KNOWN GAPS ────────────────────────────────────────────────────────────
+    //
+    //  · The async DB methods (create, get, get_all_*, update, delete, insert_into_db,
+    //    delete_from_db) are untested here: they need a Postgres pool and a
+    //    campaign → question → options seed graph, so they belong in an
+    //    #[sqlx::test] integration suite. Until added, the SQL aggregation of
+    //    roles/options, the common-vs-role branching in create()/update(), and the
+    //    "must be common or have ≥1 role" guard are unverified.
+    //
+    //  · from_question_raw_data has an unreachable `_ => ShortAnswer` arm inside the
+    //    option-type match; it cannot be hit given the outer guard and is left
+    //    uncovered by design.
+    // =========================================================================
+
+    use super::*;
+
+    // ── helpers ──────────────────────────────────────────────────────────────
+
+    /// A single MultiOptionData carrying one option, enough to pass validation.
+    fn one_option() -> MultiOptionData {
+        MultiOptionData {
+            options: vec![MultiOptionQuestionOption {
+                id: 5,
+                display_order: 1,
+                text: "Rust".to_string(),
+            }],
+        }
+    }
+
+    // ── QuestionData::validate ────────────────────────────────────────────────
+
+    /// White-box: ShortAnswer hits the unconditional Ok arm.
+    #[test]
+    fn short_answer_is_always_valid() {
+        assert!(matches!(QuestionData::ShortAnswer.validate(), Ok(())));
+    }
+
+    /// White-box: every option variant with at least one option validates Ok.
+    #[test]
+    fn option_types_with_options_are_valid() {
+        assert!(matches!(
+            QuestionData::MultiChoice(one_option()).validate(),
+            Ok(())
+        ));
+        assert!(matches!(
+            QuestionData::MultiSelect(one_option()).validate(),
+            Ok(())
+        ));
+        assert!(matches!(
+            QuestionData::DropDown(one_option()).validate(),
+            Ok(())
+        ));
+        assert!(matches!(
+            QuestionData::Ranking(one_option()).validate(),
+            Ok(())
+        ));
+    }
+
+    /// White-box: an empty options vec trips the shared BadRequest guard.
+    #[test]
+    fn returns_bad_request_for_empty_options() {
+        assert!(matches!(
+            QuestionData::MultiChoice(MultiOptionData::default()).validate(),
+            Err(ChaosError::BadRequest)
+        ));
+        assert!(matches!(
+            QuestionData::Ranking(MultiOptionData::default()).validate(),
+            Err(ChaosError::BadRequest)
+        ));
+    }
+
+    // ── QuestionData::from_question_type ──────────────────────────────────────
+
+    /// White-box: each QuestionType maps to its empty-options QuestionData default.
+    #[test]
+    fn from_question_type_builds_each_default() {
+        assert!(matches!(
+            QuestionData::from_question_type(&QuestionType::ShortAnswer),
+            QuestionData::ShortAnswer
+        ));
+        match QuestionData::from_question_type(&QuestionType::MultiChoice) {
+            QuestionData::MultiChoice(d) => assert!(d.options.is_empty()),
+            _ => panic!("expected MultiChoice"),
+        }
+        match QuestionData::from_question_type(&QuestionType::MultiSelect) {
+            QuestionData::MultiSelect(d) => assert!(d.options.is_empty()),
+            _ => panic!("expected MultiSelect"),
+        }
+        match QuestionData::from_question_type(&QuestionType::DropDown) {
+            QuestionData::DropDown(d) => assert!(d.options.is_empty()),
+            _ => panic!("expected DropDown"),
+        }
+        match QuestionData::from_question_type(&QuestionType::Ranking) {
+            QuestionData::Ranking(d) => assert!(d.options.is_empty()),
+            _ => panic!("expected Ranking"),
+        }
+    }
+
+    // ── QuestionType::from_question_data ──────────────────────────────────────
+
+    /// White-box: the type tag is derived from the data variant, discarding options.
+    #[test]
+    fn from_question_data_maps_each_variant() {
+        assert!(QuestionType::from_question_data(&QuestionData::ShortAnswer) == QuestionType::ShortAnswer);
+        assert!(
+            QuestionType::from_question_data(&QuestionData::MultiChoice(one_option()))
+                == QuestionType::MultiChoice
+        );
+        assert!(
+            QuestionType::from_question_data(&QuestionData::MultiSelect(one_option()))
+                == QuestionType::MultiSelect
+        );
+        assert!(
+            QuestionType::from_question_data(&QuestionData::DropDown(one_option()))
+                == QuestionType::DropDown
+        );
+        assert!(
+            QuestionType::from_question_data(&QuestionData::Ranking(one_option()))
+                == QuestionType::Ranking
+        );
+    }
+
+    // ── QuestionData::from_question_raw_data ──────────────────────────────────
+
+    /// White-box: ShortAnswer needs no jsonb and ignores the option column.
+    #[test]
+    fn from_raw_builds_short_answer() {
+        assert!(matches!(
+            QuestionData::from_question_raw_data(QuestionType::ShortAnswer, None),
+            QuestionData::ShortAnswer
+        ));
+    }
+
+    /// White-box: an option variant unwraps the jsonb and keeps its options.
+    #[test]
+    fn from_raw_builds_option_variant() {
+        let json = sqlx::types::Json(vec![MultiOptionQuestionOption {
+            id: 5,
+            display_order: 1,
+            text: "Rust".to_string(),
+        }]);
+        match QuestionData::from_question_raw_data(QuestionType::MultiChoice, Some(json)) {
+            QuestionData::MultiChoice(d) => {
+                assert_eq!(d.options.len(), 1);
+                assert_eq!(d.options[0].id, 5);
+            }
+            _ => panic!("expected MultiChoice"),
+        }
+    }
+
+    /// White-box: a missing jsonb column makes the option-variant `.expect()` panic.
+    #[test]
+    #[should_panic(expected = "Data should exist for MultiOptionData variants")]
+    fn panics_when_option_json_missing() {
+        QuestionData::from_question_raw_data(QuestionType::MultiChoice, None);
+    }
+
+    // ── QuestionData serde ────────────────────────────────────────────────────
+
+    /// White-box: ShortAnswer serialises to just its tag, with no data field.
+    #[test]
+    fn short_answer_serialises_without_data() {
+        let json = serde_json::to_value(QuestionData::ShortAnswer).unwrap();
+        assert_eq!(json, serde_json::json!({ "question_type": "ShortAnswer" }));
+    }
+
+    /// White-box: an option id is emitted as a JSON string under data.options.
+    #[test]
+    fn option_id_serialises_as_string() {
+        let json = serde_json::to_value(QuestionData::MultiChoice(one_option())).unwrap();
+        assert_eq!(json["question_type"], serde_json::json!("MultiChoice"));
+        assert_eq!(json["data"]["options"][0]["id"], serde_json::json!("5"));
+    }
+}

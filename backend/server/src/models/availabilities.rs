@@ -215,3 +215,70 @@ impl Availabilities {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    // =========================================================================
+    // TEST PLAN – Equivalence Partitioning (EP) & Boundary Value Analysis (BVA)
+    // =========================================================================
+    //
+    // Functions under test
+    //   · <Availability as PartialEq>::eq — derived, compares start_time only
+    //   · <Availability as Hash>::hash    — hand-written, hashes start_time only
+    //
+    // Availability is used in HashSet-based de-duplication of interview slots, so
+    // its identity is defined entirely by start_time. The Eq/Hash contract
+    // (equal values hash equal) is what makes that de-duplication correct.
+    //
+    // ── EQUIVALENCE PARTITIONING ──────────────────────────────────────────────
+    //
+    //  ID    Pair                              Class          Expected           Test
+    //  EP01  same start_time                   equal          eq && hash equal   equal_when_start_times_match
+    //  EP02  different start_time              distinct       !eq                unequal_when_start_times_differ
+    //
+    // ── BOUNDARY VALUE ANALYSIS ───────────────────────────────────────────────
+    //
+    //  Not applicable: identity is a single timestamp equality; there is no
+    //  ordered boundary being partitioned, only the equal/not-equal dichotomy.
+    //
+    // ── KNOWN GAPS ────────────────────────────────────────────────────────────
+    //
+    //  · The async DB methods (create_user_campaign_availability,
+    //    create_availability_slots, get_*, delete_availabilities) need a Postgres
+    //    pool and a user → campaign seed graph, so they belong in an
+    //    #[sqlx::test] suite and are unverified here.
+    // =========================================================================
+
+    use super::*;
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::Hasher;
+
+    // ── helpers ──────────────────────────────────────────────────────────────
+
+    /// Hashes a value through the same Hash impl HashSet would use.
+    fn hash_of(a: &Availability) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        a.hash(&mut hasher);
+        hasher.finish()
+    }
+
+    /// White-box: two slots at the same instant are equal and hash identically.
+    #[test]
+    fn equal_when_start_times_match() {
+        let instant = Utc::now();
+        let a = Availability { start_time: instant };
+        let b = Availability { start_time: instant };
+        assert!(a == b, "same start_time must be equal");
+        assert_eq!(hash_of(&a), hash_of(&b), "equal values must hash equally");
+    }
+
+    /// White-box: slots at different instants are not equal.
+    #[test]
+    fn unequal_when_start_times_differ() {
+        let a = Availability { start_time: Utc::now() };
+        let b = Availability {
+            start_time: Utc::now() + chrono::Duration::minutes(15),
+        };
+        assert!(a != b, "different start_time must not be equal");
+    }
+}

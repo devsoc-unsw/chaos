@@ -167,3 +167,125 @@ impl IntoResponse for ChaosError {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    // =========================================================================
+    // TEST PLAN – Equivalence Partitioning (EP) & Boundary Value Analysis (BVA)
+    // =========================================================================
+    //
+    // Functions under test
+    //   · <ChaosError as IntoResponse>::into_response(self) -> Response
+    //
+    // The contract under test is the mapping from each error class to an HTTP
+    // status code. The body is deliberately generic ("don't leak real error"),
+    // so only the status code is asserted.
+    //
+    // ── EQUIVALENCE PARTITIONING ──────────────────────────────────────────────
+    //
+    // into_response – error variant -> HTTP status
+    //
+    //  ID    Variant                             Expected status         Test
+    //  EP01  NotLoggedIn                         401 UNAUTHORIZED        maps_not_logged_in_to_401
+    //  EP02  Unauthorized                        403 FORBIDDEN           maps_authz_errors_to_403
+    //  EP03  ForbiddenOperation                  403 FORBIDDEN           maps_authz_errors_to_403
+    //  EP04  BadRequest                          400 BAD_REQUEST         maps_bad_request_family_to_400
+    //  EP05  BadRequestWithMessage               400 BAD_REQUEST         maps_bad_request_family_to_400
+    //  EP06  ApplicationClosed                   400 BAD_REQUEST         maps_bad_request_family_to_400
+    //  EP07  CampaignClosed                      400 BAD_REQUEST         maps_bad_request_family_to_400
+    //  EP08  NotFound                            404 NOT_FOUND           maps_not_found_to_404
+    //  EP09  DatabaseError(RowNotFound)          404 NOT_FOUND           maps_row_not_found_to_404
+    //  EP10  DatabaseError(other)                500 INTERNAL_SERVER_ERR db_error_other_than_row_not_found_is_500
+    //  EP11  InternalServerError                 500 INTERNAL_SERVER_ERR falls_through_to_500
+    //
+    // ── BOUNDARY VALUE ANALYSIS ───────────────────────────────────────────────
+    //
+    // DatabaseError sub-dispatch – the single special case is RowNotFound (404);
+    // every other sqlx::Error falls through to the 500 catch-all. RowNotFound vs
+    // any-other-DB-error is the boundary.
+    //
+    //  ID    Value                        Expected   Test                                     Status
+    //  BV01  DatabaseError(RowNotFound)   404        maps_row_not_found_to_404                OK
+    //  BV02  DatabaseError(PoolClosed)    500        db_error_other_than_row_not_found_is_500 OK
+    //
+    // ── KNOWN GAPS ────────────────────────────────────────────────────────────
+    //
+    //  · The response BODY (generic message strings) is not asserted. If a future
+    //    change accidentally leaked the underlying error text into the body, these
+    //    status-only tests would not catch it. print() (stdout only) is also
+    //    untested as it has no observable return contract.
+    // =========================================================================
+
+    use super::*;
+    use axum::http::StatusCode;
+
+    /// White-box: an unauthenticated error maps to 401.
+    #[test]
+    fn maps_not_logged_in_to_401() {
+        assert_eq!(
+            ChaosError::NotLoggedIn.into_response().status(),
+            StatusCode::UNAUTHORIZED
+        );
+    }
+
+    /// White-box: both authorisation errors map to 403 Forbidden.
+    #[test]
+    fn maps_authz_errors_to_403() {
+        assert_eq!(
+            ChaosError::Unauthorized.into_response().status(),
+            StatusCode::FORBIDDEN
+        );
+        assert_eq!(
+            ChaosError::ForbiddenOperation.into_response().status(),
+            StatusCode::FORBIDDEN
+        );
+    }
+
+    /// White-box: the whole bad-request family (incl. closed periods) maps to 400.
+    #[test]
+    fn maps_bad_request_family_to_400() {
+        for err in [
+            ChaosError::BadRequest,
+            ChaosError::BadRequestWithMessage("x".to_string()),
+            ChaosError::ApplicationClosed,
+            ChaosError::CampaignClosed,
+        ] {
+            assert_eq!(err.into_response().status(), StatusCode::BAD_REQUEST);
+        }
+    }
+
+    /// White-box: an explicit NotFound maps to 404.
+    #[test]
+    fn maps_not_found_to_404() {
+        assert_eq!(
+            ChaosError::NotFound.into_response().status(),
+            StatusCode::NOT_FOUND
+        );
+    }
+
+    /// White-box: the RowNotFound DB error is specially mapped to 404, not 500.
+    #[test]
+    fn maps_row_not_found_to_404() {
+        let err = ChaosError::DatabaseError(sqlx::Error::RowNotFound);
+        assert_eq!(err.into_response().status(), StatusCode::NOT_FOUND);
+    }
+
+    /// White-box: any other DB error falls through the catch-all to 500.
+    #[test]
+    fn db_error_other_than_row_not_found_is_500() {
+        let err = ChaosError::DatabaseError(sqlx::Error::PoolClosed);
+        assert_eq!(
+            err.into_response().status(),
+            StatusCode::INTERNAL_SERVER_ERROR
+        );
+    }
+
+    /// White-box: InternalServerError hits the final `_` arm as a 500.
+    #[test]
+    fn falls_through_to_500() {
+        assert_eq!(
+            ChaosError::InternalServerError.into_response().status(),
+            StatusCode::INTERNAL_SERVER_ERROR
+        );
+    }
+}
