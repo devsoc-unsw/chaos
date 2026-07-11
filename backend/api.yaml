@@ -2105,6 +2105,97 @@ paths:
         "401":
           $ref: "#/components/responses/NotLoggedIn"
 
+  /application/{application_id}/comment/{comment_id}/read:
+    patch:
+      operationId: markCommentRead
+      description: Mark a comment as read for the current application reviewer
+      tags:
+        - Comment
+      parameters:
+        - name: application_id
+          in: path
+          description: Application ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: comment_id
+          in: path
+          description: Comment ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully updated comment last read
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /application/{application_id}/comment/read_all:
+    patch:
+      operationId: markAllCommentsRead
+      description: Mark all comments on an application as read for the current application reviewer
+      tags:
+        - Comment
+      parameters:
+        - name: application_id
+          in: path
+          description: Application ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  message:
+                    type: string
+                    example: Successfully marked all comments read
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
+
+  /application/{application_id}/comment/unread_count:
+    get:
+      operationId: getUnreadCommentCount
+      description: Get the number of unread comments on an application for the current application reviewer
+      tags:
+        - Comment
+      parameters:
+        - name: application_id
+          in: path
+          description: Application ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  count:
+                    type: integer
+                    format: int64
+                    example: 3
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
+
   /campaign/{campaign_id}/avg_ratings:
     get:
       operationId: getApplicationAvgRatings
