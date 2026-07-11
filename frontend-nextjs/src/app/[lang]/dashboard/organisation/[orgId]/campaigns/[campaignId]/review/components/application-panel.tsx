@@ -1,12 +1,16 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ApplicationDetails,
   ApplicationStatus,
   getApplicationRoleStatuses,
 } from "@/models/application";
 import { getCategoryRatingsByApplication } from "@/models/rating";
+import {
+  getUnreadCommentCount,
+  markAllCommentsRead,
+} from "@/models/comment";
 import { useState, useMemo } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -66,6 +70,28 @@ export function ApplicationPanel({
     queryKey: [`${app.id}-application-role-statuses`],
     queryFn: () => getApplicationRoleStatuses(app.id),
   });
+
+  const queryClient = useQueryClient();
+
+  const { data: unreadComments } = useQuery({
+    queryKey: ["application-comments-unread", app.id],
+    queryFn: () => getUnreadCommentCount(app.id),
+  });
+  const unreadCount = unreadComments?.count ?? 0;
+
+  const { mutate: markCommentsRead } = useMutation({
+    mutationFn: () => markAllCommentsRead(app.id),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: ["application-comments-unread", app.id],
+      }),
+  });
+
+  // Opening the discussion marks the thread as read, clearing the unread badge.
+  const handleDiscussionOpenChange = (open: boolean) => {
+    setDiscussionOpen(open);
+    if (open) markCommentsRead();
+  };
 
   const avgRating = useMemo(() => {
     if (!allRatings || allRatings.length === 0) return 0;
@@ -152,16 +178,26 @@ export function ApplicationPanel({
             </button>
           ))}
         </div>
-        <Button
-          // variant="success"
+        <div className="relative shrink-0">
+          <Button
+            // variant="success"
 
-          size="sm"
-          onClick={() => setDiscussionOpen((o) => !o)}
-          className="gap-1.5 transition-colors"
-        >
-          <MessageSquare className="w-4 h-4" />
-          Discussion
-        </Button>
+            size="sm"
+            onClick={() => handleDiscussionOpenChange(!discussionOpen)}
+            className="gap-1.5 transition-colors"
+          >
+            <MessageSquare className="w-4 h-4" />
+            Discussion
+          </Button>
+          {unreadCount > 0 && (
+            <span
+              className="absolute -top-1.5 -right-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white shadow-sm"
+              aria-label={`${unreadCount} unread comments`}
+            >
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Tab content */}
@@ -190,7 +226,7 @@ export function ApplicationPanel({
       </div>
 
 
-      <Drawer direction="right" open={discussionOpen} onOpenChange={setDiscussionOpen}>
+      <Drawer direction="right" open={discussionOpen} onOpenChange={handleDiscussionOpenChange}>
         <DrawerContent
           className="sm:max-w-lg"
         >
