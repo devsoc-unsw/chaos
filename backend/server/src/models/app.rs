@@ -472,11 +472,11 @@ pub async fn app() -> Result<(Router, AppState), ChaosError> {
             get(RoleStatusHandler::get_role_statuses_for_application),
         )
         .route(
-            "/api/v1/campaign/:campaign_id/rolestatus/:campaign_role_id`",
+            "/api/v1/campaign/:campaign_id/rolestatus/:campaign_role_id",
             get(RoleStatusHandler::get_role_statuses_for_campaign_role),
         )
         .route(
-            "/api/v1/campaign/:campaign_id/rolestatus`",
+            "/api/v1/campaign/:campaign_id/rolestatus",
             get(RoleStatusHandler::get_role_statuses_for_campaign),
         )
         .route(
