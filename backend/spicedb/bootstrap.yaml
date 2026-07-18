@@ -53,3 +53,8 @@ schema: |-
 # Add initial local relationships here, one per line. Relationships created
 # through the API but not listed here are removed on the next SpiceDB startup.
 relationships: |-
+  organisation:org-1#admin@user:alice
+  organisation:org-1#member@user:bob
+  campaign:campaign-1#org@organisation:org-1
+  application:application-1#campaign@campaign:campaign-1
+  application:application-1#owner@user:charlie
