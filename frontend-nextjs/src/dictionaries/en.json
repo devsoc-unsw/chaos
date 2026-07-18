@@ -107,13 +107,14 @@
       "share_link": "Share Applicant Link",
       "grading_queue": "Grading Queue",
       "send_outcome_emails": "Send outcome emails",
-      "application_summary": "Masters List",
+      "application_summary": "Master List",
       "application_avg_ratings": "Application Average Ratings",
       "manage_questions": "Manage Questions",
       "publish": "Publish",
       "published": "Published",
       "draft": "Draft",
       "campaign_questions": "Campaign Questions",
+      "applicant_pipeline": "Applicant Pipeline",
       "no_roles_available": "No roles available",
       "no_rating_categories_available": "No rating categories available",
       "settings": {
@@ -138,8 +139,12 @@
         "delete_success": "The question has been deleted successfully."
       },
       "roles": {
-        "number_of_positions": "Number of Positions",
-        "add_role": "Add Role"
+        "role": "Role",
+        "position": "Position",
+        "applications": "Applications",
+        "assessment": "Assessment",
+        "offer": "Offer",
+        "hired": "Hired"
       },
       "application_review_page": {
         "no_application_selected": "No application selected",

@@ -1,8 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getCampaign, getCampaignRoles, getCampaignAttachments, publishCampaign } from "@/models/campaign";
-import { getRatingCategories, RatingCategory } from "@/models/rating";
+import { getCampaign, getCampaignRoles, getCampaignAttachments, publishCampaign, getCampaignApplications } from "@/models/campaign";
 import { Button } from "@/components/ui/button";
 import { Copy, SquarePen, Trash, FormIcon, FileText, Menu, Play, Link as LinkIcon } from "lucide-react";
 import { ButtonGroup } from "@/components/ui/button-group";
@@ -17,56 +16,28 @@ import {
 } from "@/components/ui/table"
 import Link from "next/link";
 import { getOrganisationUserRole } from "@/models/organisation";
-import { useEffect, useState } from "react";
-import { RoleDetails } from "@/models/campaign";
+import { useEffect, useMemo, useState } from "react";
 import { remark } from "remark";
 import html from "remark-html";
 import CopyButton from "@/components/copy-button";
 import { PublishCampaignDialog } from "./publish-campaign-dialog";
 import { getCurrentUser } from "@/lib/auth";
+import { getCampaignRoleStatuses } from "@/models/application";
+import { getOffersByCampaign } from "@/models/offer";
 
-
-
-interface ClientRole extends RoleDetails {
-  deleting: boolean;
-  new: boolean;
+interface RolePipeline {
+  applications: number;
+  assessment: number;
+  offer: number;
+  hired: number;
 }
 
-interface ClientCategory extends RatingCategory {
-  deleting: boolean;
-  new: boolean;
-}
-
-interface CampaignDetailsData {
-  campaignName?: string;
-  clientRoles?: ClientRole[];
-  description?: string;
-  startsAt?: Date;
-  endsAt?: Date;
-  clientCategories?: ClientCategory[];
-}
-
-export type CampaignUpdateKeys = keyof CampaignDetailsData | "roleName" | "roleMinAvailable" | "roleMaxAvailable" | "categoryName";
-
-function compareCampaignRoles(roles: RoleDetails[], clientRoles: ClientRole[]): boolean {
-  if (roles.length !== clientRoles.length) return false;
-  return roles.every(
-    (role, index) => role.id === clientRoles[index].id &&
-      role.name === clientRoles[index].name &&
-      role.description === clientRoles[index].description &&
-      role.min_available === clientRoles[index].min_available &&
-      role.max_available === clientRoles[index].max_available &&
-      role.finalised === clientRoles[index].finalised
-  );
-}
-
-function compareRatingCategories(categories: RatingCategory[], clientCategories: ClientCategory[]): boolean {
-  if (categories.length !== clientCategories.length) return false;
-  return categories.every(
-    (category, index) => category.id === clientCategories[index].id &&
-      category.name === clientCategories[index].name
-  );
-}
+const EMPTY_PIPELINE: RolePipeline = {
+  applications: 0,
+  assessment: 0,
+  offer: 0,
+  hired: 0,
+};
 
 export default function CampaignDetails({ campaignId, orgId, dict }: { campaignId: string, orgId: string, dict: any }) {
   const { data: campaign, refetch: refetchCampaign } = useQuery({
@@ -84,11 +55,6 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
     queryFn: () => getOrganisationUserRole(orgId),
   });
 
-  const { data: ratingCategories } = useQuery({
-    queryKey: [`${campaignId}-rating-categories`],
-    queryFn: () => getRatingCategories(campaignId),
-  });
-
   const { data: attachments } = useQuery({
     queryKey: [`${campaignId}-attachments`],
     queryFn: () => getCampaignAttachments(campaignId),
@@ -100,9 +66,62 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
     queryFn: () => getCurrentUser(),
   });
 
+  const { data: applications } = useQuery({
+    queryKey: [`${campaignId}-applications`],
+    queryFn: () => getCampaignApplications(campaignId),
+  });
+
+  const { data: roleStatuses } = useQuery({
+    queryKey: [`${campaignId}-role-statuses`],
+    queryFn: () => getCampaignRoleStatuses(campaignId),
+  });
+
+  const { data: offers } = useQuery({
+    queryKey: [`${campaignId}-offers`],
+    queryFn: () => getOffersByCampaign(campaignId),
+  });
+
+  // Pipeline counts per campaign role. An application can apply to multiple
+  // roles, so it counts towards each role it lists.
+  const pipelineByRole = useMemo(() => {
+    const counts = new Map<string, RolePipeline>();
+
+    const bucket = (roleId: string) => {
+      let entry = counts.get(roleId);
+      if (!entry) {
+        entry = { applications: 0, assessment: 0, offer: 0, hired: 0 };
+        counts.set(roleId, entry);
+      }
+      return entry;
+    };
+
+    for (const application of applications ?? []) {
+      for (const appliedRole of application.applied_roles) {
+        bucket(appliedRole.campaign_role_id).applications += 1;
+      }
+    }
+
+    for (const roleStatus of roleStatuses ?? []) {
+      if (roleStatus.status === "Interview") {
+        bucket(roleStatus.campaign_role_id).assessment += 1;
+      }
+    }
+
+    for (const offer of offers ?? []) {
+      // Drafts haven't been extended to the applicant yet
+      if (offer.status === "Draft") continue;
+
+      bucket(offer.role_id).offer += 1;
+      if (offer.status === "Accepted") {
+        bucket(offer.role_id).hired += 1;
+      }
+    }
+
+    return counts;
+  }, [applications, roleStatuses, offers]);
+
   const [hoveredDeleteIndex, setHoveredDeleteIndex] = useState<number | null>(null);
   const [descriptionHtmlState, setDescriptionHtmlState] = useState<string>("");
-  const [hoveredDeleteCategoryIndex, setHoveredDeleteCategoryIndex] = useState<number | null>(null);
 
   const handlePublish = async () => {
     try {
@@ -222,23 +241,40 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
         </div>
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="flex flex-col gap-6">
-          <section className="rounded-xl border bg-white p-4 shadow-sm sm:p-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">{dict.common.roles}</h2>
-              <span className="text-xs text-muted-foreground">{roles?.length ?? 0}</span>
-            </div>
-            <div className="mt-4 overflow-hidden rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted">
-                    <TableHead className="w-[160px]">{dict.common.name}</TableHead>
-                    <TableHead>{dict.dashboard.campaigns.roles.number_of_positions}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {roles?.map((role, index) => (
+      {/* Applicant Pipeline */}
+      <section>
+        <h2 className="text-lg font-semibold text-gray-900">{dict.dashboard.campaigns.applicant_pipeline}</h2>
+        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="mt-4 overflow-hidden rounded-lg border">
+            <Table>
+              <TableHeader >
+                <TableRow className="bg-muted">
+                  <TableHead className="w-[160px]">
+                    {dict.dashboard.campaigns.roles.role}
+                  </TableHead>
+                  <TableHead className="w-[160px]">
+                    {dict.dashboard.campaigns.roles.position}
+                  </TableHead>
+                  <TableHead className="w-[160px]">
+                    {dict.dashboard.campaigns.roles.applications}
+                  </TableHead>
+                  <TableHead className="w-[160px]">
+                    {dict.dashboard.campaigns.roles.assessment}
+                  </TableHead>
+                  <TableHead className="w-[160px]">
+                    {dict.dashboard.campaigns.roles.offer}
+                  </TableHead>
+                  <TableHead className="w-[160px]">
+                    {dict.dashboard.campaigns.roles.hired}
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {/* Role name e.g. "Freerooms" */}
+                {roles?.map((role, index) => {
+                  const pipeline =
+                    pipelineByRole.get(role.id) ?? EMPTY_PIPELINE;
+                  return (
                     <TableRow
                       key={role.id}
                       className={cn(
@@ -246,63 +282,54 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                         hoveredDeleteIndex === index && "bg-red-50! hover:bg-red-50!"
                       )}
                     >
-                      <TableCell className="font-medium">
+                      <TableCell>
                         {role.name}
                       </TableCell>
                       <TableCell>
+                        {/* Number of roles available */}
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           {role.min_available}
                           <span>-</span>
                           {role.max_available}
                         </div>
                       </TableCell>
-                    </TableRow>
-                  ))}
-                  {roles?.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={2} className="text-center">
-                        <p className="text-sm text-gray-600">{dict.dashboard.campaigns.no_roles_available}</p>
+                      <TableCell>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          {pipeline.applications}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          {pipeline.assessment}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          {pipeline.offer}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          {pipeline.hired}
+                        </div>
                       </TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </section>
-
-          <section className="rounded-xl border bg-white p-4 shadow-sm sm:p-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">{dict.common.rating_categories}</h2>
-              <span className="text-xs text-muted-foreground">{ratingCategories?.length ?? 0}</span>
-            </div>
-            <div className="mt-4 overflow-hidden rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted">
-                    <TableHead className="w-[160px]">{dict.common.name}</TableHead>
+                  );
+                })}
+                {roles?.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center">
+                      <p className="text-sm text-gray-600">{dict.dashboard.campaigns.no_roles_available}</p>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {ratingCategories?.map((category, index) => (
-                    <TableRow key={category.id} className={cn("group transition-colors", hoveredDeleteCategoryIndex === index && "bg-red-50! hover:bg-red-50!")}>
-                      <TableCell className="font-medium">
-                        {category.name}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {ratingCategories?.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={2} className="text-center">
-                        <p className="text-sm text-gray-600">{dict.dashboard.campaigns.no_rating_categories_available}</p>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </section>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
+      </section>
 
+      <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="flex flex-col gap-6">
           <section className="rounded-xl border bg-white p-4 shadow-sm sm:p-6">
             <div className="flex items-center gap-2">

@@ -162,6 +162,14 @@ export async function updateApplicationRoleStatus(
   );
 }
 
+export async function getCampaignRoleStatuses(
+  campaignId: string,
+): Promise<RoleStatus[]> {
+  return await apiRequest<RoleStatus[]>(
+    `/api/v1/campaign/${campaignId}/rolestatus`,
+  );
+}
+
 export async function getApplicationRoleStatusesBatch(
   applicationIds: string[],
 ): Promise<Record<string, RoleStatus[]>> {
