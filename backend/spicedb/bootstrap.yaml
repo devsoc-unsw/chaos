@@ -1,0 +1,55 @@
+# Local SpiceDB source of truth. Restarting the `spicedb` service overwrites
+# its stored schema and relationships with the contents of this file.
+schema: |-
+
+  definition user {}
+  
+  definition organisation {
+      relation admin: user
+      relation member: user
+      permission manage = admin
+      permission view = member + admin
+  }
+
+  definition campaign {
+      relation org: organisation
+      permission admin = org->admin
+      permission member = org->member
+      permission manage = admin
+      permission review = member
+  }
+
+  definition application {
+      relation campaign: campaign
+      relation owner: user
+      permission admin = campaign->admin
+      permission view = owner + campaign->member
+      permission edit = owner
+      permission review = campaign->member
+  }
+
+  definition rating {
+      relation application: application
+      relation creator: user
+      permission edit = creator + application->admin
+      permission view = application->view
+  }
+
+  definition comment {
+      relation application: application
+      relation author: user
+      permission edit = author
+      permission view = application->view
+  }
+
+  definition offer {
+      relation campaign: campaign
+      relation recipient: user
+      permission admin = campaign->admin
+      permission view = recipient + admin
+  }
+  
+
+# Add initial local relationships here, one per line. Relationships created
+# through the API but not listed here are removed on the next SpiceDB startup.
+relationships: |-

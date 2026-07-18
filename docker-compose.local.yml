@@ -14,13 +14,21 @@ services:
     environment:
       - NODE_ENV=development
       - DATABASE_URL=postgres://postgres:password@db:5432/chaos
+      # UPDATE: Use the same value as SPICEDB_GRPC_PRESHARED_KEY below.
+      - SPICEDB_GRPC_PRESHARED_KEY=replace-with-a-local-secret
+      - SPICEDB_GRPC_ENDPOINT=spicedb:50051
+      - SPICEDB_URL=http://spicedb:8443
+      - SPICEDB_KEY="replace-with-a-local-secret"
     networks:
       - chaos-network
 
     depends_on:
       db:
         condition: service_healthy
-
+      spicedb:
+        # The published SpiceDB image is minimal and does not include a shell or
+        # grpc_health_probe. Its own dependency still waits for migrations.
+        condition: service_started
 
   db:
     image: postgres:17
@@ -40,8 +48,85 @@ services:
       timeout: 5s
       retries: 5
 
+  # SpiceDB uses its own PostgreSQL database so its migrations and tables stay
+  # separate from the Chaos application database above.
+  spicedb-db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      # UPDATE: Change these development credentials if this stack is shared.
+      POSTGRES_USER: spicedb
+      POSTGRES_PASSWORD: spicedb
+      POSTGRES_DB: spicedb
+      POSTGRES_HOST_AUTH_METHOD: md5
+    # OPTIONAL: Remove this port mapping if PostgreSQL only needs to be reached
+    # by containers on chaos-network.
+    ports:
+      - "5434:5432"
+    networks:
+      - chaos-network
+    volumes:
+      - spicedb-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spicedb -d spicedb"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  # Run SpiceDB datastore migrations before starting the API service.
+  spicedb-migrate:
+    # UPDATE: Pin this to a tested release instead of `latest` for reproducible
+    # development environments.
+    image: authzed/spicedb:latest
+    command: datastore migrate head
+    environment:
+      SPICEDB_DATASTORE_ENGINE: postgres
+      # UPDATE: Keep this URI in sync with the spicedb-db credentials above.
+      SPICEDB_DATASTORE_CONN_URI: postgres://spicedb:spicedb@spicedb-db:5432/spicedb?sslmode=disable
+    networks:
+      - chaos-network
+    depends_on:
+      spicedb-db:
+        condition: service_healthy
+    restart: "no"
+
+  spicedb:
+    # UPDATE: Pin this to the same tested release as spicedb-migrate.
+    image: authzed/spicedb:latest
+    command: serve
+    restart: unless-stopped
+    environment:
+      SPICEDB_DATASTORE_ENGINE: postgres
+      # UPDATE: Keep this URI in sync with the spicedb-db credentials above.
+      SPICEDB_DATASTORE_CONN_URI: postgres://spicedb:spicedb@spicedb-db:5432/spicedb?sslmode=disable
+      # UPDATE: Replace this local-only key and keep the dev-container value in
+      # sync. Store it in an env file or secret manager outside local dev.
+      SPICEDB_GRPC_PRESHARED_KEY: replace-with-a-local-secret
+      SPICEDB_HTTP_ENABLED: "true"
+      SPICEDB_LOG_LEVEL: info
+      SPICEDB_LOG_FORMAT: console
+      # LOCAL DEVELOPMENT ONLY: Make the bootstrap file the source of truth.
+      # SpiceDB replaces existing schema and relationships on every startup.
+      SPICEDB_DATASTORE_BOOTSTRAP_FILES: /bootstrap/bootstrap.yaml
+      SPICEDB_DATASTORE_BOOTSTRAP_OVERWRITE: "true"
+      # OPTIONAL: Remove to allow SpiceDB's default telemetry endpoint.
+      SPICEDB_TELEMETRY_ENDPOINT: ""
+    volumes:
+      - ./backend/spicedb/bootstrap.yaml:/bootstrap/bootstrap.yaml:ro
+    ports:
+      - "50051:50051" # gRPC API
+      - "8443:8443" # HTTP gateway
+      # OPTIONAL: Uncomment when host access to Prometheus metrics is needed.
+      # - "9090:9090"
+    networks:
+      - chaos-network
+    depends_on:
+      spicedb-migrate:
+        condition: service_completed_successfully
+
 volumes:
   chaos-postgres-data:
+  spicedb-postgres-data:
 
 networks:
   chaos-network:
