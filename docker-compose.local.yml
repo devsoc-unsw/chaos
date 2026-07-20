@@ -107,12 +107,12 @@ services:
       SPICEDB_LOG_FORMAT: console
       # LOCAL DEVELOPMENT ONLY: Make the bootstrap file the source of truth.
       # SpiceDB replaces existing schema and relationships on every startup.
-      SPICEDB_DATASTORE_BOOTSTRAP_FILES: /bootstrap/bootstrap.yaml
+      SPICEDB_DATASTORE_BOOTSTRAP_FILES: /bootstrap/schema.yaml
       SPICEDB_DATASTORE_BOOTSTRAP_OVERWRITE: "true"
       # OPTIONAL: Remove to allow SpiceDB's default telemetry endpoint.
       SPICEDB_TELEMETRY_ENDPOINT: ""
     volumes:
-      - ./backend/spicedb/bootstrap.yaml:/bootstrap/bootstrap.yaml:ro
+      - ./backend/spicedb/schema.yaml:/bootstrap/schema.yaml:ro
     ports:
       - "50051:50051" # gRPC API
       - "8443:8443" # HTTP gateway
