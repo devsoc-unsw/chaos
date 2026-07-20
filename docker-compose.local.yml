@@ -16,9 +16,9 @@ services:
       - DATABASE_URL=postgres://postgres:password@db:5432/chaos
       # UPDATE: Use the same value as SPICEDB_GRPC_PRESHARED_KEY below.
       - SPICEDB_GRPC_PRESHARED_KEY=replace-with-a-local-secret
-      - SPICEDB_GRPC_ENDPOINT=spicedb:50051
+      - SPICEDB_GRPC_ENDPOINT=http://spicedb:50051
       - SPICEDB_URL=http://spicedb:8443
-      - SPICEDB_KEY="replace-with-a-local-secret"
+      - SPICEDB_KEY=replace-with-a-local-secret
     networks:
       - chaos-network
 

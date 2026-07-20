@@ -7,6 +7,7 @@ mod constants;
 mod handler;
 mod models;
 mod service;
+mod spicedb;
 
 #[tokio::main]
 async fn main() -> Result<(), ChaosError> {
