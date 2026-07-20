@@ -12,41 +12,38 @@ schema: |-
   }
 
   definition campaign {
-      relation org: organisation
-      permission admin = org->admin
-      permission member = org->member
-      permission manage = admin
-      permission review = member
+      relation organisation: organisation
+      permission manage = organisation->admin
+      permission review = organisation->member
   }
 
   definition application {
       relation campaign: campaign
-      relation owner: user
-      permission admin = campaign->admin
-      permission view = owner + campaign->member
-      permission edit = owner
-      permission review = campaign->member
+      relation creator: user
+      permission view = creator + campaign->review
+      permission edit = creator
+      permission review = campaign->review
   }
 
   definition rating {
       relation application: application
       relation creator: user
-      permission edit = creator + application->admin
-      permission view = application->view
+      permission edit = creator
+      permission view = application->review
   }
 
   definition comment {
       relation application: application
-      relation author: user
-      permission edit = author
-      permission view = application->view
+      relation creator: user
+      permission edit = creator
+      permission view = application->review
   }
 
   definition offer {
       relation campaign: campaign
       relation recipient: user
-      permission admin = campaign->admin
-      permission view = recipient + admin
+      permission admin = campaign->manage
+      permission view = recipient + campaign->review
   }
   
 
@@ -55,6 +52,6 @@ schema: |-
 relationships: |-
   organisation:org-1#admin@user:alice
   organisation:org-1#member@user:bob
-  campaign:campaign-1#org@organisation:org-1
+  campaign:campaign-1#organisation@organisation:org-1
   application:application-1#campaign@campaign:campaign-1
-  application:application-1#owner@user:charlie
+  application:application-1#creator@user:charlie
