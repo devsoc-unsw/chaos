@@ -34,7 +34,7 @@ jobs:
           submodules: true
           token: ${{ github.token }}
       - name: Setup cargo cache
-        uses: actions/cache@v3
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/bin/
@@ -59,7 +59,7 @@ jobs:
         with:
           install: true
       - name: Cache Docker layers
-        uses: actions/cache@v3
+        uses: actions/cache@v6
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-multi-buildx-${{ github.sha }}
