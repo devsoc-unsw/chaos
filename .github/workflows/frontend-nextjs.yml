@@ -20,7 +20,7 @@ jobs:
         working-directory: ./frontend-nextjs
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
