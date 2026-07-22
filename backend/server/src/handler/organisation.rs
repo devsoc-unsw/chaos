@@ -48,7 +48,7 @@ impl OrganisationHandler {
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewOrganisation>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Organisation::create(
+        let organisation_id = Organisation::create(
             data.admin,
             data.slug,
             data.name,
@@ -59,7 +59,15 @@ impl OrganisationHandler {
         )
         .await?;
 
-        transaction.tx.commit().await?;
+        transaction.create_relationship(
+            "chaos/organisation",
+            organisation_id,
+            "admin",
+            "chaos/user",
+            data.admin,
+        );
+
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully created organisation"))
     }
 
@@ -83,7 +91,7 @@ impl OrganisationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Organisation::check_slug_availability(data.slug, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Organisation slug is available"))
     }
 
@@ -106,7 +114,7 @@ impl OrganisationHandler {
         _user: AuthUser,
     ) -> Result<impl IntoResponse, ChaosError> {
         let org = Organisation::get(id, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(org)))
     }
 
@@ -130,7 +138,7 @@ impl OrganisationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         let org = Organisation::get_by_slug(slug, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(org)))
     }
 
@@ -154,7 +162,7 @@ impl OrganisationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Organisation::delete(id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully deleted organisation"))
     }
 
@@ -177,7 +185,7 @@ impl OrganisationHandler {
             Err(e) => Err(e),
         }?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(orgs)))
     }
 
@@ -201,7 +209,7 @@ impl OrganisationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         let members = Organisation::get_admins(id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(members)))
     }
 
@@ -225,7 +233,7 @@ impl OrganisationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         let members = Organisation::get_users(id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(members)))
     }
 
@@ -249,7 +257,7 @@ impl OrganisationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         let members = Organisation::get_members(id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(members)))
     }
 
@@ -275,7 +283,7 @@ impl OrganisationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Organisation::update_admins(id, request_body.members, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage(
             "Successfully updated organisation members",
         ))
@@ -303,7 +311,7 @@ impl OrganisationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Organisation::update_members(id, request_body.members, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage(
             "Successfully updated organisation members",
         ))
@@ -324,7 +332,7 @@ impl OrganisationHandler {
         )
         .await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully updated member role"))
     }
 
@@ -350,7 +358,7 @@ impl OrganisationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Organisation::remove_admin(id, request_body.user_id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage(
             "Successfully removed member from organisation",
         ))
@@ -378,7 +386,7 @@ impl OrganisationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Organisation::remove_user(id, request_body.user_id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage(
             "Successfully removed member from organisation",
         ))
@@ -402,7 +410,7 @@ impl OrganisationHandler {
         )
         .await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage(invite_code))
     }
 
@@ -428,7 +436,7 @@ impl OrganisationHandler {
         let logo_url =
             Organisation::update_logo(id, &mut transaction.tx, &state.storage_bucket).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(logo_url)))
     }
 
@@ -452,7 +460,7 @@ impl OrganisationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         let campaigns = Organisation::get_campaigns(id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(campaigns)))
     }
 
@@ -494,7 +502,15 @@ impl OrganisationHandler {
         )
         .await?;
 
-        transaction.tx.commit().await?;
+        transaction.create_relationship(
+            "chaos/campaign",
+            new_campaign_id,
+            "organisation",
+            "chaos/organisation",
+            id,
+        );
+
+        transaction.commit().await?;
         Ok((
             StatusCode::OK,
             Json(IdMessage {
@@ -525,7 +541,7 @@ impl OrganisationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Campaign::check_slug_availability(organisation_id, data.slug, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Campaign slug is available"))
     }
 
@@ -560,7 +576,7 @@ impl OrganisationHandler {
         )
         .await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully created email template"))
     }
 
@@ -585,7 +601,7 @@ impl OrganisationHandler {
         let email_templates =
             EmailTemplate::get_all_by_organisation(id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(email_templates)))
     }
 
@@ -596,7 +612,7 @@ impl OrganisationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         let role = Organisation::get_user_role(id, user.user_id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(json!({ "role": role }))))
     }
 }

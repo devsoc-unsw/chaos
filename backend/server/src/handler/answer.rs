@@ -54,7 +54,7 @@ impl AnswerHandler {
         )
         .await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok((StatusCode::OK, Json(IdMessage { id })))
     }
@@ -80,7 +80,7 @@ impl AnswerHandler {
         let answers =
             Answer::get_all_common_by_application(application_id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(Json(answers))
     }
@@ -108,7 +108,7 @@ impl AnswerHandler {
             Answer::get_all_by_application_and_role(application_id, role_id, &mut transaction.tx)
                 .await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(Json(answers))
     }
@@ -138,7 +138,7 @@ impl AnswerHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Answer::update(answer_id, new_answer.data, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(AppMessage::OkMessage("Successfully updated answer"))
     }
@@ -166,7 +166,7 @@ impl AnswerHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Answer::delete(answer_id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(AppMessage::OkMessage("Successfully deleted answer"))
     }

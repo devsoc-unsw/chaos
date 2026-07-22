@@ -79,7 +79,7 @@ impl AvailabilitiesHandler {
 
         let res = Availabilities::get_availability_slots(uc_id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok((
             StatusCode::OK,
@@ -143,7 +143,7 @@ impl AvailabilitiesHandler {
 
         Availabilities::create_availability_slots(uc_id, to_add, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully updated availabilities"))
     }
 }

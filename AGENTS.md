@@ -56,6 +56,11 @@ The backend follows a clean architecture pattern with three main layers:
 **Key Patterns**:
 
 - Database transactions are handled via `DBTransaction` wrapper
+- **Authorization (SpiceDB)**: Authorization checks use SpiceDB, not custom Postgres checks:
+  - Handlers authorize requests with the `SpiceDbAuth<P>` extractor (`backend/server/src/spicedb/mod.rs`), where `P` is a zero-sized policy type from `backend/server/src/spicedb/policies.rs` implementing `SpiceDbPolicy` (resource type, permission, path parameter). Add new policies there as plain impls.
+  - For resources whose ID is not a path parameter, call `AppState::check_permission` directly in the handler.
+  - Compound rules (e.g. "owner or reviewer") belong in the SpiceDB schema as a single permission, not in Rust code.
+- **SpiceDB relationship writes**: Queue relationship writes on `DBTransaction` with `create_relationship`/`delete_relationship` alongside the Postgres changes; `DBTransaction::commit()` applies them (SpiceDB batch first, then Postgres, with best-effort inverse compensation if Postgres fails). Always call `transaction.commit()` instead of `transaction.tx.commit()` so queued writes flush.
 - Authentication uses JWT tokens with Google OAuth2 integration
 - File storage uses S3-compatible services
 - Email functionality via Lettre library

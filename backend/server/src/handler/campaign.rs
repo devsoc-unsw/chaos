@@ -56,7 +56,7 @@ impl CampaignHandler {
             &state.storage_bucket,
         )
         .await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((
             StatusCode::OK,
             Json(CampaignDetailsResponse {
@@ -96,7 +96,7 @@ impl CampaignHandler {
         )
         .await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((
             StatusCode::OK,
             Json(CampaignDetailsResponse {
@@ -123,7 +123,7 @@ impl CampaignHandler {
         _user: AuthUser,
     ) -> Result<impl IntoResponse, ChaosError> {
         let campaigns = Campaign::get_all(&mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(campaigns)))
     }
 
@@ -147,7 +147,7 @@ impl CampaignHandler {
         Json(request_body): Json<models::campaign::CampaignUpdate>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Campaign::update(auth.resource_id, request_body, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully updated campaign"))
     }
 
@@ -169,7 +169,7 @@ impl CampaignHandler {
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Campaign::publish(auth.resource_id, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully published campaign"))
     }
 
@@ -195,7 +195,7 @@ impl CampaignHandler {
         let banner_url =
             Campaign::update_banner(auth.resource_id, &mut transaction.tx, &state.storage_bucket)
                 .await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(banner_url)))
     }
 
@@ -217,7 +217,7 @@ impl CampaignHandler {
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Campaign::delete(auth.resource_id, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully deleted campaign"))
     }
 
@@ -249,7 +249,7 @@ impl CampaignHandler {
             &mut state.snowflake_generator,
         )
         .await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully created role"))
     }
 
@@ -272,7 +272,7 @@ impl CampaignHandler {
         _user: AuthUser,
     ) -> Result<impl IntoResponse, ChaosError> {
         let roles = Role::get_all_in_campaign(id, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(roles)))
     }
 
@@ -308,7 +308,7 @@ impl CampaignHandler {
             &mut transaction.tx,
         )
         .await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully created application"))
     }
 
@@ -332,7 +332,7 @@ impl CampaignHandler {
         let applications =
             Application::get_from_campaign_id(auth.resource_id, auth.user_id, &mut transaction.tx)
                 .await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(applications)))
     }
 
@@ -367,7 +367,7 @@ impl CampaignHandler {
             &mut state.snowflake_generator,
         )
         .await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(AppMessage::OkMessage("Successfully created offer"))
     }
@@ -390,7 +390,7 @@ impl CampaignHandler {
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let offers = Offer::get_by_campaign(auth.resource_id, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok((StatusCode::OK, Json(offers)))
     }
@@ -440,7 +440,7 @@ impl CampaignHandler {
             });
         }
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(responses)))
     }
 
@@ -474,7 +474,7 @@ impl CampaignHandler {
             &state.storage_bucket,
         )
         .await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(upload_results)))
     }
 
@@ -517,7 +517,7 @@ impl CampaignHandler {
         );
         Storage::delete_file(storage_path, &state.storage_bucket).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(())
     }
 }

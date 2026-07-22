@@ -75,10 +75,35 @@ use crate::{
     service::auth::extract_user_id_from_request,
     spicedb::authzed::api::v1::{
         check_permission_response::Permissionship, consistency::Requirement,
-        permissions_service_client::PermissionsServiceClient, CheckPermissionRequest, Consistency,
-        ObjectReference, SubjectReference,
+        permissions_service_client::PermissionsServiceClient, relationship_update::Operation,
+        CheckPermissionRequest, Consistency, ObjectReference, Relationship, RelationshipUpdate,
+        SubjectReference, WriteRelationshipsRequest,
     },
 };
+
+/// Builds a SpiceDB request with the bearer-token metadata attached.
+///
+/// # Arguments
+///
+/// * `message` - The protobuf request body
+/// * `key` - Bearer token used to authenticate with SpiceDB
+///
+/// # Returns
+///
+/// * `Ok(Request<T>)` with the `authorization` metadata set
+/// * `Err(ChaosError::InternalServerError)` if the key is not valid metadata
+fn authorized_request<T>(message: T, key: &str) -> Result<Request<T>, ChaosError> {
+    let mut request = Request::new(message);
+
+    let authorization = format!("Bearer {key}")
+        .parse::<MetadataValue<_>>()
+        .map_err(|_| ChaosError::InternalServerError)?;
+    request
+        .metadata_mut()
+        .insert("authorization", authorization);
+
+    Ok(request)
+}
 
 /// Checks whether a user holds a permission on a SpiceDB resource.
 ///
@@ -111,32 +136,28 @@ pub async fn check_permission(
     resource_id: i64,
     permission: &str,
 ) -> Result<(), ChaosError> {
-    let mut request = Request::new(CheckPermissionRequest {
-        consistency: Some(Consistency {
-            requirement: Some(Requirement::MinimizeLatency(true)),
-        }),
-        resource: Some(ObjectReference {
-            object_type: resource_type.to_owned(),
-            object_id: resource_id.to_string(),
-        }),
-        permission: permission.to_owned(),
-        subject: Some(SubjectReference {
-            object: Some(ObjectReference {
-                object_type: "chaos/user".to_owned(),
-                object_id: user_id.to_string(),
+    let request = authorized_request(
+        CheckPermissionRequest {
+            consistency: Some(Consistency {
+                requirement: Some(Requirement::MinimizeLatency(true)),
             }),
-            optional_relation: String::new(),
-        }),
-        context: None,
-        with_tracing: false,
-    });
-
-    let authorization = format!("Bearer {key}")
-        .parse::<MetadataValue<_>>()
-        .map_err(|_| ChaosError::InternalServerError)?;
-    request
-        .metadata_mut()
-        .insert("authorization", authorization);
+            resource: Some(ObjectReference {
+                object_type: resource_type.to_owned(),
+                object_id: resource_id.to_string(),
+            }),
+            permission: permission.to_owned(),
+            subject: Some(SubjectReference {
+                object: Some(ObjectReference {
+                    object_type: "chaos/user".to_owned(),
+                    object_id: user_id.to_string(),
+                }),
+                optional_relation: String::new(),
+            }),
+            context: None,
+            with_tracing: false,
+        },
+        key,
+    )?;
 
     let response = client
         .clone()
@@ -149,6 +170,117 @@ pub async fn check_permission(
         Ok(Permissionship::HasPermission) => Ok(()),
         _ => Err(ChaosError::ForbiddenOperation),
     }
+}
+
+/// Builds a SpiceDB relationship update for the relationship
+/// `<resource_type>:<resource_id>#<relation>@<subject_type>:<subject_id>`,
+/// e.g. `chaos/campaign:123#organisation@chaos/organisation:5`.
+///
+/// # Arguments
+///
+/// * `operation` - Whether to create or delete the relationship
+/// * `resource_type` - SpiceDB object type of the resource, such as `chaos/campaign`
+/// * `resource_id` - Chaos ID of the resource
+/// * `relation` - SpiceDB relation on the resource, such as `organisation`
+/// * `subject_type` - SpiceDB object type of the subject, such as `chaos/user`
+/// * `subject_id` - Chaos ID of the subject
+///
+/// # Returns
+///
+/// * The populated [`RelationshipUpdate`], ready to queue or write
+pub fn new_relationship_update(
+    operation: Operation,
+    resource_type: &str,
+    resource_id: i64,
+    relation: &str,
+    subject_type: &str,
+    subject_id: i64,
+) -> RelationshipUpdate {
+    RelationshipUpdate {
+        operation: operation as i32,
+        relationship: Some(Relationship {
+            resource: Some(ObjectReference {
+                object_type: resource_type.to_owned(),
+                object_id: resource_id.to_string(),
+            }),
+            relation: relation.to_owned(),
+            subject: Some(SubjectReference {
+                object: Some(ObjectReference {
+                    object_type: subject_type.to_owned(),
+                    object_id: subject_id.to_string(),
+                }),
+                optional_relation: String::new(),
+            }),
+            optional_caveat: None,
+            optional_expires_at: None,
+        }),
+    }
+}
+
+/// Builds the inverse of a relationship update (create becomes delete and vice
+/// versa), used to compensate writes that must be undone.
+///
+/// # Arguments
+///
+/// * `update` - The update to invert
+///
+/// # Returns
+///
+/// * `Some` inverse update for create/delete updates, `None` for anything else
+pub fn invert_relationship_update(update: &RelationshipUpdate) -> Option<RelationshipUpdate> {
+    let operation = match Operation::try_from(update.operation) {
+        Ok(Operation::Create) => Operation::Delete,
+        Ok(Operation::Delete) => Operation::Create,
+        _ => return None,
+    };
+
+    Some(RelationshipUpdate {
+        operation: operation as i32,
+        relationship: update.relationship.clone(),
+    })
+}
+
+/// Writes a batch of relationship updates to SpiceDB atomically.
+///
+/// All updates in the batch are applied in a single SpiceDB transaction, so
+/// either every update lands or none do. Note that creating a relationship
+/// that already exists, or deleting one that does not, fails the whole batch.
+///
+/// # Arguments
+///
+/// * `client` - Shared SpiceDB permissions client from [`AppState`]
+/// * `key` - Bearer token used to authenticate with SpiceDB
+/// * `updates` - The relationship updates to apply; an empty batch is a no-op
+///
+/// # Returns
+///
+/// * `Ok(())` if the batch was applied
+/// * `Err(ChaosError::InternalServerError)` if the SpiceDB call fails
+pub async fn write_relationships(
+    client: &PermissionsServiceClient<Channel>,
+    key: &str,
+    updates: Vec<RelationshipUpdate>,
+) -> Result<(), ChaosError> {
+    if updates.is_empty() {
+        return Ok(());
+    }
+
+    let request = authorized_request(
+        WriteRelationshipsRequest {
+            updates,
+            optional_preconditions: Vec::new(),
+            optional_transaction_metadata: None,
+        },
+        key,
+    )?;
+
+    client
+        .clone()
+        .write_relationships(request)
+        .await
+        .map_err(|_| ChaosError::InternalServerError)?;
+
+    Ok(())
 }
 
 impl AppState {

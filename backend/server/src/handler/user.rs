@@ -37,7 +37,7 @@ impl UserHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         let user = User::get(user.user_id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(user)))
     }
 
@@ -61,7 +61,7 @@ impl UserHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         User::update_name(user.user_id, request_body.name, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Updated username"))
     }
 
@@ -85,7 +85,7 @@ impl UserHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         User::update_pronouns(user.user_id, request_body.pronouns, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Updated pronouns"))
     }
 
@@ -109,7 +109,7 @@ impl UserHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         User::update_gender(user.user_id, request_body.gender, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Updated gender"))
     }
 
@@ -133,7 +133,7 @@ impl UserHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         User::update_zid(user.user_id, request_body.zid, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Updated zid"))
     }
 
@@ -163,7 +163,7 @@ impl UserHandler {
         )
         .await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Updated user degree"))
     }
 
@@ -173,7 +173,7 @@ impl UserHandler {
         user: AuthUser,
     ) -> Result<impl IntoResponse, ChaosError> {
         let user = User::get(user.user_id, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         let is_superuser = matches!(user.role, UserRole::SuperUser);
         Ok((
             StatusCode::OK,
