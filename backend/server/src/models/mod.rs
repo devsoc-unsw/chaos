@@ -12,6 +12,7 @@ pub mod app;
 pub mod application;
 pub mod auth;
 pub mod campaign;
+pub mod comment_last_read;
 pub mod comment;
 pub mod email;
 pub mod email_template;

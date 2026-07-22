@@ -98,7 +98,9 @@ export default function ReviewCampaignApplications({
           </h1>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>{campaign?.name}</span>
-            <span>
+            {/* Dates are formatted in the viewer's local timezone, so the SSR (UTC)
+                and client-rendered text intentionally differ */}
+            <span suppressHydrationWarning>
               {dateToString(campaign?.starts_at ?? "")} –{" "}
               {dateToString(campaign?.ends_at ?? "")}
             </span>

@@ -505,6 +505,18 @@ pub async fn app() -> Result<(Router, AppState), ChaosError> {
             delete(CommentHandler::delete_comment),
         )
         .route(
+            "/api/v1/application/:application_id/comment/:comment_id/read",
+            patch(CommentHandler::mark_comment_read),
+        )
+        .route(
+            "/api/v1/application/:application_id/comment/read_all",
+            patch(CommentHandler::mark_all_comments_read),
+        )
+        .route(
+            "/api/v1/application/:application_id/comment/unread_count",
+            get(CommentHandler::get_unread_comment_count),
+        )
+        .route(
             "/api/v1/application/:application_id/comment",
             get(CommentHandler::get_comments_by_application),
         )
