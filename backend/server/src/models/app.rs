@@ -18,6 +18,7 @@ use crate::models::email::{ChaosEmail, EmailCredentials};
 use crate::models::error::ChaosError;
 use crate::models::storage::Storage;
 use crate::service::oauth2::build_oauth_client;
+use crate::spicedb::authzed::api::v1::permissions_service_client::PermissionsServiceClient;
 use axum::http::{header, Method, StatusCode};
 use axum::response::IntoResponse;
 use axum::routing::{delete, get, patch, post, put};
@@ -31,6 +32,7 @@ use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 use std::env;
+use tonic::transport::Channel;
 use tower_http::cors::CorsLayer;
 
 #[derive(Serialize)]
@@ -107,6 +109,10 @@ pub struct AppState {
     pub storage_bucket: Bucket,
     pub is_dev_env: bool,
     pub email_credentials: EmailCredentials,
+    /// Shared generated gRPC client for SpiceDB permission operations.
+    pub spicedb: PermissionsServiceClient<Channel>,
+    /// Bearer key attached to authenticated SpiceDB requests.
+    pub spicedb_key: String,
 }
 
 pub async fn init_app_state() -> AppState {
@@ -163,6 +169,16 @@ pub async fn init_app_state() -> AppState {
     // Initialise email credentials
     let email_credentials = ChaosEmail::setup_credentials();
 
+    // Initialise the generated SpiceDB gRPC client. The lazy channel is shared
+    // by cheap client clones and connects when the first RPC is made.
+    let spicedb_endpoint =
+        env::var("SPICEDB_GRPC_ENDPOINT").expect("SPICEDB_GRPC_ENDPOINT must be set");
+    let spicedb_key = env::var("SPICEDB_KEY").expect("SPICEDB_KEY must be set");
+    let spicedb_channel = Channel::from_shared(spicedb_endpoint)
+        .expect("SPICEDB_GRPC_ENDPOINT must be a valid URI")
+        .connect_lazy();
+    let spicedb = PermissionsServiceClient::new(spicedb_channel);
+
     // Add all data to AppState
 
     AppState {
@@ -177,6 +193,8 @@ pub async fn init_app_state() -> AppState {
         storage_bucket,
         is_dev_env,
         email_credentials,
+        spicedb,
+        spicedb_key,
     }
 }
 

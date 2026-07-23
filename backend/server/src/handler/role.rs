@@ -39,7 +39,7 @@ impl RoleHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         let role = Role::get(id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(role)))
     }
 
@@ -63,7 +63,7 @@ impl RoleHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Role::delete(id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully deleted role"))
     }
 
@@ -89,7 +89,7 @@ impl RoleHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Role::update(id, data, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully updated role"))
     }
 
@@ -113,7 +113,7 @@ impl RoleHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         let applications =
             Application::get_from_role_id(id, admin.user_id, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(applications)))
     }
 }

@@ -51,7 +51,7 @@ impl ApplicationHandler {
             &mut transaction.tx,
         )
         .await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(Json(
             json!({ "application_id": application_id.to_string() }),
@@ -78,7 +78,7 @@ impl ApplicationHandler {
             Application::check_application_exists(campaign_id, user.user_id, &mut transaction.tx)
                 .await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(Json(json!({ "application_exists": application_exists })))
     }
 
@@ -102,7 +102,7 @@ impl ApplicationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         let application =
             Application::get(application_id, admin.user_id, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(application)))
     }
 
@@ -126,7 +126,7 @@ impl ApplicationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         let application =
             Application::get_in_progress(application_id, user.user_id, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(Json(application))
     }
 
@@ -151,7 +151,7 @@ impl ApplicationHandler {
         Json(data): Json<ApplicationStatus>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Application::set_status(application_id, data, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Status successfully updated"))
     }
 
@@ -176,7 +176,7 @@ impl ApplicationHandler {
         Json(data): Json<ApplicationStatus>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Application::set_private_status(application_id, data, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Private Status successfully updated"))
     }
 
@@ -198,7 +198,7 @@ impl ApplicationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         let applications =
             Application::get_from_user_id(user.user_id, user.user_id, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(Json(applications))
     }
 
@@ -222,7 +222,7 @@ impl ApplicationHandler {
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let roles = Application::get_roles(application_id, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(Json(roles))
     }
@@ -249,7 +249,7 @@ impl ApplicationHandler {
         Json(data): Json<ApplicationRoleUpdate>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Application::update_roles(application_id, data.roles, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage(
             "Successfully updated application roles",
         ))
@@ -277,7 +277,7 @@ impl ApplicationHandler {
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Application::submit(application_id, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully submitted application"))
     }
 
@@ -301,7 +301,7 @@ impl ApplicationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         let rating =
             Rating::get_rating_details(application_id, admin.user_id, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(rating)))
     }
 
@@ -349,7 +349,7 @@ impl ApplicationHandler {
             .await?;
         }
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully created rating"))
     }
 
@@ -391,7 +391,7 @@ impl ApplicationHandler {
             .await?;
         }
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully updated rating"))
     }
 
@@ -416,7 +416,7 @@ impl ApplicationHandler {
         let ratings =
             Rating::get_all_ratings_from_application_id(application_id, &mut transaction.tx)
                 .await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(ratings)))
     }
 
@@ -440,7 +440,7 @@ impl ApplicationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         let avg_applications_ratings =
             Application::get_application_ratings_summary(campaign_id, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(Json(avg_applications_ratings))
     }

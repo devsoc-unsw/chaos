@@ -68,7 +68,7 @@ impl OfferHandler {
         _user: OfferAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
         let offer = Offer::get(id, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok((StatusCode::OK, Json(offer)))
     }
@@ -92,7 +92,7 @@ impl OfferHandler {
         _user: OfferAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
         Offer::delete(id, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(AppMessage::OkMessage("Successfully deleted offer"))
     }
@@ -118,7 +118,7 @@ impl OfferHandler {
         Json(reply): Json<OfferReply>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Offer::reply(id, reply.accept, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(AppMessage::OkMessage("Successfully accepted offer"))
     }
@@ -142,7 +142,7 @@ impl OfferHandler {
         _user: OfferAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
         let email_parts = Offer::preview_email(id, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok((StatusCode::OK, Json(email_parts)))
     }
@@ -168,7 +168,7 @@ impl OfferHandler {
         State(state): State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Offer::send_offer(id, &mut transaction.tx, state.email_credentials).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(AppMessage::OkMessage("Successfully sent offer"))
     }
@@ -230,7 +230,7 @@ impl OfferHandler {
             }
         }
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage(format!(
             "Queued {count} email(s) for delivery"
         )))

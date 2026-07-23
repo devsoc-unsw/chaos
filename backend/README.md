@@ -72,3 +72,9 @@ Request -> Middleware (optional) -> Handler -> Service -> Middleware (Optional) 
 
 ### Storage
 - Object storage
+
+### Setup the Rust Authzed API
+- Run brew install bufbuild/buf/buf
+- Then run this bash "buf generate buf.build/authzed/api:main \
+  --include-imports \
+  --template buf.gen.yaml"
