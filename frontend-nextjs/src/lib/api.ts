@@ -95,10 +95,20 @@ export async function apiRequest<T>(
       }
     }
 
+    let backendMessage: string | undefined;
+    try {
+      const errorBody = await response.json();
+      if (typeof errorBody?.error === "string") {
+        backendMessage = errorBody.error;
+      }
+    } catch {
+      // if response body wasn't JSON, fall back to the generic message below
+    }
+
     throw new ApiError(
       response.status,
       response.statusText,
-      `API request failed: ${method} ${path}`
+      backendMessage || `API request failed: ${method} ${path}`
     );
   }
 
