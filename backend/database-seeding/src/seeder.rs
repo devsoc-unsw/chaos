@@ -377,7 +377,7 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
             applied_roles: vec![ApplicationRole {
                 application_id: 0,
                 campaign_role_id: role_id_1,
-                preference: 1,
+                preference_percentage: 100,
             }],
         },
         &mut seeder.app_state.snowflake_generator,
@@ -393,7 +393,7 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
             applied_roles: vec![ApplicationRole {
                 application_id: 0,
                 campaign_role_id: role_id_2,
-                preference: 1,
+                preference_percentage: 100,
             }],
         },
         &mut seeder.app_state.snowflake_generator,
