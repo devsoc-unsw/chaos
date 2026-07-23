@@ -69,6 +69,8 @@
         "empty_available_roles": "All roles selected",
         "selected_roles": "Selected Roles",
         "available_roles": "Available Roles",
+        "preference_total_error": "Your total is {total}/100 it should be 100%",
+        "unselecting_role": "Unselecting this role will remove all answers for it.",
         "no_role_specific_qs": "No role-specific questions",
         "your_answer": "Your answer",
         "no_answer": "No answer",
