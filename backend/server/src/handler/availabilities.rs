@@ -147,3 +147,110 @@ impl AvailabilitiesHandler {
         Ok(AppMessage::OkMessage("Successfully updated availabilities"))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    // =========================================================================
+    // TEST PLAN – HTTP integration (handler + extractors + auth + DB)
+    // =========================================================================
+    //
+    // Handlers driven through the real Router via oneshot against a #[sqlx::test] DB:
+    //   · GET   /api/v1/availabilities/:user_id/:campaign_id  -> get    (AuthUser)
+    //   · PATCH /api/v1/availabilities/:user_id/:campaign_id  -> update (AuthUser)
+    //
+    //  ID    Scenario                       Expected                          Test
+    //  EP01  GET, no auth cookie            401                               get_requires_authentication
+    //  EP02  GET first time                 200 + empty slot list (UC made)   get_creates_empty_availability
+    //  EP03  PATCH slots then GET           the slots round-trip              update_then_get_round_trips
+    //
+    // KNOWN GAPS: the set-diff delete/add logic in update() is only exercised by
+    // the additive round-trip; slot removal (sending a shorter set) is not driven.
+    // =========================================================================
+
+    use super::*;
+    use crate::test_support::*;
+    use axum::http::StatusCode;
+    use axum::routing::get;
+    use axum::Router;
+    use sqlx::PgPool;
+    use tower::ServiceExt;
+
+    const SLOT: &str = "2026-07-11T10:00:00Z";
+
+    async fn seed(pool: &PgPool) {
+        seed_user(pool, 1, "interviewer@test.com").await;
+        seed_org(pool, 1, "org").await;
+        seed_campaign(pool, 1, 1, true).await;
+    }
+
+    fn router(pool: PgPool) -> Router {
+        Router::new()
+            .route(
+                "/api/v1/availabilities/:user_id/:campaign_id",
+                get(AvailabilitiesHandler::get).patch(AvailabilitiesHandler::update),
+            )
+            .with_state(test_state(pool))
+    }
+
+    /// White-box: an anonymous GET is rejected by the AuthUser extractor.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn get_requires_authentication(pool: PgPool) {
+        seed(&pool).await;
+
+        let response = router(pool.clone())
+            .oneshot(request("GET", "/api/v1/availabilities/1/1", None, None))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    /// White-box: the first GET lazily creates the user-campaign row and returns
+    /// an empty slot list.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn get_creates_empty_availability(pool: PgPool) {
+        seed(&pool).await;
+
+        let response = router(pool.clone())
+            .oneshot(request("GET", "/api/v1/availabilities/1/1", Some(1), None))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+        let json = body_json(response).await;
+        assert_eq!(json["availabilities"], serde_json::json!([]));
+        let uc_count: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM user_campaign_availabilities")
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert_eq!(uc_count, 1, "a user-campaign row should have been created");
+    }
+
+    /// White-box: slots submitted via PATCH are stored and returned by GET.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn update_then_get_round_trips(pool: PgPool) {
+        seed(&pool).await;
+
+        let update = router(pool.clone())
+            .oneshot(request(
+                "PATCH",
+                "/api/v1/availabilities/1/1",
+                Some(1),
+                Some(serde_json::json!([{ "start_time": SLOT }])),
+            ))
+            .await
+            .unwrap();
+        assert_eq!(update.status(), StatusCode::OK);
+
+        let response = router(pool.clone())
+            .oneshot(request("GET", "/api/v1/availabilities/1/1", Some(1), None))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+        let json = body_json(response).await;
+        let slots = json["availabilities"].as_array().expect("slot array");
+        assert_eq!(slots.len(), 1, "the submitted slot should come back");
+    }
+}

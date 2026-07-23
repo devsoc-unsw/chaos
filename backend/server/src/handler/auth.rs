@@ -303,3 +303,107 @@ impl DevLoginHandler {
         Ok((jar.add(cookie), Redirect::to(redirect_url)))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    // =========================================================================
+    // TEST PLAN – HTTP integration (handler + extractors + auth + DB)
+    // =========================================================================
+    //
+    // Network-free auth handlers driven through the real Router via oneshot:
+    //   · GET /auth/google                     -> google_auth_init  (redirects to Google)
+    //   · GET /auth/logout                     -> logout            (clears cookie)
+    //   · GET /api/v1/dev/super_admin_login     -> dev_super_admin_login (mints cookie)
+    //
+    //  ID    Scenario                       Expected                          Test
+    //  EP01  init OAuth flow                303 -> accounts.google.com        google_init_redirects_to_google
+    //  EP02  logout (while authed)          303 + auth_token clearing cookie   logout_clears_auth_cookie
+    //  EP03  dev super-admin login          303 + auth_token Set-Cookie        dev_login_issues_auth_cookie
+    //
+    // KNOWN GAPS: google_callback exchanges a code with Google and calls the
+    // userinfo endpoint over the network, so it cannot run against a stub and is
+    // not driven here. The is_dev_env=false guard on the dev-login handlers is not
+    // exercised (the test state is always dev).
+    // =========================================================================
+
+    use super::*;
+    use crate::test_support::*;
+    use axum::routing::get;
+    use axum::Router;
+    use sqlx::PgPool;
+    use tower::ServiceExt;
+
+    fn router(pool: PgPool) -> Router {
+        Router::new()
+            .route("/auth/google", get(google_auth_init))
+            .route("/auth/logout", get(logout))
+            .route(
+                "/api/v1/dev/super_admin_login",
+                get(DevLoginHandler::dev_super_admin_login),
+            )
+            .with_state(test_state(pool))
+    }
+
+    /// Concatenated Set-Cookie header values on a response.
+    fn set_cookies(response: &axum::response::Response) -> String {
+        response
+            .headers()
+            .get_all(axum::http::header::SET_COOKIE)
+            .iter()
+            .map(|v| v.to_str().unwrap_or(""))
+            .collect::<Vec<_>>()
+            .join("; ")
+    }
+
+    /// White-box: the OAuth init redirects the browser to Google's consent screen.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn google_init_redirects_to_google(pool: PgPool) {
+        let response = router(pool.clone())
+            .oneshot(request("GET", "/auth/google", None, None))
+            .await
+            .unwrap();
+
+        assert!(response.status().is_redirection(), "should be a 3xx redirect");
+        let location = response
+            .headers()
+            .get(axum::http::header::LOCATION)
+            .unwrap()
+            .to_str()
+            .unwrap();
+        assert!(
+            location.contains("accounts.google.com"),
+            "should redirect to Google, got {location}"
+        );
+    }
+
+    /// White-box: logging out while authenticated emits a Set-Cookie that clears
+    /// the auth_token (a removal cookie is only written when one was presented).
+    #[sqlx::test(migrations = "../migrations")]
+    async fn logout_clears_auth_cookie(pool: PgPool) {
+        let response = router(pool.clone())
+            .oneshot(request("GET", "/auth/logout", Some(1), None))
+            .await
+            .unwrap();
+
+        assert!(response.status().is_redirection());
+        assert!(
+            set_cookies(&response).contains("auth_token"),
+            "logout should clear the auth_token cookie"
+        );
+    }
+
+    /// White-box: the dev super-admin login mints an auth_token cookie (dev env).
+    #[sqlx::test(migrations = "../migrations")]
+    async fn dev_login_issues_auth_cookie(pool: PgPool) {
+        let response = router(pool.clone())
+            .oneshot(request("GET", "/api/v1/dev/super_admin_login", None, None))
+            .await
+            .unwrap();
+
+        assert!(response.status().is_redirection());
+        assert!(
+            set_cookies(&response).contains("auth_token="),
+            "dev login should issue an auth_token cookie"
+        );
+    }
+}

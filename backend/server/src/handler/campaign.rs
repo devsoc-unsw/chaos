@@ -525,3 +525,119 @@ impl CampaignHandler {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    // =========================================================================
+    // TEST PLAN – HTTP integration (handler + extractors + auth + DB)
+    // =========================================================================
+    //
+    // Handlers driven through the real Router via oneshot against a #[sqlx::test] DB:
+    //   · GET   /api/v1/campaigns              -> get_all (AuthUser)
+    //   · PATCH /api/v1/campaign/:id/publish   -> publish (CampaignAdmin)
+    //
+    //  ID    Scenario                       Expected                          Test
+    //  EP01  list, no auth cookie           401                               get_all_requires_authentication
+    //  EP02  list as authed user            200 + campaigns array             get_all_returns_campaigns
+    //  EP03  publish as campaign admin      200 + published = true            admin_can_publish
+    //  EP04  publish as non-admin           403 + still unpublished           non_admin_cannot_publish
+    //
+    // KNOWN GAPS: attachment upload/delete and banner/logo handlers use S3
+    // (Storage) which the inert bucket stub cannot serve; create_role runs
+    // RoleUpdate::validate (env-driven, covered at the model layer). None are
+    // driven here.
+    // =========================================================================
+
+    use super::*;
+    use crate::test_support::*;
+    use axum::http::StatusCode;
+    use axum::routing::{get, patch};
+    use axum::Router;
+    use sqlx::PgPool;
+    use tower::ServiceExt;
+
+    fn router(pool: PgPool) -> Router {
+        Router::new()
+            .route("/api/v1/campaigns", get(CampaignHandler::get_all))
+            .route(
+                "/api/v1/campaign/:campaign_id/publish",
+                patch(CampaignHandler::publish),
+            )
+            .with_state(test_state(pool))
+    }
+
+    async fn is_published(pool: &PgPool) -> bool {
+        sqlx::query_scalar("SELECT published FROM campaigns WHERE id = 1")
+            .fetch_one(pool)
+            .await
+            .unwrap()
+    }
+
+    /// White-box: listing campaigns requires authentication.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn get_all_requires_authentication(pool: PgPool) {
+        seed_user(&pool, 1, "u@test.com").await;
+        seed_org(&pool, 1, "org").await;
+        seed_campaign(&pool, 1, 1, true).await;
+
+        let response = router(pool.clone())
+            .oneshot(request("GET", "/api/v1/campaigns", None, None))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    /// White-box: an authed user gets the campaign list.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn get_all_returns_campaigns(pool: PgPool) {
+        seed_user(&pool, 1, "u@test.com").await;
+        seed_org(&pool, 1, "org").await;
+        seed_campaign(&pool, 1, 1, true).await;
+
+        let response = router(pool.clone())
+            .oneshot(request("GET", "/api/v1/campaigns", Some(1), None))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+        let json = body_json(response).await;
+        assert!(
+            !json.as_array().expect("array").is_empty(),
+            "the seeded campaign should be listed"
+        );
+    }
+
+    /// White-box: a campaign admin publishes the campaign.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn admin_can_publish(pool: PgPool) {
+        seed_user(&pool, 2, "admin@test.com").await;
+        seed_org(&pool, 1, "org").await;
+        seed_org_member(&pool, 1, 2, "Admin").await;
+        seed_campaign(&pool, 1, 1, false).await; // published = false
+
+        let response = router(pool.clone())
+            .oneshot(request("PATCH", "/api/v1/campaign/1/publish", Some(2), None))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+        assert!(is_published(&pool).await, "campaign should be published");
+    }
+
+    /// White-box: a non-admin cannot publish; the campaign stays unpublished.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn non_admin_cannot_publish(pool: PgPool) {
+        seed_user(&pool, 1, "u@test.com").await;
+        seed_org(&pool, 1, "org").await;
+        seed_campaign(&pool, 1, 1, false).await;
+
+        let response = router(pool.clone())
+            .oneshot(request("PATCH", "/api/v1/campaign/1/publish", Some(1), None))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::FORBIDDEN);
+        assert!(!is_published(&pool).await, "campaign must stay unpublished");
+    }
+}

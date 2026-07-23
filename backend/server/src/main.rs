@@ -8,6 +8,9 @@ mod handler;
 mod models;
 mod service;
 
+#[cfg(test)]
+mod test_support;
+
 #[tokio::main]
 async fn main() -> Result<(), ChaosError> {
     // Try to load .env file, but don't fail if it doesn't exist (env vars may be set via Docker)

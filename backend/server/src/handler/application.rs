@@ -445,3 +445,156 @@ impl ApplicationHandler {
         Ok(Json(avg_applications_ratings))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    // =========================================================================
+    // TEST PLAN – HTTP integration (handler + extractors + auth + DB)
+    // =========================================================================
+    //
+    // Handlers driven through the real Router via oneshot against a #[sqlx::test] DB:
+    //   · POST /api/v1/campaign/:campaign_id/apply             -> create_or_get (AuthUser)
+    //   · GET  /api/v1/campaign/:campaign_id/application/exists -> check_application_exists
+    //
+    //  ID    Scenario                       Expected                          Test
+    //  EP01  apply, no auth cookie          401, no application               apply_requires_authentication
+    //  EP02  apply as authed user           200 + application row             apply_creates_application
+    //  EP03  apply twice                    same id, still one row            apply_is_idempotent
+    //  EP04  exists before/after applying    false then true                  exists_reflects_application_state
+    //
+    // KNOWN GAPS: admin/reviewer endpoints (get, set_status, ratings, summary) use
+    // ApplicationAdmin/Reviewer/CampaignAdmin guards; the rating flows in
+    // particular need campaign rating categories and are covered from rating.rs
+    // where relevant. Only the applicant-facing wiring is driven here.
+    // =========================================================================
+
+    use super::*;
+    use crate::test_support::*;
+    use axum::http::StatusCode;
+    use axum::routing::{get, post};
+    use axum::Router;
+    use sqlx::PgPool;
+    use tower::ServiceExt;
+
+    async fn seed(pool: &PgPool) {
+        seed_user(pool, 1, "applicant@test.com").await;
+        seed_org(pool, 1, "org").await;
+        seed_campaign(pool, 1, 1, true).await;
+    }
+
+    fn router(pool: PgPool) -> Router {
+        Router::new()
+            .route(
+                "/api/v1/campaign/:campaign_id/apply",
+                post(ApplicationHandler::create_or_get),
+            )
+            .route(
+                "/api/v1/campaign/:campaign_id/application/exists",
+                get(ApplicationHandler::check_application_exists),
+            )
+            .with_state(test_state(pool))
+    }
+
+    async fn application_count(pool: &PgPool) -> i64 {
+        sqlx::query_scalar("SELECT COUNT(*) FROM applications")
+            .fetch_one(pool)
+            .await
+            .unwrap()
+    }
+
+    /// White-box: applying anonymously is rejected by AuthUser.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn apply_requires_authentication(pool: PgPool) {
+        seed(&pool).await;
+
+        let response = router(pool.clone())
+            .oneshot(request("POST", "/api/v1/campaign/1/apply", None, None))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+        assert_eq!(application_count(&pool).await, 0);
+    }
+
+    /// White-box: an authed apply creates the application and returns its id.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn apply_creates_application(pool: PgPool) {
+        seed(&pool).await;
+
+        let response = router(pool.clone())
+            .oneshot(request("POST", "/api/v1/campaign/1/apply", Some(1), None))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+        let json = body_json(response).await;
+        assert!(
+            json["application_id"].as_str().is_some(),
+            "expected application_id, got {json}"
+        );
+        assert_eq!(application_count(&pool).await, 1);
+    }
+
+    /// White-box: create_or_get is idempotent — a second apply returns the same id.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn apply_is_idempotent(pool: PgPool) {
+        seed(&pool).await;
+
+        let first = body_json(
+            router(pool.clone())
+                .oneshot(request("POST", "/api/v1/campaign/1/apply", Some(1), None))
+                .await
+                .unwrap(),
+        )
+        .await;
+        let second = body_json(
+            router(pool.clone())
+                .oneshot(request("POST", "/api/v1/campaign/1/apply", Some(1), None))
+                .await
+                .unwrap(),
+        )
+        .await;
+
+        assert_eq!(first["application_id"], second["application_id"]);
+        assert_eq!(application_count(&pool).await, 1, "should not create a second row");
+    }
+
+    /// White-box: the exists check flips from false to true once the user applies.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn exists_reflects_application_state(pool: PgPool) {
+        seed(&pool).await;
+
+        let before = body_json(
+            router(pool.clone())
+                .oneshot(request(
+                    "GET",
+                    "/api/v1/campaign/1/application/exists",
+                    Some(1),
+                    None,
+                ))
+                .await
+                .unwrap(),
+        )
+        .await;
+        assert_eq!(before["application_exists"], serde_json::json!(false));
+
+        router(pool.clone())
+            .oneshot(request("POST", "/api/v1/campaign/1/apply", Some(1), None))
+            .await
+            .unwrap();
+
+        let after = body_json(
+            router(pool.clone())
+                .oneshot(request(
+                    "GET",
+                    "/api/v1/campaign/1/application/exists",
+                    Some(1),
+                    None,
+                ))
+                .await
+                .unwrap(),
+        )
+        .await;
+        assert_eq!(after["application_exists"], serde_json::json!(true));
+    }
+}

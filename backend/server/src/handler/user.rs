@@ -181,3 +181,126 @@ impl UserHandler {
         ))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    // =========================================================================
+    // TEST PLAN – HTTP integration (handler + extractors + auth + DB)
+    // =========================================================================
+    //
+    // Handlers driven through the real Router via oneshot against a #[sqlx::test] DB:
+    //   · GET   /api/v1/user               -> get           (AuthUser)
+    //   · PATCH /api/v1/user/name          -> update_name   (AuthUser)
+    //   · GET   /api/v1/user/is_superuser  -> is_superuser  (AuthUser)
+    //
+    //  ID    Scenario                       Expected                          Test
+    //  EP01  GET self, no auth cookie       401                               get_requires_authentication
+    //  EP02  GET self as authed user        200 + own profile                get_returns_current_user
+    //  EP03  PATCH name then GET            the name is updated               update_name_round_trips
+    //  EP04  is_superuser for normal user   false                            is_superuser_false_for_normal_user
+    //  EP05  is_superuser for super user    true                             is_superuser_true_for_super_user
+    //
+    // KNOWN GAPS: the other profile PATCH handlers (pronouns/gender/zid/degree)
+    // share update_name's wiring exactly and are not each driven.
+    // =========================================================================
+
+    use super::*;
+    use crate::test_support::*;
+    use axum::http::StatusCode;
+    use axum::routing::{get, patch};
+    use axum::Router;
+    use sqlx::PgPool;
+    use tower::ServiceExt;
+
+    fn router(pool: PgPool) -> Router {
+        Router::new()
+            .route("/api/v1/user", get(UserHandler::get))
+            .route("/api/v1/user/is_superuser", get(UserHandler::is_superuser))
+            .route("/api/v1/user/name", patch(UserHandler::update_name))
+            .with_state(test_state(pool))
+    }
+
+    /// White-box: fetching the current user requires authentication.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn get_requires_authentication(pool: PgPool) {
+        seed_user(&pool, 1, "u@test.com").await;
+
+        let response = router(pool.clone())
+            .oneshot(request("GET", "/api/v1/user", None, None))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    /// White-box: an authed user reads their own profile (keyed by the JWT sub).
+    #[sqlx::test(migrations = "../migrations")]
+    async fn get_returns_current_user(pool: PgPool) {
+        seed_user(&pool, 1, "u@test.com").await;
+
+        let response = router(pool.clone())
+            .oneshot(request("GET", "/api/v1/user", Some(1), None))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+        let json = body_json(response).await;
+        assert_eq!(json["email"], serde_json::json!("u@test.com"));
+    }
+
+    /// White-box: a name PATCH is persisted and reflected by a subsequent GET.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn update_name_round_trips(pool: PgPool) {
+        seed_user(&pool, 1, "u@test.com").await;
+
+        let patch_resp = router(pool.clone())
+            .oneshot(request(
+                "PATCH",
+                "/api/v1/user/name",
+                Some(1),
+                Some(serde_json::json!({ "name": "Renamed" })),
+            ))
+            .await
+            .unwrap();
+        assert_eq!(patch_resp.status(), StatusCode::OK);
+
+        let json = body_json(
+            router(pool.clone())
+                .oneshot(request("GET", "/api/v1/user", Some(1), None))
+                .await
+                .unwrap(),
+        )
+        .await;
+        assert_eq!(json["name"], serde_json::json!("Renamed"));
+    }
+
+    /// White-box: a normal user is not a superuser.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn is_superuser_false_for_normal_user(pool: PgPool) {
+        seed_user(&pool, 1, "u@test.com").await;
+
+        let json = body_json(
+            router(pool.clone())
+                .oneshot(request("GET", "/api/v1/user/is_superuser", Some(1), None))
+                .await
+                .unwrap(),
+        )
+        .await;
+        assert_eq!(json["is_superuser"], serde_json::json!(false));
+    }
+
+    /// White-box: a SuperUser-role user is reported as a superuser.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn is_superuser_true_for_super_user(pool: PgPool) {
+        seed_super_user(&pool, 2, "boss@test.com").await;
+
+        let json = body_json(
+            router(pool.clone())
+                .oneshot(request("GET", "/api/v1/user/is_superuser", Some(2), None))
+                .await
+                .unwrap(),
+        )
+        .await;
+        assert_eq!(json["is_superuser"], serde_json::json!(true));
+    }
+}

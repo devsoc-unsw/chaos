@@ -236,3 +236,127 @@ impl OfferHandler {
         )))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    // =========================================================================
+    // TEST PLAN – HTTP integration (handler + extractors + auth + DB)
+    // =========================================================================
+    //
+    // Handlers driven through the real Router via oneshot against a #[sqlx::test] DB:
+    //   · GET    /api/v1/offer/:offer_id  -> get    (OfferAdmin)
+    //   · DELETE /api/v1/offer/:offer_id  -> delete (OfferAdmin = org 'Admin')
+    //   · POST   /api/v1/offer/:offer_id  -> reply  (OfferRecipient = applicant)
+    //
+    //  ID    Scenario                       Expected                          Test
+    //  EP01  GET, no auth cookie            401                               get_requires_authentication
+    //  EP02  DELETE as org admin            200 + offer removed               admin_can_delete_offer
+    //  EP03  POST reply as recipient        200 + status Accepted             recipient_can_accept_offer
+    //
+    // KNOWN GAPS: preview_email/send_offer render templates and hit SMTP, and
+    // queue_outcome_emails drives the email pipeline; none are exercised as they
+    // require a live mail transport rather than the inert stub.
+    // =========================================================================
+
+    use super::*;
+    use crate::test_support::*;
+    use axum::http::StatusCode;
+    use axum::routing::get;
+    use axum::Router;
+    use sqlx::PgPool;
+    use tower::ServiceExt;
+
+    const OFFER_ID: i64 = 700;
+
+    /// Full offer graph: org 1 (admin user 2), campaign 1, role 1, applicant
+    /// user 1 with application 1, email template 1, and a Draft offer 700.
+    async fn seed(pool: &PgPool) {
+        seed_user(pool, 1, "applicant@test.com").await;
+        seed_user(pool, 2, "admin@test.com").await;
+        seed_org(pool, 1, "org").await;
+        seed_org_member(pool, 1, 2, "Admin").await;
+        seed_campaign(pool, 1, 1, true).await;
+        seed_role(pool, 1, 1).await;
+        seed_application(pool, 1, 1, 1).await;
+        sqlx::query(
+            "INSERT INTO email_templates (id, organisation_id, name, template_subject, template_body)
+             VALUES (1, 1, 'T', 'S', 'B')",
+        )
+        .execute(pool)
+        .await
+        .unwrap();
+        sqlx::query(
+            "INSERT INTO offers (id, campaign_id, application_id, email_template_id, role_id, expiry)
+             VALUES ($1, 1, 1, 1, 1, NOW() + INTERVAL '7 day')",
+        )
+        .bind(OFFER_ID)
+        .execute(pool)
+        .await
+        .unwrap();
+    }
+
+    fn router(pool: PgPool) -> Router {
+        Router::new()
+            .route(
+                "/api/v1/offer/:offer_id",
+                get(OfferHandler::get)
+                    .delete(OfferHandler::delete)
+                    .post(OfferHandler::reply),
+            )
+            .with_state(test_state(pool))
+    }
+
+    async fn offer_status(pool: &PgPool) -> Option<String> {
+        sqlx::query_scalar("SELECT status::text FROM offers WHERE id = $1")
+            .bind(OFFER_ID)
+            .fetch_optional(pool)
+            .await
+            .unwrap()
+    }
+
+    /// White-box: viewing an offer requires authentication.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn get_requires_authentication(pool: PgPool) {
+        seed(&pool).await;
+
+        let response = router(pool.clone())
+            .oneshot(request("GET", "/api/v1/offer/700", None, None))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    /// White-box: an org admin passes OfferAdmin and deletes the offer.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn admin_can_delete_offer(pool: PgPool) {
+        seed(&pool).await;
+
+        let response = router(pool.clone())
+            .oneshot(request("DELETE", "/api/v1/offer/700", Some(2), None))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(offer_status(&pool).await, None, "offer should be deleted");
+    }
+
+    /// White-box: the applicant (recipient) accepts the offer, moving it to Accepted.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn recipient_can_accept_offer(pool: PgPool) {
+        seed(&pool).await;
+
+        let response = router(pool.clone())
+            .oneshot(request(
+                "POST",
+                "/api/v1/offer/700",
+                Some(1),
+                Some(serde_json::json!({ "accept": true })),
+            ))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(offer_status(&pool).await.as_deref(), Some("Accepted"));
+    }
+}

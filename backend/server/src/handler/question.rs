@@ -188,3 +188,164 @@ impl QuestionHandler {
         Ok(AppMessage::OkMessage("Successfully deleted question"))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    // =========================================================================
+    // TEST PLAN – HTTP integration (handler + extractors + auth + DB)
+    // =========================================================================
+    //
+    // Handlers driven through the real Router via oneshot against a #[sqlx::test] DB:
+    //   · POST /api/v1/campaign/:campaign_id/question          -> create (CampaignAdmin)
+    //   · GET  /api/v1/campaign/:campaign_id/questions/common  -> get_all_common (AuthUser)
+    //
+    //  ID    Scenario                       Expected               Test
+    //  EP01  create, no auth cookie         401, no row            create_requires_authentication
+    //  EP02  create as non-admin            403, no row            create_rejected_for_non_admin
+    //  EP03  create as campaign admin       200 + question row     admin_creates_question
+    //  EP04  create then GET common         question returned      created_question_is_listed
+    //
+    // KNOWN GAPS: update/delete use QuestionAdmin and share the wiring; not driven
+    // here. update's own validate() path is covered at the model layer.
+    // =========================================================================
+
+    use super::*;
+    use crate::test_support::*;
+    use axum::http::StatusCode;
+    use axum::routing::{get, post};
+    use axum::Router;
+    use sqlx::PgPool;
+    use tower::ServiceExt;
+
+    /// user 1 (plain), user 2 (org Admin), org 1 → campaign 1.
+    async fn seed(pool: &PgPool) {
+        seed_user(pool, 1, "user@test.com").await;
+        seed_user(pool, 2, "admin@test.com").await;
+        seed_org(pool, 1, "org").await;
+        seed_org_member(pool, 1, 2, "Admin").await;
+        seed_campaign(pool, 1, 1, true).await;
+    }
+
+    fn router(pool: PgPool) -> Router {
+        Router::new()
+            .route(
+                "/api/v1/campaign/:campaign_id/question",
+                post(QuestionHandler::create),
+            )
+            .route(
+                "/api/v1/campaign/:campaign_id/questions/common",
+                get(QuestionHandler::get_all_common_by_campaign),
+            )
+            .with_state(test_state(pool))
+    }
+
+    /// A common ShortAnswer question payload (no options required).
+    fn question_body() -> serde_json::Value {
+        serde_json::json!({
+            "title": "Why apply?",
+            "description": null,
+            "common": true,
+            "roles": null,
+            "required": true,
+            "question_type": "ShortAnswer"
+        })
+    }
+
+    async fn question_count(pool: &PgPool) -> i64 {
+        sqlx::query_scalar("SELECT COUNT(*) FROM questions")
+            .fetch_one(pool)
+            .await
+            .unwrap()
+    }
+
+    /// White-box: anonymous create is stopped at the CampaignAdmin extractor.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn create_requires_authentication(pool: PgPool) {
+        seed(&pool).await;
+
+        let response = router(pool.clone())
+            .oneshot(request(
+                "POST",
+                "/api/v1/campaign/1/question",
+                None,
+                Some(question_body()),
+            ))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+        assert_eq!(question_count(&pool).await, 0);
+    }
+
+    /// White-box: a non-admin is rejected by the CampaignAdmin guard.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn create_rejected_for_non_admin(pool: PgPool) {
+        seed(&pool).await;
+
+        let response = router(pool.clone())
+            .oneshot(request(
+                "POST",
+                "/api/v1/campaign/1/question",
+                Some(1),
+                Some(question_body()),
+            ))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::FORBIDDEN);
+        assert_eq!(question_count(&pool).await, 0);
+    }
+
+    /// White-box: a campaign admin's create returns 200 and lands a question.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn admin_creates_question(pool: PgPool) {
+        seed(&pool).await;
+
+        let response = router(pool.clone())
+            .oneshot(request(
+                "POST",
+                "/api/v1/campaign/1/question",
+                Some(2),
+                Some(question_body()),
+            ))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+        let json = body_json(response).await;
+        assert!(json["id"].as_str().is_some(), "expected id, got {json}");
+        assert_eq!(question_count(&pool).await, 1);
+    }
+
+    /// White-box: a created common question is returned by the common GET.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn created_question_is_listed(pool: PgPool) {
+        seed(&pool).await;
+
+        router(pool.clone())
+            .oneshot(request(
+                "POST",
+                "/api/v1/campaign/1/question",
+                Some(2),
+                Some(question_body()),
+            ))
+            .await
+            .unwrap();
+
+        let response = router(pool.clone())
+            .oneshot(request(
+                "GET",
+                "/api/v1/campaign/1/questions/common",
+                Some(1),
+                None,
+            ))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+        let json = body_json(response).await;
+        let questions = json.as_array().expect("questions should be an array");
+        assert_eq!(questions.len(), 1);
+        assert_eq!(questions[0]["title"], serde_json::json!("Why apply?"));
+    }
+}

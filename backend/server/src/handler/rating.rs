@@ -317,3 +317,152 @@ impl RatingHandler {
         ))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    // =========================================================================
+    // TEST PLAN – HTTP integration (handler + extractors + auth + DB)
+    // =========================================================================
+    //
+    // Handlers driven through the real Router via oneshot against a #[sqlx::test] DB:
+    //   · POST /api/v1/campaign/:campaign_id/rating_category   -> create_category (CampaignAdmin)
+    //   · GET  /api/v1/campaign/:campaign_id/rating_categories -> get_categories_by_campaign
+    //
+    //  ID    Scenario                       Expected                          Test
+    //  EP01  create, no auth cookie         401, no category                  create_requires_authentication
+    //  EP02  create as non-admin            403, no category                  create_rejected_for_non_admin
+    //  EP03  create as campaign admin       200 + category row                admin_creates_category
+    //  EP04  create then GET categories     category returned                 created_category_is_listed
+    //
+    // KNOWN GAPS: application rating create/update (reviewer + category scores) and
+    // the RatingCreator-guarded category-rating handlers need a submitted
+    // application and reviewer membership; they share this wiring and are not each
+    // driven here.
+    // =========================================================================
+
+    use super::*;
+    use crate::test_support::*;
+    use axum::http::StatusCode;
+    use axum::routing::{get, post};
+    use axum::Router;
+    use sqlx::PgPool;
+    use tower::ServiceExt;
+
+    /// user 1 (plain), user 2 (org Admin), org 1 → campaign 1.
+    async fn seed(pool: &PgPool) {
+        seed_user(pool, 1, "user@test.com").await;
+        seed_user(pool, 2, "admin@test.com").await;
+        seed_org(pool, 1, "org").await;
+        seed_org_member(pool, 1, 2, "Admin").await;
+        seed_campaign(pool, 1, 1, true).await;
+    }
+
+    fn router(pool: PgPool) -> Router {
+        Router::new()
+            .route(
+                "/api/v1/campaign/:campaign_id/rating_category",
+                post(RatingHandler::create_category),
+            )
+            .route(
+                "/api/v1/campaign/:campaign_id/rating_categories",
+                get(RatingHandler::get_categories_by_campaign),
+            )
+            .with_state(test_state(pool))
+    }
+
+    async fn category_count(pool: &PgPool) -> i64 {
+        sqlx::query_scalar("SELECT COUNT(*) FROM campaign_rating_categories")
+            .fetch_one(pool)
+            .await
+            .unwrap()
+    }
+
+    /// White-box: creating a category requires authentication.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn create_requires_authentication(pool: PgPool) {
+        seed(&pool).await;
+
+        let response = router(pool.clone())
+            .oneshot(request(
+                "POST",
+                "/api/v1/campaign/1/rating_category",
+                None,
+                Some(serde_json::json!({ "name": "Technical" })),
+            ))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+        assert_eq!(category_count(&pool).await, 0);
+    }
+
+    /// White-box: a non-admin is rejected by the CampaignAdmin guard.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn create_rejected_for_non_admin(pool: PgPool) {
+        seed(&pool).await;
+
+        let response = router(pool.clone())
+            .oneshot(request(
+                "POST",
+                "/api/v1/campaign/1/rating_category",
+                Some(1),
+                Some(serde_json::json!({ "name": "Technical" })),
+            ))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::FORBIDDEN);
+        assert_eq!(category_count(&pool).await, 0);
+    }
+
+    /// White-box: a campaign admin creates a rating category.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn admin_creates_category(pool: PgPool) {
+        seed(&pool).await;
+
+        let response = router(pool.clone())
+            .oneshot(request(
+                "POST",
+                "/api/v1/campaign/1/rating_category",
+                Some(2),
+                Some(serde_json::json!({ "name": "Technical" })),
+            ))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(category_count(&pool).await, 1);
+    }
+
+    /// White-box: a created category is returned by the categories GET.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn created_category_is_listed(pool: PgPool) {
+        seed(&pool).await;
+
+        router(pool.clone())
+            .oneshot(request(
+                "POST",
+                "/api/v1/campaign/1/rating_category",
+                Some(2),
+                Some(serde_json::json!({ "name": "Technical" })),
+            ))
+            .await
+            .unwrap();
+
+        let response = router(pool.clone())
+            .oneshot(request(
+                "GET",
+                "/api/v1/campaign/1/rating_categories",
+                Some(2),
+                None,
+            ))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+        let json = body_json(response).await;
+        let categories = json.as_array().expect("categories should be an array");
+        assert_eq!(categories.len(), 1);
+        assert_eq!(categories[0]["name"], serde_json::json!("Technical"));
+    }
+}

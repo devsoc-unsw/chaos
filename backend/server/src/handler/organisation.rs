@@ -600,3 +600,130 @@ impl OrganisationHandler {
         Ok((StatusCode::OK, Json(json!({ "role": role }))))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    // =========================================================================
+    // TEST PLAN – HTTP integration (handler + extractors + auth + DB)
+    // =========================================================================
+    //
+    // Handlers driven through the real Router via oneshot against a #[sqlx::test] DB:
+    //   · GET  /api/v1/organisation/:organisation_id  -> get    (AuthUser)
+    //   · POST /api/v1/organisation                   -> create (SuperUser)
+    //
+    //  ID    Scenario                       Expected                          Test
+    //  EP01  GET, no auth cookie            401                               get_requires_authentication
+    //  EP02  GET as authed user             200 + organisation                get_returns_organisation
+    //  EP03  POST create as super user      200 + org row                     super_user_creates_organisation
+    //  EP04  POST create as normal user     403, no org created               non_super_user_cannot_create
+    //
+    // KNOWN GAPS: the many member/admin/campaign/email-template sub-handlers use
+    // OrganisationAdmin / SuperUser guards and share this wiring; the logo handler
+    // uses S3. None are individually driven here.
+    // =========================================================================
+
+    use super::*;
+    use crate::test_support::*;
+    use axum::http::StatusCode;
+    use axum::routing::{get, post};
+    use axum::Router;
+    use sqlx::PgPool;
+    use tower::ServiceExt;
+
+    fn router(pool: PgPool) -> Router {
+        Router::new()
+            .route("/api/v1/organisation", post(OrganisationHandler::create))
+            .route(
+                "/api/v1/organisation/:organisation_id",
+                get(OrganisationHandler::get),
+            )
+            .with_state(test_state(pool))
+    }
+
+    async fn org_count(pool: &PgPool) -> i64 {
+        sqlx::query_scalar("SELECT COUNT(*) FROM organisations")
+            .fetch_one(pool)
+            .await
+            .unwrap()
+    }
+
+    /// White-box: reading an organisation requires authentication.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn get_requires_authentication(pool: PgPool) {
+        seed_user(&pool, 1, "u@test.com").await;
+        seed_org(&pool, 1, "org").await;
+
+        let response = router(pool.clone())
+            .oneshot(request("GET", "/api/v1/organisation/1", None, None))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    /// White-box: any authed user can read an organisation's details.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn get_returns_organisation(pool: PgPool) {
+        seed_user(&pool, 1, "u@test.com").await;
+        seed_org(&pool, 1, "org").await;
+
+        let response = router(pool.clone())
+            .oneshot(request("GET", "/api/v1/organisation/1", Some(1), None))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+        let json = body_json(response).await;
+        assert_eq!(json["name"], serde_json::json!("Test Org"));
+    }
+
+    /// White-box: a super user creates an organisation.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn super_user_creates_organisation(pool: PgPool) {
+        seed_super_user(&pool, 1, "boss@test.com").await;
+
+        let response = router(pool.clone())
+            .oneshot(request(
+                "POST",
+                "/api/v1/organisation",
+                Some(1),
+                Some(serde_json::json!({
+                    "slug": "neworg",
+                    "name": "Brand New Org",
+                    "admin": 1,
+                    "contact_email": "contact@neworg.com",
+                    "website_url": null
+                })),
+            ))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(org_count(&pool).await, 1);
+    }
+
+    /// White-box: a normal user is rejected by the SuperUser guard.
+    #[sqlx::test(migrations = "../migrations")]
+    async fn non_super_user_cannot_create(pool: PgPool) {
+        seed_user(&pool, 2, "normal@test.com").await;
+
+        let response = router(pool.clone())
+            .oneshot(request(
+                "POST",
+                "/api/v1/organisation",
+                Some(2),
+                Some(serde_json::json!({
+                    "slug": "neworg",
+                    "name": "Brand New Org",
+                    "admin": 2,
+                    "contact_email": "contact@neworg.com",
+                    "website_url": null
+                })),
+            ))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::FORBIDDEN);
+        assert_eq!(org_count(&pool).await, 0, "no organisation should be created");
+    }
+}
