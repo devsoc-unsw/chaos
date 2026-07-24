@@ -11,7 +11,6 @@ pub mod answer;
 pub mod app;
 pub mod application;
 pub mod auth;
-pub mod availabilities;
 pub mod campaign;
 pub mod comment_last_read;
 pub mod comment;
