@@ -115,19 +115,14 @@ function ResultFilterButton({
 function toApplicant(
   app: ApplicationRatingSummary,
   roleIdsToNames: Record<string, string>,
-  filteredRoleId?: string | null,
 ): SendEmailsApplicant {
   const applied = app.applied_roles ?? [];
-  const roleIds =
-    filteredRoleId && applied.includes(filteredRoleId)
-      ? [filteredRoleId]
-      : applied;
   return {
     id: app.application_id,
     name: app.user_name,
     email: app.user_email,
-    roleIds,
-    roles: roleIds.map((rid) => roleIdsToNames[rid] ?? rid),
+    roleIds: applied,
+    roles: applied.map((rid) => roleIdsToNames[rid] ?? rid),
   };
 }
 
@@ -396,10 +391,19 @@ export default function ApplicationSummary({
     [columns, dict, statusFilter],
   );
 
-  const getApplicant = useCallback(
-    (app: ApplicationRatingSummary) =>
-      toApplicant(app, roleIdsToNames, filteredRoleId),
-    [roleIdsToNames, filteredRoleId],
+  const acceptedApplicants = useMemo(
+    () =>
+      data
+        ?.filter((a) => a.private_status === "Successful")
+        .map((a) => toApplicant(a, roleIdsToNames)),
+    [data, roleIdsToNames],
+  );
+  const rejectedApplicants = useMemo(
+    () =>
+      data
+        ?.filter((a) => a.private_status === "Rejected")
+        .map((a) => toApplicant(a, roleIdsToNames)),
+    [data, roleIdsToNames],
   );
 
   return (
@@ -498,7 +502,8 @@ export default function ApplicationSummary({
               orgId={orgId}
               campaignId={campaignId}
               renderSubComponent={renderSubComponent}
-              getApplicant={getApplicant}
+              acceptedApplicants={acceptedApplicants}
+              rejectedApplicants={rejectedApplicants}
               filteredRoleId={filteredRoleId}
               getAppRoleStatus={getAppRoleStatus}
             />
@@ -523,6 +528,8 @@ export default function ApplicationSummary({
               orgId={orgId}
               campaignId={campaignId}
               renderSubComponent={renderSubComponent}
+              acceptedApplicants={acceptedApplicants}
+              rejectedApplicants={rejectedApplicants}
               filteredRoleId={filteredRoleId}
               roleIdsToNames={roleIdsToNames}
             />
@@ -557,6 +564,9 @@ export default function ApplicationSummary({
               orgId={orgId}
               campaignId={campaignId}
               renderSubComponent={renderSubComponent}
+              sendEmails={true}
+              acceptedApplicants={acceptedApplicants}
+              rejectedApplicants={rejectedApplicants}
             />
           )}
         </div>

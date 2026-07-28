@@ -24,7 +24,8 @@ interface ApplicationSummaryDataTableAllProp<TData, TValue> {
   renderSubComponent?: (props: { row: Row<TData> }) => React.ReactNode;
   orgId: string;
   campaignId: string;
-  getApplicant: (row: ApplicationRatingSummary) => SendEmailsApplicant;
+  acceptedApplicants?: SendEmailsApplicant[];
+  rejectedApplicants?: SendEmailsApplicant[];
   getAppRoleStatus: (
     applicationId: string,
     roleId: string,
@@ -41,7 +42,8 @@ export function ApplicationSummaryDataTableAll<TData, TValue>({
   renderSubComponent,
   orgId,
   campaignId,
-  getApplicant,
+  acceptedApplicants = [],
+  rejectedApplicants = [],
   filteredRoleId = null,
   getAppRoleStatus,
 }: ApplicationSummaryDataTableAllProp<ApplicationRatingSummary, TValue>) {
@@ -91,6 +93,10 @@ export function ApplicationSummaryDataTableAll<TData, TValue>({
         }
 
         if (!filteredRoleId) {
+          console.log(
+            STATUS_ORDER[a.private_status],
+            STATUS_ORDER[b.private_status],
+          );
           return (
             (STATUS_ORDER[b.private_status] ?? 99) -
             (STATUS_ORDER[a.private_status] ?? 99)
@@ -131,6 +137,8 @@ export function ApplicationSummaryDataTableAll<TData, TValue>({
             orgId={orgId}
             campaignId={campaignId}
             renderSubComponent={renderSubComponent}
+            acceptedApplicants={acceptedApplicants}
+            rejectedApplicants={rejectedApplicants}
             sortBy={sortBy}
             setSortBy={setSortBy}
           />
@@ -146,6 +154,9 @@ export function ApplicationSummaryDataTableAll<TData, TValue>({
             columnFilters={columnFilters}
             orgId={orgId}
             campaignId={campaignId}
+            sendEmails={true}
+            acceptedApplicants={acceptedApplicants}
+            rejectedApplicants={rejectedApplicants}
           />
         </div>
       ) : (
@@ -161,8 +172,8 @@ export function ApplicationSummaryDataTableAll<TData, TValue>({
             orgId={orgId}
             campaignId={campaignId}
             renderSubComponent={renderSubComponent}
-            sendEmails={true}
-            getApplicant={getApplicant}
+            acceptedApplicants={acceptedApplicants}
+            rejectedApplicants={rejectedApplicants}
             sortBy={sortBy}
             setSortBy={setSortBy}
           />
