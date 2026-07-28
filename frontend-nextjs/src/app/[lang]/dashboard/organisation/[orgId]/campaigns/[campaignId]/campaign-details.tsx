@@ -159,7 +159,7 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
 
     <div className="mx-auto px-4 py-6 sm:px-6 sm:py-8 grid gap-6 lg:grid-cols-[1.4fr_0.6fr] 
       animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
-      <div className="flex w-full max-w-6xl flex-col gap-6">
+      <div className="flex w-full min-w-0 max-w-6xl flex-col gap-6">
         <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
           <img className="w-full max-h-52 object-cover" src={existingBannerSrc} alt={`${campaign?.name} cover image`} />
           <div className="flex flex-col gap-3 border-t px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
@@ -332,7 +332,7 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
         </section>
       </div>
 
-      <div className="flex flex-col gap-6">
+      <div className="flex min-w-0 flex-col gap-6">
         <AvailabilityCalendar
           defaultValue={[new Date()]}
           onSave={(dates) => {
