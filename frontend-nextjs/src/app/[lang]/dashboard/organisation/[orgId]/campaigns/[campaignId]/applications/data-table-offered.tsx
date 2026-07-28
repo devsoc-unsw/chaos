@@ -2,7 +2,8 @@ import { ApplicationSummaryDataTable } from "./data-table";
 import { ColumnDef, ColumnFiltersState, Row } from "@tanstack/react-table";
 import { Dispatch, SetStateAction } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getOffersByCampaign } from "@/models/offer";
+import { getOffersByCampaign, OfferDetails } from "@/models/offer";
+import { SendEmailsApplicant } from "./send-email-modal";
 import { ApplicationRatingSummary } from "@/models/application";
 
 interface ApplicationSummaryDataTableOfferedProp<TData, TValue> {
@@ -14,6 +15,8 @@ interface ApplicationSummaryDataTableOfferedProp<TData, TValue> {
   renderSubComponent?: (props: { row: Row<TData> }) => React.ReactNode;
   orgId: string;
   campaignId: string;
+  acceptedApplicants?: SendEmailsApplicant[];
+  rejectedApplicants?: SendEmailsApplicant[];
   filteredRoleId: string | null;
   roleIdsToNames: Record<string, string>;
 }
@@ -27,6 +30,8 @@ export function ApplicationSummaryDataTableOffered<TData, TValue>({
   renderSubComponent,
   orgId,
   campaignId,
+  acceptedApplicants = [],
+  rejectedApplicants = [],
   filteredRoleId = null,
   roleIdsToNames = {},
 }: ApplicationSummaryDataTableOfferedProp<ApplicationRatingSummary, TValue>) {
@@ -36,16 +41,10 @@ export function ApplicationSummaryDataTableOffered<TData, TValue>({
   });
 
   const combinedData: ApplicationRatingSummary[] = data.map((app) => {
-    const offer = offers?.find(
-      (o) =>
-        o.application_id === app.application_id &&
-        o.role_id === filteredRoleId,
-    );
+    const offer = offers?.find((o) => o.application_id === app.application_id && o.role_id === filteredRoleId);
     return {
       ...app,
-      offer_role: offer
-        ? offer.role_name
-        : roleIdsToNames[filteredRoleId as string] || null,
+      offer_role: offer ? offer.role_name : roleIdsToNames[filteredRoleId as string] || null,
       offer_status: offer ? offer.status : "Draft",
     };
   });
@@ -63,6 +62,9 @@ export function ApplicationSummaryDataTableOffered<TData, TValue>({
         columnFilters={columnFilters}
         orgId={orgId}
         campaignId={campaignId}
+        sendEmails={true}
+        acceptedApplicants={acceptedApplicants}
+        rejectedApplicants={rejectedApplicants}
       />
 
       <ApplicationSummaryDataTable
@@ -76,6 +78,8 @@ export function ApplicationSummaryDataTableOffered<TData, TValue>({
         columnFilters={columnFilters}
         orgId={orgId}
         campaignId={campaignId}
+        acceptedApplicants={acceptedApplicants}
+        rejectedApplicants={rejectedApplicants}
       />
     </div>
   );

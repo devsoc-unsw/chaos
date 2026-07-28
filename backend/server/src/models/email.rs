@@ -5,7 +5,6 @@
 //! the Lettre email library.
 
 use crate::models::error::ChaosError;
-use lettre::message::header::ContentType;
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor};
 use serde::{Deserialize, Serialize};
@@ -147,14 +146,6 @@ impl ChaosEmail {
             None => recipient_email_address,
         };
 
-        // Detect HTML so React Email bodies render correctly in clients.
-        // Plaintext reject bodies still work as text/plain.
-        let content_type = if body.trim_start().starts_with('<') {
-            ContentType::TEXT_HTML
-        } else {
-            ContentType::TEXT_PLAIN
-        };
-
         let message = Message::builder()
             .from(
                 format!(
@@ -166,7 +157,6 @@ impl ChaosEmail {
             .reply_to("chaos@devsoc.app".parse()?)
             .to(to.parse()?)
             .subject(subject)
-            .header(content_type)
             .body(body)?;
 
         let mailer = Self::new_connection(credentials)?;

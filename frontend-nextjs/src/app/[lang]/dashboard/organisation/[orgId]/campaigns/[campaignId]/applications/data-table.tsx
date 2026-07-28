@@ -1,12 +1,11 @@
 "use client";
 
-import React, { Dispatch, SetStateAction, useMemo, useState } from "react";
+import React, { Dispatch, SetStateAction, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ColumnDef,
   ColumnFiltersState,
   Row,
-  RowSelectionState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -23,14 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getCampaign } from "@/models/campaign";
 import { SendEmailsApplicant, SendEmailsModal } from "./send-email-modal";
 import { useQuery } from "@tanstack/react-query";
@@ -47,15 +39,17 @@ interface DataTableProps<TData, TValue> {
   campaignId: string;
   color: string;
   label: string;
-  /** Show selection checkboxes + thank-you email button. */
   sendEmails?: boolean;
-  /** Maps a row to a thank-you recipient (required when sendEmails). */
-  getApplicant?: (row: TData) => SendEmailsApplicant;
+  acceptedApplicants?: SendEmailsApplicant[];
+  rejectedApplicants?: SendEmailsApplicant[];
   sortBy?: "decision" | "name" | "portfolio";
   setSortBy?: Dispatch<SetStateAction<"decision" | "name" | "portfolio">>;
 }
 
-export function ApplicationSummaryDataTable<TData, TValue>({
+export function ApplicationSummaryDataTable<
+  TData,
+  TValue
+>({
   columns,
   data,
   dict,
@@ -67,86 +61,33 @@ export function ApplicationSummaryDataTable<TData, TValue>({
   color,
   label,
   sendEmails,
-  getApplicant,
+  acceptedApplicants = [],
+  rejectedApplicants = [],
   sortBy,
-  setSortBy,
+  setSortBy
 }: DataTableProps<TData, TValue>) {
   const router = useRouter();
   const colorMap: Record<string, string> = {
-    "bg-green-100": "border-green-100",
-    "bg-red-100": "border-red-100",
+    'bg-green-100': 'border-green-100',
+    'bg-red-100': 'border-red-100',
   };
-
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [sendModalOpen, setSendModalOpen] = useState(false);
-
-  const selectionColumn = useMemo<ColumnDef<TData, TValue>[]>(() => {
-    if (!sendEmails) return [];
-    return [
-      {
-        id: "select",
-        header: ({ table }) => (
-          <Checkbox
-            checked={
-              table.getIsAllPageRowsSelected() ||
-              (table.getIsSomePageRowsSelected() && "indeterminate")
-            }
-            onCheckedChange={(value) =>
-              table.toggleAllPageRowsSelected(!!value)
-            }
-            aria-label="Select all"
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
-            aria-label="Select row"
-            onClick={(e) => e.stopPropagation()}
-          />
-        ),
-        enableSorting: false,
-        enableHiding: false,
-      },
-    ];
-  }, [sendEmails]);
-
-  const tableColumns = useMemo(
-    () => [...selectionColumn, ...columns],
-    [selectionColumn, columns],
-  );
 
   const table = useReactTable<TData>({
     data,
-    columns: tableColumns,
+    columns,
     getCoreRowModel: getCoreRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
     getRowCanExpand: () => true,
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
-    enableRowSelection: !!sendEmails,
-    onRowSelectionChange: setRowSelection,
-    getRowId: (row) => {
-      const app = row as { application_id?: string };
-      return app.application_id ?? "";
-    },
     state: {
       columnFilters,
-      rowSelection,
     },
   });
 
-  const selectedApplicants = useMemo(() => {
-    if (!getApplicant) return [];
-    return table
-      .getSelectedRowModel()
-      .rows.map((row) => getApplicant(row.original));
-    // rowSelection must be a dep so selection updates recompute recipients
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getApplicant, rowSelection, data]);
+  const borderColor = colorMap[color] || 'border-gray-200';
 
-  const borderColor = colorMap[color] || "border-gray-200";
-
+  const [sendModalOpen, setSendModalOpen] = useState(false);
   const { data: campaign } = useQuery({
     queryKey: [`${campaignId}-campaign-details`],
     queryFn: () => getCampaign(campaignId),
@@ -155,36 +96,36 @@ export function ApplicationSummaryDataTable<TData, TValue>({
   return (
     <div>
       <div className="flex justify-between items-end">
-        <div
-          className={`flex items-center justify-center w-24 h-9 ${color} rounded-t-md`}
-        >
+        <div className={`flex items-center justify-center w-24 h-9 ${color} rounded-t-md`}>
+          {/* Label */}
           <p className="text-sm font-semibold">{label}</p>
         </div>
 
-        <div className="flex mb-2 gap-2 items-center">
+        <div className="flex mb-2">
+          {/* Send Outcome Emails Button */}
           {sendEmails && (
             <>
-              {selectedApplicants.length > 0 && (
-                <span className="text-sm text-muted-foreground">
-                  {selectedApplicants.length} selected
-                </span>
-              )}
               <Button
                 variant="outline"
                 onClick={() => setSendModalOpen(true)}
                 className="gap-2"
-                disabled={selectedApplicants.length === 0}
+                disabled={
+                  acceptedApplicants.length === 0 && rejectedApplicants.length === 0
+                }
               >
                 <Send className="size-4" />
-                Send emails
+                {dict.dashboard.campaigns.send_outcome_emails ??
+                  "Send outcome emails"}
               </Button>
               <SendEmailsModal
                 open={sendModalOpen}
                 onOpenChange={setSendModalOpen}
                 orgId={orgId}
-                recipients={selectedApplicants}
+                acceptedApplicants={acceptedApplicants}
+                rejectedApplicants={rejectedApplicants}
                 organisationName={campaign?.organisation_name}
                 campaignName={campaign?.name}
+                campaignEndsAt={campaign?.ends_at}
                 onSend={async (payload) => {
                   await queueCampaignOutcomeEmails(campaignId, payload);
                 }}
@@ -192,60 +133,53 @@ export function ApplicationSummaryDataTable<TData, TValue>({
             </>
           )}
 
-          {(label === "To Review" || label === "All") && setSortBy && (
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 text-sm text-foreground">
-                <span>Sort by:</span>
-                <Select
-                  value={sortBy}
-                  onValueChange={(v) =>
-                    setSortBy(v as "decision" | "name" | "portfolio")
-                  }
-                >
-                  <SelectTrigger className="h-auto w-14 border-0 shadow-none bg-transparent p-0 focus:ring-0 text-sm underline [&_svg]:hidden">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="decision">Decision</SelectItem>
-                    <SelectItem value="name">Name</SelectItem>
-                    <SelectItem value="portfolio">Portfolio</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {orgId && campaignId && (
-                <Button
-                  variant="outline"
-                  onClick={() =>
-                    router.push(
-                      `/dashboard/organisation/${orgId}/campaigns/${campaignId}/review`,
-                    )
-                  }
-                  className="gap-2"
-                >
-                  <Menu className="size-4" />
-                  Start Queue
-                </Button>
-              )}
+          {/* Sort By Dropdown */}
+          {(label === "To Review" || label === "All") && setSortBy && <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 text-sm text-foreground">
+              <span>Sort by:</span>
+              <Select value={sortBy} onValueChange={(v) => setSortBy(v as "decision" | "name" | "portfolio")}>
+                <SelectTrigger className="h-auto w-14 border-0 shadow-none bg-transparent p-0 focus:ring-0 text-sm underline [&_svg]:hidden">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="decision">Decision</SelectItem>
+                  <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="portfolio">Portfolio</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          )}
+            {orgId && campaignId && (
+              <Button
+                variant="outline"
+                onClick={() => router.push(`/dashboard/organisation/${orgId}/campaigns/${campaignId}/review`)}
+                className="gap-2"
+              >
+                <Menu className="size-4" />
+                Start Queue
+              </Button>
+            )}
+          </div>}
         </div>
-      </div>
 
+      </div>
+      {/* Table */}
       <div className={`overflow-hidden border border-3 ${borderColor}`}>
         <TableWrapper>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
                           header.column.columnDef.header,
-                          header.getContext(),
+                          header.getContext()
                         )}
-                  </TableHead>
-                ))}
+                    </TableHead>
+                  );
+                })}
               </TableRow>
             ))}
           </TableHeader>
@@ -258,7 +192,7 @@ export function ApplicationSummaryDataTable<TData, TValue>({
                       <TableCell key={cell.id}>
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext(),
+                          cell.getContext()
                         )}
                       </TableCell>
                     ))}
