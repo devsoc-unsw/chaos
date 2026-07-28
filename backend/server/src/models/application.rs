@@ -63,8 +63,9 @@ pub struct ApplicationRole {
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
     #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
     pub campaign_role_id: i64,
-    /// User's preference ranking for this role (lower number = higher preference)
-    pub preference: i32,
+    /// User's preference for this role, as a percentage. The sum across all of an
+    /// application's roles must equal 100 by the time the application is submitted.
+    pub preference_percentage: i32,
 }
 
 /// Data structure for creating a new application.
@@ -76,8 +77,9 @@ pub struct UpdateRoleEntry {
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
     #[serde(deserialize_with = "crate::models::serde_string::deserialize")]
     pub campaign_role_id: i64,
-    /// User's preference ranking for this role (lower number = higher preference)
-    pub preference: i32,
+    /// User's preference for this role, as a percentage. The sum across all of an
+    /// application's roles must equal 100 by the time the application is submitted.
+    pub preference_percentage: i32,
 }
 
 /// Data structure for creating a new application.
@@ -160,8 +162,8 @@ pub struct ApplicationAppliedRoleDetails {
     pub campaign_role_id: i64,
     /// Name of the role
     pub role_name: String,
-    /// User's preference ranking for this role
-    pub preference: i32,
+    /// User's preference for this role, as a percentage
+    pub preference_percentage: i32,
 }
 
 /// Data structure for updating role preferences in an application.
@@ -346,12 +348,12 @@ impl Application {
         for role_applied in application_data.applied_roles {
             sqlx::query!(
                 "
-                    INSERT INTO application_roles (application_id, campaign_role_id, preference)
+                    INSERT INTO application_roles (application_id, campaign_role_id, preference_percentage)
                     VALUES ($1, $2, $3)
                 ",
                 id,
                 role_applied.campaign_role_id,
-                role_applied.preference
+                role_applied.preference_percentage
             )
             .execute(transaction.deref_mut())
             .await?;
@@ -400,7 +402,7 @@ impl Application {
             ApplicationAppliedRoleDetails,
             "
                 SELECT application_roles.campaign_role_id,
-                application_roles.preference, campaign_roles.name AS role_name
+                application_roles.preference_percentage, campaign_roles.name AS role_name
                 FROM application_roles
                     JOIN campaign_roles
                     ON application_roles.campaign_role_id = campaign_roles.id
@@ -478,7 +480,7 @@ impl Application {
             ApplicationAppliedRoleDetails,
             "
                 SELECT application_roles.campaign_role_id,
-                application_roles.preference, campaign_roles.name AS role_name
+                application_roles.preference_percentage, campaign_roles.name AS role_name
                 FROM application_roles
                     JOIN campaign_roles
                     ON application_roles.campaign_role_id = campaign_roles.id
@@ -553,7 +555,7 @@ impl Application {
                 ApplicationAppliedRoleDetails,
                 "
                     SELECT application_roles.campaign_role_id,
-                    application_roles.preference, campaign_roles.name AS role_name
+                    application_roles.preference_percentage, campaign_roles.name AS role_name
                     FROM application_roles
                         JOIN campaign_roles
                         ON application_roles.campaign_role_id = campaign_roles.id
@@ -633,7 +635,7 @@ impl Application {
                 ApplicationAppliedRoleDetails,
                 "
                     SELECT application_roles.campaign_role_id,
-                    application_roles.preference, campaign_roles.name AS role_name
+                    application_roles.preference_percentage, campaign_roles.name AS role_name
                     FROM application_roles
                         JOIN campaign_roles
                         ON application_roles.campaign_role_id = campaign_roles.id
@@ -772,7 +774,7 @@ impl Application {
                 ApplicationAppliedRoleDetails,
                 "
                     SELECT application_roles.campaign_role_id,
-                    application_roles.preference, campaign_roles.name AS role_name
+                    application_roles.preference_percentage, campaign_roles.name AS role_name
                     FROM application_roles
                         JOIN campaign_roles
                         ON application_roles.campaign_role_id = campaign_roles.id
@@ -875,8 +877,8 @@ impl Application {
     /// Retrieves all roles associated with a specific application.
     ///
     /// This function queries the database to get all application roles for a given
-    /// application ID, including their preference rankings. The roles are returned
-    /// in the order they appear in the database (typically by preference).
+    /// application ID, including their preference percentages. The roles are returned
+    /// most-preferred first.
     ///
     /// # Arguments
     ///
@@ -893,10 +895,10 @@ impl Application {
         let roles = sqlx::query_as!(
             ApplicationRole,
             "
-                SELECT application_id, campaign_role_id, preference
+                SELECT application_id, campaign_role_id, preference_percentage
                 FROM application_roles
                 WHERE application_id = $1
-                ORDER BY preference
+                ORDER BY preference_percentage DESC
             ",
             id
         )
@@ -935,12 +937,12 @@ impl Application {
         for role in roles {
             sqlx::query!(
                 "
-                    INSERT INTO application_roles (application_id, campaign_role_id, preference)
+                    INSERT INTO application_roles (application_id, campaign_role_id, preference_percentage)
                     VALUES ($1, $2, $3)
                 ",
                 id,
                 role.campaign_role_id,
-                role.preference
+                role.preference_percentage
             )
             .execute(transaction.deref_mut())
             .await?;
@@ -950,6 +952,10 @@ impl Application {
     }
 
     /// Submits an application, marking it as ready for review.
+    ///
+    /// Role preference percentages must sum to 100 across the application's roles;
+    /// this is checked here (for a clean error message) and enforced in the database
+    /// by a trigger on this column (defense in depth against any other write path).
     ///
     /// # Arguments
     ///
@@ -963,6 +969,25 @@ impl Application {
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
+        let total_percentage = sqlx::query!(
+            "
+                SELECT COALESCE(SUM(preference_percentage), 0) AS total
+                FROM application_roles
+                WHERE application_id = $1
+            ",
+            id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?
+        .total
+        .unwrap_or(0);
+
+        if total_percentage != 100 {
+            return Err(ChaosError::BadRequestWithMessage(
+                "Role preferences must add up to 100%".to_string(),
+            ));
+        }
+
         sqlx::query!(
             "
                 UPDATE applications SET submitted = true WHERE id = $1 RETURNING id

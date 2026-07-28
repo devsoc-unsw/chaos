@@ -7,10 +7,7 @@ import {
   getApplicationRoleStatuses,
 } from "@/models/application";
 import { getCategoryRatingsByApplication } from "@/models/rating";
-import {
-  getUnreadCommentCount,
-  markAllCommentsRead,
-} from "@/models/comment";
+import { getUnreadCommentCount, markAllCommentsRead } from "@/models/comment";
 import { useState, useMemo } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -33,7 +30,7 @@ import {
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
-} from "@/components/ui/drawer"
+} from "@/components/ui/drawer";
 
 export function ApplicationPanel({
   app,
@@ -52,13 +49,24 @@ export function ApplicationPanel({
   dict: any;
   ratedApplications: Record<string, boolean>;
   setRatedApplications: (v: Record<string, boolean>) => void;
-  onDecision: (appId: string, roleId: string, status: ApplicationStatus) => void;
+  onDecision: (
+    appId: string,
+    roleId: string,
+    status: ApplicationStatus,
+  ) => void;
 }) {
-  const [activeTab, setActiveTab] = useState<"application" | "review">("application");
+  const [activeTab, setActiveTab] = useState<"application" | "review">(
+    "application",
+  );
   const [discussionOpen, setDiscussionOpen] = useState(false);
-  const sortedRoles = [...app.applied_roles].sort((a, b) => a.preference - b.preference);
+  const sortedRoles = [...app.applied_roles].sort(
+    (a, b) => b.preference_percentage - a.preference_percentage,
+  );
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(
     sortedRoles[0]?.campaign_role_id ?? null,
+  );
+  const selectedRole = sortedRoles.find(
+    (r) => r.campaign_role_id === selectedRoleId,
   );
 
   const { data: allRatings } = useQuery({
@@ -96,7 +104,9 @@ export function ApplicationPanel({
   const avgRating = useMemo(() => {
     if (!allRatings || allRatings.length === 0) return 0;
     const values = allRatings.flatMap((r) =>
-      r.category_ratings.filter((cr) => cr.rating !== null).map((cr) => cr.rating as number),
+      r.category_ratings
+        .filter((cr) => cr.rating !== null)
+        .map((cr) => cr.rating as number),
     );
     if (values.length === 0) return 0;
     return Math.round(values.reduce((sum, v) => sum + v, 0) / values.length);
@@ -118,11 +128,16 @@ export function ApplicationPanel({
             </div>
             <Select
               value={
-                roleStatuses?.find((rs) => rs.campaign_role_id === selectedRoleId)?.status ??
-                "Pending"
+                roleStatuses?.find(
+                  (rs) => rs.campaign_role_id === selectedRoleId,
+                )?.status ?? "Pending"
               }
               onValueChange={(v) =>
-                onDecision(app.id, selectedRoleId as string, v as ApplicationStatus)
+                onDecision(
+                  app.id,
+                  selectedRoleId as string,
+                  v as ApplicationStatus,
+                )
               }
             >
               <SelectTrigger className="h-8 w-32 text-sm">
@@ -138,25 +153,49 @@ export function ApplicationPanel({
           </div>
         </div>
 
-        {/* Role chips */}
-        <div className="flex items-center gap-3 mt-3 pb-3 flex-wrap">
-          {sortedRoles.map((role, i) => (
-            <div key={role.campaign_role_id} className="flex items-center gap-1">
-              <span className="text-xs text-muted-foreground">{i + 1}.</span>
-              <button
-                type="button"
-                onClick={() => setSelectedRoleId(role.campaign_role_id)}
-                className={cn(
-                  "px-3 py-0.5 rounded-full text-sm font-medium transition-colors",
-                  selectedRoleId === role.campaign_role_id
-                    ? "bg-primary text-primary-foreground"
-                    : "border border-border hover:bg-muted",
-                )}
+        {/* Role chips + preference bar */}
+        <div className="flex items-center justify-between gap-4 mt-3 pb-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            {sortedRoles.map((role, i) => (
+              <div
+                key={role.campaign_role_id}
+                className="flex items-center gap-1"
               >
-                {role.role_name}
-              </button>
+                <span className="text-xs text-muted-foreground">{i + 1}.</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedRoleId(role.campaign_role_id)}
+                  className={cn(
+                    "px-3 py-0.5 rounded-full text-sm font-medium transition-colors",
+                    selectedRoleId === role.campaign_role_id
+                      ? "bg-primary text-primary-foreground"
+                      : "border border-border hover:bg-muted",
+                  )}
+                >
+                  {role.role_name}
+                </button>
+              </div>
+            ))}
+          </div>
+          {selectedRole && (
+            <div className="relative h-7 w-96 shrink-0 overflow-hidden rounded-full border border-primary/40">
+              <div
+                className="absolute inset-y-0 left-0 rounded-full bg-primary transition-[width]"
+                style={{ width: `${selectedRole.preference_percentage}%` }}
+              />
+              <span className="absolute inset-y-0 left-3 flex items-center whitespace-nowrap text-[10px] font-medium text-primary">
+                preference {selectedRole.preference_percentage}%
+              </span>
+              <div
+                className="absolute inset-y-0 left-0 overflow-hidden transition-[width]"
+                style={{ width: `${selectedRole.preference_percentage}%` }}
+              >
+                <span className="absolute inset-y-0 left-3 flex items-center whitespace-nowrap text-[10px] font-medium text-primary-foreground">
+                  preference {selectedRole.preference_percentage}%
+                </span>
+              </div>
             </div>
-          ))}
+          )}
         </div>
       </div>
       {/* Tab bar */}
@@ -225,15 +264,15 @@ export function ApplicationPanel({
         )}
       </div>
 
-
-      <Drawer direction="right" open={discussionOpen} onOpenChange={handleDiscussionOpenChange}>
-        <DrawerContent
-          className="sm:max-w-lg"
-        >
+      <Drawer
+        direction="right"
+        open={discussionOpen}
+        onOpenChange={handleDiscussionOpenChange}
+      >
+        <DrawerContent className="sm:max-w-lg">
           <DrawerHeader className="flex flex-row items-center justify-between px-4 border-b">
             <DrawerTitle>Discussion</DrawerTitle>
-            <DrawerClose className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-            >
+            <DrawerClose className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
               <X className="w-4 h-4" />
             </DrawerClose>
           </DrawerHeader>

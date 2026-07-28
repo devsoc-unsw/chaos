@@ -191,8 +191,9 @@ impl OfferHandler {
 
         let count = body.emails.len();
         for item in body.emails {
+            // Create an offer record for acceptances (audit / accept-decline flow).
             if matches!(item.email_type, EmailType::Accept) {
-                let offer_id = Offer::create(
+                Offer::create(
                     campaign_id,
                     item.application_id,
                     item.email_template_id,
@@ -202,31 +203,23 @@ impl OfferHandler {
                     &mut state.snowflake_generator,
                 )
                 .await?;
-                if state.is_dev_env {
-                    let email = item.email;
-                    println!("need to call offers here, but sent to: {email}");
-                } else {
-                    Offer::send_offer(
-                        offer_id,
-                        &mut transaction.tx,
-                        state.email_credentials.clone(),
-                    )
-                    .await?;
-                }
+            }
+
+            // Queue the frontend-rendered subject/body for all outcome types.
+            // Accept emails are HTML (React Email); rejects remain plaintext for now.
+            if state.is_dev_env {
+                let email = item.email;
+                let email_type = format!("{:?}", item.email_type);
+                println!("Queuing {email_type} email to {email}");
             } else {
-                if state.is_dev_env {
-                    let email = item.email;
-                    println!("Sending reject email to {email}");
-                } else {
-                    EmailQueue::add_to_queue(
-                        Some(item.name),
-                        item.email,
-                        item.subject,
-                        item.body,
-                        &mut transaction.tx,
-                    )
-                    .await?;
-                }
+                EmailQueue::add_to_queue(
+                    Some(item.name),
+                    item.email,
+                    item.subject,
+                    item.body,
+                    &mut transaction.tx,
+                )
+                .await?;
             }
         }
 

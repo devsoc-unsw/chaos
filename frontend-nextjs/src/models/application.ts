@@ -19,7 +19,7 @@ export type ApplicationStatus = "Pending" | "Rejected" | "Successful" | "Intervi
 export interface ApplicationAppliedRoleDetails {
   campaign_role_id: string;
   role_name: string;
-  preference: number;
+  preference_percentage: number;
 }
 
 export async function createOrGetApplication(
