@@ -32,7 +32,7 @@ function fromKey(key: string) {
 function InterviewCard({ date, name, location }: { date: Date, name: string, location: string }) {
   return (
     <div className="flex w-full items-stretch gap-3 bg-white">
-      <div className="w-1.5 shrink-0 rounded-full bg-purple-300" />
+      <div className="w-1.5 shrink-0 rounded-full bg-calendar-primary" />
       <div className="flex flex-col justify-center gap-1">
         <div className="text-xs font-medium text-gray-900">{format(date, "dd MMMM yyyy")}</div>
         <div className="text-xs text-gray-700">{name}</div>
@@ -212,10 +212,10 @@ export default function AvailabilityCalendar({
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1",
                     interactive ? "cursor-pointer" : "cursor-default",
                     marked
-                      ? "bg-purple-200 font-semibold text-purple-950 hover:bg-purple-300"
+                      ? "bg-calendar-secondary font-semibold hover:bg-calendar-primary"
                       : cn(
                         "text-foreground",
-                        interactive && "hover:bg-purple-100",
+                        interactive && "hover:bg-calendar-primary",
                       ),
                     today && !marked && "ring-2 ring-inset ring-primary/60",
                     today && marked && "ring-2 ring-inset ring-primary",

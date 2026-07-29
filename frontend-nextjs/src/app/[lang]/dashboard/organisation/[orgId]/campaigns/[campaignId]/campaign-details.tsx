@@ -164,11 +164,11 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
           <img className="w-full max-h-52 object-cover" src={existingBannerSrc} alt={`${campaign?.name} cover image`} />
           <div className="flex flex-col gap-3 border-t px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <div className="flex flex-col gap-2">
-              <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+              <h1 className="text-3xl font-bold tracking-tight">
                 Good Morning, {currentUser?.name}.
               </h1>
               <div className="flex flex-col gap-1">
-                <h2 className="text-lg font-semibold tracking-tight text-gray-900">
+                <h2 className="text-lg font-semibold tracking-tight">
                   {campaign?.name}
                 </h2>
                 <p className="text-sm text-muted-foreground">
@@ -181,7 +181,7 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
 
         {/* Quick actions */}
         <section className="flex flex-col">
-          <h2 className="text-lg font-semibold text-gray-900">{dict.common.quick_actions}</h2>
+          <h2 className="text-lg font-semibold">{dict.common.quick_actions}</h2>
           <div className="mt-4 flex flex-col w-full sm:flex-row flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap gap-2 w-full sm:w-auto">
               <CopyButton
@@ -195,9 +195,6 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                   <SquarePen className="w-4 h-4" /> {dict.dashboard.actions.edit}
                 </Button>
               </Link>}
-              <CopyButton value={campaignId} className="w-full justify-center sm:w-auto">
-                <Copy className="w-4 h-4" /> {dict.dashboard.campaigns.copy_campaign_id}
-              </CopyButton>
             </div>
 
             <div className="flex flex-wrap gap-2 w-full sm:w-auto">
@@ -243,9 +240,10 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
 
           </div>
         </section>
+
         {/* Applicant Pipeline */}
         <section>
-          <h2 className="text-lg font-semibold text-gray-900">{dict.dashboard.campaigns.applicant_pipeline}</h2>
+          <h2 className="text-lg font-semibold">{dict.dashboard.campaigns.applicant_pipeline}</h2>
           <div className="gap-6">
             <div className="mt-4 overflow-hidden rounded-lg border">
               <Table>
@@ -281,7 +279,7 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                         key={role.id}
                         className={cn(
                           "group transition-colors",
-                          hoveredDeleteIndex === index && "bg-red-50! hover:bg-red-50!"
+                          hoveredDeleteIndex === index && "bg-destructive/10 hover:bg-destructive/20"
                         )}
                       >
                         <TableCell>
@@ -321,7 +319,7 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                   {roles?.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center">
-                        <p className="text-sm text-gray-600">{dict.dashboard.campaigns.no_roles_available}</p>
+                        <p className="text-sm text-muted-foreground">{dict.dashboard.campaigns.no_roles_available}</p>
                       </TableCell>
                     </TableRow>
                   )}
@@ -346,7 +344,7 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
         <div className="flex flex-col gap-6">
           <section className="rounded-xl border bg-white p-4 shadow-sm sm:p-6">
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold text-gray-900">{dict.common.description}</h2>
+              <h2 className="text-lg font-semibold">{dict.common.description}</h2>
             </div>
             <div className="mt-3 text-sm leading-relaxed text-muted-foreground">
               <div dangerouslySetInnerHTML={{ __html: descriptionHtmlState }} />
@@ -355,7 +353,7 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
 
           <section className="rounded-xl border bg-white p-4 shadow-sm sm:p-6">
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold text-gray-900">{dict.common.attachments}</h2>
+              <h2 className="text-lg font-semibold">{dict.common.attachments}</h2>
             </div>
             {attachments && attachments.length > 0 ? (
               <div className="mt-3 space-y-2">
@@ -364,7 +362,9 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                     href={attachment.download_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 rounded-md border border-transparent bg-muted/40 px-3 py-2 text-sm text-blue-600 transition-colors hover:border-blue-200 hover:text-blue-800"
+                    className="flex items-center gap-2 rounded-md border border-transparent 
+                      bg-muted/40 px-3 py-2 text-sm text-link transition-colors 
+                      hover:border-link/50 hover:text-link-hover"
                     key={attachment.id}
                   >
                     <FileText className="w-4 h-4" />
