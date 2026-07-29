@@ -53,6 +53,11 @@ export interface AvailabilityCalendarProps {
   className?: string;
 }
 
+{/* 
+  TODO: 
+  - Visualize important dates of campaign (start date, end date, interview period) in this calendar
+  - Replace mock data with actual interview data (needs CRUD functions and seeder to be modified)
+*/}
 export default function AvailabilityCalendar({
   value,
   defaultValue,
