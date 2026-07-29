@@ -2773,10 +2773,10 @@
             "type": "String",
             "example": "Sponsorships"
           },
-          "preference": {
+          "preference_percentage": {
             "type": "integer",
             "format": "int32",
-            "example": 1
+            "example": 50
           }
         }
       },
