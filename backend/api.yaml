@@ -2673,10 +2673,11 @@ components:
         campaign_role_id:
           type: string
           example: "6996987893965227485"
-        preference:
+        preference_percentage:
           type: integer
           format: int32
-          example: 1
+          description: Percentage preference for this role. The sum across an application's roles must equal 100 when submitted.
+          example: 50
 
     NewAnswer:
       type: object

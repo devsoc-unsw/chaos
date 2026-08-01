@@ -19,7 +19,7 @@ export type ApplicationStatus = "Pending" | "Rejected" | "Successful" | "Intervi
 export interface ApplicationAppliedRoleDetails {
   campaign_role_id: string;
   role_name: string;
-  preference: number;
+  preference_percentage: number;
 }
 
 export async function createOrGetApplication(
@@ -159,6 +159,14 @@ export async function updateApplicationRoleStatus(
       method: "PUT",
       body: { status },
     },
+  );
+}
+
+export async function getCampaignRoleStatuses(
+  campaignId: string,
+): Promise<RoleStatus[]> {
+  return await apiRequest<RoleStatus[]>(
+    `/api/v1/campaign/${campaignId}/rolestatus`,
   );
 }
 

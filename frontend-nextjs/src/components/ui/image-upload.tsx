@@ -83,10 +83,10 @@ import {
                 </div>
   
                 <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                  <span className="font-semibold">Drag an image</span>
+                  <span className="font-semibold">Upload a banner</span>
                 </p>
                 <p className="text-xs text-gray-400 dark:text-gray-400">
-                  Select a image or drag here to upload directly
+                  Select an image or drag here to upload directly
                 </p>
               </div>
             )}

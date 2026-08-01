@@ -55,6 +55,7 @@ export default function ApplicationReview({
   });
 
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
+  const [rolePercentages, setRolePercentages] = useState<Record<string, number>>({});
   const [activeTab, setActiveTab] = useState<"general" | string>("general");
   const [qaByRole, setQAByRole] = useState<Map<string, QuestionAndAnswer[]>>(new Map());
   const queryClient = useQueryClient()
@@ -130,37 +131,37 @@ export default function ApplicationReview({
     });
   };
 
+  // even split across n roles that always sums to exactly 100 (remainder on the last role)
+  const evenSplit = (n: number): number[] => {
+    if (n === 0) return [];
+    const base = Math.floor(100 / n);
+    const splits = Array(n).fill(base);
+    splits[n - 1] += 100 - base * n;
+    return splits;
+  };
+
   // format roles to match what backend expects
-  const buildUpdatedRolesPayload = (orderedIds: string[]) => {
-    if (!application?.applied_roles || application.applied_roles.length === 0) {
-      return orderedIds.map((campaignRoleId, index) => ({
-        campaign_role_id: campaignRoleId,
-        preference: index
-      }));
-    }
-
-    return orderedIds.map((campaignRoleId, index) => {
-      const existing = application.applied_roles.find(
-        r => String(r.campaign_role_id) === String(campaignRoleId)
-      );
-
-      if (!existing) {
-        return {
-          campaign_role_id: campaignRoleId,
-          preference: index
-        };
-      }
-
-      return {
-        campaign_role_id: existing.campaign_role_id,
-        preference: index
-      };
-    });
+  const buildUpdatedRolesPayload = (orderedIds: string[], percentages: Record<string, number>) => {
+    return orderedIds.map((campaignRoleId) => ({
+      campaign_role_id: campaignRoleId,
+      preference_percentage: percentages[campaignRoleId] ?? 0,
+    }));
   };
 
   // update roles in backend
   const updateRoles = async (nextSelectedRoles: string[]) => {
+    const lengthChanged = nextSelectedRoles.length !== selectedRoleIds.length;
+    const nextPercentages = lengthChanged
+      ? Object.fromEntries(
+          nextSelectedRoles.map((id, i) => [id, evenSplit(nextSelectedRoles.length)[i]])
+        )
+      : rolePercentages;
+
     setSelectedRoleIds(nextSelectedRoles)
+    if (lengthChanged) setRolePercentages(nextPercentages);
+    if (activeTab !== "general" && !nextSelectedRoles.includes(activeTab)) {
+      setActiveTab("general");
+    }
     setQAByRole(prev => {
       const newQAMap = new Map<string, QuestionAndAnswer[]>();
       if (prev.has('general')) {
@@ -209,21 +210,34 @@ export default function ApplicationReview({
     });
 
     try {
-      const payload = {
-        roles: buildUpdatedRolesPayload(nextSelectedRoles),
-      };
-      await updateApplicationRoles(applicationId, payload.roles);
+      const payload = buildUpdatedRolesPayload(nextSelectedRoles, nextPercentages);
+      await updateApplicationRoles(applicationId, payload);
     } catch (err) {
       console.error("Failed to update roles:", err);
     }
   }
 
+  // update a single role's percentage (does not change selection or order)
+  const handlePercentageChange = async (campaignRoleId: string, value: number) => {
+    const nextPercentages = { ...rolePercentages, [campaignRoleId]: value };
+    setRolePercentages(nextPercentages);
+
+    try {
+      const payload = buildUpdatedRolesPayload(selectedRoleIds, nextPercentages);
+      await updateApplicationRoles(applicationId, payload);
+    } catch (err) {
+      console.error("Failed to update role preference:", err);
+    }
+  };
+
   useEffect(() => {
     if (application?.applied_roles) {
-      setSelectedRoleIds(
-        [...application.applied_roles]
-          .sort((a, b) => a.preference - b.preference)
-          .map(r => String(r.campaign_role_id))
+      const sorted = [...application.applied_roles].sort(
+        (a, b) => b.preference_percentage - a.preference_percentage
+      );
+      setSelectedRoleIds(sorted.map(r => String(r.campaign_role_id)));
+      setRolePercentages(
+        Object.fromEntries(sorted.map(r => [String(r.campaign_role_id), r.preference_percentage]))
       );
     }
   }, [application]);
@@ -233,9 +247,9 @@ export default function ApplicationReview({
       await submitApplication(applicationId)
       queryClient.invalidateQueries({ queryKey: [`application-${applicationId}`] });
       router.push(`/campaign/apply/${campaignId}/finish`);
-    } catch (e) {
+    } catch (e: any) {
       console.error("Submission failed: ", e);
-      toast.error("Failed to submit application. Please try again.");
+      toast.error(e?.message || "Failed to submit application. Please try again.");
     }
   }
 
@@ -267,7 +281,7 @@ export default function ApplicationReview({
         <div></div>
         <div className="flex w-full flex-col gap-4 lg:gap-8 xl:flex-row">
           <div className="w-full xl:w-80 xl:shrink-0">
-            <RoleSelector roles={roles} maxRolesPerApplication={campaign?.max_roles_per_application} selectedRoleIds={selectedRoleIds} onChangeSelectedRoles={updateRoles} applicationId={applicationId} dict={dict} />
+            <RoleSelector roles={roles} maxRolesPerApplication={campaign?.max_roles_per_application} selectedRoleIds={selectedRoleIds} onChangeSelectedRoles={updateRoles} rolePercentages={rolePercentages} onChangeRolePercentage={handlePercentageChange} applicationId={applicationId} dict={dict} />
           </div>
           <div className="min-w-0 flex-1">
             <div className="overflow-x-auto pb-1">
@@ -277,7 +291,7 @@ export default function ApplicationReview({
               <MainContent campaignId={campaignId} applicationId={applicationId} activeTab={activeTab} dict={dict} updateRoleAnswers={updateQuestionAnswer} qaByRole={qaByRole} />
               <TabSwitcher roles={roles} selectedRoleIds={selectedRoleIds} activeTab={activeTab} onChangeActiveTab={setActiveTab} dict={dict} />
             </div>
-            <ReviewCard questionsAndAnswersByRole={qaByRole} selectedRoleIds={selectedRoleIds} roles={roles} applicationId={applicationId} handleSubmit={handleApplicationSubmit} dict={dict} />
+            <ReviewCard questionsAndAnswersByRole={qaByRole} selectedRoleIds={selectedRoleIds} rolePercentages={rolePercentages} roles={roles} applicationId={applicationId} handleSubmit={handleApplicationSubmit} dict={dict} />
           </div>
         </div>
       </div>

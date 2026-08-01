@@ -159,6 +159,12 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
+  --color-link: var(--color-blue-600);
+  --color-link-hover: var(--color-blue-800);
+
+  --color-calendar-primary: var(--color-purple-300);
+  --color-calendar-secondary: var(--color-purple-200);
+
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --font-serif: var(--font-serif);
