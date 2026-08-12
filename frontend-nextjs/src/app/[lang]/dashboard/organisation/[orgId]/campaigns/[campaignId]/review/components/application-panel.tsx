@@ -244,7 +244,6 @@ export function ApplicationPanel({
         {activeTab === "application" && (
           <ApplicationDetailsComponent
             applicationId={app.id}
-            campaignId={campaignId}
             dict={dict}
             selectedRoleId={selectedRoleId}
           />
