@@ -477,6 +477,10 @@ pub async fn app() -> Result<(Router, AppState), ChaosError> {
             get(AnswerHandler::get_all_common_by_application),
         )
         .route(
+            "/api/v1/application/:application_id/questions_answers",
+            get(ApplicationHandler::get_questions_and_answers),
+        )
+        .route(
             "/api/v1/application/:application_id/answer",
             post(AnswerHandler::create),
         )

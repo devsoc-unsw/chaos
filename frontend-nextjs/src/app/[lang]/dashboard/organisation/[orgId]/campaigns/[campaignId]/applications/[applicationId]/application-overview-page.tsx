@@ -20,7 +20,6 @@ export default function ApplicationOverviewPageComponent({
     <div className="flex flex-col gap-4">
       <ApplicationDetailsComponent
         applicationId={applicationId}
-        campaignId={campaignId}
         dict={dict}
       />
       <ApplicationRatingsSection

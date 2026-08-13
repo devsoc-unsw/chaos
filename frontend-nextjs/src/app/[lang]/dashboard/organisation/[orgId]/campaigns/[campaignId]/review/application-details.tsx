@@ -1,19 +1,16 @@
 "use client";
 
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { getApplication } from "@/models/application";
-import { getAllCommonAnswers, getAllRoleAnswers } from "@/models/answer";
-import { getAllCommonQuestions, getAllRoleQuestions, linkQuestionsAndAnswers } from "@/models/question";
+import { getApplicationQuestionsAnswers, linkQuestionsAndAnswers } from "@/models/question";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function ApplicationDetailsComponent({
     applicationId,
-    campaignId,
     dict,
     selectedRoleId,
 }: {
     applicationId: string;
-    campaignId: string;
     dict: any;
     selectedRoleId?: string | null;
 }) {
@@ -23,41 +20,24 @@ export default function ApplicationDetailsComponent({
         enabled: !!applicationId,
     });
 
-    const { data: commonQuestions } = useQuery({
-        queryKey: [`${campaignId}-common-questions`],
-        queryFn: () => getAllCommonQuestions(campaignId),
+    const { data: qaData } = useQuery({
+        queryKey: [`${applicationId}-questions-answers`],
+        queryFn: () => getApplicationQuestionsAnswers(applicationId),
+        enabled: !!applicationId,
     });
 
-    const { data: commonAnswers } = useQuery({
-        queryKey: [`${applicationId}-common-answers`],
-        queryFn: () => getAllCommonAnswers(applicationId),
-    });
-
-    const linkedCommonQuestionsAnswers = linkQuestionsAndAnswers(commonQuestions ?? [], commonAnswers ?? []);
+    const linkedCommonQuestionsAnswers = linkQuestionsAndAnswers(
+        (qaData ?? []).filter((q) => q.common)
+    );
 
     const roles = application?.applied_roles ?? [];
 
-    const roleQuestionsQueries = useQueries({
-        queries: roles.map((role) => ({
-            queryKey: [`${campaignId}-role-questions-${role.campaign_role_id}`],
-            queryFn: () => getAllRoleQuestions(campaignId, role.campaign_role_id),
-        })),
-    });
-
-    const roleAnswersQueries = useQueries({
-        queries: roles.map((role) => ({
-            queryKey: [`${applicationId}-role-answers-${role.campaign_role_id}`],
-            queryFn: () => getAllRoleAnswers(applicationId, role.campaign_role_id),
-        })),
-    });
-
     const linkedRolesQuestionsAnswers = roles
-        .map((role, index) => ({
+        .map((role) => ({
             id: role.campaign_role_id,
             roleName: role.role_name,
             questions: linkQuestionsAndAnswers(
-                roleQuestionsQueries[index]?.data ?? [],
-                roleAnswersQueries[index]?.data ?? []
+                (qaData ?? []).filter((q) => !q.common && q.roles.includes(role.campaign_role_id))
             ),
         }))
         .filter((r) => !selectedRoleId || r.id === selectedRoleId);
