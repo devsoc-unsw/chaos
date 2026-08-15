@@ -91,6 +91,9 @@ export default function Dropdown({
                 <Label>{question.text}</Label>
                 {question.required && <span className="ml-1 text-destructive">*</span>}
             </div>
+            {question.description && (
+                <p className="mb-4 text-sm text-muted-foreground">{question.description}</p>
+            )}
             <Select
                 key={options.length + '-' + value}
                 value={value}
