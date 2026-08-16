@@ -378,7 +378,7 @@ function MultiOptionQuestionCard({ question, currentRole, possibleRole, handleQu
     return (
         <div className="flex flex-col p-2 border rounded-md gap-2 w">
             <div className="flex flex-col gap-1">
-                <label className="text-sm text-muted-foreground">{dict.common.title}</label>
+                <label className="text-sm text-foreground">{dict.common.title}</label>
                 <div className="flex justify-between">
                     <Input className="max-w-[500px]" value={title} onChange={async (e) => await updateTitle(e.target.value)} />
                     <div className="flex items-center gap-1">
@@ -424,7 +424,7 @@ function MultiOptionQuestionCard({ question, currentRole, possibleRole, handleQu
                     </Select>
                 </div>
                 <div className="flex flex-col gap-1">
-                    <label className="text-sm text-muted-foreground">{dict.common.description}</label>
+                    <label className="text-sm text-foreground">{dict.common.description}</label>
                     <Textarea
                         className="max-w-[500px] min-h-[80px]"
                         placeholder="Optional info for applicants"
@@ -538,7 +538,7 @@ function ShortAnswerQuestionCard({ question, currentRole, possibleRole, handleQu
     return (
         <div className="flex flex-col justify-between p-2 border rounded-md gap-2 min-h-[120px]">
             <div className="flex flex-col gap-1">
-                <label className="text-sm text-muted-foreground">{dict.common.title}</label>
+                <label className="text-sm text-foreground">{dict.common.title}</label>
                 <div className="flex justify-between">
                     <Input className="max-w-[500px]" value={title} onChange={async (e) => await updateTitle(e.target.value)} />
                     <div className="flex items-center gap-1">
@@ -571,7 +571,7 @@ function ShortAnswerQuestionCard({ question, currentRole, possibleRole, handleQu
                 </div>
             </div>
             <div className="flex flex-col gap-1 px-2">
-                <label className="text-sm text-muted-foreground">{dict.common.description}</label>
+                <label className="text-sm text-foreground">{dict.common.description}</label>
                 <Textarea
                     className="max-w-[500px] min-h-[80px]"
                     placeholder="Optional info for applicants"
