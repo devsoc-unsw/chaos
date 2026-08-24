@@ -1,4 +1,4 @@
-/// Used for `resource_id` parameter in SpiceDB whenever resource is `chaos/platform` 
+/// Used for `resource_id` parameter in SpiceDB whenever resource is `chaos/platform`
 pub const PLATFORM_RESOURCE_ID: i64 = 0;
 
 /// SpiceDB resource type constants.
@@ -6,8 +6,9 @@ pub mod resource {
     pub const USER: &str = "chaos/user";
     pub const PLATFORM: &str = "chaos/platform";
     pub const ORGANISATION: &str = "chaos/organisation";
-    pub const CAMPAIGN: &str = "chaos/campaign";
     pub const EMAIL_TEMPLATE: &str = "chaos/email_template";
+    pub const CAMPAIGN: &str = "chaos/campaign";
+    pub const CAMPAIGN_ROLE: &str = "chaos/campaign_role";
     pub const APPLICATION: &str = "chaos/application";
     pub const RATING: &str = "chaos/rating";
     pub const COMMENT: &str = "chaos/comment";
@@ -25,11 +26,14 @@ pub mod relation {
         pub const ADMIN: &str = "admin";
         pub const MEMBER: &str = "member";
     }
+    pub mod email_template {
+        pub const ORGANISATION: &str = "organisation";
+    }
     pub mod campaign {
         pub const ORGANISATION: &str = "organisation";
     }
-    pub mod email_template {
-        pub const ORGANISATION: &str = "organisation";
+    pub mod campaign_role {
+        pub const CAMPAIGN: &str = "campaign";
     }
     pub mod application {
         pub const CAMPAIGN: &str = "campaign";
@@ -45,7 +49,7 @@ pub mod relation {
     }
     pub mod offer {
         pub const CAMPAIGN: &str = "campaign";
-        pub const RECIPIENT: &str = "recipient";
+        pub const APPLICATION: &str = "recipient";
     }
 }
 
@@ -59,13 +63,16 @@ pub mod permission {
         pub const MANAGE: &str = "manage";
         pub const VIEW: &str = "view";
     }
+    pub mod email_template {
+        pub const MANAGE: &str = "manage";
+        pub const VIEW: &str = "view";
+    }
     pub mod campaign {
         pub const MANAGE: &str = "manage";
         pub const REVIEW: &str = "review";
     }
-    pub mod email_template {
+    pub mod campaign_role {
         pub const MANAGE: &str = "manage";
-        pub const VIEW: &str = "view";
     }
     pub mod application {
         pub const VIEW: &str = "view";

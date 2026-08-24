@@ -18,6 +18,12 @@ schema: |-
       permission manage = admin + platform->manage
       permission view = member + admin
   }
+  
+  definition chaos/email_template {
+    relation organisation: chaos/organisation
+    permission manage = organisation->manage
+    permission view = organisation->view
+  }
 
   definition chaos/campaign {
       relation organisation: chaos/organisation
@@ -25,10 +31,9 @@ schema: |-
       permission review = organisation->member + organisation->admin
   }
   
-  definition chaos/email_template {
-    relation organisation: chaos/organisation
-    permission manage = organisation->manage
-    permission view = organisation->view
+  definition chaos/campaign_role {
+    relation campaign: chaos/campaign
+    permission manage = campaign->manage
   }
 
   definition chaos/application {
@@ -55,9 +60,9 @@ schema: |-
 
   definition chaos/offer {
       relation campaign: chaos/campaign
-      relation recipient: chaos/user
+      relation application: chaos/application
       permission manage = campaign->manage
-      permission view = recipient + campaign->review
+      permission view = application->creator + campaign->review
   }
   
 

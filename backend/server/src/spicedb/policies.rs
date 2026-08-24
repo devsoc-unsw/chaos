@@ -49,6 +49,22 @@ impl SpiceDbPolicy for ViewOrganisation {
     const PATH_PARAMETER: &'static str = "organisation_id";
 }
 
+/// Manage email template
+pub struct ManageEmailTemplate;
+impl SpiceDbPolicy for ManageEmailTemplate {
+    const RESOURCE_TYPE: &'static str = schema::resource::EMAIL_TEMPLATE;
+    const PERMISSION: &'static str = schema::permission::email_template::MANAGE;
+    const PATH_PARAMETER: &'static str = "template_id";
+}
+
+/// View email template
+pub struct ViewEmailTemplate;
+impl SpiceDbPolicy for ViewEmailTemplate {
+    const RESOURCE_TYPE: &'static str = schema::resource::EMAIL_TEMPLATE;
+    const PERMISSION: &'static str = schema::permission::email_template::VIEW;
+    const PATH_PARAMETER: &'static str = "template_id";
+}
+
 /// Edit campaign settings & questions
 pub struct ManageCampaign;
 impl SpiceDbPolicy for ManageCampaign {
@@ -65,20 +81,12 @@ impl SpiceDbPolicy for ReviewCampaign {
     const PATH_PARAMETER: &'static str = "campaign_id";
 }
 
-/// Manage email template
-pub struct ManageEmailTemplate;
-impl SpiceDbPolicy for ManageEmailTemplate {
-    const RESOURCE_TYPE: &'static str = schema::resource::EMAIL_TEMPLATE;
-    const PERMISSION: &'static str = schema::permission::email_template::MANAGE;
-    const PATH_PARAMETER: &'static str = "template_id";
-}
-
-/// View email template
-pub struct ViewEmailTemplate;
-impl SpiceDbPolicy for ViewEmailTemplate {
-    const RESOURCE_TYPE: &'static str = schema::resource::EMAIL_TEMPLATE;
-    const PERMISSION: &'static str = schema::permission::email_template::VIEW;
-    const PATH_PARAMETER: &'static str = "template_id";
+/// Manage campaign role
+pub struct ManageCampaignRole;
+impl SpiceDbPolicy for ManageCampaignRole {
+    const RESOURCE_TYPE: &'static str = schema::resource::CAMPAIGN_ROLE;
+    const PERMISSION: &'static str = schema::permission::campaign_role::MANAGE;
+    const PATH_PARAMETER: &'static str = "role_id";
 }
 
 /// View application answers
