@@ -1,4 +1,4 @@
-use crate::models::app::{init_app_state, PLATFORM_RESOURCE_ID};
+use crate::models::app::init_app_state;
 use crate::models::app::AppState;
 use crate::models::error::ChaosError;
 use crate::models::organisation::Organisation;

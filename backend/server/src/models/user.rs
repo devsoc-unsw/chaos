@@ -20,6 +20,15 @@ pub enum UserRole {
     SuperUser,
 }
 
+impl UserRole {
+    pub fn convert_to_spicedb(&self) -> &str {
+        match self {
+            UserRole::User => crate::spicedb::schema::relation::platform::USER,
+            UserRole::SuperUser => crate::spicedb::schema::relation::platform::SUPERUSER
+        }
+    }
+}
+
 /// Detailed information about a user.
 ///
 /// This struct contains all the personal and academic information about a user
@@ -334,21 +343,8 @@ impl User {
             data.degree_starting_year,
             data.role as UserRole
         )
-        .execute(transaction.tx.deref_mut())
+        .execute(transaction.deref_mut())
         .await?;
-
-        // Insert user into SpiceDB
-        let spicedb_relation = match data.role {
-            UserRole::User => crate::spicedb::schema::relation::platform::USER,
-            UserRole::SuperUser => crate::spicedb::schema::relation::platform::SUPERUSER,
-        };
-        transaction.create_spicedb_relationship(
-            crate::spicedb::schema::resource::PLATFORM,
-            crate::spicedb::schema::PLATFORM_RESOURCE_ID,
-            spicedb_relation,
-            crate::spicedb::schema::resource::USER,
-            data.id,
-        );
 
         Ok(())
     }
