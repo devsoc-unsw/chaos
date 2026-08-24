@@ -42,6 +42,17 @@ pub struct DBTransaction<'a> {
 }
 
 impl DBTransaction<'_> {
+    pub async fn new(state: &AppState) -> Result<Self, ChaosError> {
+        Ok(
+            DBTransaction {
+                tx: state.db.begin().await?,
+                spicedb: state.spicedb.clone(),
+                spicedb_key: state.spicedb_key.clone(),
+                queued_relationship_updates: Vec::new(),
+            }
+        )
+    }
+
     /// Queues the creation of a SpiceDB relationship, applied by
     /// [`DBTransaction::commit`].
     ///
@@ -192,11 +203,6 @@ where
     async fn from_request_parts(_: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
 
-        Ok(DBTransaction {
-            tx: app_state.db.begin().await?,
-            spicedb: app_state.spicedb.clone(),
-            spicedb_key: app_state.spicedb_key.clone(),
-            queued_relationship_updates: Vec::new(),
-        })
+        DBTransaction::new(&app_state).await
     }
 }

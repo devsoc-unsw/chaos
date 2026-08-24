@@ -7,11 +7,13 @@ use crate::models::error::ChaosError;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Postgres, Transaction};
 use std::ops::DerefMut;
+use crate::models::app::PLATFORM_RESOURCE_ID;
+use crate::models::transaction::DBTransaction;
 
 /// Represents the role of a user in the system.
 ///
 /// Users can have different roles that determine their permissions and access levels.
-#[derive(Deserialize, Serialize, sqlx::Type, Clone)]
+#[derive(Deserialize, Serialize, sqlx::Type, Clone, Copy)]
 #[sqlx(type_name = "user_role", rename_all = "PascalCase")]
 pub enum UserRole {
     /// Regular user with basic access
@@ -317,7 +319,7 @@ impl User {
     /// Creates a User, This should only used for database seeding
     pub async fn create_user(
         data: User,
-        transaction: &mut Transaction<'_, Postgres>,
+        transaction: &mut DBTransaction<'_>,
     ) -> Result<(), ChaosError> {
         sqlx::query!(
             "
@@ -334,8 +336,21 @@ impl User {
             data.degree_starting_year,
             data.role as UserRole
         )
-        .execute(transaction.deref_mut())
+        .execute(transaction.tx.deref_mut())
         .await?;
+        
+        // Insert user into SpiceDB
+        let spicedb_relation = match data.role {
+            UserRole::User => "user",
+            UserRole::SuperUser => "superuser"
+        };
+        transaction.create_spicedb_relationship(
+            "chaos/platform",
+            PLATFORM_RESOURCE_ID,
+            spicedb_relation,
+            "chaos/user",
+            data.id
+        );
 
         Ok(())
     }

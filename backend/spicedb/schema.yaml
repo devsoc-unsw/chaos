@@ -4,6 +4,11 @@ schema: |-
 
   definition chaos/user {}
   
+  definition chaos/platform {
+    relation superuser: chaos/user
+    relation user: chaos/user
+  }
+  
   definition chaos/organisation {
       relation admin: chaos/user
       relation member: chaos/user
