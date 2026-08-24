@@ -2,7 +2,9 @@ use crate::models::app::init_app_state;
 use crate::models::app::AppState;
 use crate::models::error::ChaosError;
 use crate::models::organisation::Organisation;
+use crate::models::transaction::DBTransaction;
 use crate::models::user::{User, UserRole};
+use crate::spicedb::schema::PLATFORM_RESOURCE_ID;
 
 pub struct Seeder {
     pub app_state: AppState,
@@ -16,10 +18,10 @@ impl Seeder {
     }
 
     pub async fn seed_database(&mut self, admin_email: String) -> Result<(), ChaosError> {
-        let mut tx = self.app_state.db.begin().await?;
+        let mut transaction = DBTransaction::new(&self.app_state).await?;
 
         // Check if super user already exists, and if not, create them
-        let possible_super_user = User::find_by_email(admin_email.clone(), &mut tx).await?;
+        let possible_super_user = User::find_by_email(admin_email.clone(), &mut transaction.tx).await?;
         let super_user_id = self.app_state.snowflake_generator.real_time_generate();
         if possible_super_user.is_none() {
             let super_user = User {
@@ -34,27 +36,43 @@ impl Seeder {
                 role: UserRole::SuperUser,
             };
 
-            User::create_user(super_user, &mut tx).await?;
+            User::create_user(super_user, &mut transaction.tx).await?;
+
+            transaction.create_spicedb_relationship(
+                crate::spicedb::schema::resource::PLATFORM,
+                PLATFORM_RESOURCE_ID,
+                crate::spicedb::schema::relation::platform::SUPERUSER,
+                crate::spicedb::schema::resource::USER,
+                super_user_id,
+            );
         }
 
         // Check if DevSoc org already exists, and if not, create it
-        if Organisation::get_by_slug("devsoc".to_string(), &mut tx)
+        if Organisation::get_by_slug("devsoc".to_string(), &mut transaction.tx)
             .await
             .is_err()
         {
-            let _org_id = Organisation::create(
+            let org_id = Organisation::create(
                 super_user_id,
                 "devsoc".to_string(),
                 "UNSW DevSoc".to_string(),
                 "contact@devsoc.app".to_string(),
                 Some("https://devsoc.app".to_string()),
                 &mut self.app_state.snowflake_generator,
-                &mut tx,
+                &mut transaction.tx,
             )
             .await?;
+
+            transaction.create_spicedb_relationship(
+                crate::spicedb::schema::resource::ORGANISATION,
+                org_id,
+                crate::spicedb::schema::relation::organisation::ADMIN,
+                crate::spicedb::schema::resource::USER,
+                super_user_id,
+            );
         }
 
-        tx.commit().await?;
+        transaction.commit().await?;
         Ok(())
     }
 }

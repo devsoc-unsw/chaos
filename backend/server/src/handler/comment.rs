@@ -45,7 +45,7 @@ impl CommentHandler {
         )
         .await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(AppMessage::OkMessage(id))
     }
@@ -76,7 +76,7 @@ impl CommentHandler {
         )
         .await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(AppMessage::OkMessage("Successfully updated comment"))
     }
@@ -104,7 +104,7 @@ impl CommentHandler {
         )
         .await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(AppMessage::OkMessage("Successfully deleted comment"))
     }
@@ -126,7 +126,7 @@ impl CommentHandler {
         let comments =
             Comment::get_comments_by_application(application_id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(Json(comments))
     }
@@ -155,7 +155,7 @@ impl CommentHandler {
         )
         .await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(AppMessage::OkMessage("Successfully updated comment last read"))
     }
@@ -184,7 +184,7 @@ impl CommentHandler {
         )
         .await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(AppMessage::OkMessage("Successfully marked all comments read"))
     }
@@ -207,7 +207,7 @@ impl CommentHandler {
             CommentLastRead::get_unread_count(application_id, admin.user_id, &mut transaction.tx)
                 .await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(Json(UnreadCommentCount { count }))
     }

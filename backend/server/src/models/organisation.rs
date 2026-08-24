@@ -95,13 +95,22 @@ pub struct OrganisationDetails {
 ///
 /// This enum represents the different roles a user can have
 /// within an organisation.
-#[derive(Deserialize, Serialize, sqlx::Type, Clone)]
+#[derive(Deserialize, Debug, Serialize, sqlx::Type, Clone, Copy)]
 #[sqlx(type_name = "organisation_role", rename_all = "PascalCase")]
 pub enum OrganisationRole {
     /// Regular member with basic access
     User,
     /// Administrator with full access
     Admin,
+}
+
+impl OrganisationRole {
+    pub fn convert_to_spicedb(&self) -> &str {
+        match self {
+            OrganisationRole::User => crate::spicedb::schema::relation::organisation::MEMBER,
+            OrganisationRole::Admin => crate::spicedb::schema::relation::organisation::ADMIN
+        }
+    }
 }
 
 /// Represents a member of an organisation.
@@ -264,6 +273,8 @@ impl Organisation {
         )
         .execute(transaction.deref_mut())
         .await?;
+
+
 
         Ok(id)
     }
@@ -541,13 +552,13 @@ impl Organisation {
     ///
     /// # Returns
     /// Returns a `Result` containing either:
-    /// * `Ok(())` - If the administrators were updated successfully
+    /// * `Ok(Vec<i64>)` - Contains the deleted existing admins, if any
     /// * `Err(ChaosError)` - An error if update fails
     pub async fn update_admins(
         organisation_id: i64,
         admin_id_list: Vec<i64>,
         transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<(), ChaosError> {
+    ) -> Result<Vec<i64>, ChaosError> {
         // TODO: If we allow admins to add other admins
         // if !admin_id_list.contains(&current_user_id) {
         //     return Err(
@@ -565,13 +576,16 @@ impl Organisation {
         .fetch_one(transaction.deref_mut())
         .await?;
 
-        sqlx::query!(
-            "DELETE FROM organisation_members WHERE organisation_id = $1 AND role = $2",
+        let deleted_members: Vec<i64> = sqlx::query!(
+            "DELETE FROM organisation_members WHERE organisation_id = $1 AND role = $2 RETURNING user_id",
             organisation_id,
             OrganisationRole::Admin as OrganisationRole
         )
-        .execute(transaction.deref_mut())
-        .await?;
+        .fetch_all(transaction.deref_mut())
+        .await?
+        .iter()
+        .map(|r| r.user_id)
+        .collect();
 
         for admin_id in admin_id_list {
             sqlx::query!(
@@ -587,7 +601,7 @@ impl Organisation {
             .await?;
         }
 
-        Ok(())
+        Ok(deleted_members)
     }
 
     /// Updates the list of members for an organisation.
@@ -599,13 +613,13 @@ impl Organisation {
     ///
     /// # Returns
     /// Returns a `Result` containing either:
-    /// * `Ok(())` - If the members were updated successfully
+    /// * `Ok(Vec<i64>)` - Contains the deleted existing members, if any
     /// * `Err(ChaosError)` - An error if update fails
     pub async fn update_members(
         organisation_id: i64,
         member_id_list: Vec<i64>,
         transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<(), ChaosError> {
+    ) -> Result<Vec<i64>, ChaosError> {
         sqlx::query!(
             "SELECT id FROM organisations WHERE id = $1",
             organisation_id
@@ -613,13 +627,16 @@ impl Organisation {
         .fetch_one(transaction.deref_mut())
         .await?;
 
-        sqlx::query!(
-            "DELETE FROM organisation_members WHERE organisation_id = $1 AND role = $2",
+        let deleted_members: Vec<i64> = sqlx::query!(
+            "DELETE FROM organisation_members WHERE organisation_id = $1 AND role = $2 RETURNING user_id",
             organisation_id,
             OrganisationRole::User as OrganisationRole
         )
-        .execute(transaction.deref_mut())
-        .await?;
+        .fetch_all(transaction.deref_mut())
+        .await?
+        .iter()
+        .map(|r| r.user_id)
+        .collect();;
 
         for member_id in member_id_list {
             sqlx::query!(
@@ -635,7 +652,7 @@ impl Organisation {
             .await?;
         }
 
-        Ok(())
+        Ok(deleted_members)
     }
 
     pub async fn remove_admin(
@@ -643,24 +660,37 @@ impl Organisation {
         admin_to_remove: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        Self::update_member_role(
+        let _ = Self::update_member_role(
             organisation_id,
             admin_to_remove,
             OrganisationRole::User,
             transaction,
         )
-        .await
+        .await?;
+        
+        Ok(())
     }
 
     /// Updates a single member's role (promote to Admin or demote to User). The user must already be in the organisation.
+    /// Returns user's old role in the organisation
     pub async fn update_member_role(
         organisation_id: i64,
         user_id: i64,
         role: OrganisationRole,
         transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<(), ChaosError> {
+    ) -> Result<OrganisationRole, ChaosError> {
         sqlx::query!(
             "SELECT id FROM organisations WHERE id = $1",
+            organisation_id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
+
+        let old_membership = sqlx::query!(
+            "
+                SELECT role AS \"role!: OrganisationRole\" FROM organisation_members WHERE user_id = $1 AND organisation_id = $2
+            ",
+            user_id,
             organisation_id
         )
         .fetch_one(transaction.deref_mut())
@@ -677,7 +707,7 @@ impl Organisation {
         .execute(transaction.deref_mut())
         .await?;
 
-        Ok(())
+        Ok(old_membership.role)
     }
 
     pub async fn remove_user(
@@ -754,6 +784,8 @@ impl Organisation {
         }
     }
 
+    /// Returns either an invite code (String) or the id (i64) of an existing
+    /// user that matched the email, who was added to the organisation.
     pub async fn invite_user(
         organisation_id: i64,
         inviting_user_id: i64,
@@ -762,7 +794,7 @@ impl Organisation {
         is_dev_env: bool,
         snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<String, ChaosError> {
+    ) -> Result<(Option<String>, Option<i64>), ChaosError> {
         let email = email.to_lowercase();
 
         sqlx::query!(
@@ -780,7 +812,7 @@ impl Organisation {
                 ));
             }
             Self::add_user(organisation_id, user.id, transaction).await?;
-            return Ok("existing-user-added".to_string());
+            return Ok((None, Some(user.id)));
         }
 
         // If an invite already exists for this organisation/email, not allow duplicates, we refresh the invite.
@@ -822,7 +854,7 @@ impl Organisation {
             .execute(transaction.deref_mut())
             .await?;
 
-            return Ok(refreshed_code);
+            return Ok((Some(refreshed_code), None));
         }
 
         // New invite creation
@@ -860,7 +892,7 @@ impl Organisation {
             .await?;
         }
 
-        Ok(code)
+        Ok((Some(code), None))
     }
 
     pub async fn update_logo(

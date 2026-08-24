@@ -11,13 +11,22 @@ use std::ops::DerefMut;
 /// Represents the role of a user in the system.
 ///
 /// Users can have different roles that determine their permissions and access levels.
-#[derive(Deserialize, Serialize, sqlx::Type, Clone)]
+#[derive(Deserialize, Serialize, sqlx::Type, Clone, Copy)]
 #[sqlx(type_name = "user_role", rename_all = "PascalCase")]
 pub enum UserRole {
     /// Regular user with basic access
     User,
     /// Super user with administrative privileges
     SuperUser,
+}
+
+impl UserRole {
+    pub fn convert_to_spicedb(&self) -> &str {
+        match self {
+            UserRole::User => crate::spicedb::schema::relation::platform::USER,
+            UserRole::SuperUser => crate::spicedb::schema::relation::platform::SUPERUSER
+        }
+    }
 }
 
 /// Detailed information about a user.

@@ -70,7 +70,7 @@ impl EmailTemplateHandler {
         )
         .await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully updated email template"))
     }
 
@@ -94,7 +94,7 @@ impl EmailTemplateHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         EmailTemplate::delete(id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully deleted email template"))
     }
 
@@ -119,7 +119,7 @@ impl EmailTemplateHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         EmailTemplate::duplicate(id, &mut transaction.tx, &mut state.snowflake_generator).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage(
             "Successfully duplicated email template",
         ))

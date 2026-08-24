@@ -16,6 +16,7 @@ use crate::models::email::{ChaosEmail, EmailCredentials};
 use crate::models::error::ChaosError;
 use crate::models::storage::Storage;
 use crate::service::oauth2::build_oauth_client;
+use crate::spicedb::authzed::api::v1::permissions_service_client::PermissionsServiceClient;
 use axum::http::{header, Method, StatusCode};
 use axum::response::IntoResponse;
 use axum::routing::{delete, get, patch, post, put};
@@ -29,7 +30,10 @@ use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 use std::env;
+use tonic::transport::Channel;
 use tower_http::cors::CorsLayer;
+use crate::spicedb::check_permission;
+
 
 #[derive(Serialize)]
 pub enum AppMessage<T: Serialize> {
@@ -105,7 +109,50 @@ pub struct AppState {
     pub storage_bucket: Bucket,
     pub is_dev_env: bool,
     pub email_credentials: EmailCredentials,
+    pub spicedb: PermissionsServiceClient<Channel>,
+    pub spicedb_key: String,
 }
+
+impl AppState {
+    /// Checks whether a user holds a permission on a SpiceDB resource, using
+    /// the application's shared SpiceDB client and credentials.
+    ///
+    /// Call this directly in handlers whose resource ID does not come from a
+    /// path parameter, for example when the ID is taken from the request body,
+    /// derived from a slug, or only known after a database lookup. When the
+    /// resource ID is a path parameter, prefer the [`SpiceDbAuth`] extractor.
+    ///
+    /// # Arguments
+    ///
+    /// * `user_id` - Chaos user to authorize
+    /// * `resource_type` - SpiceDB object type, such as `chaos/organisation`
+    /// * `resource_id` - Chaos ID of the resource, sent as the SpiceDB object ID
+    /// * `permission` - SpiceDB permission to check, such as `manage`
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` if the user holds the permission
+    /// * `Err(ChaosError::ForbiddenOperation)` if the user does not
+    /// * `Err(ChaosError::InternalServerError)` if the SpiceDB call fails
+    pub async fn check_permission(
+        &self,
+        user_id: i64,
+        resource_type: &str,
+        resource_id: i64,
+        permission: &str,
+    ) -> Result<(), ChaosError> {
+        check_permission(
+            &self.spicedb,
+            &self.spicedb_key,
+            user_id,
+            resource_type,
+            resource_id,
+            permission,
+        )
+            .await
+    }
+}
+
 
 pub async fn init_app_state() -> AppState {
     // Initialise DB connection
@@ -161,6 +208,15 @@ pub async fn init_app_state() -> AppState {
     // Initialise email credentials
     let email_credentials = ChaosEmail::setup_credentials();
 
+    // Initialise the generated SpiceDB gRPC client
+    let spicedb_endpoint =
+        env::var("SPICEDB_GRPC_ENDPOINT").expect("SPICEDB_GRPC_ENDPOINT must be set");
+    let spicedb_key = env::var("SPICEDB_KEY").expect("SPICEDB_KEY must be set");
+    let spicedb_channel = Channel::from_shared(spicedb_endpoint)
+        .expect("SPICEDB_GRPC_ENDPOINT must be a valid URI")
+        .connect_lazy();
+    let spicedb = PermissionsServiceClient::new(spicedb_channel);
+
     // Add all data to AppState
 
     AppState {
@@ -175,6 +231,8 @@ pub async fn init_app_state() -> AppState {
         storage_bucket,
         is_dev_env,
         email_credentials,
+        spicedb,
+        spicedb_key,
     }
 }
 
