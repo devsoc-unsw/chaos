@@ -42,7 +42,7 @@ schema: |-
   definition chaos/offer {
       relation campaign: chaos/campaign
       relation recipient: chaos/user
-      permission admin = campaign->manage
+      permission manage = campaign->manage
       permission view = recipient + campaign->review
   }
   

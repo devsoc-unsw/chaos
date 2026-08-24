@@ -16,14 +16,14 @@ use axum::http::request::Parts;
 use sqlx::{Postgres, Transaction};
 use tonic::transport::Channel;
 
-/// A wrapper around a PostgreSQL transaction.
+/// A wrapper around a PostgreSQL transaction and queued SpiceDB calls.
 ///
 /// This struct provides a type-safe way to handle database transactions
 /// in request handlers. It automatically begins a transaction when extracted
 /// from a request.
 ///
 /// SpiceDB relationship writes can be queued on the transaction with
-/// [`DBTransaction::create_relationship`] and [`DBTransaction::delete_relationship`].
+/// [`DBTransaction::create_spicedb_relationship`] and [`DBTransaction::delete_spicedb_relationship`].
 /// Because SpiceDB has no transactions or rollbacks, the writes are buffered
 /// in memory and only applied by [`DBTransaction::commit`], which keeps the two
 /// systems as consistent as possible (see its documentation).
@@ -56,7 +56,7 @@ impl DBTransaction<'_> {
     /// * `relation` - SpiceDB relation on the resource, such as `organisation`
     /// * `subject_type` - SpiceDB object type of the subject, such as `chaos/user`
     /// * `subject_id` - Chaos ID of the subject
-    pub fn create_relationship(
+    pub fn create_spicedb_relationship(
         &mut self,
         resource_type: &str,
         resource_id: i64,
@@ -89,7 +89,7 @@ impl DBTransaction<'_> {
     /// * `relation` - SpiceDB relation on the resource, such as `member`
     /// * `subject_type` - SpiceDB object type of the subject, such as `chaos/user`
     /// * `subject_id` - Chaos ID of the subject
-    pub fn delete_relationship(
+    pub fn delete_spicedb_relationship(
         &mut self,
         resource_type: &str,
         resource_id: i64,
@@ -152,10 +152,12 @@ impl DBTransaction<'_> {
             if let Err(compensation_error) =
                 write_relationships(&self.spicedb, &self.spicedb_key, inverse_updates).await
             {
-                println!(
-                    "Failed to compensate SpiceDB writes after Postgres commit failure: \
-                     {compensation_error:?}"
-                );
+                return Err(ChaosError::InternalServerErrorWithMessage(
+                    format!(
+                        "Failed to compensate SpiceDB writes after Postgres commit failure: \
+                         {compensation_error:?}"
+                    )
+                ))
             }
             return Err(error.into());
         }

@@ -59,7 +59,7 @@ impl OrganisationHandler {
         )
         .await?;
 
-        transaction.create_relationship(
+        transaction.create_spicedb_relationship(
             "chaos/organisation",
             organisation_id,
             "admin",
@@ -502,7 +502,7 @@ impl OrganisationHandler {
         )
         .await?;
 
-        transaction.create_relationship(
+        transaction.create_spicedb_relationship(
             "chaos/campaign",
             new_campaign_id,
             "organisation",

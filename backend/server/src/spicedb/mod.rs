@@ -7,11 +7,10 @@
 //!
 //! * [`SpiceDbAuth`] - an Axum extractor that authorizes a request against a
 //!   [`SpiceDbPolicy`] via a SpiceDB permission check.
-//! * [`AppState::check_permission`] - a convenience method for permission
-//!   checks where the resource ID does not come from a path parameter.
 
 pub mod policies;
 
+// Generated modules
 pub mod authzed {
     pub mod api {
         pub mod v1 {
@@ -58,7 +57,7 @@ pub mod grpc {
     }
 }
 
-// Place the handwritten SpiceDB authorization code below this point.
+// Handwritten SpiceDB authorization code
 
 use std::{collections::HashMap, marker::PhantomData};
 
@@ -283,46 +282,6 @@ pub async fn write_relationships(
     Ok(())
 }
 
-impl AppState {
-    /// Checks whether a user holds a permission on a SpiceDB resource, using
-    /// the application's shared SpiceDB client and credentials.
-    ///
-    /// Call this directly in handlers whose resource ID does not come from a
-    /// path parameter, for example when the ID is taken from the request body,
-    /// derived from a slug, or only known after a database lookup. When the
-    /// resource ID is a path parameter, prefer the [`SpiceDbAuth`] extractor.
-    ///
-    /// # Arguments
-    ///
-    /// * `user_id` - Chaos user to authorize
-    /// * `resource_type` - SpiceDB object type, such as `chaos/organisation`
-    /// * `resource_id` - Chaos ID of the resource, sent as the SpiceDB object ID
-    /// * `permission` - SpiceDB permission to check, such as `manage`
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(())` if the user holds the permission
-    /// * `Err(ChaosError::ForbiddenOperation)` if the user does not
-    /// * `Err(ChaosError::InternalServerError)` if the SpiceDB call fails
-    pub async fn check_permission(
-        &self,
-        user_id: i64,
-        resource_type: &str,
-        resource_id: i64,
-        permission: &str,
-    ) -> Result<(), ChaosError> {
-        check_permission(
-            &self.spicedb,
-            &self.spicedb_key,
-            user_id,
-            resource_type,
-            resource_id,
-            permission,
-        )
-        .await
-    }
-}
-
 /// Describes a SpiceDB authorization policy for the [`SpiceDbAuth`] extractor.
 ///
 /// Each policy is a zero-sized type configuring which permission is checked on
@@ -357,7 +316,7 @@ pub trait SpiceDbPolicy: Send + Sync {
 /// use crate::spicedb::{policies::ManageCampaign, SpiceDbAuth};
 ///
 /// async fn update_campaign(auth: SpiceDbAuth<ManageCampaign>, ...) {
-///     // `auth.user_id` is authorized to manage the campaign `auth.resource_id`.
+///     // `auth.user_id` is authorized to `manage` the campaign `auth.resource_id`.
 /// }
 /// ```
 pub struct SpiceDbAuth<P> {
