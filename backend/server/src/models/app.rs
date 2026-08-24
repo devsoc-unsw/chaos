@@ -34,7 +34,7 @@ use sqlx::{Pool, Postgres};
 use std::env;
 use tonic::transport::Channel;
 use tower_http::cors::CorsLayer;
-use crate::spicedb::{check_permission, SpiceDbAuth};
+use crate::spicedb::check_permission;
 
 
 #[derive(Serialize)]
