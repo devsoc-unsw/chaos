@@ -65,12 +65,3 @@ schema: |-
       permission view = application->creator + campaign->review
   }
   
-
-# Add initial local relationships here, one per line. Relationships created
-# through the API but not listed here are removed on the next SpiceDB startup.
-relationships: |-
-  chaos/organisation:org-1#admin@chaos/user:alice
-  chaos/organisation:org-1#member@chaos/user:bob
-  chaos/campaign:campaign-1#organisation@chaos/organisation:org-1
-  chaos/application:application-1#campaign@chaos/campaign:campaign-1
-  chaos/application:application-1#creator@chaos/user:charlie
