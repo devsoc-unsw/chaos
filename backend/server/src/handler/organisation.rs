@@ -248,10 +248,9 @@ impl OrganisationHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - List of members or error
     pub async fn get_users(
         mut transaction: DBTransaction<'_>,
-        Path(id): Path<i64>,
-        _auth: SpiceDbAuth<ManageOrganisation>,
+        auth: SpiceDbAuth<ManageOrganisation>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let members = Organisation::get_users(id, &mut transaction.tx).await?;
+        let members = Organisation::get_users(auth.resource_id, &mut transaction.tx).await?;
 
         transaction.commit().await?;
         Ok((StatusCode::OK, Json(members)))
@@ -272,10 +271,9 @@ impl OrganisationHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - List of members or error
     pub async fn get_members(
         mut transaction: DBTransaction<'_>,
-        Path(id): Path<i64>,
-        _auth: SpiceDbAuth<ManageOrganisation>,
+        auth: SpiceDbAuth<ManageOrganisation>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let members = Organisation::get_members(id, &mut transaction.tx).await?;
+        let members = Organisation::get_members(auth.resource_id, &mut transaction.tx).await?;
 
         transaction.commit().await?;
         Ok((StatusCode::OK, Json(members)))
@@ -347,18 +345,20 @@ impl OrganisationHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update_members(
         mut transaction: DBTransaction<'_>,
-        Path(id): Path<i64>,
-        _auth: SpiceDbAuth<ManageOrganisation>,
+        auth: SpiceDbAuth<ManageOrganisation>,
         Json(request_body): Json<AdminUpdateList>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let deleted_members =
-            Organisation::update_members(id, request_body.members.clone(), &mut transaction.tx)
-                .await?;
+        let deleted_members = Organisation::update_members(
+            auth.resource_id,
+            request_body.members.clone(),
+            &mut transaction.tx,
+        )
+        .await?;
 
         for deleted_member in deleted_members {
             transaction.delete_spicedb_relationship(
                 spicedb_schema::resource::ORGANISATION,
-                id,
+                auth.resource_id,
                 spicedb_schema::relation::organisation::MEMBER,
                 spicedb_schema::resource::USER,
                 deleted_member,
@@ -368,7 +368,7 @@ impl OrganisationHandler {
         for new_member in request_body.members {
             transaction.create_spicedb_relationship(
                 spicedb_schema::resource::ORGANISATION,
-                id,
+                auth.resource_id,
                 spicedb_schema::relation::organisation::MEMBER,
                 spicedb_schema::resource::USER,
                 new_member,
@@ -478,15 +478,15 @@ impl OrganisationHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn remove_user(
         mut transaction: DBTransaction<'_>,
-        Path(id): Path<i64>,
-        _auth: SpiceDbAuth<ManageOrganisation>,
+        auth: SpiceDbAuth<ManageOrganisation>,
         Json(request_body): Json<MemberToRemove>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Organisation::remove_user(id, request_body.user_id, &mut transaction.tx).await?;
+        Organisation::remove_user(auth.resource_id, request_body.user_id, &mut transaction.tx)
+            .await?;
 
         transaction.delete_spicedb_relationship(
             spicedb_schema::resource::ORGANISATION,
-            id,
+            auth.resource_id,
             OrganisationRole::User.convert_to_spicedb(),
             spicedb_schema::resource::USER,
             request_body.user_id,
@@ -500,13 +500,12 @@ impl OrganisationHandler {
 
     pub async fn invite_user(
         mut transaction: DBTransaction<'_>,
-        Path(id): Path<i64>,
         auth: SpiceDbAuth<ManageOrganisation>,
         State(mut state): State<AppState>,
         Json(request_body): Json<MemberToInvite>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let (invite_code, added_user) = Organisation::invite_user(
-            id,
+            auth.resource_id,
             auth.user_id,
             request_body.email,
             state.email_credentials.clone(),
@@ -520,7 +519,7 @@ impl OrganisationHandler {
         if let Some(user_id) = added_user {
             transaction.create_spicedb_relationship(
                 spicedb_schema::resource::ORGANISATION,
-                id,
+                auth.resource_id,
                 OrganisationRole::User.convert_to_spicedb(),
                 spicedb_schema::resource::USER,
                 user_id,
@@ -547,11 +546,11 @@ impl OrganisationHandler {
     pub async fn update_logo(
         State(state): State<AppState>,
         mut transaction: DBTransaction<'_>,
-        Path(id): Path<i64>,
-        _auth: SpiceDbAuth<ManageOrganisation>,
+        auth: SpiceDbAuth<ManageOrganisation>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let logo_url =
-            Organisation::update_logo(id, &mut transaction.tx, &state.storage_bucket).await?;
+            Organisation::update_logo(auth.resource_id, &mut transaction.tx, &state.storage_bucket)
+                .await?;
 
         transaction.commit().await?;
         Ok((StatusCode::OK, Json(logo_url)))
@@ -596,14 +595,13 @@ impl OrganisationHandler {
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn create_campaign(
-        Path(id): Path<i64>,
         State(mut state): State<AppState>,
         mut transaction: DBTransaction<'_>,
-        _auth: SpiceDbAuth<ManageOrganisation>,
+        auth: SpiceDbAuth<ManageOrganisation>,
         Json(request_body): Json<NewCampaign>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let new_campaign_id = Organisation::create_campaign(
-            id,
+            auth.resource_id,
             request_body.slug,
             request_body.name,
             request_body.description,
@@ -624,7 +622,7 @@ impl OrganisationHandler {
             new_campaign_id,
             spicedb_schema::relation::campaign::ORGANISATION,
             spicedb_schema::resource::ORGANISATION,
-            id,
+            auth.resource_id,
         );
 
         transaction.commit().await?;
@@ -651,12 +649,11 @@ impl OrganisationHandler {
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn check_campaign_slug_availability(
-        Path(organisation_id): Path<i64>,
         mut transaction: DBTransaction<'_>,
-        _auth: SpiceDbAuth<ManageOrganisation>,
+        auth: SpiceDbAuth<ManageOrganisation>,
         Json(data): Json<SlugCheck>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Campaign::check_slug_availability(organisation_id, data.slug, &mut transaction.tx).await?;
+        Campaign::check_slug_availability(auth.resource_id, data.slug, &mut transaction.tx).await?;
 
         transaction.commit().await?;
         Ok(AppMessage::OkMessage("Campaign slug is available"))
@@ -677,14 +674,13 @@ impl OrganisationHandler {
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn create_email_template(
-        Path(id): Path<i64>,
         State(mut state): State<AppState>,
         mut transaction: DBTransaction<'_>,
-        _auth: SpiceDbAuth<ManageOrganisation>,
+        auth: SpiceDbAuth<ManageOrganisation>,
         Json(request_body): Json<NewEmailTemplate>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let template_id = Organisation::create_email_template(
-            id,
+            auth.resource_id,
             request_body.name,
             request_body.template_subject,
             request_body.template_body,
@@ -698,7 +694,7 @@ impl OrganisationHandler {
             template_id,
             spicedb_schema::relation::email_template::ORGANISATION,
             spicedb_schema::resource::ORGANISATION,
-            id,
+            auth.resource_id,
         );
 
         transaction.commit().await?;
@@ -719,12 +715,11 @@ impl OrganisationHandler {
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - List of email templates or error
     pub async fn get_all_email_templates(
-        _auth: SpiceDbAuth<ManageOrganisation>,
-        Path(id): Path<i64>,
+        auth: SpiceDbAuth<ManageOrganisation>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let email_templates =
-            EmailTemplate::get_all_by_organisation(id, &mut transaction.tx).await?;
+            EmailTemplate::get_all_by_organisation(auth.resource_id, &mut transaction.tx).await?;
 
         transaction.commit().await?;
         Ok((StatusCode::OK, Json(email_templates)))
