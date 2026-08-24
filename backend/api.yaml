@@ -2392,6 +2392,35 @@ paths:
         "401":
           $ref: "#/components/responses/NotLoggedIn"
 
+  /application/{application_id}/questions_answers:
+    get:
+      operationId: getQuestionsAndAnswers
+      parameters:
+        - name: application_id
+          in: path
+          description: Application ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: |
+        Returns all questions for an application in one call: the common
+        questions plus the questions for each role the application applied
+        for, each with its answer nested inside (null if unanswered).
+      tags:
+        - Campaign
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/QuestionWithAnswer"
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
+
   /application/{application_id}/answer:
     post:
       operationId: createAnswer
@@ -2673,10 +2702,11 @@ components:
         campaign_role_id:
           type: string
           example: "6996987893965227485"
-        preference:
+        preference_percentage:
           type: integer
           format: int32
-          example: 1
+          description: Percentage preference for this role. The sum across an application's roles must equal 100 when submitted.
+          example: 50
 
     NewAnswer:
       type: object
@@ -3306,6 +3336,53 @@ components:
         updated_at:
           type: string
           example: 2024-03-15T18:25:43.511Z
+
+    QuestionWithAnswer:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "7233828375289139200"
+        title:
+          type: string
+          example: What is your favourite language?
+        description:
+          type: string
+          nullable: true
+        common:
+          type: boolean
+          example: true
+        roles:
+          type: array
+          items:
+            type: string
+          example: ["7233828375289139200"]
+        required:
+          type: boolean
+          example: true
+        short_answer_word_limit:
+          type: integer
+          nullable: true
+        question_type:
+          type: string
+          enum:
+            - ShortAnswer
+            - MultiChoice
+            - MultiSelect
+            - DropDown
+            - Ranking
+        data:
+          type: object
+          description: Question options for multi-option question types
+        answer:
+          $ref: "#/components/schemas/Answer"
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
 
     NewQuestion:
       type: object

@@ -1,7 +1,6 @@
 use crate::handler::answer::AnswerHandler;
 use crate::handler::application::ApplicationHandler;
 use crate::handler::auth::{google_auth_init, google_callback, logout, DevLoginHandler};
-use crate::handler::availabilities::AvailabilitiesHandler;
 use crate::handler::campaign::CampaignHandler;
 use crate::handler::comment::CommentHandler;
 use crate::handler::email_template::EmailTemplateHandler;
@@ -13,7 +12,6 @@ use crate::handler::rating::RatingHandler;
 use crate::handler::role::RoleHandler;
 use crate::handler::role_status::RoleStatusHandler;
 use crate::handler::user::UserHandler;
-use crate::models::availabilities::Availability;
 use crate::models::email::{ChaosEmail, EmailCredentials};
 use crate::models::error::ChaosError;
 use crate::models::storage::Storage;
@@ -236,11 +234,6 @@ pub async fn init_app_state() -> AppState {
         spicedb,
         spicedb_key,
     }
-}
-
-#[derive(Serialize)]
-pub struct AvailabilitiesMessage {
-    pub availabilities: Vec<Availability>,
 }
 
 pub async fn app() -> Result<(Router, AppState), ChaosError> {
@@ -530,16 +523,20 @@ pub async fn app() -> Result<(Router, AppState), ChaosError> {
             get(RoleStatusHandler::get_role_statuses_for_application),
         )
         .route(
-            "/api/v1/campaign/:campaign_id/rolestatus/:campaign_role_id`",
+            "/api/v1/campaign/:campaign_id/rolestatus/:campaign_role_id",
             get(RoleStatusHandler::get_role_statuses_for_campaign_role),
         )
         .route(
-            "/api/v1/campaign/:campaign_id/rolestatus`",
+            "/api/v1/campaign/:campaign_id/rolestatus",
             get(RoleStatusHandler::get_role_statuses_for_campaign),
         )
         .route(
             "/api/v1/application/:application_id/answers/common",
             get(AnswerHandler::get_all_common_by_application),
+        )
+        .route(
+            "/api/v1/application/:application_id/questions_answers",
+            get(ApplicationHandler::get_questions_and_answers),
         )
         .route(
             "/api/v1/application/:application_id/answer",
@@ -624,10 +621,6 @@ pub async fn app() -> Result<(Router, AppState), ChaosError> {
         .route(
             "/api/v1/invite/:code",
             get(InviteHandler::get).post(InviteHandler::use_invite),
-        )
-        .route(
-            "/api/v1/availabilities/:user_id/:campaign_id",
-            get(AvailabilitiesHandler::get).patch(AvailabilitiesHandler::update),
         )
         .layer(cors)
         .with_state(state);

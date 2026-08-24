@@ -6,6 +6,7 @@
 //! - Submitting applications
 //! - Managing application ratings
 
+use crate::models::answer::Answer;
 use crate::models::app::{AppMessage, AppState};
 use crate::models::application::{
     Application, ApplicationRoleUpdate, ApplicationStatus, OpenApplicationByApplicationId,
@@ -15,6 +16,7 @@ use crate::models::auth::{
     ApplicationReviewerGivenApplicationId, AuthUser, CampaignAdmin,
 };
 use crate::models::error::ChaosError;
+use crate::models::question::{Question, QuestionWithAnswer};
 use crate::models::rating::{NewRating, Rating};
 use crate::models::transaction::DBTransaction;
 use axum::extract::{Json, Path, State};
@@ -205,7 +207,7 @@ impl ApplicationHandler {
     /// Retrieves all roles associated with a specific application.
     ///
     /// This handler allows application owners to view all roles they have applied for
-    /// in a specific application, including their preference rankings.
+    /// in a specific application, including their preference percentages.
     ///
     /// # Arguments
     ///
@@ -443,5 +445,36 @@ impl ApplicationHandler {
         transaction.commit().await?;
 
         Ok(Json(avg_applications_ratings))
+    }
+
+    /// Retrieves all questions and answers for an application in one call.
+    ///
+    /// This handler allows the application owner or a reviewer to view the
+    /// common questions and the questions for each applied role, each with
+    /// its answer nested inside (or `null` if unanswered).
+    ///
+    /// # Arguments
+    ///
+    /// * `application_id` - The ID of the application
+    /// * `_user` - The authenticated user (must be the application owner or a reviewer)
+    /// * `transaction` - Database transaction
+    ///
+    /// # Returns
+    ///
+    /// * `Result<impl IntoResponse, ChaosError>` - List of questions with nested answers or error
+    pub async fn get_questions_and_answers(
+        Path(application_id): Path<i64>,
+        _user: ApplicationOwnerOrReviewer,
+        mut transaction: DBTransaction<'_>,
+    ) -> Result<impl IntoResponse, ChaosError> {
+        let questions =
+            Question::get_all_for_application(application_id, &mut transaction.tx).await?;
+        let answers = Answer::get_all_by_application(application_id, &mut transaction.tx).await?;
+        transaction.tx.commit().await?;
+
+        Ok((
+            StatusCode::OK,
+            Json(QuestionWithAnswer::merge(questions, answers)),
+        ))
     }
 }

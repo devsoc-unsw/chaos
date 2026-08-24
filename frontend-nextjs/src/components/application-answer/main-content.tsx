@@ -1,10 +1,9 @@
 "use client"
 
 import { AnswerValue, MultiOptionQuestionOption, QuestionAndAnswer } from "@/models/question";
-import { getAllCommonQuestions, getAllRoleQuestions, linkQuestionsAndAnswers } from "@/models/question";
-import { getAllRoleAnswers, getAllCommonAnswers, updateAnswer, createAnswer, deleteAnswer  } from "@/models/answer";
-import { QueryClient, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { getApplicationQuestionsAnswers, linkQuestionsAndAnswers } from "@/models/question";
+import { updateAnswer, createAnswer, deleteAnswer  } from "@/models/answer";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ShortAnswer from "./questions/shortanswer";
 import Dropdown from "./questions/dropdown";
 import Multichoice from "./questions/multichoice";
@@ -14,14 +13,12 @@ import { buildAnswerPayload } from "@/lib/utils";
 import { toast } from "sonner";
 
 export default function MainContent({
-  campaignId,
   applicationId,
   activeTab,
   dict,
   updateRoleAnswers,
   qaByRole
 }: {
-  campaignId: string;
   applicationId: string;
   activeTab: string;
   dict: any;
@@ -30,62 +27,34 @@ export default function MainContent({
 }) {
     const generalTab = activeTab === "general"
     const queryClient = useQueryClient()
-    const { data: questions } = useQuery({
-    queryKey: generalTab
-      ? [`${campaignId}-common-questions`]
-      : [`${campaignId}-${activeTab}-role-questions`],
-      queryFn: () =>
-      generalTab
-        ? getAllCommonQuestions(campaignId)
-        : getAllRoleQuestions(campaignId, activeTab),
+    const { data: qaData } = useQuery({
+      queryKey: [`${applicationId}-questions-answers`],
+      queryFn: () => getApplicationQuestionsAnswers(applicationId),
     });
 
-    const { data: answers } = useQuery({
-    queryKey: generalTab
-      ? [`${applicationId}-common-answers`]
-      : [`${applicationId}-${activeTab}-role-answers`],
-      queryFn: () =>
-      generalTab
-        ? getAllCommonAnswers(applicationId)
-        : getAllRoleAnswers(applicationId, activeTab),
-    });
+    const tabQuestionsAndAnswers = (data: typeof qaData) =>
+      linkQuestionsAndAnswers(
+        (data ?? []).filter((q) => (generalTab ? q.common : q.roles.includes(activeTab)))
+      );
 
     const questionsAndAnswers =
       qaByRole?.has(activeTab)
         ? (qaByRole.get(activeTab) ?? [])
-        : (questions && answers ? linkQuestionsAndAnswers(questions, answers) : []);
+        : tabQuestionsAndAnswers(qaData);
   
     // submits answer to a question
     const resyncQuestionFromServer = async (question: QuestionAndAnswer) => {
-      const answersKey = generalTab
-        ? [`${applicationId}-common-answers`]
-        : [`${applicationId}-${activeTab}-role-answers`];
-      const questionsKey = generalTab
-        ? [`${campaignId}-common-questions`]
-        : [`${campaignId}-${activeTab}-role-questions`];
+      await queryClient.invalidateQueries({ queryKey: [`${applicationId}-questions-answers`] });
 
-      await queryClient.invalidateQueries({ queryKey: answersKey });
-
-      const [qs, ans] = await Promise.all([
-        queryClient.fetchQuery({
-          queryKey: questionsKey,
-          queryFn: () =>
-            generalTab
-              ? getAllCommonQuestions(campaignId)
-              : getAllRoleQuestions(campaignId, activeTab),
-        }),
-        queryClient.fetchQuery({
-          queryKey: answersKey,
-          queryFn: () =>
-            generalTab
-              ? getAllCommonAnswers(applicationId)
-              : getAllRoleAnswers(applicationId, activeTab),
-        }),
-      ]);
-
-      const fresh = linkQuestionsAndAnswers(qs, ans).find(
-        (q) => q.question_id === question.question_id
+      const fresh = await queryClient.fetchQuery({
+        queryKey: [`${applicationId}-questions-answers`],
+        queryFn: () => getApplicationQuestionsAnswers(applicationId),
+      }).then((data) =>
+        tabQuestionsAndAnswers(data).find(
+          (q) => q.question_id === question.question_id
+        )
       );
+
       updateRoleAnswers(fresh ?? question);
     };
 
@@ -115,15 +84,9 @@ export default function MainContent({
         if (payload.answer_data === null) {
           if (effectiveAnswerId) {
             await deleteAnswer(effectiveAnswerId);
-            if (generalTab) {
-              await queryClient.invalidateQueries({
-                queryKey: [`${applicationId}-common-answers`]
-              });
-            } else {
-              await queryClient.invalidateQueries({
-                queryKey: [`${applicationId}-${activeTab}-role-answers`]
-              })
-            }
+            await queryClient.invalidateQueries({
+              queryKey: [`${applicationId}-questions-answers`]
+            });
           }
           const deletedQA: QuestionAndAnswer = {
             ...question,
@@ -144,12 +107,16 @@ export default function MainContent({
       } catch (err) {
         if (!effectiveAnswerId) {
           try {
-            const answers = generalTab
-              ? await getAllCommonAnswers(applicationId)
-              : await getAllRoleAnswers(applicationId, activeTab);
-            const found = answers.find(
-              (a) => String(a.question_id) === String(question.question_id)
-            );
+            const found = await queryClient
+              .fetchQuery({
+                queryKey: [`${applicationId}-questions-answers`],
+                queryFn: () => getApplicationQuestionsAnswers(applicationId),
+              })
+              .then((data) =>
+                data.find(
+                  (q) => q.answer && String(q.answer.question_id) === String(question.question_id)
+                )?.answer
+              );
             if (found) {
               await updateAnswer(found.id, payload);
               updateRoleAnswers({ ...updatedQA, answer_id: String(found.id) });
@@ -170,14 +137,6 @@ export default function MainContent({
         }
       }
     }
-
-    // useEffect(() => {
-    //   if (!questions || !answers) {
-    //     return;
-    //   }
-    //   const linked = linkQuestionsAndAnswers(questions, answers)
-    //   setQuestionsAndAnswers(linked);
-    // }, [questions, answers]);
 
     const renderQuestion = (q:QuestionAndAnswer) => {
       switch (q.question_type) {

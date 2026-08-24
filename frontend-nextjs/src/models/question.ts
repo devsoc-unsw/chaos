@@ -42,6 +42,12 @@ export interface QuestionAndAnswer {
     description: string | null,
 }
 
+export type QuestionWithAnswer = Question & { answer: Answer | null };
+
+export async function getApplicationQuestionsAnswers(applicationId: string): Promise<QuestionWithAnswer[]> {
+    return await apiRequest<QuestionWithAnswer[]>(`/api/v1/application/${applicationId}/questions_answers`);
+}
+
 export async function getAllCommonQuestions(campaignId: string): Promise<Question[]> {
     return await apiRequest<Question[]>(`/api/v1/campaign/${campaignId}/questions/common`);
 }
@@ -120,9 +126,9 @@ export function processAnswerForDisplay(
     }
 }
 
-export function linkQuestionsAndAnswers(questions: Question[], answers: Answer[]): QuestionAndAnswer[] {
+export function linkQuestionsAndAnswers(questions: QuestionWithAnswer[]): QuestionAndAnswer[] {
     return questions.map((question) => {
-        const answer = answers?.find((answer) => answer.question_id === question.id);
+        const answer = question.answer;
         const processedAnswer = processAnswerForDisplay(
             question.question_type,
             answer?.answer_data,
