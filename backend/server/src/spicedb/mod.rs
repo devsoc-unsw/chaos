@@ -1,6 +1,6 @@
 //! SpiceDB gRPC API bindings and authorization helpers.
 //!
-//! The modules under this one (except [`policies`]) are generated from the
+//! The modules under this one (except [`policies`] & [`schema`]) are generated from the
 //! Authzed protobuf definitions by `buf` (see `backend/buf.gen.yaml`) and
 //! should not be edited by hand. The handwritten code below provides the
 //! authorization building blocks used by HTTP handlers:
@@ -9,6 +9,7 @@
 //!   [`SpiceDbPolicy`] via a SpiceDB permission check.
 
 pub mod policies;
+pub mod schema;
 
 // Generated modules
 pub mod authzed {

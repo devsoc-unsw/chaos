@@ -3,12 +3,11 @@
 //! This module provides functionality for managing users, including retrieval
 //! and updating of user information such as name, pronouns, gender, zID, and degree details.
 
+use crate::models::app::PLATFORM_RESOURCE_ID;
 use crate::models::error::ChaosError;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Postgres, Transaction};
 use std::ops::DerefMut;
-use crate::models::app::PLATFORM_RESOURCE_ID;
-use crate::models::transaction::DBTransaction;
 
 /// Represents the role of a user in the system.
 ///
@@ -319,7 +318,7 @@ impl User {
     /// Creates a User, This should only used for database seeding
     pub async fn create_user(
         data: User,
-        transaction: &mut DBTransaction<'_>,
+        transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         sqlx::query!(
             "
@@ -338,18 +337,18 @@ impl User {
         )
         .execute(transaction.tx.deref_mut())
         .await?;
-        
+
         // Insert user into SpiceDB
         let spicedb_relation = match data.role {
-            UserRole::User => "user",
-            UserRole::SuperUser => "superuser"
+            UserRole::User => crate::spicedb::spicedb_schema::relation::platform::USER,
+            UserRole::SuperUser => crate::spicedb::spicedb_schema::relation::platform::SUPERUSER,
         };
         transaction.create_spicedb_relationship(
-            "chaos/platform",
+            crate::spicedb::spicedb_schema::resource::PLATFORM,
             PLATFORM_RESOURCE_ID,
             spicedb_relation,
-            "chaos/user",
-            data.id
+            crate::spicedb::spicedb_schema::resource::USER,
+            data.id,
         );
 
         Ok(())

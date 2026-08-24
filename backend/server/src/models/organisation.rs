@@ -19,7 +19,6 @@ use snowflake::SnowflakeIdGenerator;
 use sqlx::{FromRow, Postgres, Transaction};
 use std::ops::DerefMut;
 use uuid::Uuid;
-use crate::models::transaction::DBTransaction;
 
 /// Represents an organisation in the database.
 ///
@@ -230,7 +229,7 @@ impl Organisation {
         contact_email: String,
         website_url: Option<String>,
         snowflake_generator: &mut SnowflakeIdGenerator,
-        transaction: &mut DBTransaction<'_>,
+        transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<i64, ChaosError> {
         if !slug.is_ascii() {
             return Err(ChaosError::BadRequest);
@@ -251,7 +250,7 @@ impl Organisation {
             contact_email,
             website_url
         )
-        .execute(transaction.tx.deref_mut())
+        .execute(transaction.deref_mut())
         .await?;
 
         sqlx::query!(
@@ -263,16 +262,10 @@ impl Organisation {
             admin_id,
             OrganisationRole::Admin as OrganisationRole
         )
-        .execute(transaction.tx.deref_mut())
+        .execute(transaction.deref_mut())
         .await?;
-        
-        transaction.create_spicedb_relationship(
-            "chaos/organisation",
-            id,
-            "admin",
-            "chaos/user",
-            admin_id
-        );
+
+       
 
         Ok(id)
     }

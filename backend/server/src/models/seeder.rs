@@ -1,9 +1,10 @@
-use crate::models::app::init_app_state;
+use crate::models::app::{init_app_state, PLATFORM_RESOURCE_ID};
 use crate::models::app::AppState;
 use crate::models::error::ChaosError;
 use crate::models::organisation::Organisation;
 use crate::models::transaction::DBTransaction;
 use crate::models::user::{User, UserRole};
+use crate::spicedb::schema::PLATFORM_RESOURCE_ID;
 
 pub struct Seeder {
     pub app_state: AppState,
@@ -35,7 +36,15 @@ impl Seeder {
                 role: UserRole::SuperUser,
             };
 
-            User::create_user(super_user, &mut transaction).await?;
+            User::create_user(super_user, &mut transaction.tx).await?;
+
+            transaction.create_spicedb_relationship(
+                crate::spicedb::spicedb_schema::resource::PLATFORM,
+                PLATFORM_RESOURCE_ID,
+                crate::spicedb::spicedb_schema::relation::platform::SUPERUSER,
+                crate::spicedb::spicedb_schema::resource::USER,
+                super_user_id,
+            );
         }
 
         // Check if DevSoc org already exists, and if not, create it
@@ -43,16 +52,24 @@ impl Seeder {
             .await
             .is_err()
         {
-            let _org_id = Organisation::create(
+            let org_id = Organisation::create(
                 super_user_id,
                 "devsoc".to_string(),
                 "UNSW DevSoc".to_string(),
                 "contact@devsoc.app".to_string(),
                 Some("https://devsoc.app".to_string()),
                 &mut self.app_state.snowflake_generator,
-                &mut transaction,
+                &mut transaction.tx,
             )
             .await?;
+
+            transaction.create_spicedb_relationship(
+                crate::spicedb::spicedb_schema::resource::ORGANISATION,
+                org_id,
+                crate::spicedb::spicedb_schema::relation::organisation::ADMIN,
+                crate::spicedb::spicedb_schema::resource::USER,
+                super_user_id,
+            );
         }
 
         transaction.commit().await?;

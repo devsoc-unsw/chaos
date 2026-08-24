@@ -78,3 +78,8 @@ Request -> Middleware (optional) -> Handler -> Service -> Middleware (Optional) 
 - Then run this bash "buf generate buf.build/authzed/api:main \
   --include-imports \
   --template buf.gen.yaml"
+
+### Working with SpiceDB in the backend
+1. Make changes to the schema in `spicedb/schema.yaml`
+2. Update the Rust version of policies and the schema in `server/src/spicedb/policies.rs` and `server/src/spicedb/schema.rs` respectively.
+3. For any handler that mutates the DB state, make sure to also call the respective command to create a SpiceDB relationship. The `models/` directory functions should only interact with Postgres.

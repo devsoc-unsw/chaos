@@ -37,9 +37,6 @@ use tower_http::cors::CorsLayer;
 use crate::spicedb::{check_permission, SpiceDbAuth};
 
 
-/// Used for `resource_id` parameter in SpiceDB whenever resource is `chaos/platform` 
-pub const PLATFORM_RESOURCE_ID: i64 = 0;
-
 #[derive(Serialize)]
 pub enum AppMessage<T: Serialize> {
     OkMessage(T),
