@@ -17,42 +17,107 @@
 
 use crate::spicedb::SpiceDbPolicy;
 
-/// Permits organisation admins to manage the organisation identified by the
-/// `organisation_id` path parameter.
+/// Edit organisation settings
 pub struct ManageOrganisation;
-
 impl SpiceDbPolicy for ManageOrganisation {
     const RESOURCE_TYPE: &'static str = "chaos/organisation";
     const PERMISSION: &'static str = "manage";
     const PATH_PARAMETER: &'static str = "organisation_id";
 }
 
-/// Permits campaign admins (admins of the owning organisation) to manage the
-/// campaign identified by the `campaign_id` path parameter.
-pub struct ManageCampaign;
+/// View organisation in dashboard
+pub struct ViewOrganisation;
+impl SpiceDbPolicy for ViewOrganisation {
+    const RESOURCE_TYPE: &'static str = "chaos/organisation";
+    const PERMISSION: &'static str = "view";
+    const PATH_PARAMETER: &'static str = "organisation_id";
+}
 
+/// Edit campaign settings & questions
+pub struct ManageCampaign;
 impl SpiceDbPolicy for ManageCampaign {
     const RESOURCE_TYPE: &'static str = "chaos/campaign";
     const PERMISSION: &'static str = "manage";
     const PATH_PARAMETER: &'static str = "campaign_id";
 }
 
-/// Permits members of the owning organisation to review the application
-/// identified by the `application_id` path parameter.
-pub struct ReviewApplication;
+/// View campaign details and applications in dashboard
+pub struct ReviewCampaign;
+impl SpiceDbPolicy for ReviewCampaign {
+    const RESOURCE_TYPE: &'static str = "chaos/campaign";
+    const PERMISSION: &'static str = "review";
+    const PATH_PARAMETER: &'static str = "campaign_id";
+}
 
+/// View application answers
+pub struct ViewApplication;
+impl SpiceDbPolicy for ViewApplication {
+    const RESOURCE_TYPE: &'static str = "chaos/application";
+    const PERMISSION: &'static str = "view";
+    const PATH_PARAMETER: &'static str = "application_id";
+}
+
+/// Edit application answers
+pub struct EditApplication;
+impl SpiceDbPolicy for EditApplication {
+    const RESOURCE_TYPE: &'static str = "chaos/application";
+    const PERMISSION: &'static str = "edit";
+    const PATH_PARAMETER: &'static str = "application_id";
+}
+
+/// View application answers, rate application, comment
+pub struct ReviewApplication;
 impl SpiceDbPolicy for ReviewApplication {
     const RESOURCE_TYPE: &'static str = "chaos/application";
     const PERMISSION: &'static str = "review";
     const PATH_PARAMETER: &'static str = "application_id";
 }
 
-/// Permits the creator of the application identified by the `application_id`
-/// path parameter to edit it.
-pub struct EditApplication;
 
-impl SpiceDbPolicy for EditApplication {
-    const RESOURCE_TYPE: &'static str = "chaos/application";
+/// Edit application rating
+pub struct EditRating;
+impl SpiceDbPolicy for EditRating {
+    const RESOURCE_TYPE: &'static str = "chaos/rating";
     const PERMISSION: &'static str = "edit";
-    const PATH_PARAMETER: &'static str = "application_id";
+    const PATH_PARAMETER: &'static str = "rating_id";
+}
+
+/// View application rating
+pub struct ViewRating;
+impl SpiceDbPolicy for ViewRating {
+    const RESOURCE_TYPE: &'static str = "chaos/rating";
+    const PERMISSION: &'static str = "view";
+    const PATH_PARAMETER: &'static str = "rating_id";
+}
+
+/// Edit application comment
+pub struct EditComment;
+impl SpiceDbPolicy for EditComment {
+    const RESOURCE_TYPE: &'static str = "chaos/comment";
+    const PERMISSION: &'static str = "edit";
+    const PATH_PARAMETER: &'static str = "comment_id";
+}
+
+/// View application comment
+pub struct ViewComment;
+impl SpiceDbPolicy for ViewComment {
+    const RESOURCE_TYPE: &'static str = "chaos/comment";
+    const PERMISSION: &'static str = "view";
+    const PATH_PARAMETER: &'static str = "comment_id";
+}
+
+/// Manage offer
+pub struct ManageOffer;
+impl SpiceDbPolicy for ManageOffer {
+    const RESOURCE_TYPE: &'static str = "chaos/offer";
+    const PERMISSION: &'static str = "manage";
+    const PATH_PARAMETER: &'static str = "offer_id";
+}
+
+/// View offer
+pub struct ViewOffer;
+impl SpiceDbPolicy for ViewOffer {
+    const RESOURCE_TYPE: &'static str = "chaos/offer";
+    const PERMISSION: &'static str = "view";
+    const PATH_PARAMETER: &'static str = "offer_id";
 }
