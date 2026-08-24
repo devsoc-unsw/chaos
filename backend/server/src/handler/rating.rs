@@ -6,13 +6,17 @@
 //! - Deleting ratings
 
 use crate::models::app::{AppMessage, AppState};
-use crate::models::auth::{ApplicationReviewerGivenApplicationId, CampaignAdmin, RatingCreator};
 use crate::models::error::ChaosError;
 use crate::models::rating::{
     NewApplicationCategoryRating, NewApplicationRating, NewCategoryRating, NewRating, Rating,
     UpdateCategoryRating,
 };
 use crate::models::transaction::DBTransaction;
+use crate::spicedb::{
+    self,
+    policies::{EditRating, ManageCampaign, ReviewApplication, ReviewCampaign},
+    schema as spicedb_schema, SpiceDbAuth,
+};
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -35,7 +39,7 @@ impl RatingHandler {
     pub async fn create_category(
         State(mut state): State<AppState>,
         Path(campaign_id): Path<i64>,
-        _admin: CampaignAdmin,
+        auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewCategoryRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
@@ -46,6 +50,14 @@ impl RatingHandler {
             &mut transaction.tx,
         )
         .await?;
+
+        transaction.create_spicedb_relationship(
+            spicedb_schema::resource::RATING_CATEGORY,
+            category,
+            spicedb_schema::relation::rating_category::CAMPAIGN,
+            spicedb_schema::resource::CAMPAIGN,
+            auth.resource_id,
+        );
 
         transaction.commit().await?;
 
@@ -61,7 +73,7 @@ impl RatingHandler {
     /// * `transaction` - Database transaction
     pub async fn get_categories_by_campaign(
         Path(campaign_id): Path<i64>,
-        _admin: CampaignAdmin,
+        _auth: SpiceDbAuth<ReviewCampaign>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let categories =
@@ -83,7 +95,7 @@ impl RatingHandler {
     /// * `data` - The updated rating comment
     pub async fn update_category(
         Path((_campaign_id, category_id)): Path<(i64, i64)>,
-        _admin: CampaignAdmin,
+        _auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewCategoryRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
@@ -104,12 +116,22 @@ impl RatingHandler {
     /// * `transaction` - Database transaction
     pub async fn delete_category(
         Path((_campaign_id, category_id)): Path<(i64, i64)>,
-        _admin: CampaignAdmin,
+        _auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,
+        state: State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Rating::delete_category(category_id, &mut transaction.tx).await?;
 
         transaction.commit().await?;
+
+        // Run SpiceDB delete after Postgres succeeds
+        spicedb::delete_all_resource_relationships(
+            &state.spicedb,
+            &state.spicedb_key,
+            spicedb_schema::resource::RATING_CATEGORY,
+            category_id,
+        )
+        .await?;
 
         Ok(AppMessage::OkMessage("Successfully deleted category"))
     }
@@ -130,18 +152,34 @@ impl RatingHandler {
     pub async fn create(
         State(mut state): State<AppState>,
         Path(application_id): Path<i64>,
-        admin: ApplicationReviewerGivenApplicationId,
+        auth: SpiceDbAuth<ReviewApplication>,
         mut transaction: DBTransaction<'_>,
         Json(new_rating): Json<NewRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let application_rating_id = Rating::create_application_rating(
             new_rating.comment,
             application_id,
-            admin.user_id,
+            auth.user_id,
             &mut state.snowflake_generator,
             &mut transaction.tx,
         )
         .await?;
+
+        transaction.create_spicedb_relationship(
+            spicedb_schema::resource::RATING,
+            application_rating_id,
+            spicedb_schema::relation::rating::APPLICATION,
+            spicedb_schema::resource::APPLICATION,
+            auth.resource_id,
+        );
+
+        transaction.create_spicedb_relationship(
+            spicedb_schema::resource::RATING,
+            application_rating_id,
+            spicedb_schema::relation::rating::CREATOR,
+            spicedb_schema::resource::USER,
+            auth.user_id,
+        );
 
         for category_rating in new_rating.category_ratings {
             Rating::create_category_rating(
@@ -188,7 +226,7 @@ impl RatingHandler {
     /// * `transaction` - Database transaction
     pub async fn get_all_by_application(
         Path(application_id): Path<i64>,
-        _admin: ApplicationReviewerGivenApplicationId,
+        _auth: SpiceDbAuth<ReviewApplication>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let ratings =
@@ -210,7 +248,7 @@ impl RatingHandler {
     /// * `data` - The updated rating comment
     pub async fn update_comment(
         Path(rating_id): Path<i64>,
-        _admin: RatingCreator,
+        _auth: SpiceDbAuth<EditRating>,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewApplicationRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
@@ -232,17 +270,25 @@ impl RatingHandler {
     pub async fn create_category_rating_from_existing_application_rating(
         State(mut state): State<AppState>,
         Path(rating_id): Path<i64>,
-        _admin: RatingCreator,
+        _auth: SpiceDbAuth<EditRating>,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewApplicationCategoryRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Rating::create_category_rating(
+        let category_rating_id = Rating::create_category_rating(
             data,
             rating_id,
             &mut state.snowflake_generator,
             &mut transaction.tx,
         )
         .await?;
+
+        transaction.create_spicedb_relationship(
+            spicedb_schema::resource::CATEGORY_RATING,
+            category_rating_id,
+            spicedb_schema::relation::category_rating::RATING,
+            spicedb_schema::resource::RATING,
+            rating_id,
+        );
 
         transaction.commit().await?;
 
@@ -262,7 +308,7 @@ impl RatingHandler {
     /// * `data` - The updated rating score
     pub async fn update_category_rating(
         Path((_rating_id, category_rating_id)): Path<(i64, i64)>,
-        _admin: RatingCreator,
+        _auth: SpiceDbAuth<EditRating>,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<UpdateCategoryRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
@@ -285,12 +331,22 @@ impl RatingHandler {
     /// * `transaction` - Database transaction
     pub async fn delete(
         Path(rating_id): Path<i64>,
-        _admin: RatingCreator,
+        _auth: SpiceDbAuth<EditRating>,
         mut transaction: DBTransaction<'_>,
+        state: State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Rating::delete_application_rating(rating_id, &mut transaction.tx).await?;
 
         transaction.commit().await?;
+
+        // Run SpiceDB delete after Postgres succeeds
+        spicedb::delete_all_resource_relationships(
+            &state.spicedb,
+            &state.spicedb_key,
+            spicedb_schema::resource::RATING,
+            rating_id,
+        )
+        .await?;
 
         Ok(AppMessage::OkMessage("Successfully deleted rating"))
     }
@@ -305,12 +361,22 @@ impl RatingHandler {
     /// * `transaction` - Database transaction
     pub async fn delete_category_rating(
         Path((_rating_id, category_rating_id)): Path<(i64, i64)>,
-        _admin: RatingCreator,
+        _auth: SpiceDbAuth<EditRating>,
         mut transaction: DBTransaction<'_>,
+        state: State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Rating::delete_category_rating(category_rating_id, &mut transaction.tx).await?;
 
         transaction.commit().await?;
+
+        // Run SpiceDB delete after Postgres succeeds
+        spicedb::delete_all_resource_relationships(
+            &state.spicedb,
+            &state.spicedb_key,
+            spicedb_schema::resource::CATEGORY_RATING,
+            category_rating_id,
+        )
+        .await?;
 
         Ok(AppMessage::OkMessage(
             "Successfully deleted category rating",

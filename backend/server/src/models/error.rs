@@ -117,7 +117,9 @@ impl ChaosError {
             | ChaosError::CampaignClosed
             | ChaosError::InternalServerError => println!("{:?}", self),
             ChaosError::BadRequestWithMessage(e) => println!("Bad Request: {}", e),
-            ChaosError::InternalServerErrorWithMessage(e) => println!("Internal server error: {}", e), // TODO: Handle error message internally and only send vague message
+            ChaosError::InternalServerErrorWithMessage(e) => {
+                println!("Internal server error: {}", e)
+            } // TODO: Handle error message internally and only send vague message
             ChaosError::DatabaseError(e) => println!("Database error: {}", e),
             ChaosError::MigrationError(e) => println!("Migration error: {}", e),
             ChaosError::ReqwestError(e) => println!("Reqwest error: {}", e),

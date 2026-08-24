@@ -11,16 +11,19 @@ use crate::models::app::{AppMessage, AppState, IdMessage};
 use crate::models::campaign::{Campaign, NewCampaign};
 use crate::models::email_template::{EmailTemplate, NewEmailTemplate};
 use crate::models::error::ChaosError;
-use crate::models::organisation::{AdminUpdateList, MemberRoleUpdate, MemberToInvite, MemberToRemove, NewOrganisation, Organisation, OrganisationRole, SlugCheck};
+use crate::models::organisation::{
+    AdminUpdateList, MemberRoleUpdate, MemberToInvite, MemberToRemove, NewOrganisation,
+    Organisation, OrganisationRole, SlugCheck,
+};
 use crate::models::transaction::DBTransaction;
 use crate::service::auth::assert_is_super_user;
+use crate::spicedb;
+use crate::spicedb::policies::{ManageOrganisation, ManagePlatform, UsePlatform};
 use crate::spicedb::{schema as spicedb_schema, SpiceDbAuth};
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use serde_json::json;
-use crate::spicedb;
-use crate::spicedb::policies::{ManageOrganisation, ManagePlatform, UsePlatform};
 
 /// Handler for organisation-related HTTP requests.
 pub struct OrganisationHandler;
@@ -176,8 +179,9 @@ impl OrganisationHandler {
             &state.spicedb,
             &state.spicedb_key,
             spicedb_schema::resource::ORGANISATION,
-            id
-        ).await?;
+            id,
+        )
+        .await?;
 
         Ok(AppMessage::OkMessage("Successfully deleted organisation"))
     }
@@ -186,7 +190,7 @@ impl OrganisationHandler {
     /// If user is Super User, get all organisations
     pub async fn get_all_for_user(
         mut transaction: DBTransaction<'_>,
-        auth: SpiceDbAuth<UsePlatform>
+        auth: SpiceDbAuth<UsePlatform>,
     ) -> Result<impl IntoResponse, ChaosError> {
         // Check if user is Super User
         let orgs = match assert_is_super_user(auth.user_id, &mut transaction.tx).await {
@@ -245,7 +249,7 @@ impl OrganisationHandler {
     pub async fn get_users(
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
-        _auth: SpiceDbAuth<ManageOrganisation>
+        _auth: SpiceDbAuth<ManageOrganisation>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let members = Organisation::get_users(id, &mut transaction.tx).await?;
 
@@ -269,7 +273,7 @@ impl OrganisationHandler {
     pub async fn get_members(
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
-        _auth: SpiceDbAuth<ManageOrganisation>
+        _auth: SpiceDbAuth<ManageOrganisation>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let members = Organisation::get_members(id, &mut transaction.tx).await?;
 
@@ -297,7 +301,9 @@ impl OrganisationHandler {
         mut transaction: DBTransaction<'_>,
         Json(request_body): Json<AdminUpdateList>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let deleted_members = Organisation::update_admins(id, request_body.members.clone(), &mut transaction.tx).await?;
+        let deleted_members =
+            Organisation::update_admins(id, request_body.members.clone(), &mut transaction.tx)
+                .await?;
 
         for deleted_member in deleted_members {
             transaction.delete_spicedb_relationship(
@@ -305,7 +311,7 @@ impl OrganisationHandler {
                 id,
                 spicedb_schema::relation::organisation::ADMIN,
                 spicedb_schema::resource::USER,
-                deleted_member
+                deleted_member,
             );
         }
 
@@ -315,7 +321,7 @@ impl OrganisationHandler {
                 id,
                 spicedb_schema::relation::organisation::ADMIN,
                 spicedb_schema::resource::USER,
-                new_member
+                new_member,
             );
         }
 
@@ -345,7 +351,9 @@ impl OrganisationHandler {
         _auth: SpiceDbAuth<ManageOrganisation>,
         Json(request_body): Json<AdminUpdateList>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let deleted_members = Organisation::update_members(id, request_body.members.clone(), &mut transaction.tx).await?;
+        let deleted_members =
+            Organisation::update_members(id, request_body.members.clone(), &mut transaction.tx)
+                .await?;
 
         for deleted_member in deleted_members {
             transaction.delete_spicedb_relationship(
@@ -353,7 +361,7 @@ impl OrganisationHandler {
                 id,
                 spicedb_schema::relation::organisation::MEMBER,
                 spicedb_schema::resource::USER,
-                deleted_member
+                deleted_member,
             );
         }
 
@@ -363,7 +371,7 @@ impl OrganisationHandler {
                 id,
                 spicedb_schema::relation::organisation::MEMBER,
                 spicedb_schema::resource::USER,
-                new_member
+                new_member,
             );
         }
 
@@ -393,7 +401,7 @@ impl OrganisationHandler {
             id,
             old_role.convert_to_spicedb(),
             spicedb_schema::resource::USER,
-            request_body.user_id
+            request_body.user_id,
         );
 
         transaction.create_spicedb_relationship(
@@ -401,7 +409,7 @@ impl OrganisationHandler {
             id,
             request_body.role.convert_to_spicedb(),
             spicedb_schema::resource::USER,
-            request_body.user_id
+            request_body.user_id,
         );
 
         transaction.commit().await?;
@@ -437,7 +445,7 @@ impl OrganisationHandler {
             id,
             OrganisationRole::Admin.convert_to_spicedb(),
             spicedb_schema::resource::USER,
-            request_body.user_id
+            request_body.user_id,
         );
 
         transaction.create_spicedb_relationship(
@@ -445,7 +453,7 @@ impl OrganisationHandler {
             id,
             OrganisationRole::User.convert_to_spicedb(),
             spicedb_schema::resource::USER,
-            request_body.user_id
+            request_body.user_id,
         );
 
         transaction.commit().await?;
@@ -481,7 +489,7 @@ impl OrganisationHandler {
             id,
             OrganisationRole::User.convert_to_spicedb(),
             spicedb_schema::resource::USER,
-            request_body.user_id
+            request_body.user_id,
         );
 
         transaction.commit().await?;
@@ -507,7 +515,7 @@ impl OrganisationHandler {
             &mut transaction.tx,
         )
         .await?;
-        
+
         // An existing user was added so we need to add the relationship into SpiceDB
         if let Some(user_id) = added_user {
             transaction.create_spicedb_relationship(
@@ -515,7 +523,7 @@ impl OrganisationHandler {
                 id,
                 OrganisationRole::User.convert_to_spicedb(),
                 spicedb_schema::resource::USER,
-                user_id
+                user_id,
             );
         }
 
@@ -565,7 +573,7 @@ impl OrganisationHandler {
     pub async fn get_campaigns(
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
-        _auth: SpiceDbAuth<UsePlatform>
+        _auth: SpiceDbAuth<UsePlatform>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let campaigns = Organisation::get_campaigns(id, &mut transaction.tx).await?;
 

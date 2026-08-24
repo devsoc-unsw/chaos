@@ -70,8 +70,10 @@ use axum::{
 };
 use tonic::{metadata::MetadataValue, transport::Channel, Request};
 
+use crate::spicedb::authzed::api::v1::{DeleteRelationshipsRequest, RelationshipFilter};
+use crate::spicedb::schema::PLATFORM_RESOURCE_ID;
 use crate::{
-    models::{app::AppState, transaction::DBTransaction, error::ChaosError},
+    models::{app::AppState, error::ChaosError, transaction::DBTransaction},
     service::auth::extract_user_id_from_request,
     spicedb::authzed::api::v1::{
         check_permission_response::Permissionship, consistency::Requirement,
@@ -80,8 +82,6 @@ use crate::{
         SubjectReference, WriteRelationshipsRequest,
     },
 };
-use crate::spicedb::authzed::api::v1::{DeleteRelationshipsRequest, RelationshipFilter};
-use crate::spicedb::schema::PLATFORM_RESOURCE_ID;
 
 /// Builds a SpiceDB request with the bearer-token metadata attached.
 ///
@@ -309,7 +309,7 @@ pub async fn delete_all_resource_relationships(
     client: &PermissionsServiceClient<Channel>,
     key: &str,
     resource_type: &str,
-    resource_id: i64
+    resource_id: i64,
 ) -> Result<(), ChaosError> {
     let request = authorized_request(
         DeleteRelationshipsRequest {

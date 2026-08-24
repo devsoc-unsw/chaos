@@ -88,7 +88,7 @@ pub struct QuestionWithAnswer {
 }
 
 impl QuestionWithAnswer {
-   /// Merge questions and respective answers
+    /// Merge questions and respective answers
     pub fn merge(questions: Vec<Question>, answers: Vec<Answer>) -> Vec<QuestionWithAnswer> {
         let mut answers_by_question: std::collections::HashMap<i64, Answer> = answers
             .into_iter()

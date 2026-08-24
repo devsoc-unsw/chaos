@@ -6,10 +6,10 @@
 //! - Deleting templates
 
 use crate::models::app::{AppMessage, AppState};
-use crate::models::auth::EmailTemplateAdmin;
 use crate::models::email_template::EmailTemplate;
 use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
+use crate::spicedb::{policies::ManageEmailTemplate, schema as spicedb_schema, SpiceDbAuth};
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -34,7 +34,7 @@ impl EmailTemplateHandler {
     pub async fn get(
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
-        _user: EmailTemplateAdmin,
+        _auth: SpiceDbAuth<ManageEmailTemplate>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let email_template = EmailTemplate::get(id, &mut transaction.tx).await?;
 
@@ -56,7 +56,7 @@ impl EmailTemplateHandler {
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update(
-        _user: EmailTemplateAdmin,
+        _auth: SpiceDbAuth<ManageEmailTemplate>,
         Path(id): Path<i64>,
         mut transaction: DBTransaction<'_>,
         Json(request_body): Json<EmailTemplate>,
@@ -88,7 +88,7 @@ impl EmailTemplateHandler {
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn delete(
-        _user: EmailTemplateAdmin,
+        _auth: SpiceDbAuth<ManageEmailTemplate>,
         Path(id): Path<i64>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
@@ -112,12 +112,22 @@ impl EmailTemplateHandler {
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn duplicate(
-        _user: EmailTemplateAdmin,
+        _auth: SpiceDbAuth<ManageEmailTemplate>,
         Path(id): Path<i64>,
         State(mut state): State<AppState>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        EmailTemplate::duplicate(id, &mut transaction.tx, &mut state.snowflake_generator).await?;
+        let (new_template_id, organisation_id) =
+            EmailTemplate::duplicate(id, &mut transaction.tx, &mut state.snowflake_generator)
+                .await?;
+
+        transaction.create_spicedb_relationship(
+            spicedb_schema::resource::EMAIL_TEMPLATE,
+            new_template_id,
+            spicedb_schema::relation::email_template::ORGANISATION,
+            spicedb_schema::resource::ORGANISATION,
+            organisation_id,
+        );
 
         transaction.commit().await?;
         Ok(AppMessage::OkMessage(

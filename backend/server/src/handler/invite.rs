@@ -1,10 +1,10 @@
 use crate::models::app::AppMessage;
-use crate::models::auth::AuthUser;
 use crate::models::error::ChaosError;
 use crate::models::invite::Invite;
 use crate::models::organisation::Organisation;
 use crate::models::transaction::DBTransaction;
 use crate::models::user::User;
+use crate::spicedb::{policies::UsePlatform, schema as spicedb_schema, SpiceDbAuth};
 use axum::extract::Path;
 use axum::response::IntoResponse;
 
@@ -25,6 +25,7 @@ impl InviteHandler {
     pub async fn get(
         mut transaction: DBTransaction<'_>,
         Path(code): Path<String>,
+        _auth: SpiceDbAuth<UsePlatform>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let invite = Invite::get_by_code(&code, &mut transaction.tx).await?;
 
@@ -48,13 +49,13 @@ impl InviteHandler {
     pub async fn use_invite(
         mut transaction: DBTransaction<'_>,
         Path(code): Path<String>,
-        auth_user: AuthUser,
+        auth: SpiceDbAuth<UsePlatform>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let invite = Invite::get_by_code(&code, &mut transaction.tx).await?;
 
         // Ensure the invite can only be accepted by the account whose email matches the invite email.
         // This prevents someone from accepting an invite intended for a different email address.
-        let user = User::get(auth_user.user_id, &mut transaction.tx).await?;
+        let user = User::get(auth.user_id, &mut transaction.tx).await?;
 
         if user.email != invite.email {
             return Err(ChaosError::BadRequestWithMessage(
@@ -75,15 +76,19 @@ impl InviteHandler {
         }
 
         // Add the user to the organisation.
-        Organisation::add_user(
+        Organisation::add_user(invite.organisation_id, auth.user_id, &mut transaction.tx).await?;
+
+        // Add the SpiceDB membership relationship to match
+        transaction.create_spicedb_relationship(
+            spicedb_schema::resource::ORGANISATION,
             invite.organisation_id,
-            auth_user.user_id,
-            &mut transaction.tx,
-        )
-        .await?;
+            spicedb_schema::relation::organisation::MEMBER,
+            spicedb_schema::resource::USER,
+            auth.user_id,
+        );
 
         // Mark the invite as used.
-        Invite::mark_used(&code, auth_user.user_id, &mut transaction.tx).await?;
+        Invite::mark_used(&code, auth.user_id, &mut transaction.tx).await?;
 
         transaction.commit().await?;
         Ok(AppMessage::OkMessage("Invite accepted successfully"))

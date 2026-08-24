@@ -7,7 +7,6 @@
 //! - Offer management
 //! - Banner image handling
 
-use crate::{models, spicedb};
 use crate::models::app::{AppMessage, AppState};
 use crate::models::application::Application;
 use crate::models::application::NewApplication;
@@ -20,11 +19,12 @@ use crate::models::offer::Offer;
 use crate::models::role::{Role, RoleUpdate};
 use crate::models::storage::Storage;
 use crate::models::transaction::DBTransaction;
+use crate::spicedb::policies::{ReviewCampaign, UsePlatform};
 use crate::spicedb::{policies::ManageCampaign, SpiceDbAuth};
+use crate::{models, spicedb};
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use crate::spicedb::policies::{ReviewCampaign, UsePlatform};
 
 /// Handler for campaign-related HTTP requests.
 pub struct CampaignHandler;
@@ -121,7 +121,7 @@ impl CampaignHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - List of campaigns or error
     pub async fn get_all(
         mut transaction: DBTransaction<'_>,
-        _auth: SpiceDbAuth<UsePlatform>
+        _auth: SpiceDbAuth<UsePlatform>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let campaigns = Campaign::get_all(&mut transaction.tx).await?;
         transaction.commit().await?;
@@ -216,10 +216,10 @@ impl CampaignHandler {
     pub async fn delete(
         auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,
-        state: State<AppState>
+        state: State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Campaign::delete(auth.resource_id, &mut transaction.tx).await?;
-        
+
         transaction.commit().await?;
 
         // Run SpiceDB delete after Postgres succeeds
@@ -227,9 +227,10 @@ impl CampaignHandler {
             &state.spicedb,
             &state.spicedb_key,
             crate::spicedb::schema::resource::CAMPAIGN,
-            auth.resource_id
-        ).await?;
-        
+            auth.resource_id,
+        )
+        .await?;
+
         Ok(AppMessage::OkMessage("Successfully deleted campaign"))
     }
 
@@ -267,9 +268,9 @@ impl CampaignHandler {
             role_id,
             crate::spicedb::schema::relation::campaign_role::CAMPAIGN,
             crate::spicedb::schema::resource::CAMPAIGN,
-            auth.resource_id
+            auth.resource_id,
         );
-        
+
         transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully created role"))
     }
@@ -336,7 +337,7 @@ impl CampaignHandler {
             application_id,
             crate::spicedb::schema::relation::application::CAMPAIGN,
             crate::spicedb::schema::resource::CAMPAIGN,
-            auth.resource_id
+            auth.resource_id,
         );
 
         transaction.create_spicedb_relationship(
@@ -344,9 +345,9 @@ impl CampaignHandler {
             application_id,
             crate::spicedb::schema::relation::application::CREATOR,
             crate::spicedb::schema::resource::USER,
-            auth.user_id
+            auth.user_id,
         );
-        
+
         transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully created application"))
     }
@@ -412,7 +413,7 @@ impl CampaignHandler {
             offer_id,
             crate::spicedb::schema::relation::offer::CAMPAIGN,
             crate::spicedb::schema::resource::CAMPAIGN,
-            auth.resource_id
+            auth.resource_id,
         );
 
         transaction.create_spicedb_relationship(
@@ -420,9 +421,9 @@ impl CampaignHandler {
             offer_id,
             crate::spicedb::schema::relation::offer::APPLICATION,
             crate::spicedb::schema::resource::APPLICATION,
-            data.application_id
+            data.application_id,
         );
-        
+
         transaction.commit().await?;
 
         Ok(AppMessage::OkMessage("Successfully created offer"))
@@ -470,8 +471,7 @@ impl CampaignHandler {
         mut transaction: DBTransaction<'_>,
         State(state): State<AppState>,
         Path(id): Path<i64>,
-        _auth: SpiceDbAuth<UsePlatform>
-        // TODO: Similar to roles, need two endpoints
+        _auth: SpiceDbAuth<UsePlatform>, // TODO: Similar to roles, need two endpoints
     ) -> Result<impl IntoResponse, ChaosError> {
         let campaign = Campaign::get(id, &mut transaction.tx).await?;
         let attachments = CampaignAttachment::get_by_campaign(id, &mut transaction.tx).await?;

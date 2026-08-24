@@ -108,7 +108,7 @@ impl OrganisationRole {
     pub fn convert_to_spicedb(&self) -> &str {
         match self {
             OrganisationRole::User => crate::spicedb::schema::relation::organisation::MEMBER,
-            OrganisationRole::Admin => crate::spicedb::schema::relation::organisation::ADMIN
+            OrganisationRole::Admin => crate::spicedb::schema::relation::organisation::ADMIN,
         }
     }
 }
@@ -273,8 +273,6 @@ impl Organisation {
         )
         .execute(transaction.deref_mut())
         .await?;
-
-
 
         Ok(id)
     }
@@ -636,7 +634,7 @@ impl Organisation {
         .await?
         .iter()
         .map(|r| r.user_id)
-        .collect();;
+        .collect();
 
         for member_id in member_id_list {
             sqlx::query!(
@@ -667,7 +665,7 @@ impl Organisation {
             transaction,
         )
         .await?;
-        
+
         Ok(())
     }
 

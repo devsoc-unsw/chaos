@@ -6,10 +6,14 @@
 //! - Managing role-specific and common questions
 
 use crate::models::app::{AppMessage, AppState, IdMessage};
-use crate::models::auth::{AuthUser, CampaignAdmin, QuestionAdmin};
 use crate::models::error::ChaosError;
 use crate::models::question::{NewQuestion, Question};
 use crate::models::transaction::DBTransaction;
+use crate::spicedb::{
+    self,
+    policies::{ManageCampaign, UsePlatform},
+    schema as spicedb_schema, SpiceDbAuth,
+};
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -36,7 +40,7 @@ impl QuestionHandler {
     pub async fn create(
         State(mut state): State<AppState>,
         Path(campaign_id): Path<i64>,
-        _admin: CampaignAdmin,
+        auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewQuestion>,
     ) -> Result<impl IntoResponse, ChaosError> {
@@ -52,6 +56,14 @@ impl QuestionHandler {
             &mut transaction.tx,
         )
         .await?;
+
+        transaction.create_spicedb_relationship(
+            spicedb_schema::resource::QUESTION,
+            id,
+            spicedb_schema::relation::question::CAMPAIGN,
+            spicedb_schema::resource::CAMPAIGN,
+            auth.resource_id,
+        );
 
         transaction.commit().await?;
 
@@ -74,7 +86,7 @@ impl QuestionHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - List of questions or error
     pub async fn get_all_by_campaign_and_role(
         Path((campaign_id, role_id)): Path<(i64, i64)>,
-        _user: AuthUser,
+        _auth: SpiceDbAuth<UsePlatform>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let questions =
@@ -101,7 +113,7 @@ impl QuestionHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - List of questions or error
     pub async fn get_all_common_by_campaign(
         Path(campaign_id): Path<i64>,
-        _user: AuthUser,
+        _auth: SpiceDbAuth<UsePlatform>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let questions =
@@ -132,7 +144,7 @@ impl QuestionHandler {
         mut transaction: DBTransaction<'_>,
         State(mut state): State<AppState>,
         Path((_campaign_id, question_id)): Path<(i64, i64)>,
-        _admin: QuestionAdmin,
+        _auth: SpiceDbAuth<ManageCampaign>,
         Json(data): Json<NewQuestion>,
     ) -> Result<impl IntoResponse, ChaosError> {
         // Validate question_data before updating
@@ -178,12 +190,22 @@ impl QuestionHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn delete(
         Path((_campaign_id, question_id)): Path<(i64, i64)>,
-        _admin: QuestionAdmin,
+        _auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,
+        state: State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Question::delete(question_id, &mut transaction.tx).await?;
 
         transaction.commit().await?;
+
+        // Run SpiceDB delete after Postgres succeeds
+        spicedb::delete_all_resource_relationships(
+            &state.spicedb,
+            &state.spicedb_key,
+            spicedb_schema::resource::QUESTION,
+            question_id,
+        )
+        .await?;
 
         Ok(AppMessage::OkMessage("Successfully deleted question"))
     }
