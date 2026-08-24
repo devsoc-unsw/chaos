@@ -71,7 +71,7 @@ use axum::{
 use tonic::{metadata::MetadataValue, transport::Channel, Request};
 
 use crate::{
-    models::{app::AppState, error::ChaosError},
+    models::{app::AppState, transaction::DBTransaction, error::ChaosError},
     service::auth::extract_user_id_from_request,
     spicedb::authzed::api::v1::{
         check_permission_response::Permissionship, consistency::Requirement,
@@ -80,6 +80,8 @@ use crate::{
         SubjectReference, WriteRelationshipsRequest,
     },
 };
+use crate::spicedb::authzed::api::v1::{DeleteRelationshipsRequest, RelationshipFilter};
+use crate::spicedb::schema::PLATFORM_RESOURCE_ID;
 
 /// Builds a SpiceDB request with the bearer-token metadata attached.
 ///
@@ -283,6 +285,58 @@ pub async fn write_relationships(
     Ok(())
 }
 
+/// WARNING: This cannot be undone, so run after Postgres commit
+/// Deletes all relationships for a given resource.
+///
+/// Performs a `DeleteRelationships` RPC to remove every relationship where
+/// the resource matches `<resource_type>:<resource_id>`. This is atomic —
+/// either all matching relationships are deleted or none are. This does
+/// not use the standard queue in [`DBTransaction`] as it cannot be undone,
+/// hence, it is outside [`DBTransaction`].
+///
+/// # Arguments
+///
+/// * `client` - SpiceDB permissions service client
+/// * `key` - Bearer token for SpiceDB authentication
+/// * `resource_type` - SpiceDB object type, such as `chaos/organisation`
+/// * `resource_id` - Chaos ID of the resource
+///
+/// # Returns
+///
+/// * `Ok(())` if all relationships were deleted
+/// * `Err(ChaosError::InternalServerError)` on gRPC failure
+pub async fn delete_all_resource_relationships(
+    client: &PermissionsServiceClient<Channel>,
+    key: &str,
+    resource_type: &str,
+    resource_id: i64
+) -> Result<(), ChaosError> {
+    let request = authorized_request(
+        DeleteRelationshipsRequest {
+            relationship_filter: Some(RelationshipFilter {
+                resource_type: resource_type.to_owned(),
+                optional_resource_id: resource_id.to_string(),
+                optional_resource_id_prefix: String::new(),
+                optional_relation: String::new(),
+                optional_subject_filter: None,
+            }),
+            optional_preconditions: Vec::new(),
+            optional_limit: 0,
+            optional_allow_partial_deletions: false,
+            optional_transaction_metadata: None,
+        },
+        key,
+    )?;
+
+    client
+        .clone()
+        .delete_relationships(request)
+        .await
+        .map_err(|_| ChaosError::InternalServerError)?;
+
+    Ok(())
+}
+
 /// Describes a SpiceDB authorization policy for the [`SpiceDbAuth`] extractor.
 ///
 /// Each policy is a zero-sized type configuring which permission is checked on
@@ -346,14 +400,20 @@ where
 
         let user_id = extract_user_id_from_request(parts, &app_state).await?;
 
-        let parameters = parts
-            .extract::<Path<HashMap<String, i64>>>()
-            .await
-            .map_err(|_| ChaosError::BadRequest)?;
+        // If resource is the Chaos Platform, use const platform resource id
+        let resource_id = match P::RESOURCE_TYPE {
+            "chaos/platform" => PLATFORM_RESOURCE_ID,
+            _ => {
+                let parameters = parts
+                    .extract::<Path<HashMap<String, i64>>>()
+                    .await
+                    .map_err(|_| ChaosError::BadRequest)?;
 
-        let resource_id = *parameters
-            .get(P::PATH_PARAMETER)
-            .ok_or(ChaosError::BadRequest)?;
+                *parameters
+                    .get(P::PATH_PARAMETER)
+                    .ok_or(ChaosError::BadRequest)?
+            }
+        };
 
         check_permission(
             &app_state.spicedb,

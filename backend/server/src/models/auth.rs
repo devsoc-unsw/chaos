@@ -102,40 +102,6 @@ where
     }
 }
 
-/// Super user information.
-///
-/// Contains the user ID of a user with super user privileges.
-#[derive(Deserialize, Serialize)]
-pub struct SuperUser {
-    /// ID of the super user
-    #[serde(serialize_with = "crate::models::serde_string::serialize")]
-    pub user_id: i64,
-}
-
-/// Extractor for super users.
-///
-/// This extractor is used in route handlers to ensure that the request
-/// comes from a user with super user privileges.
-#[async_trait]
-impl<S> FromRequestParts<S> for SuperUser
-where
-    AppState: FromRef<S>,
-    S: Send + Sync,
-{
-    type Rejection = ChaosError;
-
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
-        let app_state = AppState::from_ref(state);
-        let user_id = extract_user_id_from_request(parts, &app_state).await?;
-
-        let mut tx = app_state.db.begin().await?;
-        assert_is_super_user(user_id, &mut tx).await?;
-        tx.commit().await?;
-
-        Ok(SuperUser { user_id })
-    }
-}
-
 /// Organization administrator information.
 ///
 /// Contains the user ID of a user with organization administrator privileges.

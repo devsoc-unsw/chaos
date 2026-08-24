@@ -17,6 +17,22 @@
 
 use crate::spicedb::{schema, SpiceDbPolicy};
 
+/// Manage platform
+pub struct ManagePlatform;
+impl SpiceDbPolicy for ManagePlatform {
+    const RESOURCE_TYPE: &'static str = schema::resource::PLATFORM;
+    const PERMISSION: &'static str = schema::permission::platform::MANAGE;
+    const PATH_PARAMETER: &'static str = "not_applicable";
+}
+
+/// Use platform (any logged-in user)
+pub struct UsePlatform;
+impl SpiceDbPolicy for UsePlatform {
+    const RESOURCE_TYPE: &'static str = schema::resource::PLATFORM;
+    const PERMISSION: &'static str = schema::permission::platform::USE;
+    const PATH_PARAMETER: &'static str = "not_applicable";
+}
+
 /// Edit organisation settings
 pub struct ManageOrganisation;
 impl SpiceDbPolicy for ManageOrganisation {
@@ -47,6 +63,22 @@ impl SpiceDbPolicy for ReviewCampaign {
     const RESOURCE_TYPE: &'static str = schema::resource::CAMPAIGN;
     const PERMISSION: &'static str = schema::permission::campaign::REVIEW;
     const PATH_PARAMETER: &'static str = "campaign_id";
+}
+
+/// Manage email template
+pub struct ManageEmailTemplate;
+impl SpiceDbPolicy for ManageEmailTemplate {
+    const RESOURCE_TYPE: &'static str = schema::resource::EMAIL_TEMPLATE;
+    const PERMISSION: &'static str = schema::permission::email_template::MANAGE;
+    const PATH_PARAMETER: &'static str = "template_id";
+}
+
+/// View email template
+pub struct ViewEmailTemplate;
+impl SpiceDbPolicy for ViewEmailTemplate {
+    const RESOURCE_TYPE: &'static str = schema::resource::EMAIL_TEMPLATE;
+    const PERMISSION: &'static str = schema::permission::email_template::VIEW;
+    const PATH_PARAMETER: &'static str = "template_id";
 }
 
 /// View application answers

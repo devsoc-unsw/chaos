@@ -3,7 +3,6 @@
 //! This module provides functionality for managing users, including retrieval
 //! and updating of user information such as name, pronouns, gender, zID, and degree details.
 
-use crate::models::app::PLATFORM_RESOURCE_ID;
 use crate::models::error::ChaosError;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Postgres, Transaction};
@@ -340,14 +339,14 @@ impl User {
 
         // Insert user into SpiceDB
         let spicedb_relation = match data.role {
-            UserRole::User => crate::spicedb::spicedb_schema::relation::platform::USER,
-            UserRole::SuperUser => crate::spicedb::spicedb_schema::relation::platform::SUPERUSER,
+            UserRole::User => crate::spicedb::schema::relation::platform::USER,
+            UserRole::SuperUser => crate::spicedb::schema::relation::platform::SUPERUSER,
         };
         transaction.create_spicedb_relationship(
-            crate::spicedb::spicedb_schema::resource::PLATFORM,
-            PLATFORM_RESOURCE_ID,
+            crate::spicedb::schema::resource::PLATFORM,
+            crate::spicedb::schema::PLATFORM_RESOURCE_ID,
             spicedb_relation,
-            crate::spicedb::spicedb_schema::resource::USER,
+            crate::spicedb::schema::resource::USER,
             data.id,
         );
 

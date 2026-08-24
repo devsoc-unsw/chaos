@@ -7,6 +7,7 @@ pub mod resource {
     pub const PLATFORM: &str = "chaos/platform";
     pub const ORGANISATION: &str = "chaos/organisation";
     pub const CAMPAIGN: &str = "chaos/campaign";
+    pub const EMAIL_TEMPLATE: &str = "chaos/email_template";
     pub const APPLICATION: &str = "chaos/application";
     pub const RATING: &str = "chaos/rating";
     pub const COMMENT: &str = "chaos/comment";
@@ -20,10 +21,14 @@ pub mod relation {
         pub const USER: &str = "user";
     }
     pub mod organisation {
+        pub const PLATFORM: &str = "platform";
         pub const ADMIN: &str = "admin";
         pub const MEMBER: &str = "member";
     }
     pub mod campaign {
+        pub const ORGANISATION: &str = "organisation";
+    }
+    pub mod email_template {
         pub const ORGANISATION: &str = "organisation";
     }
     pub mod application {
@@ -46,6 +51,10 @@ pub mod relation {
 
 /// SpiceDB permission name constants, namespaced by resource.
 pub mod permission {
+    pub mod platform {
+        pub const MANAGE: &str = "manage";
+        pub const USE: &str = "use";
+    }
     pub mod organisation {
         pub const MANAGE: &str = "manage";
         pub const VIEW: &str = "view";
@@ -53,6 +62,10 @@ pub mod permission {
     pub mod campaign {
         pub const MANAGE: &str = "manage";
         pub const REVIEW: &str = "review";
+    }
+    pub mod email_template {
+        pub const MANAGE: &str = "manage";
+        pub const VIEW: &str = "view";
     }
     pub mod application {
         pub const VIEW: &str = "view";

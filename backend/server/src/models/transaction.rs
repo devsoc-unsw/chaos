@@ -86,7 +86,7 @@ impl DBTransaction<'_> {
             ));
     }
 
-    /// Queues the deletion of a SpiceDB relationship, applied by
+    /// Queues the deletion of a specific SpiceDB relationship, applied by
     /// [`DBTransaction::commit`].
     ///
     /// The relationship is `<resource_type>:<resource_id>#<relation>@<subject_type>:<subject_id>`,

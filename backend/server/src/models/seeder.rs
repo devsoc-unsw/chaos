@@ -39,10 +39,10 @@ impl Seeder {
             User::create_user(super_user, &mut transaction.tx).await?;
 
             transaction.create_spicedb_relationship(
-                crate::spicedb::spicedb_schema::resource::PLATFORM,
+                crate::spicedb::schema::resource::PLATFORM,
                 PLATFORM_RESOURCE_ID,
-                crate::spicedb::spicedb_schema::relation::platform::SUPERUSER,
-                crate::spicedb::spicedb_schema::resource::USER,
+                crate::spicedb::schema::relation::platform::SUPERUSER,
+                crate::spicedb::schema::resource::USER,
                 super_user_id,
             );
         }
@@ -64,10 +64,10 @@ impl Seeder {
             .await?;
 
             transaction.create_spicedb_relationship(
-                crate::spicedb::spicedb_schema::resource::ORGANISATION,
+                crate::spicedb::schema::resource::ORGANISATION,
                 org_id,
-                crate::spicedb::spicedb_schema::relation::organisation::ADMIN,
-                crate::spicedb::spicedb_schema::resource::USER,
+                crate::spicedb::schema::relation::organisation::ADMIN,
+                crate::spicedb::schema::resource::USER,
                 super_user_id,
             );
         }
