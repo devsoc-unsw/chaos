@@ -32,7 +32,7 @@ reviews:
     enabled: true
     drafts: true
     base_branches:
-      - '*'
+      - '.*'
     ignore_usernames:
       - 'renovate[bot]'
 chat:
