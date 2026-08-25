@@ -70,7 +70,9 @@ use axum::{
 };
 use tonic::{metadata::MetadataValue, transport::Channel, Request};
 
-use crate::spicedb::authzed::api::v1::{DeleteRelationshipsRequest, RelationshipFilter};
+use crate::spicedb::authzed::api::v1::{
+    DeleteRelationshipsRequest, RelationshipFilter, SubjectFilter,
+};
 use crate::spicedb::schema::PLATFORM_RESOURCE_ID;
 use crate::{
     models::{app::AppState, error::ChaosError, transaction::DBTransaction},
@@ -286,13 +288,17 @@ pub async fn write_relationships(
 }
 
 /// WARNING: This cannot be undone, so run after Postgres commit
-/// Deletes all relationships for a given resource.
+/// Deletes all relationships for a given resource, where the
+/// relationship is the resource OR the subject.
 ///
-/// Performs a `DeleteRelationships` RPC to remove every relationship where
-/// the resource matches `<resource_type>:<resource_id>`. This is atomic —
-/// either all matching relationships are deleted or none are. This does
-/// not use the standard queue in [`DBTransaction`] as it cannot be undone,
-/// hence, it is outside [`DBTransaction`].
+/// Performs two `DeleteRelationships` RPCs: one removing every relationship
+/// where the resource appears on the left-hand side
+/// (`<resource_type>:<resource_id>#relation@<any>`), and one removing every
+/// relationship where it appears as the subject
+/// (`<any>#relation@<resource_type>:<resource_id>`). SpiceDB cannot express
+/// both directions in a single filter, hence two calls; each is atomic and
+/// idempotent. This does not use the standard queue in [`DBTransaction`]
+/// as it cannot be undone, hence, it is outside [`DBTransaction`].
 ///
 /// # Arguments
 ///
@@ -311,7 +317,8 @@ pub async fn delete_all_resource_relationships(
     resource_type: &str,
     resource_id: i64,
 ) -> Result<(), ChaosError> {
-    let request = authorized_request(
+    // Delete all where <resource_type>:<resource_id>#relation@<anything>
+    let resource_request = authorized_request(
         DeleteRelationshipsRequest {
             relationship_filter: Some(RelationshipFilter {
                 resource_type: resource_type.to_owned(),
@@ -330,7 +337,35 @@ pub async fn delete_all_resource_relationships(
 
     client
         .clone()
-        .delete_relationships(request)
+        .delete_relationships(resource_request)
+        .await
+        .map_err(|_| ChaosError::InternalServerError)?;
+
+    // Delete all where <anything>#relation@<type>:<id>
+    let subject_request = authorized_request(
+        DeleteRelationshipsRequest {
+            relationship_filter: Some(RelationshipFilter {
+                resource_type: String::new(),
+                optional_resource_id: String::new(),
+                optional_resource_id_prefix: String::new(),
+                optional_relation: String::new(),
+                optional_subject_filter: Some(SubjectFilter {
+                    subject_type: resource_type.to_owned(),
+                    optional_subject_id: resource_id.to_string(),
+                    optional_relation: None,
+                }),
+            }),
+            optional_preconditions: Vec::new(),
+            optional_limit: 0,
+            optional_allow_partial_deletions: false,
+            optional_transaction_metadata: None,
+        },
+        key,
+    )?;
+
+    client
+        .clone()
+        .delete_relationships(subject_request)
         .await
         .map_err(|_| ChaosError::InternalServerError)?;
 
