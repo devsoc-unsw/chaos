@@ -389,7 +389,7 @@ impl Application {
                 FROM applications a
                 JOIN users u ON u.id = a.user_id
                 JOIN campaigns c ON c.id = a.campaign_id
-                LEFT JOIN application_ratings ar ON ar.application_id = a.id AND ar.application_id = $2
+                LEFT JOIN application_ratings ar ON ar.application_id = a.id AND ar.rater_id = $2
                 WHERE a.id = $1 AND a.submitted = true
             ",
             id,
