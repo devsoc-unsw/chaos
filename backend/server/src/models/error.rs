@@ -171,6 +171,9 @@ impl IntoResponse for ChaosError {
             ChaosError::CampaignClosed => {
                 AppMessage::BadRequestMessage("Campaign closed").into_response()
             }
+            ChaosError::CampaignOpen => {
+                AppMessage::BadRequestMessage("Campaign open").into_response()
+            }
             // We only care about the RowNotFound error, as others are miscellaneous DB errors.
             ChaosError::DatabaseError(sqlx::Error::RowNotFound) => {
                 AppMessage::NotFoundMessage("Not found").into_response()
