@@ -867,9 +867,12 @@ where
             .ok_or(ChaosError::BadRequest)?;
 
         let mut tx = app_state.db.begin().await?;
-        if let Ok(_) = assert_campaign_is_open(campaign_id, &mut tx).await {
+        if let Err(e) = assert_campaign_is_open(campaign_id, &mut tx).await {
             tx.commit().await?;
-            return Ok(ClosedCampaign);
+            return match e {
+                ChaosError::CampaignClosed => Ok(ClosedCampaign),
+                _ => Err(e),
+            };
         }
 
         tx.commit().await?;
