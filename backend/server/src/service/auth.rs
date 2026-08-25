@@ -37,13 +37,14 @@ use std::ops::DerefMut;
 ///
 /// # Returns
 ///
-/// * `Result<i64, ChaosError>` - The user ID if successful, or an error
+/// * `Result<(i64, bool), ChaosError>` - The user ID if successful + if the user was
+/// newly created, or an error
 pub async fn create_or_get_user_id(
     email: String,
     name: String,
     snowflake_generator: &mut SnowflakeIdGenerator,
     transaction: &mut DBTransaction<'_>,
-) -> Result<i64, ChaosError> {
+) -> Result<(i64, bool), ChaosError> {
     let possible_user_id = sqlx::query!(
         "SELECT id FROM users WHERE lower(email) = $1",
         email.to_lowercase()
@@ -52,7 +53,7 @@ pub async fn create_or_get_user_id(
     .await?;
 
     if let Some(result) = possible_user_id {
-        return Ok(result.id);
+        return Ok((result.id, false));
     }
 
     let user_id = snowflake_generator.real_time_generate();
@@ -66,16 +67,7 @@ pub async fn create_or_get_user_id(
     .execute(transaction.tx.deref_mut())
     .await?;
 
-    // New users need the platform `user` relationship for SpiceDbAuth<UsePlatform> checks
-    transaction.create_spicedb_relationship(
-        schema::resource::PLATFORM,
-        PLATFORM_RESOURCE_ID,
-        schema::relation::platform::USER,
-        schema::resource::USER,
-        user_id,
-    );
-
-    Ok(user_id)
+    Ok((user_id, true))
 }
 
 /// Verifies if a user has super user privileges.

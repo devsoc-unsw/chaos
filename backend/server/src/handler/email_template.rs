@@ -8,7 +8,9 @@
 use crate::models::app::{AppMessage, AppState};
 use crate::models::email_template::EmailTemplate;
 use crate::models::error::ChaosError;
+use crate::models::rating::Rating;
 use crate::models::transaction::DBTransaction;
+use crate::spicedb;
 use crate::spicedb::{policies::ManageEmailTemplate, schema as spicedb_schema, SpiceDbAuth};
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
@@ -33,10 +35,9 @@ impl EmailTemplateHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Template details or error
     pub async fn get(
         mut transaction: DBTransaction<'_>,
-        Path(id): Path<i64>,
-        _auth: SpiceDbAuth<ManageEmailTemplate>,
+        auth: SpiceDbAuth<ManageEmailTemplate>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let email_template = EmailTemplate::get(id, &mut transaction.tx).await?;
+        let email_template = EmailTemplate::get(auth.resource_id, &mut transaction.tx).await?;
 
         Ok((StatusCode::OK, Json(email_template)))
     }
@@ -56,13 +57,12 @@ impl EmailTemplateHandler {
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update(
-        _auth: SpiceDbAuth<ManageEmailTemplate>,
-        Path(id): Path<i64>,
+        auth: SpiceDbAuth<ManageEmailTemplate>,
         mut transaction: DBTransaction<'_>,
         Json(request_body): Json<EmailTemplate>,
     ) -> Result<impl IntoResponse, ChaosError> {
         EmailTemplate::update(
-            id,
+            auth.resource_id,
             request_body.name,
             request_body.template_subject,
             request_body.template_body,
@@ -88,13 +88,23 @@ impl EmailTemplateHandler {
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn delete(
-        _auth: SpiceDbAuth<ManageEmailTemplate>,
-        Path(id): Path<i64>,
+        auth: SpiceDbAuth<ManageEmailTemplate>,
+        State(state): State<AppState>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        EmailTemplate::delete(id, &mut transaction.tx).await?;
+        EmailTemplate::delete(auth.resource_id, &mut transaction.tx).await?;
 
         transaction.commit().await?;
+
+        // Run SpiceDB delete after Postgres succeeds
+        spicedb::delete_all_resource_relationships(
+            &state.spicedb,
+            &state.spicedb_key,
+            spicedb::schema::resource::EMAIL_TEMPLATE,
+            auth.resource_id,
+        )
+        .await?;
+
         Ok(AppMessage::OkMessage("Successfully deleted email template"))
     }
 
@@ -112,14 +122,16 @@ impl EmailTemplateHandler {
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn duplicate(
-        _auth: SpiceDbAuth<ManageEmailTemplate>,
-        Path(id): Path<i64>,
+        auth: SpiceDbAuth<ManageEmailTemplate>,
         State(mut state): State<AppState>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let (new_template_id, organisation_id) =
-            EmailTemplate::duplicate(id, &mut transaction.tx, &mut state.snowflake_generator)
-                .await?;
+        let (new_template_id, organisation_id) = EmailTemplate::duplicate(
+            auth.resource_id,
+            &mut transaction.tx,
+            &mut state.snowflake_generator,
+        )
+        .await?;
 
         transaction.create_spicedb_relationship(
             spicedb_schema::resource::EMAIL_TEMPLATE,

@@ -183,6 +183,8 @@ impl OrganisationHandler {
         )
         .await?;
 
+        // TODO: SpiceDB deep delete
+
         Ok(AppMessage::OkMessage("Successfully deleted organisation"))
     }
 
@@ -484,6 +486,7 @@ impl OrganisationHandler {
         Organisation::remove_user(auth.resource_id, request_body.user_id, &mut transaction.tx)
             .await?;
 
+        // Can only remove users with role "User", so no need to worry about removing admin
         transaction.delete_spicedb_relationship(
             spicedb_schema::resource::ORGANISATION,
             auth.resource_id,

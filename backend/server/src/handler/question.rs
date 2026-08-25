@@ -6,6 +6,7 @@
 //! - Managing role-specific and common questions
 
 use crate::models::app::{AppMessage, AppState, IdMessage};
+use crate::models::campaign::ClosedCampaign;
 use crate::models::error::ChaosError;
 use crate::models::question::{NewQuestion, Question};
 use crate::models::transaction::DBTransaction;
@@ -193,6 +194,7 @@ impl QuestionHandler {
         _auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,
         state: State<AppState>,
+        _: ClosedCampaign, // Can only delete questions for closed campaigns
     ) -> Result<impl IntoResponse, ChaosError> {
         Question::delete(question_id, &mut transaction.tx).await?;
 

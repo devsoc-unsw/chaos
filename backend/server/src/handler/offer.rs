@@ -68,10 +68,9 @@ impl OfferHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Offer details or error
     pub async fn get(
         mut transaction: DBTransaction<'_>,
-        Path(id): Path<i64>,
-        _auth: SpiceDbAuth<ViewOffer>,
+        auth: SpiceDbAuth<ViewOffer>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let offer = Offer::get(id, &mut transaction.tx).await?;
+        let offer = Offer::get(auth.resource_id, &mut transaction.tx).await?;
         transaction.commit().await?;
 
         Ok((StatusCode::OK, Json(offer)))
@@ -92,11 +91,10 @@ impl OfferHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn delete(
         mut transaction: DBTransaction<'_>,
-        Path(id): Path<i64>,
-        _auth: SpiceDbAuth<ManageOffer>,
+        auth: SpiceDbAuth<ManageOffer>,
         state: State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Offer::delete(id, &mut transaction.tx).await?;
+        Offer::delete(auth.resource_id, &mut transaction.tx).await?;
         transaction.commit().await?;
 
         // Run SpiceDB delete after Postgres succeeds
@@ -104,7 +102,7 @@ impl OfferHandler {
             &state.spicedb,
             &state.spicedb_key,
             spicedb_schema::resource::OFFER,
-            id,
+            auth.resource_id,
         )
         .await?;
 
@@ -127,11 +125,10 @@ impl OfferHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn reply(
         mut transaction: DBTransaction<'_>,
-        Path(id): Path<i64>,
-        _auth: SpiceDbAuth<ReplyOffer>,
+        auth: SpiceDbAuth<ReplyOffer>,
         Json(reply): Json<OfferReply>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Offer::reply(id, reply.accept, &mut transaction.tx).await?;
+        Offer::reply(auth.resource_id, reply.accept, &mut transaction.tx).await?;
         transaction.commit().await?;
 
         Ok(AppMessage::OkMessage("Successfully accepted offer"))
@@ -152,10 +149,9 @@ impl OfferHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Email preview or error
     pub async fn preview_email(
         mut transaction: DBTransaction<'_>,
-        Path(id): Path<i64>,
-        _auth: SpiceDbAuth<ManageOffer>,
+        auth: SpiceDbAuth<ManageOffer>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let email_parts = Offer::preview_email(id, &mut transaction.tx).await?;
+        let email_parts = Offer::preview_email(auth.resource_id, &mut transaction.tx).await?;
         transaction.commit().await?;
 
         Ok((StatusCode::OK, Json(email_parts)))
@@ -177,11 +173,15 @@ impl OfferHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn send_offer(
         mut transaction: DBTransaction<'_>,
-        Path(id): Path<i64>,
-        _auth: SpiceDbAuth<ManageOffer>,
+        auth: SpiceDbAuth<ManageOffer>,
         State(state): State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Offer::send_offer(id, &mut transaction.tx, state.email_credentials).await?;
+        Offer::send_offer(
+            auth.resource_id,
+            &mut transaction.tx,
+            state.email_credentials,
+        )
+        .await?;
         transaction.commit().await?;
 
         Ok(AppMessage::OkMessage("Successfully sent offer"))
@@ -191,12 +191,13 @@ impl OfferHandler {
     ///
     /// Auth matches viewing application ratings summary: org member for the campaign.
     pub async fn queue_outcome_emails(
-        _auth: SpiceDbAuth<ManageCampaign>,
-        Path(campaign_id): Path<i64>,
+        auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,
         State(mut state): State<AppState>,
         Json(body): Json<QueueOutcomeEmailsRequest>,
     ) -> Result<impl IntoResponse, ChaosError> {
+        let campaign_id = auth.resource_id;
+
         if body.emails.is_empty() {
             return Err(ChaosError::BadRequestWithMessage(
                 "No emails to queue".to_string(),

@@ -231,6 +231,8 @@ impl CampaignHandler {
         )
         .await?;
 
+        // TODO: SpiceDB deep delete
+
         Ok(AppMessage::OkMessage("Successfully deleted campaign"))
     }
 

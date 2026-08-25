@@ -43,9 +43,13 @@ pub enum ChaosError {
     #[error("Application closed")]
     ApplicationClosed,
 
-    /// Campaign period has ended
-    #[error("Campagin closed")]
+    /// Campaign period has ended or not started
+    #[error("Campaign closed")]
     CampaignClosed,
+
+    /// Campaign is published
+    #[error("Campaign open")]
+    CampaignOpen,
 
     /// Database operation failed
     #[error("SQLx error")]
@@ -115,6 +119,7 @@ impl ChaosError {
             | ChaosError::NotFound
             | ChaosError::ApplicationClosed
             | ChaosError::CampaignClosed
+            | ChaosError::CampaignOpen
             | ChaosError::InternalServerError => println!("{:?}", self),
             ChaosError::BadRequestWithMessage(e) => println!("Bad Request: {}", e),
             ChaosError::InternalServerErrorWithMessage(e) => {

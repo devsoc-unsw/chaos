@@ -17,6 +17,7 @@ use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
 use sqlx::Postgres;
 use sqlx::{FromRow, Transaction};
+use std::collections::HashMap;
 use std::env;
 use std::ops::DerefMut;
 use uuid::Uuid;
@@ -826,16 +827,53 @@ where
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
-        let Path(campaign_id) = parts
-            .extract::<Path<i64>>()
+        let campaign_id = *parts
+            .extract::<Path<HashMap<String, i64>>>()
             .await
-            .map_err(|_| ChaosError::BadRequest)?;
+            .map_err(|_| ChaosError::BadRequest)?
+            .get("campaign_id")
+            .ok_or(ChaosError::BadRequest)?;
 
         let mut tx = app_state.db.begin().await?;
         assert_campaign_is_open(campaign_id, &mut tx).await?;
         tx.commit().await?;
 
         Ok(OpenCampaign)
+    }
+}
+
+/// Extractor for ensuring a campaign is open.
+///
+/// This extractor is used in route handlers to ensure that the campaign
+/// being accessed is currently accepting applications.
+pub struct ClosedCampaign;
+
+#[async_trait]
+impl<S> FromRequestParts<S> for ClosedCampaign
+where
+    AppState: FromRef<S>,
+    S: Send + Sync,
+{
+    type Rejection = ChaosError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let app_state = AppState::from_ref(state);
+
+        let campaign_id = *parts
+            .extract::<Path<HashMap<String, i64>>>()
+            .await
+            .map_err(|_| ChaosError::BadRequest)?
+            .get("campaign_id")
+            .ok_or(ChaosError::BadRequest)?;
+
+        let mut tx = app_state.db.begin().await?;
+        if let Ok(_) = assert_campaign_is_open(campaign_id, &mut tx).await {
+            tx.commit().await?;
+            return Ok(ClosedCampaign);
+        }
+
+        tx.commit().await?;
+        Err(ChaosError::CampaignClosed)
     }
 }
 

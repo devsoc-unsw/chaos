@@ -343,6 +343,12 @@ impl RatingHandler {
         mut transaction: DBTransaction<'_>,
         state: State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
+        let rating = Rating::get_all_category_ratings_from_application_rating_id(
+            rating_id,
+            &mut transaction.tx,
+        )
+        .await?;
+
         Rating::delete_application_rating(rating_id, &mut transaction.tx).await?;
 
         transaction.commit().await?;
@@ -355,6 +361,17 @@ impl RatingHandler {
             rating_id,
         )
         .await?;
+
+        // Deep delete category ratings which reference the parent rating
+        for category_rating in rating.iter() {
+            spicedb::delete_all_resource_relationships(
+                &state.spicedb,
+                &state.spicedb_key,
+                spicedb_schema::resource::CATEGORY_RATING,
+                category_rating.id,
+            )
+            .await?;
+        }
 
         Ok(AppMessage::OkMessage("Successfully deleted rating"))
     }

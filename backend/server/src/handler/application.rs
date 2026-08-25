@@ -15,6 +15,7 @@ use crate::models::error::ChaosError;
 use crate::models::question::{Question, QuestionWithAnswer};
 use crate::models::rating::{NewRating, Rating};
 use crate::models::transaction::DBTransaction;
+use crate::spicedb;
 use crate::spicedb::{
     policies::{EditApplication, ReviewApplication, ReviewCampaign, UsePlatform, ViewApplication},
     schema as spicedb_schema, SpiceDbAuth,
@@ -359,6 +360,22 @@ impl ApplicationHandler {
         )
         .await?;
 
+        transaction.create_spicedb_relationship(
+            spicedb_schema::resource::RATING,
+            application_id,
+            spicedb_schema::relation::rating::APPLICATION,
+            spicedb_schema::resource::APPLICATION,
+            auth.resource_id,
+        );
+
+        transaction.create_spicedb_relationship(
+            spicedb_schema::resource::RATING,
+            application_id,
+            spicedb_schema::relation::rating::CREATOR,
+            spicedb_schema::resource::USER,
+            auth.user_id,
+        );
+
         // Then loop through and create each category rating
         for category_rating in new_rating.category_ratings {
             Rating::create_category_rating(
@@ -368,6 +385,14 @@ impl ApplicationHandler {
                 &mut transaction.tx,
             )
             .await?;
+
+            transaction.create_spicedb_relationship(
+                spicedb_schema::resource::CATEGORY_RATING,
+                application_id,
+                spicedb_schema::relation::category_rating::RATING,
+                spicedb_schema::resource::RATING,
+                application_rating_id,
+            );
         }
 
         transaction.commit().await?;
@@ -397,7 +422,7 @@ impl ApplicationHandler {
             )
             .await?;
 
-        for category_rating in existing_category_ratings {
+        for category_rating in existing_category_ratings.clone() {
             Rating::delete_category_rating(category_rating.id, &mut transaction.tx).await?;
         }
 
@@ -410,9 +435,28 @@ impl ApplicationHandler {
                 &mut transaction.tx,
             )
             .await?;
+
+            transaction.create_spicedb_relationship(
+                spicedb_schema::resource::CATEGORY_RATING,
+                application_id,
+                spicedb_schema::relation::category_rating::RATING,
+                spicedb_schema::resource::RATING,
+                rating.id,
+            );
         }
 
         transaction.commit().await?;
+
+        // Run deletes after Postgres transaction successfully commits
+        for category_rating in existing_category_ratings {
+            spicedb::delete_all_resource_relationships(
+                &state.spicedb,
+                &state.spicedb_key,
+                crate::spicedb::schema::resource::CATEGORY_RATING,
+                category_rating.id,
+            )
+            .await?;
+        }
         Ok(AppMessage::OkMessage("Successfully updated rating"))
     }
 

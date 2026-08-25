@@ -162,7 +162,7 @@ impl DBTransaction<'_> {
                 write_relationships(&self.spicedb, &self.spicedb_key, inverse_updates).await
             {
                 return Err(ChaosError::InternalServerErrorWithMessage(format!(
-                    "Failed to compensate SpiceDB writes after Postgres commit failure: \
+                    "FATAL! Failed to compensate SpiceDB writes after Postgres commit failure: \
                          {compensation_error:?}"
                 )));
             }
