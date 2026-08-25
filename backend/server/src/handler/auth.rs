@@ -96,7 +96,6 @@ pub async fn google_auth_init(
 pub async fn google_callback(
     State(mut state): State<AppState>,
     jar: CookieJar,
-    mut transaction: DBTransaction<'_>,
     Query(query): Query<AuthRequest>,
 ) -> Result<impl IntoResponse, ChaosError> {
     let token = state
@@ -113,6 +112,8 @@ pub async fn google_callback(
         .await?;
 
     let profile = profile.json::<GoogleUserProfile>().await?;
+
+    let mut transaction = DBTransaction::new(&state).await?;
 
     let (user_id, created) = create_or_get_user_id(
         profile.email.clone(),
