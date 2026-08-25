@@ -30,7 +30,7 @@ reviews:
         - No data duplication between tables."
   auto_review:
     enabled: true
-    drafts: true
+    drafts: false
     base_branches:
       - '.*'
     ignore_usernames:
