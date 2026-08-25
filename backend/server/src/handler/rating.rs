@@ -182,13 +182,21 @@ impl RatingHandler {
         );
 
         for category_rating in new_rating.category_ratings {
-            Rating::create_category_rating(
+            let category_rating_id = Rating::create_category_rating(
                 category_rating,
                 application_rating_id,
                 &mut state.snowflake_generator,
                 &mut transaction.tx,
             )
             .await?;
+
+            transaction.create_spicedb_relationship(
+                spicedb_schema::resource::CATEGORY_RATING,
+                category_rating_id,
+                spicedb_schema::relation::category_rating::RATING,
+                spicedb_schema::resource::RATING,
+                application_rating_id,
+            );
         }
 
         transaction.commit().await?;
