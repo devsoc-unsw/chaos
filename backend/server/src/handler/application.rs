@@ -362,15 +362,15 @@ impl ApplicationHandler {
 
         transaction.create_spicedb_relationship(
             spicedb_schema::resource::RATING,
-            application_id,
+            application_rating_id,
             spicedb_schema::relation::rating::APPLICATION,
             spicedb_schema::resource::APPLICATION,
-            auth.resource_id,
+            application_id,
         );
 
         transaction.create_spicedb_relationship(
             spicedb_schema::resource::RATING,
-            application_id,
+            application_rating_id,
             spicedb_schema::relation::rating::CREATOR,
             spicedb_schema::resource::USER,
             auth.user_id,
@@ -378,7 +378,7 @@ impl ApplicationHandler {
 
         // Then loop through and create each category rating
         for category_rating in new_rating.category_ratings {
-            Rating::create_category_rating(
+            let category_rating_id = Rating::create_category_rating(
                 category_rating,
                 application_rating_id,
                 &mut state.snowflake_generator,
@@ -388,7 +388,7 @@ impl ApplicationHandler {
 
             transaction.create_spicedb_relationship(
                 spicedb_schema::resource::CATEGORY_RATING,
-                application_id,
+                category_rating_id,
                 spicedb_schema::relation::category_rating::RATING,
                 spicedb_schema::resource::RATING,
                 application_rating_id,

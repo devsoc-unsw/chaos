@@ -302,7 +302,7 @@ impl Rating {
     ///
     /// # Returns
     /// Returns a `Result` containing either:
-    /// * `Ok(())` - If the rating was created successfully
+    /// * `Ok(i64)` - The newly created rating's id
     /// * `Err(ChaosError)` - An error if creation fails
     pub async fn create_application_rating(
         comment: Option<String>,
@@ -313,12 +313,12 @@ impl Rating {
     ) -> Result<i64, ChaosError> {
         let rating_id = snowflake_generator.real_time_generate();
 
+        // Will fail on CONFLICT (application_id, rater_id)
+        // Expected behaviour to prevent implicit update
         sqlx::query!(
             "
                 INSERT INTO application_ratings (id, application_id, rater_id, comment)
                     VALUES ($1, $2, $3, $4)
-                ON CONFLICT (application_id, rater_id)
-                DO UPDATE SET comment = $4, updated_at = NOW()
             ",
             rating_id,
             application_id,

@@ -147,6 +147,7 @@ impl ChaosError {
 /// errors from external dependencies.
 impl IntoResponse for ChaosError {
     fn into_response(self) -> Response {
+        // TODO: Change to logging to OpenTelemetry collector
         self.print();
 
         // Don't leak real error, only return a generic error message
@@ -175,9 +176,15 @@ impl IntoResponse for ChaosError {
                 AppMessage::BadRequestMessage("Campaign open").into_response()
             }
             // We only care about the RowNotFound error, as others are miscellaneous DB errors.
-            ChaosError::DatabaseError(sqlx::Error::RowNotFound) => {
-                AppMessage::NotFoundMessage("Not found").into_response()
-            }
+            ChaosError::DatabaseError(e) => match e {
+                sqlx::Error::RowNotFound => {
+                    AppMessage::NotFoundMessage("Not found").into_response()
+                }
+                sqlx::Error::Database(_) => {
+                    AppMessage::BadRequestMessage("Bad request").into_response()
+                }
+                _ => AppMessage::ErrorMessage("Internal server error").into_response(),
+            },
             _ => AppMessage::ErrorMessage("Internal server error").into_response(),
         }
     }
