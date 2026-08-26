@@ -28,7 +28,7 @@ jobs:
         ports:
           - 5432:5432
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Setup env file
         run: |
           echo "DATABASE_URL=postgres://postgres:password@localhost:5432/chaos" >> backend/.env
