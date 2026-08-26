@@ -13,7 +13,8 @@ reviews:
         "Confirm that the code adheres to the following:
         - Proper use of Tanstack Query.
         - Efficient requests to the backend.
-        - No hardcoded Tailwind styles like bg-[#ffffff], must use src/app/globals.css to change template."
+        - No hardcoded Tailwind styles like bg-[#ffffff], must use src/app/globals.css to change template.
+        - All documentation comments for functions reflect the proper function, inputs and outputs"
     - path: 'backend/server/**/*'
       instructions: |
         "Confirm that the code adheres to the following:
@@ -21,7 +22,9 @@ reviews:
         - All permissions in the SpiceDB schema are reflection in src/spicedb/policies.rs.
         - Minimal Postgres queries per request. NO N+1 queries at all are allowed.
         - SpiceDB relationships are properly added into required handlers in src/handler/** as per the schema.
-        - All handlers that mutate the database to create or delete a resource that is also stored in SpiceDB, should create or delete the applicable SpiceDB relationships."
+        - All handlers that mutate the database to create or delete a resource that is also stored in SpiceDB, should create or delete the applicable SpiceDB relationships.
+        - All documentation comments for functions reflect the proper function, inputs and outputs
+        - All handler functions are documented in backend/api.yaml with the correct input and output schemas"
     - path: 'backend/migrations/**/*'
       instructions: |
         "Confirm that the code adheres to the following:
