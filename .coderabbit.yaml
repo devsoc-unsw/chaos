@@ -31,6 +31,10 @@ reviews:
         - Postgres schema best practices.
         - Minimal to no array columns - everything should be normalised.
         - No data duplication between tables."
+    - path: 'backend/spicedb/**/*'
+      instructions: |
+        "Confirm that the code adheres to the following:
+        - Valid SpiceDB schema that follows SpiceDB best practices"
   auto_review:
     enabled: true
     drafts: false

@@ -7,8 +7,8 @@ schema: |-
   definition chaos/platform {
     relation superuser: chaos/user
     relation user: chaos/user
-    permission manage: superuser
-    permission use: user + superuser
+    permission manage = superuser
+    permission use = user + superuser
   }
   
   definition chaos/organisation {
