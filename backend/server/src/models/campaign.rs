@@ -638,7 +638,16 @@ impl Campaign {
         Role::create(campaign_id, role_data, transaction, snowflake_generator).await
     }
 
-    /// Returns an array of IDs for all applications
+    /// Returns an array of IDs for all applications in the campaign.
+    ///
+    /// # Arguments
+    ///
+    /// * `campaign_id` - ID of the campaign
+    /// * `transaction` - Database transaction to use
+    ///
+    /// # Returns
+    ///
+    /// * `Result<Vec<i64>, ChaosError>` - The application IDs or error
     pub async fn get_application_ids(
         campaign_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
@@ -653,7 +662,16 @@ impl Campaign {
         Ok(application_ids.iter().map(|r| r.id).collect())
     }
 
-    /// Returns an array of IDs for all ratings
+    /// Returns an array of IDs for all ratings belonging to the campaign's applications.
+    ///
+    /// # Arguments
+    ///
+    /// * `campaign_id` - ID of the campaign
+    /// * `transaction` - Database transaction to use
+    ///
+    /// # Returns
+    ///
+    /// * `Result<Vec<i64>, ChaosError>` - The rating IDs of the campaign
     pub async fn get_rating_ids(
         campaign_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
@@ -673,7 +691,16 @@ impl Campaign {
         Ok(rating_ids.iter().map(|r| r.id).collect())
     }
 
-    /// Returns an array of IDs for all comments
+    /// Returns an array of IDs for all comments belonging to the campaign's applications.
+    ///
+    /// # Arguments
+    ///
+    /// * `campaign_id` - ID of the campaign
+    /// * `transaction` - Database transaction to use
+    ///
+    /// # Returns
+    ///
+    /// * `Result<Vec<i64>, ChaosError>` - The comment IDs of the campaign
     pub async fn get_comment_ids(
         campaign_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
@@ -724,11 +751,12 @@ impl CampaignAttachment {
         Ok(attachments)
     }
 
-    /// Retrieves an attachment by its ID.
+    /// Retrieves an attachment by its ID, scoped to the owning campaign.
     ///
     /// # Arguments
     ///
     /// * `attachment_id` - ID of the attachment
+    /// * `campaign_id` - ID of the campaign the attachment must belong to
     /// * `transaction` - Database transaction to use
     ///
     /// # Returns
@@ -842,11 +870,12 @@ impl CampaignAttachment {
     /// # Arguments
     ///
     /// * `attachment_id` - ID of the attachment to delete
+    /// * `campaign_id` - ID of the campaign the attachment must belong to
     /// * `transaction` - Database transaction to use
     ///
     /// # Returns
     ///
-    /// * `Result<i64, ChaosError>` - The ID of the deleted attachment or error if not found
+    /// * `Result<(i64, i64), ChaosError>` - The (organisation_id, campaign_id) of the deleted attachment or error if not found
     pub async fn delete(
         attachment_id: i64,
         campaign_id: i64,

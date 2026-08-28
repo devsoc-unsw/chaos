@@ -93,6 +93,7 @@ impl RoleStatus {
     ///
     /// # Arguments
     /// * `campaign_role_id` - The campaign role to fetch the role statuses for.
+    /// * `campaign_id` - The campaign the campaign role must belong to.
     /// * `transaction` - Database transaction to use.
     ///
     /// # Returns

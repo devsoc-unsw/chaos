@@ -561,6 +561,23 @@ impl Question {
         Ok(questions)
     }
 
+    /// Updates an existing question.
+    ///
+    /// # Arguments
+    /// * `id` - The ID of the question to update
+    /// * `campaign_id` - The ID of the campaign the question must belong to
+    /// * `title` - The new question title
+    /// * `description` - The new question description
+    /// * `common` - Whether the question is common to all roles
+    /// * `roles` - The roles the question applies to
+    /// * `required` - Whether the question is required
+    /// * `short_answer_word_limit` - Word limit for short answer questions
+    /// * `question_data` - The type-specific question data
+    /// * `transaction` - Database transaction to use
+    /// * `snowflake_generator` - Generator for creating unique IDs
+    ///
+    /// # Returns
+    /// * `Result<(), ChaosError>` - Ok if the question was updated, error otherwise
     pub async fn update(
         id: i64,
         campaign_id: i64,
@@ -627,6 +644,16 @@ impl Question {
         Ok(())
     }
 
+    /// Deletes an existing question.
+    ///
+    /// # Arguments
+    /// * `id` - The ID of the question to delete
+    /// * `campaign_id` - The ID of the campaign the question must belong to
+    /// * `transaction` - Database transaction to use
+    ///
+    /// # Returns
+    /// * `Ok(())` - If the question was deleted successfully
+    /// * `Err(ChaosError)` - An error if deletion fails
     pub async fn delete(
         id: i64,
         campaign_id: i64,

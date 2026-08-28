@@ -242,6 +242,7 @@ impl Rating {
     ///
     /// # Arguments
     /// * `category_id` - The ID of the category to update
+    /// * `campaign_id` - The ID of the campaign the category must belong to
     /// * `updated_category` - The new category (ONLY INCLUDES NAME)
     /// * `transaction` - A mutable reference to the database transaction
     ///
@@ -272,7 +273,17 @@ impl Rating {
         Ok(())
     }
 
-    /// Deletes a category
+    /// Deletes a category.
+    ///
+    /// # Arguments
+    /// * `category_id` - The ID of the category to delete
+    /// * `campaign_id` - The ID of the campaign the category must belong to
+    /// * `transaction` - A mutable reference to the database transaction
+    ///
+    /// # Returns
+    /// Returns a `Result` containing either:
+    /// * `Ok(())` - If the category was deleted successfully
+    /// * `Err(ChaosError)` - An error if deletion fails
     pub async fn delete_category(
         category_id: i64,
         campaign_id: i64,
@@ -567,6 +578,7 @@ impl Rating {
     ///
     /// # Arguments
     /// * `category_rating_id` - The ID of the category rating to update
+    /// * `rating_id` - The ID of the application rating the category rating must belong to
     /// * `updated_rating` - The new rating data
     /// * `transaction` - A mutable reference to the database transaction
     ///
@@ -633,6 +645,7 @@ impl Rating {
     ///
     /// # Arguments
     /// * `application_category_rating_id` - The ID of the application category rating to delete
+    /// * `rating_id` - The ID of the application rating the category rating must belong to
     /// * `transaction` - A mutable reference to the database transaction
     ///
     /// # Returns

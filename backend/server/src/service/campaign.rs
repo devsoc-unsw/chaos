@@ -163,6 +163,19 @@ pub fn create_proper_slug(input: &str) -> String {
 /// - offer
 ///     - offer->campaign - CAMPAIGN
 ///     - offer->application - APPLICATION
+///
+/// # Arguments
+///
+/// * `campaign_id` - The ID of the campaign to delete
+/// * `application_ids` - IDs of the campaign's applications to delete
+/// * `rating_ids` - IDs of the campaign's ratings (via its applications) to delete
+/// * `comment_ids` - IDs of the campaign's comments (via its applications) to delete
+/// * `spicedb_client` - The SpiceDB permissions service client
+/// * `spicedb_key` - The SpiceDB secret key
+///
+/// # Returns
+///
+/// * `Result<(), ChaosError>` - Ok if all relationships were deleted, error otherwise
 pub async fn campaign_spicedb_deep_delete(
     campaign_id: i64,
     application_ids: Vec<i64>,
