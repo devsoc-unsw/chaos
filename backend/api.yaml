@@ -3,34 +3,63 @@ info:
   title: Chaos API
   version: 1.0.0
 servers:
-  - url: https://chaos.devsoc.app/api
+  - url: https://chaos.devsoc.app
     description: Production server
-  - url: http://localhost:3000/api
+  - url: http://localhost:3000
     description: Local server
 
 paths:
-  /auth/callback/google:
+  /auth/google:
+    get:
+      operationId: googleAuthInit
+      description: Redirects the user to Google's OAuth2 authorization URL to begin authentication
+      tags:
+        - Auth
+      parameters:
+        - name: to
+          in: query
+          description: Optional redirect path after successful login (e.g. /dashboard)
+          required: false
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Redirect to Google OAuth authorization page
+        "500":
+          description: Internal server error
+
+  /auth/logout:
+    get:
+      operationId: logout
+      description: Clears the auth_token cookie and redirects to the frontend root
+      tags:
+        - Auth
+      responses:
+        "302":
+          description: Redirect to frontend root with cleared auth_token cookie
+
+  /api/auth/callback/google:
     get:
       operationId: googleCallback
-      description: Google OAuth callback
+      description: Google OAuth callback. Exchanges the authorization code for a JWT, sets it as an httpOnly auth_token cookie and redirects to the frontend
       tags:
         - Auth
       parameters:
         - name: code
           in: query
-          description: Google OAuth code
+          description: Google OAuth authorization code
           required: true
           schema:
             type: string
+        - name: state
+          in: query
+          description: CSRF state token (used to look up the original redirect path)
+          required: false
+          schema:
+            type: string
       responses:
-        "200":
-          description: Ok
-          content:
-            application/json:
-              schema:
-                type: string
-                description: JWT token
-                example: "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9..."
+        "302":
+          description: Redirect to the frontend (saved redirect path or /dashboard) with auth_token cookie set
         "401":
           description: Authentication failed
           content:
@@ -38,30 +67,55 @@ paths:
               schema:
                 $ref: "#/components/schemas/NotLoggedIn"
 
-  /auth/logout:
-    post:
-      operationId: logout
-      description: Invalidates current token
+  /api/v1/dev/super_admin_login:
+    get:
+      operationId: devSuperAdminLogin
+      description: DEV ONLY. Logs in as the seeded super admin user (id 1) and redirects to the dashboard
       tags:
         - Auth
       responses:
-        "200":
-          description: Ok
+        "302":
+          description: Redirect to http://localhost:3000/dashboard with auth_token cookie set
+        "403":
+          description: Endpoint disabled outside of a dev environment
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully logged out
-        "401":
-          description: Not logged in
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NotLoggedIn"
+                $ref: "#/components/schemas/Unauthorized"
 
-  /user:
+  /api/v1/dev/org_admin_login:
+    get:
+      operationId: devOrgAdminLogin
+      description: DEV ONLY. Logs in as the seeded organisation admin user (id 2) and redirects to the dashboard
+      tags:
+        - Auth
+      responses:
+        "302":
+          description: Redirect to http://localhost:3000/dashboard with auth_token cookie set
+        "403":
+          description: Endpoint disabled outside of a dev environment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthorized"
+
+  /api/v1/dev/user_login:
+    get:
+      operationId: devUserLogin
+      description: DEV ONLY. Logs in as the seeded regular user (id 3) and redirects to the dashboard
+      tags:
+        - Auth
+      responses:
+        "302":
+          description: Redirect to http://localhost:3000/dashboard with auth_token cookie set
+        "403":
+          description: Endpoint disabled outside of a dev environment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unauthorized"
+
+  /api/v1/user:
     get:
       operationId: getLoggedInUser
       description: Returns info about currently logged in user
@@ -81,7 +135,27 @@ paths:
               schema:
                 $ref: "#/components/schemas/NotLoggedIn"
 
-  /user/name:
+  /api/v1/user/is_superuser:
+    get:
+      operationId: isSuperuser
+      description: Returns whether the currently logged in user is a super user
+      tags:
+        - User
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  is_superuser:
+                    type: boolean
+                    example: true
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
+
+  /api/v1/user/name:
     patch:
       operationId: updateUserName
       description: Updates currently logged in user's name
@@ -92,24 +166,18 @@ paths:
         content:
           application/json:
             schema:
-              properties:
-                name:
-                  type: string
-                  example: "Clancy Tiger"
+              $ref: "#/components/schemas/UserName"
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Updated username
+                $ref: "#/components/schemas/Message"
         "401":
           $ref: "#/components/responses/NotLoggedIn"
 
-  /user/pronouns:
+  /api/v1/user/pronouns:
     patch:
       operationId: updateUserPronouns
       description: Updates currently logged in user's pronouns
@@ -120,24 +188,18 @@ paths:
         content:
           application/json:
             schema:
-              properties:
-                pronouns:
-                  type: string
-                  example: They/Them
+              $ref: "#/components/schemas/UserPronouns"
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Updated pronouns
+                $ref: "#/components/schemas/Message"
         "401":
           $ref: "#/components/responses/NotLoggedIn"
 
-  /user/gender:
+  /api/v1/user/gender:
     patch:
       operationId: updateUserGender
       description: Updates currently logged in user's gender
@@ -148,24 +210,18 @@ paths:
         content:
           application/json:
             schema:
-              properties:
-                gender:
-                  type: string
-                  example: Female
+              $ref: "#/components/schemas/UserGender"
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Updated gender
+                $ref: "#/components/schemas/Message"
         "401":
           $ref: "#/components/responses/NotLoggedIn"
 
-  /user/zid:
+  /api/v1/user/zid:
     patch:
       operationId: updateUserZid
       description: Updates currently logged in user's zID
@@ -176,27 +232,21 @@ paths:
         content:
           application/json:
             schema:
-              properties:
-                zid:
-                  type: string
-                  example: z5123456
+              $ref: "#/components/schemas/UserZid"
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Updated zid
+                $ref: "#/components/schemas/Message"
         "401":
           $ref: "#/components/responses/NotLoggedIn"
 
-  /user/degree:
+  /api/v1/user/degree:
     patch:
       operationId: updateUserDegree
-      description: Updates currently logged in user's degree
+      description: Updates currently logged in user's degree details
       tags:
         - User
       requestBody:
@@ -204,27 +254,18 @@ paths:
         content:
           application/json:
             schema:
-              properties:
-                degree_name:
-                  type: string
-                  example: Electrical Engineering
-                degree_starting_year:
-                  type: integer
-                  example: 2024
+              $ref: "#/components/schemas/UserDegree"
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Updated degree
+                $ref: "#/components/schemas/Message"
         "401":
           $ref: "#/components/responses/NotLoggedIn"
 
-  /user/applications:
+  /api/v1/user/applications:
     get:
       operationId: getUserApplications
       description: Returns info about applications made by currently logged in user
@@ -242,7 +283,25 @@ paths:
         "401":
           $ref: "#/components/responses/NotLoggedIn"
 
-  /organisation:
+  /api/v1/user/organisations:
+    get:
+      operationId: getUserOrganisations
+      description: Returns all organisations the current user is a member of (all organisations for super users)
+      tags:
+        - Organisation
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OrganisationDetails"
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
+
+  /api/v1/organisation:
     post:
       operationId: createOrganisation
       description: Create a new organisation
@@ -260,19 +319,14 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully created organisation
+                $ref: "#/components/schemas/Message"
         "401":
           $ref: "#/components/responses/NotSuperUser"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
 
-  /organisation/slug_check:
+  /api/v1/organisation/slug_check:
     post:
       operationId: checkOrganisationSlugAvailability
-      description: Check if slug is available
+      description: Check if a slug is available for a new organisation
       tags:
         - Organisation
       requestBody:
@@ -287,10 +341,7 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Organisation slug is available
+                $ref: "#/components/schemas/Message"
         "400":
           description: Bad request - slug is in use or not ASCII
           content:
@@ -299,14 +350,12 @@ paths:
                 $ref: "#/components/schemas/BadRequest"
         "401":
           $ref: "#/components/responses/NotSuperUser"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
 
-  /organisation/{id}:
+  /api/v1/organisation/{organisation_id}:
     get:
       operationId: getOrganisationById
       parameters:
-        - name: id
+        - name: organisation_id
           in: path
           description: Organisation ID
           required: true
@@ -328,7 +377,7 @@ paths:
     delete:
       operationId: deleteOrganisationById
       parameters:
-        - name: id
+        - name: organisation_id
           in: path
           description: Organisation ID
           required: true
@@ -344,16 +393,38 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully deleted organisation
+                $ref: "#/components/schemas/Message"
         "401":
           $ref: "#/components/responses/NotSuperUser"
-        "307":
+
+  /api/v1/organisation/{organisation_id}/role:
+    get:
+      operationId: getOrganisationUserRole
+      parameters:
+        - name: organisation_id
+          in: path
+          description: Organisation ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns the role of the current user within the specified organisation
+      tags:
+        - Organisation
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  role:
+                    $ref: "#/components/schemas/OrganisationRole"
+        "401":
           $ref: "#/components/responses/NotLoggedIn"
 
-  /organisation/slug/{slug}:
+  /api/v1/organisation/slug/{slug}:
     get:
       operationId: getOrganisationBySlug
       parameters:
@@ -376,11 +447,11 @@ paths:
         "401":
           $ref: "#/components/responses/NotLoggedIn"
 
-  /organisation/{id}/campaign:
+  /api/v1/organisation/{organisation_id}/campaign:
     post:
       operationId: createCampaign
       parameters:
-        - name: id
+        - name: organisation_id
           in: path
           description: Organisation ID
           required: true
@@ -402,27 +473,22 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully created campaign
+                $ref: "#/components/schemas/IdMessage"
         "401":
           $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
 
-  /organisation/{id}/campaign/slug_check:
+  /api/v1/organisation/{organisation_id}/campaign/slug_check:
     post:
       operationId: checkCampaignSlugAvailability
       parameters:
-        - name: id
+        - name: organisation_id
           in: path
           description: Organisation ID
           required: true
           schema:
             type: integer
             format: int64
-      description: Checks availability of campaign slug in specified organisation
+      description: Checks availability of a campaign slug in specified organisation
       tags:
         - Organisation
       requestBody:
@@ -437,20 +503,15 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Campaign slug is available
+                $ref: "#/components/schemas/Message"
         "401":
           $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
 
-  /organisation/{id}/campaigns:
+  /api/v1/organisation/{organisation_id}/campaigns:
     get:
       operationId: getAllOrganisationCampaigns
       parameters:
-        - name: id
+        - name: organisation_id
           in: path
           description: Organisation ID
           required: true
@@ -472,11 +533,11 @@ paths:
         "401":
           $ref: "#/components/responses/NotLoggedIn"
 
-  /organisation/{id}/email_template:
+  /api/v1/organisation/{organisation_id}/email_template:
     post:
       operationId: createEmailTemplate
       parameters:
-        - name: id
+        - name: organisation_id
           in: path
           description: Organisation ID
           required: true
@@ -498,20 +559,15 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully created email template
+                $ref: "#/components/schemas/Message"
         "401":
           $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
 
-  /organisation/{id}/email_templates:
+  /api/v1/organisation/{organisation_id}/email_templates:
     get:
       operationId: getAllOrganisationEmailTemplates
       parameters:
-        - name: id
+        - name: organisation_id
           in: path
           description: Organisation ID
           required: true
@@ -532,21 +588,19 @@ paths:
                   $ref: "#/components/schemas/EmailTemplate"
         "401":
           $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
 
-  /organisation/{id}/logo:
+  /api/v1/organisation/{organisation_id}/logo:
     patch:
       operationId: updateOrganisationLogoById
       parameters:
-        - name: id
+        - name: organisation_id
           in: path
           description: Organisation ID
           required: true
           schema:
             type: integer
             format: int64
-      description: Update logo for specified organisation. Returns a PUT url to upload new image to
+      description: Updates the organisation logo and returns a presigned PUT URL to upload the new image to
       tags:
         - Organisation
       responses:
@@ -555,21 +609,17 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  upload_url:
-                    type: string
-                    description: Presigned S3 url to upload file
-                    example: https://presignedurldemo.s3.eu-west-2.amazonaws.com/6996987893965262849/2d19617b-46fd-4927-9f53-77d69232ba5d
+                type: string
+                description: Presigned S3 PUT URL to upload the new logo
+                example: https://presignedurldemo.s3.eu-west-2.amazonaws.com/6996987893965262849/2d19617b-46fd-4927-9f53-77d69232ba5d
         "401":
           $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
 
-  /organisation/{id}/members:
+  /api/v1/organisation/{organisation_id}/members:
     get:
       operationId: getOrganisationMembers
       parameters:
-        - name: id
+        - name: organisation_id
           in: path
           description: Organisation ID
           required: true
@@ -585,13 +635,15 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MemberList"
+                type: array
+                items:
+                  $ref: "#/components/schemas/Member"
         "401":
           $ref: "#/components/responses/NotOrganisationAdmin"
     put:
       operationId: updateOrganisationMembers
       parameters:
-        - name: id
+        - name: organisation_id
           in: path
           description: Organisation ID
           required: true
@@ -603,14 +655,8 @@ paths:
         content:
           application/json:
             schema:
-              properties:
-                members:
-                  type: array
-                  items:
-                    type: integer
-                    format: int64
-                  example: [1541815603606036480, 1541815603606036827]
-      description: Updates the list of members for an organisation
+              $ref: "#/components/schemas/AdminUpdateList"
+      description: Replaces the list of members (role "User") for an organisation
       tags:
         - Organisation
       responses:
@@ -619,20 +665,78 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully updated members
+                $ref: "#/components/schemas/Message"
         "401":
           $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
 
-  /organisation/{id}/member:
-    delete:
-      operationId: deleteOrganisationMember
+  /api/v1/organisation/{organisation_id}/user:
+    post:
+      operationId: inviteUser
       parameters:
-        - name: id
+        - name: organisation_id
+          in: path
+          description: Organisation ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Invites a user to the organisation by email. If the user already exists they are added directly
+      tags:
+        - Organisation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemberToInvite"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Invite code (or empty string if the user was added directly)
+                    example: 3fKd9sLp2qW
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+    delete:
+      operationId: removeUser
+      parameters:
+        - name: organisation_id
+          in: path
+          description: Organisation ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Removes a user (role "User") from the organisation
+      tags:
+        - Organisation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemberToRemove"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/organisation/{organisation_id}/member:
+    put:
+      operationId: updateOrganisationMember
+      parameters:
+        - name: organisation_id
           in: path
           description: Organisation ID
           required: true
@@ -644,11 +748,8 @@ paths:
         content:
           application/json:
             schema:
-              properties:
-                user_id:
-                  type: integer
-                  format: int64
-      description: Removes a member from the organisation
+              $ref: "#/components/schemas/MemberRoleUpdate"
+      description: Updates a single member's role (promote to Admin or demote to User). Super users only
       tags:
         - Organisation
       responses:
@@ -657,20 +758,15 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully removed member
+                $ref: "#/components/schemas/Message"
         "401":
-          $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
+          $ref: "#/components/responses/NotSuperUser"
 
-  /organisation/{id}/admins:
+  /api/v1/organisation/{organisation_id}/admins:
     get:
       operationId: getOrganisationAdmins
       parameters:
-        - name: id
+        - name: organisation_id
           in: path
           description: Organisation ID
           required: true
@@ -686,15 +782,15 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MemberList"
+                type: array
+                items:
+                  $ref: "#/components/schemas/Member"
         "401":
           $ref: "#/components/responses/NotSuperUser"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
     put:
       operationId: updateOrganisationAdmins
       parameters:
-        - name: id
+        - name: organisation_id
           in: path
           description: Organisation ID
           required: true
@@ -706,14 +802,8 @@ paths:
         content:
           application/json:
             schema:
-              properties:
-                members:
-                  type: array
-                  items:
-                    type: integer
-                    format: int64
-                  example: [1541815603606036480, 1541815603606036827]
-      description: Updates the list of administrators for an organisation
+              $ref: "#/components/schemas/AdminUpdateList"
+      description: Replaces the list of administrators for an organisation
       tags:
         - Organisation
       responses:
@@ -722,20 +812,15 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully updated admins
+                $ref: "#/components/schemas/Message"
         "401":
           $ref: "#/components/responses/NotSuperUser"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
 
-  /organisation/{id}/admin:
+  /api/v1/organisation/{organisation_id}/admin:
     delete:
       operationId: deleteOrganisationAdmin
       parameters:
-        - name: id
+        - name: organisation_id
           in: path
           description: Organisation ID
           required: true
@@ -747,11 +832,8 @@ paths:
         content:
           application/json:
             schema:
-              properties:
-                user_id:
-                  type: integer
-                  format: int64
-      description: Removes an administrator from the organisation
+              $ref: "#/components/schemas/MemberToRemove"
+      description: Removes an administrator from the organisation (demotes them to role "User")
       tags:
         - Organisation
       responses:
@@ -760,215 +842,418 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully removed admin
+                $ref: "#/components/schemas/Message"
         "401":
           $ref: "#/components/responses/NotSuperUser"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
 
-  /rating/{id}:
-
-  # /rating/{id}:
-  #   get:
-  #     operationId: getRatingById
-  #     description: Returns info about specified rating
-  #     tags:
-  #       - Rating
-  #     responses:
-  #       "200":
-  #         description: OK
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/RatingDetails"
-  #       "307":
-  #         $ref: "#/components/responses/NotLoggedIn"
-  #       "401":
-  #         $ref: "#/components/responses/NotOrganisationMember"
-  #   delete:
-  #     operationId: deleteRatingById
-  #     description: Delete specified rating
-  #     tags:
-  #       - Rating
-  #     responses:
-  #       "200":
-  #         description: OK
-  #         content:
-  #           application/json:
-  #             schema:
-  #               properties:
-  #                 message:
-  #                   type: string
-  #                   example: Successfully deleted rating
-  #       "307":
-  #         $ref: "#/components/responses/NotLoggedIn"
-  #       "401":
-  #         description: User is not original rating creator
-  #         content:
-  #           application/json:
-  #             schema:
-  #               properties:
-  #                 error:
-  #                   type: string
-  #                   example: Unauthorized
-  #   put:
-  #     operationId: updateRatingById
-  #     description: Update specified rating
-  #     tags:
-  #       - Rating
-  #     requestBody:
-  #       required: true
-  #       content:
-  #         application/json:
-  #           schema:
-  #             $ref: "#/components/schemas/NewRating"
-  #     responses:
-  #       "200":
-  #         description: OK
-  #         content:
-  #           application/json:
-  #             schema:
-  #               properties:
-  #                 message:
-  #                   type: string
-  #                   example: Successfully updated rating
-  #       "307":
-  #         $ref: "#/components/responses/NotLoggedIn"
-  #       "401":
-  #         description: User is not original rating creator
-  #         content:
-  #           application/json:
-  #             schema:
-  #               properties:
-  #                 error:
-  #                   type: string
-  #                   example: Unauthorized
-  /campaign:
+  /api/v1/organisation/{organisation_id}/users:
     get:
-      operationId: getAllCampaigns
-      description: Returns all active campaigns.
-      tags:
-        - Campaign
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                properties:
-                  campaigns:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                          format: int64
-                          example: 6996987893965262849
-                        organisation_id:
-                          type: integer
-                          format: int64
-                          example: 1541815603606036827
-                        organisation_name:
-                          type: string
-                          example: UNSW Software Development Society
-                        name:
-                          type: string
-                          example: 2024 Subcommittee Recruitment
-                        cover_image:
-                          type: string
-                          example: 2d19617b-46fd-4927-9f53-77d69232ba5d
-                        description:
-                          type: string
-                          example: Are you excited to make a difference?
-                        starts_at:
-                          type: string
-                          example: 2024-03-15T18:25:43.511Z
-                        ends_at:
-                          type: string
-                          example: 2024-04-15T18:25:43.511Z
-  /campaign/{id}:
-    get:
-      operationId: getCampaignById
+      operationId: getOrganisationUsers
       parameters:
-        - name: id
+        - name: organisation_id
           in: path
-          description: Campaign ID
+          description: Organisation ID
           required: true
           schema:
             type: integer
             format: int64
-      description: Returns info about specified campaign
+      description: Returns all members with role "User" for the organisation
       tags:
-        - Campaign
+        - Organisation
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CampaignDetails"
-        "401":
-          $ref: "#/components/responses/NotLoggedIn"
-    delete:
-      operationId: deleteCampaignById
-      parameters:
-        - name: id
-          in: path
-          description: Campaign ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Deletes specified campaign
-      tags:
-        - Campaign
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully deleted campaign
+                type: array
+                items:
+                  $ref: "#/components/schemas/Member"
         "401":
           $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
-
-  /campaign/slug/{slug}:
-    get:
-      operationId: getCampaignBySlug
+    put:
+      operationId: getOrganisationUsersPut
       parameters:
-        - name: slug
+        - name: organisation_id
           in: path
-          description: Campaign slug
+          description: Organisation ID
           required: true
           schema:
-            type: string
-      description: Returns info about specified campaign
+            type: integer
+            format: int64
+      description: Same handler as GET - returns all members with role "User" for the organisation (no request body)
       tags:
-        - Campaign
+        - Organisation
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CampaignDetails"
+                type: array
+                items:
+                  $ref: "#/components/schemas/Member"
         "401":
-          $ref: "#/components/responses/NotLoggedIn"
+          $ref: "#/components/responses/NotOrganisationAdmin"
 
-  /campaign/{id}/role:
+  /api/v1/campaign/{campaign_id}/rating_category:
+    post:
+      operationId: createRatingCategory
+      parameters:
+        - name: campaign_id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Creates a new rating category for a campaign
+      tags:
+        - Rating
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewCategoryRating"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int64
+                description: ID of the created rating category
+                example: 6996987893965262849
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/campaign/{campaign_id}/rating_categories:
+    get:
+      operationId: getRatingCategoriesByCampaign
+      parameters:
+        - name: campaign_id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns all rating categories for a campaign
+      tags:
+        - Rating
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryRating"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/campaign/{campaign_id}/rating_category/{category_id}:
+    patch:
+      operationId: updateRatingCategory
+      parameters:
+        - name: campaign_id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: category_id
+          in: path
+          description: Rating category ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Updates a rating category's name
+      tags:
+        - Rating
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewCategoryRating"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+    delete:
+      operationId: deleteRatingCategory
+      parameters:
+        - name: campaign_id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: category_id
+          in: path
+          description: Rating category ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Deletes a rating category from a campaign
+      tags:
+        - Rating
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/application/{application_id}/rating:
+    post:
+      operationId: createRating
+      parameters:
+        - name: application_id
+          in: path
+          description: Application ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Creates a new rating with comment and category scores for the specified application
+      tags:
+        - Rating
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewRating"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+    get:
+      operationId: getApplicationRatings
+      parameters:
+        - name: application_id
+          in: path
+          description: Application ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns all ratings for the specified application
+      tags:
+        - Rating
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RatingDetails"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/rating/{rating_id}:
+    patch:
+      operationId: updateRatingComment
+      parameters:
+        - name: rating_id
+          in: path
+          description: Rating ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Updates the comment of a rating
+      tags:
+        - Rating
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewApplicationRating"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+    delete:
+      operationId: deleteRating
+      parameters:
+        - name: rating_id
+          in: path
+          description: Rating ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Deletes a rating and all associated category scores
+      tags:
+        - Rating
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/rating/{rating_id}/category:
+    post:
+      operationId: createCategoryRating
+      parameters:
+        - name: rating_id
+          in: path
+          description: Rating ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Creates a new category rating for an existing application rating
+      tags:
+        - Rating
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewApplicationCategoryRating"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/rating/{rating_id}/category/{category_rating_id}:
+    patch:
+      operationId: updateCategoryRating
+      parameters:
+        - name: rating_id
+          in: path
+          description: Rating ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: category_rating_id
+          in: path
+          description: Category rating ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Updates a specific category rating score
+      tags:
+        - Rating
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCategoryRating"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+    delete:
+      operationId: deleteCategoryRating
+      parameters:
+        - name: rating_id
+          in: path
+          description: Rating ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: category_rating_id
+          in: path
+          description: Category rating ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Deletes a specific category rating
+      tags:
+        - Rating
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/campaign/{campaign_id}/avg_ratings:
+    get:
+      operationId: getApplicationAvgRatings
+      parameters:
+        - name: campaign_id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns average ratings grouped by application for the specified campaign
+      tags:
+        - Application
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ApplicationRatingSummary"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/campaign/{campaign_id}/role:
     post:
       operationId: createRole
       parameters:
-        - name: id
+        - name: campaign_id
           in: path
           description: Campaign ID
           required: true
@@ -983,103 +1268,6 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/NewRole"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully created role
-        "401":
-          $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
-
-  /campaign/{id}/roles:
-    get:
-      operationId: getCampaignRoles
-      parameters:
-        - name: id
-          in: path
-          description: Campaign ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Returns all roles for specified campaign
-      tags:
-        - Campaign
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/RoleDetails"
-        "401":
-          $ref: "#/components/responses/NotLoggedIn"
-
-  /campaign/{id}/role/{role_id}:
-    get:
-      operationId: getRoleById
-      parameters:
-        - name: id
-          in: path
-          description: Campaign ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: role_id
-          in: path
-          description: Role ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Returns info about specified role
-      tags:
-        - Campaign
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/RoleDetails"
-        "401":
-          $ref: "#/components/responses/NotLoggedIn"
-    patch:
-      operationId: updateRole
-      parameters:
-        - name: id
-          in: path
-          description: Campaign ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: role_id
-          in: path
-          description: Role ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Updates specified role
-      tags:
-        - Campaign
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
               $ref: "#/components/schemas/RoleUpdate"
       responses:
         "200":
@@ -1087,674 +1275,15 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully updated role
+                $ref: "#/components/schemas/Message"
         "401":
           $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
-    delete:
-      operationId: deleteRole
-      parameters:
-        - name: id
-          in: path
-          description: Campaign ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: role_id
-          in: path
-          description: Role ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Deletes specified role
-      tags:
-        - Campaign
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully deleted role
-        "401":
-          $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
 
-  /campaign/{id}/application:
-    post:
-      operationId: createApplication
-      parameters:
-        - name: id
-          in: path
-          description: Campaign ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Create a new application inside specified campaign
-      tags:
-        - Campaign
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/NewApplication"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully created application
-        "401":
-          $ref: "#/components/responses/NotLoggedIn"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
-
-  /campaign/{id}/apply:
-    post:
-      operationId: createOrGetApplication
-      parameters:
-        - name: id
-          in: path
-          description: Campaign ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Create a new application or get existing application for the specified campaign
-      tags:
-        - Campaign
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                properties:
-                  application_id:
-                    type: integer
-                    format: int64
-                    description: ID of the created or existing application
-                    example: 1541815603606036480
-        "401":
-          $ref: "#/components/responses/NotLoggedIn"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
-
-  /campaign/{id}/applications:
-    get:
-      operationId: getCampaignApplications
-      parameters:
-        - name: id
-          in: path
-          description: Campaign ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Returns all applications for specified campaign
-      tags:
-        - Campaign
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ApplicationDetails"
-        "401":
-          $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
-
-  /campaign/{id}/application/{application_id}:
-    get:
-      operationId: getApplicationById
-      parameters:
-        - name: id
-          in: path
-          description: Campaign ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: application_id
-          in: path
-          description: Application ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Returns info about specified application
-      tags:
-        - Campaign
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApplicationDetails"
-        "401":
-          $ref: "#/components/responses/NotLoggedIn"
-    delete:
-      operationId: deleteApplication
-      parameters:
-        - name: id
-          in: path
-          description: Campaign ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: application_id
-          in: path
-          description: Application ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Deletes specified application
-      tags:
-        - Campaign
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully deleted application
-        "401":
-          $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
-
-  # /campaign/{id}/application/{application_id}/rating:
-  #   post:
-  #     operationId: createRating
-  #     parameters:
-  #       - name: id
-  #         in: path
-  #         description: Campaign ID
-  #         required: true
-  #         schema:
-  #           type: integer
-  #           format: int64
-  #       - name: application_id
-  #         in: path
-  #         description: Application ID
-  #         required: true
-  #         schema:
-  #           type: integer
-  #           format: int64
-  #     description: Create a new rating for specified application
-  #     tags:
-  #       - Campaign
-  #     requestBody:
-  #       required: true
-  #       content:
-  #         application/json:
-  #           schema:
-  #             $ref: "#/components/schemas/NewRating"
-  #     responses:
-  #       "200":
-  #         description: OK
-  #         content:
-  #           application/json:
-  #             schema:
-  #               properties:
-  #                 message:
-  #                   type: string
-  #                   example: Successfully created rating
-  #       "401":
-  #         $ref: "#/components/responses/NotOrganisationAdmin"
-  #       "307":
-  #         $ref: "#/components/responses/NotLoggedIn"
-
-  # /campaign/{id}/application/{application_id}/ratings:
-  #   get:
-  #     operationId: getApplicationRatings
-  #     parameters:
-  #       - name: id
-  #         in: path
-  #         description: Campaign ID
-  #         required: true
-  #         schema:
-  #           type: integer
-  #           format: int64
-  #       - name: application_id
-  #         in: path
-  #         description: Application ID
-  #         required: true
-  #         schema:
-  #           type: integer
-  #           format: int64
-  #     description: Returns all ratings for specified application
-  #     tags:
-  #       - Campaign
-  #     responses:
-  #       "200":
-  #         description: OK
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/ApplicationRatings"
-  #       "401":
-  #         $ref: "#/components/responses/NotOrganisationAdmin"
-  #       "307":
-  #         $ref: "#/components/responses/NotLoggedIn"
-
-  # /campaign/{id}/application/{application_id}/rating/{rating_id}:
-  #   get:
-  #     operationId: getRatingById
-  #     parameters:
-  #       - name: id
-  #         in: path
-  #         description: Campaign ID
-  #         required: true
-  #         schema:
-  #           type: integer
-  #           format: int64
-  #       - name: application_id
-  #         in: path
-  #         description: Application ID
-  #         required: true
-  #         schema:
-  #           type: integer
-  #           format: int64
-  #       - name: rating_id
-  #         in: path
-  #         description: Rating ID
-  #         required: true
-  #         schema:
-  #           type: integer
-  #           format: int64
-  #     description: Returns info about specified rating
-  #     tags:
-  #       - Campaign
-  #     responses:
-  #       "200":
-  #         description: OK
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/RatingDetails"
-  #       "401":
-  #         $ref: "#/components/responses/NotOrganisationAdmin"
-  #       "307":
-  #         $ref: "#/components/responses/NotLoggedIn"
-  #   patch:
-  #     operationId: updateRating
-  #     parameters:
-  #       - name: id
-  #         in: path
-  #         description: Campaign ID
-  #         required: true
-  #         schema:
-  #           type: integer
-  #           format: int64
-  #       - name: application_id
-  #         in: path
-  #         description: Application ID
-  #         required: true
-  #         schema:
-  #           type: integer
-  #           format: int64
-  #       - name: rating_id
-  #         in: path
-  #         description: Rating ID
-  #         required: true
-  #         schema:
-  #           type: integer
-  #           format: int64
-  #     description: Updates specified rating
-  #     tags:
-  #       - Campaign
-  #     requestBody:
-  #       required: true
-  #       content:
-  #         application/json:
-  #           schema:
-  #             $ref: "#/components/schemas/RatingUpdate"
-  #     responses:
-  #       "200":
-  #         description: OK
-  #         content:
-  #           application/json:
-  #             schema:
-  #               properties:
-  #                 message:
-  #                   type: string
-  #                   example: Successfully updated rating
-  #       "401":
-  #         $ref: "#/components/responses/NotOrganisationAdmin"
-  #       "307":
-  #         $ref: "#/components/responses/NotLoggedIn"
-  #   delete:
-  #     operationId: deleteRating
-  #     parameters:
-  #       - name: id
-  #         in: path
-  #         description: Campaign ID
-  #         required: true
-  #         schema:
-  #           type: integer
-  #           format: int64
-  #       - name: application_id
-  #         in: path
-  #         description: Application ID
-  #         required: true
-  #         schema:
-  #           type: integer
-  #           format: int64
-  #       - name: rating_id
-  #         in: path
-  #         description: Rating ID
-  #         required: true
-  #         schema:
-  #           type: integer
-  #           format: int64
-  #     description: Deletes specified rating
-  #     tags:
-  #       - Campaign
-  #     responses:
-  #       "200":
-  #         description: OK
-  #         content:
-  #           application/json:
-  #             schema:
-  #               properties:
-  #                 message:
-  #                   type: string
-  #                   example: Successfully deleted rating
-  #       "401":
-  #         $ref: "#/components/responses/NotOrganisationAdmin"
-  #       "307":
-  #         $ref: "#/components/responses/NotLoggedIn"
-
-  /campaign/{id}/application/{application_id}/offer:
-    post:
-      operationId: createOffer
-      parameters:
-        - name: id
-          in: path
-          description: Campaign ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: application_id
-          in: path
-          description: Application ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Create a new offer for specified application
-      tags:
-        - Campaign
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/NewOffer"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully created offer
-        "401":
-          $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
-
-  /campaign/{id}/application/{application_id}/offer/{offer_id}:
-    get:
-      operationId: getOfferById
-      parameters:
-        - name: id
-          in: path
-          description: Campaign ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: application_id
-          in: path
-          description: Application ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: offer_id
-          in: path
-          description: Offer ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Returns info about specified offer
-      tags:
-        - Campaign
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OfferDetails"
-        "401":
-          $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
-    delete:
-      operationId: deleteOffer
-      parameters:
-        - name: id
-          in: path
-          description: Campaign ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: application_id
-          in: path
-          description: Application ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: offer_id
-          in: path
-          description: Offer ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Deletes specified offer
-      tags:
-        - Campaign
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully deleted offer
-        "401":
-          $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
-
-  /campaign/{id}/application/{application_id}/offer/{offer_id}/reply:
-    post:
-      operationId: replyToOffer
-      parameters:
-        - name: id
-          in: path
-          description: Campaign ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: application_id
-          in: path
-          description: Application ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: offer_id
-          in: path
-          description: Offer ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Reply to specified offer
-      tags:
-        - Campaign
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/OfferReply"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully replied to offer
-        "401":
-          $ref: "#/components/responses/NotLoggedIn"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
-
-  /campaign/{id}/application/{application_id}/offer/{offer_id}/preview:
-    get:
-      operationId: previewOfferEmail
-      parameters:
-        - name: id
-          in: path
-          description: Campaign ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: application_id
-          in: path
-          description: Application ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: offer_id
-          in: path
-          description: Offer ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Preview the email that will be sent for specified offer
-      tags:
-        - Campaign
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                properties:
-                  preview:
-                    type: string
-                    example: Hi John, you have been successful in your application for UNSW DevSoc Software Developer. Regards UNSW DevSoc Exec
-        "401":
-          $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
-
-  /campaign/{id}/application/{application_id}/offer/{offer_id}/send:
-    post:
-      operationId: sendOfferEmail
-      parameters:
-        - name: id
-          in: path
-          description: Campaign ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: application_id
-          in: path
-          description: Application ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: offer_id
-          in: path
-          description: Offer ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Send the offer email for specified offer
-      tags:
-        - Campaign
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully sent offer email
-        "401":
-          $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
-
-  /campaign/{id}/role/{role_id}/questions:
+  /api/v1/campaign/{campaign_id}/role/{role_id}/questions:
     get:
       operationId: getRoleQuestions
       parameters:
-        - name: id
+        - name: campaign_id
           in: path
           description: Campaign ID
           required: true
@@ -1783,7 +1312,133 @@ paths:
         "401":
           $ref: "#/components/responses/NotLoggedIn"
 
-  /role/{role_id}/applications:
+  /api/v1/campaign/{campaign_id}/roles:
+    get:
+      operationId: getCampaignRoles
+      parameters:
+        - name: campaign_id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns all roles for specified campaign
+      tags:
+        - Campaign
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RoleDetails"
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
+
+  /api/v1/campaign/{campaign_id}/applications:
+    get:
+      operationId: getCampaignApplications
+      parameters:
+        - name: campaign_id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns all applications for specified campaign
+      tags:
+        - Campaign
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ApplicationDetails"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/role/{role_id}:
+    get:
+      operationId: getRoleById
+      parameters:
+        - name: role_id
+          in: path
+          description: Role ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns info about specified role
+      tags:
+        - Campaign
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleDetails"
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
+    patch:
+      operationId: updateRole
+      parameters:
+        - name: role_id
+          in: path
+          description: Role ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Updates specified role
+      tags:
+        - Campaign
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+    delete:
+      operationId: deleteRole
+      parameters:
+        - name: role_id
+          in: path
+          description: Role ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Deletes specified role
+      tags:
+        - Campaign
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/role/{role_id}/applications:
     get:
       operationId: getRoleApplications
       parameters:
@@ -1809,11 +1464,209 @@ paths:
         "401":
           $ref: "#/components/responses/NotLoggedIn"
 
-  /campaign/{id}/question:
+  /api/v1/campaign/{campaign_id}:
+    get:
+      operationId: getCampaignById
+      parameters:
+        - name: campaign_id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns info about specified campaign (public)
+      tags:
+        - Campaign
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignDetailsResponse"
+    put:
+      operationId: updateCampaign
+      parameters:
+        - name: campaign_id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Updates specified campaign
+      tags:
+        - Campaign
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampaignUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+    delete:
+      operationId: deleteCampaignById
+      parameters:
+        - name: campaign_id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Deletes specified campaign
+      tags:
+        - Campaign
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/campaign/{campaign_id}/publish:
+    patch:
+      operationId: publishCampaign
+      parameters:
+        - name: campaign_id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Publishes a campaign by setting its published field to true
+      tags:
+        - Campaign
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/organisation/slug/{organisation_slug}/campaign/slug/{campaign_slug}:
+    get:
+      operationId: getCampaignBySlugs
+      parameters:
+        - name: organisation_slug
+          in: path
+          description: Organisation slug
+          required: true
+          schema:
+            type: string
+        - name: campaign_slug
+          in: path
+          description: Campaign slug
+          required: true
+          schema:
+            type: string
+      description: Returns info about a campaign identified by organisation and campaign slugs (public)
+      tags:
+        - Campaign
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignDetailsResponse"
+
+  /api/v1/campaigns:
+    get:
+      operationId: getAllCampaigns
+      description: Returns all campaigns
+      tags:
+        - Campaign
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Campaign"
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
+
+  /api/v1/campaign/{campaign_id}/apply:
+    post:
+      operationId: createOrGetApplication
+      parameters:
+        - name: campaign_id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Creates a new application for the current user in the campaign, or returns the existing application ID
+      tags:
+        - Campaign
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  application_id:
+                    type: string
+                    description: ID of the created or existing application (as string to preserve large integer precision)
+                    example: "1541815603606036480"
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
+
+  /api/v1/campaign/{campaign_id}/application/exists:
+    get:
+      operationId: checkApplicationExists
+      parameters:
+        - name: campaign_id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Checks whether the current user already has an application for the campaign
+      tags:
+        - Application
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  application_exists:
+                    type: boolean
+                    example: true
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
+
+  /api/v1/campaign/{campaign_id}/question:
     post:
       operationId: createQuestion
       parameters:
-        - name: id
+        - name: campaign_id
           in: path
           description: Campaign ID
           required: true
@@ -1835,27 +1688,22 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully created question
+                $ref: "#/components/schemas/IdMessage"
         "401":
           $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
 
-  /campaign/{id}/question/{question_id}:
+  /api/v1/campaign/{campaign_id}/question/{id}:
     patch:
       operationId: updateQuestion
       parameters:
-        - name: id
+        - name: campaign_id
           in: path
           description: Campaign ID
           required: true
           schema:
             type: integer
             format: int64
-        - name: question_id
+        - name: id
           in: path
           description: Question ID
           required: true
@@ -1870,39 +1718,34 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/QuestionUpdate"
+              $ref: "#/components/schemas/NewQuestion"
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully updated question
+                $ref: "#/components/schemas/Message"
         "401":
           $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
     delete:
       operationId: deleteQuestion
       parameters:
-        - name: id
+        - name: campaign_id
           in: path
           description: Campaign ID
           required: true
           schema:
             type: integer
             format: int64
-        - name: question_id
+        - name: id
           in: path
           description: Question ID
           required: true
           schema:
             type: integer
             format: int64
-      description: Delete a question
+      description: Delete a question (only for closed campaigns)
       tags:
         - Campaign
       responses:
@@ -1911,20 +1754,15 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully deleted question
+                $ref: "#/components/schemas/Message"
         "401":
           $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
 
-  /campaign/{id}/questions/common:
+  /api/v1/campaign/{campaign_id}/questions/common:
     get:
       operationId: getCommonQuestions
       parameters:
-        - name: id
+        - name: campaign_id
           in: path
           description: Campaign ID
           required: true
@@ -1946,7 +1784,251 @@ paths:
         "401":
           $ref: "#/components/responses/NotLoggedIn"
 
-  /application/{application_id}/status:
+  /api/v1/campaign/{campaign_id}/banner:
+    patch:
+      operationId: updateCampaignBanner
+      parameters:
+        - name: campaign_id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Updates the campaign banner and returns a presigned PUT URL to upload the new image to
+      tags:
+        - Campaign
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignBannerUpdate"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/campaign/{campaign_id}/attachments:
+    get:
+      operationId: getCampaignAttachments
+      parameters:
+        - name: campaign_id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns the attachments for a campaign with presigned download URLs
+      tags:
+        - Campaign
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AttachmentResponse"
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
+    patch:
+      operationId: uploadCampaignAttachments
+      parameters:
+        - name: campaign_id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Creates or updates attachments for a campaign and returns presigned PUT URLs
+      tags:
+        - Campaign
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/NewAttachment"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AttachmentUpload"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/campaign/{campaign_id}/attachment/{attachment_id}:
+    delete:
+      operationId: deleteCampaignAttachment
+      parameters:
+        - name: campaign_id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: attachment_id
+          in: path
+          description: Attachment ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Deletes an attachment from a campaign (and its file from storage)
+      tags:
+        - Campaign
+      responses:
+        "200":
+          description: OK
+          content: {}
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/campaign/{campaign_id}/application:
+    post:
+      operationId: createApplication
+      parameters:
+        - name: campaign_id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Create a new application inside specified open campaign
+      tags:
+        - Campaign
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewApplication"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
+
+  /api/v1/campaign/{campaign_id}/offer:
+    post:
+      operationId: createOffer
+      parameters:
+        - name: campaign_id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Create a new offer for an application in the campaign
+      tags:
+        - Campaign
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewOffer"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/campaign/{campaign_id}/offers:
+    get:
+      operationId: getCampaignOffers
+      parameters:
+        - name: campaign_id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns all offers for a campaign
+      tags:
+        - Campaign
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OfferDetails"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/application/{application_id}:
+    get:
+      operationId: getApplicationById
+      parameters:
+        - name: application_id
+          in: path
+          description: Application ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns info about specified application (reviewer view)
+      tags:
+        - Application
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationDetails"
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
+
+  /api/v1/application/{application_id}/inprogress:
+    get:
+      operationId: getApplicationInProgress
+      parameters:
+        - name: application_id
+          in: path
+          description: Application ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns info about specified application regardless of submission status (applicant view)
+      tags:
+        - Application
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationDetails"
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
+
+  /api/v1/application/{application_id}/status:
     patch:
       operationId: updateApplicationStatus
       parameters:
@@ -1959,7 +2041,7 @@ paths:
             format: int64
       description: Update the status of an application
       tags:
-        - Campaign
+        - Application
       requestBody:
         required: true
         content:
@@ -1972,16 +2054,11 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully updated application status
+                $ref: "#/components/schemas/Message"
         "401":
           $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
 
-  /application/{application_id}/private:
+  /api/v1/application/{application_id}/private:
     patch:
       operationId: updateApplicationPrivateStatus
       parameters:
@@ -1994,7 +2071,7 @@ paths:
             format: int64
       description: Update the private status of an application
       tags:
-        - Campaign
+        - Application
       requestBody:
         required: true
         content:
@@ -2007,16 +2084,251 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully updated application private status
+                $ref: "#/components/schemas/Message"
         "401":
           $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
+
+  /api/v1/application/{application_id}/rolestatus/{campaign_role_id}:
+    put:
+      operationId: updateRoleStatus
+      parameters:
+        - name: application_id
+          in: path
+          description: Application ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: campaign_role_id
+          in: path
+          description: Campaign role ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Sets the per-campaign-role status for an application
+      tags:
+        - Application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRoleStatus"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/application/{application_id}/rolestatus:
+    get:
+      operationId: getApplicationRoleStatuses
+      parameters:
+        - name: application_id
+          in: path
+          description: Application ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns all per-campaign-role statuses for an application
+      tags:
+        - Application
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RoleStatus"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/campaign/{campaign_id}/rolestatus/{campaign_role_id}:
+    get:
+      operationId: getCampaignRoleStatuses
+      parameters:
+        - name: campaign_id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: campaign_role_id
+          in: path
+          description: Campaign role ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns all per-campaign-role statuses for a campaign role
+      tags:
+        - Application
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RoleStatus"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/campaign/{campaign_id}/rolestatus:
+    get:
+      operationId: getCampaignRoleStatusesByCampaign
+      parameters:
+        - name: campaign_id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns all per-campaign-role statuses for a campaign
+      tags:
+        - Application
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RoleStatus"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/application/{application_id}/answers/common:
+    get:
+      operationId: getCommonAnswers
+      parameters:
+        - name: application_id
+          in: path
+          description: Application ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns all common answers for an application
+      tags:
+        - Application
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Answer"
+        "401":
           $ref: "#/components/responses/NotLoggedIn"
 
-  /application/{application_id}/roles:
+  /api/v1/application/{application_id}/questions_answers:
+    get:
+      operationId: getQuestionsAndAnswers
+      parameters:
+        - name: application_id
+          in: path
+          description: Application ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: |
+        Returns all questions for an application in one call: the common
+        questions plus the questions for each role the application applied
+        for, each with its answer nested inside (null if unanswered).
+      tags:
+        - Application
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/QuestionWithAnswer"
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
+
+  /api/v1/application/{application_id}/answer:
+    post:
+      operationId: createAnswer
+      parameters:
+        - name: application_id
+          in: path
+          description: Application ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Create a new answer for an application
+      tags:
+        - Application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewAnswer"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdMessage"
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
+
+  /api/v1/application/{application_id}/role/{role_id}/answers:
+    get:
+      operationId: getRoleAnswers
+      parameters:
+        - name: application_id
+          in: path
+          description: Application ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: role_id
+          in: path
+          description: Role ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns all answers for a specific role in an application
+      tags:
+        - Application
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Answer"
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
+
+  /api/v1/application/{application_id}/roles:
     get:
       operationId: getApplicationRoles
       parameters:
@@ -2029,7 +2341,7 @@ paths:
             format: int64
       description: Get all roles for a specific application
       tags:
-        - Campaign
+        - Application
       responses:
         "200":
           description: OK
@@ -2053,32 +2365,24 @@ paths:
             format: int64
       description: Update the roles for an application
       tags:
-        - Campaign
+        - Application
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: array
-              items:
-                type: integer
-                format: int64
+              $ref: "#/components/schemas/ApplicationRoleUpdate"
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully updated application roles
+                $ref: "#/components/schemas/Message"
         "401":
-          $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
           $ref: "#/components/responses/NotLoggedIn"
 
-  /application/{application_id}/submit:
+  /api/v1/application/{application_id}/submit:
     post:
       operationId: submitApplication
       parameters:
@@ -2091,21 +2395,147 @@ paths:
             format: int64
       description: Submit an application
       tags:
-        - Campaign
+        - Application
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully submitted application
+                $ref: "#/components/schemas/Message"
         "401":
           $ref: "#/components/responses/NotLoggedIn"
 
-  /application/{application_id}/comment/{comment_id}/read:
+  /api/v1/application/{application_id}/comment:
+    post:
+      operationId: createComment
+      parameters:
+        - name: application_id
+          in: path
+          description: Application ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Creates a new comment on an application
+      tags:
+        - Comment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewComment"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: ID of the created comment (as string to preserve large integer precision)
+                    example: "6996987893965227483"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+    get:
+      operationId: getCommentsByApplication
+      parameters:
+        - name: application_id
+          in: path
+          description: Application ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns all comments for an application
+      tags:
+        - Comment
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CommentDetails"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/application/{application_id}/comment/{comment_id}:
+    put:
+      operationId: editComment
+      parameters:
+        - name: application_id
+          in: path
+          description: Application ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: comment_id
+          in: path
+          description: Comment ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Edits an existing comment (author only)
+      tags:
+        - Comment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateComment"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteComment
+      parameters:
+        - name: application_id
+          in: path
+          description: Application ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: comment_id
+          in: path
+          description: Comment ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Deletes an existing comment (author only)
+      tags:
+        - Comment
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/application/{application_id}/comment/{comment_id}/read:
     patch:
       operationId: markCommentRead
       description: Mark a comment as read for the current application reviewer
@@ -2132,16 +2562,13 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully updated comment last read
+                $ref: "#/components/schemas/Message"
         "401":
           $ref: "#/components/responses/NotLoggedIn"
         "404":
           $ref: "#/components/responses/NotFound"
 
-  /application/{application_id}/comment/read_all:
+  /api/v1/application/{application_id}/comment/read_all:
     patch:
       operationId: markAllCommentsRead
       description: Mark all comments on an application as read for the current application reviewer
@@ -2161,14 +2588,11 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully marked all comments read
+                $ref: "#/components/schemas/Message"
         "401":
           $ref: "#/components/responses/NotLoggedIn"
 
-  /application/{application_id}/comment/unread_count:
+  /api/v1/application/{application_id}/comment/unread_count:
     get:
       operationId: getUnreadCommentCount
       description: Get the number of unread comments on an application for the current application reviewer
@@ -2188,306 +2612,11 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  count:
-                    type: integer
-                    format: int64
-                    example: 3
+                $ref: "#/components/schemas/UnreadCommentCount"
         "401":
           $ref: "#/components/responses/NotLoggedIn"
 
-  /campaign/{campaign_id}/avg_ratings:
-    get:
-      operationId: getApplicationAvgRatings
-      parameters:
-        - name: campaign_id
-          in: path
-          description: Campaign ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Returns average ratings grouped by user for the specified application
-      tags:
-        - Application
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/UserAvgApplicationRating"
-        "401":
-          $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
-
-  /offer/{offer_id}:
-    get:
-      operationId: getOffer
-      parameters:
-        - name: offer_id
-          in: path
-          description: Offer ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Returns information about a specific offer
-      tags:
-        - Campaign
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OfferDetails"
-        "401":
-          $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
-    delete:
-      operationId: deleteOffer
-      parameters:
-        - name: offer_id
-          in: path
-          description: Offer ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Delete an offer
-      tags:
-        - Campaign
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully deleted offer
-        "401":
-          $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
-    post:
-      operationId: replyToOffer
-      parameters:
-        - name: offer_id
-          in: path
-          description: Offer ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Reply to an offer
-      tags:
-        - Campaign
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/OfferReply"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully replied to offer
-        "401":
-          $ref: "#/components/responses/NotLoggedIn"
-
-  /offer/{offer_id}/preview:
-    get:
-      operationId: previewOfferEmail
-      parameters:
-        - name: offer_id
-          in: path
-          description: Offer ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Preview the email that will be sent for an offer
-      tags:
-        - Campaign
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                properties:
-                  preview:
-                    type: string
-                    example: Hi John, you have been successful in your application for UNSW DevSoc Software Developer. Regards UNSW DevSoc Exec
-        "401":
-          $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
-
-  /offer/{offer_id}/send:
-    post:
-      operationId: sendOfferEmail
-      parameters:
-        - name: offer_id
-          in: path
-          description: Offer ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Send the offer email
-      tags:
-        - Campaign
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully sent offer email
-        "401":
-          $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
-
-  /application/{application_id}/answers/common:
-    get:
-      operationId: getCommonAnswers
-      parameters:
-        - name: application_id
-          in: path
-          description: Application ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Returns all common answers for an application
-      tags:
-        - Campaign
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Answer"
-        "401":
-          $ref: "#/components/responses/NotLoggedIn"
-
-  /application/{application_id}/questions_answers:
-    get:
-      operationId: getQuestionsAndAnswers
-      parameters:
-        - name: application_id
-          in: path
-          description: Application ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: |
-        Returns all questions for an application in one call: the common
-        questions plus the questions for each role the application applied
-        for, each with its answer nested inside (null if unanswered).
-      tags:
-        - Campaign
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/QuestionWithAnswer"
-        "401":
-          $ref: "#/components/responses/NotLoggedIn"
-
-  /application/{application_id}/answer:
-    post:
-      operationId: createAnswer
-      parameters:
-        - name: application_id
-          in: path
-          description: Application ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Create a new answer for an application
-      tags:
-        - Campaign
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/NewAnswer"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully created answer
-        "401":
-          $ref: "#/components/responses/NotLoggedIn"
-
-  /application/{application_id}/answers/role/{role_id}:
-    get:
-      operationId: getRoleAnswers
-      parameters:
-        - name: application_id
-          in: path
-          description: Application ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: role_id
-          in: path
-          description: Role ID
-          required: true
-          schema:
-            type: integer
-            format: int64
-      description: Returns all answers for a specific role in an application
-      tags:
-        - Campaign
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Answer"
-        "401":
-          $ref: "#/components/responses/NotLoggedIn"
-
-  /answer/{answer_id}:
+  /api/v1/answer/{answer_id}:
     patch:
       operationId: updateAnswer
       parameters:
@@ -2500,7 +2629,7 @@ paths:
             format: int64
       description: Update an answer
       tags:
-        - Campaign
+        - Application
       requestBody:
         required: true
         content:
@@ -2513,10 +2642,7 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully updated answer
+                $ref: "#/components/schemas/Message"
         "401":
           $ref: "#/components/responses/NotLoggedIn"
     delete:
@@ -2531,21 +2657,18 @@ paths:
             format: int64
       description: Delete an answer
       tags:
-        - Campaign
+        - Application
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully deleted answer
+                $ref: "#/components/schemas/Message"
         "401":
           $ref: "#/components/responses/NotLoggedIn"
 
-  /email_template/{template_id}:
+  /api/v1/email_template/{template_id}:
     get:
       operationId: getEmailTemplate
       parameters:
@@ -2558,7 +2681,7 @@ paths:
             format: int64
       description: Returns information about a specific email template
       tags:
-        - Campaign
+        - EmailTemplate
       responses:
         "200":
           description: OK
@@ -2568,8 +2691,6 @@ paths:
                 $ref: "#/components/schemas/EmailTemplate"
         "401":
           $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
     patch:
       operationId: updateEmailTemplate
       parameters:
@@ -2582,27 +2703,22 @@ paths:
             format: int64
       description: Update an email template
       tags:
-        - Campaign
+        - EmailTemplate
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/NewEmailTemplate"
+              $ref: "#/components/schemas/EmailTemplate"
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully updated email template
+                $ref: "#/components/schemas/Message"
         "401":
           $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
-          $ref: "#/components/responses/NotLoggedIn"
     delete:
       operationId: deleteEmailTemplate
       parameters:
@@ -2615,24 +2731,263 @@ paths:
             format: int64
       description: Delete an email template
       tags:
-        - Campaign
+        - EmailTemplate
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                properties:
-                  message:
-                    type: string
-                    example: Successfully deleted email template
+                $ref: "#/components/schemas/Message"
         "401":
           $ref: "#/components/responses/NotOrganisationAdmin"
-        "307":
+
+  /api/v1/email_template/{template_id}/duplicate:
+    post:
+      operationId: duplicateEmailTemplate
+      parameters:
+        - name: template_id
+          in: path
+          description: Email Template ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Duplicates an email template
+      tags:
+        - EmailTemplate
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/offer/{offer_id}:
+    get:
+      operationId: getOffer
+      parameters:
+        - name: offer_id
+          in: path
+          description: Offer ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Returns information about a specific offer
+      tags:
+        - Offer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OfferDetails"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+    delete:
+      operationId: deleteOffer
+      parameters:
+        - name: offer_id
+          in: path
+          description: Offer ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Delete an offer
+      tags:
+        - Offer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+    post:
+      operationId: replyToOffer
+      parameters:
+        - name: offer_id
+          in: path
+          description: Offer ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Reply to an offer (accept or decline)
+      tags:
+        - Offer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OfferReply"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
+
+  /api/v1/offer/{offer_id}/preview:
+    get:
+      operationId: previewOfferEmail
+      parameters:
+        - name: offer_id
+          in: path
+          description: Offer ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Preview the email that will be sent for an offer
+      tags:
+        - Offer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmailParts"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/offer/{offer_id}/send:
+    post:
+      operationId: sendOfferEmail
+      parameters:
+        - name: offer_id
+          in: path
+          description: Offer ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Send the offer email to the recipient
+      tags:
+        - Offer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/offer/{campaign_id}/outcome-emails/queue:
+    post:
+      operationId: queueOutcomeEmails
+      parameters:
+        - name: campaign_id
+          in: path
+          description: Campaign ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      description: Queues outcome emails for a campaign. Accept emails create offers and send them; reject emails are queued for delivery
+      tags:
+        - Offer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QueueOutcomeEmailsRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "400":
+          description: Bad request - no emails to queue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadRequest"
+        "401":
+          $ref: "#/components/responses/NotOrganisationAdmin"
+
+  /api/v1/invite/{code}:
+    get:
+      operationId: getInvite
+      parameters:
+        - name: code
+          in: path
+          description: Invite code
+          required: true
+          schema:
+            type: string
+      description: Returns invite details for a given invite code
+      tags:
+        - Invite
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    $ref: "#/components/schemas/InviteDetails"
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      operationId: useInvite
+      parameters:
+        - name: code
+          in: path
+          description: Invite code
+          required: true
+          schema:
+            type: string
+      description: Accepts an invite for the current authenticated user (email must match the invite)
+      tags:
+        - Invite
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "400":
+          description: Bad request - invite used, expired, or sent to a different email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadRequest"
+        "401":
           $ref: "#/components/responses/NotLoggedIn"
 
 components:
   schemas:
+    Message:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Success
+
     NotLoggedIn:
       type: object
       properties:
@@ -2654,224 +3009,35 @@ components:
           type: string
           example: Bad request
 
-    Answer:
+    IdMessage:
       type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-          example: 6996987893965227483
-        question_id:
-          type: integer
-          format: int64
-          example: 6996987893965227483
-        answer_type:
-          type: string
-          enum:
-            - ShortAnswer
-            - MultiChoice
-            - MultiSelect
-            - DropDown
-            - Ranking
-        data:
-          oneOf:
-            - type: string
-              example: I am passionate about events
-            - type: integer
-              example: 6996987893965227483
-            - type: array
-              format: int64
-              example:
-                [6996987893965227483, 69969829832652228374, 6996987893965228374]
-        created_at:
-          type: string
-          example: 2024-03-15T18:25:43.511Z
-        updated_at:
-          type: string
-          example: 2024-03-15T18:25:43.511Z
-
-    ApplicationRole:
-      type: object
+      description: Response containing a single ID (serialized as string to preserve large integer precision)
       properties:
         id:
           type: string
-          example: "6996987893965227483"
-        application_id:
-          type: string
-          example: "6996987893965227484"
-        campaign_role_id:
-          type: string
-          example: "6996987893965227485"
-        preference_percentage:
-          type: integer
-          format: int32
-          description: Percentage preference for this role. The sum across an application's roles must equal 100 when submitted.
-          example: 50
+          example: "6996987893965262849"
 
-    NewAnswer:
-      type: object
-      properties:
-        question_id:
-          type: integer
-          format: int64
-          example: 6996987893965262849
-        answer_type:
-          type: string
-          enum:
-            - ShortAnswer
-            - MultiChoice
-            - MultiSelect
-            - DropDown
-            - Ranking
-        data:
-          oneOf:
-            - type: string
-              example: I am passionate about events
-            - type: integer
-              example: 6996987893965227483
-            - type: array
-              format: int64
-              example:
-                [6996987893965227483, 69969829832652228374, 6996987893965228374]
-
-    ApplicationStatus:
+    UserRole:
       type: string
       enum:
-        - Pending
-        - Rejected
-        - Successful
-
-    OrganisationDetails:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-          example: 6996987893965262849
-        slug:
-          type: string
-          example: devsoc-unsw
-        name:
-          type: string
-          example: UNSW Software Development Society
-        logo:
-          type: string
-          example: "76718252-2a13-4de2-bc07-f977c75dc52b"
-        created_at:
-          type: string
-          example: 2024-02-10T18:25:43.511Z
-
-    OrganisationCampaign:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-          example: 6996987893965262849
-        slug:
-          type: string
-          example: 2024-subcom-recruitment
-        name:
-          type: string
-          example: 2024 Subcommittee Recruitment
-        cover_image:
-          type: string
-          example: 2d19617b-46fd-4927-9f53-77d69232ba5d
-        description:
-          type: string
-          example: Are you excited to make a difference?
-        starts_at:
-          type: string
-          example: 2024-03-15T18:25:43.511Z
-        ends_at:
-          type: string
-          example: 2024-04-15T18:25:43.511Z
-
-    RoleUpdate:
-      type: object
-      properties:
-        name:
-          type: string
-          example: Chief Mouser
-        description:
-          type: string
-          required: False
-          example: Larry the cat is dead, now we need someone else to handle the rat issues at 10th Downing st.
-        min_available:
-          type: int32
-          example: 1
-        max_available:
-          type: int32
-          example: 3
-        finalised:
-          type: boolean
-          description: Whether this role has been finalised (e.g. max available number)
-          example: False
-
-    RoleDetails:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-          example: 7036987893965262849
-        campaign_id:
-          type: integer
-          format: int64
-          example: 1116987453965262849
-        name:
-          type: string
-          example: Chief Mouser
-        description:
-          type: string
-          example: Larry the cat gone missing! now we need someone else to handle the rat issues at 10th Downing st.
-        min_available:
-          type: int32
-          example: 1
-        max_available:
-          type: int32
-          example: 3
-        finalised:
-          type: boolean
-          description: Whether this role has been finalised (e.g. max available number)
-          example: False
+        - User
+        - SuperUser
+      example: User
 
     User:
       type: object
       properties:
         id:
-          type: integer
-          format: int64
-          example: 1541815603606036480
+          type: string
+          description: User ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
         email:
           type: string
           example: clancy.lion@unsw.edu.au
-        pronouns:
-          type: string
-          nullable: true
-          example: he/him
-        gender:
-          type: string
-          nullable: true
-          example: male
         zid:
           type: string
           nullable: true
           example: z1234567
-        degree:
-          type: string
-          nullable: true
-          example: Computer Science
-        created_at:
-          type: string
-          example: 2024-03-15T18:25:43.511Z
-        updated_at:
-          type: string
-          example: 2024-03-15T18:25:43.511Z
-
-    UserUpdate:
-      type: object
-      properties:
         name:
           type: string
           example: Clancy Lion
@@ -2883,67 +3049,273 @@ components:
           type: string
           nullable: true
           example: male
+        degree_name:
+          type: string
+          nullable: true
+          example: Computer Science
+        degree_starting_year:
+          type: integer
+          format: int32
+          nullable: true
+          example: 2024
+        role:
+          $ref: "#/components/schemas/UserRole"
+
+    UserDetails:
+      type: object
+      description: User details nested inside application responses
+      properties:
+        id:
+          type: string
+          description: User ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        email:
+          type: string
+          example: clancy.lion@unsw.edu.au
         zid:
           type: string
           nullable: true
           example: z1234567
-        degree:
+        name:
+          type: string
+          example: Clancy Lion
+        pronouns:
+          type: string
+          nullable: true
+          example: he/him
+        gender:
+          type: string
+          nullable: true
+          example: male
+        degree_name:
           type: string
           nullable: true
           example: Computer Science
+        degree_starting_year:
+          type: integer
+          format: int32
+          nullable: true
+          example: 2024
 
-    ApplicationDetails:
+    UserName:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Clancy Tiger"
+
+    UserPronouns:
+      type: object
+      properties:
+        pronouns:
+          type: string
+          example: They/Them
+
+    UserGender:
+      type: object
+      properties:
+        gender:
+          type: string
+          example: Female
+
+    UserZid:
+      type: object
+      properties:
+        zid:
+          type: string
+          example: z5123456
+
+    UserDegree:
+      type: object
+      properties:
+        degree_name:
+          type: string
+          example: Electrical Engineering
+        degree_starting_year:
+          type: integer
+          format: int32
+          example: 2024
+
+    OrganisationRole:
+      type: string
+      nullable: true
+      enum:
+        - User
+        - Admin
+      example: Admin
+
+    OrganisationDetails:
       type: object
       properties:
         id:
-          type: integer
-          format: int64
-          example: 1541815603606036480
-        campaign_id:
-          type: integer
-          format: int64
-          example: 1541815603606036480
-        user_id:
-          type: integer
-          format: int64
-          example: 1541815603606036480
-        status:
-          $ref: "#/components/schemas/ApplicationStatus"
-        private_status:
-          $ref: "#/components/schemas/ApplicationStatus"
-        applied_roles:
-          type: array
-          items:
-            $ref: "#/components/schemas/ApplicationAppliedRoleDetails"
+          type: string
+          description: Organisation ID (as string to preserve large integer precision)
+          example: "6996987893965262849"
+        slug:
+          type: string
+          example: devsoc-unsw
+        name:
+          type: string
+          example: UNSW Software Development Society
+        logo:
+          type: string
+          format: uuid
+          nullable: true
+          example: "76718252-2a13-4de2-bc07-f977c75dc52b"
         created_at:
           type: string
-          example: 2024-03-15T18:25:43.511Z
-        updated_at:
+          format: date-time
+          example: 2024-02-10T18:25:43.511Z
+        contact_email:
           type: string
-          example: 2024-03-15T18:25:43.511Z
+          example: contact@devsoc.app
+        website_url:
+          type: string
+          nullable: true
+          example: https://devsoc.app
 
-    ApplicationAppliedRoleDetails:
+    NewOrganisation:
       type: object
       properties:
-        role_id:
-          type: integer
-          format: int64
-          example: 1541815603606036480
-        role_name:
+        slug:
           type: string
-          example: Chief Mouser
-        role_description:
+          example: unsw-devsoc
+        name:
           type: string
-          example: Larry the cat is dead, now we need someone else to handle the rat issues at 10th Downing st.
-        min_available:
-          type: int32
-          example: 1
-        max_available:
-          type: int32
-          example: 3
-        finalised:
+          example: UNSW Software Development Society
+        admin:
+          type: string
+          description: ID of the user who will be the initial administrator (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        contact_email:
+          type: string
+          example: contact@devsoc.app
+        website_url:
+          type: string
+          nullable: true
+          example: https://devsoc.app
+
+    SlugCheck:
+      type: object
+      properties:
+        slug:
+          type: string
+          example: unsw-devsoc
+
+    Member:
+      type: object
+      properties:
+        id:
+          type: string
+          description: User ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        name:
+          type: string
+          example: Clancy Lion
+        email:
+          type: string
+          example: clancy.lion@unsw.edu.au
+        role:
+          $ref: "#/components/schemas/OrganisationRole"
+
+    AdminUpdateList:
+      type: object
+      properties:
+        members:
+          type: array
+          description: User IDs (as strings to preserve large integer precision)
+          items:
+            type: string
+          example: ["1541815603606036480", "1541815603606036827"]
+
+    MemberToRemove:
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: User ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+
+    MemberRoleUpdate:
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: User ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        role:
+          $ref: "#/components/schemas/OrganisationRole"
+
+    MemberToInvite:
+      type: object
+      properties:
+        email:
+          type: string
+          example: new.member@unsw.edu.au
+
+    OrganisationCampaign:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Campaign ID (as string to preserve large integer precision)
+          example: "6996987893965262849"
+        organisation_id:
+          type: string
+          description: Organisation ID (as string to preserve large integer precision)
+          example: "1541815603606036827"
+        campaign_slug:
+          type: string
+          example: 2024-subcom-recruitment
+        organisation_slug:
+          type: string
+          example: unsw-devsoc
+        name:
+          type: string
+          example: 2024 Subcommittee Recruitment
+        cover_image:
+          type: string
+          format: uuid
+          nullable: true
+          example: 2d19617b-46fd-4927-9f53-77d69232ba5d
+        description:
+          type: string
+          nullable: true
+          example: Are you excited to make a difference?
+        starts_at:
+          type: string
+          format: date-time
+          example: 2024-03-15T18:25:43.511Z
+        ends_at:
+          type: string
+          format: date-time
+          example: 2024-04-15T18:25:43.511Z
+        published:
           type: boolean
-          example: false
+          example: true
+        interview_period_starts_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: 2024-04-20T18:25:43.511Z
+        interview_period_ends_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: 2024-04-25T18:25:43.511Z
+        interview_format:
+          type: string
+          nullable: true
+          example: online
+        outcomes_released_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: 2024-05-01T18:25:43.511Z
+        application_requirements:
+          type: string
+          nullable: true
+          example: Resume required
 
     NewCampaign:
       type: object
@@ -2956,21 +3328,91 @@ components:
           example: 2024 Subcommittee Recruitment
         description:
           type: string
+          nullable: true
           example: Are you excited to make a difference?
         starts_at:
           type: string
+          format: date-time
           example: 2024-03-15T18:25:43.511Z
         ends_at:
           type: string
+          format: date-time
           example: 2024-04-15T18:25:43.511Z
+        interview_period_starts_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: 2024-04-20T18:25:43.511Z
+        interview_period_ends_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: 2024-04-25T18:25:43.511Z
+        interview_format:
+          type: string
+          nullable: true
+          example: online
+        outcomes_released_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: 2024-05-01T18:25:43.511Z
+        application_requirements:
+          type: string
+          nullable: true
+          example: Resume required
+
+    CampaignUpdate:
+      type: object
+      properties:
+        slug:
+          type: string
+          example: 2024-subcom-recruitment
+        name:
+          type: string
+          example: 2024 Subcommittee Recruitment
+        description:
+          type: string
+          example: Are you excited to make a difference?
+        starts_at:
+          type: string
+          format: date-time
+          example: 2024-03-15T18:25:43.511Z
+        ends_at:
+          type: string
+          format: date-time
+          example: 2024-04-15T18:25:43.511Z
+        interview_period_starts_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: 2024-04-20T18:25:43.511Z
+        interview_period_ends_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: 2024-04-25T18:25:43.511Z
+        interview_format:
+          type: string
+          nullable: true
+          example: online
+        outcomes_released_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: 2024-05-01T18:25:43.511Z
+        application_requirements:
+          type: string
+          nullable: true
+          example: Resume required
 
     Campaign:
       type: object
       properties:
         id:
-          type: integer
-          format: int64
-          example: 1541815603606036480
+          type: string
+          description: Campaign ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
         slug:
           type: string
           example: 2024-subcom-recruitment
@@ -2978,87 +3420,901 @@ components:
           type: string
           example: 2024 Subcommittee Recruitment
         organisation_id:
-          type: integer
-          format: int64
-          example: 1541815603606036480
+          type: string
+          description: Organisation ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        organisation_slug:
+          type: string
+          example: unsw-devsoc
         organisation_name:
           type: string
           example: UNSW Software Development Society
         cover_image:
           type: string
           format: uuid
-          example: 05ebad1e-8be4-40c3-9d36-140cac9a0075
           nullable: true
+          example: 05ebad1e-8be4-40c3-9d36-140cac9a0075
         description:
           type: string
-          example: Are you excited to make a difference?
           nullable: true
+          example: Are you excited to make a difference?
         starts_at:
           type: string
+          format: date-time
           example: 2024-03-15T18:25:43.511Z
         ends_at:
           type: string
+          format: date-time
           example: 2024-04-15T18:25:43.511Z
         created_at:
           type: string
+          format: date-time
           example: 2024-02-15T18:25:43.511Z
         updated_at:
           type: string
+          format: date-time
           example: 2024-02-15T18:25:43.511Z
+        interview_period_starts_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: 2024-04-20T18:25:43.511Z
+        interview_period_ends_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: 2024-04-25T18:25:43.511Z
+        interview_format:
+          type: string
+          nullable: true
+          example: online
+        outcomes_released_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: 2024-05-01T18:25:43.511Z
+        application_requirements:
+          type: string
+          nullable: true
+          example: Resume required
+        published:
+          type: boolean
+          example: true
+        max_roles_per_application:
+          type: integer
+          format: int32
+          nullable: true
+          example: 3
 
-    # RatingDetails:
-    #   type: object
-    #   properties:
-    #     id:
-    #       type: integer
-    #       format: int64
-    #       example: 1541815603606036480
-    #     application_id:
-    #       type: integer
-    #       format: int64
-    #       example: 1541815603606036480
-    #     user_id:
-    #       type: integer
-    #       format: int64
-    #       example: 1541815603606036480
-    #     rating:
-    #       type: integer
-    #       format: int32
-    #       example: 9
-    #     comment:
-    #       type: string
-    #       nullable: true
-    #       example: Good answer to this question
-    #     created_at:
-    #       type: string
-    #       example: 2024-03-15T18:25:43.511Z
-    #     updated_at:
-    #       type: string
-    #       example: 2024-03-15T18:25:43.511Z
+    CampaignDetails:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Campaign ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        campaign_slug:
+          type: string
+          example: 2024-subcom-recruitment
+        name:
+          type: string
+          example: 2024 Subcommittee Recruitment
+        organisation_id:
+          type: string
+          description: Organisation ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        organisation_slug:
+          type: string
+          example: unsw-devsoc
+        organisation_name:
+          type: string
+          example: UNSW Software Development Society
+        contact_email:
+          type: string
+          example: contact@devsoc.app
+        website_url:
+          type: string
+          nullable: true
+          example: https://devsoc.app
+        cover_image:
+          type: string
+          format: uuid
+          nullable: true
+          example: 2d19617b-46fd-4927-9f53-77d69232ba5d
+        description:
+          type: string
+          nullable: true
+          example: Are you excited to make a difference?
+        starts_at:
+          type: string
+          format: date-time
+          example: 2024-03-15T18:25:43.511Z
+        ends_at:
+          type: string
+          format: date-time
+          example: 2024-04-15T18:25:43.511Z
+        interview_period_starts_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: 2024-04-20T18:25:43.511Z
+        interview_period_ends_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: 2024-04-25T18:25:43.511Z
+        interview_format:
+          type: string
+          nullable: true
+          example: online
+        outcomes_released_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: 2024-05-01T18:25:43.511Z
+        application_requirements:
+          type: string
+          nullable: true
+          example: Resume required
+        published:
+          type: boolean
+          example: true
+        max_roles_per_application:
+          type: integer
+          format: int32
+          nullable: true
+          example: 3
 
-    # NewRating:
-    #   type: object
-    #   properties:
-    #     rating:
-    #       type: integer
-    #       format: int32
-    #       example: 9
-    #     comment:
-    #       type: string
-    #       nullable: true
-    #       example: Good answer to this question
+    CampaignDetailsResponse:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/CampaignDetails"
+        - type: object
+          properties:
+            cover_image_url:
+              type: string
+              nullable: true
+              description: Presigned GET URL for the banner image (short-lived)
+              example: https://presignedurldemo.s3.eu-west-2.amazonaws.com/banner/6996987893965262849/2d19617b-46fd-4927-9f53-77d69232ba5d
+
+    CampaignBannerUpdate:
+      type: object
+      properties:
+        upload_url:
+          type: string
+          description: Presigned S3 PUT URL to upload the new banner image
+          example: https://presignedurldemo.s3.eu-west-2.amazonaws.com/banner/6996987893965262849/2d19617b-46fd-4927-9f53-77d69232ba5d
+
+    AttachmentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Attachment ID (as string to preserve large integer precision)
+          example: "6996987893965262849"
+        campaign_id:
+          type: string
+          description: Campaign ID (as string to preserve large integer precision)
+          example: "6996987893965262849"
+        file_name:
+          type: string
+          example: role-document.pdf
+        file_size:
+          type: integer
+          format: int64
+          example: 1048576
+        download_url:
+          type: string
+          description: Presigned GET URL for the file (valid for 1 hour)
+          example: https://presignedurldemo.s3.eu-west-2.amazonaws.com/organisation/1541815603606036827/campaign/6996987893965262849/attachment/6996987893965227483
+
+    NewAttachment:
+      type: object
+      properties:
+        file_name:
+          type: string
+          example: role-document.pdf
+        file_size:
+          type: integer
+          format: int64
+          example: 1048576
+
+    AttachmentUpload:
+      type: object
+      properties:
+        attachment_id:
+          type: string
+          description: ID of the created attachment record (as string to preserve large integer precision)
+          example: "6996987893965227483"
+        upload_url:
+          type: string
+          description: Presigned S3 PUT URL for uploading the file
+          example: https://presignedurldemo.s3.eu-west-2.amazonaws.com/organisation/1541815603606036827/campaign/6996987893965262849/attachment/6996987893965227483
+
+    ApplicationStatus:
+      type: string
+      enum:
+        - Pending
+        - Rejected
+        - Successful
+        - Interview
+
+    Application:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Application ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        campaign_id:
+          type: string
+          description: Campaign ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        user_id:
+          type: string
+          description: User ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        status:
+          $ref: "#/components/schemas/ApplicationStatus"
+        private_status:
+          $ref: "#/components/schemas/ApplicationStatus"
+        created_at:
+          type: string
+          format: date-time
+          example: 2024-03-15T18:25:43.511Z
+        updated_at:
+          type: string
+          format: date-time
+          example: 2024-03-15T18:25:43.511Z
+
+    ApplicationDetails:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Application ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        campaign_id:
+          type: string
+          description: Campaign ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        user:
+          $ref: "#/components/schemas/UserDetails"
+        status:
+          $ref: "#/components/schemas/ApplicationStatus"
+        private_status:
+          $ref: "#/components/schemas/ApplicationStatus"
+        applied_roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApplicationAppliedRoleDetails"
+        current_user_rated:
+          type: boolean
+          description: Whether the current logged-in user has rated this application
+          example: false
+
+    ApplicationAppliedRoleDetails:
+      type: object
+      properties:
+        campaign_role_id:
+          type: string
+          description: Campaign role ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        role_name:
+          type: string
+          example: Chief Mouser
+        preference_percentage:
+          type: integer
+          format: int32
+          example: 50
+
+    ApplicationRole:
+      type: object
+      properties:
+        application_id:
+          type: string
+          description: Application ID (as string to preserve large integer precision)
+          example: "6996987893965227483"
+        campaign_role_id:
+          type: string
+          description: Campaign role ID (as string to preserve large integer precision)
+          example: "6996987893965227485"
+        preference_percentage:
+          type: integer
+          format: int32
+          description: Percentage preference for this role. The sum across an application's roles must equal 100 when submitted.
+          example: 50
+
+    UpdateRoleEntry:
+      type: object
+      properties:
+        campaign_role_id:
+          type: string
+          description: Campaign role ID (as string to preserve large integer precision)
+          example: "6996987893965227485"
+        preference_percentage:
+          type: integer
+          format: int32
+          description: Percentage preference for this role. The sum across an application's roles must equal 100 when submitted.
+          example: 50
+
+    ApplicationRoleUpdate:
+      type: object
+      properties:
+        roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/UpdateRoleEntry"
+
+    NewApplication:
+      type: object
+      properties:
+        applied_roles:
+          type: array
+          description: List of roles the user is applying for, with their preferences
+          items:
+            $ref: "#/components/schemas/ApplicationRole"
+
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Role ID (as string to preserve large integer precision)
+          example: "7036987893965262849"
+        campaign_id:
+          type: string
+          description: Campaign ID (as string to preserve large integer precision)
+          example: "1116987453965262849"
+        name:
+          type: string
+          nullable: true
+          example: Chief Mouser
+        description:
+          type: string
+          example: Larry the cat gone missing! now we need someone else to handle the rat issues at 10th Downing st.
+        min_available:
+          type: integer
+          format: int32
+          example: 1
+        max_available:
+          type: integer
+          format: int32
+          example: 3
+        finalised:
+          type: boolean
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          example: 2024-03-15T18:25:43.511Z
+        updated_at:
+          type: string
+          format: date-time
+          example: 2024-03-15T18:25:43.511Z
+
+    RoleDetails:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Role ID (as string to preserve large integer precision)
+          example: "7036987893965262849"
+        campaign_id:
+          type: string
+          description: Campaign ID (as string to preserve large integer precision)
+          example: "1116987453965262849"
+        name:
+          type: string
+          example: Chief Mouser
+        description:
+          type: string
+          nullable: true
+          example: Larry the cat gone missing! now we need someone else to handle the rat issues at 10th Downing st.
+        min_available:
+          type: integer
+          format: int32
+          example: 1
+        max_available:
+          type: integer
+          format: int32
+          example: 3
+        finalised:
+          type: boolean
+          example: false
+
+    RoleUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Chief Mouser
+        description:
+          type: string
+          nullable: true
+          example: Larry the cat is dead, now we need someone else to handle the rat issues at 10th Downing st.
+        min_available:
+          type: integer
+          format: int32
+          example: 1
+        max_available:
+          type: integer
+          format: int32
+          example: 3
+        finalised:
+          type: boolean
+          description: Whether this role has been finalised (e.g. max available number)
+          example: false
+
+    NewRole:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Chief Mouser
+        description:
+          type: string
+          nullable: true
+          example: Larry the cat is dead, now we need someone else to handle the rat issues at 10th Downing st.
+        min_available:
+          type: integer
+          format: int32
+          example: 1
+        max_available:
+          type: integer
+          format: int32
+          example: 3
+        finalised:
+          type: boolean
+          description: Whether this role has been finalised (e.g. max available number)
+          example: false
+
+    RoleStatus:
+      type: object
+      properties:
+        application_id:
+          type: string
+          description: Application ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        campaign_role_id:
+          type: string
+          description: Campaign role ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        status:
+          $ref: "#/components/schemas/ApplicationStatus"
+
+    UpdateRoleStatus:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ApplicationStatus"
+
+    QuestionType:
+      type: string
+      enum:
+        - ShortAnswer
+        - MultiChoice
+        - MultiSelect
+        - DropDown
+        - Ranking
+
+    QuestionData:
+      type: object
+      description: Question options for multi-option question types (absent for ShortAnswer)
+      properties:
+        options:
+          type: array
+          items:
+            $ref: "#/components/schemas/MultiOptionQuestionOption"
+
+    MultiOptionQuestionOption:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Option ID (as string to preserve large integer precision)
+          example: "7233828375387640938"
+        display_order:
+          type: integer
+          format: int32
+          example: 1
+        text:
+          type: string
+          example: Rust
+
+    QuestionDetails:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Question ID (as string to preserve large integer precision)
+          example: "7233828375289139200"
+        title:
+          type: string
+          example: What is your favourite language?
+        description:
+          type: string
+          nullable: true
+          example: Tell us about your experience
+        common:
+          type: boolean
+          description: Common questions are shown at the start of every application
+          example: true
+        roles:
+          type: array
+          description: List of role IDs the question is for (empty for common questions)
+          items:
+            type: string
+          example: ["7233828375289139200"]
+        required:
+          type: boolean
+          example: true
+        short_answer_word_limit:
+          type: integer
+          format: int32
+          nullable: true
+          example: 200
+        question_type:
+          $ref: "#/components/schemas/QuestionType"
+        data:
+          $ref: "#/components/schemas/QuestionData"
+        created_at:
+          type: string
+          format: date-time
+          example: 2024-06-28T16:29:04.644008111Z
+        updated_at:
+          type: string
+          format: date-time
+          example: 2024-06-30T12:14:12.458390190Z
+
+    NewQuestion:
+      type: object
+      description: Payload for creating a question. Must either be common or assigned to at least one role
+      properties:
+        title:
+          type: string
+          example: What is your favourite language?
+        description:
+          type: string
+          nullable: true
+          example: Tell us about your experience
+        common:
+          type: boolean
+          example: true
+        roles:
+          type: array
+          description: List of role IDs the question is for (required when common is false)
+          items:
+            type: string
+          example: ["7233828375289139200"]
+        required:
+          type: boolean
+          example: true
+        short_answer_word_limit:
+          type: integer
+          format: int32
+          nullable: true
+          example: 200
+        question_type:
+          $ref: "#/components/schemas/QuestionType"
+        data:
+          $ref: "#/components/schemas/QuestionData"
+
+    QuestionUpdate:
+      type: object
+      description: Payload for updating a question (same shape as NewQuestion)
+      properties:
+        title:
+          type: string
+          example: What is your favourite language?
+        description:
+          type: string
+          nullable: true
+          example: Tell us about your experience
+        common:
+          type: boolean
+          example: true
+        roles:
+          type: array
+          items:
+            type: string
+          example: ["7233828375289139200"]
+        required:
+          type: boolean
+          example: true
+        short_answer_word_limit:
+          type: integer
+          format: int32
+          nullable: true
+          example: 200
+        question_type:
+          $ref: "#/components/schemas/QuestionType"
+        data:
+          $ref: "#/components/schemas/QuestionData"
+
+    QuestionWithAnswer:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/QuestionDetails"
+        - type: object
+          properties:
+            answer:
+              $ref: "#/components/schemas/Answer"
+              nullable: true
+
+    Answer:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Answer ID (as string to preserve large integer precision)
+          example: "7233828375289773948"
+        question_id:
+          type: string
+          description: Question ID (as string to preserve large integer precision)
+          example: "7233828375289139200"
+        answer_type:
+          $ref: "#/components/schemas/QuestionType"
+        answer_data:
+          description: The answer value. A string for ShortAnswer, a single option ID for MultiChoice/DropDown, or an array of option IDs for MultiSelect/Ranking
+          oneOf:
+            - type: string
+              example: I am passionate about events
+            - type: string
+              description: Single selected option ID (as string to preserve large integer precision)
+              example: "6996987893965227483"
+            - type: array
+              items:
+                type: string
+              example: ["6996987893965227483", "6996987893965228374"]
+        created_at:
+          type: string
+          format: date-time
+          example: 2024-03-15T18:25:43.511Z
+        updated_at:
+          type: string
+          format: date-time
+          example: 2024-03-15T18:25:43.511Z
+
+    NewAnswer:
+      type: object
+      properties:
+        question_id:
+          type: string
+          description: Question ID (as string to preserve large integer precision)
+          example: "6996987893965262849"
+        answer_type:
+          $ref: "#/components/schemas/QuestionType"
+        answer_data:
+          description: The answer value. A string for ShortAnswer, a single option ID for MultiChoice/DropDown, or an array of option IDs for MultiSelect/Ranking
+          oneOf:
+            - type: string
+              example: I am passionate about events
+            - type: string
+              description: Single selected option ID (as string to preserve large integer precision)
+              example: "6996987893965227483"
+            - type: array
+              items:
+                type: string
+              example: ["6996987893965227483", "6996987893965228374"]
+
+    CommentDetails:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Comment ID (as string to preserve large integer precision)
+          example: "6996987893965227483"
+        name:
+          type: string
+          description: Name of the comment author
+          example: John Doe
+        body:
+          type: string
+          example: Have you considered this applicant for the design role?
+        author_id:
+          type: string
+          description: ID of the comment author (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        created_at:
+          type: string
+          format: date-time
+          example: 2024-03-15T18:25:43.511Z
+
+    NewComment:
+      type: object
+      properties:
+        body:
+          type: string
+          example: Have you considered this applicant for the design role?
+
+    UpdateComment:
+      type: object
+      properties:
+        body:
+          type: string
+          example: Have you considered this applicant for the design role?
+
+    UnreadCommentCount:
+      type: object
+      properties:
+        count:
+          type: integer
+          format: int64
+          example: 3
+
+    CategoryRating:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Category ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        campaign_id:
+          type: string
+          description: Campaign ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        name:
+          type: string
+          example: Communication
+
+    NewCategoryRating:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the category
+          example: Communication
+
+    NewApplicationRating:
+      type: object
+      properties:
+        comment:
+          type: string
+          nullable: true
+          example: Good answer to this question
+
+    NewApplicationCategoryRating:
+      type: object
+      properties:
+        campaign_rating_category_id:
+          type: string
+          description: ID of the category being rated (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        rating:
+          type: integer
+          format: int32
+          description: Numerical score based on the rating
+          example: 9
+
+    UpdateCategoryRating:
+      type: object
+      properties:
+        rating:
+          type: integer
+          format: int32
+          description: Numerical score based on the rating
+          example: 9
+
+    NewRating:
+      type: object
+      properties:
+        comment:
+          type: string
+          nullable: true
+          example: Good answer to this question
+        category_ratings:
+          type: array
+          items:
+            $ref: "#/components/schemas/NewApplicationCategoryRating"
+
+    RatingDetails:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID of the application rating (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        rater_id:
+          type: string
+          description: ID of the user who created the rating (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        rater_name:
+          type: string
+          description: Name of the user who created the rating
+          example: John Doe
+        comment:
+          type: string
+          nullable: true
+          example: Good answer to this question
+        category_ratings:
+          type: array
+          description: Category ratings for this application rating
+          items:
+            $ref: "#/components/schemas/CategoryRatingDetail"
+        updated_at:
+          type: string
+          format: date-time
+          example: 2024-03-15T18:25:43.511Z
+
+    CategoryRatingDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID of the application category rating record (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        campaign_rating_category_id:
+          type: string
+          description: ID of the campaign rating category (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        category_name:
+          type: string
+          description: Name of the category
+          example: Communication
+        rating:
+          type: integer
+          format: int32
+          nullable: true
+          description: Numerical rating value (null if not rated yet)
+          example: 9
+
+    ApplicationRatings:
+      type: object
+      properties:
+        ratings:
+          type: array
+          items:
+            $ref: "#/components/schemas/RatingDetails"
+
+    ApplicationRatingSummary:
+      type: object
+      description: Aggregate rating information for one application within a campaign
+      properties:
+        application_id:
+          type: string
+          description: Application ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        applied_roles:
+          type: array
+          description: IDs of the roles the application is for (as strings to preserve large integer precision)
+          items:
+            type: string
+          example: ["1541815603606036480"]
+        user_name:
+          type: string
+          description: User's full name
+          example: John Doe
+        user_email:
+          type: string
+          format: email
+          description: User's email address
+          example: john.doe@example.com
+        status:
+          $ref: "#/components/schemas/ApplicationStatus"
+        private_status:
+          $ref: "#/components/schemas/ApplicationStatus"
+        updated_at:
+          type: string
+          format: date-time
+          example: 2024-03-15T18:25:43.511Z
+        ratings:
+          type: array
+          description: All ratings the application has received
+          items:
+            $ref: "#/components/schemas/RatingDetails"
 
     EmailTemplate:
       type: object
       properties:
         id:
-          type: integer
-          format: int64
-          example: 1541815603606036480
+          type: string
+          description: Template ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
         organisation_id:
-          type: integer
-          format: int64
-          example: 1541815603606036480
+          type: string
+          description: Organisation ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
         name:
           type: string
           example: Success Email
@@ -3068,12 +4324,6 @@ components:
         template_body:
           type: string
           example: "Hi {{name}}, you have been successful in your application for {{organisation_name}} {{role_name}}. Regards {{organisation_name}} Exec"
-        created_at:
-          type: string
-          example: 2024-03-15T18:25:43.511Z
-        updated_at:
-          type: string
-          example: 2024-03-15T18:25:43.511Z
 
     NewEmailTemplate:
       type: object
@@ -3088,343 +4338,204 @@ components:
           type: string
           example: "Hi {{name}}, you have been successful in your application for {{organisation_name}} {{role_name}}. Regards {{organisation_name}} Exec"
 
-    NewOrganisation:
+    EmailParts:
       type: object
       properties:
-        slug:
+        subject:
           type: string
-          example: unsw-devsoc
-        name:
+          example: "[OUTCOME] 2024 Subcommittee Recruitment - Software Engineer"
+        body:
           type: string
-          example: UNSW Software Development Society
-        admin:
-          type: integer
-          format: int64
-          example: 1541815603606036480
+          example: "Hi John, you have been successful in your application for UNSW DevSoc Software Developer. Regards UNSW DevSoc Exec"
 
-    SlugCheck:
-      type: object
-      properties:
-        slug:
-          type: string
-          example: unsw-devsoc
-
-    MemberList:
-      type: object
-      properties:
-        members:
-          type: array
-          items:
-            type: integer
-            format: int64
-
-    CampaignDetails:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-          example: 1541815603606036480
-        slug:
-          type: string
-          example: 2024-subcom-recruitment
-        name:
-          type: string
-          example: 2024 Subcommittee Recruitment
-        cover_image:
-          type: string
-          example: 2d19617b-46fd-4927-9f53-77d69232ba5d
-        description:
-          type: string
-          example: Are you excited to make a difference?
-        starts_at:
-          type: string
-          example: 2024-03-15T18:25:43.511Z
-        ends_at:
-          type: string
-          example: 2024-04-15T18:25:43.511Z
-
-    NewRole:
-      type: object
-      properties:
-        name:
-          type: string
-          example: Chief Mouser
-        description:
-          type: string
-          required: False
-          example: Larry the cat is dead, now we need someone else to handle the rat issues at 10th Downing st.
-        min_available:
-          type: int32
-          example: 1
-        max_available:
-          type: int32
-          example: 3
-        finalised:
-          type: boolean
-          description: Whether this role has been finalised (e.g. max available number)
-          example: False
-
-    NewApplication:
-      type: object
-      properties:
-        campaign_id:
-          type: integer
-          format: int64
-          example: 1541815603606036480
-        user_id:
-          type: integer
-          format: int64
-          example: 1541815603606036480
-        status:
-          $ref: "#/components/schemas/ApplicationStatus"
-        private_status:
-          $ref: "#/components/schemas/ApplicationStatus"
-        applied_roles:
-          type: array
-          items:
-            $ref: "#/components/schemas/ApplicationAppliedRoleDetails"
-
-    ApplicationRatings:
-      type: object
-      properties:
-        ratings:
-          type: array
-          items:
-            $ref: "#/components/schemas/RatingDetails"
-
-    # RatingUpdate:
-    #   type: object
-    #   properties:
-    #     rating:
-    #       type: integer
-    #       format: int32
-    #       example: 9
-    #     comment:
-    #       type: string
-    #       nullable: true
-    #       example: Good answer to this question
-
-    UserAvgApplicationRating:
-      type: object
-      properties:
-        application_id:
-          type: string
-          description: Application ID (as string to preserve large integer precision)
-          example: "1541815603606036480"
-        campaign_role_id:
-          type: string
-          description: Role ID within the campaign (as string to preserve large integer precision)
-          example: "1541815603606036480"
-        campaign_role_name:
-          type: string
-          description: Name of the campaign role
-          example: "Software Engineer"
-        user_name:
-          type: string
-          description: User's full name
-          example: "John Doe"
-        user_email:
-          type: string
-          format: email
-          description: User's email address
-          example: "john.doe@example.com"
-        status:
-          $ref: "#/components/schemas/ApplicationStatus"
-        avg_rating:
-          type: number
-          format: double
-          nullable: true
-          description: Average rating for this user's application in the given role (null if no ratings exist)
-          example: 4.5
-
-    RatingUpdate:
-      type: object
-      properties:
-        rating:
-          type: integer
-          format: int32
-          example: 9
-        comment:
-          type: string
-          nullable: true
-          example: Good answer to this question
+    OfferStatus:
+      type: string
+      enum:
+        - Draft
+        - Sent
+        - Accepted
+        - Declined
+      example: Draft
 
     OfferDetails:
       type: object
       properties:
         id:
-          type: integer
-          format: int64
-          example: 1541815603606036480
-        organisation_id:
-          type: integer
-          format: int64
-          example: 1541815603606036480
-        name:
           type: string
-          example: Success Email
-        template_subject:
+          description: Offer ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        campaign_id:
           type: string
-          example: "[OUTCOME] {{campaign_name}} - {{role_name}}"
-        template_body:
+          description: Campaign ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        organisation_name:
           type: string
-          example: "Hi {{name}}, you have been successful in your application for {{organisation_name}} {{role_name}}. Regards {{organisation_name}} Exec"
+          example: UNSW Software Development Society
+        campaign_name:
+          type: string
+          example: 2024 Subcommittee Recruitment
+        application_id:
+          type: string
+          description: Application ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        user_id:
+          type: string
+          description: ID of the user receiving the offer (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        user_name:
+          type: string
+          example: John Doe
+        user_email:
+          type: string
+          format: email
+          example: john.doe@example.com
+        email_template_id:
+          type: string
+          description: Email template ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        role_id:
+          type: string
+          description: Role ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        role_name:
+          type: string
+          example: Software Engineer
+        expiry:
+          type: string
+          format: date-time
+          example: 2024-04-15T18:25:43.511Z
+        status:
+          $ref: "#/components/schemas/OfferStatus"
+        created_at:
+          type: string
+          format: date-time
+          example: 2024-03-15T18:25:43.511Z
+
+    NewOffer:
+      type: object
+      description: Payload for creating an offer. The handler deserializes the full Offer object but only uses these fields
+      properties:
+        application_id:
+          type: string
+          description: Application ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        email_template_id:
+          type: string
+          description: Email template ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        role_id:
+          type: string
+          description: Role ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        expiry:
+          type: string
+          format: date-time
+          example: 2024-04-15T18:25:43.511Z
 
     OfferReply:
       type: object
       properties:
-        reply:
-          type: string
-          example: I am interested in the role
+        accept:
+          type: boolean
+          description: Whether the offer is accepted
+          example: true
 
-    OfferStatus:
+    EmailType:
       type: string
       enum:
-        - PENDING
-        - ACCEPTED
-        - DECLINED
-        - EXPIRED
-      example: PENDING
+        - Interview
+        - Accept
+        - Reject
+      example: Accept
 
-    NewOffer:
+    QueueOutcomeEmailItem:
       type: object
       properties:
-        email_template_id:
-          type: integer
-          format: int64
-          example: 1541815603606036480
+        id:
+          type: string
+          nullable: true
+          description: Optional pre-existing offer ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        application_id:
+          type: string
+          description: Application ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        email:
+          type: string
+          format: email
+          example: john.doe@example.com
+        name:
+          type: string
+          example: John Doe
+        role:
+          type: string
+          nullable: true
+          example: Software Engineer
         role_id:
-          type: integer
-          format: int64
-          example: 1541815603606036480
+          type: string
+          description: Role ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        email_template_id:
+          type: string
+          description: Email template ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
         expiry:
           type: string
+          format: date-time
           example: 2024-04-15T18:25:43.511Z
+        subject:
+          type: string
+          example: "[OUTCOME] 2024 Subcommittee Recruitment - Software Engineer"
+        body:
+          type: string
+          example: "Hi John, you have been successful in your application for UNSW DevSoc Software Developer. Regards UNSW DevSoc Exec"
+        email_type:
+          $ref: "#/components/schemas/EmailType"
 
-    QuestionDetails:
+    QueueOutcomeEmailsRequest:
       type: object
       properties:
-        id:
-          type: integer
-          format: int64
-          example: 1541815603606036480
-        campaign_id:
-          type: integer
-          format: int64
-          example: 1541815603606036480
-        question_type:
-          type: string
-          enum:
-            - ShortAnswer
-            - MultiChoice
-            - MultiSelect
-            - DropDown
-            - Ranking
-        question:
-          type: string
-          example: Why do you want to join this role?
-        required:
-          type: boolean
-          example: true
-        common:
-          type: boolean
-          example: false
-        created_at:
-          type: string
-          example: 2024-03-15T18:25:43.511Z
-        updated_at:
-          type: string
-          example: 2024-03-15T18:25:43.511Z
-
-    QuestionWithAnswer:
-      type: object
-      properties:
-        id:
-          type: string
-          example: "7233828375289139200"
-        title:
-          type: string
-          example: What is your favourite language?
-        description:
-          type: string
-          nullable: true
-        common:
-          type: boolean
-          example: true
-        roles:
+        emails:
           type: array
           items:
-            type: string
-          example: ["7233828375289139200"]
-        required:
-          type: boolean
-          example: true
-        short_answer_word_limit:
-          type: integer
-          nullable: true
-        question_type:
-          type: string
-          enum:
-            - ShortAnswer
-            - MultiChoice
-            - MultiSelect
-            - DropDown
-            - Ranking
-        data:
-          type: object
-          description: Question options for multi-option question types
-        answer:
-          $ref: "#/components/schemas/Answer"
-          nullable: true
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
+            $ref: "#/components/schemas/QueueOutcomeEmailItem"
 
-    NewQuestion:
+    InviteDetails:
       type: object
       properties:
-        question_type:
+        id:
           type: string
-          enum:
-            - ShortAnswer
-            - MultiChoice
-            - MultiSelect
-            - DropDown
-            - Ranking
-        question:
+          description: Invite ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        code:
           type: string
-          example: Why do you want to join this role?
-        required:
-          type: boolean
-          example: true
-        common:
-          type: boolean
-          example: false
-
-    QuestionUpdate:
-      type: object
-      properties:
-        question_type:
+          example: 3fKd9sLp2qW
+        organisation_id:
           type: string
-          enum:
-            - ShortAnswer
-            - MultiChoice
-            - MultiSelect
-            - DropDown
-            - Ranking
-        question:
+          description: Organisation ID (as string to preserve large integer precision)
+          example: "1541815603606036480"
+        organisation_name:
           type: string
-          example: Why do you want to join this role?
-        required:
-          type: boolean
-          example: true
-        common:
+          example: UNSW Software Development Society
+        email:
+          type: string
+          format: email
+          example: new.member@unsw.edu.au
+        expires_at:
+          type: string
+          format: date-time
+          example: 2024-04-15T18:25:43.511Z
+        used:
           type: boolean
           example: false
+        expired:
+          type: boolean
+          example: false
+        invited_by_user_id:
+          type: string
+          nullable: true
+          description: ID of the user that invited the member (as string to preserve large integer precision)
+          example: "1541815603606036480"
 
   responses:
     NotLoggedIn:
@@ -3454,3 +4565,10 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Unauthorized"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BadRequest"

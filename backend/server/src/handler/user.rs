@@ -25,8 +25,8 @@ impl UserHandler {
     ///
     /// # Arguments
     ///
-    /// * `state` - The application state
-    /// * `user` - The authenticated user
+    /// * `transaction` - Database transaction
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
     ///
     /// # Returns
     ///
@@ -47,8 +47,8 @@ impl UserHandler {
     ///
     /// # Arguments
     ///
-    /// * `state` - The application state
-    /// * `user` - The authenticated user
+    /// * `transaction` - Database transaction
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
     /// * `request_body` - The new name
     ///
     /// # Returns
@@ -71,8 +71,8 @@ impl UserHandler {
     ///
     /// # Arguments
     ///
-    /// * `state` - The application state
-    /// * `user` - The authenticated user
+    /// * `transaction` - Database transaction
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
     /// * `request_body` - The new pronouns
     ///
     /// # Returns
@@ -95,8 +95,8 @@ impl UserHandler {
     ///
     /// # Arguments
     ///
-    /// * `state` - The application state
-    /// * `user` - The authenticated user
+    /// * `transaction` - Database transaction
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
     /// * `request_body` - The new gender
     ///
     /// # Returns
@@ -119,8 +119,8 @@ impl UserHandler {
     ///
     /// # Arguments
     ///
-    /// * `state` - The application state
-    /// * `user` - The authenticated user
+    /// * `transaction` - Database transaction
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
     /// * `request_body` - The new zid
     ///
     /// # Returns
@@ -143,8 +143,8 @@ impl UserHandler {
     ///
     /// # Arguments
     ///
-    /// * `state` - The application state
-    /// * `user` - The authenticated user
+    /// * `transaction` - Database transaction
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
     /// * `request_body` - The new degree details
     ///
     /// # Returns
@@ -168,6 +168,15 @@ impl UserHandler {
     }
 
     /// Returns whether the current user is a superuser.
+    ///
+    /// # Arguments
+    ///
+    /// * `transaction` - Database transaction
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
+    ///
+    /// # Returns
+    ///
+    /// * `Result<impl IntoResponse, ChaosError>` - JSON containing the `is_superuser` boolean or error
     pub async fn is_superuser(
         mut transaction: DBTransaction<'_>,
         auth: SpiceDbAuth<UsePlatform>,

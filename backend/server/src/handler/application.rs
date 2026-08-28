@@ -85,7 +85,7 @@ impl ApplicationHandler {
     /// # Arguments
     ///
     /// * `campaign_id` - ID of the campaign to check
-    /// * `user` - The authenticated user
+    /// * `auth` - The authenticated user, authorized to use the platform (`SpiceDbAuth<UsePlatform>`)
     /// * `transaction` - Database transaction
     ///
     /// # Returns
@@ -106,12 +106,12 @@ impl ApplicationHandler {
 
     /// Retrieves the details of a specific application.
     ///
-    /// This handler allows application admins to view application details.
+    /// This handler allows application reviewers to view application details.
     ///
     /// # Arguments
     ///
     /// * `application_id` - The ID of the application to retrieve
-    /// * `_admin` - The authenticated user (must be an application admin)
+    /// * `auth` - The authenticated reviewer, authorized by `SpiceDbAuth<ReviewApplication>`
     /// * `transaction` - Database transaction
     ///
     /// # Returns
@@ -135,7 +135,7 @@ impl ApplicationHandler {
     /// # Arguments
     ///
     /// * `application_id` - The ID of the application to retrieve
-    /// * `_admin` - The authenticated user (must be an application admin)
+    /// * `auth` - The authenticated applicant, authorized by `SpiceDbAuth<EditApplication>`
     /// * `transaction` - Database transaction
     ///
     /// # Returns
@@ -154,13 +154,13 @@ impl ApplicationHandler {
 
     /// Updates the status of an application.
     ///
-    /// This handler allows application admins to update the application's status.
+    /// This handler allows application reviewers to update the application's status.
     ///
     /// # Arguments
     ///
-    /// * `state` - The application state
     /// * `application_id` - The ID of the application to update
-    /// * `_admin` - The authenticated user (must be an application admin)
+    /// * `_auth` - The authenticated reviewer, authorized by `SpiceDbAuth<ReviewApplication>`
+    /// * `transaction` - Database transaction
     /// * `data` - The new application status
     ///
     /// # Returns
@@ -179,13 +179,13 @@ impl ApplicationHandler {
 
     /// Updates the private status of an application.
     ///
-    /// This handler allows application admins to update the application's private status.
+    /// This handler allows application reviewers to update the application's private status.
     ///
     /// # Arguments
     ///
-    /// * `state` - The application state
     /// * `application_id` - The ID of the application to update
-    /// * `_admin` - The authenticated user (must be an application admin)
+    /// * `_auth` - The authenticated reviewer, authorized by `SpiceDbAuth<ReviewApplication>`
+    /// * `transaction` - Database transaction
     /// * `data` - The new private status
     ///
     /// # Returns
@@ -208,7 +208,7 @@ impl ApplicationHandler {
     ///
     /// # Arguments
     ///
-    /// * `user` - The authenticated user
+    /// * `auth` - The authenticated user, authorized to use the platform (`SpiceDbAuth<UsePlatform>`)
     /// * `transaction` - Database transaction
     ///
     /// # Returns
@@ -231,7 +231,7 @@ impl ApplicationHandler {
     ///
     /// # Arguments
     ///
-    /// * `_user` - The authenticated user (must be the application owner)
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<ViewApplication>`
     /// * `application_id` - The ID of the application to retrieve roles for
     /// * `transaction` - Database transaction
     ///
@@ -255,7 +255,8 @@ impl ApplicationHandler {
     ///
     /// # Arguments
     ///
-    /// * `_user` - The authenticated user (must be the application owner)
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<EditApplication>`
+    /// * `_: OpenApplicationByApplicationId` - Ensures the application is open
     /// * `application_id` - The ID of the application to update
     /// * `transaction` - Database transaction
     /// * `data` - The new role assignments
@@ -284,8 +285,8 @@ impl ApplicationHandler {
     ///
     /// # Arguments
     ///
-    /// * `_user` - The authenticated user (must be the application owner)
-    /// * `_` - Ensures the application is open
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<EditApplication>`
+    /// * `_: OpenApplicationByApplicationId` - Ensures the application is open
     /// * `application_id` - The ID of the application to submit
     /// * `transaction` - Database transaction
     ///
@@ -310,7 +311,7 @@ impl ApplicationHandler {
     /// # Arguments
     ///
     /// * `application_id` - The ID of the application to get the rating for
-    /// * `admin` - The authenticated user (must be an application reviewer)
+    /// * `auth` - The authenticated reviewer, authorized by `SpiceDbAuth<ReviewApplication>`
     /// * `transaction` - Database transaction
     ///
     /// # Returns
@@ -336,7 +337,7 @@ impl ApplicationHandler {
     ///
     /// * `state` - The application state
     /// * `application_id` - The ID of the application to rate
-    /// * `admin` - The authenticated user (must be an application reviewer)
+    /// * `auth` - The authenticated reviewer, authorized by `SpiceDbAuth<ReviewApplication>`
     /// * `transaction` - Database transaction
     /// * `new_rating` - The rating details including comment and category scores
     ///
@@ -399,6 +400,22 @@ impl ApplicationHandler {
         Ok(AppMessage::OkMessage("Successfully created rating"))
     }
 
+    /// Updates the rating for an application given by the current user.
+    ///
+    /// This handler allows application reviewers to update their rating for an application.
+    /// Replaces the existing comment and category scores with the provided ones.
+    ///
+    /// # Arguments
+    ///
+    /// * `state` - The application state
+    /// * `application_id` - The ID of the application being rated
+    /// * `auth` - The authenticated reviewer, authorized by `SpiceDbAuth<ReviewApplication>`
+    /// * `transaction` - Database transaction
+    /// * `updated_rating` - The new rating details including comment and category scores
+    ///
+    /// # Returns
+    ///
+    /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update_rating(
         State(mut state): State<AppState>,
         Path(application_id): Path<i64>,
@@ -472,7 +489,7 @@ impl ApplicationHandler {
     /// # Arguments
     ///
     /// * `application_id` - The ID of the application
-    /// * `_admin` - The authenticated user (must be an application reviewer)
+    /// * `_auth` - The authenticated reviewer, authorized by `SpiceDbAuth<ReviewApplication>`
     /// * `transaction` - Database transaction
     ///
     /// # Returns
@@ -496,8 +513,8 @@ impl ApplicationHandler {
     ///
     /// # Arguments
     ///
-    /// * `_user` - The authenticated user (must be an application reviewer)
-    /// * `application_id` - The ID of the application
+    /// * `_auth` - The authenticated reviewer, authorized by `SpiceDbAuth<ReviewCampaign>`
+    /// * `campaign_id` - The ID of the campaign
     /// * `transaction` - Database transaction
     ///
     /// # Returns
@@ -524,7 +541,7 @@ impl ApplicationHandler {
     /// # Arguments
     ///
     /// * `application_id` - The ID of the application
-    /// * `_user` - The authenticated user (must be the application owner or a reviewer)
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<ViewApplication>`
     /// * `transaction` - Database transaction
     ///
     /// # Returns
