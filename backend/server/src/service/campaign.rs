@@ -5,9 +5,12 @@
 //! - Checking campaign status and deadlines
 
 use crate::models::error::ChaosError;
+use crate::spicedb;
+use crate::spicedb::authzed::api::v1::permissions_service_client::PermissionsServiceClient;
 use chrono::Utc;
-use sqlx::{Postgres, Transaction};
+use sqlx::{Pool, Postgres, Transaction};
 use std::ops::DerefMut;
+use tonic::transport::Channel;
 
 /// Verifies if a user has admin privileges for a campaign.
 ///
@@ -129,4 +132,86 @@ pub fn create_proper_slug(input: &str) -> String {
 
     // Remove leading and trailing hyphens if necessary (optional, depending on desired behavior)
     result.trim_matches('-').to_string().to_lowercase()
+}
+
+/// Deletes a campaign and its child resources'
+/// SpiceDB relationships. Some of these deletes are
+/// handled by other resource/subject deletions -
+/// the deletion call that handles them is
+/// indicated below. The child resources and
+/// their relationships that are deleted by
+/// this function:
+/// - campaign_role
+///     - campaign_role->campaign - CAMPAIGN
+/// - application
+///     - application->campaign - CAMPAIGN
+///     - application->creator - APPLICATION
+/// - rating
+///     - rating->application - APPLICATION
+///     - rating->creator - RATING
+/// - comment
+///     - comment->application - APPLICATION
+///     - comment->creator - COMMENT
+/// - question
+///     - question->campaign - CAMPAIGN
+/// - rating_category
+///     - rating_category->campaign - CAMPAIGN
+/// - category_rating
+///     - category_rating->rating - RATING
+/// - answer
+///     - answer->application - APPLICATION
+/// - offer
+///     - offer->campaign - CAMPAIGN
+///     - offer->application - APPLICATION
+pub async fn campaign_spicedb_deep_delete(
+    campaign_id: i64,
+    application_ids: Vec<i64>,
+    rating_ids: Vec<i64>,
+    comment_ids: Vec<i64>,
+    spicedb_client: &PermissionsServiceClient<Channel>,
+    spicedb_key: &str,
+) -> Result<(), ChaosError> {
+    // DELETE parent campaign
+    spicedb::delete_all_resource_relationships(
+        spicedb_client,
+        spicedb_key,
+        crate::spicedb::schema::resource::CAMPAIGN,
+        campaign_id,
+    )
+    .await?;
+
+    // DELETE applications
+    for application_id in application_ids {
+        spicedb::delete_all_resource_relationships(
+            spicedb_client,
+            spicedb_key,
+            crate::spicedb::schema::resource::APPLICATION,
+            application_id,
+        )
+        .await?;
+    }
+
+    // DELETE ratings
+    for rating_id in rating_ids {
+        spicedb::delete_all_resource_relationships(
+            spicedb_client,
+            spicedb_key,
+            crate::spicedb::schema::resource::RATING,
+            rating_id,
+        )
+        .await?;
+    }
+
+    // DELETE comments
+    for comment_id in comment_ids {
+        spicedb::delete_all_resource_relationships(
+            spicedb_client,
+            spicedb_key,
+            crate::spicedb::schema::resource::COMMENT,
+            comment_id,
+        )
+        .await?;
+    }
+
+    Ok(())
 }

@@ -218,21 +218,26 @@ impl CampaignHandler {
         mut transaction: DBTransaction<'_>,
         state: State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
+        let application_ids =
+            Campaign::get_application_ids(auth.resource_id, &mut transaction.tx).await?;
+        let rating_ids = Campaign::get_rating_ids(auth.resource_id, &mut transaction.tx).await?;
+        let comment_ids = Campaign::get_comment_ids(auth.resource_id, &mut transaction.tx).await?;
+
         Campaign::delete(auth.resource_id, &mut transaction.tx).await?;
 
         transaction.commit().await?;
 
         // Run SpiceDB delete after Postgres succeeds
-        spicedb::delete_all_resource_relationships(
+        // TODO: Move to async queue to speed up endpoint response times
+        crate::service::campaign::campaign_spicedb_deep_delete(
+            auth.resource_id,
+            application_ids,
+            rating_ids,
+            comment_ids,
             &state.spicedb,
             &state.spicedb_key,
-            crate::spicedb::schema::resource::CAMPAIGN,
-            auth.resource_id,
         )
         .await?;
-
-        // TODO: SpiceDB deep delete
-
         Ok(AppMessage::OkMessage("Successfully deleted campaign"))
     }
 

@@ -637,6 +637,61 @@ impl Campaign {
         }
         Role::create(campaign_id, role_data, transaction, snowflake_generator).await
     }
+
+    /// Returns an array of IDs for all applications
+    pub async fn get_application_ids(
+        campaign_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<i64>, ChaosError> {
+        let application_ids = sqlx::query!(
+            "SELECT id FROM applications WHERE campaign_id = $1",
+            campaign_id
+        )
+        .fetch_all(transaction.deref_mut())
+        .await?;
+
+        Ok(application_ids.iter().map(|r| r.id).collect())
+    }
+
+    /// Returns an array of IDs for all ratings
+    pub async fn get_rating_ids(
+        campaign_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<i64>, ChaosError> {
+        let rating_ids = sqlx::query!(
+            "
+                SELECT ar.id
+                FROM application_ratings ar
+                JOIN applications a ON a.id = ar.application_id
+                WHERE a.campaign_id = $1
+            ",
+            campaign_id
+        )
+        .fetch_all(transaction.deref_mut())
+        .await?;
+
+        Ok(rating_ids.iter().map(|r| r.id).collect())
+    }
+
+    /// Returns an array of IDs for all comments
+    pub async fn get_comment_ids(
+        campaign_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<i64>, ChaosError> {
+        let comment_ids = sqlx::query!(
+            "
+                SELECT c.id
+                FROM comments c
+                JOIN applications a ON a.id = c.application_id
+                WHERE a.campaign_id = $1
+            ",
+            campaign_id
+        )
+        .fetch_all(transaction.deref_mut())
+        .await?;
+
+        Ok(comment_ids.iter().map(|r| r.id).collect())
+    }
 }
 
 impl CampaignAttachment {

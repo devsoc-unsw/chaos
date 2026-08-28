@@ -183,7 +183,7 @@ impl OrganisationHandler {
         )
         .await?;
 
-        // TODO: SpiceDB deep delete
+        // TODO: SpiceDB deep delete - we currently don't support organisation support
 
         Ok(AppMessage::OkMessage("Successfully deleted organisation"))
     }
