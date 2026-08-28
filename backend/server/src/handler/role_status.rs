@@ -82,12 +82,16 @@ impl RoleStatusHandler {
     /// # Returns
     /// The per-role statuses for the campaign role.
     pub async fn get_role_statuses_for_campaign_role(
-        Path((_campaign_id, campaign_role_id)): Path<(i64, i64)>,
+        Path((campaign_id, campaign_role_id)): Path<(i64, i64)>,
         _auth: SpiceDbAuth<ReviewCampaign>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let statuses =
-            RoleStatus::get_all_for_campaign_role(campaign_role_id, &mut transaction.tx).await?;
+        let statuses = RoleStatus::get_all_for_campaign_role(
+            campaign_role_id,
+            campaign_id,
+            &mut transaction.tx,
+        )
+        .await?;
 
         transaction.commit().await?;
 

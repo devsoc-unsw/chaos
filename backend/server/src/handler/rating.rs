@@ -94,12 +94,12 @@ impl RatingHandler {
     /// * `transaction` - Database transaction
     /// * `data` - The updated rating comment
     pub async fn update_category(
-        Path((_campaign_id, category_id)): Path<(i64, i64)>,
+        Path((campaign_id, category_id)): Path<(i64, i64)>,
         _auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewCategoryRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Rating::update_category(category_id, data.name, &mut transaction.tx).await?;
+        Rating::update_category(category_id, campaign_id, data.name, &mut transaction.tx).await?;
 
         transaction.commit().await?;
 
@@ -115,12 +115,12 @@ impl RatingHandler {
     /// * `_admin` - The authenticated user (must be a campaign admin)
     /// * `transaction` - Database transaction
     pub async fn delete_category(
-        Path((_campaign_id, category_id)): Path<(i64, i64)>,
+        Path((campaign_id, category_id)): Path<(i64, i64)>,
         _auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,
         state: State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Rating::delete_category(category_id, &mut transaction.tx).await?;
+        Rating::delete_category(category_id, campaign_id, &mut transaction.tx).await?;
 
         transaction.commit().await?;
 
@@ -315,13 +315,18 @@ impl RatingHandler {
     /// * `transaction` - Database transaction
     /// * `data` - The updated rating score
     pub async fn update_category_rating(
-        Path((_rating_id, category_rating_id)): Path<(i64, i64)>,
+        Path((rating_id, category_rating_id)): Path<(i64, i64)>,
         _auth: SpiceDbAuth<EditRating>,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<UpdateCategoryRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Rating::update_category_rating(category_rating_id, data.rating, &mut transaction.tx)
-            .await?;
+        Rating::update_category_rating(
+            category_rating_id,
+            rating_id,
+            data.rating,
+            &mut transaction.tx,
+        )
+        .await?;
 
         transaction.commit().await?;
 
@@ -385,12 +390,12 @@ impl RatingHandler {
     /// * `_admin` - The authenticated user (must be the rating creator)
     /// * `transaction` - Database transaction
     pub async fn delete_category_rating(
-        Path((_rating_id, category_rating_id)): Path<(i64, i64)>,
+        Path((rating_id, category_rating_id)): Path<(i64, i64)>,
         _auth: SpiceDbAuth<EditRating>,
         mut transaction: DBTransaction<'_>,
         state: State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Rating::delete_category_rating(category_rating_id, &mut transaction.tx).await?;
+        Rating::delete_category_rating(category_rating_id, rating_id, &mut transaction.tx).await?;
 
         transaction.commit().await?;
 

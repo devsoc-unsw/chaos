@@ -564,20 +564,13 @@ impl CampaignHandler {
         State(state): State<AppState>,
         Path((campaign_id, attachment_id)): Path<(i64, i64)>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let attachment = CampaignAttachment::get_by_id(attachment_id, &mut transaction.tx).await?;
-
-        // Ensure the attachment actually belongs to the campaign in the path
-        if attachment.campaign_id != campaign_id {
-            return Err(ChaosError::BadRequest);
-        }
-
         let (organisation_id, campaign_id) =
-            CampaignAttachment::delete(attachment_id, &mut transaction.tx).await?;
+            CampaignAttachment::delete(attachment_id, campaign_id, &mut transaction.tx).await?;
 
         // Delete the file from S3 storage
         let storage_path = format!(
             "/organisation/{}/campaign/{}/attachment/{}",
-            organisation_id, campaign_id, attachment.id
+            organisation_id, campaign_id, attachment_id
         );
         Storage::delete_file(storage_path, &state.storage_bucket).await?;
 

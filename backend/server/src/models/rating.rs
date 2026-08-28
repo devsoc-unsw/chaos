@@ -251,17 +251,19 @@ impl Rating {
     /// * `Err(ChaosError)` - An error if update fails
     pub async fn update_category(
         category_id: i64,
+        campaign_id: i64,
         name: String,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         sqlx::query!(
             "
                 UPDATE campaign_rating_categories
-                SET name = $2
-                WHERE id = $1
+                SET name = $3
+                WHERE id = $1 AND campaign_id = $2
                 RETURNING id
             ",
             category_id,
+            campaign_id,
             name,
         )
         .fetch_one(transaction.deref_mut())
@@ -273,14 +275,17 @@ impl Rating {
     /// Deletes a category
     pub async fn delete_category(
         category_id: i64,
+        campaign_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         sqlx::query!(
             "
-                DELETE FROM campaign_rating_categories WHERE id = $1
+                DELETE FROM campaign_rating_categories
+                WHERE id = $1 AND campaign_id = $2
                 RETURNING id
             ",
-            category_id
+            category_id,
+            campaign_id,
         )
         .fetch_one(transaction.deref_mut())
         .await?;
@@ -571,6 +576,7 @@ impl Rating {
     /// * `Err(ChaosError)` - An error if update fails
     pub async fn update_category_rating(
         category_rating_id: i64,
+        rating_id: i64,
         updated_rating: i32,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
@@ -579,11 +585,12 @@ impl Rating {
         sqlx::query!(
             "
             UPDATE application_rating_category_ratings
-            SET rating = $2, updated_at = $3
-            WHERE id = $1
+            SET rating = $3, updated_at = $4
+            WHERE id = $1 AND application_rating_id = $2
             RETURNING id
         ",
             category_rating_id,
+            rating_id,
             updated_rating,
             current_time
         )
@@ -634,14 +641,17 @@ impl Rating {
     /// * `Err(ChaosError)` - An error if deletion fails
     pub async fn delete_category_rating(
         application_category_rating_id: i64,
+        rating_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         sqlx::query!(
             "
-            DELETE FROM application_rating_category_ratings WHERE id = $1
+            DELETE FROM application_rating_category_ratings
+            WHERE id = $1 AND application_rating_id = $2
             RETURNING id
         ",
-            application_category_rating_id
+            application_category_rating_id,
+            rating_id
         )
         .fetch_one(transaction.deref_mut())
         .await?;

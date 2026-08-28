@@ -423,7 +423,12 @@ impl ApplicationHandler {
             .await?;
 
         for category_rating in existing_category_ratings.clone() {
-            Rating::delete_category_rating(category_rating.id, &mut transaction.tx).await?;
+            Rating::delete_category_rating(
+                category_rating.id,
+                category_rating.application_rating_id,
+                &mut transaction.tx,
+            )
+            .await?;
         }
 
         // Create new category ratings

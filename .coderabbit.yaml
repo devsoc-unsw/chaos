@@ -24,7 +24,9 @@ reviews:
         - SpiceDB relationships are properly added into required handlers in src/handler/** as per the schema.
         - All handlers that mutate the database to create or delete a resource that is also stored in SpiceDB, should create or delete the applicable SpiceDB relationships.
         - All documentation comments for functions reflect the proper function, inputs and outputs
-        - All handler functions are documented in backend/api.yaml with the correct input and output schemas"
+        - All handler functions are documented in backend/api.yaml with the correct input and output schemas
+        - When there are multiple IDs in a route, the handler only checks for authorization to mutate the parent resource. Make sure each nested ID is bound to the parent's id, preferably with a filter in the SQL queries used.
+        - All delete/edit functions under src/models/**/* should check that the resource exists. The preferred way to do this is by `RETURNING id` at the end of the update/delete SQL call, with `fetch_one()` on `sqlx::query!()`, which will throw a 404 error if no row is returned."
     - path: 'backend/migrations/**/*'
       instructions: |
         "Confirm that the code adheres to the following:

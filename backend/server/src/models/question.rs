@@ -563,6 +563,7 @@ impl Question {
 
     pub async fn update(
         id: i64,
+        campaign_id: i64,
         title: String,
         description: Option<String>,
         common: bool,
@@ -579,14 +580,15 @@ impl Question {
             QuestionTypeParent,
             r#"
                 UPDATE questions SET
-                    title = $2, description = $3, common = $4,
-                    required = $5, question_type = $6, updated_at = $7,
-                    short_answer_word_limit = $8
+                    title = $3, description = $4, common = $5,
+                    required = $6, question_type = $7, updated_at = $8,
+                    short_answer_word_limit = $9
 
-                WHERE id = $1
+                WHERE id = $1 AND campaign_id = $2
                 RETURNING question_type AS "question_type: QuestionType"
             "#,
             id,
+            campaign_id,
             title,
             description,
             common,
@@ -627,11 +629,20 @@ impl Question {
 
     pub async fn delete(
         id: i64,
+        campaign_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        sqlx::query!("DELETE FROM questions WHERE id = $1 RETURNING id", id)
-            .fetch_one(transaction.deref_mut())
-            .await?;
+        sqlx::query!(
+            "
+                DELETE FROM questions
+                WHERE id = $1 AND campaign_id = $2
+                RETURNING id
+            ",
+            id,
+            campaign_id
+        )
+        .fetch_one(transaction.deref_mut())
+        .await?;
 
         Ok(())
     }

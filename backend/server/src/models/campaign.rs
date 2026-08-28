@@ -736,6 +736,7 @@ impl CampaignAttachment {
     /// * `Result<CampaignAttachment, ChaosError>` - The attachment or error if not found
     pub async fn get_by_id(
         attachment_id: i64,
+        campaign_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<CampaignAttachment, ChaosError> {
         let attachment = sqlx::query_as!(
@@ -743,9 +744,10 @@ impl CampaignAttachment {
             "
                 SELECT id, campaign_id, file_name, file_size
                 FROM campaign_attachments
-                WHERE id = $1
+                WHERE id = $1 AND campaign_id = $2
             ",
-            attachment_id
+            attachment_id,
+            campaign_id,
         )
         .fetch_one(transaction.deref_mut())
         .await?;
@@ -847,18 +849,21 @@ impl CampaignAttachment {
     /// * `Result<i64, ChaosError>` - The ID of the deleted attachment or error if not found
     pub async fn delete(
         attachment_id: i64,
+        campaign_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(i64, i64), ChaosError> {
-        let attachment = Self::get_by_id(attachment_id, transaction).await?;
+        let attachment = Self::get_by_id(attachment_id, campaign_id, transaction).await?;
         let campaign = Campaign::get(attachment.campaign_id, transaction).await?;
         if campaign.published {
             return Err(ChaosError::BadRequest);
         }
+
         sqlx::query!(
             "
-                DELETE FROM campaign_attachments WHERE id = $1 RETURNING id
+                DELETE FROM campaign_attachments WHERE id = $1 AND campaign_id = $2 RETURNING id
             ",
-            attachment_id
+            attachment_id,
+            campaign_id
         )
         .fetch_one(transaction.deref_mut())
         .await?;
@@ -897,10 +902,10 @@ where
     }
 }
 
-/// Extractor for ensuring a campaign is open.
+/// Extractor for ensuring a campaign is closed.
 ///
 /// This extractor is used in route handlers to ensure that the campaign
-/// being accessed is currently accepting applications.
+/// being accessed is currently unpublished/not accepting applications.
 pub struct ClosedCampaign;
 
 #[async_trait]
