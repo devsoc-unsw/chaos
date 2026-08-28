@@ -34,13 +34,13 @@ impl ApplicationHandler {
     /// # Arguments
     ///
     /// * `campaign_id` - ID of the campaign to apply to
-    /// * `user_id` - ID of the user submitting the application
-    /// * `snowflake_generator` - Generator for creating unique IDs
+    /// * `auth` - The authenticated user, authorized to use the platform
+    /// * `state` - The application state
     /// * `transaction` - Database transaction to use
     ///
     /// # Returns
     ///
-    /// * `Result<impl IntoResponse, ChaosError>` - Application details or error
+    /// * `Result<impl IntoResponse, ChaosError>` - JSON containing the application ID or error
     pub async fn create_or_get(
         Path(campaign_id): Path<i64>,
         auth: SpiceDbAuth<UsePlatform>,
@@ -433,7 +433,7 @@ impl ApplicationHandler {
 
         // Create new category ratings
         for category_rating in updated_rating.category_ratings {
-            Rating::create_category_rating(
+            let category_rating_id = Rating::create_category_rating(
                 category_rating,
                 rating.id,
                 &mut state.snowflake_generator,
@@ -443,7 +443,7 @@ impl ApplicationHandler {
 
             transaction.create_spicedb_relationship(
                 spicedb_schema::resource::CATEGORY_RATING,
-                application_id,
+                category_rating_id,
                 spicedb_schema::relation::category_rating::RATING,
                 spicedb_schema::resource::RATING,
                 rating.id,
