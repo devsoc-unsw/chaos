@@ -22,7 +22,7 @@ impl RoleStatusHandler {
     /// # Arguments
     /// * `application_id` - ID of the application whose status is being set.
     /// * `campaign_role_id` - ID of the campaign role whose per-role status is being set.
-    /// * `_admin` - Authenticated user allowed to set the application's per-role status.
+    /// * `auth` - The authenticated user, authorized to review the application.
     /// * `transaction` - Database transaction wrapper.
     /// * `data` - Update role payload.
     ///

@@ -25,13 +25,13 @@ pub struct QuestionHandler;
 impl QuestionHandler {
     /// Creates a new question for a campaign.
     ///
-    /// This handler allows campaign admins to create questions.
+    /// This handler allows users authorized to manage the campaign to create questions.
     ///
     /// # Arguments
     ///
     /// * `state` - The application state
     /// * `campaign_id` - The ID of the campaign
-    /// * `_admin` - The authenticated user (must be a campaign admin)
+    /// * `auth` - The authenticated user, authorized to manage the campaign
     /// * `transaction` - Database transaction
     /// * `data` - The new question details
     ///
@@ -127,14 +127,14 @@ impl QuestionHandler {
 
     /// Updates a question.
     ///
-    /// This handler allows question admins to update question details.
+    /// This handler allows users authorized to manage the campaign to update question details.
     ///
     /// # Arguments
     ///
     /// * `state` - The application state
     /// * `campaign_id` - The ID of the campaign
     /// * `question_id` - The ID of the question to update
-    /// * `_admin` - The authenticated user (must be a question admin)
+    /// * `auth` - The authenticated user, authorized to manage the campaign
     /// * `transaction` - Database transaction
     /// * `data` - The new question details
     ///
@@ -178,13 +178,13 @@ impl QuestionHandler {
 
     /// Deletes a question.
     ///
-    /// This handler allows question admins to delete questions.
+    /// This handler allows users authorized to manage the campaign to delete questions.
     ///
     /// # Arguments
     ///
     /// * `campaign_id` - The ID of the campaign
     /// * `question_id` - The ID of the question to delete
-    /// * `_admin` - The authenticated user (must be a question admin)
+    /// * `auth` - The authenticated user, authorized to manage the campaign
     /// * `transaction` - Database transaction
     ///
     /// # Returns

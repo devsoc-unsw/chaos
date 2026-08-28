@@ -934,7 +934,8 @@ where
 /// Extractor for ensuring a campaign is closed.
 ///
 /// This extractor is used in route handlers to ensure that the campaign
-/// being accessed is currently unpublished/not accepting applications.
+/// being accessed has ended (its `ends_at` has passed) and is no longer
+/// accepting applications. It succeeds only when the campaign is closed.
 pub struct ClosedCampaign;
 
 #[async_trait]
