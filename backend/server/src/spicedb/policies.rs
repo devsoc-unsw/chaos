@@ -160,3 +160,19 @@ impl SpiceDbPolicy for ViewOffer {
     const PERMISSION: &'static str = schema::permission::offer::VIEW;
     const PATH_PARAMETER: &'static str = "offer_id";
 }
+
+/// Reply to an offer as its recipient
+pub struct ReplyOffer;
+impl SpiceDbPolicy for ReplyOffer {
+    const RESOURCE_TYPE: &'static str = schema::resource::OFFER;
+    const PERMISSION: &'static str = schema::permission::offer::REPLY;
+    const PATH_PARAMETER: &'static str = "offer_id";
+}
+
+/// Edit application answer
+pub struct EditAnswer;
+impl SpiceDbPolicy for EditAnswer {
+    const RESOURCE_TYPE: &'static str = schema::resource::ANSWER;
+    const PERMISSION: &'static str = schema::permission::answer::EDIT;
+    const PATH_PARAMETER: &'static str = "answer_id";
+}

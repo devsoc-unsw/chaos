@@ -17,6 +17,7 @@ use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
 use sqlx::Postgres;
 use sqlx::{FromRow, Transaction};
+use std::collections::HashMap;
 use std::env;
 use std::ops::DerefMut;
 use uuid::Uuid;
@@ -636,6 +637,88 @@ impl Campaign {
         }
         Role::create(campaign_id, role_data, transaction, snowflake_generator).await
     }
+
+    /// Returns an array of IDs for all applications in the campaign.
+    ///
+    /// # Arguments
+    ///
+    /// * `campaign_id` - ID of the campaign
+    /// * `transaction` - Database transaction to use
+    ///
+    /// # Returns
+    ///
+    /// * `Result<Vec<i64>, ChaosError>` - The application IDs or error
+    pub async fn get_application_ids(
+        campaign_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<i64>, ChaosError> {
+        let application_ids = sqlx::query!(
+            "SELECT id FROM applications WHERE campaign_id = $1",
+            campaign_id
+        )
+        .fetch_all(transaction.deref_mut())
+        .await?;
+
+        Ok(application_ids.iter().map(|r| r.id).collect())
+    }
+
+    /// Returns an array of IDs for all ratings belonging to the campaign's applications.
+    ///
+    /// # Arguments
+    ///
+    /// * `campaign_id` - ID of the campaign
+    /// * `transaction` - Database transaction to use
+    ///
+    /// # Returns
+    ///
+    /// * `Result<Vec<i64>, ChaosError>` - The rating IDs of the campaign
+    pub async fn get_rating_ids(
+        campaign_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<i64>, ChaosError> {
+        let rating_ids = sqlx::query!(
+            "
+                SELECT ar.id
+                FROM application_ratings ar
+                JOIN applications a ON a.id = ar.application_id
+                WHERE a.campaign_id = $1
+            ",
+            campaign_id
+        )
+        .fetch_all(transaction.deref_mut())
+        .await?;
+
+        Ok(rating_ids.iter().map(|r| r.id).collect())
+    }
+
+    /// Returns an array of IDs for all comments belonging to the campaign's applications.
+    ///
+    /// # Arguments
+    ///
+    /// * `campaign_id` - ID of the campaign
+    /// * `transaction` - Database transaction to use
+    ///
+    /// # Returns
+    ///
+    /// * `Result<Vec<i64>, ChaosError>` - The comment IDs of the campaign
+    pub async fn get_comment_ids(
+        campaign_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<i64>, ChaosError> {
+        let comment_ids = sqlx::query!(
+            "
+                SELECT c.id
+                FROM comments c
+                JOIN applications a ON a.id = c.application_id
+                WHERE a.campaign_id = $1
+            ",
+            campaign_id
+        )
+        .fetch_all(transaction.deref_mut())
+        .await?;
+
+        Ok(comment_ids.iter().map(|r| r.id).collect())
+    }
 }
 
 impl CampaignAttachment {
@@ -668,11 +751,12 @@ impl CampaignAttachment {
         Ok(attachments)
     }
 
-    /// Retrieves an attachment by its ID.
+    /// Retrieves an attachment by its ID, scoped to the owning campaign.
     ///
     /// # Arguments
     ///
     /// * `attachment_id` - ID of the attachment
+    /// * `campaign_id` - ID of the campaign the attachment must belong to
     /// * `transaction` - Database transaction to use
     ///
     /// # Returns
@@ -680,6 +764,7 @@ impl CampaignAttachment {
     /// * `Result<CampaignAttachment, ChaosError>` - The attachment or error if not found
     pub async fn get_by_id(
         attachment_id: i64,
+        campaign_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<CampaignAttachment, ChaosError> {
         let attachment = sqlx::query_as!(
@@ -687,9 +772,10 @@ impl CampaignAttachment {
             "
                 SELECT id, campaign_id, file_name, file_size
                 FROM campaign_attachments
-                WHERE id = $1
+                WHERE id = $1 AND campaign_id = $2
             ",
-            attachment_id
+            attachment_id,
+            campaign_id,
         )
         .fetch_one(transaction.deref_mut())
         .await?;
@@ -784,25 +870,29 @@ impl CampaignAttachment {
     /// # Arguments
     ///
     /// * `attachment_id` - ID of the attachment to delete
+    /// * `campaign_id` - ID of the campaign the attachment must belong to
     /// * `transaction` - Database transaction to use
     ///
     /// # Returns
     ///
-    /// * `Result<i64, ChaosError>` - The ID of the deleted attachment or error if not found
+    /// * `Result<(i64, i64), ChaosError>` - The (organisation_id, campaign_id) of the deleted attachment or error if not found
     pub async fn delete(
         attachment_id: i64,
+        campaign_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(i64, i64), ChaosError> {
-        let attachment = Self::get_by_id(attachment_id, transaction).await?;
+        let attachment = Self::get_by_id(attachment_id, campaign_id, transaction).await?;
         let campaign = Campaign::get(attachment.campaign_id, transaction).await?;
         if campaign.published {
             return Err(ChaosError::BadRequest);
         }
+
         sqlx::query!(
             "
-                DELETE FROM campaign_attachments WHERE id = $1 RETURNING id
+                DELETE FROM campaign_attachments WHERE id = $1 AND campaign_id = $2 RETURNING id
             ",
-            attachment_id
+            attachment_id,
+            campaign_id
         )
         .fetch_one(transaction.deref_mut())
         .await?;
@@ -826,16 +916,57 @@ where
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
-        let Path(campaign_id) = parts
-            .extract::<Path<i64>>()
+        let campaign_id = *parts
+            .extract::<Path<HashMap<String, i64>>>()
             .await
-            .map_err(|_| ChaosError::BadRequest)?;
+            .map_err(|_| ChaosError::BadRequest)?
+            .get("campaign_id")
+            .ok_or(ChaosError::BadRequest)?;
 
         let mut tx = app_state.db.begin().await?;
         assert_campaign_is_open(campaign_id, &mut tx).await?;
         tx.commit().await?;
 
         Ok(OpenCampaign)
+    }
+}
+
+/// Extractor for ensuring a campaign is closed.
+///
+/// This extractor is used in route handlers to ensure that the campaign
+/// being accessed has ended (its `ends_at` has passed) and is no longer
+/// accepting applications. It succeeds only when the campaign is closed.
+pub struct ClosedCampaign;
+
+#[async_trait]
+impl<S> FromRequestParts<S> for ClosedCampaign
+where
+    AppState: FromRef<S>,
+    S: Send + Sync,
+{
+    type Rejection = ChaosError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let app_state = AppState::from_ref(state);
+
+        let campaign_id = *parts
+            .extract::<Path<HashMap<String, i64>>>()
+            .await
+            .map_err(|_| ChaosError::BadRequest)?
+            .get("campaign_id")
+            .ok_or(ChaosError::BadRequest)?;
+
+        let mut tx = app_state.db.begin().await?;
+        if let Err(e) = assert_campaign_is_open(campaign_id, &mut tx).await {
+            tx.commit().await?;
+            return match e {
+                ChaosError::CampaignClosed => Ok(ClosedCampaign),
+                _ => Err(e),
+            };
+        }
+
+        tx.commit().await?;
+        Err(ChaosError::CampaignClosed)
     }
 }
 

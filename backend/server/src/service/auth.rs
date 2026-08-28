@@ -8,18 +8,21 @@
 
 use crate::models::app::AppState;
 use crate::models::error::ChaosError;
+use crate::models::transaction::DBTransaction;
 use crate::models::user::UserRole;
 use crate::service::jwt::decode_auth_token;
+use crate::spicedb::schema::{self, PLATFORM_RESOURCE_ID};
 use axum::http::request::Parts;
 use axum::RequestPartsExt;
 use axum_extra::headers::Cookie;
 use axum_extra::TypedHeader;
 use snowflake::SnowflakeIdGenerator;
-use sqlx::{Pool, Postgres, Transaction};
+use sqlx::{Postgres, Transaction};
 use std::ops::DerefMut;
 
 /// Checks if a user exists in DB based on given email address. If so, their user_id is returned.
-/// Otherwise, a new user is created in the DB, and the new id is returned.
+/// Otherwise, a new user is created in the DB and SpiceDB (platform `user` relationship),
+/// and the new id is returned.
 /// This function is used in OAuth flows to login/signup users when they click the
 /// "Sign in with ___" buttons. The returned user_id will be used to generate a JWT to be
 /// used as a token for the user's browser.
@@ -28,27 +31,29 @@ use std::ops::DerefMut;
 ///
 /// * `email` - The email address of the user
 /// * `name` - The name of the user
-/// * `pool` - Database connection pool
 /// * `snowflake_generator` - Generator for unique user IDs
+/// * `transaction` - Database transaction wrapper; the SpiceDB relationship write is
+///   queued here and applied on commit
 ///
 /// # Returns
 ///
-/// * `Result<i64, ChaosError>` - The user ID if successful, or an error
+/// * `Result<(i64, bool), ChaosError>` - The user ID if successful + if the user was
+/// newly created, or an error
 pub async fn create_or_get_user_id(
     email: String,
     name: String,
-    pool: &Pool<Postgres>,
     snowflake_generator: &mut SnowflakeIdGenerator,
-) -> Result<i64, ChaosError> {
+    transaction: &mut DBTransaction<'_>,
+) -> Result<(i64, bool), ChaosError> {
     let possible_user_id = sqlx::query!(
         "SELECT id FROM users WHERE lower(email) = $1",
         email.to_lowercase()
     )
-    .fetch_optional(pool)
+    .fetch_optional(transaction.tx.deref_mut())
     .await?;
 
     if let Some(result) = possible_user_id {
-        return Ok(result.id);
+        return Ok((result.id, false));
     }
 
     let user_id = snowflake_generator.real_time_generate();
@@ -59,10 +64,10 @@ pub async fn create_or_get_user_id(
         email.to_lowercase(),
         name
     )
-    .execute(pool)
+    .execute(transaction.tx.deref_mut())
     .await?;
 
-    Ok(user_id)
+    Ok((user_id, true))
 }
 
 /// Verifies if a user has super user privileges.

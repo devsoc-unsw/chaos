@@ -5,13 +5,17 @@
 //! - Updating and deleting roles
 //! - Managing role applications
 
-use crate::models::app::AppMessage;
+use crate::models::app::{AppMessage, AppState};
 use crate::models::application::Application;
-use crate::models::auth::{AuthUser, RoleAdmin};
 use crate::models::error::ChaosError;
 use crate::models::role::{Role, RoleUpdate};
 use crate::models::transaction::DBTransaction;
-use axum::extract::{Json, Path};
+use crate::spicedb::{
+    self,
+    policies::{ManageCampaignRole, UsePlatform},
+    schema as spicedb_schema, SpiceDbAuth,
+};
+use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 
@@ -35,7 +39,7 @@ impl RoleHandler {
     pub async fn get(
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
-        _user: AuthUser,
+        _auth: SpiceDbAuth<UsePlatform>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let role = Role::get(id, &mut transaction.tx).await?;
 
@@ -59,11 +63,22 @@ impl RoleHandler {
     pub async fn delete(
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
-        _admin: RoleAdmin,
+        _auth: SpiceDbAuth<ManageCampaignRole>,
+        state: State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Role::delete(id, &mut transaction.tx).await?;
 
         transaction.commit().await?;
+
+        // Run SpiceDB delete after Postgres succeeds
+        spicedb::delete_all_resource_relationships(
+            &state.spicedb,
+            &state.spicedb_key,
+            spicedb_schema::resource::CAMPAIGN_ROLE,
+            id,
+        )
+        .await?;
+
         Ok(AppMessage::OkMessage("Successfully deleted role"))
     }
 
@@ -84,7 +99,7 @@ impl RoleHandler {
     pub async fn update(
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
-        _admin: RoleAdmin,
+        _auth: SpiceDbAuth<ManageCampaignRole>,
         Json(data): Json<RoleUpdate>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Role::update(id, data, &mut transaction.tx).await?;
@@ -108,11 +123,11 @@ impl RoleHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - List of applications or error
     pub async fn get_applications(
         Path(id): Path<i64>,
-        admin: RoleAdmin,
+        auth: SpiceDbAuth<ManageCampaignRole>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let applications =
-            Application::get_from_role_id(id, admin.user_id, &mut transaction.tx).await?;
+            Application::get_from_role_id(id, auth.user_id, &mut transaction.tx).await?;
         transaction.commit().await?;
         Ok((StatusCode::OK, Json(applications)))
     }

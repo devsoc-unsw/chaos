@@ -7,8 +7,11 @@
 use crate::models::app::AppState;
 use crate::models::auth::{AuthRequest, GoogleUserProfile, LoginRequest};
 use crate::models::error::ChaosError;
+use crate::models::transaction::DBTransaction;
 use crate::service::auth::create_or_get_user_id;
 use crate::service::jwt::encode_auth_token;
+use crate::spicedb::schema;
+use crate::spicedb::schema::PLATFORM_RESOURCE_ID;
 use axum::extract::{Query, State};
 use axum::response::{IntoResponse, Redirect};
 use axum_extra::extract::cookie::{Cookie, CookieJar, Expiration};
@@ -110,13 +113,27 @@ pub async fn google_callback(
 
     let profile = profile.json::<GoogleUserProfile>().await?;
 
-    let user_id = create_or_get_user_id(
+    let mut transaction = DBTransaction::new(&state).await?;
+
+    let (user_id, created) = create_or_get_user_id(
         profile.email.clone(),
         profile.name,
-        &state.db,
         &mut state.snowflake_generator,
+        &mut transaction,
     )
     .await?;
+
+    if created {
+        transaction.create_spicedb_relationship(
+            schema::resource::PLATFORM,
+            PLATFORM_RESOURCE_ID,
+            schema::relation::platform::USER,
+            schema::resource::USER,
+            user_id,
+        );
+    }
+
+    transaction.commit().await?;
 
     let token = encode_auth_token(
         profile.email,

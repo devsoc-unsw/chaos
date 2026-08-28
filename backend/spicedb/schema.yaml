@@ -7,8 +7,8 @@ schema: |-
   definition chaos/platform {
     relation superuser: chaos/user
     relation user: chaos/user
-    permission manage: superuser
-    permission use: user + superuser
+    permission manage = superuser
+    permission use = user + superuser
   }
   
   definition chaos/organisation {
@@ -58,10 +58,34 @@ schema: |-
       permission view = application->review
   }
 
+  definition chaos/question {
+    relation campaign: chaos/campaign
+    permission manage = campaign->manage
+  }
+  
+  definition chaos/rating_category {
+    relation campaign: chaos/campaign
+    permission manage = campaign->manage
+    permission view = campaign->review
+  }
+
+  definition chaos/category_rating {
+    relation rating: chaos/rating
+    permission edit = rating->edit
+    permission view = rating->view
+  }
+  
+  definition chaos/answer {
+    relation application: chaos/application
+    permission edit = application->edit
+    permission view = application->view
+  }
+
   definition chaos/offer {
       relation campaign: chaos/campaign
       relation application: chaos/application
       permission manage = campaign->manage
       permission view = application->creator + campaign->review
+      permission reply = application->creator
   }
   
