@@ -17,7 +17,7 @@ use std::ops::DerefMut;
 ///
 /// * `user_id` - The ID of the user to check
 /// * `answer_id` - The ID of the answer
-/// * `pool` - Database connection pool
+/// * `transaction` - Database transaction
 ///
 /// # Returns
 ///
@@ -60,7 +60,7 @@ pub async fn user_is_answer_owner(
 /// # Arguments
 ///
 /// * `answer_id` - The ID of the answer to check
-/// * `pool` - Database connection pool
+/// * `transaction` - Database transaction
 ///
 /// # Returns
 ///

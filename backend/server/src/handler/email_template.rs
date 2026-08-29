@@ -27,8 +27,8 @@ impl EmailTemplateHandler {
     /// # Arguments
     ///
     /// * `transaction` - Database transaction
-    /// * `id` - The ID of the template to retrieve
-    /// * `_user` - The authenticated user (must be an email template admin)
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageEmailTemplate>`
+    ///   (template identified by the `template_id` path parameter)
     ///
     /// # Returns
     ///
@@ -48,9 +48,9 @@ impl EmailTemplateHandler {
     ///
     /// # Arguments
     ///
-    /// * `_user` - The authenticated user (must be an email template admin)
-    /// * `id` - The ID of the template to update
-    /// * `state` - The application state
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageEmailTemplate>`
+    ///   (template identified by the `template_id` path parameter)
+    /// * `transaction` - Database transaction
     /// * `request_body` - The new template details
     ///
     /// # Returns
@@ -80,9 +80,10 @@ impl EmailTemplateHandler {
     ///
     /// # Arguments
     ///
-    /// * `_user` - The authenticated user (must be an email template admin)
-    /// * `id` - The ID of the template to delete
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageEmailTemplate>`
+    ///   (template identified by the `template_id` path parameter)
     /// * `state` - The application state
+    /// * `transaction` - Database transaction
     ///
     /// # Returns
     ///
@@ -114,9 +115,10 @@ impl EmailTemplateHandler {
     ///
     /// # Arguments
     ///
-    /// * `_user` - The authenticated user (must be an email template admin)
-    /// * `id` - The ID of the template to delete
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageEmailTemplate>`
+    ///   (template identified by the `template_id` path parameter)
     /// * `state` - The application state
+    /// * `transaction` - Database transaction
     ///
     /// # Returns
     ///

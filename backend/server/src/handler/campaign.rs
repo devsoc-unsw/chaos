@@ -32,13 +32,13 @@ pub struct CampaignHandler;
 impl CampaignHandler {
     /// Retrieves a campaign by its ID.
     ///
-    /// This handler allows any authenticated user to view campaign details.
+    /// This handler allows anyone to view campaign details.
     ///
     /// # Arguments
     ///
     /// * `transaction` - Database transaction
+    /// * `state` - The application state
     /// * `id` - The ID of the campaign to retrieve
-    /// * `_user` - The authenticated user
     ///
     /// # Returns
     ///
@@ -68,14 +68,14 @@ impl CampaignHandler {
 
     /// Retrieves a campaign by its organisation and campaign slugs.
     ///
-    /// This handler allows any authenticated user to view campaign details using slugs.
+    /// This handler allows anyone to view campaign details using slugs.
     ///
     /// # Arguments
     ///
     /// * `transaction` - Database transaction
+    /// * `state` - The application state
     /// * `organisation_slug` - The slug of the organisation
     /// * `campaign_slug` - The slug of the campaign
-    /// * `_user` - The authenticated user
     ///
     /// # Returns
     ///
@@ -114,7 +114,7 @@ impl CampaignHandler {
     /// # Arguments
     ///
     /// * `transaction` - Database transaction
-    /// * `_user` - The authenticated user
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
     ///
     /// # Returns
     ///
@@ -135,7 +135,7 @@ impl CampaignHandler {
     /// # Arguments
     ///
     /// * `auth` - The authenticated user, authorized to manage the campaign
-    ///   identified by the `campaign_id` path parameter
+    ///   identified by the `campaign_id` path parameter (`SpiceDbAuth<ManageCampaign>`)
     /// * `transaction` - Database transaction
     /// * `request_body` - The new campaign details
     ///
@@ -159,7 +159,7 @@ impl CampaignHandler {
     /// # Arguments
     ///
     /// * `auth` - The authenticated user, authorized to manage the campaign
-    ///   identified by the `campaign_id` path parameter
+    ///   identified by the `campaign_id` path parameter (`SpiceDbAuth<ManageCampaign>`)
     /// * `transaction` - Database transaction
     ///
     /// # Returns
@@ -181,7 +181,7 @@ impl CampaignHandler {
     /// # Arguments
     ///
     /// * `auth` - The authenticated user, authorized to manage the campaign
-    ///   identified by the `campaign_id` path parameter
+    ///   identified by the `campaign_id` path parameter (`SpiceDbAuth<ManageCampaign>`)
     /// * `transaction` - Database transaction
     /// * `state` - The application state
     ///
@@ -207,8 +207,9 @@ impl CampaignHandler {
     /// # Arguments
     ///
     /// * `auth` - The authenticated user, authorized to manage the campaign
-    ///   identified by the `campaign_id` path parameter
+    ///   identified by the `campaign_id` path parameter (`SpiceDbAuth<ManageCampaign>`)
     /// * `transaction` - Database transaction
+    /// * `state` - The application state
     ///
     /// # Returns
     ///
@@ -248,7 +249,7 @@ impl CampaignHandler {
     /// # Arguments
     ///
     /// * `auth` - The authenticated user, authorized to manage the campaign
-    ///   identified by the `campaign_id` path parameter
+    ///   identified by the `campaign_id` path parameter (`SpiceDbAuth<ManageCampaign>`)
     /// * `transaction` - Database transaction
     /// * `state` - The application state
     /// * `data` - The new role details
@@ -290,7 +291,7 @@ impl CampaignHandler {
     ///
     /// * `transaction` - Database transaction
     /// * `id` - The ID of the campaign
-    /// * `_user` - The authenticated user
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
     ///
     /// # Returns
     ///
@@ -313,9 +314,9 @@ impl CampaignHandler {
     /// # Arguments
     ///
     /// * `state` - The application state
-    /// * `id` - The ID of the campaign
-    /// * `user` - The authenticated user
-    /// * `_` - Ensures the campaign is open
+    /// * `campaign_id` - The ID of the campaign
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
+    /// * `_: OpenCampaign` - Ensures the campaign is open
     /// * `transaction` - Database transaction
     /// * `data` - The new application details
     ///
@@ -324,14 +325,14 @@ impl CampaignHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn create_application(
         State(mut state): State<AppState>,
-        Path(id): Path<i64>,
+        Path(campaign_id): Path<i64>,
         auth: SpiceDbAuth<UsePlatform>,
         _: OpenCampaign,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewApplication>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let application_id = Application::create(
-            id,
+            campaign_id,
             auth.user_id,
             data,
             &mut state.snowflake_generator,
@@ -344,7 +345,7 @@ impl CampaignHandler {
             application_id,
             crate::spicedb::schema::relation::application::CAMPAIGN,
             crate::spicedb::schema::resource::CAMPAIGN,
-            auth.resource_id,
+            campaign_id,
         );
 
         transaction.create_spicedb_relationship(
@@ -361,12 +362,12 @@ impl CampaignHandler {
 
     /// Retrieves all applications for a campaign.
     ///
-    /// This handler allows campaign admins to view all applications.
+    /// This handler allows campaign reviewers to view all applications.
     ///
     /// # Arguments
     ///
-    /// * `auth` - The authenticated user, authorized to manage the campaign
-    ///   identified by the `campaign_id` path parameter
+    /// * `auth` - The authenticated user, authorized to review the campaign
+    ///   identified by the `campaign_id` path parameter (`SpiceDbAuth<ReviewCampaign>`)
     /// * `transaction` - Database transaction
     ///
     /// # Returns
@@ -390,7 +391,7 @@ impl CampaignHandler {
     /// # Arguments
     ///
     /// * `auth` - The authenticated user, authorized to manage the campaign
-    ///   identified by the `campaign_id` path parameter
+    ///   identified by the `campaign_id` path parameter (`SpiceDbAuth<ManageCampaign>`)
     /// * `state` - The application state
     /// * `transaction` - Database transaction
     /// * `data` - The new offer details
@@ -443,7 +444,7 @@ impl CampaignHandler {
     /// # Arguments
     ///
     /// * `auth` - The authenticated user, authorized to manage the campaign
-    ///   identified by the `campaign_id` path parameter
+    ///   identified by the `campaign_id` path parameter (`SpiceDbAuth<ManageCampaign>`)
     /// * `transaction` - Database transaction
     ///
     /// # Returns
@@ -469,7 +470,7 @@ impl CampaignHandler {
     /// * `transaction` - Database transaction
     /// * `state` - The application state
     /// * `id` - The ID of the campaign
-    /// * `_user` - The authenticated user
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
     ///
     /// # Returns
     ///
@@ -516,14 +517,14 @@ impl CampaignHandler {
     /// # Arguments
     ///
     /// * `auth` - The authenticated user, authorized to manage the campaign
-    ///   identified by the `campaign_id` path parameter
+    ///   identified by the `campaign_id` path parameter (`SpiceDbAuth<ManageCampaign>`)
     /// * `transaction` - Database transaction
     /// * `state` - The application state
-    /// * `data` - The file metadata (name and size)
+    /// * `data` - The list of new attachment metadata (name and size)
     ///
     /// # Returns
     ///
-    /// * `Result<impl IntoResponse, ChaosError>` - Upload URL and attachment ID
+    /// * `Result<impl IntoResponse, ChaosError>` - List of attachment upload URLs and IDs
     pub async fn upload_attachments(
         auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,
@@ -549,7 +550,7 @@ impl CampaignHandler {
     /// # Arguments
     ///
     /// * `_auth` - The authenticated user, authorized to manage the campaign
-    ///   identified by the `campaign_id` path parameter
+    ///   identified by the `campaign_id` path parameter (`SpiceDbAuth<ManageCampaign>`)
     /// * `transaction` - Database transaction
     /// * `state` - The application state
     /// * `campaign_id` - The ID of the campaign owning the attachment
@@ -575,6 +576,6 @@ impl CampaignHandler {
         Storage::delete_file(storage_path, &state.storage_bucket).await?;
 
         transaction.commit().await?;
-        Ok(())
+        Ok(AppMessage::OkMessage("Successfully deleted attachment"))
     }
 }
