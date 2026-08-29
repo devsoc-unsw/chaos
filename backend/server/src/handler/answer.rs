@@ -73,7 +73,7 @@ impl AnswerHandler {
 
     /// Retrieves all common answers for an application.
     ///
-    /// This handler allows application owners to view all common answers.
+    /// This handler allows application creators and reviewers to view all common answers.
     ///
     /// # Arguments
     ///
@@ -99,7 +99,7 @@ impl AnswerHandler {
 
     /// Retrieves all answers for a specific role in an application.
     ///
-    /// This handler allows application owners to view role-specific answers.
+    /// This handler allows application creators and reviewers to view role-specific answers.
     ///
     /// # Arguments
     ///

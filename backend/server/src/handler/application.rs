@@ -226,8 +226,9 @@ impl ApplicationHandler {
 
     /// Retrieves all roles associated with a specific application.
     ///
-    /// This handler allows application owners to view all roles they have applied for
-    /// in a specific application, including their preference percentages.
+    /// This handler allows application creators and reviewers to view
+    /// all roles an applicant has applied for including their
+    /// preference percentages.
     ///
     /// # Arguments
     ///
