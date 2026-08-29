@@ -53,6 +53,7 @@ impl RoleHandler {
     ///
     /// # Arguments
     ///
+    /// * `transaction` - Database transaction
     /// * `state` - The application state
     /// * `id` - The ID of the role to delete
     /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<ManageCampaignRole>`

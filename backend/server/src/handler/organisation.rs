@@ -532,7 +532,8 @@ impl OrganisationHandler {
     ///
     /// # Returns
     ///
-    /// * `Result<impl IntoResponse, ChaosError>` - Invite code or error
+    /// * `Result<impl IntoResponse, ChaosError>` - Invite code, an empty string
+    /// when an existing user is added or an error
     pub async fn invite_user(
         mut transaction: DBTransaction<'_>,
         auth: SpiceDbAuth<ManageOrganisation>,

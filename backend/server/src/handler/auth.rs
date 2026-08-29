@@ -70,6 +70,7 @@ pub async fn google_auth_init(
 /// * `state` - The application state
 /// * `jar` - The cookie jar, used to set the auth token cookie
 /// * `query` - The OAuth2 callback query parameters containing the authorization code
+/// and optional `state` parameter used to resolve the redirect target
 ///
 /// # Returns
 ///

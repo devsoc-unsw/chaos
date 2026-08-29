@@ -325,14 +325,14 @@ impl CampaignHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn create_application(
         State(mut state): State<AppState>,
-        Path(id): Path<i64>,
+        Path(campaign_id): Path<i64>,
         auth: SpiceDbAuth<UsePlatform>,
         _: OpenCampaign,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewApplication>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let application_id = Application::create(
-            id,
+            campaign_id,
             auth.user_id,
             data,
             &mut state.snowflake_generator,
@@ -345,7 +345,7 @@ impl CampaignHandler {
             application_id,
             crate::spicedb::schema::relation::application::CAMPAIGN,
             crate::spicedb::schema::resource::CAMPAIGN,
-            auth.resource_id,
+            campaign_id,
         );
 
         transaction.create_spicedb_relationship(
@@ -524,7 +524,7 @@ impl CampaignHandler {
     ///
     /// # Returns
     ///
-    /// * `Result<impl IntoResponse, ChaosError>` - Upload URL and attachment ID
+    /// * `Result<impl IntoResponse, ChaosError>` - List of attachment upload URLs and IDs
     pub async fn upload_attachments(
         auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,
@@ -576,6 +576,6 @@ impl CampaignHandler {
         Storage::delete_file(storage_path, &state.storage_bucket).await?;
 
         transaction.commit().await?;
-        Ok(())
+        Ok(AppMessage::OkMessage("Successfully deleted attachment"))
     }
 }
