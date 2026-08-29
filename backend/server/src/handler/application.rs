@@ -307,7 +307,8 @@ impl ApplicationHandler {
 
     /// Retrieves the average ratings for all users in an application.
     ///
-    /// This handler allows campaign reviewers to view the average ratings for all users in an application.
+    /// This handler allows campaign reviewers to view the average ratings for all
+    /// applications in the campaign.
     ///
     /// # Arguments
     ///

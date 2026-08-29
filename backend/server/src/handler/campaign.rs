@@ -314,7 +314,7 @@ impl CampaignHandler {
     /// # Arguments
     ///
     /// * `state` - The application state
-    /// * `id` - The ID of the campaign
+    /// * `campaign_id` - The ID of the campaign
     /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
     /// * `_: OpenCampaign` - Ensures the campaign is open
     /// * `transaction` - Database transaction
