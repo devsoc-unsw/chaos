@@ -183,13 +183,15 @@ impl AnswerHandler {
         transaction.commit().await?;
 
         // Run SpiceDB delete after Postgres succeeds
-        spicedb::delete_all_resource_relationships(
+        let new_zedtoken = spicedb::delete_all_resource_relationships(
             &state.spicedb,
             &state.spicedb_key,
             spicedb_schema::resource::ANSWER,
             answer_id,
         )
         .await?;
+
+        spicedb::store_zedtoken(&state.spicedb_zedtoken, new_zedtoken);
 
         Ok(AppMessage::OkMessage("Successfully deleted answer"))
     }

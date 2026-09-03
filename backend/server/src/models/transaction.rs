@@ -5,15 +5,19 @@
 
 use crate::models::app::AppState;
 use crate::models::error::ChaosError;
+use crate::spicedb;
 use crate::spicedb::authzed::api::v1::{
     permissions_service_client::PermissionsServiceClient, relationship_update::Operation,
-    RelationshipUpdate,
+    RelationshipUpdate, ZedToken,
 };
-use crate::spicedb::{invert_relationship_update, new_relationship_update, write_relationships};
+use crate::spicedb::{
+    invert_relationship_update, new_relationship_update, store_zedtoken, write_relationships,
+};
 use axum::async_trait;
 use axum::extract::{FromRef, FromRequestParts};
 use axum::http::request::Parts;
 use sqlx::{Postgres, Transaction};
+use std::sync::{Arc, RwLock};
 use tonic::transport::Channel;
 
 /// A wrapper around a PostgreSQL transaction and queued SpiceDB calls.
@@ -37,6 +41,9 @@ pub struct DBTransaction<'a> {
     /// Bearer key attached to SpiceDB requests made on commit.
     spicedb_key: String,
 
+    /// Latest SpiceDB revision observed by this instance
+    spicedb_zedtoken: Arc<RwLock<Option<ZedToken>>>,
+
     /// SpiceDB relationship writes queued for application on commit.
     queued_relationship_updates: Vec<RelationshipUpdate>,
 }
@@ -47,6 +54,7 @@ impl DBTransaction<'_> {
             tx: state.db.begin().await?,
             spicedb: state.spicedb.clone(),
             spicedb_key: state.spicedb_key.clone(),
+            spicedb_zedtoken: state.spicedb_zedtoken.clone(),
             queued_relationship_updates: Vec::new(),
         })
     }
@@ -150,7 +158,8 @@ impl DBTransaction<'_> {
             .filter_map(invert_relationship_update)
             .collect();
 
-        write_relationships(
+        // It is fine if this first write fails, as the Postgres transaction will be rolled-back
+        let new_zedtoken = write_relationships(
             &self.spicedb,
             &self.spicedb_key,
             self.queued_relationship_updates,
@@ -158,15 +167,25 @@ impl DBTransaction<'_> {
         .await?;
 
         if let Err(error) = self.tx.commit().await {
-            if let Err(compensation_error) =
-                write_relationships(&self.spicedb, &self.spicedb_key, inverse_updates).await
-            {
+            // DB commit failed, so we must undo SpiceDB writes
+            let response =
+                write_relationships(&self.spicedb, &self.spicedb_key, inverse_updates).await;
+
+            if let Ok(new_zedtoken) = response {
+                // Store ZedToken from undo write
+                spicedb::store_zedtoken(&self.spicedb_zedtoken, new_zedtoken)
+            } else if let Err(compensation_error) = response {
+                // The SpiceDB undo write failed too, so SpiceDB and Postgres might have diverged
+                // TODO: Handle with reconciliation
                 return Err(ChaosError::InternalServerErrorWithMessage(format!(
                     "FATAL! Failed to compensate SpiceDB writes after Postgres commit failure: \
                          {compensation_error:?}"
                 )));
             }
             return Err(error.into());
+        } else {
+            // Only store ZedToken for first write after Postgres transaction has successfully committed
+            spicedb::store_zedtoken(&self.spicedb_zedtoken, new_zedtoken);
         }
 
         Ok(())

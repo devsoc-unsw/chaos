@@ -125,13 +125,15 @@ impl RatingHandler {
         transaction.commit().await?;
 
         // Run SpiceDB delete after Postgres succeeds
-        spicedb::delete_all_resource_relationships(
+        let new_zedtoken = spicedb::delete_all_resource_relationships(
             &state.spicedb,
             &state.spicedb_key,
             spicedb_schema::resource::RATING_CATEGORY,
             category_id,
         )
         .await?;
+
+        spicedb::store_zedtoken(&state.spicedb_zedtoken, new_zedtoken);
 
         Ok(AppMessage::OkMessage("Successfully deleted category"))
     }
@@ -359,7 +361,7 @@ impl RatingHandler {
         transaction.commit().await?;
 
         // Run SpiceDB delete after Postgres succeeds
-        spicedb::delete_all_resource_relationships(
+        let new_zedtoken = spicedb::delete_all_resource_relationships(
             &state.spicedb,
             &state.spicedb_key,
             spicedb_schema::resource::RATING,
@@ -367,15 +369,19 @@ impl RatingHandler {
         )
         .await?;
 
+        spicedb::store_zedtoken(&state.spicedb_zedtoken, new_zedtoken);
+
         // Deep delete category ratings which reference the parent rating
         for category_rating in rating.iter() {
-            spicedb::delete_all_resource_relationships(
+            let new_zedtoken = spicedb::delete_all_resource_relationships(
                 &state.spicedb,
                 &state.spicedb_key,
                 spicedb_schema::resource::CATEGORY_RATING,
                 category_rating.id,
             )
             .await?;
+
+            spicedb::store_zedtoken(&state.spicedb_zedtoken, new_zedtoken);
         }
 
         Ok(AppMessage::OkMessage("Successfully deleted rating"))
@@ -400,13 +406,15 @@ impl RatingHandler {
         transaction.commit().await?;
 
         // Run SpiceDB delete after Postgres succeeds
-        spicedb::delete_all_resource_relationships(
+        let new_zedtoken = spicedb::delete_all_resource_relationships(
             &state.spicedb,
             &state.spicedb_key,
             spicedb_schema::resource::CATEGORY_RATING,
             category_rating_id,
         )
         .await?;
+
+        spicedb::store_zedtoken(&state.spicedb_zedtoken, new_zedtoken);
 
         Ok(AppMessage::OkMessage(
             "Successfully deleted category rating",

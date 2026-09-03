@@ -237,6 +237,7 @@ impl CampaignHandler {
             comment_ids,
             &state.spicedb,
             &state.spicedb_key,
+            &state.spicedb_zedtoken,
         )
         .await?;
         Ok(AppMessage::OkMessage("Successfully deleted campaign"))
