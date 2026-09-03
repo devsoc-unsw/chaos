@@ -5,11 +5,14 @@
 
 use crate::models::app::AppState;
 use crate::models::error::ChaosError;
+use crate::spicedb;
 use crate::spicedb::authzed::api::v1::{
     permissions_service_client::PermissionsServiceClient, relationship_update::Operation,
     RelationshipUpdate, ZedToken,
 };
-use crate::spicedb::{invert_relationship_update, new_relationship_update, write_relationships};
+use crate::spicedb::{
+    invert_relationship_update, new_relationship_update, store_zedtoken, write_relationships,
+};
 use axum::async_trait;
 use axum::extract::{FromRef, FromRequestParts};
 use axum::http::request::Parts;
@@ -155,29 +158,34 @@ impl DBTransaction<'_> {
             .filter_map(invert_relationship_update)
             .collect();
 
-        write_relationships(
+        // It is fine if this first write fails, as the Postgres transaction will be rolled-back
+        let new_zedtoken = write_relationships(
             &self.spicedb,
             &self.spicedb_key,
-            &self.spicedb_zedtoken,
             self.queued_relationship_updates,
         )
         .await?;
 
         if let Err(error) = self.tx.commit().await {
-            if let Err(compensation_error) = write_relationships(
-                &self.spicedb,
-                &self.spicedb_key,
-                &self.spicedb_zedtoken,
-                inverse_updates,
-            )
-            .await
-            {
+            // DB commit failed, so we must undo SpiceDB writes
+            let response =
+                write_relationships(&self.spicedb, &self.spicedb_key, inverse_updates).await;
+
+            if let Ok(new_zedtoken) = response {
+                // Store ZedToken from undo write
+                spicedb::store_zedtoken(&self.spicedb_zedtoken, new_zedtoken)
+            } else if let Err(compensation_error) = response {
+                // The SpiceDB undo write failed too, so SpiceDB and Postgres might have diverged
+                // TODO: Handle with reconciliation
                 return Err(ChaosError::InternalServerErrorWithMessage(format!(
                     "FATAL! Failed to compensate SpiceDB writes after Postgres commit failure: \
                          {compensation_error:?}"
                 )));
             }
             return Err(error.into());
+        } else {
+            // Only store ZedToken for first write after Postgres transaction has successfully committed
+            spicedb::store_zedtoken(&self.spicedb_zedtoken, new_zedtoken);
         }
 
         Ok(())

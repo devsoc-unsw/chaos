@@ -98,14 +98,15 @@ impl EmailTemplateHandler {
         transaction.commit().await?;
 
         // Run SpiceDB delete after Postgres succeeds
-        spicedb::delete_all_resource_relationships(
+        let new_zedtoken = spicedb::delete_all_resource_relationships(
             &state.spicedb,
             &state.spicedb_key,
-            &state.spicedb_zedtoken,
             spicedb::schema::resource::EMAIL_TEMPLATE,
             auth.resource_id,
         )
         .await?;
+
+        spicedb::store_zedtoken(&state.spicedb_zedtoken, new_zedtoken);
 
         Ok(AppMessage::OkMessage("Successfully deleted email template"))
     }

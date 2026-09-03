@@ -215,49 +215,53 @@ pub async fn campaign_spicedb_deep_delete(
     spicedb_zedtoken: &RwLock<Option<ZedToken>>,
 ) -> Result<(), ChaosError> {
     // DELETE parent campaign
-    spicedb::delete_all_resource_relationships(
+    let new_zedtoken = spicedb::delete_all_resource_relationships(
         spicedb_client,
         spicedb_key,
-        spicedb_zedtoken,
         crate::spicedb::schema::resource::CAMPAIGN,
         campaign_id,
     )
     .await?;
 
+    spicedb::store_zedtoken(spicedb_zedtoken, new_zedtoken);
+
     // DELETE applications
     for application_id in application_ids {
-        spicedb::delete_all_resource_relationships(
+        let new_zedtoken = spicedb::delete_all_resource_relationships(
             spicedb_client,
             spicedb_key,
-            spicedb_zedtoken,
             crate::spicedb::schema::resource::APPLICATION,
             application_id,
         )
         .await?;
+
+        spicedb::store_zedtoken(spicedb_zedtoken, new_zedtoken);
     }
 
     // DELETE ratings
     for rating_id in rating_ids {
-        spicedb::delete_all_resource_relationships(
+        let new_zedtoken = spicedb::delete_all_resource_relationships(
             spicedb_client,
             spicedb_key,
-            spicedb_zedtoken,
             crate::spicedb::schema::resource::RATING,
             rating_id,
         )
         .await?;
+
+        spicedb::store_zedtoken(spicedb_zedtoken, new_zedtoken);
     }
 
     // DELETE comments
     for comment_id in comment_ids {
-        spicedb::delete_all_resource_relationships(
+        let new_zedtoken = spicedb::delete_all_resource_relationships(
             spicedb_client,
             spicedb_key,
-            spicedb_zedtoken,
             crate::spicedb::schema::resource::COMMENT,
             comment_id,
         )
         .await?;
+
+        spicedb::store_zedtoken(spicedb_zedtoken, new_zedtoken);
     }
 
     Ok(())

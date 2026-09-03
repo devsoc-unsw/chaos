@@ -22,6 +22,7 @@ reviews:
         - All permissions in the SpiceDB schema are reflection in src/spicedb/policies.rs.
         - Minimal Postgres queries per request. NO N+1 queries at all are allowed.
         - SpiceDB relationships are properly added into required handlers in src/handler/** as per the schema.
+        - Each new ZedToken returned from `spicedb::write_relationships()` and `spicedb::delete_all_resource_relationships()` should be stored using `spicedb::store_zedtoken()` unless a valid reason is commented.
         - All handlers that mutate the database to create or delete a resource that is also stored in SpiceDB, should create or delete the applicable SpiceDB relationships.
         - All documentation comments for functions reflect the proper function, inputs and outputs
         - All handler functions are documented in backend/api.yaml with the correct input and output schemas

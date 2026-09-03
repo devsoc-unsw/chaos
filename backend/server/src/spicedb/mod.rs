@@ -115,7 +115,7 @@ fn consistency_from_stored(zedtoken: &RwLock<Option<ZedToken>>) -> Consistency {
 /// # Returns
 ///
 /// Returns nothing
-fn store_zedtoken(zedtoken: &RwLock<Option<ZedToken>>, token: Option<ZedToken>) {
+pub fn store_zedtoken(zedtoken: &RwLock<Option<ZedToken>>, token: Option<ZedToken>) {
     if let Some(token) = token {
         *zedtoken.write().unwrap() = Some(token);
     }
@@ -292,21 +292,19 @@ pub fn invert_relationship_update(update: &RelationshipUpdate) -> Option<Relatio
 ///
 /// * `client` - Shared SpiceDB permissions client from [`AppState`]
 /// * `key` - Bearer token used to authenticate with SpiceDB
-/// * `zedtoken` - The ZedToken, if any
 /// * `updates` - The relationship updates to apply; an empty batch is a no-op
 ///
 /// # Returns
 ///
-/// * `Ok(())` if the batch was applied
+/// * `Ok(Option<ZedToken>)` if the batch was applied, a new ZedToken is returned
 /// * `Err(ChaosError::InternalServerError)` if the SpiceDB call fails
 pub async fn write_relationships(
     client: &PermissionsServiceClient<Channel>,
     key: &str,
-    zedtoken: &RwLock<Option<ZedToken>>,
     updates: Vec<RelationshipUpdate>,
-) -> Result<(), ChaosError> {
+) -> Result<Option<ZedToken>, ChaosError> {
     if updates.is_empty() {
-        return Ok(());
+        return Ok(None);
     }
 
     let request = authorized_request(
@@ -325,9 +323,7 @@ pub async fn write_relationships(
         .map_err(|_| ChaosError::InternalServerError)?
         .into_inner();
 
-    store_zedtoken(zedtoken, response.written_at);
-
-    Ok(())
+    Ok(response.written_at)
 }
 
 /// WARNING: This cannot be undone, so run after Postgres commit
@@ -347,21 +343,19 @@ pub async fn write_relationships(
 ///
 /// * `client` - SpiceDB permissions service client
 /// * `key` - Bearer token for SpiceDB authentication
-/// * `zedtoken` - The ZedToken, if any
 /// * `resource_type` - SpiceDB object type, such as `chaos/organisation`
 /// * `resource_id` - Chaos ID of the resource
 ///
 /// # Returns
 ///
-/// * `Ok(())` if all relationships were deleted
+/// * `Ok(Option<ZedToken>)` if all relationships were deleted, a new ZedToken is returned
 /// * `Err(ChaosError::InternalServerError)` on gRPC failure
 pub async fn delete_all_resource_relationships(
     client: &PermissionsServiceClient<Channel>,
     key: &str,
-    zedtoken: &RwLock<Option<ZedToken>>,
     resource_type: &str,
     resource_id: i64,
-) -> Result<(), ChaosError> {
+) -> Result<Option<ZedToken>, ChaosError> {
     // Delete all where <resource_type>:<resource_id>#relation@<anything>
     let resource_request = authorized_request(
         DeleteRelationshipsRequest {
@@ -380,14 +374,12 @@ pub async fn delete_all_resource_relationships(
         key,
     )?;
 
-    let response1 = client
+    client
         .clone()
         .delete_relationships(resource_request)
         .await
         .map_err(|_| ChaosError::InternalServerError)?
         .into_inner();
-
-    store_zedtoken(zedtoken, response1.deleted_at);
 
     // Delete all where <anything>#relation@<type>:<id>
     let subject_request = authorized_request(
@@ -418,9 +410,8 @@ pub async fn delete_all_resource_relationships(
         .map_err(|_| ChaosError::InternalServerError)?
         .into_inner();
 
-    store_zedtoken(zedtoken, response2.deleted_at);
-
-    Ok(())
+    // Only return newest ZedToken
+    Ok(response2.deleted_at)
 }
 
 /// Describes a SpiceDB authorization policy for the [`SpiceDbAuth`] extractor.
