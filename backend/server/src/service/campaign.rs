@@ -7,9 +7,11 @@
 use crate::models::error::ChaosError;
 use crate::spicedb;
 use crate::spicedb::authzed::api::v1::permissions_service_client::PermissionsServiceClient;
+use crate::spicedb::authzed::api::v1::ZedToken;
 use chrono::Utc;
 use sqlx::{Pool, Postgres, Transaction};
 use std::ops::DerefMut;
+use std::sync::RwLock;
 use tonic::transport::Channel;
 
 /// Verifies if a user has admin privileges for a campaign.
@@ -198,6 +200,7 @@ pub fn create_proper_slug(input: &str) -> String {
 /// * `comment_ids` - IDs of the campaign's comments (via its applications) to delete
 /// * `spicedb_client` - The SpiceDB permissions service client
 /// * `spicedb_key` - The SpiceDB secret key
+/// * `spicedb_zedtoken` - The latest SpiceDB ZedToken stored in `AppState`
 ///
 /// # Returns
 ///
@@ -209,11 +212,13 @@ pub async fn campaign_spicedb_deep_delete(
     comment_ids: Vec<i64>,
     spicedb_client: &PermissionsServiceClient<Channel>,
     spicedb_key: &str,
+    spicedb_zedtoken: &RwLock<Option<ZedToken>>,
 ) -> Result<(), ChaosError> {
     // DELETE parent campaign
     spicedb::delete_all_resource_relationships(
         spicedb_client,
         spicedb_key,
+        spicedb_zedtoken,
         crate::spicedb::schema::resource::CAMPAIGN,
         campaign_id,
     )
@@ -224,6 +229,7 @@ pub async fn campaign_spicedb_deep_delete(
         spicedb::delete_all_resource_relationships(
             spicedb_client,
             spicedb_key,
+            spicedb_zedtoken,
             crate::spicedb::schema::resource::APPLICATION,
             application_id,
         )
@@ -235,6 +241,7 @@ pub async fn campaign_spicedb_deep_delete(
         spicedb::delete_all_resource_relationships(
             spicedb_client,
             spicedb_key,
+            spicedb_zedtoken,
             crate::spicedb::schema::resource::RATING,
             rating_id,
         )
@@ -246,6 +253,7 @@ pub async fn campaign_spicedb_deep_delete(
         spicedb::delete_all_resource_relationships(
             spicedb_client,
             spicedb_key,
+            spicedb_zedtoken,
             crate::spicedb::schema::resource::COMMENT,
             comment_id,
         )

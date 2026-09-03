@@ -130,6 +130,7 @@ impl CommentHandler {
         spicedb::delete_all_resource_relationships(
             &state.spicedb,
             &state.spicedb_key,
+            &state.spicedb_zedtoken,
             spicedb_schema::resource::COMMENT,
             comment_id,
         )

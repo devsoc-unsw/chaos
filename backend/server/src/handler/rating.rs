@@ -128,6 +128,7 @@ impl RatingHandler {
         spicedb::delete_all_resource_relationships(
             &state.spicedb,
             &state.spicedb_key,
+            &state.spicedb_zedtoken,
             spicedb_schema::resource::RATING_CATEGORY,
             category_id,
         )
@@ -362,6 +363,7 @@ impl RatingHandler {
         spicedb::delete_all_resource_relationships(
             &state.spicedb,
             &state.spicedb_key,
+            &state.spicedb_zedtoken,
             spicedb_schema::resource::RATING,
             rating_id,
         )
@@ -372,6 +374,7 @@ impl RatingHandler {
             spicedb::delete_all_resource_relationships(
                 &state.spicedb,
                 &state.spicedb_key,
+                &state.spicedb_zedtoken,
                 spicedb_schema::resource::CATEGORY_RATING,
                 category_rating.id,
             )
@@ -403,6 +406,7 @@ impl RatingHandler {
         spicedb::delete_all_resource_relationships(
             &state.spicedb,
             &state.spicedb_key,
+            &state.spicedb_zedtoken,
             spicedb_schema::resource::CATEGORY_RATING,
             category_rating_id,
         )

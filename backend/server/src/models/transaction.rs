@@ -7,13 +7,14 @@ use crate::models::app::AppState;
 use crate::models::error::ChaosError;
 use crate::spicedb::authzed::api::v1::{
     permissions_service_client::PermissionsServiceClient, relationship_update::Operation,
-    RelationshipUpdate,
+    RelationshipUpdate, ZedToken,
 };
 use crate::spicedb::{invert_relationship_update, new_relationship_update, write_relationships};
 use axum::async_trait;
 use axum::extract::{FromRef, FromRequestParts};
 use axum::http::request::Parts;
 use sqlx::{Postgres, Transaction};
+use std::sync::{Arc, RwLock};
 use tonic::transport::Channel;
 
 /// A wrapper around a PostgreSQL transaction and queued SpiceDB calls.
@@ -37,6 +38,9 @@ pub struct DBTransaction<'a> {
     /// Bearer key attached to SpiceDB requests made on commit.
     spicedb_key: String,
 
+    /// Latest SpiceDB revision observed by this instance
+    spicedb_zedtoken: Arc<RwLock<Option<ZedToken>>>,
+
     /// SpiceDB relationship writes queued for application on commit.
     queued_relationship_updates: Vec<RelationshipUpdate>,
 }
@@ -47,6 +51,7 @@ impl DBTransaction<'_> {
             tx: state.db.begin().await?,
             spicedb: state.spicedb.clone(),
             spicedb_key: state.spicedb_key.clone(),
+            spicedb_zedtoken: state.spicedb_zedtoken.clone(),
             queued_relationship_updates: Vec::new(),
         })
     }
@@ -153,13 +158,19 @@ impl DBTransaction<'_> {
         write_relationships(
             &self.spicedb,
             &self.spicedb_key,
+            &self.spicedb_zedtoken,
             self.queued_relationship_updates,
         )
         .await?;
 
         if let Err(error) = self.tx.commit().await {
-            if let Err(compensation_error) =
-                write_relationships(&self.spicedb, &self.spicedb_key, inverse_updates).await
+            if let Err(compensation_error) = write_relationships(
+                &self.spicedb,
+                &self.spicedb_key,
+                &self.spicedb_zedtoken,
+                inverse_updates,
+            )
+            .await
             {
                 return Err(ChaosError::InternalServerErrorWithMessage(format!(
                     "FATAL! Failed to compensate SpiceDB writes after Postgres commit failure: \
