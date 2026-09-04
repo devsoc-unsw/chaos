@@ -309,6 +309,18 @@ function MultiOptionQuestionCard({ question, currentRole, possibleRole, handleQu
     const [options, setOptions] = useState<MultiOptionQuestionOption[]>(question?.data?.options ?? []);
     const [required, setRequired] = useState<boolean>(question?.required ?? false);
 
+    const updateQuestion = async (overrides: Partial<Question> = {}) => {
+        await handleQuestionUpdate('update', {
+            ...question!,
+            title,
+            description: description.trim() === "" ? null : description,
+            question_type: questionType as QuestionType,
+            data: { options },
+            required,
+            ...overrides,
+        });
+    }
+
     const handleDragEnd = async (result: DropResult) => {
         if (!result.destination) {
             return;
@@ -320,44 +332,44 @@ function MultiOptionQuestionCard({ question, currentRole, possibleRole, handleQu
         const newItems = items.map((option, index) => ({ ...option, display_order: index + 1 }));
 
         setOptions(newItems);
-        await handleQuestionUpdate('update', { ...question!, data: { options: newItems } });
+        await updateQuestion({ data: { options: newItems } });
     }
 
     const addOption = async (text: string) => {
         // Generate random id for use with DnD and to send to server (which expects i64 - as string or number)
         const newItems: MultiOptionQuestionOption[] = [...options, { id: snowflakeGenerator.generate().toString(), text: text, display_order: options.length + 1 }];
         setOptions(newItems);
-        await handleQuestionUpdate('update', { ...question!, data: { options: newItems } });
+        await updateQuestion({ data: { options: newItems } });
     }
 
     const removeOption = async (id: string) => {
         const newItems = options.filter((option) => option.id !== id);
         setOptions(newItems);
-        await handleQuestionUpdate('update', { ...question!, data: { options: newItems } });
+        await updateQuestion({ data: { options: newItems } });
     }
 
     const updateOption = async (id: string, text: string) => {
-        const newItems = options.map((option) => option.id === id ? { ...option, text: text } : option);
+        const serverText = question?.data?.options?.find((option) => option.id === id)?.text;
+        if (text === serverText) return;
+        const newItems = options.map((option) => option.id === id ? { ...option, text } : option);
         setOptions(newItems);
-        await handleQuestionUpdate('update', { ...question!, data: { options: newItems } });
+        await updateQuestion({ data: { options: newItems } });
     }
 
-    const updateTitle = async (title: string) => {
-        setTitle(title);
-        await handleQuestionUpdate('update', { ...question!, title: title });
+    const updateTitle = async () => {
+        if (title === (question?.title ?? "")) return;
+        await updateQuestion({ title });
     }
 
-    const updateDescription = async (description: string) => {
-        setDescription(description);
-        await handleQuestionUpdate('update', {
-            ...question!,
-            description: description.trim() === "" ? null : description,
-        });
+    const updateDescription = async () => {
+        const next = description.trim() === "" ? null : description;
+        if (next === (question?.description ?? null)) return;
+        await updateQuestion({ description: next });
     }
 
-    const updateQuestionType = async (questionType: string) => {
-        setQuestionType(questionType);
-        await handleQuestionUpdate('update', { ...question!, question_type: questionType as QuestionType });
+    const updateQuestionType = async (nextType: string) => {
+        setQuestionType(nextType);
+        await updateQuestion({ question_type: nextType as QuestionType });
     }
 
     const handleDeleteQuestion = async () => {
@@ -365,14 +377,13 @@ function MultiOptionQuestionCard({ question, currentRole, possibleRole, handleQu
     }
 
     const handleRemoveQuestionFromRole = async () => {
-        const updatedQuestion = { ...question!, roles: question?.roles?.filter((role) => role !== currentRole) ?? [] };
-        await handleQuestionUpdate('update', updatedQuestion);
+        await updateQuestion({ roles: question?.roles?.filter((role) => role !== currentRole) ?? [] });
     }
 
     const toggleRequired = async () => {
         const newRequired = !required;
         setRequired(newRequired);
-        await handleQuestionUpdate('update', { ...question!, required: newRequired });
+        await updateQuestion({ required: newRequired });
     }
 
     return (
@@ -380,7 +391,7 @@ function MultiOptionQuestionCard({ question, currentRole, possibleRole, handleQu
             <div className="flex flex-col gap-1">
                 <label className="text-sm text-foreground">{dict.common.title}</label>
                 <div className="flex justify-between">
-                    <Input className="max-w-[500px]" value={title} onChange={async (e) => await updateTitle(e.target.value)} />
+                    <Input className="max-w-[500px]" value={title} onChange={(e) => setTitle(e.target.value)} onBlur={updateTitle} />
                     <div className="flex items-center gap-1">
                         <Tooltip>
                             <TooltipTrigger asChild>
@@ -429,7 +440,8 @@ function MultiOptionQuestionCard({ question, currentRole, possibleRole, handleQu
                         className="max-w-[500px] min-h-[80px]"
                         placeholder="Optional info for applicants"
                         value={description}
-                        onChange={async (e) => await updateDescription(e.target.value)}
+                        onChange={(e) => setDescription(e.target.value)}
+                        onBlur={updateDescription}
                     />
                 </div>
             </div>
@@ -456,7 +468,15 @@ function MultiOptionQuestionCard({ question, currentRole, possibleRole, handleQu
                                                     <div className="mt-1">
                                                         <OptionDecorator questionType={questionType} index={index} />
                                                     </div>
-                                                    <input className="w-full focus:outline-none border-b-2 border-dotted border-gray-500 max-w-[300px]" defaultValue={option.text} onChange={async (e) => await updateOption(option.id, (e.target as HTMLInputElement).value)} />
+                                                    <input
+                                                        className="w-full focus:outline-none border-b-2 border-dotted border-gray-500 max-w-[300px]"
+                                                        value={option.text}
+                                                        onChange={(e) => {
+                                                            const text = e.target.value;
+                                                            setOptions((prev) => prev.map((item) => item.id === option.id ? { ...item, text } : item));
+                                                        }}
+                                                        onBlur={(e) => updateOption(option.id, e.target.value)}
+                                                    />
                                                 </div>
                                                 <X className="w-5 h-5 cursor-pointer text-red-500 hover:text-red-600" onClick={async () => await removeOption(option.id)} />
                                             </div>
@@ -501,23 +521,31 @@ function ShortAnswerQuestionCard({ question, currentRole, possibleRole, handleQu
     const [required, setRequired] = useState(question?.required ?? false);
     const [wordLimit, setWordLimit] = useState<number | null>(question?.short_answer_word_limit ?? null);
 
-    const updateWordLimit = async (value: string) => {
-        const parsed = value === "" ? null : parseInt(value, 10);
-        setWordLimit(parsed);
-        await handleQuestionUpdate('update', { ...question!, short_answer_word_limit: parsed });
-    };
-
-    const updateTitle = async (title: string) => {
-        setTitle(title);
-        await handleQuestionUpdate('update', { ...question!, title: title });
-    }
-
-    const updateDescription = async (description: string) => {
-        setDescription(description);
+    const updateQuestion = async (overrides: Partial<Question> = {}) => {
         await handleQuestionUpdate('update', {
             ...question!,
+            title,
             description: description.trim() === "" ? null : description,
+            required,
+            short_answer_word_limit: wordLimit,
+            ...overrides,
         });
+    }
+
+    const updateTitle = async () => {
+        if (title === (question?.title ?? "")) return;
+        await updateQuestion({ title });
+    }
+
+    const updateDescription = async () => {
+        const next = description.trim() === "" ? null : description;
+        if (next === (question?.description ?? null)) return;
+        await updateQuestion({ description: next });
+    }
+
+    const updateWordLimit = async () => {
+        if (wordLimit === (question?.short_answer_word_limit ?? null)) return;
+        await updateQuestion({ short_answer_word_limit: wordLimit });
     }
 
     const handleDeleteQuestion = async () => {
@@ -525,14 +553,13 @@ function ShortAnswerQuestionCard({ question, currentRole, possibleRole, handleQu
     }
 
     const handleRemoveQuestionFromRole = async () => {
-        const updatedQuestion = { ...question!, roles: question?.roles?.filter((role) => role !== currentRole) ?? [] };
-        await handleQuestionUpdate('update', updatedQuestion);
+        await updateQuestion({ roles: question?.roles?.filter((role) => role !== currentRole) ?? [] });
     }
 
     const toggleRequired = async () => {
         const newRequired = !required;
         setRequired(newRequired);
-        await handleQuestionUpdate('update', { ...question!, required: newRequired });
+        await updateQuestion({ required: newRequired });
     }
 
     return (
@@ -540,7 +567,7 @@ function ShortAnswerQuestionCard({ question, currentRole, possibleRole, handleQu
             <div className="flex flex-col gap-1">
                 <label className="text-sm text-foreground">{dict.common.title}</label>
                 <div className="flex justify-between">
-                    <Input className="max-w-[500px]" value={title} onChange={async (e) => await updateTitle(e.target.value)} />
+                    <Input className="max-w-[500px]" value={title} onChange={(e) => setTitle(e.target.value)} onBlur={updateTitle} />
                     <div className="flex items-center gap-1">
                         <Tooltip>
                             <TooltipTrigger asChild>
@@ -576,7 +603,8 @@ function ShortAnswerQuestionCard({ question, currentRole, possibleRole, handleQu
                     className="max-w-[500px] min-h-[80px]"
                     placeholder="Optional info for applicants"
                     value={description}
-                    onChange={async (e) => await updateDescription(e.target.value)}
+                    onChange={(e) => setDescription(e.target.value)}
+                    onBlur={updateDescription}
                 />
             </div>
             <div className="flex items-center gap-2 p-2">
@@ -587,7 +615,11 @@ function ShortAnswerQuestionCard({ question, currentRole, possibleRole, handleQu
                     className="max-w-[120px]"
                     placeholder="None"
                     value={wordLimit ?? ""}
-                    onChange={(e) => updateWordLimit(e.target.value.replace(/[^0-9]/g, ""))}
+                    onChange={(e) => {
+                        const value = e.target.value.replace(/[^0-9]/g, "");
+                        setWordLimit(value === "" ? null : parseInt(value, 10));
+                    }}
+                    onBlur={updateWordLimit}
                 />
             </div>
             <div className="flex flex-col gap-1 p-2">
