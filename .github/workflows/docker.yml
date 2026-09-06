@@ -307,9 +307,10 @@ jobs:
   # Deploy
   # ---------------------------------------------------------------------
   deploy:
-    name: Deploy (CD)
+    name: Deploy to production (CD)
     runs-on: ubuntu-latest
     needs: [merge-frontend, merge-backend]
+    if: github.ref_name == 'main'
     concurrency: ${{ github.ref_name == 'main' && 'prod' || 'staging' }}
     environment:
       name: ${{ github.ref_name == 'main' && 'prod' || 'staging' }}
