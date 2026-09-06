@@ -115,7 +115,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/devsoc-unsw/${{ env.IMAGE_NAME }}
           tags: |
-            type=sha,prefix=sha-
+            type=raw,value=${{ github.sha }}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
       - name: Create manifest list and push
