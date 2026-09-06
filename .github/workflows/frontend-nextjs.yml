@@ -18,20 +18,21 @@ jobs:
     defaults:
       run:
         working-directory: ./frontend-nextjs
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          bun-version: latest
+          node-version: 24
+          cache: "npm"
+          cache-dependency-path: frontend-nextjs/package-lock.json
 
       - name: Install dependencies
-        run: bun install
+        run: npm ci
 
       - name: Build
-        run: bun run build
+        run: npm run build
         env:
           NEXT_PUBLIC_APP_URL: http://localhost:3000
           NEXT_OAUTH_CALLBACK_URL: http://localhost:8080/auth/google
