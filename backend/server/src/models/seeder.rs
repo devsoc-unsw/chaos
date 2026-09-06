@@ -12,9 +12,7 @@ pub struct Seeder {
 
 impl Seeder {
     pub async fn init(state: AppState) -> Seeder {
-        Seeder {
-            app_state: state,
-        }
+        Seeder { app_state: state }
     }
 
     pub async fn seed_database(&mut self, admin_email: String) -> Result<(), ChaosError> {

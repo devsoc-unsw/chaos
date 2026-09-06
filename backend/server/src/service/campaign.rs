@@ -7,11 +7,9 @@
 use crate::models::error::ChaosError;
 use crate::spicedb;
 use crate::spicedb::authzed::api::v1::permissions_service_client::PermissionsServiceClient;
-use crate::spicedb::authzed::api::v1::ZedToken;
 use chrono::Utc;
 use sqlx::{Pool, Postgres, Transaction};
 use std::ops::DerefMut;
-use std::sync::RwLock;
 use tonic::transport::Channel;
 
 /// Verifies if a user has admin privileges for a campaign.
@@ -200,7 +198,6 @@ pub fn create_proper_slug(input: &str) -> String {
 /// * `comment_ids` - IDs of the campaign's comments (via its applications) to delete
 /// * `spicedb_client` - The SpiceDB permissions service client
 /// * `spicedb_key` - The SpiceDB secret key
-/// * `spicedb_zedtoken` - The latest SpiceDB ZedToken stored in `AppState`
 ///
 /// # Returns
 ///
@@ -212,10 +209,9 @@ pub async fn campaign_spicedb_deep_delete(
     comment_ids: Vec<i64>,
     spicedb_client: &PermissionsServiceClient<Channel>,
     spicedb_key: &str,
-    spicedb_zedtoken: &RwLock<Option<ZedToken>>,
 ) -> Result<(), ChaosError> {
     // DELETE parent campaign
-    let new_zedtoken = spicedb::delete_all_resource_relationships(
+    spicedb::delete_all_resource_relationships(
         spicedb_client,
         spicedb_key,
         crate::spicedb::schema::resource::CAMPAIGN,
@@ -223,45 +219,37 @@ pub async fn campaign_spicedb_deep_delete(
     )
     .await?;
 
-    spicedb::store_zedtoken(spicedb_zedtoken, new_zedtoken);
-
     // DELETE applications
     for application_id in application_ids {
-        let new_zedtoken = spicedb::delete_all_resource_relationships(
+        spicedb::delete_all_resource_relationships(
             spicedb_client,
             spicedb_key,
             crate::spicedb::schema::resource::APPLICATION,
             application_id,
         )
         .await?;
-
-        spicedb::store_zedtoken(spicedb_zedtoken, new_zedtoken);
     }
 
     // DELETE ratings
     for rating_id in rating_ids {
-        let new_zedtoken = spicedb::delete_all_resource_relationships(
+        spicedb::delete_all_resource_relationships(
             spicedb_client,
             spicedb_key,
             crate::spicedb::schema::resource::RATING,
             rating_id,
         )
         .await?;
-
-        spicedb::store_zedtoken(spicedb_zedtoken, new_zedtoken);
     }
 
     // DELETE comments
     for comment_id in comment_ids {
-        let new_zedtoken = spicedb::delete_all_resource_relationships(
+        spicedb::delete_all_resource_relationships(
             spicedb_client,
             spicedb_key,
             crate::spicedb::schema::resource::COMMENT,
             comment_id,
         )
         .await?;
-
-        spicedb::store_zedtoken(spicedb_zedtoken, new_zedtoken);
     }
 
     Ok(())

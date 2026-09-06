@@ -71,8 +71,9 @@ use std::{collections::HashMap, marker::PhantomData};
 use tonic::{metadata::MetadataValue, transport::Channel, Request};
 
 use crate::spicedb::authzed::api::v1::{
-    schema_service_client::SchemaServiceClient, DeleteRelationshipsRequest, RelationshipFilter,
-    SubjectFilter, WriteSchemaRequest, ZedToken,
+    schema_service_client::SchemaServiceClient, watch_service_client::WatchServiceClient,
+    DeleteRelationshipsRequest, RelationshipFilter, SubjectFilter, WatchKind, WatchRequest,
+    WriteSchemaRequest, ZedToken,
 };
 use crate::spicedb::schema::PLATFORM_RESOURCE_ID;
 use crate::{
@@ -108,6 +109,18 @@ fn consistency_from_stored(zedtoken: &RwLock<Option<ZedToken>>) -> Consistency {
 
 /// Store given ZedToken into `RwLock`
 ///
+/// The stored token is the freshness boundary supplied to
+/// [`consistency_from_stored`]. It must never go backwards, or later
+/// authorization checks would use an outdated `AtLeastAsFresh` boundary.
+///
+/// ZedTokens are opaque to clients (SpiceDB revisions are not byte-sortable
+/// and their wire format is datastore-specific), so this function cannot
+/// compare tokens itself. Monotonicity is instead guaranteed by its only
+/// caller, [`spawn_zedtoken_watcher`], which feeds tokens in ascending
+/// revision order from the Watch API stream. Do not call this from write
+/// paths: an older write finishing last would unconditionally overwrite a
+/// newer token.
+///
 /// # Arguments
 ///
 /// * `zedtoken` - The ZedToken lock in `AppState`
@@ -116,14 +129,81 @@ fn consistency_from_stored(zedtoken: &RwLock<Option<ZedToken>>) -> Consistency {
 /// # Returns
 ///
 /// Returns nothing
-pub fn store_zedtoken(zedtoken: &RwLock<Option<ZedToken>>, token: Option<ZedToken>) {
+fn store_zedtoken(zedtoken: &RwLock<Option<ZedToken>>, token: Option<ZedToken>) {
     if let Some(token) = token {
         *zedtoken.write().unwrap() = Some(token);
     }
 }
 
-/// Builds a SpiceDB request with the bearer-token metadata attached.
+/// Tracks SpiceDB revisions in the background, keeping the stored ZedToken
+/// monotonically increasing.
 ///
+/// This is the single writer of the stored token (see [`store_zedtoken`]).
+/// It streams relationship changes via the Watch API, which delivers every
+/// response's `changes_through` token in ascending revision order, so the
+/// shared freshness boundary only ever moves forward.
+///
+/// Each (re)connection starts from the current head revision rather than
+/// resuming from the stored token, because the head is always at or past the
+/// stored token, keeps the stream monotonic across reconnects, and sidesteps
+/// garbage-collection errors for stale cursors. Requests include checkpoints
+/// so the stream stays alive while idle.
+///
+/// # Arguments
+///
+/// * `app_state` - The application state holding the SpiceDB client, key and
+///   shared zedtoken lock
+///
+/// # Returns
+///
+/// Never returns; runs until the process exits.
+pub async fn spawn_zedtoken_watcher(app_state: AppState) {
+    loop {
+        let endpoint =
+            std::env::var("SPICEDB_GRPC_ENDPOINT").expect("SPICEDB_GRPC_ENDPOINT must be set");
+        let channel = Channel::from_shared(endpoint)
+            .expect("SPICEDB_GRPC_ENDPOINT must be a valid URI")
+            .connect_lazy();
+        let mut client = WatchServiceClient::new(channel);
+
+        let request = match authorized_request(
+            WatchRequest {
+                optional_object_types: Vec::new(),
+                optional_start_cursor: None,
+                optional_relationship_filters: Vec::new(),
+                optional_update_kinds: vec![
+                    WatchKind::IncludeRelationshipUpdates as i32,
+                    WatchKind::IncludeCheckpoints as i32,
+                ],
+            },
+            &app_state.spicedb_key,
+        ) {
+            Ok(request) => request,
+            Err(error) => {
+                println!("Failed to build SpiceDB watch request: {error}");
+                tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
+                continue;
+            }
+        };
+
+        match client.watch(request).await {
+            Ok(response) => {
+                let mut stream = response.into_inner();
+                while let Ok(Some(response)) = stream.message().await {
+                    if let Some(token) = response.changes_through {
+                        store_zedtoken(&app_state.spicedb_zedtoken, Some(token));
+                    }
+                }
+            }
+            Err(error) => println!("SpiceDB watch stream failed: {error}"),
+        }
+
+        tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
+    }
+}
+
+/// Builds a SpiceDB request with the bearer-token metadata attached.
+//
 /// # Arguments
 ///
 /// * `message` - The protobuf request body
