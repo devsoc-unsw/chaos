@@ -16,9 +16,13 @@ async fn main() -> Result<(), ChaosError> {
 
     let (app, state_clone) = app().await?;
 
-    // Run migrations
+    // Run DB migrations
     sqlx::migrate!("../migrations").run(&state_clone.db).await?;
     println!("Migrations ran successfully!");
+
+    // Run SpiceDB migrations (upsert the schema from spicedb/schema.yaml)
+    spicedb::migrate_schema().await?;
+    println!("SpiceDB migrations ran successfully!");
 
     let super_user_email =
         std::env::var("CHAOS_SUPER_USER_EMAIL").expect("CHAOS_SUPER_USER_EMAIL must be set");

@@ -71,7 +71,8 @@ use std::{collections::HashMap, marker::PhantomData};
 use tonic::{metadata::MetadataValue, transport::Channel, Request};
 
 use crate::spicedb::authzed::api::v1::{
-    DeleteRelationshipsRequest, RelationshipFilter, SubjectFilter, ZedToken,
+    schema_service_client::SchemaServiceClient, DeleteRelationshipsRequest, RelationshipFilter,
+    SubjectFilter, WriteSchemaRequest, ZedToken,
 };
 use crate::spicedb::schema::PLATFORM_RESOURCE_ID;
 use crate::{
@@ -143,6 +144,47 @@ fn authorized_request<T>(message: T, key: &str) -> Result<Request<T>, ChaosError
         .insert("authorization", authorization);
 
     Ok(request)
+}
+
+/// Applies the SpiceDB schema from `backend/spicedb/schema.yaml` to the
+/// SpiceDB server via `WriteSchema`.
+///
+/// This is an idempotent upsert of the full schema. It keeps the schema in
+/// sync at server startup in environments without
+/// `SPICEDB_DATASTORE_BOOTSTRAP_FILES` (e.g. production).
+///
+/// # Returns
+///
+/// * `Ok(())` if the schema was written
+/// * `Err(ChaosError::InternalServerError)` if the SpiceDB call fails
+pub async fn migrate_schema() -> Result<(), ChaosError> {
+    let endpoint =
+        std::env::var("SPICEDB_GRPC_ENDPOINT").expect("SPICEDB_GRPC_ENDPOINT must be set");
+    let key = std::env::var("SPICEDB_KEY").expect("SPICEDB_KEY must be set");
+    let channel = Channel::from_shared(endpoint)
+        .expect("SPICEDB_GRPC_ENDPOINT must be a valid URI")
+        .connect_lazy();
+    let mut client = SchemaServiceClient::new(channel);
+
+    // schema.yaml holds a single `schema: |-` block scalar; strip the
+    // header and the block's 2-space indentation instead of pulling in a YAML dep.
+    let schema = include_str!("../../../spicedb/schema.yaml")
+        .split_once("schema: |-")
+        .expect("spicedb/schema.yaml must contain `schema: |-`")
+        .1
+        .lines()
+        .map(|line| line.strip_prefix("  ").unwrap_or(line))
+        .collect::<Vec<_>>()
+        .join("\n")
+        .trim()
+        .to_owned();
+
+    let request = authorized_request(WriteSchemaRequest { schema }, &key)?;
+    client
+        .write_schema(request)
+        .await
+        .map_err(|_| ChaosError::InternalServerError)?;
+    Ok(())
 }
 
 /// Checks whether a user holds a permission on a SpiceDB resource.
