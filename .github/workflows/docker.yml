@@ -19,6 +19,8 @@ jobs:
   sqlx-prepare:
     name: Prepare SQLx offline metadata
     runs-on: ubuntu-latest
+    permissions:
+        contents: read
     services:
       postgres:
         image: postgres:16
@@ -62,6 +64,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: sqlx-metadata
+          include-hidden-files: true
           path: backend/server/.sqlx
           retention-days: 1
 
