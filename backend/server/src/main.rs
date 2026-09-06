@@ -26,7 +26,7 @@ async fn main() -> Result<(), ChaosError> {
 
     let super_user_email =
         std::env::var("CHAOS_SUPER_USER_EMAIL").expect("CHAOS_SUPER_USER_EMAIL must be set");
-    let mut seeder = Seeder::init().await;
+    let mut seeder = Seeder::init(state_clone.clone()).await;
     seeder.seed_database(super_user_email).await?;
 
     let email_db = state_clone.db.clone();

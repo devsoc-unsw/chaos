@@ -156,7 +156,9 @@ fn authorized_request<T>(message: T, key: &str) -> Result<Request<T>, ChaosError
 /// # Returns
 ///
 /// * `Ok(())` if the schema was written
-/// * `Err(ChaosError::InternalServerError)` if the SpiceDB call fails
+/// * `Err(ChaosError::InternalServerError)` if the SpiceDB call fails. This
+/// can be due to missing env variables, an invalid endpoint or a schema without
+/// the proper `schema: |-` marker.
 pub async fn migrate_schema() -> Result<(), ChaosError> {
     let endpoint =
         std::env::var("SPICEDB_GRPC_ENDPOINT").expect("SPICEDB_GRPC_ENDPOINT must be set");
@@ -179,6 +181,8 @@ pub async fn migrate_schema() -> Result<(), ChaosError> {
         .trim()
         .to_owned();
 
+    // This call can block the server binding to port 8080 as migrate_schema() is called before in main.rs
+    // however this is expected behaviour as an unresponsive SpiceDB should prevent the server from running.
     let request = authorized_request(WriteSchemaRequest { schema }, &key)?;
     client
         .write_schema(request)

@@ -11,9 +11,9 @@ pub struct Seeder {
 }
 
 impl Seeder {
-    pub async fn init() -> Seeder {
+    pub async fn init(state: AppState) -> Seeder {
         Seeder {
-            app_state: init_app_state().await,
+            app_state: state,
         }
     }
 
