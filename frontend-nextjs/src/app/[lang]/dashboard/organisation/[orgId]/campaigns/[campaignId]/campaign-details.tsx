@@ -217,7 +217,7 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                 {/* <Button variant="outline" className="cursor-pointer w-full justify-center sm:w-auto">
                   <Trash className="w-4 h-4" /> {dict.dashboard.actions.delete}
                 </Button> */}
-                {!campaign?.published && (
+                {/* {!campaign?.published && ( */}
                   <>
                     <ButtonGroup className="w-full sm:w-auto flex-col sm:flex-row gap-2 sm:gap-0 [&>*]:w-full sm:[&>*]:w-auto">
                       <Link href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}/questions`} className="w-full sm:w-auto">
@@ -234,7 +234,7 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                       />
                     </ButtonGroup>
                   </>
-                )}
+                {/* )} */}
               </>
             )}
 
