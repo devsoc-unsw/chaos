@@ -4,12 +4,14 @@ export default function ErrorCard({
   details,
   imageSrc = "/chaos.png",
   imageAlt = "Error",
+  children,
 }: {
   title: string;
   message: string;
   details?: string;
   imageSrc?: string;
   imageAlt?: string;
+  children?: React.ReactNode;
 }) {
   return (
     <div className="min-h-screen font-sans flex flex-col items-center justify-center px-6">
@@ -38,6 +40,7 @@ export default function ErrorCard({
             </>
           )}
         </p>
+        {children}
       </div>
     </div>
   );
