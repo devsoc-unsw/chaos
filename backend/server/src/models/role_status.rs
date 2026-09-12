@@ -93,12 +93,14 @@ impl RoleStatus {
     ///
     /// # Arguments
     /// * `campaign_role_id` - The campaign role to fetch the role statuses for.
+    /// * `campaign_id` - The campaign the campaign role must belong to.
     /// * `transaction` - Database transaction to use.
     ///
     /// # Returns
     /// A vector of all the per-campaign-role statuses for the campaign role.
     pub async fn get_all_for_campaign_role(
         campaign_role_id: i64,
+        campaign_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<RoleStatus>, ChaosError> {
         // Fetch all per-campaign statuses for the campaign role
@@ -106,11 +108,13 @@ impl RoleStatus {
             RoleStatus,
             r#"
                 SELECT application_id, campaign_role_id, role_status AS "status: ApplicationStatus"
-                       FROM application_roles
-                WHERE campaign_role_id = $1
+                       FROM application_roles ar
+                JOIN campaign_roles cr ON cr.id = ar.campaign_role_id
+                WHERE campaign_role_id = $1 AND cr.campaign_id = $2
                 ORDER BY campaign_role_id
             "#,
-            campaign_role_id
+            campaign_role_id,
+            campaign_id
         )
         .fetch_all(transaction.deref_mut())
         .await?;

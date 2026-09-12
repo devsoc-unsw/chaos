@@ -171,22 +171,23 @@ impl EmailTemplate {
     ///
     /// # Arguments
     /// * `id` - The ID of the template to duplicate
-    /// * `pool` - A reference to the database connection pool
+    /// * `transaction` - A mutable reference to the database transaction
+    /// * `snowflake_generator` - Generator for the new template's unique ID
     ///
     /// # Returns
     /// Returns a `Result` containing either:
-    /// * `Ok(())` - If the deletion was successful
-    /// * `Err(ChaosError)` - An error if the deletion fails
+    /// * `Ok((i64, i64))` - The new template's ID and its organisation's ID
+    /// * `Err(ChaosError)` - If duplication fails
     pub async fn duplicate(
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
         snowflake_generator: &mut SnowflakeIdGenerator,
-    ) -> Result<(), ChaosError> {
+    ) -> Result<(i64, i64), ChaosError> {
         let template = EmailTemplate::get(id, transaction).await?;
 
         let duplicate_prevention_id = nanoid!(6, &NANOID_ALPHABET);
         let new_template_name = format!("{} (Copy {})", template.name, duplicate_prevention_id);
-        Organisation::create_email_template(
+        let new_template_id = Organisation::create_email_template(
             template.organisation_id,
             new_template_name,
             template.template_subject,
@@ -196,7 +197,7 @@ impl EmailTemplate {
         )
         .await?;
 
-        Ok(())
+        Ok((new_template_id, template.organisation_id))
     }
 
     /// Generates an email using a template and provided data.

@@ -43,14 +43,12 @@ pub struct DBTransaction<'a> {
 
 impl DBTransaction<'_> {
     pub async fn new(state: &AppState) -> Result<Self, ChaosError> {
-        Ok(
-            DBTransaction {
-                tx: state.db.begin().await?,
-                spicedb: state.spicedb.clone(),
-                spicedb_key: state.spicedb_key.clone(),
-                queued_relationship_updates: Vec::new(),
-            }
-        )
+        Ok(DBTransaction {
+            tx: state.db.begin().await?,
+            spicedb: state.spicedb.clone(),
+            spicedb_key: state.spicedb_key.clone(),
+            queued_relationship_updates: Vec::new(),
+        })
     }
 
     /// Queues the creation of a SpiceDB relationship, applied by
@@ -163,12 +161,10 @@ impl DBTransaction<'_> {
             if let Err(compensation_error) =
                 write_relationships(&self.spicedb, &self.spicedb_key, inverse_updates).await
             {
-                return Err(ChaosError::InternalServerErrorWithMessage(
-                    format!(
-                        "Failed to compensate SpiceDB writes after Postgres commit failure: \
+                return Err(ChaosError::InternalServerErrorWithMessage(format!(
+                    "FATAL! Failed to compensate SpiceDB writes after Postgres commit failure: \
                          {compensation_error:?}"
-                    )
-                ))
+                )));
             }
             return Err(error.into());
         }
