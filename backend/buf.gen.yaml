@@ -1,0 +1,9 @@
+version: v2
+clean: true
+
+plugins:
+  - remote: buf.build/community/neoeinstein-prost
+    out: server/src/spicedb/generated
+
+  - remote: buf.build/community/neoeinstein-tonic
+    out: server/src/spicedb/generated

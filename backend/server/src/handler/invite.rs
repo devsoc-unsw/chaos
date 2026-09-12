@@ -28,7 +28,7 @@ impl InviteHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         let invite = Invite::get_by_code(&code, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage(invite))
     }
 
@@ -85,7 +85,7 @@ impl InviteHandler {
         // Mark the invite as used.
         Invite::mark_used(&code, auth_user.user_id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Invite accepted successfully"))
     }
 }

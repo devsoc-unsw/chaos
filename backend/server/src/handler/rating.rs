@@ -47,7 +47,7 @@ impl RatingHandler {
         )
         .await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok((StatusCode::OK, Json(category)))
     }
@@ -67,7 +67,7 @@ impl RatingHandler {
         let categories =
             Rating::get_categories_by_campaign(campaign_id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok((StatusCode::OK, Json(categories)))
     }
@@ -89,7 +89,7 @@ impl RatingHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Rating::update_category(category_id, data.name, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(AppMessage::OkMessage("Successfully updated category name."))
     }
@@ -109,7 +109,7 @@ impl RatingHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Rating::delete_category(category_id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(AppMessage::OkMessage("Successfully deleted category"))
     }
@@ -153,7 +153,7 @@ impl RatingHandler {
             .await?;
         }
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(AppMessage::OkMessage(
             "Successfully created application rating together with all category ratings.",
@@ -174,7 +174,7 @@ impl RatingHandler {
     // ) -> Result<impl IntoResponse, ChaosError> {
     //     let rating = Rating::get_rating(rating_id, &mut transaction.tx).await?;
 
-    //     transaction.tx.commit().await?;
+    //     transaction.commit().await?;
 
     //     Ok((StatusCode::OK, Json(rating)))
     // }
@@ -195,7 +195,7 @@ impl RatingHandler {
             Rating::get_all_ratings_from_application_id(application_id, &mut transaction.tx)
                 .await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok((StatusCode::OK, Json(ratings)))
     }
@@ -216,7 +216,7 @@ impl RatingHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Rating::update_application_rating(rating_id, data.comment, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(AppMessage::OkMessage("Successfully updated rating"))
     }
@@ -244,7 +244,7 @@ impl RatingHandler {
         )
         .await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(AppMessage::OkMessage(
             "Successfully created category rating for existing application rating",
@@ -269,7 +269,7 @@ impl RatingHandler {
         Rating::update_category_rating(category_rating_id, data.rating, &mut transaction.tx)
             .await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(AppMessage::OkMessage(
             "Successfully updated category rating",
@@ -290,7 +290,7 @@ impl RatingHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Rating::delete_application_rating(rating_id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(AppMessage::OkMessage("Successfully deleted rating"))
     }
@@ -310,7 +310,7 @@ impl RatingHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Rating::delete_category_rating(category_rating_id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(AppMessage::OkMessage(
             "Successfully deleted category rating",
