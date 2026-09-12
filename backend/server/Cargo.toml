@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 # Primary crates
-tokio = { version = "1.34", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.34", features = ["macros", "rt-multi-thread", "sync"] }
 axum = { version = "0.7", features = ["macros"] }
 axum-extra = { version = "0.9.6", features = ["typed-header", "cookie"] }
 sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "chrono", "uuid"] }

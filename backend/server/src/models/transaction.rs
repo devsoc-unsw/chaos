@@ -9,11 +9,16 @@ use crate::spicedb::authzed::api::v1::{
     permissions_service_client::PermissionsServiceClient, relationship_update::Operation,
     RelationshipUpdate,
 };
-use crate::spicedb::{invert_relationship_update, new_relationship_update, write_relationships};
+use crate::spicedb::{
+    invert_relationship_update, new_relationship_update, register_pending_write,
+    resolve_pending_write, write_relationships, ZedTokenPublicationGate,
+};
 use axum::async_trait;
 use axum::extract::{FromRef, FromRequestParts};
 use axum::http::request::Parts;
 use sqlx::{Postgres, Transaction};
+use std::sync::Arc;
+use tokio::sync::{Mutex, Notify};
 use tonic::transport::Channel;
 
 /// A wrapper around a PostgreSQL transaction and queued SpiceDB calls.
@@ -37,6 +42,13 @@ pub struct DBTransaction<'a> {
     /// Bearer key attached to SpiceDB requests made on commit.
     spicedb_key: String,
 
+    /// Gates Watch token publication while this commit's write is pending;
+    /// see [`AppState::spicedb_publication_gate`].
+    spicedb_publication_gate: Arc<Mutex<ZedTokenPublicationGate>>,
+
+    /// Wakes the Watch task when this commit resolves the last pending write.
+    spicedb_publication_notify: Arc<Notify>,
+
     /// SpiceDB relationship writes queued for application on commit.
     queued_relationship_updates: Vec<RelationshipUpdate>,
 }
@@ -47,6 +59,8 @@ impl DBTransaction<'_> {
             tx: state.db.begin().await?,
             spicedb: state.spicedb.clone(),
             spicedb_key: state.spicedb_key.clone(),
+            spicedb_publication_gate: state.spicedb_publication_gate.clone(),
+            spicedb_publication_notify: state.spicedb_publication_notify.clone(),
             queued_relationship_updates: Vec::new(),
         })
     }
@@ -129,10 +143,18 @@ impl DBTransaction<'_> {
     ///    compensation writes the inverse relationship updates to SpiceDB, so
     ///    the net effect is that neither system changes.
     ///
-    /// Step 2 failing *and* the compensation also failing leaves SpiceDB
-    /// ahead of Postgres; this residual risk is inherent to dual writes and
-    /// must be handled by reconciliation, with Postgres as the source of
-    /// truth.
+    /// Before step 1, this commit registers a pending write on
+    /// [`AppState::spicedb_publication_gate`]. While the write is pending the
+    /// Watch task defers tokens, so no concurrent permission check can
+    /// observe a relationship whose Postgres commit may still fail. The write
+    /// is resolved once it reaches a final state: the first SpiceDB write
+    /// failing, the Postgres commit succeeding, or compensation succeeding.
+    ///
+    /// If the Postgres commit fails *and* compensation also fails, SpiceDB
+    /// and Postgres have diverged. The pending write is intentionally NOT
+    /// resolved, leaving the gate closed so no further Watch token is
+    /// published, and the fatal error below is returned; the process should
+    /// stop or enter an unhealthy state (TODO: implement).
     ///
     /// # Returns
     ///
@@ -150,33 +172,64 @@ impl DBTransaction<'_> {
             .filter_map(invert_relationship_update)
             .collect();
 
+        // Register the pending write *before* the first SpiceDB write: the
+        // Watch stream can report the revision as soon as the write lands,
+        // and the gate must already be closed so the token is deferred.
+        register_pending_write(&self.spicedb_publication_gate).await;
+
         // It is fine if this first write fails, as the Postgres transaction will be rolled-back
-        write_relationships(
+        match write_relationships(
             &self.spicedb,
             &self.spicedb_key,
             self.queued_relationship_updates,
         )
-        .await?;
-
-        if let Err(error) = self.tx.commit().await {
-            // DB commit failed, so we must undo SpiceDB writes
-            let response =
-                write_relationships(&self.spicedb, &self.spicedb_key, inverse_updates).await;
-
-            // ZedTokens need not be stored here; the Watch-based
-            // `spicedb::spawn_zedtoken_watcher` tracks all revisions.
-            if let Err(compensation_error) = response {
-                // The SpiceDB undo write failed too, so SpiceDB and Postgres might have diverged
-                // TODO: Handle with reconciliation
-                return Err(ChaosError::InternalServerErrorWithMessage(format!(
-                    "FATAL! Failed to compensate SpiceDB writes after Postgres commit failure: \
-                         {compensation_error:?}"
-                )));
+        .await
+        {
+            Err(error) => {
+                // Nothing was applied to SpiceDB, so there is nothing to undo.
+                resolve_pending_write(
+                    &self.spicedb_publication_gate,
+                    &self.spicedb_publication_notify,
+                )
+                .await;
+                return Err(error);
             }
-            return Err(error.into());
+            Ok(_) => {}
         }
 
-        Ok(())
+        match self.tx.commit().await {
+            Ok(()) => {
+                resolve_pending_write(
+                    &self.spicedb_publication_gate,
+                    &self.spicedb_publication_notify,
+                )
+                .await;
+                Ok(())
+            }
+            Err(error) => {
+                // DB commit failed, so we must undo SpiceDB writes
+                match write_relationships(&self.spicedb, &self.spicedb_key, inverse_updates).await {
+                    Ok(_) => {
+                        // Compensation succeeded; the write is resolved.
+                        resolve_pending_write(
+                            &self.spicedb_publication_gate,
+                            &self.spicedb_publication_notify,
+                        )
+                        .await;
+                        Err(error.into())
+                    }
+                    Err(compensation_error) => {
+                        // Fatal: the gate stays closed on purpose, so no token
+                        // covering the unresolved relationship is published.
+                        // TODO: Handle with reconciliation
+                        Err(ChaosError::InternalServerErrorWithMessage(format!(
+                            "FATAL! Failed to compensate SpiceDB writes after Postgres commit \
+                             failure: {compensation_error:?}"
+                        )))
+                    }
+                }
+            }
+        }
     }
 }
 

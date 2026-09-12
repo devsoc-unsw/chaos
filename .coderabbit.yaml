@@ -22,7 +22,7 @@ reviews:
         - All permissions in the SpiceDB schema are reflection in src/spicedb/policies.rs.
         - Minimal Postgres queries per request. NO N+1 queries at all are allowed.
         - SpiceDB relationships are properly added into required handlers in src/handler/** as per the schema.
-        - ZedTokens are stored exclusively by the Watch-based `spicedb::spawn_zedtoken_watcher()` task, which tracks revisions in ascending order. Do not call `spicedb::store_zedtoken()` from write paths: an older write finishing last would regress the shared freshness boundary.
+        - ZedTokens are stored exclusively by the Watch-based `spicedb::spawn_zedtoken_watcher()` task, which tracks revisions in ascending order and gates publication behind `AppState::spicedb_publication_gate` (`pending_writes`/`deferred_token`) while `DBTransaction` writes are unresolved. Do not call `spicedb::store_zedtoken()` from write paths, and do not resolve a pending write when compensation fails.
         - All handlers that mutate the database to create or delete a resource that is also stored in SpiceDB, should create or delete the applicable SpiceDB relationships.
         - All documentation comments for functions reflect the proper function, inputs and outputs
         - All handler functions are documented in backend/api.yaml with the correct input and output schemas
@@ -31,6 +31,7 @@ reviews:
     - path: 'backend/migrations/**/*'
       instructions: |
         "Confirm that the code adheres to the following:
+        - No existing file should be changed or deleted. Any changes to tables should be made via new files that migrate the schema.
         - Postgres schema best practices.
         - Minimal to no array columns - everything should be normalised.
         - No data duplication between tables."

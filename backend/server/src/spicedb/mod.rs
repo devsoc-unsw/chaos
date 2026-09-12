@@ -66,8 +66,9 @@ use axum::{
     http::request::Parts,
     RequestPartsExt,
 };
-use std::sync::RwLock;
+use std::sync::{Arc, RwLock};
 use std::{collections::HashMap, marker::PhantomData};
+use tokio::sync::{Mutex, Notify};
 use tonic::{metadata::MetadataValue, transport::Channel, Request};
 
 use crate::spicedb::authzed::api::v1::{
@@ -115,11 +116,11 @@ fn consistency_from_stored(zedtoken: &RwLock<Option<ZedToken>>) -> Consistency {
 ///
 /// ZedTokens are opaque to clients (SpiceDB revisions are not byte-sortable
 /// and their wire format is datastore-specific), so this function cannot
-/// compare tokens itself. Monotonicity is instead guaranteed by its only
-/// caller, [`spawn_zedtoken_watcher`], which feeds tokens in ascending
-/// revision order from the Watch API stream. Do not call this from write
-/// paths: an older write finishing last would unconditionally overwrite a
-/// newer token.
+/// compare tokens itself. Monotonicity is instead guaranteed by the Watch
+/// task ([`spawn_zedtoken_watcher`]), which feeds tokens in ascending
+/// revision order and gates them behind pending `DBTransaction` writes. Do
+/// not call this from write paths: an older write finishing last would
+/// unconditionally overwrite a newer token.
 ///
 /// # Arguments
 ///
@@ -135,6 +136,114 @@ fn store_zedtoken(zedtoken: &RwLock<Option<ZedToken>>, token: Option<ZedToken>) 
     }
 }
 
+/// Shared state gating publication of Watch tokens.
+///
+/// `pending_writes` counts `DBTransaction` commits that have applied a
+/// SpiceDB relationship write whose Postgres transaction has not reached a
+/// final state (committed, or compensated after failure). `deferred_token`
+/// holds the newest Watch token received while the gate was closed. Both are
+/// protected by a single async mutex; only the Watch task writes the
+/// published token in [`AppState::spicedb_zedtoken`].
+pub struct ZedTokenPublicationGate {
+    /// Number of pending SpiceDB writes with an unresolved Postgres commit.
+    pub pending_writes: usize,
+
+    /// Newest Watch token received while `pending_writes` was non-zero.
+    pub deferred_token: Option<ZedToken>,
+}
+
+impl ZedTokenPublicationGate {
+    /// Create a gate with no pending writes and no deferred token.
+    pub fn new() -> Self {
+        Self {
+            pending_writes: 0,
+            deferred_token: None,
+        }
+    }
+}
+
+/// Registers a pending SpiceDB relationship write on the gate.
+///
+/// Must be called *before* the SpiceDB write RPC: the Watch stream can
+/// report the revision as soon as the write lands, and the gate must already
+/// be closed by then, or the token would be published while the Postgres
+/// commit is still at risk.
+///
+/// # Arguments
+///
+/// * `gate` - The shared publication gate
+pub async fn register_pending_write(gate: &Arc<Mutex<ZedTokenPublicationGate>>) {
+    gate.lock().await.pending_writes += 1;
+}
+
+/// Resolves a pending SpiceDB relationship write on the gate.
+///
+/// Notifies the Watch task when the last pending write resolves, so it can
+/// publish the deferred token even while SpiceDB is idle. Do not call this
+/// on a compensation failure: SpiceDB and Postgres have then diverged and
+/// the gate must stay closed.
+///
+/// # Arguments
+///
+/// * `gate` - The shared publication gate
+/// * `notify` - Waker for the Watch task
+pub async fn resolve_pending_write(
+    gate: &Arc<Mutex<ZedTokenPublicationGate>>,
+    notify: &Arc<Notify>,
+) {
+    let mut gate = gate.lock().await;
+    gate.pending_writes -= 1;
+    if gate.pending_writes == 0 {
+        notify.notify_one();
+    }
+}
+
+/// Defers or publishes a Watch token depending on the gate.
+///
+/// While any write is pending, the token is held back: its revision may
+/// include relationships whose Postgres commit has not succeeded yet. Once
+/// the gate is open, the token is published and any older deferred token is
+/// dropped as covered (the stream delivers tokens in ascending revision
+/// order, so a freshly delivered token is never older than the deferred
+/// one).
+///
+/// # Arguments
+///
+/// * `gate` - The shared publication gate
+/// * `zedtoken` - The shared published token lock
+/// * `token` - The token delivered by the Watch stream
+async fn defer_or_publish(
+    gate: &Arc<Mutex<ZedTokenPublicationGate>>,
+    zedtoken: &Arc<RwLock<Option<ZedToken>>>,
+    token: ZedToken,
+) {
+    let mut gate = gate.lock().await;
+    if gate.pending_writes > 0 {
+        gate.deferred_token = Some(token);
+    } else {
+        gate.deferred_token = None;
+        store_zedtoken(&*zedtoken, Some(token));
+    }
+}
+
+/// Publishes the deferred token once the gate is open.
+///
+/// # Arguments
+///
+/// * `gate` - The shared publication gate
+/// * `zedtoken` - The shared published token lock
+async fn publish_deferred(
+    gate: &Arc<Mutex<ZedTokenPublicationGate>>,
+    zedtoken: &Arc<RwLock<Option<ZedToken>>>,
+) {
+    let mut gate = gate.lock().await;
+    if gate.pending_writes == 0 {
+        if let Some(token) = std::mem::take(&mut gate.deferred_token) {
+            store_zedtoken(&*zedtoken, Some(token));
+        }
+    }
+}
+
 /// Tracks SpiceDB revisions in the background, keeping the stored ZedToken
 /// monotonically increasing.
 ///
@@ -142,6 +251,15 @@ fn store_zedtoken(zedtoken: &RwLock<Option<ZedToken>>, token: Option<ZedToken>) 
 /// It streams relationship changes via the Watch API, which delivers every
 /// response's `changes_through` token in ascending revision order, so the
 /// shared freshness boundary only ever moves forward.
+///
+/// Publication is gated on [`ZedTokenPublicationGate`]: while any
+/// `DBTransaction` commit has an uncommitted SpiceDB write, tokens are
+/// deferred instead of published. A pending write's revision may contain
+/// relationships that Postgres has not committed yet (and may still reject
+/// and compensate), so publishing it could let a concurrent check authorize
+/// a relationship that is later removed. When the last pending write
+/// resolves, the task is woken via [`Notify`] and publishes the deferred
+/// token.
 ///
 /// Each (re)connection starts from the current head revision rather than
 /// resuming from the stored token, because the head is always at or past the
@@ -189,10 +307,39 @@ pub async fn spawn_zedtoken_watcher(app_state: AppState) {
         match client.watch(request).await {
             Ok(response) => {
                 let mut stream = response.into_inner();
-                while let Ok(Some(response)) = stream.message().await {
-                    if let Some(token) = response.changes_through {
-                        store_zedtoken(&app_state.spicedb_zedtoken, Some(token));
+                'stream: loop {
+                    tokio::select! {
+                        message = stream.message() => {
+                            match message {
+                                Ok(Some(response)) => {
+                                    // Defer while a DBTransaction write is
+                                    // pending; publish once the gate is open.
+                                    if let Some(token) = response.changes_through {
+                                        defer_or_publish(
+                                            &app_state.spicedb_publication_gate,
+                                            &app_state.spicedb_zedtoken,
+                                            token,
+                                        )
+                                        .await;
+                                    }
+                                }
+                                Ok(None) => break 'stream,
+                                Err(error) => {
+                                    println!("SpiceDB watch stream error: {error}");
+                                    break 'stream;
+                                }
+                            }
+                        }
+                        _ = app_state.spicedb_publication_notify.notified() => {}
                     }
+
+                    // A pending write may have resolved while SpiceDB is
+                    // idle; publish its deferred token now.
+                    publish_deferred(
+                        &app_state.spicedb_publication_gate,
+                        &app_state.spicedb_zedtoken,
+                    )
+                    .await;
                 }
             }
             Err(error) => println!("SpiceDB watch stream failed: {error}"),
