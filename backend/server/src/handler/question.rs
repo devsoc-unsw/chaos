@@ -31,7 +31,7 @@ impl QuestionHandler {
     ///
     /// * `state` - The application state
     /// * `campaign_id` - The ID of the campaign
-    /// * `auth` - The authenticated user, authorized to manage the campaign
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageCampaign>`
     /// * `transaction` - Database transaction
     /// * `data` - The new question details
     ///
@@ -79,7 +79,7 @@ impl QuestionHandler {
     ///
     /// * `campaign_id` - The ID of the campaign
     /// * `role_id` - The ID of the role
-    /// * `_user` - The authenticated user
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
     /// * `transaction` - Database transaction
     ///
     /// # Returns
@@ -106,7 +106,7 @@ impl QuestionHandler {
     /// # Arguments
     ///
     /// * `campaign_id` - The ID of the campaign
-    /// * `_user` - The authenticated user
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
     /// * `transaction` - Database transaction
     ///
     /// # Returns
@@ -134,7 +134,7 @@ impl QuestionHandler {
     /// * `state` - The application state
     /// * `campaign_id` - The ID of the campaign
     /// * `question_id` - The ID of the question to update
-    /// * `auth` - The authenticated user, authorized to manage the campaign
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<ManageCampaign>`
     /// * `transaction` - Database transaction
     /// * `data` - The new question details
     ///
@@ -184,8 +184,10 @@ impl QuestionHandler {
     ///
     /// * `campaign_id` - The ID of the campaign
     /// * `question_id` - The ID of the question to delete
-    /// * `auth` - The authenticated user, authorized to manage the campaign
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<ManageCampaign>`
     /// * `transaction` - Database transaction
+    /// * `state` - The application state
+    /// * `_: ClosedCampaign` - Ensures the campaign is closed (only questions for closed campaigns can be deleted)
     ///
     /// # Returns
     ///

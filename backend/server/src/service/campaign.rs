@@ -20,7 +20,7 @@ use tonic::transport::Channel;
 ///
 /// * `user_id` - The ID of the user to check
 /// * `campaign_id` - The ID of the campaign
-/// * `pool` - Database connection pool
+/// * `transaction` - Database transaction
 ///
 /// # Returns
 ///
@@ -53,6 +53,20 @@ pub async fn user_is_campaign_admin(
     Ok(())
 }
 
+/// Verifies if a user is a member of the organisation that owns a campaign.
+///
+/// This function checks if the user is a member (of any role) of the organisation
+/// that owns the campaign.
+///
+/// # Arguments
+///
+/// * `user_id` - The ID of the user to check
+/// * `campaign_id` - The ID of the campaign
+/// * `transaction` - Database transaction
+///
+/// # Returns
+///
+/// * `Result<(), ChaosError>` - Ok if the user is a member, Unauthorized error otherwise
 pub async fn user_is_campaign_org_member(
     user_id: i64,
     campaign_id: i64,
@@ -88,7 +102,7 @@ pub async fn user_is_campaign_org_member(
 /// # Arguments
 ///
 /// * `campaign_id` - The ID of the campaign to check
-/// * `pool` - Database connection pool
+/// * `transaction` - Database transaction
 ///
 /// # Returns
 ///
@@ -114,6 +128,18 @@ pub async fn assert_campaign_is_open(
     Ok(())
 }
 
+/// Converts an input string into a URL-friendly slug.
+///
+/// This function replaces runs of non-alphanumeric characters with a single hyphen,
+/// removes leading/trailing hyphens, and lowercases the result.
+///
+/// # Arguments
+///
+/// * `input` - The string to convert into a slug
+///
+/// # Returns
+///
+/// * `String` - The slugified string
 pub fn create_proper_slug(input: &str) -> String {
     let mut result = String::new();
     let mut last_char_was_hyphen = false; // To handle consecutive non-alphanumeric chars

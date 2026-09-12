@@ -55,13 +55,12 @@ pub struct QueueOutcomeEmailsRequest {
 impl OfferHandler {
     /// Retrieves the details of a specific offer.
     ///
-    /// This handler allows campaign admins and the offer's recipient to view offer details.
+    /// This handler allows users authorized to view the offer to retrieve offer details.
     ///
     /// # Arguments
     ///
     /// * `transaction` - Database transaction
-    /// * `id` - The ID of the offer to retrieve
-    /// * `_auth` - The authenticated user (must be able to view the offer)
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ViewOffer>`
     ///
     /// # Returns
     ///
@@ -78,13 +77,13 @@ impl OfferHandler {
 
     /// Deletes an offer.
     ///
-    /// This handler allows offer admins to delete offers.
+    /// This handler allows users authorized to manage the offer to delete offers.
     ///
     /// # Arguments
     ///
     /// * `transaction` - Database transaction
-    /// * `id` - The ID of the offer to delete
-    /// * `_user` - The authenticated user (must be an offer admin)
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageOffer>`
+    /// * `state` - The application state
     ///
     /// # Returns
     ///
@@ -116,8 +115,7 @@ impl OfferHandler {
     /// # Arguments
     ///
     /// * `transaction` - Database transaction
-    /// * `id` - The ID of the offer to reply to
-    /// * `_user` - The authenticated user (must be the offer recipient)
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ReplyOffer>`
     /// * `reply` - The recipient's response
     ///
     /// # Returns
@@ -136,13 +134,12 @@ impl OfferHandler {
 
     /// Previews the email that will be sent for an offer.
     ///
-    /// This handler allows offer admins to preview the offer email before sending.
+    /// This handler allows users authorized to manage the offer to preview the offer email before sending.
     ///
     /// # Arguments
     ///
     /// * `transaction` - Database transaction
-    /// * `id` - The ID of the offer
-    /// * `_user` - The authenticated user (must be an offer admin)
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageOffer>`
     ///
     /// # Returns
     ///
@@ -159,13 +156,12 @@ impl OfferHandler {
 
     /// Sends an offer email to the recipient.
     ///
-    /// This handler allows offer admins to send offer emails.
+    /// This handler allows users authorized to manage the offer to send offer emails.
     ///
     /// # Arguments
     ///
     /// * `transaction` - Database transaction
-    /// * `id` - The ID of the offer to send
-    /// * `_user` - The authenticated user (must be an offer admin)
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageOffer>`
     /// * `state` - The application state containing email credentials
     ///
     /// # Returns
@@ -189,7 +185,18 @@ impl OfferHandler {
 
     /// Queues outcome emails for the worker (`EmailQueue`, same pipeline as offer email queue).
     ///
-    /// Auth matches viewing application ratings summary: org member for the campaign.
+    /// This handler allows users authorized to manage the campaign to queue outcome emails for delivery.
+    ///
+    /// # Arguments
+    ///
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageCampaign>`
+    /// * `transaction` - Database transaction
+    /// * `state` - The application state
+    /// * `body` - The outcome emails to queue
+    ///
+    /// # Returns
+    ///
+    /// * `Result<impl IntoResponse, ChaosError>` - Success message with the number of queued emails or error
     pub async fn queue_outcome_emails(
         auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,

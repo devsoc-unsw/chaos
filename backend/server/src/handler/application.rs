@@ -85,7 +85,7 @@ impl ApplicationHandler {
     /// # Arguments
     ///
     /// * `campaign_id` - ID of the campaign to check
-    /// * `user` - The authenticated user
+    /// * `auth` - The authenticated user, authorized to use the platform (`SpiceDbAuth<UsePlatform>`)
     /// * `transaction` - Database transaction
     ///
     /// # Returns
@@ -106,12 +106,12 @@ impl ApplicationHandler {
 
     /// Retrieves the details of a specific application.
     ///
-    /// This handler allows application admins to view application details.
+    /// This handler allows application reviewers to view application details.
     ///
     /// # Arguments
     ///
     /// * `application_id` - The ID of the application to retrieve
-    /// * `_admin` - The authenticated user (must be an application admin)
+    /// * `auth` - The authenticated reviewer, authorized by `SpiceDbAuth<ReviewApplication>`
     /// * `transaction` - Database transaction
     ///
     /// # Returns
@@ -135,7 +135,7 @@ impl ApplicationHandler {
     /// # Arguments
     ///
     /// * `application_id` - The ID of the application to retrieve
-    /// * `_admin` - The authenticated user (must be an application admin)
+    /// * `auth` - The authenticated applicant, authorized by `SpiceDbAuth<EditApplication>`
     /// * `transaction` - Database transaction
     ///
     /// # Returns
@@ -154,13 +154,13 @@ impl ApplicationHandler {
 
     /// Updates the status of an application.
     ///
-    /// This handler allows application admins to update the application's status.
+    /// This handler allows application reviewers to update the application's status.
     ///
     /// # Arguments
     ///
-    /// * `state` - The application state
     /// * `application_id` - The ID of the application to update
-    /// * `_admin` - The authenticated user (must be an application admin)
+    /// * `_auth` - The authenticated reviewer, authorized by `SpiceDbAuth<ReviewApplication>`
+    /// * `transaction` - Database transaction
     /// * `data` - The new application status
     ///
     /// # Returns
@@ -179,13 +179,13 @@ impl ApplicationHandler {
 
     /// Updates the private status of an application.
     ///
-    /// This handler allows application admins to update the application's private status.
+    /// This handler allows application reviewers to update the application's private status.
     ///
     /// # Arguments
     ///
-    /// * `state` - The application state
     /// * `application_id` - The ID of the application to update
-    /// * `_admin` - The authenticated user (must be an application admin)
+    /// * `_auth` - The authenticated reviewer, authorized by `SpiceDbAuth<ReviewApplication>`
+    /// * `transaction` - Database transaction
     /// * `data` - The new private status
     ///
     /// # Returns
@@ -208,7 +208,7 @@ impl ApplicationHandler {
     ///
     /// # Arguments
     ///
-    /// * `user` - The authenticated user
+    /// * `auth` - The authenticated user, authorized to use the platform (`SpiceDbAuth<UsePlatform>`)
     /// * `transaction` - Database transaction
     ///
     /// # Returns
@@ -226,12 +226,13 @@ impl ApplicationHandler {
 
     /// Retrieves all roles associated with a specific application.
     ///
-    /// This handler allows application owners to view all roles they have applied for
-    /// in a specific application, including their preference percentages.
+    /// This handler allows application creators and reviewers to view
+    /// all roles an applicant has applied for including their
+    /// preference percentages.
     ///
     /// # Arguments
     ///
-    /// * `_user` - The authenticated user (must be the application owner)
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<ViewApplication>`
     /// * `application_id` - The ID of the application to retrieve roles for
     /// * `transaction` - Database transaction
     ///
@@ -255,7 +256,8 @@ impl ApplicationHandler {
     ///
     /// # Arguments
     ///
-    /// * `_user` - The authenticated user (must be the application owner)
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<EditApplication>`
+    /// * `_: OpenApplicationByApplicationId` - Ensures the application is open
     /// * `application_id` - The ID of the application to update
     /// * `transaction` - Database transaction
     /// * `data` - The new role assignments
@@ -284,8 +286,8 @@ impl ApplicationHandler {
     ///
     /// # Arguments
     ///
-    /// * `_user` - The authenticated user (must be the application owner)
-    /// * `_` - Ensures the application is open
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<EditApplication>`
+    /// * `_: OpenApplicationByApplicationId` - Ensures the application is open
     /// * `application_id` - The ID of the application to submit
     /// * `transaction` - Database transaction
     ///
@@ -303,201 +305,15 @@ impl ApplicationHandler {
         Ok(AppMessage::OkMessage("Successfully submitted application"))
     }
 
-    /// Retrieves the rating for an application given by the current user.
-    ///
-    /// This handler allows application reviewers to view their rating for an application.
-    ///
-    /// # Arguments
-    ///
-    /// * `application_id` - The ID of the application to get the rating for
-    /// * `admin` - The authenticated user (must be an application reviewer)
-    /// * `transaction` - Database transaction
-    ///
-    /// # Returns
-    ///
-    /// * `Result<impl IntoResponse, ChaosError>` - Rating details with all category scores or error
-    pub async fn get_rating_by_current_user(
-        Path(application_id): Path<i64>,
-        auth: SpiceDbAuth<ReviewApplication>,
-        mut transaction: DBTransaction<'_>,
-    ) -> Result<impl IntoResponse, ChaosError> {
-        let rating =
-            Rating::get_rating_details(application_id, auth.user_id, &mut transaction.tx).await?;
-        transaction.commit().await?;
-        Ok((StatusCode::OK, Json(rating)))
-    }
-
-    /// Creates a new rating for an application with comment and category scores.
-    ///
-    /// This handler allows application reviewers to create ratings.
-    /// First creates the application_rating with comment, then creates all category ratings.
-    ///
-    /// # Arguments
-    ///
-    /// * `state` - The application state
-    /// * `application_id` - The ID of the application to rate
-    /// * `admin` - The authenticated user (must be an application reviewer)
-    /// * `transaction` - Database transaction
-    /// * `new_rating` - The rating details including comment and category scores
-    ///
-    /// # Returns
-    ///
-    /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
-    pub async fn create_rating(
-        State(mut state): State<AppState>,
-        Path(application_id): Path<i64>,
-        auth: SpiceDbAuth<ReviewApplication>,
-        mut transaction: DBTransaction<'_>,
-        Json(new_rating): Json<NewRating>,
-    ) -> Result<impl IntoResponse, ChaosError> {
-        // First create the application_rating with comment
-        let application_rating_id = Rating::create_application_rating(
-            new_rating.comment,
-            application_id,
-            auth.user_id,
-            &mut state.snowflake_generator,
-            &mut transaction.tx,
-        )
-        .await?;
-
-        transaction.create_spicedb_relationship(
-            spicedb_schema::resource::RATING,
-            application_rating_id,
-            spicedb_schema::relation::rating::APPLICATION,
-            spicedb_schema::resource::APPLICATION,
-            application_id,
-        );
-
-        transaction.create_spicedb_relationship(
-            spicedb_schema::resource::RATING,
-            application_rating_id,
-            spicedb_schema::relation::rating::CREATOR,
-            spicedb_schema::resource::USER,
-            auth.user_id,
-        );
-
-        // Then loop through and create each category rating
-        for category_rating in new_rating.category_ratings {
-            let category_rating_id = Rating::create_category_rating(
-                category_rating,
-                application_rating_id,
-                &mut state.snowflake_generator,
-                &mut transaction.tx,
-            )
-            .await?;
-
-            transaction.create_spicedb_relationship(
-                spicedb_schema::resource::CATEGORY_RATING,
-                category_rating_id,
-                spicedb_schema::relation::category_rating::RATING,
-                spicedb_schema::resource::RATING,
-                application_rating_id,
-            );
-        }
-
-        transaction.commit().await?;
-        Ok(AppMessage::OkMessage("Successfully created rating"))
-    }
-
-    pub async fn update_rating(
-        State(mut state): State<AppState>,
-        Path(application_id): Path<i64>,
-        auth: SpiceDbAuth<ReviewApplication>,
-        mut transaction: DBTransaction<'_>,
-        Json(updated_rating): Json<NewRating>,
-    ) -> Result<impl IntoResponse, ChaosError> {
-        // Get the existing rating for this user and application
-        let rating =
-            Rating::get_rating_details(application_id, auth.user_id, &mut transaction.tx).await?;
-
-        // Update the comment
-        Rating::update_application_rating(rating.id, updated_rating.comment, &mut transaction.tx)
-            .await?;
-
-        // Get existing category ratings and delete them
-        let existing_category_ratings =
-            Rating::get_all_category_ratings_from_application_rating_id(
-                rating.id,
-                &mut transaction.tx,
-            )
-            .await?;
-
-        for category_rating in existing_category_ratings.clone() {
-            Rating::delete_category_rating(
-                category_rating.id,
-                category_rating.application_rating_id,
-                &mut transaction.tx,
-            )
-            .await?;
-        }
-
-        // Create new category ratings
-        for category_rating in updated_rating.category_ratings {
-            let category_rating_id = Rating::create_category_rating(
-                category_rating,
-                rating.id,
-                &mut state.snowflake_generator,
-                &mut transaction.tx,
-            )
-            .await?;
-
-            transaction.create_spicedb_relationship(
-                spicedb_schema::resource::CATEGORY_RATING,
-                category_rating_id,
-                spicedb_schema::relation::category_rating::RATING,
-                spicedb_schema::resource::RATING,
-                rating.id,
-            );
-        }
-
-        transaction.commit().await?;
-
-        // Run deletes after Postgres transaction successfully commits
-        for category_rating in existing_category_ratings {
-            spicedb::delete_all_resource_relationships(
-                &state.spicedb,
-                &state.spicedb_key,
-                crate::spicedb::schema::resource::CATEGORY_RATING,
-                category_rating.id,
-            )
-            .await?;
-        }
-        Ok(AppMessage::OkMessage("Successfully updated rating"))
-    }
-
-    /// Retrieves all ratings for an application.
-    ///
-    /// This handler allows application reviewers to view all ratings for an application.
-    ///
-    /// # Arguments
-    ///
-    /// * `application_id` - The ID of the application
-    /// * `_admin` - The authenticated user (must be an application reviewer)
-    /// * `transaction` - Database transaction
-    ///
-    /// # Returns
-    ///
-    /// * `Result<impl IntoResponse, ChaosError>` - List of ratings with all category scores or error
-    pub async fn get_ratings(
-        Path(application_id): Path<i64>,
-        _auth: SpiceDbAuth<ReviewApplication>,
-        mut transaction: DBTransaction<'_>,
-    ) -> Result<impl IntoResponse, ChaosError> {
-        let ratings =
-            Rating::get_all_ratings_from_application_id(application_id, &mut transaction.tx)
-                .await?;
-        transaction.commit().await?;
-        Ok((StatusCode::OK, Json(ratings)))
-    }
-
     /// Retrieves the average ratings for all users in an application.
     ///
-    /// This handler allows application reviewers to view the average ratings for all users in an application.
+    /// This handler allows campaign reviewers to view the average ratings for all
+    /// applications in the campaign.
     ///
     /// # Arguments
     ///
-    /// * `_user` - The authenticated user (must be an application reviewer)
-    /// * `application_id` - The ID of the application
+    /// * `_auth` - The authenticated reviewer, authorized by `SpiceDbAuth<ReviewCampaign>`
+    /// * `campaign_id` - The ID of the campaign
     /// * `transaction` - Database transaction
     ///
     /// # Returns
@@ -524,7 +340,7 @@ impl ApplicationHandler {
     /// # Arguments
     ///
     /// * `application_id` - The ID of the application
-    /// * `_user` - The authenticated user (must be the application owner or a reviewer)
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<ViewApplication>`
     /// * `transaction` - Database transaction
     ///
     /// # Returns

@@ -29,9 +29,9 @@ impl RoleHandler {
     ///
     /// # Arguments
     ///
-    /// * `state` - The application state
+    /// * `transaction` - Database transaction
     /// * `id` - The ID of the role to retrieve
-    /// * `_user` - The authenticated user
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
     ///
     /// # Returns
     ///
@@ -49,13 +49,14 @@ impl RoleHandler {
 
     /// Deletes a role.
     ///
-    /// This handler allows role admins to delete roles.
+    /// This handler allows users authorized to manage the campaign role to delete roles.
     ///
     /// # Arguments
     ///
+    /// * `transaction` - Database transaction
     /// * `state` - The application state
     /// * `id` - The ID of the role to delete
-    /// * `_admin` - The authenticated user (must be a role admin)
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<ManageCampaignRole>`
     ///
     /// # Returns
     ///
@@ -84,13 +85,13 @@ impl RoleHandler {
 
     /// Updates a role.
     ///
-    /// This handler allows role admins to update role details.
+    /// This handler allows users authorized to manage the campaign role to update role details.
     ///
     /// # Arguments
     ///
-    /// * `state` - The application state
+    /// * `transaction` - Database transaction
     /// * `id` - The ID of the role to update
-    /// * `_admin` - The authenticated user (must be a role admin)
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<ManageCampaignRole>`
     /// * `data` - The new role details
     ///
     /// # Returns
@@ -110,12 +111,12 @@ impl RoleHandler {
 
     /// Retrieves all applications for a specific role.
     ///
-    /// This handler allows role admins to view all applications for a role.
+    /// This handler allows users authorized to manage the campaign role to view all applications for a role.
     ///
     /// # Arguments
     ///
     /// * `id` - The ID of the role
-    /// * `_admin` - The authenticated user (must be a role admin)
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageCampaignRole>`
     /// * `transaction` - Database transaction
     ///
     /// # Returns

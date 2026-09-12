@@ -18,7 +18,7 @@ use std::ops::DerefMut;
 ///
 /// * `user_id` - The ID of the user to check
 /// * `offer_id` - The ID of the offer
-/// * `pool` - Database connection pool
+/// * `transaction` - Database transaction
 ///
 /// # Returns
 ///
@@ -60,7 +60,7 @@ pub async fn assert_user_is_offer_admin(
 ///
 /// * `user_id` - The ID of the user to check
 /// * `offer_id` - The ID of the offer
-/// * `pool` - Database connection pool
+/// * `transaction` - Database transaction
 ///
 /// # Returns
 ///

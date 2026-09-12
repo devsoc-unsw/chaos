@@ -25,7 +25,7 @@ impl CommentHandler {
     /// # Arguments
     /// * `state` - Application state (includes snowflake generator).
     /// * `application_id` - ID of the application being commented on.
-    /// * `admin` - Authenticated user allowed to review the application.
+    /// * `auth` - Authenticated reviewer, authorized by `SpiceDbAuth<ReviewApplication>`.
     /// * `transaction` - Database transaction wrapper.
     /// * `data` - New comment payload.
     ///
@@ -73,7 +73,7 @@ impl CommentHandler {
     /// # Arguments
     /// * `application_id` - ID of the application the comment belongs to.
     /// * `comment_id` - ID of the comment to edit.
-    /// * `admin` - Authenticated user allowed to review the application.
+    /// * `auth` - Authenticated user, authorized by `SpiceDbAuth<EditComment>`.
     /// * `transaction` - Database transaction wrapper.
     /// * `data` - Updated comment payload.
     ///
@@ -104,8 +104,9 @@ impl CommentHandler {
     /// # Arguments
     /// * `application_id` - ID of the application the comment belongs to.
     /// * `comment_id` - ID of the comment to delete.
-    /// * `admin` - Authenticated user allowed to review the application.
+    /// * `auth` - Authenticated user, authorized by `SpiceDbAuth<EditComment>`.
     /// * `transaction` - Database transaction wrapper.
+    /// * `state` - Application state.
     ///
     /// # Returns
     /// Returns an OK message on success.
@@ -141,7 +142,7 @@ impl CommentHandler {
     ///
     /// # Arguments
     /// * `application_id` - ID of the application to fetch the comments for.
-    /// * `_admin` - Authenticated user allowed to review the application.
+    /// * `_auth` - Authenticated reviewer, authorized by `SpiceDbAuth<ReviewApplication>`.
     /// * `transaction` - Database transaction wrapper.
     ///
     /// # Returns
@@ -164,7 +165,7 @@ impl CommentHandler {
     /// # Arguments
     /// * `application_id` - ID of the application that owns the comment.
     /// * `comment_id` - ID of the comment being marked as read.
-    /// * `admin` - Authenticated user allowed to review the application.
+    /// * `auth` - Authenticated reviewer, authorized by `SpiceDbAuth<ReviewApplication>`.
     /// * `transaction` - Database transaction wrapper.
     ///
     /// # Returns
@@ -196,7 +197,7 @@ impl CommentHandler {
     ///
     /// # Arguments
     /// * `application_id` - ID of the application whose comments are being marked read.
-    /// * `admin` - Authenticated user allowed to review the application.
+    /// * `auth` - Authenticated reviewer, authorized by `SpiceDbAuth<ReviewApplication>`.
     /// * `transaction` - Database transaction wrapper.
     ///
     /// # Returns
@@ -225,7 +226,7 @@ impl CommentHandler {
     ///
     /// # Arguments
     /// * `application_id` - ID of the application to count unread comments for.
-    /// * `admin` - Authenticated user allowed to review the application.
+    /// * `auth` - Authenticated reviewer, authorized by `SpiceDbAuth<ReviewApplication>`.
     /// * `transaction` - Database transaction wrapper.
     ///
     /// # Returns
