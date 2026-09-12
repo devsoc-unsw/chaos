@@ -17,7 +17,8 @@ use crate::models::error::ChaosError;
 use crate::models::storage::Storage;
 use crate::service::oauth2::build_oauth_client;
 use crate::spicedb::authzed::api::v1::permissions_service_client::PermissionsServiceClient;
-use crate::spicedb::check_permission;
+use crate::spicedb::authzed::api::v1::ZedToken;
+use crate::spicedb::{check_permission, ZedTokenPublicationGate};
 use axum::http::{header, Method, StatusCode};
 use axum::response::IntoResponse;
 use axum::routing::{delete, get, patch, post, put};
@@ -31,6 +32,8 @@ use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 use std::env;
+use std::sync::{Arc, RwLock};
+use tokio::sync::{Mutex, Notify};
 use tonic::transport::Channel;
 use tower_http::cors::CorsLayer;
 
@@ -110,6 +113,9 @@ pub struct AppState {
     pub email_credentials: EmailCredentials,
     pub spicedb: PermissionsServiceClient<Channel>,
     pub spicedb_key: String,
+    pub spicedb_zedtoken: Arc<RwLock<Option<ZedToken>>>,
+    pub spicedb_publication_gate: Arc<Mutex<ZedTokenPublicationGate>>,
+    pub spicedb_publication_notify: Arc<Notify>,
 }
 
 impl AppState {
@@ -143,6 +149,7 @@ impl AppState {
         check_permission(
             &self.spicedb,
             &self.spicedb_key,
+            &self.spicedb_zedtoken,
             user_id,
             resource_type,
             resource_id,
@@ -214,6 +221,9 @@ pub async fn init_app_state() -> AppState {
         .expect("SPICEDB_GRPC_ENDPOINT must be a valid URI")
         .connect_lazy();
     let spicedb = PermissionsServiceClient::new(spicedb_channel);
+    let spicedb_zedtoken = Arc::new(RwLock::new(None));
+    let spicedb_publication_gate = Arc::new(Mutex::new(ZedTokenPublicationGate::new()));
+    let spicedb_publication_notify = Arc::new(Notify::new());
 
     // Add all data to AppState
 
@@ -231,6 +241,9 @@ pub async fn init_app_state() -> AppState {
         email_credentials,
         spicedb,
         spicedb_key,
+        spicedb_zedtoken,
+        spicedb_publication_gate,
+        spicedb_publication_notify,
     }
 }
 
