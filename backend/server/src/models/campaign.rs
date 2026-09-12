@@ -630,10 +630,11 @@ impl Campaign {
         transaction: &mut Transaction<'_, Postgres>,
         snowflake_generator: &mut SnowflakeIdGenerator,
     ) -> Result<i64, ChaosError> {
-        let campaign = Self::get(campaign_id, transaction).await?;
-        if campaign.published {
-            return Err(ChaosError::BadRequest);
-        }
+
+        // let campaign = Self::get(campaign_id, transaction).await?;
+        // if campaign.published {
+        //     return Err(ChaosError::BadRequest);
+        // }
         Role::create(campaign_id, role_data, transaction, snowflake_generator).await
     }
 }
