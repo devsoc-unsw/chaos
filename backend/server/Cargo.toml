@@ -31,3 +31,9 @@ handlebars = "6.2"
 lettre = { version = "0.11", default-features = false, features = ["tokio1-rustls-tls", "smtp-transport", "builder"] }
 time = "0.3.37"
 tower-http = { version = "0.6", features = ["cors"] }
+
+# SpiceDB
+tonic = { version = "0.14", features = ["transport"] }
+tonic-prost = "0.14"
+prost = "0.14"
+prost-types = "0.14"

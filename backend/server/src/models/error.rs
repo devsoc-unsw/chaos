@@ -96,6 +96,10 @@ pub enum ChaosError {
     #[error("SMTP transport error")]
     SmtpTransportError(#[from] lettre::transport::smtp::Error),
 
+    /// Internal server error with detailed message
+    #[error("Internal server error: {0}")]
+    InternalServerErrorWithMessage(String),
+
     // not covered by any other error
     #[error("Internal server error")]
     InternalServerError,
@@ -113,6 +117,7 @@ impl ChaosError {
             | ChaosError::CampaignClosed
             | ChaosError::InternalServerError => println!("{:?}", self),
             ChaosError::BadRequestWithMessage(e) => println!("Bad Request: {}", e),
+            ChaosError::InternalServerErrorWithMessage(e) => println!("Internal server error: {}", e), // TODO: Handle error message internally and only send vague message
             ChaosError::DatabaseError(e) => println!("Database error: {}", e),
             ChaosError::MigrationError(e) => println!("Migration error: {}", e),
             ChaosError::ReqwestError(e) => println!("Reqwest error: {}", e),

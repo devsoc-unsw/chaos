@@ -53,7 +53,7 @@ impl QuestionHandler {
         )
         .await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok((StatusCode::OK, Json(IdMessage { id })))
     }
@@ -81,7 +81,7 @@ impl QuestionHandler {
             Question::get_all_by_campaign_and_role(campaign_id, role_id, &mut transaction.tx)
                 .await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok((StatusCode::OK, Json(questions)))
     }
@@ -107,7 +107,7 @@ impl QuestionHandler {
         let questions =
             Question::get_all_common_by_campaign(campaign_id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok((StatusCode::OK, Json(questions)))
     }
@@ -157,7 +157,7 @@ impl QuestionHandler {
         )
         .await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(AppMessage::OkMessage("Successfully updated question"))
     }
@@ -183,7 +183,7 @@ impl QuestionHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Question::delete(question_id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(AppMessage::OkMessage("Successfully deleted question"))
     }

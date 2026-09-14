@@ -40,7 +40,7 @@ impl RoleStatusHandler {
         )
         .await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(AppMessage::OkMessage(
             "Successfully set per-campaign-role status.",
@@ -65,7 +65,7 @@ impl RoleStatusHandler {
         let statuses =
             RoleStatus::get_all_for_application(application_id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(Json(statuses))
     }
@@ -89,7 +89,7 @@ impl RoleStatusHandler {
         let statuses =
             RoleStatus::get_all_for_campaign_role(campaign_role_id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(Json(statuses))
     }
@@ -111,7 +111,7 @@ impl RoleStatusHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         let statuses = RoleStatus::get_all_for_campaign(campaign_id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(Json(statuses))
     }
