@@ -19,22 +19,6 @@ use oauth2::reqwest::async_http_client;
 use oauth2::{AuthorizationCode, Scope, TokenResponse};
 use time::OffsetDateTime;
 
-/// Handles the Google OAuth2 callback.
-///
-/// This handler processes the OAuth2 code received from Google after user authorization.
-/// It exchanges the code for an access token, retrieves the user's profile information,
-/// creates or retrieves the user in the database, and generates a JWT token for authentication.
-///
-/// # Arguments
-///
-/// * `state` - The application state
-/// * `query` - The OAuth2 callback query parameters containing the authorization code
-/// * `oauth_client` - The OAuth2 client for Google authentication
-///
-/// # Returns
-///
-/// * `Result<impl IntoResponse, ChaosError>` - JWT token or error
-///
 /// Initiates the Google OAuth2 flow.
 ///
 /// This handler redirects users to Google's OAuth2 authorization URL to begin
@@ -43,6 +27,7 @@ use time::OffsetDateTime;
 /// # Arguments
 ///
 /// * `state` - The application state containing the OAuth2 client
+/// * `query` - The login request query parameters, including the optional redirect target
 ///
 /// # Returns
 ///
@@ -83,12 +68,13 @@ pub async fn google_auth_init(
 /// # Arguments
 ///
 /// * `state` - The application state
+/// * `jar` - The cookie jar, used to set the auth token cookie
 /// * `query` - The OAuth2 callback query parameters containing the authorization code
-/// * `oauth_client` - The OAuth2 client for Google authentication
+/// and optional `state` parameter used to resolve the redirect target
 ///
 /// # Returns
 ///
-/// * `Result<impl IntoResponse, ChaosError>` - JWT token or error
+/// * `Result<impl IntoResponse, ChaosError>` - Redirect to the frontend with the auth token cookie set, or error
 ///
 /// # Note
 ///
@@ -189,6 +175,18 @@ pub async fn google_callback(
     Ok((jar.add(cookie), Redirect::to(redirect_url.as_str())))
 }
 
+/// Logs out the authenticated user.
+///
+/// This handler clears the auth token cookie and redirects to the frontend.
+///
+/// # Arguments
+///
+/// * `state` - The application state
+/// * `jar` - The cookie jar, used to remove the auth token cookie
+///
+/// # Returns
+///
+/// * `Result<impl IntoResponse, ChaosError>` - Redirect to the frontend or error
 pub async fn logout(
     State(state): State<AppState>,
     jar: CookieJar,
@@ -227,6 +225,19 @@ pub async fn logout(
 
 pub struct DevLoginHandler;
 impl DevLoginHandler {
+    /// Dev-only login as the super admin user.
+    ///
+    /// This handler issues a JWT for a hardcoded super admin account and sets it
+    /// as an auth token cookie. Disabled outside dev environments.
+    ///
+    /// # Arguments
+    ///
+    /// * `state` - The application state
+    /// * `jar` - The cookie jar, used to set the auth token cookie
+    ///
+    /// # Returns
+    ///
+    /// * `Result<impl IntoResponse, ChaosError>` - Redirect to the dashboard or error
     pub async fn dev_super_admin_login(
         State(state): State<AppState>,
         jar: CookieJar,
@@ -258,6 +269,19 @@ impl DevLoginHandler {
         Ok((jar.add(cookie), Redirect::to(redirect_url)))
     }
 
+    /// Dev-only login as the org admin user.
+    ///
+    /// This handler issues a JWT for a hardcoded org admin account and sets it
+    /// as an auth token cookie. Disabled outside dev environments.
+    ///
+    /// # Arguments
+    ///
+    /// * `state` - The application state
+    /// * `jar` - The cookie jar, used to set the auth token cookie
+    ///
+    /// # Returns
+    ///
+    /// * `Result<impl IntoResponse, ChaosError>` - Redirect to the dashboard or error
     pub async fn dev_org_admin_login(
         State(state): State<AppState>,
         jar: CookieJar,
@@ -289,6 +313,19 @@ impl DevLoginHandler {
         Ok((jar.add(cookie), Redirect::to(redirect_url)))
     }
 
+    /// Dev-only login as a regular user.
+    ///
+    /// This handler issues a JWT for a hardcoded user account and sets it
+    /// as an auth token cookie. Disabled outside dev environments.
+    ///
+    /// # Arguments
+    ///
+    /// * `state` - The application state
+    /// * `jar` - The cookie jar, used to set the auth token cookie
+    ///
+    /// # Returns
+    ///
+    /// * `Result<impl IntoResponse, ChaosError>` - Redirect to the dashboard or error
     pub async fn dev_user_login(
         State(state): State<AppState>,
         jar: CookieJar,

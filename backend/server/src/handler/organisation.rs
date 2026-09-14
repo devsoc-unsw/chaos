@@ -36,7 +36,7 @@ impl OrganisationHandler {
     /// # Arguments
     ///
     /// * `state` - The application state
-    /// * `_user` - The authenticated user (must be a super user)
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<ManagePlatform>`
     /// * `transaction` - Database transaction
     /// * `data` - The new organisation details
     ///
@@ -86,8 +86,8 @@ impl OrganisationHandler {
     ///
     /// # Arguments
     ///
-    /// * `state` - The application state
-    /// * `_user` - The authenticated user (must be a super user)
+    /// * `transaction` - Database transaction
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<ManagePlatform>`
     /// * `data` - The slug to check
     ///
     /// # Returns
@@ -110,9 +110,9 @@ impl OrganisationHandler {
     ///
     /// # Arguments
     ///
-    /// * `state` - The application state
+    /// * `transaction` - Database transaction
     /// * `id` - The ID of the organisation to retrieve
-    /// * `_user` - The authenticated user
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
     ///
     /// # Returns
     ///
@@ -133,9 +133,9 @@ impl OrganisationHandler {
     ///
     /// # Arguments
     ///
-    /// * `state` - The application state
+    /// * `transaction` - Database transaction
     /// * `slug` - The slug of the organisation
-    /// * `_user` - The authenticated user
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
     ///
     /// # Returns
     ///
@@ -159,7 +159,7 @@ impl OrganisationHandler {
     ///
     /// * `state` - The application state
     /// * `id` - The ID of the organisation to delete
-    /// * `_user` - The authenticated user (must be a super user)
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<ManagePlatform>`
     ///
     /// # Returns
     ///
@@ -188,8 +188,18 @@ impl OrganisationHandler {
         Ok(AppMessage::OkMessage("Successfully deleted organisation"))
     }
 
-    /// Get all organisations that the logged-in user is a Member of
-    /// If user is Super User, get all organisations
+    /// Gets all organisations that the logged-in user is a member of.
+    ///
+    /// If the user is a super user, gets all organisations.
+    ///
+    /// # Arguments
+    ///
+    /// * `transaction` - Database transaction
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
+    ///
+    /// # Returns
+    ///
+    /// * `Result<impl IntoResponse, ChaosError>` - List of organisations or error
     pub async fn get_all_for_user(
         mut transaction: DBTransaction<'_>,
         auth: SpiceDbAuth<UsePlatform>,
@@ -217,9 +227,9 @@ impl OrganisationHandler {
     ///
     /// # Arguments
     ///
-    /// * `state` - The application state
+    /// * `transaction` - Database transaction
     /// * `id` - The ID of the organisation
-    /// * `_user` - The authenticated user (must be a super user)
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<ManagePlatform>`
     ///
     /// # Returns
     ///
@@ -241,9 +251,8 @@ impl OrganisationHandler {
     ///
     /// # Arguments
     ///
-    /// * `state` - The application state
-    /// * `id` - The ID of the organisation
-    /// * `_admin` - The authenticated user (must be an organisation admin)
+    /// * `transaction` - Database transaction
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageOrganisation>`
     ///
     /// # Returns
     ///
@@ -264,9 +273,8 @@ impl OrganisationHandler {
     ///
     /// # Arguments
     ///
-    /// * `state` - The application state
-    /// * `id` - The ID of the organisation
-    /// * `_admin` - The authenticated user (must be an organisation admin)
+    /// * `transaction` - Database transaction
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageOrganisation>`
     ///
     /// # Returns
     ///
@@ -288,7 +296,7 @@ impl OrganisationHandler {
     /// # Arguments
     ///
     /// * `id` - The ID of the organisation
-    /// * `_super_user` - The authenticated user (must be a super user)
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<ManagePlatform>`
     /// * `transaction` - Database transaction
     /// * `request_body` - The new admin list
     ///
@@ -338,8 +346,7 @@ impl OrganisationHandler {
     /// # Arguments
     ///
     /// * `transaction` - Database transaction
-    /// * `id` - The ID of the organisation
-    /// * `_admin` - The authenticated user (must be an organisation admin)
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageOrganisation>`
     /// * `request_body` - The new member list
     ///
     /// # Returns
@@ -384,6 +391,17 @@ impl OrganisationHandler {
     }
 
     /// Updates a single member's role (promote to Admin or demote to User). Superusers only.
+    ///
+    /// # Arguments
+    ///
+    /// * `transaction` - Database transaction
+    /// * `id` - The ID of the organisation
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<ManagePlatform>`
+    /// * `request_body` - The member role update details
+    ///
+    /// # Returns
+    ///
+    /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update_member(
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
@@ -428,7 +446,7 @@ impl OrganisationHandler {
     ///
     /// * `transaction` - Database transaction
     /// * `id` - The ID of the organisation
-    /// * `_super_user` - The authenticated user (must be a super user)
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<ManagePlatform>`
     /// * `request_body` - The admin to remove
     ///
     /// # Returns
@@ -471,8 +489,7 @@ impl OrganisationHandler {
     /// # Arguments
     ///
     /// * `transaction` - Database transaction
-    /// * `id` - The ID of the organisation
-    /// * `_admin` - The authenticated user (must be an organisation admin)
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageOrganisation>`
     /// * `request_body` - The member to remove
     ///
     /// # Returns
@@ -501,6 +518,22 @@ impl OrganisationHandler {
         ))
     }
 
+    /// Invites a user to an organisation by email.
+    ///
+    /// Sends an invite email to the given address, or adds the user directly
+    /// if an account with that email already exists.
+    ///
+    /// # Arguments
+    ///
+    /// * `transaction` - Database transaction
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageOrganisation>`
+    /// * `state` - The application state
+    /// * `request_body` - The email of the user to invite
+    ///
+    /// # Returns
+    ///
+    /// * `Result<impl IntoResponse, ChaosError>` - Invite code, an empty string
+    /// when an existing user is added or an error
     pub async fn invite_user(
         mut transaction: DBTransaction<'_>,
         auth: SpiceDbAuth<ManageOrganisation>,
@@ -540,8 +573,8 @@ impl OrganisationHandler {
     /// # Arguments
     ///
     /// * `state` - The application state
-    /// * `id` - The ID of the organisation
-    /// * `_admin` - The authenticated user (must be an organisation admin)
+    /// * `transaction` - Database transaction
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageOrganisation>`
     ///
     /// # Returns
     ///
@@ -565,9 +598,9 @@ impl OrganisationHandler {
     ///
     /// # Arguments
     ///
-    /// * `state` - The application state
+    /// * `transaction` - Database transaction
     /// * `id` - The ID of the organisation
-    /// * `_user` - The authenticated user
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
     ///
     /// # Returns
     ///
@@ -589,14 +622,14 @@ impl OrganisationHandler {
     ///
     /// # Arguments
     ///
-    /// * `id` - The ID of the organisation
     /// * `state` - The application state
-    /// * `_admin` - The authenticated user (must be an organisation admin)
+    /// * `transaction` - Database transaction
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageOrganisation>`
     /// * `request_body` - The new campaign details
     ///
     /// # Returns
     ///
-    /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
+    /// * `Result<impl IntoResponse, ChaosError>` - JSON containing the new campaign ID or error
     pub async fn create_campaign(
         State(mut state): State<AppState>,
         mut transaction: DBTransaction<'_>,
@@ -643,9 +676,8 @@ impl OrganisationHandler {
     ///
     /// # Arguments
     ///
-    /// * `organisation_id` - The ID of the organisation
-    /// * `state` - The application state
-    /// * `_user` - The authenticated user (must be an organisation admin)
+    /// * `transaction` - Database transaction
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageOrganisation>`
     /// * `data` - The slug to check
     ///
     /// # Returns
@@ -668,9 +700,9 @@ impl OrganisationHandler {
     ///
     /// # Arguments
     ///
-    /// * `id` - The ID of the organisation
     /// * `state` - The application state
-    /// * `_admin` - The authenticated user (must be an organisation admin)
+    /// * `transaction` - Database transaction
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageOrganisation>`
     /// * `request_body` - The new template details
     ///
     /// # Returns
@@ -710,9 +742,8 @@ impl OrganisationHandler {
     ///
     /// # Arguments
     ///
-    /// * `_user` - The authenticated user (must be an organisation admin)
-    /// * `id` - The ID of the organisation
-    /// * `state` - The application state
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageOrganisation>`
+    /// * `transaction` - Database transaction
     ///
     /// # Returns
     ///
@@ -728,6 +759,17 @@ impl OrganisationHandler {
         Ok((StatusCode::OK, Json(email_templates)))
     }
 
+    /// Retrieves the current user's role within an organisation.
+    ///
+    /// # Arguments
+    ///
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
+    /// * `id` - The ID of the organisation
+    /// * `transaction` - Database transaction
+    ///
+    /// # Returns
+    ///
+    /// * `Result<impl IntoResponse, ChaosError>` - JSON containing the role or error
     pub async fn get_user_role(
         auth: SpiceDbAuth<UsePlatform>,
         Path(id): Path<i64>,

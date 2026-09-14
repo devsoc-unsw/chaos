@@ -22,12 +22,12 @@ impl RoleStatusHandler {
     /// # Arguments
     /// * `application_id` - ID of the application whose status is being set.
     /// * `campaign_role_id` - ID of the campaign role whose per-role status is being set.
-    /// * `auth` - The authenticated user, authorized to review the application.
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<ReviewApplication>`.
     /// * `transaction` - Database transaction wrapper.
     /// * `data` - Update role payload.
     ///
     /// # Returns
-    /// A success message.
+    /// `Result<impl IntoResponse, ChaosError>` - A success message.
     pub async fn update_role_status(
         Path((application_id, campaign_role_id)): Path<(i64, i64)>,
         _auth: SpiceDbAuth<ReviewApplication>,
@@ -53,11 +53,11 @@ impl RoleStatusHandler {
     ///
     /// # Arguments
     /// * `application_id` - ID of the application to fetch the per-campaign-role statuses for.
-    /// * `_admin` - Authenticated user allowed to view the application's per-role statuses.
+    /// * `_auth` - Authenticated user, authorized by `SpiceDbAuth<ReviewApplication>`.
     /// * `transaction` - Database transaction wrapper.
     ///
     /// # Returns
-    /// The per-campaign-role statuses for the application.
+    /// `Result<impl IntoResponse, ChaosError>` - The per-campaign-role statuses for the application.
     pub async fn get_role_statuses_for_application(
         Path(application_id): Path<i64>,
         _auth: SpiceDbAuth<ReviewApplication>,
@@ -76,11 +76,11 @@ impl RoleStatusHandler {
     /// # Arguments
     /// * `campaign_id` - ID of the campaign to fetch the per-campaign-role statuses for.
     /// * `campaign_role_id` - ID of the campaign role to fetch the per-role statuses for.
-    /// * `_admin` - Authenticated user allowed to view the campaign role's statuses.
+    /// * `_auth` - Authenticated user, authorized by `SpiceDbAuth<ReviewCampaign>`.
     /// * `transaction` - Database transaction wrapper.
     ///
     /// # Returns
-    /// The per-role statuses for the campaign role.
+    /// `Result<impl IntoResponse, ChaosError>` - The per-role statuses for the campaign role.
     pub async fn get_role_statuses_for_campaign_role(
         Path((campaign_id, campaign_role_id)): Path<(i64, i64)>,
         _auth: SpiceDbAuth<ReviewCampaign>,
@@ -102,11 +102,11 @@ impl RoleStatusHandler {
     ///
     /// # Arguments
     /// * `campaign_id` - ID of the campaign to fetch the per-campaign-role statuses for.
-    /// * `_admin` - Authenticated user allowed to view the campaign's per-role statuses.
+    /// * `_auth` - Authenticated user, authorized by `SpiceDbAuth<ReviewCampaign>`.
     /// * `transaction` - Database transaction wrapper.
     ///
     /// # Returns
-    /// The per-role statuses for the campaign.
+    /// `Result<impl IntoResponse, ChaosError>` - The per-role statuses for the campaign.
     pub async fn get_role_statuses_for_campaign(
         Path(campaign_id): Path<i64>,
         _auth: SpiceDbAuth<ReviewCampaign>,

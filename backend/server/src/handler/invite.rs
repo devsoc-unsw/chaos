@@ -18,6 +18,7 @@ impl InviteHandler {
     ///
     /// * `transaction` - Database transaction
     /// * `code` - Invite code
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
     ///
     /// # Returns
     ///
@@ -41,7 +42,7 @@ impl InviteHandler {
     ///
     /// * `transaction` - Database transaction
     /// * `code` - Invite code
-    /// * `user` - Authenticated user
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
     ///
     /// # Returns
     ///
