@@ -11,14 +11,15 @@ use crate::models::app::{AppMessage, AppState};
 use crate::models::application::{
     Application, ApplicationRoleUpdate, ApplicationStatus, OpenApplicationByApplicationId,
 };
-use crate::models::auth::{
-    ApplicationAdmin, ApplicationOwner, ApplicationOwnerOrReviewer,
-    ApplicationReviewerGivenApplicationId, AuthUser, CampaignAdmin,
-};
 use crate::models::error::ChaosError;
 use crate::models::question::{Question, QuestionWithAnswer};
 use crate::models::rating::{NewRating, Rating};
 use crate::models::transaction::DBTransaction;
+use crate::spicedb;
+use crate::spicedb::{
+    policies::{EditApplication, ReviewApplication, ReviewCampaign, UsePlatform, ViewApplication},
+    schema as spicedb_schema, SpiceDbAuth,
+};
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -33,26 +34,45 @@ impl ApplicationHandler {
     /// # Arguments
     ///
     /// * `campaign_id` - ID of the campaign to apply to
-    /// * `user_id` - ID of the user submitting the application
-    /// * `snowflake_generator` - Generator for creating unique IDs
+    /// * `auth` - The authenticated user, authorized to use the platform
+    /// * `state` - The application state
     /// * `transaction` - Database transaction to use
     ///
     /// # Returns
     ///
-    /// * `Result<impl IntoResponse, ChaosError>` - Application details or error
+    /// * `Result<impl IntoResponse, ChaosError>` - JSON containing the application ID or error
     pub async fn create_or_get(
         Path(campaign_id): Path<i64>,
-        user: AuthUser,
+        auth: SpiceDbAuth<UsePlatform>,
         State(mut state): State<AppState>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let application_id = Application::create_or_get(
+        let (application_id, created) = Application::create_or_get(
             campaign_id,
-            user.user_id,
+            auth.user_id,
             &mut state.snowflake_generator,
             &mut transaction.tx,
         )
         .await?;
+
+        if created {
+            transaction.create_spicedb_relationship(
+                spicedb_schema::resource::APPLICATION,
+                application_id,
+                spicedb_schema::relation::application::CAMPAIGN,
+                spicedb_schema::resource::CAMPAIGN,
+                campaign_id,
+            );
+
+            transaction.create_spicedb_relationship(
+                spicedb_schema::resource::APPLICATION,
+                application_id,
+                spicedb_schema::relation::application::CREATOR,
+                spicedb_schema::resource::USER,
+                auth.user_id,
+            );
+        }
+
         transaction.commit().await?;
 
         Ok(Json(
@@ -73,11 +93,11 @@ impl ApplicationHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - True if application exists, false otherwise
     pub async fn check_application_exists(
         Path(campaign_id): Path<i64>,
-        user: AuthUser,
+        auth: SpiceDbAuth<UsePlatform>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let application_exists =
-            Application::check_application_exists(campaign_id, user.user_id, &mut transaction.tx)
+            Application::check_application_exists(campaign_id, auth.user_id, &mut transaction.tx)
                 .await?;
 
         transaction.commit().await?;
@@ -99,11 +119,11 @@ impl ApplicationHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Application details or error
     pub async fn get(
         Path(application_id): Path<i64>,
-        admin: ApplicationAdmin,
+        auth: SpiceDbAuth<ReviewApplication>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let application =
-            Application::get(application_id, admin.user_id, &mut transaction.tx).await?;
+            Application::get(application_id, auth.user_id, &mut transaction.tx).await?;
         transaction.commit().await?;
         Ok((StatusCode::OK, Json(application)))
     }
@@ -123,11 +143,11 @@ impl ApplicationHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Application details or error
     pub async fn get_in_progress(
         Path(application_id): Path<i64>,
-        user: AuthUser,
+        auth: SpiceDbAuth<EditApplication>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let application =
-            Application::get_in_progress(application_id, user.user_id, &mut transaction.tx).await?;
+            Application::get_in_progress(application_id, auth.user_id, &mut transaction.tx).await?;
         transaction.commit().await?;
         Ok(Json(application))
     }
@@ -148,7 +168,7 @@ impl ApplicationHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn set_status(
         Path(application_id): Path<i64>,
-        _admin: ApplicationAdmin,
+        _auth: SpiceDbAuth<ReviewApplication>,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<ApplicationStatus>,
     ) -> Result<impl IntoResponse, ChaosError> {
@@ -173,7 +193,7 @@ impl ApplicationHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn set_private_status(
         Path(application_id): Path<i64>,
-        _admin: ApplicationAdmin,
+        _auth: SpiceDbAuth<ReviewApplication>,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<ApplicationStatus>,
     ) -> Result<impl IntoResponse, ChaosError> {
@@ -195,11 +215,11 @@ impl ApplicationHandler {
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - List of applications or error
     pub async fn get_from_curr_user(
-        user: AuthUser,
+        auth: SpiceDbAuth<UsePlatform>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let applications =
-            Application::get_from_user_id(user.user_id, user.user_id, &mut transaction.tx).await?;
+            Application::get_from_user_id(auth.user_id, auth.user_id, &mut transaction.tx).await?;
         transaction.commit().await?;
         Ok(Json(applications))
     }
@@ -219,7 +239,7 @@ impl ApplicationHandler {
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - List of application roles with preferences or error
     pub async fn get_roles(
-        _user: ApplicationOwnerOrReviewer,
+        _auth: SpiceDbAuth<ViewApplication>,
         Path(application_id): Path<i64>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
@@ -244,7 +264,7 @@ impl ApplicationHandler {
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update_roles(
-        _user: ApplicationOwner,
+        _auth: SpiceDbAuth<EditApplication>,
         _: OpenApplicationByApplicationId,
         Path(application_id): Path<i64>,
         mut transaction: DBTransaction<'_>,
@@ -273,7 +293,7 @@ impl ApplicationHandler {
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn submit(
-        _user: ApplicationOwner,
+        _auth: SpiceDbAuth<EditApplication>,
         _: OpenApplicationByApplicationId,
         Path(application_id): Path<i64>,
         mut transaction: DBTransaction<'_>,
@@ -298,11 +318,11 @@ impl ApplicationHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Rating details with all category scores or error
     pub async fn get_rating_by_current_user(
         Path(application_id): Path<i64>,
-        admin: ApplicationReviewerGivenApplicationId,
+        auth: SpiceDbAuth<ReviewApplication>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let rating =
-            Rating::get_rating_details(application_id, admin.user_id, &mut transaction.tx).await?;
+            Rating::get_rating_details(application_id, auth.user_id, &mut transaction.tx).await?;
         transaction.commit().await?;
         Ok((StatusCode::OK, Json(rating)))
     }
@@ -326,7 +346,7 @@ impl ApplicationHandler {
     pub async fn create_rating(
         State(mut state): State<AppState>,
         Path(application_id): Path<i64>,
-        admin: ApplicationReviewerGivenApplicationId,
+        auth: SpiceDbAuth<ReviewApplication>,
         mut transaction: DBTransaction<'_>,
         Json(new_rating): Json<NewRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
@@ -334,21 +354,45 @@ impl ApplicationHandler {
         let application_rating_id = Rating::create_application_rating(
             new_rating.comment,
             application_id,
-            admin.user_id,
+            auth.user_id,
             &mut state.snowflake_generator,
             &mut transaction.tx,
         )
         .await?;
 
+        transaction.create_spicedb_relationship(
+            spicedb_schema::resource::RATING,
+            application_rating_id,
+            spicedb_schema::relation::rating::APPLICATION,
+            spicedb_schema::resource::APPLICATION,
+            application_id,
+        );
+
+        transaction.create_spicedb_relationship(
+            spicedb_schema::resource::RATING,
+            application_rating_id,
+            spicedb_schema::relation::rating::CREATOR,
+            spicedb_schema::resource::USER,
+            auth.user_id,
+        );
+
         // Then loop through and create each category rating
         for category_rating in new_rating.category_ratings {
-            Rating::create_category_rating(
+            let category_rating_id = Rating::create_category_rating(
                 category_rating,
                 application_rating_id,
                 &mut state.snowflake_generator,
                 &mut transaction.tx,
             )
             .await?;
+
+            transaction.create_spicedb_relationship(
+                spicedb_schema::resource::CATEGORY_RATING,
+                category_rating_id,
+                spicedb_schema::relation::category_rating::RATING,
+                spicedb_schema::resource::RATING,
+                application_rating_id,
+            );
         }
 
         transaction.commit().await?;
@@ -358,13 +402,13 @@ impl ApplicationHandler {
     pub async fn update_rating(
         State(mut state): State<AppState>,
         Path(application_id): Path<i64>,
-        admin: ApplicationReviewerGivenApplicationId,
+        auth: SpiceDbAuth<ReviewApplication>,
         mut transaction: DBTransaction<'_>,
         Json(updated_rating): Json<NewRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
         // Get the existing rating for this user and application
         let rating =
-            Rating::get_rating_details(application_id, admin.user_id, &mut transaction.tx).await?;
+            Rating::get_rating_details(application_id, auth.user_id, &mut transaction.tx).await?;
 
         // Update the comment
         Rating::update_application_rating(rating.id, updated_rating.comment, &mut transaction.tx)
@@ -378,22 +422,46 @@ impl ApplicationHandler {
             )
             .await?;
 
-        for category_rating in existing_category_ratings {
-            Rating::delete_category_rating(category_rating.id, &mut transaction.tx).await?;
+        for category_rating in existing_category_ratings.clone() {
+            Rating::delete_category_rating(
+                category_rating.id,
+                category_rating.application_rating_id,
+                &mut transaction.tx,
+            )
+            .await?;
         }
 
         // Create new category ratings
         for category_rating in updated_rating.category_ratings {
-            Rating::create_category_rating(
+            let category_rating_id = Rating::create_category_rating(
                 category_rating,
                 rating.id,
                 &mut state.snowflake_generator,
                 &mut transaction.tx,
             )
             .await?;
+
+            transaction.create_spicedb_relationship(
+                spicedb_schema::resource::CATEGORY_RATING,
+                category_rating_id,
+                spicedb_schema::relation::category_rating::RATING,
+                spicedb_schema::resource::RATING,
+                rating.id,
+            );
         }
 
         transaction.commit().await?;
+
+        // Run deletes after Postgres transaction successfully commits
+        for category_rating in existing_category_ratings {
+            spicedb::delete_all_resource_relationships(
+                &state.spicedb,
+                &state.spicedb_key,
+                crate::spicedb::schema::resource::CATEGORY_RATING,
+                category_rating.id,
+            )
+            .await?;
+        }
         Ok(AppMessage::OkMessage("Successfully updated rating"))
     }
 
@@ -412,7 +480,7 @@ impl ApplicationHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - List of ratings with all category scores or error
     pub async fn get_ratings(
         Path(application_id): Path<i64>,
-        _admin: ApplicationReviewerGivenApplicationId,
+        _auth: SpiceDbAuth<ReviewApplication>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let ratings =
@@ -436,7 +504,7 @@ impl ApplicationHandler {
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - List of average ratings or error
     pub async fn get_application_ratings_summary(
-        _: CampaignAdmin,
+        _auth: SpiceDbAuth<ReviewCampaign>,
         Path(campaign_id): Path<i64>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
@@ -464,13 +532,13 @@ impl ApplicationHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - List of questions with nested answers or error
     pub async fn get_questions_and_answers(
         Path(application_id): Path<i64>,
-        _user: ApplicationOwnerOrReviewer,
+        _auth: SpiceDbAuth<ViewApplication>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let questions =
             Question::get_all_for_application(application_id, &mut transaction.tx).await?;
         let answers = Answer::get_all_by_application(application_id, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok((
             StatusCode::OK,

@@ -24,7 +24,7 @@ impl UserRole {
     pub fn convert_to_spicedb(&self) -> &str {
         match self {
             UserRole::User => crate::spicedb::schema::relation::platform::USER,
-            UserRole::SuperUser => crate::spicedb::schema::relation::platform::SUPERUSER
+            UserRole::SuperUser => crate::spicedb::schema::relation::platform::SUPERUSER,
         }
     }
 }

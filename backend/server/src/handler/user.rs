@@ -5,12 +5,12 @@
 //! - Updating user information (name, pronouns, gender, zid, degree)
 
 use crate::models::app::AppMessage;
-use crate::models::auth::AuthUser;
 use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
 use crate::models::user::{
     User, UserDegree, UserGender, UserName, UserPronouns, UserRole, UserZid,
 };
+use crate::spicedb::{policies::UsePlatform, SpiceDbAuth};
 use axum::extract::Json;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -33,9 +33,9 @@ impl UserHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - User details or error
     pub async fn get(
         mut transaction: DBTransaction<'_>,
-        user: AuthUser,
+        auth: SpiceDbAuth<UsePlatform>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let user = User::get(user.user_id, &mut transaction.tx).await?;
+        let user = User::get(auth.user_id, &mut transaction.tx).await?;
 
         transaction.commit().await?;
         Ok((StatusCode::OK, Json(user)))
@@ -56,10 +56,10 @@ impl UserHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update_name(
         mut transaction: DBTransaction<'_>,
-        user: AuthUser,
+        auth: SpiceDbAuth<UsePlatform>,
         Json(request_body): Json<UserName>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        User::update_name(user.user_id, request_body.name, &mut transaction.tx).await?;
+        User::update_name(auth.user_id, request_body.name, &mut transaction.tx).await?;
 
         transaction.commit().await?;
         Ok(AppMessage::OkMessage("Updated username"))
@@ -80,10 +80,10 @@ impl UserHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update_pronouns(
         mut transaction: DBTransaction<'_>,
-        user: AuthUser,
+        auth: SpiceDbAuth<UsePlatform>,
         Json(request_body): Json<UserPronouns>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        User::update_pronouns(user.user_id, request_body.pronouns, &mut transaction.tx).await?;
+        User::update_pronouns(auth.user_id, request_body.pronouns, &mut transaction.tx).await?;
 
         transaction.commit().await?;
         Ok(AppMessage::OkMessage("Updated pronouns"))
@@ -104,10 +104,10 @@ impl UserHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update_gender(
         mut transaction: DBTransaction<'_>,
-        user: AuthUser,
+        auth: SpiceDbAuth<UsePlatform>,
         Json(request_body): Json<UserGender>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        User::update_gender(user.user_id, request_body.gender, &mut transaction.tx).await?;
+        User::update_gender(auth.user_id, request_body.gender, &mut transaction.tx).await?;
 
         transaction.commit().await?;
         Ok(AppMessage::OkMessage("Updated gender"))
@@ -128,10 +128,10 @@ impl UserHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update_zid(
         mut transaction: DBTransaction<'_>,
-        user: AuthUser,
+        auth: SpiceDbAuth<UsePlatform>,
         Json(request_body): Json<UserZid>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        User::update_zid(user.user_id, request_body.zid, &mut transaction.tx).await?;
+        User::update_zid(auth.user_id, request_body.zid, &mut transaction.tx).await?;
 
         transaction.commit().await?;
         Ok(AppMessage::OkMessage("Updated zid"))
@@ -152,11 +152,11 @@ impl UserHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update_degree(
         mut transaction: DBTransaction<'_>,
-        user: AuthUser,
+        auth: SpiceDbAuth<UsePlatform>,
         Json(request_body): Json<UserDegree>,
     ) -> Result<impl IntoResponse, ChaosError> {
         User::update_degree(
-            user.user_id,
+            auth.user_id,
             request_body.degree_name,
             request_body.degree_starting_year,
             &mut transaction.tx,
@@ -170,9 +170,9 @@ impl UserHandler {
     /// Returns whether the current user is a superuser.
     pub async fn is_superuser(
         mut transaction: DBTransaction<'_>,
-        user: AuthUser,
+        auth: SpiceDbAuth<UsePlatform>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let user = User::get(user.user_id, &mut transaction.tx).await?;
+        let user = User::get(auth.user_id, &mut transaction.tx).await?;
         transaction.commit().await?;
         let is_superuser = matches!(user.role, UserRole::SuperUser);
         Ok((
