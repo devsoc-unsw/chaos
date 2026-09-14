@@ -466,10 +466,10 @@ impl Campaign {
         update: CampaignUpdate,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
-        let campaign = Self::get(id, transaction).await?;
-        if campaign.published {
-            return Err(ChaosError::BadRequest);
-        }
+        // let campaign = Self::get(id, transaction).await?;
+        // if campaign.published {
+        //     return Err(ChaosError::BadRequest);
+        // }
         update.validate()?;
 
         sqlx::query!(
