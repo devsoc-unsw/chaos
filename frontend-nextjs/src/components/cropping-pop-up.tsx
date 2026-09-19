@@ -73,14 +73,17 @@ export default function CroppingPopUp({
     <Dialog
       open={file !== null}
       onOpenChange={(open) => {
-        if (!open) {
+        if (!open && !cropping) {
           onCancel();
         }
       }}
     >
       {/* The scale animation clashes with react-easy-crop internal logic to compute
         sizes. Add a custom style to override the default animation. */}
-      <DialogContent className="sm:max-w-2xl data-[state=open]:zoom-in-100 data-[state=closed]:zoom-out-100">
+      <DialogContent
+        showCloseButton={!cropping}
+        className="sm:max-w-2xl data-[state=open]:zoom-in-100 data-[state=closed]:zoom-out-100"
+      >
         <DialogHeader>
           <DialogTitle>Crop banner</DialogTitle>
           <DialogDescription>
