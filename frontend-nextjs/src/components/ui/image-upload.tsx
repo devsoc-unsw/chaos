@@ -135,7 +135,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ selectedImage, onImageChange 
           <Button
             onClick={removeSelectedImage}
             type="button"
-            variant="secondary"
+            variant="destructive"
           >
             Remove
           </Button>
