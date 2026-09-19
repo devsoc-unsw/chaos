@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { IoCloudUploadOutline } from "react-icons/io5";
 import Image from "next/image";
+import { toast } from "sonner";
 import CroppingPopUp from "@/components/cropping-pop-up";
 
 const ACCEPTED_IMAGE_TYPES = {
@@ -41,11 +42,21 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ selectedImage, onImageChange 
   }, [selectedImage]);
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files?.length) {
-      setPendingFile(event.target.files[0]);
-    }
-    // Let the same file be picked again after it's been removed.
+    const file = event.target.files?.[0];
+    // Let the same file be picked again, after removing it or a rejection.
     event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    // Check if the file type is accepted
+    if (!Object.keys(ACCEPTED_IMAGE_TYPES).includes(file.type)) {
+      toast.error("Please choose a PNG or JPEG image.");
+      return;
+    }
+
+    setPendingFile(file);
   };
 
   const removeSelectedImage = () => {
