@@ -17,6 +17,8 @@ use crate::models::error::ChaosError;
 use crate::models::storage::Storage;
 use crate::service::oauth2::build_oauth_client;
 use crate::spicedb::authzed::api::v1::permissions_service_client::PermissionsServiceClient;
+use crate::spicedb::authzed::api::v1::ZedToken;
+use crate::spicedb::{check_permission, ZedTokenPublicationGate};
 use axum::http::{header, Method, StatusCode};
 use axum::response::IntoResponse;
 use axum::routing::{delete, get, patch, post, put};
@@ -30,10 +32,10 @@ use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 use std::env;
+use std::sync::{Arc, RwLock};
+use tokio::sync::{Mutex, Notify};
 use tonic::transport::Channel;
 use tower_http::cors::CorsLayer;
-use crate::spicedb::check_permission;
-
 
 #[derive(Serialize)]
 pub enum AppMessage<T: Serialize> {
@@ -111,6 +113,9 @@ pub struct AppState {
     pub email_credentials: EmailCredentials,
     pub spicedb: PermissionsServiceClient<Channel>,
     pub spicedb_key: String,
+    pub spicedb_zedtoken: Arc<RwLock<Option<ZedToken>>>,
+    pub spicedb_publication_gate: Arc<Mutex<ZedTokenPublicationGate>>,
+    pub spicedb_publication_notify: Arc<Notify>,
 }
 
 impl AppState {
@@ -144,15 +149,15 @@ impl AppState {
         check_permission(
             &self.spicedb,
             &self.spicedb_key,
+            &self.spicedb_zedtoken,
             user_id,
             resource_type,
             resource_id,
             permission,
         )
-            .await
+        .await
     }
 }
-
 
 pub async fn init_app_state() -> AppState {
     // Initialise DB connection
@@ -216,6 +221,9 @@ pub async fn init_app_state() -> AppState {
         .expect("SPICEDB_GRPC_ENDPOINT must be a valid URI")
         .connect_lazy();
     let spicedb = PermissionsServiceClient::new(spicedb_channel);
+    let spicedb_zedtoken = Arc::new(RwLock::new(None));
+    let spicedb_publication_gate = Arc::new(Mutex::new(ZedTokenPublicationGate::new()));
+    let spicedb_publication_notify = Arc::new(Notify::new());
 
     // Add all data to AppState
 
@@ -233,6 +241,9 @@ pub async fn init_app_state() -> AppState {
         email_credentials,
         spicedb,
         spicedb_key,
+        spicedb_zedtoken,
+        spicedb_publication_gate,
+        spicedb_publication_notify,
     }
 }
 
@@ -495,17 +506,6 @@ pub async fn app() -> Result<(Router, AppState), ChaosError> {
             "/api/v1/application/:application_id/inprogress",
             get(ApplicationHandler::get_in_progress),
         )
-        // Rating routes are handled by RatingHandler, idk why they are back so commented
-        // .route(
-        //     "/api/v1/application/:application_id/rating",
-        //     get(ApplicationHandler::get_rating_by_current_user)
-        //         .post(ApplicationHandler::create_rating)
-        //         .put(ApplicationHandler::update_rating),
-        // )
-        // .route(
-        //     "/api/v1/application/:application_id/ratings",
-        //     get(ApplicationHandler::get_ratings),
-        // )
         .route(
             "/api/v1/application/:application_id/status",
             patch(ApplicationHandler::set_status),

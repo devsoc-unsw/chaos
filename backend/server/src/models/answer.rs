@@ -21,10 +21,10 @@ use std::ops::DerefMut;
 /// `Answer` will look like this:
 /// ```json
 /// {
-///   "id": 7233828375289773948,
-///   "question_id": 7233828375289139200,
+///   "id": "7233828375289773948",
+///   "question_id": "7233828375289139200",
 ///   "answer_type": "MultiChoice",
-///   "data": 7233828393325384908,
+///   "data": "7233828393325384908",
 ///   "created_at": "2024-06-28T16:29:04.644008111Z",
 ///   "updated_at": "2024-06-30T12:14:12.458390190Z"
 /// }
@@ -52,6 +52,7 @@ pub struct Answer {
 /// associated role.
 #[derive(Deserialize, Serialize)]
 pub struct AnswerWithRole {
+    /// Unique identifier for the answer
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
     id: i64,
     /// ID of the question this answer is for
@@ -62,7 +63,7 @@ pub struct AnswerWithRole {
     #[serde(flatten)]
     data: AnswerData,
 
-    // role ID
+    /// ID of the role this answer is for
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
     role_id: i64,
 }
@@ -120,7 +121,7 @@ impl Answer {
     ///
     /// * `application_id` - ID of the application this answer belongs to
     /// * `question_id` - ID of the question being answered
-    /// * `answer_data` - The answer data
+    /// * `data` - The answer data
     /// * `snowflake_generator` - Generator for creating unique IDs
     /// * `transaction` - Database transaction to use
     ///
@@ -471,7 +472,7 @@ impl Answer {
     /// # Arguments
     ///
     /// * `id` - ID of the answer to update
-    /// * `answer_data` - New answer data
+    /// * `data` - New answer data
     /// * `transaction` - Database transaction to use
     ///
     /// # Returns
@@ -628,6 +629,11 @@ impl AnswerData {
         }
     }
 
+    /// Checks whether the answer data is empty.
+    ///
+    /// # Returns
+    ///
+    /// * `bool` - True if the answer data is empty, false otherwise
     pub fn is_empty(&self) -> bool {
         match self {
             AnswerData::ShortAnswer(text) => text.is_empty(),

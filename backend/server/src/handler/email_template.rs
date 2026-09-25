@@ -6,10 +6,12 @@
 //! - Deleting templates
 
 use crate::models::app::{AppMessage, AppState};
-use crate::models::auth::EmailTemplateAdmin;
 use crate::models::email_template::EmailTemplate;
 use crate::models::error::ChaosError;
+use crate::models::rating::Rating;
 use crate::models::transaction::DBTransaction;
+use crate::spicedb;
+use crate::spicedb::{policies::ManageEmailTemplate, schema as spicedb_schema, SpiceDbAuth};
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -25,18 +27,17 @@ impl EmailTemplateHandler {
     /// # Arguments
     ///
     /// * `transaction` - Database transaction
-    /// * `id` - The ID of the template to retrieve
-    /// * `_user` - The authenticated user (must be an email template admin)
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageEmailTemplate>`
+    ///   (template identified by the `template_id` path parameter)
     ///
     /// # Returns
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Template details or error
     pub async fn get(
         mut transaction: DBTransaction<'_>,
-        Path(id): Path<i64>,
-        _user: EmailTemplateAdmin,
+        auth: SpiceDbAuth<ManageEmailTemplate>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let email_template = EmailTemplate::get(id, &mut transaction.tx).await?;
+        let email_template = EmailTemplate::get(auth.resource_id, &mut transaction.tx).await?;
 
         Ok((StatusCode::OK, Json(email_template)))
     }
@@ -47,22 +48,21 @@ impl EmailTemplateHandler {
     ///
     /// # Arguments
     ///
-    /// * `_user` - The authenticated user (must be an email template admin)
-    /// * `id` - The ID of the template to update
-    /// * `state` - The application state
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageEmailTemplate>`
+    ///   (template identified by the `template_id` path parameter)
+    /// * `transaction` - Database transaction
     /// * `request_body` - The new template details
     ///
     /// # Returns
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update(
-        _user: EmailTemplateAdmin,
-        Path(id): Path<i64>,
+        auth: SpiceDbAuth<ManageEmailTemplate>,
         mut transaction: DBTransaction<'_>,
         Json(request_body): Json<EmailTemplate>,
     ) -> Result<impl IntoResponse, ChaosError> {
         EmailTemplate::update(
-            id,
+            auth.resource_id,
             request_body.name,
             request_body.template_subject,
             request_body.template_body,
@@ -80,21 +80,32 @@ impl EmailTemplateHandler {
     ///
     /// # Arguments
     ///
-    /// * `_user` - The authenticated user (must be an email template admin)
-    /// * `id` - The ID of the template to delete
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageEmailTemplate>`
+    ///   (template identified by the `template_id` path parameter)
     /// * `state` - The application state
+    /// * `transaction` - Database transaction
     ///
     /// # Returns
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn delete(
-        _user: EmailTemplateAdmin,
-        Path(id): Path<i64>,
+        auth: SpiceDbAuth<ManageEmailTemplate>,
+        State(state): State<AppState>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        EmailTemplate::delete(id, &mut transaction.tx).await?;
+        EmailTemplate::delete(auth.resource_id, &mut transaction.tx).await?;
 
         transaction.commit().await?;
+
+        // Run SpiceDB delete after Postgres succeeds
+        spicedb::delete_all_resource_relationships(
+            &state.spicedb,
+            &state.spicedb_key,
+            spicedb::schema::resource::EMAIL_TEMPLATE,
+            auth.resource_id,
+        )
+        .await?;
+
         Ok(AppMessage::OkMessage("Successfully deleted email template"))
     }
 
@@ -104,20 +115,33 @@ impl EmailTemplateHandler {
     ///
     /// # Arguments
     ///
-    /// * `_user` - The authenticated user (must be an email template admin)
-    /// * `id` - The ID of the template to delete
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageEmailTemplate>`
+    ///   (template identified by the `template_id` path parameter)
     /// * `state` - The application state
+    /// * `transaction` - Database transaction
     ///
     /// # Returns
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn duplicate(
-        _user: EmailTemplateAdmin,
-        Path(id): Path<i64>,
+        auth: SpiceDbAuth<ManageEmailTemplate>,
         State(mut state): State<AppState>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        EmailTemplate::duplicate(id, &mut transaction.tx, &mut state.snowflake_generator).await?;
+        let (new_template_id, organisation_id) = EmailTemplate::duplicate(
+            auth.resource_id,
+            &mut transaction.tx,
+            &mut state.snowflake_generator,
+        )
+        .await?;
+
+        transaction.create_spicedb_relationship(
+            spicedb_schema::resource::EMAIL_TEMPLATE,
+            new_template_id,
+            spicedb_schema::relation::email_template::ORGANISATION,
+            spicedb_schema::resource::ORGANISATION,
+            organisation_id,
+        );
 
         transaction.commit().await?;
         Ok(AppMessage::OkMessage(

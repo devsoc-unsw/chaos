@@ -7,11 +7,15 @@
 //! - Queuing offer emails for the background worker (`EmailQueue`)
 
 use crate::models::app::{AppMessage, AppState};
-use crate::models::auth::{CampaignAdmin, OfferAdmin, OfferRecipient};
 use crate::models::email::{EmailQueue, EmailType};
 use crate::models::error::ChaosError;
 use crate::models::offer::{Offer, OfferReply};
 use crate::models::transaction::DBTransaction;
+use crate::spicedb::{
+    self,
+    policies::{ManageCampaign, ManageOffer, ReplyOffer, ViewOffer},
+    schema as spicedb_schema, SpiceDbAuth,
+};
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -51,23 +55,21 @@ pub struct QueueOutcomeEmailsRequest {
 impl OfferHandler {
     /// Retrieves the details of a specific offer.
     ///
-    /// This handler allows offer admins to view offer details.
+    /// This handler allows users authorized to view the offer to retrieve offer details.
     ///
     /// # Arguments
     ///
     /// * `transaction` - Database transaction
-    /// * `id` - The ID of the offer to retrieve
-    /// * `_user` - The authenticated user (must be an offer admin)
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ViewOffer>`
     ///
     /// # Returns
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Offer details or error
     pub async fn get(
         mut transaction: DBTransaction<'_>,
-        Path(id): Path<i64>,
-        _user: OfferAdmin,
+        auth: SpiceDbAuth<ViewOffer>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let offer = Offer::get(id, &mut transaction.tx).await?;
+        let offer = Offer::get(auth.resource_id, &mut transaction.tx).await?;
         transaction.commit().await?;
 
         Ok((StatusCode::OK, Json(offer)))
@@ -75,24 +77,33 @@ impl OfferHandler {
 
     /// Deletes an offer.
     ///
-    /// This handler allows offer admins to delete offers.
+    /// This handler allows users authorized to manage the offer to delete offers.
     ///
     /// # Arguments
     ///
     /// * `transaction` - Database transaction
-    /// * `id` - The ID of the offer to delete
-    /// * `_user` - The authenticated user (must be an offer admin)
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageOffer>`
+    /// * `state` - The application state
     ///
     /// # Returns
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn delete(
         mut transaction: DBTransaction<'_>,
-        Path(id): Path<i64>,
-        _user: OfferAdmin,
+        auth: SpiceDbAuth<ManageOffer>,
+        state: State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Offer::delete(id, &mut transaction.tx).await?;
+        Offer::delete(auth.resource_id, &mut transaction.tx).await?;
         transaction.commit().await?;
+
+        // Run SpiceDB delete after Postgres succeeds
+        spicedb::delete_all_resource_relationships(
+            &state.spicedb,
+            &state.spicedb_key,
+            spicedb_schema::resource::OFFER,
+            auth.resource_id,
+        )
+        .await?;
 
         Ok(AppMessage::OkMessage("Successfully deleted offer"))
     }
@@ -104,8 +115,7 @@ impl OfferHandler {
     /// # Arguments
     ///
     /// * `transaction` - Database transaction
-    /// * `id` - The ID of the offer to reply to
-    /// * `_user` - The authenticated user (must be the offer recipient)
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ReplyOffer>`
     /// * `reply` - The recipient's response
     ///
     /// # Returns
@@ -113,11 +123,10 @@ impl OfferHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn reply(
         mut transaction: DBTransaction<'_>,
-        Path(id): Path<i64>,
-        _user: OfferRecipient,
+        auth: SpiceDbAuth<ReplyOffer>,
         Json(reply): Json<OfferReply>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Offer::reply(id, reply.accept, &mut transaction.tx).await?;
+        Offer::reply(auth.resource_id, reply.accept, &mut transaction.tx).await?;
         transaction.commit().await?;
 
         Ok(AppMessage::OkMessage("Successfully accepted offer"))
@@ -125,23 +134,21 @@ impl OfferHandler {
 
     /// Previews the email that will be sent for an offer.
     ///
-    /// This handler allows offer admins to preview the offer email before sending.
+    /// This handler allows users authorized to manage the offer to preview the offer email before sending.
     ///
     /// # Arguments
     ///
     /// * `transaction` - Database transaction
-    /// * `id` - The ID of the offer
-    /// * `_user` - The authenticated user (must be an offer admin)
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageOffer>`
     ///
     /// # Returns
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Email preview or error
     pub async fn preview_email(
         mut transaction: DBTransaction<'_>,
-        Path(id): Path<i64>,
-        _user: OfferAdmin,
+        auth: SpiceDbAuth<ManageOffer>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let email_parts = Offer::preview_email(id, &mut transaction.tx).await?;
+        let email_parts = Offer::preview_email(auth.resource_id, &mut transaction.tx).await?;
         transaction.commit().await?;
 
         Ok((StatusCode::OK, Json(email_parts)))
@@ -149,13 +156,12 @@ impl OfferHandler {
 
     /// Sends an offer email to the recipient.
     ///
-    /// This handler allows offer admins to send offer emails.
+    /// This handler allows users authorized to manage the offer to send offer emails.
     ///
     /// # Arguments
     ///
     /// * `transaction` - Database transaction
-    /// * `id` - The ID of the offer to send
-    /// * `_user` - The authenticated user (must be an offer admin)
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageOffer>`
     /// * `state` - The application state containing email credentials
     ///
     /// # Returns
@@ -163,11 +169,15 @@ impl OfferHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn send_offer(
         mut transaction: DBTransaction<'_>,
-        Path(id): Path<i64>,
-        _user: OfferAdmin,
+        auth: SpiceDbAuth<ManageOffer>,
         State(state): State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Offer::send_offer(id, &mut transaction.tx, state.email_credentials).await?;
+        Offer::send_offer(
+            auth.resource_id,
+            &mut transaction.tx,
+            state.email_credentials,
+        )
+        .await?;
         transaction.commit().await?;
 
         Ok(AppMessage::OkMessage("Successfully sent offer"))
@@ -175,14 +185,26 @@ impl OfferHandler {
 
     /// Queues outcome emails for the worker (`EmailQueue`, same pipeline as offer email queue).
     ///
-    /// Auth matches viewing application ratings summary: org member for the campaign.
+    /// This handler allows users authorized to manage the campaign to queue outcome emails for delivery.
+    ///
+    /// # Arguments
+    ///
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<ManageCampaign>`
+    /// * `transaction` - Database transaction
+    /// * `state` - The application state
+    /// * `body` - The outcome emails to queue
+    ///
+    /// # Returns
+    ///
+    /// * `Result<impl IntoResponse, ChaosError>` - Success message with the number of queued emails or error
     pub async fn queue_outcome_emails(
-        _user: CampaignAdmin,
-        Path(campaign_id): Path<i64>,
+        auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,
         State(mut state): State<AppState>,
         Json(body): Json<QueueOutcomeEmailsRequest>,
     ) -> Result<impl IntoResponse, ChaosError> {
+        let campaign_id = auth.resource_id;
+
         if body.emails.is_empty() {
             return Err(ChaosError::BadRequestWithMessage(
                 "No emails to queue".to_string(),
@@ -202,6 +224,22 @@ impl OfferHandler {
                     &mut state.snowflake_generator,
                 )
                 .await?;
+
+                transaction.create_spicedb_relationship(
+                    spicedb_schema::resource::OFFER,
+                    offer_id,
+                    spicedb_schema::relation::offer::CAMPAIGN,
+                    spicedb_schema::resource::CAMPAIGN,
+                    campaign_id,
+                );
+
+                transaction.create_spicedb_relationship(
+                    spicedb_schema::resource::OFFER,
+                    offer_id,
+                    spicedb_schema::relation::offer::APPLICATION,
+                    spicedb_schema::resource::APPLICATION,
+                    item.application_id,
+                );
                 if state.is_dev_env {
                     let email = item.email;
                     println!("need to call offers here, but sent to: {email}");

@@ -3,10 +3,13 @@
 //! This module provides HTTP request handlers for CRUD operations on per-campaign-role statuses.
 
 use crate::models::app::AppMessage;
-use crate::models::auth::{AuthUser, CampaignOrgMember};
 use crate::models::error::ChaosError;
 use crate::models::role_status::{RoleStatus, UpdateRoleStatus};
 use crate::models::transaction::DBTransaction;
+use crate::spicedb::{
+    policies::{ReviewApplication, ReviewCampaign},
+    SpiceDbAuth,
+};
 use axum::extract::{Json, Path};
 use axum::response::IntoResponse;
 
@@ -19,16 +22,15 @@ impl RoleStatusHandler {
     /// # Arguments
     /// * `application_id` - ID of the application whose status is being set.
     /// * `campaign_role_id` - ID of the campaign role whose per-role status is being set.
-    /// * `_admin` - Authenticated user allowed to set the application's per-role status.
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<ReviewApplication>`.
     /// * `transaction` - Database transaction wrapper.
     /// * `data` - Update role payload.
     ///
     /// # Returns
-    /// A success message.
+    /// `Result<impl IntoResponse, ChaosError>` - A success message.
     pub async fn update_role_status(
         Path((application_id, campaign_role_id)): Path<(i64, i64)>,
-        // TODO: Replace the AuthUser extractor with something that enforces the desired permissions.
-        _admin: AuthUser,
+        _auth: SpiceDbAuth<ReviewApplication>,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<UpdateRoleStatus>,
     ) -> Result<impl IntoResponse, ChaosError> {
@@ -51,15 +53,14 @@ impl RoleStatusHandler {
     ///
     /// # Arguments
     /// * `application_id` - ID of the application to fetch the per-campaign-role statuses for.
-    /// * `_admin` - Authenticated user allowed to view the application's per-role statuses.
+    /// * `_auth` - Authenticated user, authorized by `SpiceDbAuth<ReviewApplication>`.
     /// * `transaction` - Database transaction wrapper.
     ///
     /// # Returns
-    /// The per-campaign-role statuses for the application.
+    /// `Result<impl IntoResponse, ChaosError>` - The per-campaign-role statuses for the application.
     pub async fn get_role_statuses_for_application(
         Path(application_id): Path<i64>,
-        // TODO: Replace the AuthUser extractor with something that enforces the desired permissions.
-        _admin: AuthUser,
+        _auth: SpiceDbAuth<ReviewApplication>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let statuses =
@@ -75,19 +76,22 @@ impl RoleStatusHandler {
     /// # Arguments
     /// * `campaign_id` - ID of the campaign to fetch the per-campaign-role statuses for.
     /// * `campaign_role_id` - ID of the campaign role to fetch the per-role statuses for.
-    /// * `_admin` - Authenticated user allowed to view the campaign role's statuses.
+    /// * `_auth` - Authenticated user, authorized by `SpiceDbAuth<ReviewCampaign>`.
     /// * `transaction` - Database transaction wrapper.
     ///
     /// # Returns
-    /// The per-role statuses for the campaign role.
+    /// `Result<impl IntoResponse, ChaosError>` - The per-role statuses for the campaign role.
     pub async fn get_role_statuses_for_campaign_role(
         Path((campaign_id, campaign_role_id)): Path<(i64, i64)>,
-        // TODO: Replace the CampaignOrgMember extractor with something that enforces the desired permissions.
-        _admin: CampaignOrgMember,
+        _auth: SpiceDbAuth<ReviewCampaign>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let statuses =
-            RoleStatus::get_all_for_campaign_role(campaign_role_id, &mut transaction.tx).await?;
+        let statuses = RoleStatus::get_all_for_campaign_role(
+            campaign_role_id,
+            campaign_id,
+            &mut transaction.tx,
+        )
+        .await?;
 
         transaction.commit().await?;
 
@@ -98,15 +102,14 @@ impl RoleStatusHandler {
     ///
     /// # Arguments
     /// * `campaign_id` - ID of the campaign to fetch the per-campaign-role statuses for.
-    /// * `_admin` - Authenticated user allowed to view the campaign's per-role statuses.
+    /// * `_auth` - Authenticated user, authorized by `SpiceDbAuth<ReviewCampaign>`.
     /// * `transaction` - Database transaction wrapper.
     ///
     /// # Returns
-    /// The per-role statuses for the campaign.
+    /// `Result<impl IntoResponse, ChaosError>` - The per-role statuses for the campaign.
     pub async fn get_role_statuses_for_campaign(
         Path(campaign_id): Path<i64>,
-        // TODO: Replace the CampaignOrgMember extractor with something that enforces the desired permissions.
-        _admin: CampaignOrgMember,
+        _auth: SpiceDbAuth<ReviewCampaign>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let statuses = RoleStatus::get_all_for_campaign(campaign_id, &mut transaction.tx).await?;

@@ -11,17 +11,16 @@ pub struct Seeder {
 }
 
 impl Seeder {
-    pub async fn init() -> Seeder {
-        Seeder {
-            app_state: init_app_state().await,
-        }
+    pub async fn init(state: AppState) -> Seeder {
+        Seeder { app_state: state }
     }
 
     pub async fn seed_database(&mut self, admin_email: String) -> Result<(), ChaosError> {
         let mut transaction = DBTransaction::new(&self.app_state).await?;
 
         // Check if super user already exists, and if not, create them
-        let possible_super_user = User::find_by_email(admin_email.clone(), &mut transaction.tx).await?;
+        let possible_super_user =
+            User::find_by_email(admin_email.clone(), &mut transaction.tx).await?;
         let super_user_id = self.app_state.snowflake_generator.real_time_generate();
         if possible_super_user.is_none() {
             let super_user = User {

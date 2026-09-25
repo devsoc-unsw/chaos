@@ -19,7 +19,7 @@ use std::ops::DerefMut;
 ///
 /// * `user_id` - The ID of the user to check
 /// * `rating_id` - The ID of the rating
-/// * `pool` - Database connection pool
+/// * `transaction` - Database transaction
 ///
 /// # Returns
 ///
@@ -74,7 +74,7 @@ pub async fn assert_user_is_application_reviewer_given_rating_id(
 ///
 /// * `user_id` - The ID of the user to check
 /// * `rating_id` - The ID of the rating
-/// * `pool` - Database connection pool
+/// * `transaction` - Database transaction
 ///
 /// # Returns
 ///
@@ -126,11 +126,11 @@ pub async fn assert_user_is_rating_creator_and_organisation_member(
 ///
 /// * `user_id` - The ID of the user to check
 /// * `application_id` - The ID of the application
-/// * `pool` - Database connection pool
+/// * `transaction` - Database transaction
 ///
 /// # Returns
 ///
-/// * `Result<(), ChaosError>` - Ok if the user is a member, Unauthorized error otherwise
+/// * `Result<bool, ChaosError>` - Ok(true) if the user is a member, Unauthorized error otherwise
 pub async fn assert_user_is_organisation_member(
     user_id: i64,
     application_id: i64,
