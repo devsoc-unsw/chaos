@@ -7,12 +7,9 @@
 //! - Offer management
 //! - Banner image handling
 
-use crate::models;
 use crate::models::app::{AppMessage, AppState};
 use crate::models::application::Application;
 use crate::models::application::NewApplication;
-use crate::models::auth::AuthUser;
-use crate::models::auth::CampaignAdmin;
 use crate::models::campaign::{
     AttachmentResponse, Campaign, CampaignAttachment, CampaignDetailsResponse, NewAttachment,
     OpenCampaign,
@@ -22,6 +19,9 @@ use crate::models::offer::Offer;
 use crate::models::role::{Role, RoleUpdate};
 use crate::models::storage::Storage;
 use crate::models::transaction::DBTransaction;
+use crate::spicedb::policies::{ReviewCampaign, UsePlatform};
+use crate::spicedb::{policies::ManageCampaign, SpiceDbAuth};
+use crate::{models, spicedb};
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -32,13 +32,13 @@ pub struct CampaignHandler;
 impl CampaignHandler {
     /// Retrieves a campaign by its ID.
     ///
-    /// This handler allows any authenticated user to view campaign details.
+    /// This handler allows anyone to view campaign details.
     ///
     /// # Arguments
     ///
     /// * `transaction` - Database transaction
+    /// * `state` - The application state
     /// * `id` - The ID of the campaign to retrieve
-    /// * `_user` - The authenticated user
     ///
     /// # Returns
     ///
@@ -56,7 +56,7 @@ impl CampaignHandler {
             &state.storage_bucket,
         )
         .await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((
             StatusCode::OK,
             Json(CampaignDetailsResponse {
@@ -68,14 +68,14 @@ impl CampaignHandler {
 
     /// Retrieves a campaign by its organisation and campaign slugs.
     ///
-    /// This handler allows any authenticated user to view campaign details using slugs.
+    /// This handler allows anyone to view campaign details using slugs.
     ///
     /// # Arguments
     ///
     /// * `transaction` - Database transaction
+    /// * `state` - The application state
     /// * `organisation_slug` - The slug of the organisation
     /// * `campaign_slug` - The slug of the campaign
-    /// * `_user` - The authenticated user
     ///
     /// # Returns
     ///
@@ -84,6 +84,7 @@ impl CampaignHandler {
         mut transaction: DBTransaction<'_>,
         State(state): State<AppState>,
         Path((organisation_slug, campaign_slug)): Path<(String, String)>,
+        // Once again a public handler, so no need for AuthUser
     ) -> Result<impl IntoResponse, ChaosError> {
         let campaign =
             Campaign::get_by_slugs(organisation_slug, campaign_slug, true, &mut transaction.tx)
@@ -96,7 +97,7 @@ impl CampaignHandler {
         )
         .await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((
             StatusCode::OK,
             Json(CampaignDetailsResponse {
@@ -113,17 +114,17 @@ impl CampaignHandler {
     /// # Arguments
     ///
     /// * `transaction` - Database transaction
-    /// * `_user` - The authenticated user
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
     ///
     /// # Returns
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - List of campaigns or error
     pub async fn get_all(
         mut transaction: DBTransaction<'_>,
-        _user: AuthUser,
+        _auth: SpiceDbAuth<UsePlatform>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let campaigns = Campaign::get_all(&mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(campaigns)))
     }
 
@@ -133,22 +134,21 @@ impl CampaignHandler {
     ///
     /// # Arguments
     ///
+    /// * `auth` - The authenticated user, authorized to manage the campaign
+    ///   identified by the `campaign_id` path parameter (`SpiceDbAuth<ManageCampaign>`)
     /// * `transaction` - Database transaction
-    /// * `id` - The ID of the campaign to update
-    /// * `_admin` - The authenticated user (must be a campaign admin)
     /// * `request_body` - The new campaign details
     ///
     /// # Returns
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update(
+        auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,
-        Path(id): Path<i64>,
-        _admin: CampaignAdmin,
         Json(request_body): Json<models::campaign::CampaignUpdate>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Campaign::update(id, request_body, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        Campaign::update(auth.resource_id, request_body, &mut transaction.tx).await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully updated campaign"))
     }
 
@@ -158,20 +158,19 @@ impl CampaignHandler {
     ///
     /// # Arguments
     ///
+    /// * `auth` - The authenticated user, authorized to manage the campaign
+    ///   identified by the `campaign_id` path parameter (`SpiceDbAuth<ManageCampaign>`)
     /// * `transaction` - Database transaction
-    /// * `id` - The ID of the campaign to publish
-    /// * `_admin` - The authenticated user (must be a campaign admin)
     ///
     /// # Returns
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn publish(
+        auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,
-        Path(id): Path<i64>,
-        _admin: CampaignAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Campaign::publish(id, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        Campaign::publish(auth.resource_id, &mut transaction.tx).await?;
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully published campaign"))
     }
 
@@ -181,23 +180,23 @@ impl CampaignHandler {
     ///
     /// # Arguments
     ///
+    /// * `auth` - The authenticated user, authorized to manage the campaign
+    ///   identified by the `campaign_id` path parameter (`SpiceDbAuth<ManageCampaign>`)
     /// * `transaction` - Database transaction
     /// * `state` - The application state
-    /// * `id` - The ID of the campaign
-    /// * `_admin` - The authenticated user (must be a campaign admin)
     ///
     /// # Returns
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Banner URL or error
     pub async fn update_banner(
+        auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,
         State(state): State<AppState>,
-        Path(id): Path<i64>,
-        _admin: CampaignAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
         let banner_url =
-            Campaign::update_banner(id, &mut transaction.tx, &state.storage_bucket).await?;
-        transaction.tx.commit().await?;
+            Campaign::update_banner(auth.resource_id, &mut transaction.tx, &state.storage_bucket)
+                .await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(banner_url)))
     }
 
@@ -207,20 +206,39 @@ impl CampaignHandler {
     ///
     /// # Arguments
     ///
+    /// * `auth` - The authenticated user, authorized to manage the campaign
+    ///   identified by the `campaign_id` path parameter (`SpiceDbAuth<ManageCampaign>`)
     /// * `transaction` - Database transaction
-    /// * `id` - The ID of the campaign to delete
-    /// * `_admin` - The authenticated user (must be a campaign admin)
+    /// * `state` - The application state
     ///
     /// # Returns
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn delete(
+        auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,
-        Path(id): Path<i64>,
-        _admin: CampaignAdmin,
+        state: State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Campaign::delete(id, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        let application_ids =
+            Campaign::get_application_ids(auth.resource_id, &mut transaction.tx).await?;
+        let rating_ids = Campaign::get_rating_ids(auth.resource_id, &mut transaction.tx).await?;
+        let comment_ids = Campaign::get_comment_ids(auth.resource_id, &mut transaction.tx).await?;
+
+        Campaign::delete(auth.resource_id, &mut transaction.tx).await?;
+
+        transaction.commit().await?;
+
+        // Run SpiceDB delete after Postgres succeeds
+        // TODO: Move to async queue to speed up endpoint response times
+        crate::service::campaign::campaign_spicedb_deep_delete(
+            auth.resource_id,
+            application_ids,
+            rating_ids,
+            comment_ids,
+            &state.spicedb,
+            &state.spicedb_key,
+        )
+        .await?;
         Ok(AppMessage::OkMessage("Successfully deleted campaign"))
     }
 
@@ -230,30 +248,38 @@ impl CampaignHandler {
     ///
     /// # Arguments
     ///
+    /// * `auth` - The authenticated user, authorized to manage the campaign
+    ///   identified by the `campaign_id` path parameter (`SpiceDbAuth<ManageCampaign>`)
     /// * `transaction` - Database transaction
     /// * `state` - The application state
-    /// * `id` - The ID of the campaign
-    /// * `_admin` - The authenticated user (must be a campaign admin)
     /// * `data` - The new role details
     ///
     /// # Returns
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn create_role(
+        auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,
         State(mut state): State<AppState>,
-        Path(id): Path<i64>,
-        _admin: CampaignAdmin,
         Json(data): Json<RoleUpdate>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Campaign::create_role(
-            id,
+        let role_id = Campaign::create_role(
+            auth.resource_id,
             data,
             &mut transaction.tx,
             &mut state.snowflake_generator,
         )
         .await?;
-        transaction.tx.commit().await?;
+
+        transaction.create_spicedb_relationship(
+            crate::spicedb::schema::resource::CAMPAIGN_ROLE,
+            role_id,
+            crate::spicedb::schema::relation::campaign_role::CAMPAIGN,
+            crate::spicedb::schema::resource::CAMPAIGN,
+            auth.resource_id,
+        );
+
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully created role"))
     }
 
@@ -265,7 +291,7 @@ impl CampaignHandler {
     ///
     /// * `transaction` - Database transaction
     /// * `id` - The ID of the campaign
-    /// * `_user` - The authenticated user
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
     ///
     /// # Returns
     ///
@@ -273,10 +299,11 @@ impl CampaignHandler {
     pub async fn get_roles(
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
-        _user: AuthUser,
+        _auth: SpiceDbAuth<UsePlatform>,
+        // TODO: Make this endpoint only work if campaign is open, then create new endpoint for use by Organisation Viewers
     ) -> Result<impl IntoResponse, ChaosError> {
         let roles = Role::get_all_in_campaign(id, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(roles)))
     }
 
@@ -287,9 +314,9 @@ impl CampaignHandler {
     /// # Arguments
     ///
     /// * `state` - The application state
-    /// * `id` - The ID of the campaign
-    /// * `user` - The authenticated user
-    /// * `_` - Ensures the campaign is open
+    /// * `campaign_id` - The ID of the campaign
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
+    /// * `_: OpenCampaign` - Ensures the campaign is open
     /// * `transaction` - Database transaction
     /// * `data` - The new application details
     ///
@@ -298,45 +325,62 @@ impl CampaignHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn create_application(
         State(mut state): State<AppState>,
-        Path(id): Path<i64>,
-        user: AuthUser,
+        Path(campaign_id): Path<i64>,
+        auth: SpiceDbAuth<UsePlatform>,
         _: OpenCampaign,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewApplication>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        Application::create(
-            id,
-            user.user_id,
+        let application_id = Application::create(
+            campaign_id,
+            auth.user_id,
             data,
             &mut state.snowflake_generator,
             &mut transaction.tx,
         )
         .await?;
-        transaction.tx.commit().await?;
+
+        transaction.create_spicedb_relationship(
+            crate::spicedb::schema::resource::APPLICATION,
+            application_id,
+            crate::spicedb::schema::relation::application::CAMPAIGN,
+            crate::spicedb::schema::resource::CAMPAIGN,
+            campaign_id,
+        );
+
+        transaction.create_spicedb_relationship(
+            crate::spicedb::schema::resource::APPLICATION,
+            application_id,
+            crate::spicedb::schema::relation::application::CREATOR,
+            crate::spicedb::schema::resource::USER,
+            auth.user_id,
+        );
+
+        transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully created application"))
     }
 
     /// Retrieves all applications for a campaign.
     ///
-    /// This handler allows campaign admins to view all applications.
+    /// This handler allows campaign reviewers to view all applications.
     ///
     /// # Arguments
     ///
-    /// * `id` - The ID of the campaign
-    /// * `_admin` - The authenticated user (must be a campaign admin)
+    /// * `auth` - The authenticated user, authorized to review the campaign
+    ///   identified by the `campaign_id` path parameter (`SpiceDbAuth<ReviewCampaign>`)
     /// * `transaction` - Database transaction
     ///
     /// # Returns
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - List of applications or error
     pub async fn get_applications(
-        Path(id): Path<i64>,
-        admin: CampaignAdmin,
+        auth: SpiceDbAuth<ReviewCampaign>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let applications =
-            Application::get_from_campaign_id(id, admin.user_id, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+            Application::get_from_campaign_id(auth.resource_id, auth.user_id, &mut transaction.tx)
+                .await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(applications)))
     }
 
@@ -346,9 +390,9 @@ impl CampaignHandler {
     ///
     /// # Arguments
     ///
-    /// * `id` - The ID of the campaign
+    /// * `auth` - The authenticated user, authorized to manage the campaign
+    ///   identified by the `campaign_id` path parameter (`SpiceDbAuth<ManageCampaign>`)
     /// * `state` - The application state
-    /// * `_admin` - The authenticated user (must be a campaign admin)
     /// * `transaction` - Database transaction
     /// * `data` - The new offer details
     ///
@@ -356,14 +400,13 @@ impl CampaignHandler {
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn create_offer(
-        Path(id): Path<i64>,
+        auth: SpiceDbAuth<ManageCampaign>,
         State(mut state): State<AppState>,
-        _admin: CampaignAdmin,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<Offer>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let _ = Offer::create(
-            id,
+        let offer_id = Offer::create(
+            auth.resource_id,
             data.application_id,
             data.email_template_id,
             data.role_id,
@@ -372,7 +415,24 @@ impl CampaignHandler {
             &mut state.snowflake_generator,
         )
         .await?;
-        transaction.tx.commit().await?;
+
+        transaction.create_spicedb_relationship(
+            crate::spicedb::schema::resource::OFFER,
+            offer_id,
+            crate::spicedb::schema::relation::offer::CAMPAIGN,
+            crate::spicedb::schema::resource::CAMPAIGN,
+            auth.resource_id,
+        );
+
+        transaction.create_spicedb_relationship(
+            crate::spicedb::schema::resource::OFFER,
+            offer_id,
+            crate::spicedb::schema::relation::offer::APPLICATION,
+            crate::spicedb::schema::resource::APPLICATION,
+            data.application_id,
+        );
+
+        transaction.commit().await?;
 
         Ok(AppMessage::OkMessage("Successfully created offer"))
     }
@@ -383,20 +443,19 @@ impl CampaignHandler {
     ///
     /// # Arguments
     ///
+    /// * `auth` - The authenticated user, authorized to manage the campaign
+    ///   identified by the `campaign_id` path parameter (`SpiceDbAuth<ManageCampaign>`)
     /// * `transaction` - Database transaction
-    /// * `id` - The ID of the campaign
-    /// * `_user` - The authenticated user (must be a campaign admin)
     ///
     /// # Returns
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - List of offers or error
     pub async fn get_offers(
+        auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,
-        Path(id): Path<i64>,
-        _user: CampaignAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let offers = Offer::get_by_campaign(id, &mut transaction.tx).await?;
-        transaction.tx.commit().await?;
+        let offers = Offer::get_by_campaign(auth.resource_id, &mut transaction.tx).await?;
+        transaction.commit().await?;
 
         Ok((StatusCode::OK, Json(offers)))
     }
@@ -411,7 +470,7 @@ impl CampaignHandler {
     /// * `transaction` - Database transaction
     /// * `state` - The application state
     /// * `id` - The ID of the campaign
-    /// * `_user` - The authenticated user
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
     ///
     /// # Returns
     ///
@@ -420,7 +479,7 @@ impl CampaignHandler {
         mut transaction: DBTransaction<'_>,
         State(state): State<AppState>,
         Path(id): Path<i64>,
-        _user: AuthUser,
+        _auth: SpiceDbAuth<UsePlatform>, // TODO: Similar to roles, need two endpoints
     ) -> Result<impl IntoResponse, ChaosError> {
         let campaign = Campaign::get(id, &mut transaction.tx).await?;
         let attachments = CampaignAttachment::get_by_campaign(id, &mut transaction.tx).await?;
@@ -446,7 +505,7 @@ impl CampaignHandler {
             });
         }
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(responses)))
     }
 
@@ -457,31 +516,30 @@ impl CampaignHandler {
     ///
     /// # Arguments
     ///
+    /// * `auth` - The authenticated user, authorized to manage the campaign
+    ///   identified by the `campaign_id` path parameter (`SpiceDbAuth<ManageCampaign>`)
     /// * `transaction` - Database transaction
     /// * `state` - The application state
-    /// * `id` - The ID of the campaign
-    /// * `_admin` - The authenticated user (must be a campaign admin)
-    /// * `data` - The file metadata (name and size)
+    /// * `data` - The list of new attachment metadata (name and size)
     ///
     /// # Returns
     ///
-    /// * `Result<impl IntoResponse, ChaosError>` - Upload URL and attachment ID
+    /// * `Result<impl IntoResponse, ChaosError>` - List of attachment upload URLs and IDs
     pub async fn upload_attachments(
+        auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,
         State(mut state): State<AppState>,
-        Path(id): Path<i64>,
-        _admin: CampaignAdmin,
         Json(data): Json<Vec<NewAttachment>>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let upload_results = CampaignAttachment::create_or_update_multiple(
-            id,
+            auth.resource_id,
             data,
             &mut transaction.tx,
             &mut state.snowflake_generator,
             &state.storage_bucket,
         )
         .await?;
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
         Ok((StatusCode::OK, Json(upload_results)))
     }
 
@@ -491,37 +549,33 @@ impl CampaignHandler {
     ///
     /// # Arguments
     ///
+    /// * `_auth` - The authenticated user, authorized to manage the campaign
+    ///   identified by the `campaign_id` path parameter (`SpiceDbAuth<ManageCampaign>`)
     /// * `transaction` - Database transaction
+    /// * `state` - The application state
+    /// * `campaign_id` - The ID of the campaign owning the attachment
     /// * `attachment_id` - The ID of the attachment to delete
-    /// * `_admin` - The authenticated user (must be a campaign admin)
     ///
     /// # Returns
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn delete_attachment(
+        _auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,
         State(state): State<AppState>,
         Path((campaign_id, attachment_id)): Path<(i64, i64)>,
-        _admin: CampaignAdmin,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let attachment = CampaignAttachment::get_by_id(attachment_id, &mut transaction.tx).await?;
-
-        // Ensure the attachment actually belongs to the campaign in the path
-        if attachment.campaign_id != campaign_id {
-            return Err(ChaosError::BadRequest);
-        }
-
         let (organisation_id, campaign_id) =
-            CampaignAttachment::delete(attachment_id, &mut transaction.tx).await?;
+            CampaignAttachment::delete(attachment_id, campaign_id, &mut transaction.tx).await?;
 
         // Delete the file from S3 storage
         let storage_path = format!(
             "/organisation/{}/campaign/{}/attachment/{}",
-            organisation_id, campaign_id, attachment.id
+            organisation_id, campaign_id, attachment_id
         );
         Storage::delete_file(storage_path, &state.storage_bucket).await?;
 
-        transaction.tx.commit().await?;
-        Ok(())
+        transaction.commit().await?;
+        Ok(AppMessage::OkMessage("Successfully deleted attachment"))
     }
 }

@@ -16,6 +16,9 @@ use crate::models::email::{ChaosEmail, EmailCredentials};
 use crate::models::error::ChaosError;
 use crate::models::storage::Storage;
 use crate::service::oauth2::build_oauth_client;
+use crate::spicedb::authzed::api::v1::permissions_service_client::PermissionsServiceClient;
+use crate::spicedb::authzed::api::v1::ZedToken;
+use crate::spicedb::{check_permission, ZedTokenPublicationGate};
 use axum::http::{header, Method, StatusCode};
 use axum::response::IntoResponse;
 use axum::routing::{delete, get, patch, post, put};
@@ -29,6 +32,9 @@ use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 use std::env;
+use std::sync::{Arc, RwLock};
+use tokio::sync::{Mutex, Notify};
+use tonic::transport::Channel;
 use tower_http::cors::CorsLayer;
 
 #[derive(Serialize)]
@@ -105,6 +111,52 @@ pub struct AppState {
     pub storage_bucket: Bucket,
     pub is_dev_env: bool,
     pub email_credentials: EmailCredentials,
+    pub spicedb: PermissionsServiceClient<Channel>,
+    pub spicedb_key: String,
+    pub spicedb_zedtoken: Arc<RwLock<Option<ZedToken>>>,
+    pub spicedb_publication_gate: Arc<Mutex<ZedTokenPublicationGate>>,
+    pub spicedb_publication_notify: Arc<Notify>,
+}
+
+impl AppState {
+    /// Checks whether a user holds a permission on a SpiceDB resource, using
+    /// the application's shared SpiceDB client and credentials.
+    ///
+    /// Call this directly in handlers whose resource ID does not come from a
+    /// path parameter, for example when the ID is taken from the request body,
+    /// derived from a slug, or only known after a database lookup. When the
+    /// resource ID is a path parameter, prefer the [`SpiceDbAuth`] extractor.
+    ///
+    /// # Arguments
+    ///
+    /// * `user_id` - Chaos user to authorize
+    /// * `resource_type` - SpiceDB object type, such as `chaos/organisation`
+    /// * `resource_id` - Chaos ID of the resource, sent as the SpiceDB object ID
+    /// * `permission` - SpiceDB permission to check, such as `manage`
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` if the user holds the permission
+    /// * `Err(ChaosError::ForbiddenOperation)` if the user does not
+    /// * `Err(ChaosError::InternalServerError)` if the SpiceDB call fails
+    pub async fn check_permission(
+        &self,
+        user_id: i64,
+        resource_type: &str,
+        resource_id: i64,
+        permission: &str,
+    ) -> Result<(), ChaosError> {
+        check_permission(
+            &self.spicedb,
+            &self.spicedb_key,
+            &self.spicedb_zedtoken,
+            user_id,
+            resource_type,
+            resource_id,
+            permission,
+        )
+        .await
+    }
 }
 
 pub async fn init_app_state() -> AppState {
@@ -161,6 +213,18 @@ pub async fn init_app_state() -> AppState {
     // Initialise email credentials
     let email_credentials = ChaosEmail::setup_credentials();
 
+    // Initialise the generated SpiceDB gRPC client
+    let spicedb_endpoint =
+        env::var("SPICEDB_GRPC_ENDPOINT").expect("SPICEDB_GRPC_ENDPOINT must be set");
+    let spicedb_key = env::var("SPICEDB_KEY").expect("SPICEDB_KEY must be set");
+    let spicedb_channel = Channel::from_shared(spicedb_endpoint)
+        .expect("SPICEDB_GRPC_ENDPOINT must be a valid URI")
+        .connect_lazy();
+    let spicedb = PermissionsServiceClient::new(spicedb_channel);
+    let spicedb_zedtoken = Arc::new(RwLock::new(None));
+    let spicedb_publication_gate = Arc::new(Mutex::new(ZedTokenPublicationGate::new()));
+    let spicedb_publication_notify = Arc::new(Notify::new());
+
     // Add all data to AppState
 
     AppState {
@@ -175,6 +239,11 @@ pub async fn init_app_state() -> AppState {
         storage_bucket,
         is_dev_env,
         email_credentials,
+        spicedb,
+        spicedb_key,
+        spicedb_zedtoken,
+        spicedb_publication_gate,
+        spicedb_publication_notify,
     }
 }
 
@@ -437,17 +506,6 @@ pub async fn app() -> Result<(Router, AppState), ChaosError> {
             "/api/v1/application/:application_id/inprogress",
             get(ApplicationHandler::get_in_progress),
         )
-        // Rating routes are handled by RatingHandler, idk why they are back so commented
-        // .route(
-        //     "/api/v1/application/:application_id/rating",
-        //     get(ApplicationHandler::get_rating_by_current_user)
-        //         .post(ApplicationHandler::create_rating)
-        //         .put(ApplicationHandler::update_rating),
-        // )
-        // .route(
-        //     "/api/v1/application/:application_id/ratings",
-        //     get(ApplicationHandler::get_ratings),
-        // )
         .route(
             "/api/v1/application/:application_id/status",
             patch(ApplicationHandler::set_status),

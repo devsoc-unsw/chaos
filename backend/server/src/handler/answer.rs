@@ -8,9 +8,13 @@
 use crate::models::answer::{Answer, NewAnswer};
 use crate::models::app::{AppMessage, AppState, IdMessage};
 use crate::models::application::{OpenApplicationByAnswerId, OpenApplicationByApplicationId};
-use crate::models::auth::{AnswerOwner, ApplicationOwner, ApplicationOwnerOrReviewer};
 use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
+use crate::spicedb::{
+    self,
+    policies::{EditAnswer, EditApplication, ViewApplication},
+    schema as spicedb_schema, SpiceDbAuth,
+};
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -28,8 +32,8 @@ impl AnswerHandler {
     ///
     /// * `state` - The application state
     /// * `application_id` - The ID of the application
-    /// * `_user` - The authenticated user (must be the application owner)
-    /// * `_` - Ensures the application is open
+    /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<EditApplication>`
+    /// * `_: OpenApplicationByApplicationId` - Ensures the application is open
     /// * `transaction` - Database transaction
     /// * `data` - The answer details
     ///
@@ -39,7 +43,7 @@ impl AnswerHandler {
     pub async fn create(
         State(mut state): State<AppState>,
         Path(application_id): Path<i64>,
-        _user: ApplicationOwner,
+        auth: SpiceDbAuth<EditApplication>,
         _: OpenApplicationByApplicationId,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewAnswer>,
@@ -54,19 +58,27 @@ impl AnswerHandler {
         )
         .await?;
 
-        transaction.tx.commit().await?;
+        transaction.create_spicedb_relationship(
+            spicedb_schema::resource::ANSWER,
+            id,
+            spicedb_schema::relation::answer::APPLICATION,
+            spicedb_schema::resource::APPLICATION,
+            auth.resource_id,
+        );
+
+        transaction.commit().await?;
 
         Ok((StatusCode::OK, Json(IdMessage { id })))
     }
 
     /// Retrieves all common answers for an application.
     ///
-    /// This handler allows application owners to view all common answers.
+    /// This handler allows application creators and reviewers to view all common answers.
     ///
     /// # Arguments
     ///
     /// * `application_id` - The ID of the application
-    /// * `_owner` - The authenticated user (must be the application owner)
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<ViewApplication>`
     /// * `transaction` - Database transaction
     ///
     /// # Returns
@@ -74,26 +86,26 @@ impl AnswerHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - List of answers or error
     pub async fn get_all_common_by_application(
         Path(application_id): Path<i64>,
-        _owner: ApplicationOwnerOrReviewer,
+        _auth: SpiceDbAuth<ViewApplication>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let answers =
             Answer::get_all_common_by_application(application_id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(Json(answers))
     }
 
     /// Retrieves all answers for a specific role in an application.
     ///
-    /// This handler allows application owners to view role-specific answers.
+    /// This handler allows application creators and reviewers to view role-specific answers.
     ///
     /// # Arguments
     ///
     /// * `application_id` - The ID of the application
     /// * `role_id` - The ID of the role
-    /// * `_owner` - The authenticated user (must be the application owner)
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<ViewApplication>`
     /// * `transaction` - Database transaction
     ///
     /// # Returns
@@ -101,14 +113,14 @@ impl AnswerHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - List of answers or error
     pub async fn get_all_by_application_and_role(
         Path((application_id, role_id)): Path<(i64, i64)>,
-        _owner: ApplicationOwnerOrReviewer,
+        _auth: SpiceDbAuth<ViewApplication>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         let answers =
             Answer::get_all_by_application_and_role(application_id, role_id, &mut transaction.tx)
                 .await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(Json(answers))
     }
@@ -121,24 +133,24 @@ impl AnswerHandler {
     /// # Arguments
     ///
     /// * `answer_id` - The ID of the answer to update
-    /// * `_owner` - The authenticated user (must be the answer owner)
-    /// * `_` - Ensures the application is open
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<EditAnswer>`
+    /// * `_: OpenApplicationByAnswerId` - Ensures the application is open
     /// * `transaction` - Database transaction
-    /// * `data` - The new answer details
+    /// * `new_answer` - The new answer details
     ///
     /// # Returns
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn update(
         Path(answer_id): Path<i64>,
-        _owner: AnswerOwner,
+        _auth: SpiceDbAuth<EditAnswer>,
         _: OpenApplicationByAnswerId, // Troublesome throws BadRequest
         mut transaction: DBTransaction<'_>,
         Json(new_answer): Json<NewAnswer>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Answer::update(answer_id, new_answer.data, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
 
         Ok(AppMessage::OkMessage("Successfully updated answer"))
     }
@@ -151,22 +163,33 @@ impl AnswerHandler {
     /// # Arguments
     ///
     /// * `answer_id` - The ID of the answer to delete
-    /// * `_owner` - The authenticated user (must be the answer owner)
-    /// * `_` - Ensures the application is open
+    /// * `_auth` - The authenticated user, authorized by `SpiceDbAuth<EditAnswer>`
+    /// * `_: OpenApplicationByAnswerId` - Ensures the application is open
     /// * `transaction` - Database transaction
+    /// * `state` - The application state
     ///
     /// # Returns
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn delete(
         Path(answer_id): Path<i64>,
-        _owner: AnswerOwner,
+        _auth: SpiceDbAuth<EditAnswer>,
         _: OpenApplicationByAnswerId,
         mut transaction: DBTransaction<'_>,
+        state: State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Answer::delete(answer_id, &mut transaction.tx).await?;
 
-        transaction.tx.commit().await?;
+        transaction.commit().await?;
+
+        // Run SpiceDB delete after Postgres succeeds
+        spicedb::delete_all_resource_relationships(
+            &state.spicedb,
+            &state.spicedb_key,
+            spicedb_schema::resource::ANSWER,
+            answer_id,
+        )
+        .await?;
 
         Ok(AppMessage::OkMessage("Successfully deleted answer"))
     }

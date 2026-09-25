@@ -16,7 +16,7 @@ use std::ops::DerefMut;
 ///
 /// * `user_id` - The ID of the user to check
 /// * `organisation_id` - The ID of the organisation
-/// * `pool` - Database connection pool
+/// * `transaction` - Database transaction
 ///
 /// # Returns
 ///
@@ -41,19 +41,19 @@ pub async fn assert_user_is_organisation_admin(
     Ok(())
 }
 
-/// Verifies if a user is in an organization
+/// Verifies if a user is not a member of an organisation.
 ///
-/// This function checks if the user is a member of the specified organisation.
+/// This function checks if the user is not a member of the specified organisation.
 ///
 /// # Arguments
 ///
 /// * `user_id` - The ID of the user to check
 /// * `organisation_id` - The ID of the organisation
-/// * `pool` - Database connection pool
+/// * `transaction` - Database transaction
 ///
 /// # Returns
 ///
-/// * `Result<(), ChaosError>` - Ok if the user is a member, Unauthorized error otherwise
+/// * `Result<(), ChaosError>` - Ok if the user is not a member, Unauthorized error otherwise
 pub async fn assert_user_is_not_in_organisation(
     user_id: i64,
     organisation_id: i64,
@@ -82,7 +82,7 @@ pub async fn assert_user_is_not_in_organisation(
 ///
 /// * `user_id` - The ID of the user to check
 /// * `organisation_id` - The ID of the organisation
-/// * `pool` - Database connection pool
+/// * `transaction` - Database transaction
 ///
 /// # Returns
 ///
