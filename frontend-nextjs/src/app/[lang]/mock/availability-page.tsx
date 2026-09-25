@@ -8,6 +8,7 @@ import {
   newTimeRange,
   type Day,
 } from "./components/availability-adjuster";
+import { ConfirmDialog } from "./components/confirm-dialog";
 import { OverridesSection } from "./components/overrides-section";
 
 const initialDays: Day[] = [
@@ -23,9 +24,25 @@ const initialDays: Day[] = [
 export default function AvailabilityPage() {
   const [days, setDays] = useState<Day[]>(initialDays);
   const [tab, setTab] = useState("you");
+  const [dayToTurnOff, setDayToTurnOff] = useState<number | null>(null);
 
   function updateDay(index: number, updated: Day) {
     setDays((prev) => prev.map((day, i) => (i === index ? updated : day)));
+  }
+
+  function handleDayChange(index: number, updated: Day) {
+    if (days[index].enabled && !updated.enabled) {
+      setDayToTurnOff(index);
+      return;
+    }
+    updateDay(index, updated);
+  }
+
+  function confirmTurnOff() {
+    if (dayToTurnOff !== null) {
+      updateDay(dayToTurnOff, { ...days[dayToTurnOff], enabled: false });
+    }
+    setDayToTurnOff(null);
   }
 
   return (
@@ -54,7 +71,7 @@ export default function AvailabilityPage() {
               <AvailabilityAdjuster
                 key={day.name}
                 day={day}
-                onChange={(updated) => updateDay(index, updated)}
+                onChange={(updated) => handleDayChange(index, updated)}
               />
             ))}
           </CardContent>
@@ -68,6 +85,12 @@ export default function AvailabilityPage() {
       </div>
 
       <OverridesSection />
+
+      <ConfirmDialog
+        open={dayToTurnOff !== null}
+        onConfirm={confirmTurnOff}
+        onCancel={() => setDayToTurnOff(null)}
+      />
     </div>
   );
 }
