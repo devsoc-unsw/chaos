@@ -5,6 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Plus, Trash2, ChevronDown } from "lucide-react";
 
 type Day = {
@@ -34,32 +36,6 @@ type Override = {
 const initialOverrides: Override[] = [
   { id: 1, date: "31 July 2026", start: "9:00am", end: "9:00am" },
 ];
-
-function Toggle({
-  checked,
-  onCheckedChange,
-}: {
-  checked: boolean;
-  onCheckedChange: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={onCheckedChange}
-      className={`h-6 w-11 shrink-0 rounded-full transition-colors ${
-        checked ? "bg-purple-600" : "bg-muted border border-input"
-      }`}
-    >
-      <span
-        className={`block h-5 w-5 rounded-full bg-white shadow transform transition-transform ${
-          checked ? "translate-x-5" : "translate-x-0.5"
-        }`}
-      />
-    </button>
-  );
-}
 
 export default function AvailabilityPage() {
   const [days, setDays] = useState<Day[]>(initialDays);
@@ -122,11 +98,13 @@ export default function AvailabilityPage() {
                 key={day.name}
                 className="flex items-center gap-4 py-4 border-b last:border-b-0"
               >
-                <Toggle
-                  checked={day.enabled}
-                  onCheckedChange={() => toggleDay(index)}
-                />
-                <span className="w-24">{day.name}</span>
+                <Label className="w-40 cursor-pointer gap-4 text-base font-normal">
+                  <Switch
+                    checked={day.enabled}
+                    onCheckedChange={() => toggleDay(index)}
+                  />
+                  {day.name}
+                </Label>
 
                 <Input
                   value={day.start}
