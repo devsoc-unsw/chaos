@@ -21,19 +21,19 @@ use sqlx::{Postgres, Transaction};
 use std::ops::DerefMut;
 
 /// Checks if a user exists in DB based on given email address. If so, their user_id is returned.
-/// Otherwise, a new user is created in the DB and SpiceDB (platform `user` relationship),
-/// and the new id is returned.
+/// Otherwise, a new user is created in the DB, and the new id is returned.
 /// This function is used in OAuth flows to login/signup users when they click the
 /// "Sign in with ___" buttons. The returned user_id will be used to generate a JWT to be
-/// used as a token for the user's browser.
+/// used as a token for the user's browser. When the returned `created` flag is true, the
+/// caller is responsible for queueing the SpiceDB platform `user` relationship on the
+/// transaction.
 ///
 /// # Arguments
 ///
 /// * `email` - The email address of the user
 /// * `name` - The name of the user
 /// * `snowflake_generator` - Generator for unique user IDs
-/// * `transaction` - Database transaction wrapper; the SpiceDB relationship write is
-///   queued here and applied on commit
+/// * `transaction` - Database transaction used for the user lookup and insertion
 ///
 /// # Returns
 ///
@@ -75,7 +75,7 @@ pub async fn create_or_get_user_id(
 /// # Arguments
 ///
 /// * `user_id` - The ID of the user to check
-/// * `pool` - Database connection pool
+/// * `transaction` - Database transaction
 ///
 /// # Returns
 ///
