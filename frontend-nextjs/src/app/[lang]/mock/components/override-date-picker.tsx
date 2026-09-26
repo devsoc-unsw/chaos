@@ -27,7 +27,7 @@ export function OverrideDatePicker({ value, onChange }: OverrideDatePickerProps)
         <Button
           variant="outline"
           aria-label={label ? `Override date, ${label}` : "Choose override date"}
-          className={cn("w-40 justify-between font-normal", !value && "text-muted-foreground")}
+          className={cn("h-11 w-44 justify-between text-base font-normal", !value && "text-muted-foreground")}
         >
           {label ?? "dd mm yyyy"}
           <ChevronDown className="text-muted-foreground" />

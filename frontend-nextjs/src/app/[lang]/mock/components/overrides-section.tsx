@@ -52,7 +52,7 @@ function OverrideRow({
   action,
 }: OverrideRowProps) {
   return (
-    <div className="flex items-center gap-4 py-4 border-b last:border-b-0">
+    <div className="flex items-center gap-5 py-3">
       <OverrideDatePicker value={date} onChange={onDateChange} />
       <Input
         aria-label="Override start time"
@@ -60,7 +60,7 @@ function OverrideRow({
         onChange={(e) => onStartChange(e.target.value)}
         placeholder="-:--"
         disabled={!date}
-        className="w-28"
+        className="h-11 w-32 md:text-base"
       />
       <span>-</span>
       <Input
@@ -69,7 +69,7 @@ function OverrideRow({
         onChange={(e) => onEndChange(e.target.value)}
         placeholder="-:--"
         disabled={!date}
-        className="w-28"
+        className="h-11 w-32 md:text-base"
       />
       {action}
     </div>
@@ -103,13 +103,13 @@ export function OverridesSection() {
 
   return (
     <>
-      <h2 className="text-xl font-bold mt-8 mb-1">Overrides</h2>
-      <p className="text-sm text-muted-foreground mb-4">
+      <h2 className="text-2xl font-bold mt-8 mb-1">Overrides</h2>
+      <p className="text-base text-muted-foreground mb-4">
         Remove a single time slot from your regular availability.
       </p>
 
-      <Card className="max-w-2xl">
-        <CardContent className="py-2">
+      <Card className="max-w-4xl gap-0 py-3">
+        <CardContent className="px-7">
           {overrides.map((override) => (
             <OverrideRow
               key={override.id}

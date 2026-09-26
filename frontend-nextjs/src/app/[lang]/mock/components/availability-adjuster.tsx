@@ -51,8 +51,8 @@ export function AvailabilityAdjuster({ day, onChange }: AvailabilityAdjusterProp
   }
 
   return (
-    <div className="flex items-start gap-4 py-4 border-b last:border-b-0">
-      <Label className="h-9 w-40 cursor-pointer gap-4 text-base font-normal">
+    <div className="flex items-start gap-5 py-3">
+      <Label className="h-11 w-44 cursor-pointer gap-3 text-base font-normal">
         <Switch
           checked={day.enabled}
           onCheckedChange={(enabled) => onChange({ ...day, enabled })}
@@ -62,19 +62,19 @@ export function AvailabilityAdjuster({ day, onChange }: AvailabilityAdjusterProp
 
       <div className="flex flex-col gap-3">
         {day.ranges.map((range, index) => (
-          <div key={range.id} className="flex items-center gap-4">
+          <div key={range.id} className="flex items-center gap-5">
             <Input
               aria-label={`${day.name} start time`}
               value={range.start}
               onChange={(e) => updateRange(range.id, "start", e.target.value)}
-              className="w-28"
+              className="h-11 w-32 md:text-base"
             />
             <span>-</span>
             <Input
               aria-label={`${day.name} end time`}
               value={range.end}
               onChange={(e) => updateRange(range.id, "end", e.target.value)}
-              className="w-28"
+              className="h-11 w-32 md:text-base"
             />
 
             {index === 0 ? (
