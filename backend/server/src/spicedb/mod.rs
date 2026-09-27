@@ -470,35 +470,6 @@ pub async fn delete_all_resource_relationships(
         key,
     )?;
 
-    client
-        .clone()
-        .delete_relationships(subject_request)
-        .await
-        .map_err(|_| ChaosError::InternalServerError)?
-        .into_inner();
-
-    // Delete all where <anything>#relation@<type>:<id>
-    let subject_request = authorized_request(
-        DeleteRelationshipsRequest {
-            relationship_filter: Some(RelationshipFilter {
-                resource_type: String::new(),
-                optional_resource_id: String::new(),
-                optional_resource_id_prefix: String::new(),
-                optional_relation: String::new(),
-                optional_subject_filter: Some(SubjectFilter {
-                    subject_type: resource_type.to_owned(),
-                    optional_subject_id: resource_id.to_string(),
-                    optional_relation: None,
-                }),
-            }),
-            optional_preconditions: Vec::new(),
-            optional_limit: 0,
-            optional_allow_partial_deletions: false,
-            optional_transaction_metadata: None,
-        },
-        key,
-    )?;
-
     let response2 = client
         .clone()
         .delete_relationships(subject_request)
