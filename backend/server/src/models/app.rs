@@ -158,7 +158,9 @@ pub async fn init_app_state() -> AppState {
         .expect("Error getting DATABASE_URL")
         .to_string();
     let pool = PgPoolOptions::new()
-        .max_connections(5)
+        // 5 for API traffic + 1 reserved for the ETL leader-lock connection
+        // held by `etl::LeaderLock` on the elected instance.
+        .max_connections(6)
         .connect(db_url.as_str())
         .await
         .expect("Cannot connect to database");

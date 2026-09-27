@@ -4,6 +4,7 @@ use crate::models::error::ChaosError;
 use crate::models::seeder::Seeder;
 
 mod constants;
+mod etl;
 mod handler;
 mod models;
 mod service;
@@ -25,6 +26,24 @@ async fn main() -> Result<(), ChaosError> {
     let mut seeder = Seeder::init().await;
     seeder.seed_database(super_user_email).await?;
 
+    // Postgres -> SpiceDB ETL pipeline, single-leader elected by advisory lock.
+    // The boot election decides this instance's role: a leader start failure
+    // fails boot loudly, while followers boot as API-only servers and pick up
+    // leadership later if the lock frees up.
+    let etl_role = if etl::enabled() {
+        Some(
+            etl::elect_and_start(
+                &state_clone.db,
+                state_clone.spicedb.clone(),
+                state_clone.spicedb_key.clone(),
+            )
+            .await?,
+        )
+    } else {
+        println!("ETL pipeline disabled (set ETL_ENABLED=true to enable)");
+        None
+    };
+
     let email_db = state_clone.db.clone();
     let email_task = tokio::spawn(async move {
         loop {
@@ -45,7 +64,31 @@ async fn main() -> Result<(), ChaosError> {
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
     let server_task = axum::serve(listener, app);
 
-    let _ = tokio::join!(server_task, email_task);
+    let etl_future = async {
+        match etl_role {
+            Some(etl::EtlRole::Leader { pipeline, lock }) => {
+                etl::supervise(
+                    state_clone.db.clone(),
+                    state_clone.spicedb.clone(),
+                    state_clone.spicedb_key.clone(),
+                    pipeline,
+                    lock,
+                )
+                .await;
+            }
+            Some(etl::EtlRole::Follower) => {
+                etl::campaign(
+                    state_clone.db.clone(),
+                    state_clone.spicedb.clone(),
+                    state_clone.spicedb_key.clone(),
+                )
+                .await;
+            }
+            None => {}
+        }
+    };
+
+    let _ = tokio::join!(server_task, email_task, etl_future);
 
     Ok(())
 }
