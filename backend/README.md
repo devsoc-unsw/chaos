@@ -73,11 +73,14 @@ Request -> Middleware (optional) -> Handler -> Service -> Middleware (Optional) 
 ### Storage
 - Object storage
 
-### Setup the Rust Authzed API
-- Run brew install bufbuild/buf/buf
-- Then run this bash "buf generate buf.build/authzed/api:main \
+### Setup the Rust SpiceDB API
+1. Install the Buf CLI using the [official instructions](https://buf.build/docs/cli/installation/) for your system.
+2. In the backend folder, run the following command to generate the Rust client code for SpiceDB:
+ ```bash
+  buf generate buf.build/authzed/api:main \
   --include-imports \
-  --template buf.gen.yaml"
+  --template buf.gen.yaml
+```
 
 ### Working with SpiceDB in the backend
 1. Make changes to the schema in `spicedb/schema.yaml`
