@@ -46,6 +46,22 @@ impl CommentHandler {
         )
         .await?;
 
+        transaction.create_spicedb_relationship(
+            spicedb_schema::resource::COMMENT,
+            id,
+            spicedb_schema::relation::comment::APPLICATION,
+            spicedb_schema::resource::APPLICATION,
+            auth.resource_id,
+        );
+
+        transaction.create_spicedb_relationship(
+            spicedb_schema::resource::COMMENT,
+            id,
+            spicedb_schema::relation::comment::CREATOR,
+            spicedb_schema::resource::USER,
+            auth.user_id,
+        );
+
         transaction.commit().await?;
 
         Ok(AppMessage::OkMessage(id))
@@ -108,6 +124,15 @@ impl CommentHandler {
         .await?;
 
         transaction.commit().await?;
+
+        // Run SpiceDB delete after Postgres succeeds
+        spicedb::delete_all_resource_relationships(
+            &state.spicedb,
+            &state.spicedb_key,
+            spicedb_schema::resource::COMMENT,
+            comment_id,
+        )
+        .await?;
 
         Ok(AppMessage::OkMessage("Successfully deleted comment"))
     }

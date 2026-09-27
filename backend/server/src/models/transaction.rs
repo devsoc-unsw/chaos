@@ -5,6 +5,17 @@
 
 use crate::models::app::AppState;
 use crate::models::error::ChaosError;
+<<<<<<< CHAOS-803-4.2-spicedb-sync
+=======
+use crate::spicedb::authzed::api::v1::{
+    permissions_service_client::PermissionsServiceClient, relationship_update::Operation,
+    RelationshipUpdate,
+};
+use crate::spicedb::{
+    invert_relationship_update, new_relationship_update, register_pending_write,
+    resolve_pending_write, write_relationships, ZedTokenPublicationGate,
+};
+>>>>>>> CHAOS-803-spicedb
 use axum::async_trait;
 use axum::extract::{FromRef, FromRequestParts};
 use axum::http::request::Parts;

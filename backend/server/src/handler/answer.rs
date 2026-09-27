@@ -57,6 +57,14 @@ impl AnswerHandler {
         )
         .await?;
 
+        transaction.create_spicedb_relationship(
+            spicedb_schema::resource::ANSWER,
+            id,
+            spicedb_schema::relation::answer::APPLICATION,
+            spicedb_schema::resource::APPLICATION,
+            auth.resource_id,
+        );
+
         transaction.commit().await?;
 
         Ok((StatusCode::OK, Json(IdMessage { id })))

@@ -17,13 +17,21 @@ async fn main() -> Result<(), ChaosError> {
 
     let (app, state_clone) = app().await?;
 
-    // Run migrations
+    // Run DB migrations
     sqlx::migrate!("../migrations").run(&state_clone.db).await?;
     println!("Migrations ran successfully!");
 
+    // Run SpiceDB migrations (upsert the schema from spicedb/schema.yaml)
+    spicedb::migrate_schema().await?;
+    println!("SpiceDB migrations ran successfully!");
+
+    // Track SpiceDB revisions via the Watch API so permission checks use a
+    // monotonically increasing freshness boundary.
+    let watcher_task = tokio::spawn(spicedb::spawn_zedtoken_watcher(state_clone.clone()));
+
     let super_user_email =
         std::env::var("CHAOS_SUPER_USER_EMAIL").expect("CHAOS_SUPER_USER_EMAIL must be set");
-    let mut seeder = Seeder::init().await;
+    let mut seeder = Seeder::init(state_clone.clone()).await;
     seeder.seed_database(super_user_email).await?;
 
     // Postgres -> SpiceDB ETL pipeline, single-leader elected by advisory lock.
@@ -88,7 +96,7 @@ async fn main() -> Result<(), ChaosError> {
         }
     };
 
-    let _ = tokio::join!(server_task, email_task, etl_future);
+    let _ = tokio::join!(server_task, email_task, etl_future, watcher_task);
 
     Ok(())
 }

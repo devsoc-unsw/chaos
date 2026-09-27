@@ -8,6 +8,7 @@
 use crate::models::app::{AppMessage, AppState};
 use crate::models::email_template::EmailTemplate;
 use crate::models::error::ChaosError;
+use crate::models::rating::Rating;
 use crate::models::transaction::DBTransaction;
 use crate::spicedb::{policies::ManageEmailTemplate, SpiceDbAuth};
 use axum::extract::{Json, State};

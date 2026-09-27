@@ -22,6 +22,7 @@ use crate::models::storage::Storage;
 use crate::models::transaction::DBTransaction;
 use crate::spicedb::policies::{ReviewCampaign, UsePlatform};
 use crate::spicedb::{policies::ManageCampaign, SpiceDbAuth};
+use crate::{models, spicedb};
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -219,6 +220,11 @@ impl CampaignHandler {
         mut transaction: DBTransaction<'_>,
         state: State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
+        let application_ids =
+            Campaign::get_application_ids(auth.resource_id, &mut transaction.tx).await?;
+        let rating_ids = Campaign::get_rating_ids(auth.resource_id, &mut transaction.tx).await?;
+        let comment_ids = Campaign::get_comment_ids(auth.resource_id, &mut transaction.tx).await?;
+
         Campaign::delete(auth.resource_id, &mut transaction.tx).await?;
 
         transaction.commit().await?;
