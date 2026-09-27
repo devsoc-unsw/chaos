@@ -20,12 +20,14 @@ use etl::event::Event;
 use etl::pipeline::Pipeline;
 use etl::schema::ReplicatedTableSchema;
 use etl::store::PostgresStore;
-use etl_config::shared::ReplicationSlotConfig;
+use etl_config::shared::{PgConnectionOptions, ReplicationSlotConfig};
 use secrecy::SecretString;
 use sqlx::{Pool, Postgres};
 use std::collections::HashMap;
 use std::future::Future;
+use sqlx::postgres::PgSslMode;
 use tonic::transport::Channel;
+use url::Url;
 
 /// ETL destination that syncs Postgres changes into SpiceDB relationships
 #[derive(Clone)]
@@ -870,39 +872,71 @@ pub fn enabled() -> bool {
 
 /// Builds the ETL source connection from `DATABASE_URL`.
 ///
+/// TLS honours the URL's `sslmode`: modes below `require` map to etl's
+/// disabled config (sqlx then negotiates per `prefer`), while `require`,
+/// `verify-ca`, and `verify-full` enable TLS and need a root certificate
+/// (`sslrootcert` query param or `PGSSLROOTCERT`). A verifying mode without a
+/// readable certificate fails boot instead of replicating rows in cleartext.
+///
 /// # Returns
 ///
 /// * `Ok(PgConnectionConfig)` parsed from `DATABASE_URL`
-/// * `Err(ChaosError)` if the variable is missing or unparsable
+/// * `Err(ChaosError)` if the variable is missing, unparsable, or demands TLS it cannot configure
 fn pg_connection() -> Result<PgConnectionConfig, crate::models::error::ChaosError> {
     use crate::models::error::ChaosError;
 
     let db_url = std::env::var("DATABASE_URL").map_err(|e| {
         ChaosError::InternalServerErrorWithMessage(format!("ETL needs DATABASE_URL: {e:?}"))
     })?;
-    // sqlx 0.9 deliberately exposes no password getter, so parse the URL
-    // directly (`url` already decodes percent-escapes in each component).
-    let url = url::Url::parse(&db_url).map_err(|e| {
-        ChaosError::InternalServerErrorWithMessage(format!("ETL invalid DATABASE_URL: {e:?}"))
+
+    let parsed_url = Url::parse(&db_url).or_else(|_| {
+        Err(ChaosError::InternalServerErrorWithMessage("ETL DATABASE_URL is invalid".to_owned()))
     })?;
-    let host = url.host_str().ok_or_else(|| {
-        ChaosError::InternalServerErrorWithMessage("ETL DATABASE_URL has no host".to_owned())
-    })?;
-    let name = url.path().trim_start_matches('/').to_owned();
-    if name.is_empty() {
-        return Err(ChaosError::InternalServerErrorWithMessage(
-            "ETL DATABASE_URL has no database".to_owned(),
-        ));
-    }
+    let connection_options: sqlx::postgres::PgConnectOptions = db_url.parse()?;
+
+    // etl's TlsConfig only has two states: disabled (sqlx prefer) and
+    // enabled+CA (sqlx verify-full). Anything stricter than prefer therefore
+    // requires a CA, or we fail closed.
+    let tls = if matches!(
+        connection_options.get_ssl_mode(),
+        PgSslMode::Disable | PgSslMode::Prefer | PgSslMode::Allow
+    ) {
+        TlsConfig::disabled()
+    } else {
+        let cert = parsed_url
+            .query_pairs()
+            .find(|(k, _)| k == "sslrootcert")
+            .map(|(_, v)| v.into_owned())
+            .or_else(|| std::env::var("POSTGRES_SSL_ROOT_CERT").ok())
+            .ok_or_else(|| {
+                ChaosError::InternalServerErrorWithMessage(
+                    "ETL DATABASE_URL requires TLS (sslmode=require/verify-ca/verify-full) \
+                     but no sslrootcert is configured in url or env variable \"POSTGRES_SSL_ROOT_CERT\""
+                        .to_owned(),
+                )
+            })?;
+        let pem = if cert.starts_with("-----BEGIN") {
+            cert
+        } else {
+            std::fs::read_to_string(&cert).map_err(|e| {
+                ChaosError::InternalServerErrorWithMessage(format!(
+                    "ETL sslrootcert {cert} unreadable: {e:?}"
+                ))
+            })?
+        };
+        TlsConfig { trusted_root_certs: pem, enabled: true }
+    };
 
     Ok(PgConnectionConfig {
-        host: host.to_owned(),
+        host: connection_options.get_host().to_string(),
         hostaddr: None,
-        port: url.port().unwrap_or(5432),
-        name,
-        username: url.username().to_owned(),
-        password: url.password().map(SecretString::from),
-        tls: TlsConfig::disabled(),
+        port: connection_options.get_port(),
+        name: connection_options.get_database().ok_or_else(|| {
+            ChaosError::InternalServerErrorWithMessage("ETL DATABASE_URL has no database".to_owned())
+        })?.to_string(),
+        username: connection_options.get_username().to_string(),
+        password: parsed_url.password().map(SecretString::from),
+        tls,
         keepalive: TcpKeepaliveConfig::default(),
     })
 }
