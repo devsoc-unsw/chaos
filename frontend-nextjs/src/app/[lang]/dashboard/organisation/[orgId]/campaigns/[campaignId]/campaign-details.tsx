@@ -154,14 +154,17 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
       : null) ||
     "/placeholder.svg";
 
-  const hour = new Date().getHours();
   function getGreeting(hour: number) {
     if (hour < 12) return "Morning";
     if (hour < 18) return "Afternoon";
     return "Evening";
   }
-  const greeting = getGreeting(hour);
+  
+  const [greeting, setGreeting] = useState("");
 
+  useEffect(() => {
+    setGreeting(getGreeting(new Date().getHours()));
+  }, []);
 
   return (
 
@@ -173,7 +176,7 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
           <div className="flex flex-col gap-3 border-t px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <div className="flex flex-col gap-2">
               <h1 className="text-3xl font-bold tracking-tight">
-                Good {greeting}, {currentUser?.name}.
+                {greeting && `Good ${greeting},`} {currentUser?.name}.
               </h1>
               <div className="flex flex-col gap-1">
                 <h2 className="text-lg font-semibold tracking-tight">
