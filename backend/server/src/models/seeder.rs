@@ -38,14 +38,6 @@ impl Seeder {
             };
 
             User::create_user(super_user, &mut transaction.tx).await?;
-
-            transaction.create_spicedb_relationship(
-                crate::spicedb::schema::resource::PLATFORM,
-                PLATFORM_RESOURCE_ID,
-                crate::spicedb::schema::relation::platform::SUPERUSER,
-                crate::spicedb::schema::resource::USER,
-                super_user_id,
-            );
         }
 
         // Check if DevSoc org already exists, and if not, create it
@@ -63,14 +55,6 @@ impl Seeder {
                 &mut transaction.tx,
             )
             .await?;
-
-            transaction.create_spicedb_relationship(
-                crate::spicedb::schema::resource::ORGANISATION,
-                org_id,
-                crate::spicedb::schema::relation::organisation::ADMIN,
-                crate::spicedb::schema::resource::USER,
-                super_user_id,
-            );
         }
 
         transaction.commit().await?;

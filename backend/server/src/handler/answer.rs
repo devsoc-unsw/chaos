@@ -11,9 +11,8 @@ use crate::models::application::{OpenApplicationByAnswerId, OpenApplicationByApp
 use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
 use crate::spicedb::{
-    self,
     policies::{EditAnswer, EditApplication, ViewApplication},
-    schema as spicedb_schema, SpiceDbAuth,
+    SpiceDbAuth,
 };
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
@@ -57,14 +56,6 @@ impl AnswerHandler {
             &mut transaction.tx,
         )
         .await?;
-
-        transaction.create_spicedb_relationship(
-            spicedb_schema::resource::ANSWER,
-            id,
-            spicedb_schema::relation::answer::APPLICATION,
-            spicedb_schema::resource::APPLICATION,
-            auth.resource_id,
-        );
 
         transaction.commit().await?;
 
@@ -181,16 +172,6 @@ impl AnswerHandler {
         Answer::delete(answer_id, &mut transaction.tx).await?;
 
         transaction.commit().await?;
-
-        // Run SpiceDB delete after Postgres succeeds
-        spicedb::delete_all_resource_relationships(
-            &state.spicedb,
-            &state.spicedb_key,
-            spicedb_schema::resource::ANSWER,
-            answer_id,
-        )
-        .await?;
-
         Ok(AppMessage::OkMessage("Successfully deleted answer"))
     }
 }

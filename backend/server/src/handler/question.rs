@@ -11,9 +11,8 @@ use crate::models::error::ChaosError;
 use crate::models::question::{NewQuestion, Question};
 use crate::models::transaction::DBTransaction;
 use crate::spicedb::{
-    self,
     policies::{ManageCampaign, UsePlatform},
-    schema as spicedb_schema, SpiceDbAuth,
+    SpiceDbAuth,
 };
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
@@ -57,14 +56,6 @@ impl QuestionHandler {
             &mut transaction.tx,
         )
         .await?;
-
-        transaction.create_spicedb_relationship(
-            spicedb_schema::resource::QUESTION,
-            id,
-            spicedb_schema::relation::question::CAMPAIGN,
-            spicedb_schema::resource::CAMPAIGN,
-            auth.resource_id,
-        );
 
         transaction.commit().await?;
 
@@ -202,15 +193,6 @@ impl QuestionHandler {
         Question::delete(question_id, campaign_id, &mut transaction.tx).await?;
 
         transaction.commit().await?;
-
-        // Run SpiceDB delete after Postgres succeeds
-        spicedb::delete_all_resource_relationships(
-            &state.spicedb,
-            &state.spicedb_key,
-            spicedb_schema::resource::QUESTION,
-            question_id,
-        )
-        .await?;
 
         Ok(AppMessage::OkMessage("Successfully deleted question"))
     }

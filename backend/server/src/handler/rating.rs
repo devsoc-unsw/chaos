@@ -13,9 +13,8 @@ use crate::models::rating::{
 };
 use crate::models::transaction::DBTransaction;
 use crate::spicedb::{
-    self,
     policies::{EditRating, ManageCampaign, ReviewApplication, ReviewCampaign},
-    schema as spicedb_schema, SpiceDbAuth,
+    SpiceDbAuth,
 };
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
@@ -50,14 +49,6 @@ impl RatingHandler {
             &mut transaction.tx,
         )
         .await?;
-
-        transaction.create_spicedb_relationship(
-            spicedb_schema::resource::RATING_CATEGORY,
-            category,
-            spicedb_schema::relation::rating_category::CAMPAIGN,
-            spicedb_schema::resource::CAMPAIGN,
-            auth.resource_id,
-        );
 
         transaction.commit().await?;
 
@@ -124,15 +115,6 @@ impl RatingHandler {
 
         transaction.commit().await?;
 
-        // Run SpiceDB delete after Postgres succeeds
-        spicedb::delete_all_resource_relationships(
-            &state.spicedb,
-            &state.spicedb_key,
-            spicedb_schema::resource::RATING_CATEGORY,
-            category_id,
-        )
-        .await?;
-
         Ok(AppMessage::OkMessage("Successfully deleted category"))
     }
 
@@ -165,38 +147,14 @@ impl RatingHandler {
         )
         .await?;
 
-        transaction.create_spicedb_relationship(
-            spicedb_schema::resource::RATING,
-            application_rating_id,
-            spicedb_schema::relation::rating::APPLICATION,
-            spicedb_schema::resource::APPLICATION,
-            auth.resource_id,
-        );
-
-        transaction.create_spicedb_relationship(
-            spicedb_schema::resource::RATING,
-            application_rating_id,
-            spicedb_schema::relation::rating::CREATOR,
-            spicedb_schema::resource::USER,
-            auth.user_id,
-        );
-
         for category_rating in new_rating.category_ratings {
-            let category_rating_id = Rating::create_category_rating(
+            Rating::create_category_rating(
                 category_rating,
                 application_rating_id,
                 &mut state.snowflake_generator,
                 &mut transaction.tx,
             )
             .await?;
-
-            transaction.create_spicedb_relationship(
-                spicedb_schema::resource::CATEGORY_RATING,
-                category_rating_id,
-                spicedb_schema::relation::category_rating::RATING,
-                spicedb_schema::resource::RATING,
-                application_rating_id,
-            );
         }
 
         transaction.commit().await?;
@@ -290,14 +248,6 @@ impl RatingHandler {
         )
         .await?;
 
-        transaction.create_spicedb_relationship(
-            spicedb_schema::resource::CATEGORY_RATING,
-            category_rating_id,
-            spicedb_schema::relation::category_rating::RATING,
-            spicedb_schema::resource::RATING,
-            rating_id,
-        );
-
         transaction.commit().await?;
 
         Ok(AppMessage::OkMessage(
@@ -358,26 +308,6 @@ impl RatingHandler {
 
         transaction.commit().await?;
 
-        // Run SpiceDB delete after Postgres succeeds
-        spicedb::delete_all_resource_relationships(
-            &state.spicedb,
-            &state.spicedb_key,
-            spicedb_schema::resource::RATING,
-            rating_id,
-        )
-        .await?;
-
-        // Deep delete category ratings which reference the parent rating
-        for category_rating in rating.iter() {
-            spicedb::delete_all_resource_relationships(
-                &state.spicedb,
-                &state.spicedb_key,
-                spicedb_schema::resource::CATEGORY_RATING,
-                category_rating.id,
-            )
-            .await?;
-        }
-
         Ok(AppMessage::OkMessage("Successfully deleted rating"))
     }
 
@@ -398,15 +328,6 @@ impl RatingHandler {
         Rating::delete_category_rating(category_rating_id, rating_id, &mut transaction.tx).await?;
 
         transaction.commit().await?;
-
-        // Run SpiceDB delete after Postgres succeeds
-        spicedb::delete_all_resource_relationships(
-            &state.spicedb,
-            &state.spicedb_key,
-            spicedb_schema::resource::CATEGORY_RATING,
-            category_rating_id,
-        )
-        .await?;
 
         Ok(AppMessage::OkMessage(
             "Successfully deleted category rating",

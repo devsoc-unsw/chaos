@@ -8,11 +8,9 @@
 use crate::models::app::{AppMessage, AppState};
 use crate::models::email_template::EmailTemplate;
 use crate::models::error::ChaosError;
-use crate::models::rating::Rating;
 use crate::models::transaction::DBTransaction;
-use crate::spicedb;
-use crate::spicedb::{policies::ManageEmailTemplate, schema as spicedb_schema, SpiceDbAuth};
-use axum::extract::{Json, Path, State};
+use crate::spicedb::{policies::ManageEmailTemplate, SpiceDbAuth};
+use axum::extract::{Json, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 
@@ -97,15 +95,6 @@ impl EmailTemplateHandler {
 
         transaction.commit().await?;
 
-        // Run SpiceDB delete after Postgres succeeds
-        spicedb::delete_all_resource_relationships(
-            &state.spicedb,
-            &state.spicedb_key,
-            spicedb::schema::resource::EMAIL_TEMPLATE,
-            auth.resource_id,
-        )
-        .await?;
-
         Ok(AppMessage::OkMessage("Successfully deleted email template"))
     }
 
@@ -128,20 +117,12 @@ impl EmailTemplateHandler {
         State(mut state): State<AppState>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let (new_template_id, organisation_id) = EmailTemplate::duplicate(
+        EmailTemplate::duplicate(
             auth.resource_id,
             &mut transaction.tx,
             &mut state.snowflake_generator,
         )
         .await?;
-
-        transaction.create_spicedb_relationship(
-            spicedb_schema::resource::EMAIL_TEMPLATE,
-            new_template_id,
-            spicedb_schema::relation::email_template::ORGANISATION,
-            spicedb_schema::resource::ORGANISATION,
-            organisation_id,
-        );
 
         transaction.commit().await?;
         Ok(AppMessage::OkMessage(

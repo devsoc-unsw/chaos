@@ -12,9 +12,8 @@ use crate::models::error::ChaosError;
 use crate::models::offer::{Offer, OfferReply};
 use crate::models::transaction::DBTransaction;
 use crate::spicedb::{
-    self,
     policies::{ManageCampaign, ManageOffer, ReplyOffer, ViewOffer},
-    schema as spicedb_schema, SpiceDbAuth,
+    SpiceDbAuth,
 };
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
@@ -95,15 +94,6 @@ impl OfferHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Offer::delete(auth.resource_id, &mut transaction.tx).await?;
         transaction.commit().await?;
-
-        // Run SpiceDB delete after Postgres succeeds
-        spicedb::delete_all_resource_relationships(
-            &state.spicedb,
-            &state.spicedb_key,
-            spicedb_schema::resource::OFFER,
-            auth.resource_id,
-        )
-        .await?;
 
         Ok(AppMessage::OkMessage("Successfully deleted offer"))
     }
@@ -225,21 +215,6 @@ impl OfferHandler {
                 )
                 .await?;
 
-                transaction.create_spicedb_relationship(
-                    spicedb_schema::resource::OFFER,
-                    offer_id,
-                    spicedb_schema::relation::offer::CAMPAIGN,
-                    spicedb_schema::resource::CAMPAIGN,
-                    campaign_id,
-                );
-
-                transaction.create_spicedb_relationship(
-                    spicedb_schema::resource::OFFER,
-                    offer_id,
-                    spicedb_schema::relation::offer::APPLICATION,
-                    spicedb_schema::resource::APPLICATION,
-                    item.application_id,
-                );
                 if state.is_dev_env {
                     let email = item.email;
                     println!("need to call offers here, but sent to: {email}");

@@ -17,9 +17,8 @@ use crate::models::organisation::{
 };
 use crate::models::transaction::DBTransaction;
 use crate::service::auth::assert_is_super_user;
-use crate::spicedb;
 use crate::spicedb::policies::{ManageOrganisation, ManagePlatform, UsePlatform};
-use crate::spicedb::{schema as spicedb_schema, SpiceDbAuth};
+use crate::spicedb::SpiceDbAuth;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -59,22 +58,6 @@ impl OrganisationHandler {
             &mut transaction.tx,
         )
         .await?;
-
-        transaction.create_spicedb_relationship(
-            spicedb_schema::resource::ORGANISATION,
-            organisation_id,
-            spicedb_schema::relation::organisation::ADMIN,
-            spicedb_schema::resource::USER,
-            data.admin,
-        );
-
-        transaction.create_spicedb_relationship(
-            spicedb_schema::resource::ORGANISATION,
-            organisation_id,
-            spicedb_schema::relation::organisation::PLATFORM,
-            spicedb_schema::resource::PLATFORM,
-            spicedb_schema::PLATFORM_RESOURCE_ID,
-        );
 
         transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully created organisation"))
@@ -173,17 +156,6 @@ impl OrganisationHandler {
         Organisation::delete(id, &mut transaction.tx).await?;
 
         transaction.commit().await?;
-
-        // Run SpiceDB delete after Postgres succeeds
-        spicedb::delete_all_resource_relationships(
-            &state.spicedb,
-            &state.spicedb_key,
-            spicedb_schema::resource::ORGANISATION,
-            id,
-        )
-        .await?;
-
-        // TODO: SpiceDB deep delete - we currently don't support organisation support
 
         Ok(AppMessage::OkMessage("Successfully deleted organisation"))
     }
@@ -309,29 +281,7 @@ impl OrganisationHandler {
         mut transaction: DBTransaction<'_>,
         Json(request_body): Json<AdminUpdateList>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let deleted_members =
-            Organisation::update_admins(id, request_body.members.clone(), &mut transaction.tx)
-                .await?;
-
-        for deleted_member in deleted_members {
-            transaction.delete_spicedb_relationship(
-                spicedb_schema::resource::ORGANISATION,
-                id,
-                spicedb_schema::relation::organisation::ADMIN,
-                spicedb_schema::resource::USER,
-                deleted_member,
-            );
-        }
-
-        for new_member in request_body.members {
-            transaction.create_spicedb_relationship(
-                spicedb_schema::resource::ORGANISATION,
-                id,
-                spicedb_schema::relation::organisation::ADMIN,
-                spicedb_schema::resource::USER,
-                new_member,
-            );
-        }
+        Organisation::update_admins(id, request_body.members.clone(), &mut transaction.tx).await?;
 
         transaction.commit().await?;
         Ok(AppMessage::OkMessage(
@@ -357,32 +307,12 @@ impl OrganisationHandler {
         auth: SpiceDbAuth<ManageOrganisation>,
         Json(request_body): Json<AdminUpdateList>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let deleted_members = Organisation::update_members(
+        Organisation::update_members(
             auth.resource_id,
             request_body.members.clone(),
             &mut transaction.tx,
         )
         .await?;
-
-        for deleted_member in deleted_members {
-            transaction.delete_spicedb_relationship(
-                spicedb_schema::resource::ORGANISATION,
-                auth.resource_id,
-                spicedb_schema::relation::organisation::MEMBER,
-                spicedb_schema::resource::USER,
-                deleted_member,
-            );
-        }
-
-        for new_member in request_body.members {
-            transaction.create_spicedb_relationship(
-                spicedb_schema::resource::ORGANISATION,
-                auth.resource_id,
-                spicedb_schema::relation::organisation::MEMBER,
-                spicedb_schema::resource::USER,
-                new_member,
-            );
-        }
 
         transaction.commit().await?;
         Ok(AppMessage::OkMessage(
@@ -416,22 +346,6 @@ impl OrganisationHandler {
         )
         .await?;
 
-        transaction.delete_spicedb_relationship(
-            spicedb_schema::resource::ORGANISATION,
-            id,
-            old_role.convert_to_spicedb(),
-            spicedb_schema::resource::USER,
-            request_body.user_id,
-        );
-
-        transaction.create_spicedb_relationship(
-            spicedb_schema::resource::ORGANISATION,
-            id,
-            request_body.role.convert_to_spicedb(),
-            spicedb_schema::resource::USER,
-            request_body.user_id,
-        );
-
         transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully updated member role"))
     }
@@ -460,22 +374,6 @@ impl OrganisationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Organisation::remove_admin(id, request_body.user_id, &mut transaction.tx).await?;
 
-        transaction.delete_spicedb_relationship(
-            spicedb_schema::resource::ORGANISATION,
-            id,
-            OrganisationRole::Admin.convert_to_spicedb(),
-            spicedb_schema::resource::USER,
-            request_body.user_id,
-        );
-
-        transaction.create_spicedb_relationship(
-            spicedb_schema::resource::ORGANISATION,
-            id,
-            OrganisationRole::User.convert_to_spicedb(),
-            spicedb_schema::resource::USER,
-            request_body.user_id,
-        );
-
         transaction.commit().await?;
         Ok(AppMessage::OkMessage(
             "Successfully removed member from organisation",
@@ -502,15 +400,6 @@ impl OrganisationHandler {
     ) -> Result<impl IntoResponse, ChaosError> {
         Organisation::remove_user(auth.resource_id, request_body.user_id, &mut transaction.tx)
             .await?;
-
-        // Can only remove users with role "User", so no need to worry about removing admin
-        transaction.delete_spicedb_relationship(
-            spicedb_schema::resource::ORGANISATION,
-            auth.resource_id,
-            OrganisationRole::User.convert_to_spicedb(),
-            spicedb_schema::resource::USER,
-            request_body.user_id,
-        );
 
         transaction.commit().await?;
         Ok(AppMessage::OkMessage(
@@ -540,7 +429,7 @@ impl OrganisationHandler {
         State(mut state): State<AppState>,
         Json(request_body): Json<MemberToInvite>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let (invite_code, added_user) = Organisation::invite_user(
+        let (invite_code, _added_user) = Organisation::invite_user(
             auth.resource_id,
             auth.user_id,
             request_body.email,
@@ -550,17 +439,6 @@ impl OrganisationHandler {
             &mut transaction.tx,
         )
         .await?;
-
-        // An existing user was added so we need to add the relationship into SpiceDB
-        if let Some(user_id) = added_user {
-            transaction.create_spicedb_relationship(
-                spicedb_schema::resource::ORGANISATION,
-                auth.resource_id,
-                OrganisationRole::User.convert_to_spicedb(),
-                spicedb_schema::resource::USER,
-                user_id,
-            );
-        }
 
         transaction.commit().await?;
         Ok(AppMessage::OkMessage(invite_code))
@@ -653,14 +531,6 @@ impl OrganisationHandler {
         )
         .await?;
 
-        transaction.create_spicedb_relationship(
-            spicedb_schema::resource::CAMPAIGN,
-            new_campaign_id,
-            spicedb_schema::relation::campaign::ORGANISATION,
-            spicedb_schema::resource::ORGANISATION,
-            auth.resource_id,
-        );
-
         transaction.commit().await?;
         Ok((
             StatusCode::OK,
@@ -723,14 +593,6 @@ impl OrganisationHandler {
             &mut state.snowflake_generator,
         )
         .await?;
-
-        transaction.create_spicedb_relationship(
-            spicedb_schema::resource::EMAIL_TEMPLATE,
-            template_id,
-            spicedb_schema::relation::email_template::ORGANISATION,
-            spicedb_schema::resource::ORGANISATION,
-            auth.resource_id,
-        );
 
         transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully created email template"))

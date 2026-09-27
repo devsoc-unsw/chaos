@@ -11,9 +11,8 @@ use crate::models::error::ChaosError;
 use crate::models::role::{Role, RoleUpdate};
 use crate::models::transaction::DBTransaction;
 use crate::spicedb::{
-    self,
     policies::{ManageCampaignRole, UsePlatform},
-    schema as spicedb_schema, SpiceDbAuth,
+    SpiceDbAuth,
 };
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
@@ -70,15 +69,6 @@ impl RoleHandler {
         Role::delete(id, &mut transaction.tx).await?;
 
         transaction.commit().await?;
-
-        // Run SpiceDB delete after Postgres succeeds
-        spicedb::delete_all_resource_relationships(
-            &state.spicedb,
-            &state.spicedb_key,
-            spicedb_schema::resource::CAMPAIGN_ROLE,
-            id,
-        )
-        .await?;
 
         Ok(AppMessage::OkMessage("Successfully deleted role"))
     }

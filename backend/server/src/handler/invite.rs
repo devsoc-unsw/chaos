@@ -4,7 +4,7 @@ use crate::models::invite::Invite;
 use crate::models::organisation::Organisation;
 use crate::models::transaction::DBTransaction;
 use crate::models::user::User;
-use crate::spicedb::{policies::UsePlatform, schema as spicedb_schema, SpiceDbAuth};
+use crate::spicedb::{policies::UsePlatform, SpiceDbAuth};
 use axum::extract::Path;
 use axum::response::IntoResponse;
 
@@ -78,15 +78,6 @@ impl InviteHandler {
 
         // Add the user to the organisation.
         Organisation::add_user(invite.organisation_id, auth.user_id, &mut transaction.tx).await?;
-
-        // Add the SpiceDB membership relationship to match
-        transaction.create_spicedb_relationship(
-            spicedb_schema::resource::ORGANISATION,
-            invite.organisation_id,
-            spicedb_schema::relation::organisation::MEMBER,
-            spicedb_schema::resource::USER,
-            auth.user_id,
-        );
 
         // Mark the invite as used.
         Invite::mark_used(&code, auth.user_id, &mut transaction.tx).await?;

@@ -7,6 +7,7 @@
 //! - Offer management
 //! - Banner image handling
 
+use crate::models;
 use crate::models::app::{AppMessage, AppState};
 use crate::models::application::Application;
 use crate::models::application::NewApplication;
@@ -21,7 +22,6 @@ use crate::models::storage::Storage;
 use crate::models::transaction::DBTransaction;
 use crate::spicedb::policies::{ReviewCampaign, UsePlatform};
 use crate::spicedb::{policies::ManageCampaign, SpiceDbAuth};
-use crate::{models, spicedb};
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -219,26 +219,10 @@ impl CampaignHandler {
         mut transaction: DBTransaction<'_>,
         state: State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let application_ids =
-            Campaign::get_application_ids(auth.resource_id, &mut transaction.tx).await?;
-        let rating_ids = Campaign::get_rating_ids(auth.resource_id, &mut transaction.tx).await?;
-        let comment_ids = Campaign::get_comment_ids(auth.resource_id, &mut transaction.tx).await?;
-
         Campaign::delete(auth.resource_id, &mut transaction.tx).await?;
 
         transaction.commit().await?;
 
-        // Run SpiceDB delete after Postgres succeeds
-        // TODO: Move to async queue to speed up endpoint response times
-        crate::service::campaign::campaign_spicedb_deep_delete(
-            auth.resource_id,
-            application_ids,
-            rating_ids,
-            comment_ids,
-            &state.spicedb,
-            &state.spicedb_key,
-        )
-        .await?;
         Ok(AppMessage::OkMessage("Successfully deleted campaign"))
     }
 
@@ -270,14 +254,6 @@ impl CampaignHandler {
             &mut state.snowflake_generator,
         )
         .await?;
-
-        transaction.create_spicedb_relationship(
-            crate::spicedb::schema::resource::CAMPAIGN_ROLE,
-            role_id,
-            crate::spicedb::schema::relation::campaign_role::CAMPAIGN,
-            crate::spicedb::schema::resource::CAMPAIGN,
-            auth.resource_id,
-        );
 
         transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully created role"))
@@ -340,22 +316,6 @@ impl CampaignHandler {
         )
         .await?;
 
-        transaction.create_spicedb_relationship(
-            crate::spicedb::schema::resource::APPLICATION,
-            application_id,
-            crate::spicedb::schema::relation::application::CAMPAIGN,
-            crate::spicedb::schema::resource::CAMPAIGN,
-            campaign_id,
-        );
-
-        transaction.create_spicedb_relationship(
-            crate::spicedb::schema::resource::APPLICATION,
-            application_id,
-            crate::spicedb::schema::relation::application::CREATOR,
-            crate::spicedb::schema::resource::USER,
-            auth.user_id,
-        );
-
         transaction.commit().await?;
         Ok(AppMessage::OkMessage("Successfully created application"))
     }
@@ -415,22 +375,6 @@ impl CampaignHandler {
             &mut state.snowflake_generator,
         )
         .await?;
-
-        transaction.create_spicedb_relationship(
-            crate::spicedb::schema::resource::OFFER,
-            offer_id,
-            crate::spicedb::schema::relation::offer::CAMPAIGN,
-            crate::spicedb::schema::resource::CAMPAIGN,
-            auth.resource_id,
-        );
-
-        transaction.create_spicedb_relationship(
-            crate::spicedb::schema::resource::OFFER,
-            offer_id,
-            crate::spicedb::schema::relation::offer::APPLICATION,
-            crate::spicedb::schema::resource::APPLICATION,
-            data.application_id,
-        );
 
         transaction.commit().await?;
 

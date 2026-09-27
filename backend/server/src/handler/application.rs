@@ -13,12 +13,10 @@ use crate::models::application::{
 };
 use crate::models::error::ChaosError;
 use crate::models::question::{Question, QuestionWithAnswer};
-use crate::models::rating::{NewRating, Rating};
 use crate::models::transaction::DBTransaction;
-use crate::spicedb;
 use crate::spicedb::{
     policies::{EditApplication, ReviewApplication, ReviewCampaign, UsePlatform, ViewApplication},
-    schema as spicedb_schema, SpiceDbAuth,
+    SpiceDbAuth,
 };
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
@@ -47,31 +45,13 @@ impl ApplicationHandler {
         State(mut state): State<AppState>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let (application_id, created) = Application::create_or_get(
+        let (application_id, _created) = Application::create_or_get(
             campaign_id,
             auth.user_id,
             &mut state.snowflake_generator,
             &mut transaction.tx,
         )
         .await?;
-
-        if created {
-            transaction.create_spicedb_relationship(
-                spicedb_schema::resource::APPLICATION,
-                application_id,
-                spicedb_schema::relation::application::CAMPAIGN,
-                spicedb_schema::resource::CAMPAIGN,
-                campaign_id,
-            );
-
-            transaction.create_spicedb_relationship(
-                spicedb_schema::resource::APPLICATION,
-                application_id,
-                spicedb_schema::relation::application::CREATOR,
-                spicedb_schema::resource::USER,
-                auth.user_id,
-            );
-        }
 
         transaction.commit().await?;
 
