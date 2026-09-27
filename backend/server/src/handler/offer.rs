@@ -95,15 +95,6 @@ impl OfferHandler {
         Offer::delete(auth.resource_id, &mut transaction.tx).await?;
         transaction.commit().await?;
 
-        // Run SpiceDB delete after Postgres succeeds
-        spicedb::delete_all_resource_relationships(
-            &state.spicedb,
-            &state.spicedb_key,
-            spicedb_schema::resource::OFFER,
-            auth.resource_id,
-        )
-        .await?;
-
         Ok(AppMessage::OkMessage("Successfully deleted offer"))
     }
 
