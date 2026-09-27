@@ -13,6 +13,7 @@ pub mod schema;
 
 // Generated modules
 pub mod authzed {
+    #![allow(dead_code)]
     pub mod api {
         pub mod v1 {
             include!("generated/authzed/api/v1/authzed.api.v1.rs");
@@ -27,6 +28,7 @@ pub mod authzed {
 }
 
 pub mod google {
+    #![allow(dead_code)]
     pub mod api {
         include!("generated/google/api/google.api.rs");
     }
@@ -37,16 +39,19 @@ pub mod google {
 }
 
 pub mod validate {
+    #![allow(dead_code)]
     include!("generated/validate/validate.rs");
 }
 
 pub mod buf {
+    #![allow(dead_code)]
     pub mod validate {
         include!("generated/buf/validate/buf.validate.rs");
     }
 }
 
 pub mod grpc {
+    #![allow(dead_code)]
     pub mod gateway {
         pub mod protoc_gen_openapiv2 {
             pub mod options {
