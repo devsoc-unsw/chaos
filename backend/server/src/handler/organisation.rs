@@ -13,7 +13,7 @@ use crate::models::email_template::{EmailTemplate, NewEmailTemplate};
 use crate::models::error::ChaosError;
 use crate::models::organisation::{
     AdminUpdateList, MemberRoleUpdate, MemberToInvite, MemberToRemove, NewOrganisation,
-    Organisation, OrganisationRole, SlugCheck,
+    Organisation, SlugCheck,
 };
 use crate::models::transaction::DBTransaction;
 use crate::service::auth::assert_is_super_user;
@@ -48,7 +48,7 @@ impl OrganisationHandler {
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewOrganisation>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let organisation_id = Organisation::create(
+        Organisation::create(
             data.admin,
             data.slug,
             data.name,
@@ -151,7 +151,6 @@ impl OrganisationHandler {
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
         _auth: SpiceDbAuth<ManagePlatform>,
-        state: State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Organisation::delete(id, &mut transaction.tx).await?;
 
@@ -338,7 +337,7 @@ impl OrganisationHandler {
         _auth: SpiceDbAuth<ManagePlatform>,
         Json(request_body): Json<MemberRoleUpdate>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let old_role = Organisation::update_member_role(
+        Organisation::update_member_role(
             id,
             request_body.user_id,
             request_body.role,
@@ -584,7 +583,7 @@ impl OrganisationHandler {
         auth: SpiceDbAuth<ManageOrganisation>,
         Json(request_body): Json<NewEmailTemplate>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let template_id = Organisation::create_email_template(
+        Organisation::create_email_template(
             auth.resource_id,
             request_body.name,
             request_body.template_subject,

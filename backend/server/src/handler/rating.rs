@@ -38,7 +38,7 @@ impl RatingHandler {
     pub async fn create_category(
         State(mut state): State<AppState>,
         Path(campaign_id): Path<i64>,
-        auth: SpiceDbAuth<ManageCampaign>,
+        _auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewCategoryRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
@@ -109,7 +109,6 @@ impl RatingHandler {
         Path((campaign_id, category_id)): Path<(i64, i64)>,
         _auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,
-        state: State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Rating::delete_category(category_id, campaign_id, &mut transaction.tx).await?;
 
@@ -240,7 +239,7 @@ impl RatingHandler {
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewApplicationCategoryRating>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let category_rating_id = Rating::create_category_rating(
+        Rating::create_category_rating(
             data,
             rating_id,
             &mut state.snowflake_generator,
@@ -296,14 +295,7 @@ impl RatingHandler {
         Path(rating_id): Path<i64>,
         _auth: SpiceDbAuth<EditRating>,
         mut transaction: DBTransaction<'_>,
-        state: State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let rating = Rating::get_all_category_ratings_from_application_rating_id(
-            rating_id,
-            &mut transaction.tx,
-        )
-        .await?;
-
         Rating::delete_application_rating(rating_id, &mut transaction.tx).await?;
 
         transaction.commit().await?;
@@ -323,7 +315,6 @@ impl RatingHandler {
         Path((rating_id, category_rating_id)): Path<(i64, i64)>,
         _auth: SpiceDbAuth<EditRating>,
         mut transaction: DBTransaction<'_>,
-        state: State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Rating::delete_category_rating(category_rating_id, rating_id, &mut transaction.tx).await?;
 

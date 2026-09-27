@@ -10,8 +10,6 @@ use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
 use crate::service::auth::create_or_get_user_id;
 use crate::service::jwt::encode_auth_token;
-use crate::spicedb::schema;
-use crate::spicedb::schema::PLATFORM_RESOURCE_ID;
 use axum::extract::{Query, State};
 use axum::response::{IntoResponse, Redirect};
 use axum_extra::extract::cookie::{Cookie, CookieJar, Expiration};

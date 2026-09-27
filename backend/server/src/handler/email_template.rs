@@ -8,7 +8,6 @@
 use crate::models::app::{AppMessage, AppState};
 use crate::models::email_template::EmailTemplate;
 use crate::models::error::ChaosError;
-use crate::models::rating::Rating;
 use crate::models::transaction::DBTransaction;
 use crate::spicedb::{policies::ManageEmailTemplate, SpiceDbAuth};
 use axum::extract::{Json, State};
@@ -89,7 +88,6 @@ impl EmailTemplateHandler {
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
     pub async fn delete(
         auth: SpiceDbAuth<ManageEmailTemplate>,
-        State(state): State<AppState>,
         mut transaction: DBTransaction<'_>,
     ) -> Result<impl IntoResponse, ChaosError> {
         EmailTemplate::delete(auth.resource_id, &mut transaction.tx).await?;

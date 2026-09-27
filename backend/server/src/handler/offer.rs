@@ -15,7 +15,7 @@ use crate::spicedb::{
     policies::{ManageCampaign, ManageOffer, ReplyOffer, ViewOffer},
     SpiceDbAuth,
 };
-use axum::extract::{Json, Path, State};
+use axum::extract::{Json, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use chrono::{DateTime, Utc};
@@ -90,7 +90,6 @@ impl OfferHandler {
     pub async fn delete(
         mut transaction: DBTransaction<'_>,
         auth: SpiceDbAuth<ManageOffer>,
-        state: State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Offer::delete(auth.resource_id, &mut transaction.tx).await?;
         transaction.commit().await?;

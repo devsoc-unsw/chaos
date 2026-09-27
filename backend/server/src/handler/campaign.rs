@@ -217,13 +217,7 @@ impl CampaignHandler {
     pub async fn delete(
         auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,
-        state: State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let application_ids =
-            Campaign::get_application_ids(auth.resource_id, &mut transaction.tx).await?;
-        let rating_ids = Campaign::get_rating_ids(auth.resource_id, &mut transaction.tx).await?;
-        let comment_ids = Campaign::get_comment_ids(auth.resource_id, &mut transaction.tx).await?;
-
         Campaign::delete(auth.resource_id, &mut transaction.tx).await?;
 
         transaction.commit().await?;
@@ -252,7 +246,7 @@ impl CampaignHandler {
         State(mut state): State<AppState>,
         Json(data): Json<RoleUpdate>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let role_id = Campaign::create_role(
+        Campaign::create_role(
             auth.resource_id,
             data,
             &mut transaction.tx,
@@ -312,7 +306,7 @@ impl CampaignHandler {
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewApplication>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let application_id = Application::create(
+        Application::create(
             campaign_id,
             auth.user_id,
             data,
@@ -370,7 +364,7 @@ impl CampaignHandler {
         mut transaction: DBTransaction<'_>,
         Json(data): Json<Offer>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let offer_id = Offer::create(
+        Offer::create(
             auth.resource_id,
             data.application_id,
             data.email_template_id,

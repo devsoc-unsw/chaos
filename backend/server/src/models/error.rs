@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 //! Error handling module for the Chaos application.
 //!
 //! This module defines the core error types and their conversion to HTTP responses.

@@ -75,7 +75,7 @@ use crate::spicedb::authzed::api::v1::{
 };
 use crate::spicedb::schema::PLATFORM_RESOURCE_ID;
 use crate::{
-    models::{app::AppState, error::ChaosError, transaction::DBTransaction},
+    models::{app::AppState, error::ChaosError},
     service::auth::extract_user_id_from_request,
     spicedb::authzed::api::v1::{
         check_permission_response::Permissionship, consistency::Requirement,
@@ -343,29 +343,6 @@ pub fn new_relationship_update(
             optional_expires_at: None,
         }),
     }
-}
-
-/// Builds the inverse of a relationship update (create becomes delete and vice
-/// versa), used to compensate writes that must be undone.
-///
-/// # Arguments
-///
-/// * `update` - The update to invert
-///
-/// # Returns
-///
-/// * `Some` inverse update for create/delete updates, `None` for anything else
-pub fn invert_relationship_update(update: &RelationshipUpdate) -> Option<RelationshipUpdate> {
-    let operation = match Operation::try_from(update.operation) {
-        Ok(Operation::Create) => Operation::Delete,
-        Ok(Operation::Delete) => Operation::Create,
-        _ => return None,
-    };
-
-    Some(RelationshipUpdate {
-        operation: operation as i32,
-        relationship: update.relationship.clone(),
-    })
 }
 
 /// Writes a batch of relationship updates to SpiceDB atomically.

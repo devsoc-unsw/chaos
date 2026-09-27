@@ -11,7 +11,6 @@ use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
 use crate::models::user::UserRole;
 use crate::service::jwt::decode_auth_token;
-use crate::spicedb::schema::{self, PLATFORM_RESOURCE_ID};
 use axum::http::request::Parts;
 use axum::RequestPartsExt;
 use axum_extra::headers::Cookie;

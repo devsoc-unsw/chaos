@@ -97,7 +97,6 @@ impl CommentHandler {
         Path((application_id, comment_id)): Path<(i64, i64)>,
         auth: SpiceDbAuth<EditComment>,
         mut transaction: DBTransaction<'_>,
-        state: State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Comment::delete(
             comment_id,

@@ -5,7 +5,7 @@
 //! - Updating and deleting roles
 //! - Managing role applications
 
-use crate::models::app::{AppMessage, AppState};
+use crate::models::app::AppMessage;
 use crate::models::application::Application;
 use crate::models::error::ChaosError;
 use crate::models::role::{Role, RoleUpdate};
@@ -14,7 +14,7 @@ use crate::spicedb::{
     policies::{ManageCampaignRole, UsePlatform},
     SpiceDbAuth,
 };
-use axum::extract::{Json, Path, State};
+use axum::extract::{Json, Path};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 
@@ -64,7 +64,6 @@ impl RoleHandler {
         mut transaction: DBTransaction<'_>,
         Path(id): Path<i64>,
         _auth: SpiceDbAuth<ManageCampaignRole>,
-        state: State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Role::delete(id, &mut transaction.tx).await?;
 

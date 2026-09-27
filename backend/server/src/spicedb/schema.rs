@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 /// Used for `resource_id` parameter in SpiceDB whenever resource is `chaos/platform`
 pub const PLATFORM_RESOURCE_ID: i64 = 0;
 

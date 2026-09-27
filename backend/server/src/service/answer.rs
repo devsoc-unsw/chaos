@@ -1,56 +1,12 @@
 //! Answer service for the Chaos application.
 //!
 //! This module provides functionality for managing application answers, including:
-//! - Verifying answer ownership
 //! - Checking if answers can be modified based on application status
 
 use crate::models::error::ChaosError;
 use chrono::Utc;
 use sqlx::{Postgres, Transaction};
 use std::ops::DerefMut;
-
-/// Verifies if a user is the owner of an answer.
-///
-/// This function checks if the user owns the application that contains the answer.
-///
-/// # Arguments
-///
-/// * `user_id` - The ID of the user to check
-/// * `answer_id` - The ID of the answer
-/// * `transaction` - Database transaction
-///
-/// # Returns
-///
-/// * `Result<(), ChaosError>` - Ok if the user is the owner, Unauthorized error otherwise
-pub async fn user_is_answer_owner(
-    user_id: i64,
-    answer_id: i64,
-    transaction: &mut Transaction<'_, Postgres>,
-) -> Result<(), ChaosError> {
-    let is_owner = sqlx::query!(
-        "
-            SELECT EXISTS(
-                SELECT 1 FROM (
-                    SELECT FROM answers ans
-                     JOIN applications app ON ans.application_id = app.id
-                     WHERE ans.id = $1 AND app.user_id = $2
-                ) sub
-            )
-        ",
-        answer_id,
-        user_id
-    )
-    .fetch_one(transaction.deref_mut())
-    .await?
-    .exists
-    .expect("`exists` should always exist in this query result");
-
-    if !is_owner {
-        return Err(ChaosError::Unauthorized);
-    }
-
-    Ok(())
-}
 
 /// Verifies if an answer can be modified.
 ///

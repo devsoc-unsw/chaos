@@ -42,7 +42,7 @@ impl AnswerHandler {
     pub async fn create(
         State(mut state): State<AppState>,
         Path(application_id): Path<i64>,
-        auth: SpiceDbAuth<EditApplication>,
+        _auth: SpiceDbAuth<EditApplication>,
         _: OpenApplicationByApplicationId,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewAnswer>,
@@ -167,7 +167,6 @@ impl AnswerHandler {
         _auth: SpiceDbAuth<EditAnswer>,
         _: OpenApplicationByAnswerId,
         mut transaction: DBTransaction<'_>,
-        state: State<AppState>,
     ) -> Result<impl IntoResponse, ChaosError> {
         Answer::delete(answer_id, &mut transaction.tx).await?;
 

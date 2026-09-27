@@ -1,10 +1,8 @@
-use crate::models::app::init_app_state;
 use crate::models::app::AppState;
 use crate::models::error::ChaosError;
 use crate::models::organisation::Organisation;
 use crate::models::transaction::DBTransaction;
 use crate::models::user::{User, UserRole};
-use crate::spicedb::schema::PLATFORM_RESOURCE_ID;
 
 pub struct Seeder {
     pub app_state: AppState,
@@ -43,7 +41,7 @@ impl Seeder {
             .await
             .is_err()
         {
-            let org_id = Organisation::create(
+            Organisation::create(
                 super_user_id,
                 "devsoc".to_string(),
                 "UNSW DevSoc".to_string(),

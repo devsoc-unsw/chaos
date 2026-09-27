@@ -40,7 +40,7 @@ impl QuestionHandler {
     pub async fn create(
         State(mut state): State<AppState>,
         Path(campaign_id): Path<i64>,
-        auth: SpiceDbAuth<ManageCampaign>,
+        _auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,
         Json(data): Json<NewQuestion>,
     ) -> Result<impl IntoResponse, ChaosError> {
@@ -187,7 +187,6 @@ impl QuestionHandler {
         Path((campaign_id, question_id)): Path<(i64, i64)>,
         _auth: SpiceDbAuth<ManageCampaign>,
         mut transaction: DBTransaction<'_>,
-        state: State<AppState>,
         _: ClosedCampaign, // Can only delete questions for closed campaigns
     ) -> Result<impl IntoResponse, ChaosError> {
         Question::delete(question_id, campaign_id, &mut transaction.tx).await?;

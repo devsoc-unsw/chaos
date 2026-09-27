@@ -1,101 +1,12 @@
 //! Application service for the Chaos application.
 //!
 //! This module provides functionality for managing applications, including:
-//! - Verifying application admin privileges
-//! - Verifying application ownership
 //! - Checking application status and deadlines
 
 use crate::models::error::ChaosError;
 use chrono::Utc;
 use sqlx::{Postgres, Transaction};
 use std::ops::DerefMut;
-
-/// Verifies if a user has admin privileges for an application.
-///
-/// This function checks if the user is an admin of the organisation that owns the campaign
-/// the application belongs to.
-///
-/// # Arguments
-///
-/// * `user_id` - The ID of the user to check
-/// * `application_id` - The ID of the application
-/// * `transaction` - Database transaction
-///
-/// # Returns
-///
-/// * `Result<bool, ChaosError>` - Ok(true) if the user is an admin, Ok(false) otherwise
-pub async fn user_is_application_admin(
-    user_id: i64,
-    application_id: i64,
-    transaction: &mut Transaction<'_, Postgres>,
-) -> Result<bool, ChaosError> {
-    let is_admin = sqlx::query!(
-        "
-            SELECT EXISTS(
-                SELECT 1 FROM (
-                    SELECT c.organisation_id FROM applications a
-                    JOIN campaigns c on a.campaign_id = c.id
-                    WHERE a.id = $1
-                ) ca
-                JOIN organisation_members m on ca.organisation_id = m.organisation_id
-                WHERE m.user_id = $2 AND m.role = 'Admin'
-            )
-        ",
-        application_id,
-        user_id
-    )
-    .fetch_one(transaction.deref_mut())
-    .await?
-    .exists
-    .expect("`exists` should always exist in this query result");
-
-    if !is_admin {
-        return Ok(false);
-    }
-
-    Ok(true)
-}
-
-/// Verifies if a user is the owner of an application.
-///
-/// This function checks if the user created the application.
-///
-/// # Arguments
-///
-/// * `user_id` - The ID of the user to check
-/// * `application_id` - The ID of the application
-/// * `transaction` - Database transaction
-///
-/// # Returns
-///
-/// * `Result<bool, ChaosError>` - Ok(true) if the user is the owner, Ok(false) otherwise
-pub async fn user_is_application_owner(
-    user_id: i64,
-    application_id: i64,
-    transaction: &mut Transaction<'_, Postgres>,
-) -> Result<bool, ChaosError> {
-    let is_owner = sqlx::query!(
-        "
-            SELECT EXISTS(
-                SELECT 1 FROM (
-                    SELECT FROM applications WHERE id = $1 AND user_id = $2
-                ) sub
-            )
-        ",
-        application_id,
-        user_id
-    )
-    .fetch_one(transaction.deref_mut())
-    .await?
-    .exists
-    .expect("`exists` should always exist in this query result");
-
-    if !is_owner {
-        return Ok(false);
-    }
-
-    Ok(true)
-}
 
 /// Verifies if an application is still open for submissions.
 ///

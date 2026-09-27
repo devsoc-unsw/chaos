@@ -104,15 +104,6 @@ pub enum OrganisationRole {
     Admin,
 }
 
-impl OrganisationRole {
-    pub fn convert_to_spicedb(&self) -> &str {
-        match self {
-            OrganisationRole::User => crate::spicedb::schema::relation::organisation::MEMBER,
-            OrganisationRole::Admin => crate::spicedb::schema::relation::organisation::ADMIN,
-        }
-    }
-}
-
 /// Represents a member of an organisation.
 ///
 /// This struct contains information about a user's membership

@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 //! Reusable SpiceDB authorization policies for HTTP handlers.
 //!
 //! Each policy is a zero-sized type implementing [`SpiceDbPolicy`]. Pass it as
