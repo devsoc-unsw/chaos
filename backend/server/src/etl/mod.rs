@@ -1,9 +1,9 @@
 use crate::spicedb::authzed::api::v1::permissions_service_client::PermissionsServiceClient;
 use crate::spicedb::authzed::api::v1::relationship_update::Operation;
-use crate::spicedb::authzed::api::v1::RelationshipUpdate;
+use crate::spicedb::authzed::api::v1::{RelationshipUpdate, ZedToken};
 use crate::spicedb::schema::{relation, resource, PLATFORM_RESOURCE_ID};
 use crate::spicedb::{
-    delete_all_resource_relationships, new_relationship_update, write_relationships,
+    delete_all_resource_relationships, new_relationship_update, store_zedtoken, write_relationships,
 };
 use etl::config::{
     BatchConfig, InvalidatedSlotBehavior, MemoryBackpressureConfig, PgConnectionConfig,
@@ -22,6 +22,7 @@ use etl::schema::ReplicatedTableSchema;
 use etl::store::PostgresStore;
 use etl_config::shared::ReplicationSlotConfig;
 use secrecy::SecretString;
+use sqlx::{Pool, Postgres};
 use std::collections::HashMap;
 use std::future::Future;
 use tonic::transport::Channel;
@@ -31,15 +32,49 @@ use tonic::transport::Channel;
 pub struct SpiceDBDestination {
     spicedb_client: PermissionsServiceClient<Channel>,
     spicedb_key: String,
+    db: Pool<Postgres>,
 }
 
 impl SpiceDBDestination {
-    /// Creates a destination sharing the given SpiceDB client and key.
-    pub fn new(spicedb_client: PermissionsServiceClient<Channel>, spicedb_key: String) -> Self {
+    /// Creates a destination sharing the given SpiceDB client, key, and pool.
+    ///
+    /// The pool persists each SpiceDB batch's ZedToken to `spicedb_zedtoken`
+    /// (see [`publish_token`]); it may be the shared application pool.
+    pub fn new(
+        spicedb_client: PermissionsServiceClient<Channel>,
+        spicedb_key: String,
+        db: Pool<Postgres>,
+    ) -> Self {
         Self {
             spicedb_client,
             spicedb_key,
+            db,
         }
+    }
+
+    /// Persists a SpiceDB write's ZedToken as the newest freshness boundary.
+    ///
+    /// Called strictly after the SpiceDB batch it came from is confirmed, in
+    /// batch order, so last-wins stays monotonic under the single leader. A
+    /// `None` token (empty batch, no-op writes) leaves the boundary untouched.
+    ///
+    /// # Arguments
+    ///
+    /// * `token` - ZedToken returned by the SpiceDB write, if any
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` if the boundary was stored (or there was nothing to store)
+    /// * `Err(ChaosError)` if the upsert fails; callers nack the batch so ETL
+    ///   retries it rather than advancing past an unrecorded revision
+    async fn publish_token(
+        &self,
+        token: Option<ZedToken>,
+    ) -> Result<(), crate::models::error::ChaosError> {
+        if let Some(token) = token {
+            store_zedtoken(&self.db, &token).await?;
+        }
+        Ok(())
     }
 }
 
@@ -434,16 +469,33 @@ impl Destination for SpiceDBDestination {
                 return Ok(());
             }
             // SpiceDB caps a single WriteRelationships batch, so chunk large
-            // backfills; any chunk failing nacks the whole batch for retry.
+            // backfills; any chunk failing (or its token persist failing)
+            // nacks the whole batch for retry.
             for chunk in touches.chunks(500) {
-                if let Err(e) =
-                    write_relationships(&self.spicedb_client, &self.spicedb_key, chunk.to_vec())
-                        .await
+                let token = match write_relationships(
+                    &self.spicedb_client,
+                    &self.spicedb_key,
+                    chunk.to_vec(),
+                )
+                .await
                 {
-                    log::error!("SpiceDBDestination: backfill batch for {table} failed: {e:?}");
+                    Err(e) => {
+                        log::error!("SpiceDBDestination: backfill batch for {table} failed: {e:?}");
+                        async_result.send(Err(etl_error!(
+                            etl::error::ErrorKind::Unknown,
+                            "SpiceDB write failed"
+                        )));
+                        return Ok(());
+                    }
+                    Ok(token) => token,
+                };
+                if let Err(e) = self.publish_token(token).await {
+                    log::error!(
+                        "SpiceDBDestination: backfill zedtoken persist for {table} failed: {e:?}"
+                    );
                     async_result.send(Err(etl_error!(
                         etl::error::ErrorKind::Unknown,
-                        "SpiceDB write failed"
+                        "ZedToken persist failed"
                     )));
                     return Ok(());
                 }
@@ -653,13 +705,25 @@ impl Destination for SpiceDBDestination {
             }
 
             if !touches.is_empty() {
-                if let Err(e) =
-                    write_relationships(&self.spicedb_client, &self.spicedb_key, touches).await
-                {
-                    log::error!("SpiceDBDestination: event batch write failed: {e:?}");
+                let token =
+                    match write_relationships(&self.spicedb_client, &self.spicedb_key, touches)
+                        .await
+                    {
+                        Err(e) => {
+                            log::error!("SpiceDBDestination: event batch write failed: {e:?}");
+                            async_result.send(Err(etl_error!(
+                                etl::error::ErrorKind::Unknown,
+                                "SpiceDB write failed"
+                            )));
+                            return Ok(());
+                        }
+                        Ok(token) => token,
+                    };
+                if let Err(e) = self.publish_token(token).await {
+                    log::error!("SpiceDBDestination: event zedtoken persist failed: {e:?}");
                     async_result.send(Err(etl_error!(
                         etl::error::ErrorKind::Unknown,
-                        "SpiceDB write failed"
+                        "ZedToken persist failed"
                     )));
                     return Ok(());
                 }
@@ -675,35 +739,65 @@ impl Destination for SpiceDBDestination {
                     resource::USER,
                     uid,
                 );
-                if write_relationships(&self.spicedb_client, &self.spicedb_key, vec![admin])
+                match write_relationships(&self.spicedb_client, &self.spicedb_key, vec![admin])
                     .await
-                    .is_err()
                 {
-                    let member = delete(
-                        resource::ORGANISATION,
-                        oid,
-                        relation::organisation::MEMBER,
-                        resource::USER,
-                        uid,
-                    );
-                    if let Err(e) =
-                        write_relationships(&self.spicedb_client, &self.spicedb_key, vec![member])
-                            .await
-                    {
-                        log::error!(
-                            "SpiceDBDestination: membership delete failed for org {oid} user {uid}: {e:?}"
+                    Ok(token) => {
+                        if let Err(e) = self.publish_token(token).await {
+                            log::error!(
+                                "SpiceDBDestination: membership zedtoken persist failed: {e:?}"
+                            );
+                            async_result.send(Err(etl_error!(
+                                etl::error::ErrorKind::Unknown,
+                                "ZedToken persist failed"
+                            )));
+                            return Ok(());
+                        }
+                    }
+                    Err(_) => {
+                        let member = delete(
+                            resource::ORGANISATION,
+                            oid,
+                            relation::organisation::MEMBER,
+                            resource::USER,
+                            uid,
                         );
-                        async_result.send(Err(etl_error!(
-                            etl::error::ErrorKind::Unknown,
-                            "SpiceDB write failed"
-                        )));
-                        return Ok(());
+                        match write_relationships(
+                            &self.spicedb_client,
+                            &self.spicedb_key,
+                            vec![member],
+                        )
+                        .await
+                        {
+                            Ok(token) => {
+                                if let Err(e) = self.publish_token(token).await {
+                                    log::error!(
+                                        "SpiceDBDestination: membership zedtoken persist failed: {e:?}"
+                                    );
+                                    async_result.send(Err(etl_error!(
+                                        etl::error::ErrorKind::Unknown,
+                                        "ZedToken persist failed"
+                                    )));
+                                    return Ok(());
+                                }
+                            }
+                            Err(e) => {
+                                log::error!(
+                                    "SpiceDBDestination: membership delete failed for org {oid} user {uid}: {e:?}"
+                                );
+                                async_result.send(Err(etl_error!(
+                                    etl::error::ErrorKind::Unknown,
+                                    "SpiceDB write failed"
+                                )));
+                                return Ok(());
+                            }
+                        }
                     }
                 }
             }
             // Filtered deletes are idempotent, so retries converge.
             for (res_type, id) in resource_deletes {
-                if let Err(e) = delete_all_resource_relationships(
+                let token = match delete_all_resource_relationships(
                     &self.spicedb_client,
                     &self.spicedb_key,
                     res_type,
@@ -711,12 +805,25 @@ impl Destination for SpiceDBDestination {
                 )
                 .await
                 {
+                    Err(e) => {
+                        log::error!(
+                            "SpiceDBDestination: resource delete failed for {res_type}:{id}: {e:?}"
+                        );
+                        async_result.send(Err(etl_error!(
+                            etl::error::ErrorKind::Unknown,
+                            "SpiceDB delete failed"
+                        )));
+                        return Ok(());
+                    }
+                    Ok(token) => token,
+                };
+                if let Err(e) = self.publish_token(token).await {
                     log::error!(
-                        "SpiceDBDestination: resource delete failed for {res_type}:{id}: {e:?}"
+                        "SpiceDBDestination: delete zedtoken persist failed for {res_type}:{id}: {e:?}"
                     );
                     async_result.send(Err(etl_error!(
                         etl::error::ErrorKind::Unknown,
-                        "SpiceDB delete failed"
+                        "ZedToken persist failed"
                     )));
                     return Ok(());
                 }
@@ -724,10 +831,17 @@ impl Destination for SpiceDBDestination {
             // Opposite-relation cleanup after role swaps; a missing relation
             // just means state already converged.
             for op in best_effort {
-                if let Err(e) =
-                    write_relationships(&self.spicedb_client, &self.spicedb_key, vec![op]).await
-                {
-                    log::warn!("SpiceDBDestination: opposite-relation cleanup skipped: {e:?}");
+                match write_relationships(&self.spicedb_client, &self.spicedb_key, vec![op]).await {
+                    Err(e) => {
+                        log::warn!("SpiceDBDestination: opposite-relation cleanup skipped: {e:?}");
+                    }
+                    Ok(token) => {
+                        if let Err(e) = self.publish_token(token).await {
+                            log::warn!(
+                                "SpiceDBDestination: cleanup zedtoken persist skipped: {e:?}"
+                            );
+                        }
+                    }
                 }
             }
             async_result.send(Ok(DestinationWriteStatus::Durable));
@@ -806,6 +920,8 @@ fn pg_connection() -> Result<PgConnectionConfig, crate::models::error::ChaosErro
 ///
 /// * `spicedb_client` - Shared SpiceDB permissions client
 /// * `spicedb_key` - Bearer key for SpiceDB requests
+/// * `db` - Database pool used to persist each batch's ZedToken (may be the
+///   shared application pool)
 ///
 /// # Returns
 ///
@@ -814,6 +930,7 @@ fn pg_connection() -> Result<PgConnectionConfig, crate::models::error::ChaosErro
 pub async fn start_pipeline(
     spicedb_client: PermissionsServiceClient<Channel>,
     spicedb_key: String,
+    db: Pool<Postgres>,
 ) -> Result<Pipeline<PostgresStore, SpiceDBDestination>, crate::models::error::ChaosError> {
     use crate::models::error::ChaosError;
 
@@ -855,7 +972,7 @@ pub async fn start_pipeline(
         run_source_migrations,
     };
 
-    let destination = SpiceDBDestination::new(spicedb_client, spicedb_key);
+    let destination = SpiceDBDestination::new(spicedb_client, spicedb_key, db);
     let mut pipeline = Pipeline::new(config, store, destination);
     pipeline
         .start()
@@ -983,7 +1100,7 @@ pub async fn elect_and_start(
     match stand_for_election(db).await? {
         Leadership::Leader(lock) => {
             println!("ETL: elected leader, starting pipeline...");
-            let pipeline = start_pipeline(spicedb_client, spicedb_key).await?;
+            let pipeline = start_pipeline(spicedb_client, spicedb_key, db.clone()).await?;
             Ok(EtlRole::Leader { pipeline, lock })
         }
         Leadership::Follower => {
@@ -1086,7 +1203,8 @@ pub async fn campaign(
             }
             Ok(Leadership::Follower) => tokio::time::sleep(poll).await,
             Ok(Leadership::Leader(lock)) => {
-                match start_pipeline(spicedb_client.clone(), spicedb_key.clone()).await {
+                match start_pipeline(spicedb_client.clone(), spicedb_key.clone(), db.clone()).await
+                {
                     Err(e) => {
                         log::error!("ETL leader failed to start pipeline: {e:?}; retrying");
                         drop(lock);

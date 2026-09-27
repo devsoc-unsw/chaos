@@ -66,15 +66,12 @@ use axum::{
     http::request::Parts,
     RequestPartsExt,
 };
-use std::sync::{Arc, RwLock};
 use std::{collections::HashMap, marker::PhantomData};
-use tokio::sync::{Mutex, Notify};
 use tonic::{metadata::MetadataValue, transport::Channel, Request};
 
 use crate::spicedb::authzed::api::v1::{
-    schema_service_client::SchemaServiceClient, watch_service_client::WatchServiceClient,
-    DeleteRelationshipsRequest, RelationshipFilter, SubjectFilter, WatchKind, WatchRequest,
-    WriteSchemaRequest, ZedToken,
+    schema_service_client::SchemaServiceClient, DeleteRelationshipsRequest, RelationshipFilter,
+    SubjectFilter, WriteSchemaRequest, ZedToken,
 };
 use crate::spicedb::schema::PLATFORM_RESOURCE_ID;
 use crate::{
@@ -87,18 +84,19 @@ use crate::{
         SubjectReference, WriteRelationshipsRequest,
     },
 };
+use sqlx::{Pool, Postgres};
 
-/// Returns SpiceDB `Consistency` to use depending on if ZedToken is available.
+/// Returns SpiceDB `Consistency` for the given freshness boundary.
 ///
 /// # Arguments
 ///
-/// * `zedtoken` - The ZedToken stored in `AppState`
+/// * `token` - Newest ZedToken observed by the ETL pipeline, if any
 ///
 /// # Returns
 ///
-/// * `Consistency` setting to use (`MinimizeLatency` or `AtLeastAsFresh`)
-fn consistency_from_stored(zedtoken: &RwLock<Option<ZedToken>>) -> Consistency {
-    let requirement = match zedtoken.read().unwrap().clone() {
+/// * `Consistency` setting to use (`AtLeastAsFresh` or `MinimizeLatency`)
+fn consistency_for(token: Option<ZedToken>) -> Consistency {
+    let requirement = match token {
         Some(token) => Requirement::AtLeastAsFresh(token),
         None => Requirement::MinimizeLatency(true),
     };
@@ -108,245 +106,57 @@ fn consistency_from_stored(zedtoken: &RwLock<Option<ZedToken>>) -> Consistency {
     }
 }
 
-/// Store given ZedToken into `RwLock`
+/// Loads the newest ZedToken observed by the ETL pipeline.
 ///
-/// The stored token is the freshness boundary supplied to
-/// [`consistency_from_stored`]. It must never go backwards, or later
-/// authorization checks would use an outdated `AtLeastAsFresh` boundary.
-///
-/// ZedTokens are opaque to clients (SpiceDB revisions are not byte-sortable
-/// and their wire format is datastore-specific), so this function cannot
-/// compare tokens itself. Monotonicity is instead guaranteed by the Watch
-/// task ([`spawn_zedtoken_watcher`]), which feeds tokens in ascending
-/// revision order and gates them behind pending `DBTransaction` writes. Do
-/// not call this from write paths: an older write finishing last would
-/// unconditionally overwrite a newer token.
+/// The token lives in the single-row `spicedb_zedtoken` table, written by the
+/// ETL leader after every SpiceDB batch (see `etl::SpiceDBDestination`) and
+/// read by every instance, so followers share the leader's freshness boundary
+/// without any in-process watcher.
 ///
 /// # Arguments
 ///
-/// * `zedtoken` - The ZedToken lock in `AppState`
-/// * `token` - The new token to be stored, if any
+/// * `db` - Database pool
 ///
 /// # Returns
 ///
-/// Returns nothing
-fn store_zedtoken(zedtoken: &RwLock<Option<ZedToken>>, token: Option<ZedToken>) {
-    if let Some(token) = token {
-        *zedtoken.write().unwrap() = Some(token);
-    }
+/// * `Ok(Some(ZedToken))` if the pipeline has published a token yet
+/// * `Ok(None)` before the first ETL batch (callers fall back to
+///   `MinimizeLatency`)
+/// * `Err(ChaosError)` if the query fails
+pub async fn load_zedtoken(db: &Pool<Postgres>) -> Result<Option<ZedToken>, ChaosError> {
+    let row: Option<(String,)> =
+        sqlx::query_as("SELECT token FROM spicedb_zedtoken WHERE id = TRUE")
+            .fetch_optional(db)
+            .await?;
+
+    Ok(row.map(|(token,)| ZedToken { token }))
 }
 
-/// Shared state gating publication of Watch tokens.
+/// Persists a ZedToken observed from a SpiceDB write as the newest boundary.
 ///
-/// `pending_writes` counts `DBTransaction` commits that have applied a
-/// SpiceDB relationship write whose Postgres transaction has not reached a
-/// final state (committed, or compensated after failure). `deferred_token`
-/// holds the newest Watch token received while the gate was closed. Both are
-/// protected by a single async mutex; only the Watch task writes the
-/// published token in [`AppState::spicedb_zedtoken`].
-pub struct ZedTokenPublicationGate {
-    /// Number of pending SpiceDB writes with an unresolved Postgres commit.
-    pub pending_writes: usize,
-
-    /// Newest Watch token received while `pending_writes` was non-zero.
-    pub deferred_token: Option<ZedToken>,
-}
-
-impl ZedTokenPublicationGate {
-    /// Create a gate with no pending writes and no deferred token.
-    pub fn new() -> Self {
-        Self {
-            pending_writes: 0,
-            deferred_token: None,
-        }
-    }
-}
-
-/// Registers a pending SpiceDB relationship write on the gate.
-///
-/// Must be called *before* the SpiceDB write RPC: the Watch stream can
-/// report the revision as soon as the write lands, and the gate must already
-/// be closed by then, or the token would be published while the Postgres
-/// commit is still at risk.
+/// Last-wins is monotonic: only the single elected ETL pipeline writes here,
+/// and it persists tokens strictly after the SpiceDB batch they came from is
+/// confirmed, in batch order.
 ///
 /// # Arguments
 ///
-/// * `gate` - The shared publication gate
-pub async fn register_pending_write(gate: &Arc<Mutex<ZedTokenPublicationGate>>) {
-    gate.lock().await.pending_writes += 1;
-}
-
-/// Resolves a pending SpiceDB relationship write on the gate.
-///
-/// Notifies the Watch task when the last pending write resolves, so it can
-/// publish the deferred token even while SpiceDB is idle. Do not call this
-/// on a compensation failure: SpiceDB and Postgres have then diverged and
-/// the gate must stay closed.
-///
-/// # Arguments
-///
-/// * `gate` - The shared publication gate
-/// * `notify` - Waker for the Watch task
-pub async fn resolve_pending_write(
-    gate: &Arc<Mutex<ZedTokenPublicationGate>>,
-    notify: &Arc<Notify>,
-) {
-    let mut gate = gate.lock().await;
-    gate.pending_writes -= 1;
-    if gate.pending_writes == 0 {
-        notify.notify_one();
-    }
-}
-
-/// Defers or publishes a Watch token depending on the gate.
-///
-/// While any write is pending, the token is held back: its revision may
-/// include relationships whose Postgres commit has not succeeded yet. Once
-/// the gate is open, the token is published and any older deferred token is
-/// dropped as covered (the stream delivers tokens in ascending revision
-/// order, so a freshly delivered token is never older than the deferred
-/// one).
-///
-/// # Arguments
-///
-/// * `gate` - The shared publication gate
-/// * `zedtoken` - The shared published token lock
-/// * `token` - The token delivered by the Watch stream
-async fn defer_or_publish(
-    gate: &Arc<Mutex<ZedTokenPublicationGate>>,
-    zedtoken: &Arc<RwLock<Option<ZedToken>>>,
-    token: ZedToken,
-) {
-    let mut gate = gate.lock().await;
-    if gate.pending_writes > 0 {
-        gate.deferred_token = Some(token);
-    } else {
-        gate.deferred_token = None;
-        store_zedtoken(&*zedtoken, Some(token));
-    }
-}
-
-/// Publishes the deferred token once the gate is open.
-///
-/// # Arguments
-///
-/// * `gate` - The shared publication gate
-/// * `zedtoken` - The shared published token lock
-async fn publish_deferred(
-    gate: &Arc<Mutex<ZedTokenPublicationGate>>,
-    zedtoken: &Arc<RwLock<Option<ZedToken>>>,
-) {
-    let mut gate = gate.lock().await;
-    if gate.pending_writes == 0 {
-        if let Some(token) = std::mem::take(&mut gate.deferred_token) {
-            store_zedtoken(&*zedtoken, Some(token));
-        }
-    }
-}
-
-/// Tracks SpiceDB revisions in the background, keeping the stored ZedToken
-/// monotonically increasing.
-///
-/// This is the single writer of the stored token (see [`store_zedtoken`]).
-/// It streams relationship changes via the Watch API, which delivers every
-/// response's `changes_through` token in ascending revision order, so the
-/// shared freshness boundary only ever moves forward.
-///
-/// Publication is gated on [`ZedTokenPublicationGate`]: while any
-/// `DBTransaction` commit has an uncommitted SpiceDB write, tokens are
-/// deferred instead of published. A pending write's revision may contain
-/// relationships that Postgres has not committed yet (and may still reject
-/// and compensate), so publishing it could let a concurrent check authorize
-/// a relationship that is later removed. When the last pending write
-/// resolves, the task is woken via [`Notify`] and publishes the deferred
-/// token.
-///
-/// Each (re)connection starts from the current head revision rather than
-/// resuming from the stored token, because the head is always at or past the
-/// stored token, keeps the stream monotonic across reconnects, and sidesteps
-/// garbage-collection errors for stale cursors. Requests include checkpoints
-/// so the stream stays alive while idle.
-///
-/// # Arguments
-///
-/// * `app_state` - The application state holding the SpiceDB client, key and
-///   shared zedtoken lock
+/// * `db` - Database pool
+/// * `token` - ZedToken returned by the SpiceDB write
 ///
 /// # Returns
 ///
-/// Never returns; runs until the process exits.
-pub async fn spawn_zedtoken_watcher(app_state: AppState) {
-    loop {
-        let endpoint =
-            std::env::var("SPICEDB_GRPC_ENDPOINT").expect("SPICEDB_GRPC_ENDPOINT must be set");
-        let channel = Channel::from_shared(endpoint)
-            .expect("SPICEDB_GRPC_ENDPOINT must be a valid URI")
-            .connect_lazy();
-        let mut client = WatchServiceClient::new(channel);
+/// * `Ok(())` if the token was stored
+/// * `Err(ChaosError)` if the upsert fails
+pub async fn store_zedtoken(db: &Pool<Postgres>, token: &ZedToken) -> Result<(), ChaosError> {
+    sqlx::query(
+        "INSERT INTO spicedb_zedtoken (id, token, updated_at) VALUES (TRUE, $1, CURRENT_TIMESTAMP)
+         ON CONFLICT (id) DO UPDATE SET token = EXCLUDED.token, updated_at = CURRENT_TIMESTAMP",
+    )
+    .bind(&token.token)
+    .execute(db)
+    .await?;
 
-        let request = match authorized_request(
-            WatchRequest {
-                optional_object_types: Vec::new(),
-                optional_start_cursor: None,
-                optional_relationship_filters: Vec::new(),
-                optional_update_kinds: vec![
-                    WatchKind::IncludeRelationshipUpdates as i32,
-                    WatchKind::IncludeCheckpoints as i32,
-                ],
-            },
-            &app_state.spicedb_key,
-        ) {
-            Ok(request) => request,
-            Err(error) => {
-                println!("Failed to build SpiceDB watch request: {error}");
-                tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
-                continue;
-            }
-        };
-
-        match client.watch(request).await {
-            Ok(response) => {
-                let mut stream = response.into_inner();
-                'stream: loop {
-                    tokio::select! {
-                        message = stream.message() => {
-                            match message {
-                                Ok(Some(response)) => {
-                                    // Defer while a DBTransaction write is
-                                    // pending; publish once the gate is open.
-                                    if let Some(token) = response.changes_through {
-                                        defer_or_publish(
-                                            &app_state.spicedb_publication_gate,
-                                            &app_state.spicedb_zedtoken,
-                                            token,
-                                        )
-                                        .await;
-                                    }
-                                }
-                                Ok(None) => break 'stream,
-                                Err(error) => {
-                                    println!("SpiceDB watch stream error: {error}");
-                                    break 'stream;
-                                }
-                            }
-                        }
-                        _ = app_state.spicedb_publication_notify.notified() => {}
-                    }
-
-                    // A pending write may have resolved while SpiceDB is
-                    // idle; publish its deferred token now.
-                    publish_deferred(
-                        &app_state.spicedb_publication_gate,
-                        &app_state.spicedb_zedtoken,
-                    )
-                    .await;
-                }
-            }
-            Err(error) => println!("SpiceDB watch stream failed: {error}"),
-        }
-
-        tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
-    }
+    Ok(())
 }
 
 /// Builds a SpiceDB request with the bearer-token metadata attached.
@@ -423,15 +233,16 @@ pub async fn migrate_schema() -> Result<(), ChaosError> {
 /// Performs a `CheckPermission` RPC for the subject `chaos/user:<user_id>`
 /// against the object `<resource_type>:<resource_id>`.
 ///
-/// Consistency depends on if a ZedToken is available, so results may be
-/// slightly stale at initial startup; Once the app gets a ZedToken, it will
-/// remain consistent with new writes for future reads.
+/// Consistency comes from the `spicedb_zedtoken` table (written by the ETL
+/// leader after every SpiceDB batch): results are `AtLeastAsFresh` as the
+/// newest ETL-observed revision, falling back to `MinimizeLatency` before the
+/// first ETL batch lands.
 ///
 /// # Arguments
 ///
 /// * `client` - Shared SpiceDB permissions client from [`AppState`]
 /// * `key` - Bearer token used to authenticate with SpiceDB
-/// * `zedtoken` - The ZedToken, if any
+/// * `db` - Database pool holding the `spicedb_zedtoken` freshness boundary
 /// * `user_id` - Chaos user to authorize
 /// * `resource_type` - SpiceDB object type, such as `chaos/organisation`
 /// * `resource_id` - Chaos ID of the resource, sent as the SpiceDB object ID
@@ -445,7 +256,7 @@ pub async fn migrate_schema() -> Result<(), ChaosError> {
 pub async fn check_permission(
     client: &PermissionsServiceClient<Channel>,
     key: &str,
-    zedtoken: &RwLock<Option<ZedToken>>,
+    db: &Pool<Postgres>,
     user_id: i64,
     resource_type: &str,
     resource_id: i64,
@@ -453,7 +264,7 @@ pub async fn check_permission(
 ) -> Result<(), ChaosError> {
     let request = authorized_request(
         CheckPermissionRequest {
-            consistency: Some(consistency_from_stored(zedtoken)),
+            consistency: Some(consistency_for(load_zedtoken(db).await?)),
             resource: Some(ObjectReference {
                 object_type: resource_type.to_owned(),
                 object_id: resource_id.to_string(),
@@ -479,7 +290,9 @@ pub async fn check_permission(
         .map_err(|_| ChaosError::InternalServerError)?
         .into_inner();
 
-    // Not storing into zedtoken as this might be a stale read at startup
+    // Not feeding the check's own revision back into the boundary: it may be
+    // older than the newest ETL-observed token, and the boundary must only
+    // move forward via ETL-published writes.
 
     match Permissionship::try_from(response.permissionship) {
         Ok(Permissionship::HasPermission) => Ok(()),
@@ -796,7 +609,7 @@ where
         check_permission(
             &app_state.spicedb,
             &app_state.spicedb_key,
-            &app_state.spicedb_zedtoken,
+            &app_state.db,
             user_id,
             P::RESOURCE_TYPE,
             resource_id,

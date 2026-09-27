@@ -146,7 +146,6 @@ impl RatingHandler {
             &mut transaction.tx,
         )
         .await?;
-        
 
         for category_rating in new_rating.category_ratings {
             Rating::create_category_rating(
