@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import AvailabilityPage from "./availability-page";
 
 export const metadata: Metadata = {
-  title: "Availability - Chaos",
+  title: "Availability",
 };
 
 export default function MockAvailabilityPage() {
