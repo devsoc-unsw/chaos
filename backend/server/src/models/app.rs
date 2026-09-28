@@ -18,7 +18,7 @@ use crate::models::storage::Storage;
 use crate::service::oauth2::build_oauth_client;
 use crate::spicedb::authzed::api::v1::permissions_service_client::PermissionsServiceClient;
 use crate::spicedb::authzed::api::v1::ZedToken;
-use crate::spicedb::{check_permission, ZedTokenPublicationGate};
+use crate::spicedb::check_permission;
 use axum::http::{header, Method, StatusCode};
 use axum::response::IntoResponse;
 use axum::routing::{delete, get, patch, post, put};
@@ -33,7 +33,7 @@ use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 use std::env;
 use std::sync::{Arc, RwLock};
-use tokio::sync::{Mutex, Notify};
+use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use tonic::transport::Channel;
 use tower_http::cors::CorsLayer;
 
@@ -114,8 +114,7 @@ pub struct AppState {
     pub spicedb: PermissionsServiceClient<Channel>,
     pub spicedb_key: String,
     pub spicedb_zedtoken: Arc<RwLock<Option<ZedToken>>>,
-    pub spicedb_publication_gate: Arc<Mutex<ZedTokenPublicationGate>>,
-    pub spicedb_publication_notify: Arc<Notify>,
+    pub spicedb_token_tx: UnboundedSender<ZedToken>,
 }
 
 impl AppState {
@@ -159,7 +158,16 @@ impl AppState {
     }
 }
 
-pub async fn init_app_state() -> AppState {
+/// Initialises the shared application state and the ZedToken channel.
+///
+/// # Returns
+///
+/// * `AppState` with the state used by handlers
+/// * `UnboundedReceiver<ZedToken>` for the Watch task, which is the only
+///   writer of [`AppState::spicedb_zedtoken`]. The receiver is returned
+///   rather than stored so the channel starts unconsumed; write paths send
+///   through [`AppState::spicedb_token_tx`].
+pub async fn init_app_state() -> (AppState, UnboundedReceiver<ZedToken>) {
     // Initialise DB connection
     let db_url = env::var("DATABASE_URL")
         .expect("Error getting DATABASE_URL")
@@ -222,12 +230,11 @@ pub async fn init_app_state() -> AppState {
         .connect_lazy();
     let spicedb = PermissionsServiceClient::new(spicedb_channel);
     let spicedb_zedtoken = Arc::new(RwLock::new(None));
-    let spicedb_publication_gate = Arc::new(Mutex::new(ZedTokenPublicationGate::new()));
-    let spicedb_publication_notify = Arc::new(Notify::new());
+    let (spicedb_token_tx, spicedb_token_rx) = mpsc::unbounded_channel();
 
     // Add all data to AppState
 
-    AppState {
+    let state = AppState {
         db: pool,
         ctx,
         oauth2_client,
@@ -242,13 +249,14 @@ pub async fn init_app_state() -> AppState {
         spicedb,
         spicedb_key,
         spicedb_zedtoken,
-        spicedb_publication_gate,
-        spicedb_publication_notify,
-    }
+        spicedb_token_tx,
+    };
+
+    (state, spicedb_token_rx)
 }
 
-pub async fn app() -> Result<(Router, AppState), ChaosError> {
-    let state = init_app_state().await;
+pub async fn app() -> Result<(Router, AppState, UnboundedReceiver<ZedToken>), ChaosError> {
+    let (state, spicedb_token_rx) = init_app_state().await;
     let state_clone = state.clone();
 
     let cors = CorsLayer::new()
@@ -625,5 +633,5 @@ pub async fn app() -> Result<(Router, AppState), ChaosError> {
         .layer(cors)
         .with_state(state);
 
-    Ok((router, state_clone))
+    Ok((router, state_clone, spicedb_token_rx))
 }

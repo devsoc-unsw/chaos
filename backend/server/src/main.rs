@@ -14,7 +14,7 @@ async fn main() -> Result<(), ChaosError> {
     // Try to load .env file, but don't fail if it doesn't exist (env vars may be set via Docker)
     dotenvy::dotenv().ok();
 
-    let (app, state_clone) = app().await?;
+    let (app, state_clone, spicedb_token_rx) = app().await?;
 
     // Run DB migrations
     sqlx::migrate!("../migrations").run(&state_clone.db).await?;
@@ -24,9 +24,14 @@ async fn main() -> Result<(), ChaosError> {
     spicedb::migrate_schema().await?;
     println!("SpiceDB migrations ran successfully!");
 
-    // Track SpiceDB revisions via the Watch API so permission checks use a
-    // monotonically increasing freshness boundary.
-    let watcher_task = tokio::spawn(spicedb::spawn_zedtoken_watcher(state_clone.clone()));
+    // Track SpiceDB revisions, publishing the freshness boundary used by
+    // permission checks. This task is the sole writer of the stored ZedToken:
+    // it applies tokens sent by write paths and, as a fallback for writes made
+    // elsewhere (including the ETL pipeline), tokens from the Watch API.
+    let watcher_task = tokio::spawn(spicedb::spawn_zedtoken_watcher(
+        state_clone.clone(),
+        spicedb_token_rx,
+    ));
 
     let super_user_email =
         std::env::var("CHAOS_SUPER_USER_EMAIL").expect("CHAOS_SUPER_USER_EMAIL must be set");

@@ -132,6 +132,7 @@ impl CommentHandler {
             &state.spicedb_key,
             spicedb_schema::resource::COMMENT,
             comment_id,
+            &state.spicedb_token_tx,
         )
         .await?;
 

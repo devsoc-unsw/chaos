@@ -7,18 +7,14 @@ use crate::models::app::AppState;
 use crate::models::error::ChaosError;
 use crate::spicedb::authzed::api::v1::{
     permissions_service_client::PermissionsServiceClient, relationship_update::Operation,
-    RelationshipUpdate,
+    RelationshipUpdate, ZedToken,
 };
-use crate::spicedb::{
-    invert_relationship_update, new_relationship_update, register_pending_write,
-    resolve_pending_write, write_relationships, ZedTokenPublicationGate,
-};
+use crate::spicedb::{new_relationship_update, write_relationships};
 use axum::async_trait;
 use axum::extract::{FromRef, FromRequestParts};
 use axum::http::request::Parts;
 use sqlx::{Postgres, Transaction};
-use std::sync::Arc;
-use tokio::sync::{Mutex, Notify};
+use tokio::sync::mpsc::UnboundedSender;
 use tonic::transport::Channel;
 
 /// A wrapper around a PostgreSQL transaction and queued SpiceDB calls.
@@ -42,12 +38,9 @@ pub struct DBTransaction<'a> {
     /// Bearer key attached to SpiceDB requests made on commit.
     spicedb_key: String,
 
-    /// Gates Watch token publication while this commit's write is pending;
-    /// see [`AppState::spicedb_publication_gate`].
-    spicedb_publication_gate: Arc<Mutex<ZedTokenPublicationGate>>,
-
-    /// Wakes the Watch task when this commit resolves the last pending write.
-    spicedb_publication_notify: Arc<Notify>,
+    /// Channel used to publish the commit's ZedToken to the Watch task, which
+    /// owns the stored token; see [`AppState::spicedb_token_tx`].
+    spicedb_token_tx: UnboundedSender<ZedToken>,
 
     /// SpiceDB relationship writes queued for application on commit.
     queued_relationship_updates: Vec<RelationshipUpdate>,
@@ -59,8 +52,7 @@ impl DBTransaction<'_> {
             tx: state.db.begin().await?,
             spicedb: state.spicedb.clone(),
             spicedb_key: state.spicedb_key.clone(),
-            spicedb_publication_gate: state.spicedb_publication_gate.clone(),
-            spicedb_publication_notify: state.spicedb_publication_notify.clone(),
+            spicedb_token_tx: state.spicedb_token_tx.clone(),
             queued_relationship_updates: Vec::new(),
         })
     }
@@ -136,48 +128,29 @@ impl DBTransaction<'_> {
     /// Postgres and SpiceDB cannot commit atomically, so the commit is
     /// ordered to fail in the safest direction:
     ///
-    /// 1. The queued SpiceDB writes are applied as a single atomic batch. If
-    ///    this fails, the Postgres transaction is dropped without committing,
-    ///    so neither system changes.
-    /// 2. The Postgres transaction is committed. If this fails, best-effort
-    ///    compensation writes the inverse relationship updates to SpiceDB, so
-    ///    the net effect is that neither system changes.
+    /// 1. The Postgres transaction is committed. This ensures that our source
+    ///    of truth (the DB) is consistent with what the logic asked for.
+    /// 2. The queued SpiceDB writes are applied as a single atomic batch. If
+    ///    this fails, SpiceDB will be left behind Postgres. We do not fail the
+    ///    commit if this happens, as our ETL pipeline will ensure SpiceDB
+    ///    catches up to Postgres' state.
     ///
-    /// Before step 1, this commit registers a pending write on
-    /// [`AppState::spicedb_publication_gate`]. While the write is pending the
-    /// Watch task defers tokens, so no concurrent permission check can
-    /// observe a relationship whose Postgres commit may still fail. The write
-    /// is resolved once it reaches a final state: the first SpiceDB write
-    /// failing, the Postgres commit succeeding, or compensation succeeding.
-    ///
-    /// If the Postgres commit fails *and* compensation also fails, SpiceDB
-    /// and Postgres have diverged. The pending write is intentionally NOT
-    /// resolved, leaving the gate closed so no further Watch token is
-    /// published, and the fatal error below is returned; the process should
-    /// stop or enter an unhealthy state (TODO: implement).
+    /// On a successful SpiceDB write, the returned ZedToken is published to
+    /// the Watch task so later permission checks see the change immediately.
     ///
     /// # Returns
     ///
-    /// * `Ok(())` if both systems were updated
-    /// * `Err(ChaosError)` if either system failed to commit
+    /// * `Ok(())` if both at least Postgres was updated
+    /// * `Err(ChaosError)` if Postgres failed to commit
     pub async fn commit(self) -> Result<(), ChaosError> {
+        self.tx.commit().await?;
+
+        // If there are no SpiceDB calls, only commit Postgres
         if self.queued_relationship_updates.is_empty() {
-            self.tx.commit().await?;
             return Ok(());
         }
 
-        let inverse_updates = self
-            .queued_relationship_updates
-            .iter()
-            .filter_map(invert_relationship_update)
-            .collect();
-
-        // Register the pending write *before* the first SpiceDB write: the
-        // Watch stream can report the revision as soon as the write lands,
-        // and the gate must already be closed so the token is deferred.
-        register_pending_write(&self.spicedb_publication_gate).await;
-
-        // It is fine if this first write fails, as the Postgres transaction will be rolled-back
+        // It is fine if this write fails, as the ETL pipeline will sync SpiceDB with Postgres
         match write_relationships(
             &self.spicedb,
             &self.spicedb_key,
@@ -185,51 +158,18 @@ impl DBTransaction<'_> {
         )
         .await
         {
-            Err(error) => {
-                // Nothing was applied to SpiceDB, so there is nothing to undo.
-                resolve_pending_write(
-                    &self.spicedb_publication_gate,
-                    &self.spicedb_publication_notify,
-                )
-                .await;
-                return Err(error);
+            // Publish the revision so the next check is at least as fresh as
+            // this write. A closed channel only means the Watch task is gone.
+            Ok(Some(token)) => {
+                let _ = self.spicedb_token_tx.send(token);
             }
-            Ok(_) => {}
+            Ok(None) => {}
+            Err(_) => {
+                println!("Failed writing SpiceDB relationships. Falling-back to ETL syncing.")
+            }
         }
 
-        match self.tx.commit().await {
-            Ok(()) => {
-                resolve_pending_write(
-                    &self.spicedb_publication_gate,
-                    &self.spicedb_publication_notify,
-                )
-                .await;
-                Ok(())
-            }
-            Err(error) => {
-                // DB commit failed, so we must undo SpiceDB writes
-                match write_relationships(&self.spicedb, &self.spicedb_key, inverse_updates).await {
-                    Ok(_) => {
-                        // Compensation succeeded; the write is resolved.
-                        resolve_pending_write(
-                            &self.spicedb_publication_gate,
-                            &self.spicedb_publication_notify,
-                        )
-                        .await;
-                        Err(error.into())
-                    }
-                    Err(compensation_error) => {
-                        // Fatal: the gate stays closed on purpose, so no token
-                        // covering the unresolved relationship is published.
-                        // TODO: Handle with reconciliation
-                        Err(ChaosError::InternalServerErrorWithMessage(format!(
-                            "FATAL! Failed to compensate SpiceDB writes after Postgres commit \
-                             failure: {compensation_error:?}"
-                        )))
-                    }
-                }
-            }
-        }
+        Ok(())
     }
 }
 

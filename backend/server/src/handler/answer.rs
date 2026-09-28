@@ -188,6 +188,7 @@ impl AnswerHandler {
             &state.spicedb_key,
             spicedb_schema::resource::ANSWER,
             answer_id,
+            &state.spicedb_token_tx,
         )
         .await?;
 

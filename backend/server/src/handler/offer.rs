@@ -102,6 +102,7 @@ impl OfferHandler {
             &state.spicedb_key,
             spicedb_schema::resource::OFFER,
             auth.resource_id,
+            &state.spicedb_token_tx,
         )
         .await?;
 

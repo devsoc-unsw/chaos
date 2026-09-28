@@ -103,6 +103,7 @@ impl EmailTemplateHandler {
             &state.spicedb_key,
             spicedb::schema::resource::EMAIL_TEMPLATE,
             auth.resource_id,
+            &state.spicedb_token_tx,
         )
         .await?;
 
