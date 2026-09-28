@@ -4,6 +4,7 @@ use crate::models::error::ChaosError;
 use crate::models::seeder::Seeder;
 
 mod constants;
+mod etl;
 mod handler;
 mod models;
 mod service;
@@ -33,6 +34,55 @@ async fn main() -> Result<(), ChaosError> {
         spicedb_token_rx,
     ));
 
+    // Postgres -> SpiceDB ETL pipeline, single-leader elected by advisory lock.
+    // The boot election decides this instance's role: a leader start failure
+    // fails boot loudly, while followers boot as API-only servers and pick up
+    // leadership later if the lock frees up.
+    let etl_task = tokio::spawn({
+        let state = state_clone.clone();
+        async move {
+            let etl_role = if !etl::disabled() {
+                Some(
+                    etl::elect_and_start(
+                        &state.db,
+                        state.spicedb.clone(),
+                        state.spicedb_key.clone(),
+                        state.spicedb_token_tx.clone(),
+                    )
+                    .await?,
+                )
+            } else {
+                println!("ETL pipeline disabled (set ETL_DISABLED=false to enable)");
+                None
+            };
+
+            match etl_role {
+                Some(etl::EtlRole::Leader { pipeline, lock }) => {
+                    etl::supervise(
+                        state.db.clone(),
+                        state.spicedb.clone(),
+                        state.spicedb_key.clone(),
+                        state.spicedb_token_tx.clone(),
+                        pipeline,
+                        lock,
+                    )
+                    .await;
+                }
+                Some(etl::EtlRole::Follower) => {
+                    etl::campaign(
+                        state.db.clone(),
+                        state.spicedb.clone(),
+                        state.spicedb_key.clone(),
+                        state.spicedb_token_tx.clone(),
+                    )
+                    .await;
+                }
+                None => {}
+            }
+            Ok::<(), ChaosError>(())
+        }
+    });
+
     let super_user_email =
         std::env::var("CHAOS_SUPER_USER_EMAIL").expect("CHAOS_SUPER_USER_EMAIL must be set");
     let mut seeder = Seeder::init(state_clone.clone()).await;
@@ -58,7 +108,7 @@ async fn main() -> Result<(), ChaosError> {
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
     let server_task = axum::serve(listener, app);
 
-    let _ = tokio::join!(server_task, email_task, watcher_task);
+    let _ = tokio::join!(server_task, email_task, watcher_task, etl_task);
 
     Ok(())
 }
