@@ -6,6 +6,13 @@
 //! the SpiceDB relationships the row owns, then applies a whole batch as one
 //! coalesced `WriteRelationships` call.
 //!
+//! Every action maps through the same [`relationships_for_row`], differing only
+//! in the operation it emits: an upsert for a row that exists, an explicit
+//! delete for one that no longer does. Deletes are explicit because Postgres
+//! cascades, so the rows that referenced a deleted row are deleted too and each
+//! removes the relationships it owns. Nothing is left for a filtered delete to
+//! discover, and every change in a batch stays in one atomic write.
+//!
 //! The table-to-relationship mapping is the same one the previous
 //! supabase/etl-based destination used, so authorisation semantics are
 //! unchanged by the switch to Sequin.
@@ -15,9 +22,7 @@ use crate::models::error::ChaosError;
 use crate::spicedb::authzed::api::v1::relationship_update::Operation;
 use crate::spicedb::authzed::api::v1::ZedToken;
 use crate::spicedb::schema::{relation, resource, PLATFORM_RESOURCE_ID};
-use crate::spicedb::{
-    delete_all_resource_relationships, new_relationship_update, write_relationships,
-};
+use crate::spicedb::{new_relationship_update, write_relationships};
 use indexmap::IndexMap;
 use serde::Deserialize;
 use serde_json::Value;
@@ -99,16 +104,24 @@ fn to_update(entry: (RelKey, Operation)) -> crate::spicedb::authzed::api::v1::Re
     )
 }
 
-/// Builds an idempotent upsert for a SpiceDB relationship.
+/// Builds one relationship operation.
+///
+/// `operation` is [`Operation::Touch`] when the row exists and should be
+/// upserted, or [`Operation::Delete`] when the row has been deleted and the
+/// same relationship must go. A row owns the same relationships in both
+/// directions, so the two operations share this builder and the mapping below.
 ///
 /// Touch (not Create) is what makes replayed batches converge instead of
-/// failing the whole batch with `ATTEMPT_TO_RECREATE_RELATIONSHIP`.
-fn touch(
+/// failing the whole batch with `ATTEMPT_TO_RECREATE_RELATIONSHIP`, and
+/// deleting a relationship that does not exist is a silent no-op, so replaying
+/// a batch always converges.
+fn edge(
     resource_type: &'static str,
     resource_id: i64,
     relation: &'static str,
     subject_type: &'static str,
     subject_id: i64,
+    operation: Operation,
 ) -> (RelKey, Operation) {
     (
         (
@@ -118,30 +131,7 @@ fn touch(
             subject_type,
             subject_id,
         ),
-        Operation::Touch,
-    )
-}
-
-/// Builds a single-relationship delete.
-///
-/// Deleting a relationship that does not exist is a silent success in SpiceDB,
-/// so replaying a batch never fails on an already-applied delete.
-fn delete(
-    resource_type: &'static str,
-    resource_id: i64,
-    relation: &'static str,
-    subject_type: &'static str,
-    subject_id: i64,
-) -> (RelKey, Operation) {
-    (
-        (
-            resource_type,
-            resource_id,
-            relation,
-            subject_type,
-            subject_id,
-        ),
-        Operation::Delete,
+        operation,
     )
 }
 
@@ -191,34 +181,43 @@ fn organisation_relation(role: &str) -> &'static str {
 ///
 /// * `table` - Source table name, from the message metadata
 /// * `record` - The row's current state
+/// * `operation` - [`Operation::Touch`] to upsert, or [`Operation::Delete`] to
+///   remove. A deleted row owns the same relationships as a live one, so the
+///   delete set is exactly the touch set with the operation swapped.
 ///
 /// # Returns
 ///
 /// * The relationship operations this row implies
-fn touches_for_row(table: &str, record: &Value) -> Vec<(RelKey, Operation)> {
+fn relationships_for_row(
+    table: &str,
+    record: &Value,
+    operation: Operation,
+) -> Vec<(RelKey, Operation)> {
     match table {
         "users" => {
             let (Some(id), Some(role)) = (cell_i64(record, "id"), cell_str(record, "role")) else {
                 return vec![];
             };
-            vec![touch(
+            vec![edge(
                 resource::PLATFORM,
                 PLATFORM_RESOURCE_ID,
                 platform_relation(role),
                 resource::USER,
                 id,
+                operation,
             )]
         }
         "organisations" => {
             let Some(id) = cell_i64(record, "id") else {
                 return vec![];
             };
-            vec![touch(
+            vec![edge(
                 resource::ORGANISATION,
                 id,
                 relation::organisation::PLATFORM,
                 resource::PLATFORM,
                 PLATFORM_RESOURCE_ID,
+                operation,
             )]
         }
         "organisation_members" => {
@@ -229,12 +228,13 @@ fn touches_for_row(table: &str, record: &Value) -> Vec<(RelKey, Operation)> {
             ) else {
                 return vec![];
             };
-            vec![touch(
+            vec![edge(
                 resource::ORGANISATION,
                 oid,
                 organisation_relation(role),
                 resource::USER,
                 uid,
+                operation,
             )]
         }
         "campaigns" => {
@@ -243,12 +243,13 @@ fn touches_for_row(table: &str, record: &Value) -> Vec<(RelKey, Operation)> {
             else {
                 return vec![];
             };
-            vec![touch(
+            vec![edge(
                 resource::CAMPAIGN,
                 id,
                 relation::campaign::ORGANISATION,
                 resource::ORGANISATION,
                 oid,
+                operation,
             )]
         }
         "campaign_roles" => {
@@ -256,12 +257,13 @@ fn touches_for_row(table: &str, record: &Value) -> Vec<(RelKey, Operation)> {
             else {
                 return vec![];
             };
-            vec![touch(
+            vec![edge(
                 resource::CAMPAIGN_ROLE,
                 id,
                 relation::campaign_role::CAMPAIGN,
                 resource::CAMPAIGN,
                 cid,
+                operation,
             )]
         }
         "applications" => {
@@ -273,19 +275,21 @@ fn touches_for_row(table: &str, record: &Value) -> Vec<(RelKey, Operation)> {
                 return vec![];
             };
             vec![
-                touch(
+                edge(
                     resource::APPLICATION,
                     id,
                     relation::application::CAMPAIGN,
                     resource::CAMPAIGN,
                     cid,
+                    operation,
                 ),
-                touch(
+                edge(
                     resource::APPLICATION,
                     id,
                     relation::application::CREATOR,
                     resource::USER,
                     uid,
+                    operation,
                 ),
             ]
         }
@@ -294,12 +298,13 @@ fn touches_for_row(table: &str, record: &Value) -> Vec<(RelKey, Operation)> {
             else {
                 return vec![];
             };
-            vec![touch(
+            vec![edge(
                 resource::QUESTION,
                 id,
                 relation::question::CAMPAIGN,
                 resource::CAMPAIGN,
                 cid,
+                operation,
             )]
         }
         "campaign_rating_categories" => {
@@ -307,12 +312,13 @@ fn touches_for_row(table: &str, record: &Value) -> Vec<(RelKey, Operation)> {
             else {
                 return vec![];
             };
-            vec![touch(
+            vec![edge(
                 resource::RATING_CATEGORY,
                 id,
                 relation::rating_category::CAMPAIGN,
                 resource::CAMPAIGN,
                 cid,
+                operation,
             )]
         }
         "application_ratings" => {
@@ -324,19 +330,21 @@ fn touches_for_row(table: &str, record: &Value) -> Vec<(RelKey, Operation)> {
                 return vec![];
             };
             vec![
-                touch(
+                edge(
                     resource::RATING,
                     id,
                     relation::rating::APPLICATION,
                     resource::APPLICATION,
                     aid,
+                    operation,
                 ),
-                touch(
+                edge(
                     resource::RATING,
                     id,
                     relation::rating::CREATOR,
                     resource::USER,
                     rid,
+                    operation,
                 ),
             ]
         }
@@ -347,12 +355,13 @@ fn touches_for_row(table: &str, record: &Value) -> Vec<(RelKey, Operation)> {
             ) else {
                 return vec![];
             };
-            vec![touch(
+            vec![edge(
                 resource::CATEGORY_RATING,
                 id,
                 relation::category_rating::RATING,
                 resource::RATING,
                 rid,
+                operation,
             )]
         }
         "comments" => {
@@ -364,19 +373,21 @@ fn touches_for_row(table: &str, record: &Value) -> Vec<(RelKey, Operation)> {
                 return vec![];
             };
             vec![
-                touch(
+                edge(
                     resource::COMMENT,
                     id,
                     relation::comment::APPLICATION,
                     resource::APPLICATION,
                     aid,
+                    operation,
                 ),
-                touch(
+                edge(
                     resource::COMMENT,
                     id,
                     relation::comment::CREATOR,
                     resource::USER,
                     uid,
+                    operation,
                 ),
             ]
         }
@@ -386,12 +397,13 @@ fn touches_for_row(table: &str, record: &Value) -> Vec<(RelKey, Operation)> {
             else {
                 return vec![];
             };
-            vec![touch(
+            vec![edge(
                 resource::ANSWER,
                 id,
                 relation::answer::APPLICATION,
                 resource::APPLICATION,
                 aid,
+                operation,
             )]
         }
         "offers" => {
@@ -403,19 +415,21 @@ fn touches_for_row(table: &str, record: &Value) -> Vec<(RelKey, Operation)> {
                 return vec![];
             };
             vec![
-                touch(
+                edge(
                     resource::OFFER,
                     id,
                     relation::offer::CAMPAIGN,
                     resource::CAMPAIGN,
                     cid,
+                    operation,
                 ),
-                touch(
+                edge(
                     resource::OFFER,
                     id,
                     relation::offer::APPLICATION,
                     resource::APPLICATION,
                     aid,
+                    operation,
                 ),
             ]
         }
@@ -425,38 +439,16 @@ fn touches_for_row(table: &str, record: &Value) -> Vec<(RelKey, Operation)> {
             else {
                 return vec![];
             };
-            vec![touch(
+            vec![edge(
                 resource::EMAIL_TEMPLATE,
                 id,
                 relation::email_template::ORGANISATION,
                 resource::ORGANISATION,
                 oid,
+                operation,
             )]
         }
         _ => vec![],
-    }
-}
-
-/// Returns the SpiceDB resource type owned by a table, if any.
-///
-/// `organisation_members` is absent on purpose: a membership row owns no
-/// resource, it only contributes a relation on its organisation.
-fn resource_for_table(table: &str) -> Option<&'static str> {
-    match table {
-        "users" => Some(resource::USER),
-        "organisations" => Some(resource::ORGANISATION),
-        "campaigns" => Some(resource::CAMPAIGN),
-        "campaign_roles" => Some(resource::CAMPAIGN_ROLE),
-        "applications" => Some(resource::APPLICATION),
-        "questions" => Some(resource::QUESTION),
-        "campaign_rating_categories" => Some(resource::RATING_CATEGORY),
-        "application_ratings" => Some(resource::RATING),
-        "application_rating_category_ratings" => Some(resource::CATEGORY_RATING),
-        "comments" => Some(resource::COMMENT),
-        "answers" => Some(resource::ANSWER),
-        "offers" => Some(resource::OFFER),
-        "email_templates" => Some(resource::EMAIL_TEMPLATE),
-        _ => None,
     }
 }
 
@@ -465,10 +457,16 @@ fn resource_for_table(table: &str) -> Option<&'static str> {
 /// `insert` and `read` (backfill) both mean "this row now exists", so they
 /// produce the same touches. `update` additionally retires the relation the row
 /// used to imply, taken from `changes`, so a role flip does not leave the old
-/// relation behind. `delete` retires every relationship the row owned, which is
-/// handled separately because it needs a filtered delete rather than a
-/// per-relationship one.
-fn collect(ops: &mut Ops, deletes: &mut Vec<(&'static str, i64)>, message: &SequinMessage) {
+/// relation behind. `delete` emits the row's relationships as explicit deletes.
+///
+/// Deletes are explicit rather than a filtered `delete_all_resource_relationships`
+/// because the relationships a row owns are knowable: Postgres cascades, so
+/// every row that referenced a deleted row is itself deleted and arrives as its
+/// own delete message, and each one removes the relationships it owns. A
+/// filtered delete would instead wipe relations created by other tables and
+/// issued in the same batch, which the coalesced map can no longer order
+/// against a separately-timed RPC.
+fn collect(ops: &mut Ops, message: &SequinMessage) {
     let table = message.metadata.table_name.as_str();
 
     if message.metadata.table_schema != "public" {
@@ -479,12 +477,12 @@ fn collect(ops: &mut Ops, deletes: &mut Vec<(&'static str, i64)>, message: &Sequ
 
     match message.action.as_str() {
         "insert" | "read" => {
-            for entry in touches_for_row(table, &message.record) {
+            for entry in relationships_for_row(table, &message.record, Operation::Touch) {
                 record(ops, entry);
             }
         }
         "update" => {
-            for entry in touches_for_row(table, &message.record) {
+            for entry in relationships_for_row(table, &message.record, Operation::Touch) {
                 record(ops, entry);
             }
             // Retire the previous relation. `changes` holds the old value of
@@ -498,12 +496,13 @@ fn collect(ops: &mut Ops, deletes: &mut Vec<(&'static str, i64)>, message: &Sequ
                         {
                             record(
                                 ops,
-                                delete(
+                                edge(
                                     resource::PLATFORM,
                                     PLATFORM_RESOURCE_ID,
                                     platform_relation(previous),
                                     resource::USER,
                                     id,
+                                    Operation::Delete,
                                 ),
                             );
                         }
@@ -516,12 +515,13 @@ fn collect(ops: &mut Ops, deletes: &mut Vec<(&'static str, i64)>, message: &Sequ
                         ) {
                             record(
                                 ops,
-                                delete(
+                                edge(
                                     resource::ORGANISATION,
                                     oid,
                                     organisation_relation(previous),
                                     resource::USER,
                                     uid,
+                                    Operation::Delete,
                                 ),
                             );
                         }
@@ -531,31 +531,12 @@ fn collect(ops: &mut Ops, deletes: &mut Vec<(&'static str, i64)>, message: &Sequ
             }
         }
         "delete" => {
-            // A deleted row owns a resource (and, for memberships, a relation),
-            // so retire everything it owned. The resource delete is filtered and
-            // so covers relations created by other tables; the membership case
-            // is handled by the caller as a per-relationship delete.
-            if let Some(res_type) = resource_for_table(table) {
-                if let Some(id) = cell_i64(&message.record, "id") {
-                    deletes.push((res_type, id));
-                }
-            } else if table == "organisation_members" {
-                if let (Some(oid), Some(uid), Some(role)) = (
-                    cell_i64(&message.record, "organisation_id"),
-                    cell_i64(&message.record, "user_id"),
-                    cell_str(&message.record, "role"),
-                ) {
-                    record(
-                        ops,
-                        delete(
-                            resource::ORGANISATION,
-                            oid,
-                            organisation_relation(role),
-                            resource::USER,
-                            uid,
-                        ),
-                    );
-                }
+            // The same relationship set the row owned, now removed explicitly.
+            // Postgres cascades mean any row that pointed at this one is also
+            // deleted and arrives here with its own relationships, so there is
+            // nothing left behind for a filtered delete to catch.
+            for entry in relationships_for_row(table, &message.record, Operation::Delete) {
+                record(ops, entry);
             }
         }
         // Unknown actions are ignored rather than failing the batch, so a newer
@@ -566,11 +547,11 @@ fn collect(ops: &mut Ops, deletes: &mut Vec<(&'static str, i64)>, message: &Sequ
 
 /// Applies a Sequin batch to SpiceDB as one coalesced write.
 ///
-/// Relationship touches and deletes are folded into a single ordered map (last
-/// write per relationship wins) and sent as one `WriteRelationships` call, so
-/// the batch is atomic and cannot contain two updates for one relationship.
-/// Resource deletes are filtered deletes, which are a different SpiceDB API and
-/// so run after the batch; they are idempotent, so a replay converges.
+/// Touches and deletes are folded into a single ordered map (last write per
+/// relationship wins) and sent as one `WriteRelationships` call, so the batch is
+/// atomic and cannot contain two updates for one relationship. Deletes are
+/// ordinary entries in that map rather than a separate filtered delete, so the
+/// whole batch is ordered by change order and replayed identically.
 ///
 /// # Arguments
 ///
@@ -584,36 +565,21 @@ fn collect(ops: &mut Ops, deletes: &mut Vec<(&'static str, i64)>, message: &Sequ
 ///   Sequin retries the batch
 pub async fn apply_batch(state: &AppState, batch: &SequinBatch) -> Result<usize, ChaosError> {
     let mut ops: Ops = Ops::default();
-    let mut deletes: Vec<(&'static str, i64)> = Vec::new();
 
     for message in &batch.data {
-        collect(&mut ops, &mut deletes, message);
+        collect(&mut ops, message);
     }
 
-    let applied = if ops.is_empty() {
-        0
-    } else {
-        let updates: Vec<_> = ops.into_iter().map(to_update).collect();
-        let count = updates.len();
-        let token = write_relationships(&state.spicedb, &state.spicedb_key, updates).await?;
-        publish_token(state, token);
-        count
-    };
-
-    // Filtered resource deletes run after the batch so a row deleted and
-    // recreated within one batch still ends up with its relationships removed.
-    for (res_type, id) in deletes {
-        delete_all_resource_relationships(
-            &state.spicedb,
-            &state.spicedb_key,
-            res_type,
-            id,
-            &state.spicedb_token_tx,
-        )
-        .await?;
+    if ops.is_empty() {
+        return Ok(0);
     }
 
-    Ok(applied)
+    let updates: Vec<_> = ops.into_iter().map(to_update).collect();
+    let count = updates.len();
+    let token = write_relationships(&state.spicedb, &state.spicedb_key, updates).await?;
+    publish_token(state, token);
+
+    Ok(count)
 }
 
 /// Publishes a SpiceDB write's ZedToken to the Watch task.
