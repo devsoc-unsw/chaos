@@ -24,12 +24,11 @@ async fn main() -> Result<(), ChaosError> {
     spicedb::migrate_schema().await?;
     println!("SpiceDB migrations ran successfully!");
 
-    // Track SpiceDB revisions, publishing the freshness boundary used by
-    // permission checks. This task is the sole writer of the stored ZedToken:
-    // it applies tokens sent by write paths and, as a fallback for writes made
-    // elsewhere (including Sequin's sync webhook), tokens from the Watch API.
-    let watcher_task = tokio::spawn(spicedb::spawn_zedtoken_watcher(
-        state_clone.clone(),
+    // Apply the ZedTokens published by every SpiceDB write path, keeping the
+    // freshness boundary used by permission checks up to date. This task is the
+    // only writer of the stored token.
+    let token_task = tokio::spawn(spicedb::apply_zedtokens(
+        state_clone.spicedb_zedtoken.clone(),
         spicedb_token_rx,
     ));
 
@@ -58,7 +57,7 @@ async fn main() -> Result<(), ChaosError> {
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
     let server_task = axum::serve(listener, app);
 
-    let _ = tokio::join!(server_task, email_task, watcher_task);
+    let _ = tokio::join!(server_task, email_task, token_task);
 
     Ok(())
 }

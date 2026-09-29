@@ -169,7 +169,7 @@ impl AppState {
 /// # Returns
 ///
 /// * `AppState` with the state used by handlers
-/// * `UnboundedReceiver<ZedToken>` for the Watch task, which is the only
+/// * `UnboundedReceiver<ZedToken>` for the token task, which is the only
 ///   writer of [`AppState::spicedb_zedtoken`]. The receiver is returned
 ///   rather than stored so the channel starts unconsumed; write paths send
 ///   through [`AppState::spicedb_token_tx`].
@@ -272,10 +272,10 @@ pub async fn init_app_state() -> (AppState, UnboundedReceiver<ZedToken>) {
 ///
 /// * `Router` with every route and the CORS layer applied
 /// * `AppState` for background tasks (the router holds its own clone)
-/// * `UnboundedReceiver<ZedToken>` for the Watch task, the only writer of
+/// * `UnboundedReceiver<ZedToken>` for the token task, the only writer of
 ///   [`AppState::spicedb_zedtoken`]. Hand this to
-///   `spicedb::spawn_zedtoken_watcher`; if the receiver is dropped, tokens
-///   published by write paths are silently lost.
+///   `spicedb::apply_zedtokens`; if the receiver is dropped, tokens published
+///   by write paths are silently lost.
 pub async fn app() -> Result<(Router, AppState, UnboundedReceiver<ZedToken>), ChaosError> {
     let (state, spicedb_token_rx) = init_app_state().await;
     let state_clone = state.clone();

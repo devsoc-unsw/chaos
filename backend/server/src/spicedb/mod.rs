@@ -71,15 +71,14 @@ use axum::{
     http::request::Parts,
     RequestPartsExt,
 };
-use std::sync::RwLock;
+use std::sync::{Arc, RwLock};
 use std::{collections::HashMap, marker::PhantomData};
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use tonic::{metadata::MetadataValue, transport::Channel, Request};
 
 use crate::spicedb::authzed::api::v1::{
-    schema_service_client::SchemaServiceClient, watch_service_client::WatchServiceClient,
-    DeleteRelationshipsRequest, RelationshipFilter, SubjectFilter, WatchKind, WatchRequest,
-    WriteSchemaRequest, ZedToken,
+    schema_service_client::SchemaServiceClient, DeleteRelationshipsRequest, RelationshipFilter,
+    SubjectFilter, WriteSchemaRequest, ZedToken,
 };
 use crate::spicedb::schema::PLATFORM_RESOURCE_ID;
 use crate::{
@@ -113,148 +112,42 @@ fn consistency_from_stored(zedtoken: &RwLock<Option<ZedToken>>) -> Consistency {
     }
 }
 
-/// Store given ZedToken into `RwLock`
+/// Applies published ZedTokens to the shared freshness boundary.
 ///
-/// The stored token is the freshness boundary supplied to
-/// [`consistency_from_stored`]. Only the Watch task
-/// ([`spawn_zedtoken_watcher`]) may call this: it owns the stored token and
-/// applies tokens in the order it receives them, so no two writers can race
-/// and overwrite each other.
+/// This task is the only writer of the stored token in
+/// [`AppState::spicedb_zedtoken`]. Every SpiceDB write originates in this
+/// process, either from a request handler ([`DBTransaction::commit`],
+/// [`delete_all_resource_relationships`]) or from the Sequin sync webhook, and
+/// each sends the ZedToken its write RPC returned over
+/// [`AppState::spicedb_token_tx`]. Routing them through one task keeps a
+/// single writer, so the token is applied in the order it was published and no
+/// two senders can race to overwrite each other.
 ///
-/// ZedTokens are opaque (a base64-encoded protobuf whose revision encoding is
-/// datastore-specific and not reliably ordered), so nothing here can compare
-/// tokens. Instead, ordering falls out of the single writer: a token sent by
-/// a write path is queued before SpiceDB reports the same revision on the
-/// Watch stream, and Watch itself delivers `changes_through` in ascending
-/// revision order.
+/// Tokens are never compared. ZedTokens are opaque and not reliably ordered
+/// (see the Authzed issue requesting a compare API), so two concurrent writes
+/// can publish their tokens out of order and leave the boundary briefly stale.
+/// That only costs a permission check some freshness until the next write, and
+/// it cannot deny access that Postgres has not granted, because a stale token is
+/// still a valid lower bound.
+///
+/// Before the first write the token is unset, and [`consistency_from_stored`]
+/// falls back to `MinimizeLatency` until one arrives.
 ///
 /// # Arguments
 ///
 /// * `zedtoken` - The ZedToken lock in `AppState`
-/// * `token` - The new token to be stored, if any
+/// * `token_rx` - Receiver for tokens sent by write paths, owned here for the
+///   lifetime of the task so a token published just before shutdown is applied
 ///
 /// # Returns
 ///
-/// Returns nothing
-fn store_zedtoken(zedtoken: &RwLock<Option<ZedToken>>, token: Option<ZedToken>) {
-    if let Some(token) = token {
-        *zedtoken.write().unwrap() = Some(token);
-    }
-}
-
-/// Tracks SpiceDB revisions in the background, publishing the newest
-/// ZedToken as the shared freshness boundary.
-///
-/// This is the single writer of the stored token (see [`store_zedtoken`]).
-/// It receives tokens from two sources:
-///
-/// * Write paths ([`DBTransaction::commit`], [`delete_all_resource_relationships`])
-///   send the token returned by their write RPC, so a change is visible to the
-///   next permission check without waiting for the Watch round trip.
-/// * The Watch API stream is the fallback: it covers writes this process did
-///   not make (including the ETL pipeline syncing SpiceDB with Postgres) and
-///   picks up changes while idle. It delivers every response's
-///   `changes_through` token in ascending revision order.
-///
-/// Both sources funnel through this task's `select!` loop, so the stored
-/// token is written exactly once per token and arrival order is preserved.
-/// Tokens are not compared: an occasional stale step backwards only costs a
-/// check some freshness until the next token arrives, which is acceptable
-/// because Postgres is always ahead of SpiceDB and the ETL pipeline closes
-/// the gap.
-///
-/// Each (re)connection starts from the current head revision rather than
-/// resuming from the stored token, because the head is always at or past the
-/// stored token, keeps the stream monotonic across reconnects, and sidesteps
-/// garbage-collection errors for stale cursors. Requests include checkpoints
-/// so the stream stays alive while idle.
-///
-/// # Arguments
-///
-/// * `app_state` - The application state holding the SpiceDB client, key and
-///   shared zedtoken lock
-/// * `token_rx` - Receiver for tokens sent by write paths; owned here for the
-///   lifetime of the task so tokens published while the stream is
-///   reconnecting are not lost
-///
-/// # Returns
-///
-/// Never returns; runs until the process exits.
-pub async fn spawn_zedtoken_watcher(
-    app_state: AppState,
+/// Never returns while a sender remains; exits once every sender is dropped
+pub async fn apply_zedtokens(
+    zedtoken: Arc<RwLock<Option<ZedToken>>>,
     mut token_rx: UnboundedReceiver<ZedToken>,
 ) {
-    loop {
-        let endpoint =
-            std::env::var("SPICEDB_GRPC_ENDPOINT").expect("SPICEDB_GRPC_ENDPOINT must be set");
-        let channel = Channel::from_shared(endpoint)
-            .expect("SPICEDB_GRPC_ENDPOINT must be a valid URI")
-            .connect_lazy();
-        let mut client = WatchServiceClient::new(channel);
-
-        let request = match authorized_request(
-            WatchRequest {
-                optional_object_types: Vec::new(),
-                optional_start_cursor: None,
-                optional_relationship_filters: Vec::new(),
-                optional_update_kinds: vec![
-                    WatchKind::IncludeRelationshipUpdates as i32,
-                    WatchKind::IncludeCheckpoints as i32,
-                ],
-            },
-            &app_state.spicedb_key,
-        ) {
-            Ok(request) => request,
-            Err(error) => {
-                println!("Failed to build SpiceDB watch request: {error}");
-                tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
-                continue;
-            }
-        };
-
-        match client.watch(request).await {
-            Ok(response) => {
-                let mut stream = response.into_inner();
-                'stream: loop {
-                    tokio::select! {
-                        message = stream.message() => {
-                            match message {
-                                Ok(Some(response)) => {
-                                    // Watch fallback for writes this process
-                                    // did not make (e.g. ETL syncs).
-                                    store_zedtoken(
-                                        &app_state.spicedb_zedtoken,
-                                        response.changes_through,
-                                    );
-                                }
-                                Ok(None) => break 'stream,
-                                Err(error) => {
-                                    println!("SpiceDB watch stream error: {error}");
-                                    break 'stream;
-                                }
-                            }
-                        }
-                        // Tokens published by write paths, applied even while
-                        // the stream is idle or reconnecting. The refutable
-                        // pattern disables this branch once every sender is
-                        // dropped, instead of spinning on a ready `recv()`.
-                        Some(token) = token_rx.recv() => {
-                            store_zedtoken(&app_state.spicedb_zedtoken, Some(token));
-                        }
-                    }
-                }
-            }
-            Err(error) => println!("SpiceDB watch stream failed: {error}"),
-        }
-
-        // The stream is not being polled while we reconnect, so apply any
-        // tokens queued by write paths in the meantime rather than holding
-        // them until the next connection succeeds.
-        while let Ok(token) = token_rx.try_recv() {
-            store_zedtoken(&app_state.spicedb_zedtoken, Some(token));
-        }
-
-        tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
+    while let Some(token) = token_rx.recv().await {
+        *zedtoken.write().unwrap() = Some(token);
     }
 }
 
@@ -388,7 +281,9 @@ pub async fn check_permission(
         .map_err(|_| ChaosError::InternalServerError)?
         .into_inner();
 
-    // Not storing into zedtoken as this might be a stale read at startup
+    // Deliberately not published to the token task: a check's response ZedToken
+    // reflects when the read was served, not a write, so publishing it would
+    // move the boundary backwards on a stale read.
 
     match Permissionship::try_from(response.permissionship) {
         Ok(Permissionship::HasPermission) => Ok(()),
