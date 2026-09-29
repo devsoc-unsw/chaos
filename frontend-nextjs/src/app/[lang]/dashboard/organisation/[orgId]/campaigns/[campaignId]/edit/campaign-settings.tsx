@@ -21,7 +21,6 @@ import Image from "next/image";
 
 export default function CampaignSettings({ campaignId, orgId, dict }: { campaignId: string, orgId: string, dict: any }) {
     const queryClient = useQueryClient();
-    const DESCRIPTION_CHAR_LIMIT = 200;
 
     const { data: campaign } = useQuery({
         queryKey: [`${campaignId}-campaign-details`],
