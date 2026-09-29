@@ -235,9 +235,10 @@ pub async fn spawn_zedtoken_watcher(
                             }
                         }
                         // Tokens published by write paths, applied even while
-                        // the stream is idle or reconnecting.
-                        token = token_rx.recv() => {
-                            let Some(token) = token else { continue };
+                        // the stream is idle or reconnecting. The refutable
+                        // pattern disables this branch once every sender is
+                        // dropped, instead of spinning on a ready `recv()`.
+                        Some(token) = token_rx.recv() => {
                             store_zedtoken(&app_state.spicedb_zedtoken, Some(token));
                         }
                     }

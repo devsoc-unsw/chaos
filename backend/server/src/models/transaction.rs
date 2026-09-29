@@ -140,7 +140,7 @@ impl DBTransaction<'_> {
     ///
     /// # Returns
     ///
-    /// * `Ok(())` if both at least Postgres was updated
+    /// * `Ok(())` if Postgres was committed (SpiceDB write failures are logged, not returned)
     /// * `Err(ChaosError)` if Postgres failed to commit
     pub async fn commit(self) -> Result<(), ChaosError> {
         self.tx.commit().await?;
@@ -164,8 +164,10 @@ impl DBTransaction<'_> {
                 let _ = self.spicedb_token_tx.send(token);
             }
             Ok(None) => {}
-            Err(_) => {
-                println!("Failed writing SpiceDB relationships. Falling-back to ETL syncing.")
+            Err(error) => {
+                println!(
+                    "Failed writing SpiceDB relationships ({error}). Falling back to ETL syncing."
+                )
             }
         }
 

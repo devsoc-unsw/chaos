@@ -21,8 +21,10 @@ use etl::pipeline::Pipeline;
 use etl::schema::ReplicatedTableSchema;
 use etl::store::PostgresStore;
 use etl_config::shared::ReplicationSlotConfig;
+use indexmap::IndexMap;
 use secrecy::SecretString;
-use sqlx::postgres::PgSslMode;
+use sqlx::postgres::{PgAdvisoryLock, PgAdvisoryLockGuard, PgAdvisoryLockKey, PgSslMode};
+use sqlx::Either;
 use std::collections::HashMap;
 use std::future::Future;
 use tokio::sync::mpsc::UnboundedSender;
@@ -120,19 +122,28 @@ fn cell_str<'a>(row: &'a HashMap<&str, &'a Cell>, col: &str) -> Option<&'a str> 
     }
 }
 
-/// Builds an idempotent upsert for a SpiceDB relationship.
+/// Identifies one SpiceDB relationship, so repeated updates to it within a
+/// batch can be coalesced into a single final operation.
 ///
-/// Touch (not Create) is what makes replayed batches converge instead of
-/// failing the whole batch with `ATTEMPT_TO_RECREATE_RELATIONSHIP`.
-fn touch(
-    resource_type: &str,
-    resource_id: i64,
-    relation: &str,
-    subject_type: &str,
-    subject_id: i64,
-) -> RelationshipUpdate {
+/// The resource/relation/subject types are the `&'static str` constants from
+/// [`crate::spicedb::schema`], never runtime strings, which is what lets this
+/// be a plain tuple usable as a map key.
+type RelKey = (&'static str, i64, &'static str, &'static str, i64);
+
+/// A relationship's intended final operation, ordered by first appearance in
+/// the event stream.
+///
+/// One `WriteRelationships` call rejects two updates to the same relationship
+/// (`ERROR_REASON_UPDATES_ON_SAME_RELATIONSHIP`), so a batch that inserts and
+/// then deletes the same membership must send one update, not two. Insertion
+/// order is preserved so the call still reflects stream order.
+type Ops = IndexMap<RelKey, Operation>;
+
+/// Renders one coalesced entry as a SpiceDB relationship update.
+fn to_update(entry: (RelKey, Operation)) -> RelationshipUpdate {
+    let ((resource_type, resource_id, relation, subject_type, subject_id), operation) = entry;
     new_relationship_update(
-        Operation::Touch,
+        operation,
         resource_type,
         resource_id,
         relation,
@@ -141,29 +152,66 @@ fn touch(
     )
 }
 
+/// Records an operation for a relationship, last write winning.
+///
+/// Within a batch the Postgres stream is ordered, so the last operation seen
+/// for a relationship is the state that should exist once the batch is
+/// applied. That makes insert-then-delete collapse to a single `Delete`, and
+/// role flips collapse to the final relation only.
+fn record(ops: &mut Ops, entry: (RelKey, Operation)) {
+    ops.insert(entry.0, entry.1);
+}
+
+/// Builds an idempotent upsert for a SpiceDB relationship.
+///
+/// Touch (not Create) is what makes replayed batches converge instead of
+/// failing the whole batch with `ATTEMPT_TO_RECREATE_RELATIONSHIP`.
+fn touch(
+    resource_type: &'static str,
+    resource_id: i64,
+    relation: &'static str,
+    subject_type: &'static str,
+    subject_id: i64,
+) -> (RelKey, Operation) {
+    (
+        (
+            resource_type,
+            resource_id,
+            relation,
+            subject_type,
+            subject_id,
+        ),
+        Operation::Touch,
+    )
+}
+
 /// Builds a single-relationship delete.
 fn delete(
-    resource_type: &str,
+    resource_type: &'static str,
     resource_id: i64,
-    relation: &str,
-    subject_type: &str,
+    relation: &'static str,
+    subject_type: &'static str,
     subject_id: i64,
-) -> RelationshipUpdate {
-    new_relationship_update(
+) -> (RelKey, Operation) {
+    (
+        (
+            resource_type,
+            resource_id,
+            relation,
+            subject_type,
+            subject_id,
+        ),
         Operation::Delete,
-        resource_type,
-        resource_id,
-        relation,
-        subject_type,
-        subject_id,
     )
 }
 
 /// Maps an inserted (or backfilled) row to the SpiceDB relationships it owns.
 ///
 /// Returns an empty vec when required columns are missing/null or the table
-/// owns no relationships (association tables, invites, tokens, …).
-fn touches_for_row(table: &str, row: &HashMap<&str, &Cell>) -> Vec<RelationshipUpdate> {
+/// owns no relationships (association tables, invites, tokens, …). Each entry
+/// is a `(relationship, operation)` pair for [`record`], not a finished update,
+/// so a batch touching the same relationship twice coalesces.
+fn touches_for_row(table: &str, row: &HashMap<&str, &Cell>) -> Vec<(RelKey, Operation)> {
     match table {
         "users" => {
             let (Some(id), Some(role)) = (cell_i64(row, "id"), cell_str(row, "role")) else {
@@ -465,14 +513,19 @@ impl Destination for SpiceDBDestination {
             }
             let table = replicated_table_schema.name().name.as_str();
             let names = full_column_names(replicated_table_schema);
-            let touches: Vec<RelationshipUpdate> = table_rows
-                .iter()
-                .flat_map(|r| touches_for_row(table, &row_map(&names, r.values())))
-                .collect();
-            if touches.is_empty() {
+            // Coalesce before chunking: two rows can own the same relationship,
+            // and one WriteRelationships call rejects duplicate keys.
+            let mut ops: Ops = Ops::default();
+            for row in &table_rows {
+                for entry in touches_for_row(table, &row_map(&names, row.values())) {
+                    record(&mut ops, entry);
+                }
+            }
+            if ops.is_empty() {
                 async_result.send(Ok(DestinationWriteStatus::Durable));
                 return Ok(());
             }
+            let touches: Vec<RelationshipUpdate> = ops.into_iter().map(to_update).collect();
             // SpiceDB caps a single WriteRelationships batch, so chunk large
             // backfills; any chunk failing nacks the whole batch for retry.
             for chunk in touches.chunks(500) {
@@ -511,14 +564,20 @@ impl Destination for SpiceDBDestination {
                 async_result.send(Ok(DestinationWriteStatus::Durable));
                 return Ok(());
             }
-            // Batched Touch/Delete ops applied atomically first.
-            let mut touches: Vec<RelationshipUpdate> = Vec::new();
+            // Every relationship the batch touches, coalesced in stream order
+            // with last write winning, then applied as ONE WriteRelationships
+            // call. That call is atomic, and it rejects two updates to the
+            // same relationship, so coalescing is what keeps a batch that
+            // inserts-then-deletes (or flips a role twice) from failing and
+            // retrying forever.
+            let mut ops: Ops = Ops::default();
             // (resource_type, id) pairs for filtered resource deletes.
             let mut resource_deletes: Vec<(&'static str, i64)> = Vec::new();
             // Membership deletes whose role is unknown (key-only old row):
             // tried as admin-then-member sequentially below.
             let mut unknown_member_deletes: Vec<(i64, i64)> = Vec::new();
-            // Opposite-relation cleanup after role swaps; best-effort.
+            // Opposite-relation cleanup where the old row is unavailable, so the
+            // previous relation cannot be put in the atomic batch; best-effort.
             let mut best_effort: Vec<RelationshipUpdate> = Vec::new();
 
             for event in &events {
@@ -526,10 +585,10 @@ impl Destination for SpiceDBDestination {
                     Event::Insert(i) => {
                         let table = i.replicated_table_schema.name().name.as_str();
                         let names = full_column_names(&i.replicated_table_schema);
-                        touches.extend(touches_for_row(
-                            table,
-                            &row_map(&names, i.table_row.values()),
-                        ));
+                        for entry in touches_for_row(table, &row_map(&names, i.table_row.values()))
+                        {
+                            record(&mut ops, entry);
+                        }
                     }
                     Event::Update(u) => {
                         let table = u.replicated_table_schema.name().name.as_str();
@@ -559,20 +618,37 @@ impl Destination for SpiceDBDestination {
                                 } else {
                                     (relation::platform::USER, relation::platform::SUPERUSER)
                                 };
-                                touches.push(touch(
-                                    resource::PLATFORM,
-                                    PLATFORM_RESOURCE_ID,
-                                    new_rel,
-                                    resource::USER,
-                                    id,
-                                ));
-                                best_effort.push(delete(
-                                    resource::PLATFORM,
-                                    PLATFORM_RESOURCE_ID,
-                                    old_rel,
-                                    resource::USER,
-                                    id,
-                                ));
+                                // The opposite-relation delete joins the atomic
+                                // batch whenever the old row is known. It used to
+                                // run afterwards as best-effort, which for a
+                                // User -> SuperUser -> User batch deleted both
+                                // relations and left the user with no platform
+                                // relation at all.
+                                if let Some(OldTableRow::Full(old)) = &u.old_table_row {
+                                    let old_map = row_map(&names, old.values());
+                                    if cell_str(&old_map, "role").is_some() {
+                                        record(
+                                            &mut ops,
+                                            delete(
+                                                resource::PLATFORM,
+                                                PLATFORM_RESOURCE_ID,
+                                                old_rel,
+                                                resource::USER,
+                                                id,
+                                            ),
+                                        );
+                                    }
+                                }
+                                record(
+                                    &mut ops,
+                                    touch(
+                                        resource::PLATFORM,
+                                        PLATFORM_RESOURCE_ID,
+                                        new_rel,
+                                        resource::USER,
+                                        id,
+                                    ),
+                                );
                             }
                             "organisation_members" => {
                                 let (Some(oid), Some(uid), Some(new_role)) = (
@@ -598,35 +674,43 @@ impl Destination for SpiceDBDestination {
                                         relation::organisation::MEMBER
                                     };
                                     if old_rel != new_rel {
-                                        touches.push(delete(
-                                            resource::ORGANISATION,
-                                            oid,
-                                            old_rel,
-                                            resource::USER,
-                                            uid,
-                                        ));
+                                        record(
+                                            &mut ops,
+                                            delete(
+                                                resource::ORGANISATION,
+                                                oid,
+                                                old_rel,
+                                                resource::USER,
+                                                uid,
+                                            ),
+                                        );
                                     }
                                 } else {
+                                    // No old row: the previous relation is a
+                                    // guess, so it cannot join the atomic batch.
                                     let old_rel = if new_rel == relation::organisation::ADMIN {
                                         relation::organisation::MEMBER
                                     } else {
                                         relation::organisation::ADMIN
                                     };
-                                    best_effort.push(delete(
+                                    best_effort.push(to_update(delete(
                                         resource::ORGANISATION,
                                         oid,
                                         old_rel,
                                         resource::USER,
                                         uid,
-                                    ));
+                                    )));
                                 }
-                                touches.push(touch(
-                                    resource::ORGANISATION,
-                                    oid,
-                                    new_rel,
-                                    resource::USER,
-                                    uid,
-                                ));
+                                record(
+                                    &mut ops,
+                                    touch(
+                                        resource::ORGANISATION,
+                                        oid,
+                                        new_rel,
+                                        resource::USER,
+                                        uid,
+                                    ),
+                                );
                             }
                             _ => {}
                         }
@@ -654,20 +738,26 @@ impl Destination for SpiceDBDestination {
                                 continue;
                             };
                             match cell_str(&map, "role") {
-                                Some("Admin") => touches.push(delete(
-                                    resource::ORGANISATION,
-                                    oid,
-                                    relation::organisation::ADMIN,
-                                    resource::USER,
-                                    uid,
-                                )),
-                                Some(_) => touches.push(delete(
-                                    resource::ORGANISATION,
-                                    oid,
-                                    relation::organisation::MEMBER,
-                                    resource::USER,
-                                    uid,
-                                )),
+                                Some("Admin") => record(
+                                    &mut ops,
+                                    delete(
+                                        resource::ORGANISATION,
+                                        oid,
+                                        relation::organisation::ADMIN,
+                                        resource::USER,
+                                        uid,
+                                    ),
+                                ),
+                                Some(_) => record(
+                                    &mut ops,
+                                    delete(
+                                        resource::ORGANISATION,
+                                        oid,
+                                        relation::organisation::MEMBER,
+                                        resource::USER,
+                                        uid,
+                                    ),
+                                ),
                                 None => unknown_member_deletes.push((oid, uid)),
                             }
                             continue;
@@ -699,46 +789,49 @@ impl Destination for SpiceDBDestination {
                 }
             }
 
-            if !touches.is_empty() {
-                let token =
-                    match write_relationships(&self.spicedb_client, &self.spicedb_key, touches)
-                        .await
-                    {
-                        Err(e) => {
-                            log::error!("SpiceDBDestination: event batch write failed: {e:?}");
-                            async_result.send(Err(etl_error!(
-                                etl::error::ErrorKind::Unknown,
-                                "SpiceDB write failed"
-                            )));
-                            return Ok(());
-                        }
-                        Ok(token) => token,
-                    };
+            if !ops.is_empty() {
+                let token = match write_relationships(
+                    &self.spicedb_client,
+                    &self.spicedb_key,
+                    ops.into_iter().map(to_update).collect(),
+                )
+                .await
+                {
+                    Err(e) => {
+                        log::error!("SpiceDBDestination: event batch write failed: {e:?}");
+                        async_result.send(Err(etl_error!(
+                            etl::error::ErrorKind::Unknown,
+                            "SpiceDB write failed"
+                        )));
+                        return Ok(());
+                    }
+                    Ok(token) => token,
+                };
                 self.publish_token(token);
             }
             // Key-only membership deletes: the role isn't in the identity
             // image, so try admin first, then member. Both failing nacks the
             // batch; under REPLICA IDENTITY FULL this path is unreachable.
             for (oid, uid) in unknown_member_deletes {
-                let admin = delete(
+                let admin = to_update(delete(
                     resource::ORGANISATION,
                     oid,
                     relation::organisation::ADMIN,
                     resource::USER,
                     uid,
-                );
+                ));
                 match write_relationships(&self.spicedb_client, &self.spicedb_key, vec![admin])
                     .await
                 {
                     Ok(token) => self.publish_token(token),
                     Err(_) => {
-                        let member = delete(
+                        let member = to_update(delete(
                             resource::ORGANISATION,
                             oid,
                             relation::organisation::MEMBER,
                             resource::USER,
                             uid,
-                        );
+                        ));
                         match write_relationships(
                             &self.spicedb_client,
                             &self.spicedb_key,
@@ -894,7 +987,20 @@ fn pg_connection() -> Result<PgConnectionConfig, crate::models::error::ChaosErro
             })?
             .to_string(),
         username: connection_options.get_username().to_string(),
-        password: parsed_url.password().map(SecretString::from),
+        password: parsed_url.password().map(|encoded| {
+            // `Url::password()` returns the still-encoded text, while sqlx
+            // decodes the same URL. A password containing `@`, `/`, `%` or
+            // `:` must be percent-encoded, so passing the encoded form
+            // through would fail ETL authentication and, on the elected
+            // leader, fail boot. Fall back to the raw text if it is not
+            // valid percent-encoded UTF-8.
+            percent_encoding::percent_decode_str(encoded)
+                .decode_utf8()
+                .map_or_else(
+                    |_| SecretString::from(encoded),
+                    |p| SecretString::from(p.into_owned()),
+                )
+        }),
         tls,
         keepalive: TcpKeepaliveConfig::default(),
     })
@@ -989,12 +1095,21 @@ const REELECT_BACKOFF_SECS: u64 = 5;
 
 /// Holds the elected leader's advisory lock.
 ///
-/// The advisory lock is session-scoped, so this guard keeps its dedicated
-/// database connection checked out for the whole leadership term: dropping it
-/// returns the connection and releases the lock. Never run queries on it.
+/// The advisory lock is session-scoped and tied to one database connection, so
+/// this guard keeps that connection checked out for the whole leadership term
+/// and doubles as the heartbeat channel. Never run queries on it beyond the
+/// heartbeat probe.
+///
+/// Releasing it relies on [`PgAdvisoryLockGuard`], whose `Drop` queues
+/// `pg_advisory_unlock()`; sqlx flushes that when the connection returns to the
+/// pool. Hand-rolling this with a bare `PoolConnection` would leak the lock:
+/// returning a connection to the pool does not end the session, so
+/// `pg_try_advisory_lock` would still be held and no instance could win the
+/// next election until restart.
 pub struct LeaderLock {
-    /// Dedicated connection holding the lock; doubles as a heartbeat channel.
-    conn: sqlx::pool::PoolConnection<sqlx::Postgres>,
+    /// Guard releasing the advisory lock when the leadership term ends; also
+    /// the heartbeat channel, via its deref to the locked connection.
+    guard: PgAdvisoryLockGuard<sqlx::pool::PoolConnection<sqlx::Postgres>>,
 }
 
 /// Outcome of a leadership election round.
@@ -1029,8 +1144,8 @@ fn env_secs(name: &str, default: u64) -> u64 {
 /// Attempts to become the ETL leader exactly once.
 ///
 /// Checks out a dedicated connection and tries the advisory lock: success
-/// returns [`Leadership::Leader`] holding the connection, failure drops it and
-/// returns [`Leadership::Follower`].
+/// returns [`Leadership::Leader`] wrapping sqlx's guard, failure returns the
+/// connection to the pool and yields [`Leadership::Follower`].
 ///
 /// # Arguments
 ///
@@ -1046,24 +1161,19 @@ pub async fn stand_for_election(
     use crate::models::error::ChaosError;
 
     let key = ETL_LEADER_LOCK_KEY + PIPELINE_ID as i64;
-    let mut conn = db.acquire().await.map_err(|e| {
+    let conn = db.acquire().await.map_err(|e| {
         ChaosError::InternalServerErrorWithMessage(format!("ETL election acquire failed: {e:?}"))
     })?;
-    let locked: bool =
-        sqlx::query_scalar::<sqlx::Postgres, bool>("SELECT pg_try_advisory_lock($1)")
-            .bind(key)
-            .fetch_one(&mut *conn)
-            .await
-            .map_err(|e| {
-                ChaosError::InternalServerErrorWithMessage(format!(
-                    "ETL election query failed: {e:?}"
-                ))
-            })?;
 
-    if locked {
-        Ok(Leadership::Leader(LeaderLock { conn }))
-    } else {
-        Ok(Leadership::Follower)
+    // The guard queues pg_advisory_unlock() on drop, which sqlx flushes when
+    // the connection returns to the pool. Without it the session keeps the
+    // lock and every later election on this instance fails.
+    let lock = PgAdvisoryLock::with_key(PgAdvisoryLockKey::BigInt(key));
+    match lock.try_acquire(conn).await.map_err(|e| {
+        ChaosError::InternalServerErrorWithMessage(format!("ETL election query failed: {e:?}"))
+    })? {
+        Either::Left(guard) => Ok(Leadership::Leader(LeaderLock { guard })),
+        Either::Right(_conn) => Ok(Leadership::Follower),
     }
 }
 
@@ -1120,8 +1230,10 @@ pub async fn elect_and_start(
 async fn heartbeat(lock: &mut LeaderLock) -> Result<(), crate::models::error::ChaosError> {
     use crate::models::error::ChaosError;
 
+    // The guard derefs to its connection, so the probe runs on the very
+    // session holding the lock.
     sqlx::query_scalar::<sqlx::Postgres, i32>("SELECT 1")
-        .fetch_one(&mut *lock.conn)
+        .fetch_one(&mut *lock.guard)
         .await
         .map(|_| ())
         .map_err(|e| {
@@ -1241,4 +1353,91 @@ pub async fn supervise(
 ) {
     supervise_term(pipeline, lock).await;
     campaign(db, spicedb_client, spicedb_key, token_tx).await;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const ORG: i64 = 1;
+    const USER: i64 = 7;
+
+    fn member_touch(role: &'static str) -> (RelKey, Operation) {
+        touch(resource::ORGANISATION, ORG, role, resource::USER, USER)
+    }
+
+    fn member_delete(role: &'static str) -> (RelKey, Operation) {
+        delete(resource::ORGANISATION, ORG, role, resource::USER, USER)
+    }
+
+    /// Coalescing must collapse a relationship touched more than once in a
+    /// batch, because one `WriteRelationships` call rejects two updates to the
+    /// same relationship (`ERROR_REASON_UPDATES_ON_SAME_RELATIONSHIP`) and the
+    /// rejected batch would be retried forever.
+    #[test]
+    fn record_collapses_repeated_relationships() {
+        // Insert then delete of the same membership settles as one delete.
+        let mut ops: Ops = Ops::default();
+        record(&mut ops, member_touch(relation::organisation::MEMBER));
+        record(&mut ops, member_delete(relation::organisation::MEMBER));
+        assert_eq!(
+            ops.len(),
+            1,
+            "same relationship must collapse to one update"
+        );
+        assert_eq!(ops.values().next(), Some(&Operation::Delete));
+
+        // A role flip Member -> Admin -> Member settles on `member` staying and
+        // `admin` being dropped. The old staged code instead wrote both touches
+        // and then ran its trailing cleanup deletes, leaving the user with no
+        // organisation relation at all.
+        let mut ops: Ops = Ops::default();
+        record(&mut ops, member_touch(relation::organisation::MEMBER));
+        record(&mut ops, member_delete(relation::organisation::MEMBER));
+        record(&mut ops, member_touch(relation::organisation::ADMIN));
+        record(&mut ops, member_delete(relation::organisation::ADMIN));
+        record(&mut ops, member_touch(relation::organisation::MEMBER));
+
+        let settled: Vec<(&'static str, Operation)> =
+            ops.into_iter().map(|(key, op)| (key.2, op)).collect();
+        assert_eq!(
+            settled,
+            vec![
+                (relation::organisation::MEMBER, Operation::Touch),
+                (relation::organisation::ADMIN, Operation::Delete),
+            ],
+            "role flip keeps the final relation and drops the intermediate one"
+        );
+    }
+
+    /// Distinct relationships all survive, in first-seen (stream) order.
+    #[test]
+    fn record_keeps_distinct_relationships_in_order() {
+        let mut ops: Ops = Ops::default();
+        record(&mut ops, member_touch(relation::organisation::MEMBER));
+        record(
+            &mut ops,
+            touch(
+                resource::ORGANISATION,
+                2,
+                relation::organisation::MEMBER,
+                resource::USER,
+                USER,
+            ),
+        );
+        record(&mut ops, member_touch(relation::organisation::ADMIN));
+
+        let rendered: Vec<(i64, &'static str)> =
+            ops.into_iter().map(|(key, _)| (key.1, key.2)).collect();
+
+        assert_eq!(
+            rendered,
+            vec![
+                (1, relation::organisation::MEMBER),
+                (2, relation::organisation::MEMBER),
+                (1, relation::organisation::ADMIN),
+            ],
+            "distinct relationships survive in stream order"
+        );
+    }
 }

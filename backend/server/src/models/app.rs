@@ -255,6 +255,16 @@ pub async fn init_app_state() -> (AppState, UnboundedReceiver<ZedToken>) {
     (state, spicedb_token_rx)
 }
 
+/// Builds the Axum router and the shared application state.
+///
+/// # Returns
+///
+/// * `Router` with every route and the CORS layer applied
+/// * `AppState` for background tasks (the router holds its own clone)
+/// * `UnboundedReceiver<ZedToken>` for the Watch task, the only writer of
+///   [`AppState::spicedb_zedtoken`]. Hand this to
+///   `spicedb::spawn_zedtoken_watcher`; if the receiver is dropped, tokens
+///   published by write paths are silently lost.
 pub async fn app() -> Result<(Router, AppState, UnboundedReceiver<ZedToken>), ChaosError> {
     let (state, spicedb_token_rx) = init_app_state().await;
     let state_clone = state.clone();

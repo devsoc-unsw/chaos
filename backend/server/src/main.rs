@@ -37,25 +37,27 @@ async fn main() -> Result<(), ChaosError> {
     // Postgres -> SpiceDB ETL pipeline, single-leader elected by advisory lock.
     // The boot election decides this instance's role: a leader start failure
     // fails boot loudly, while followers boot as API-only servers and pick up
-    // leadership later if the lock frees up.
+    // leadership later if the lock frees up. The election runs here rather than
+    // inside the task so `?` actually aborts boot; spawning it would only end
+    // the task, and the discarded result would leave SpiceDB silently behind
+    // Postgres with no catch-up path.
+    let etl_role = if !etl::disabled() {
+        Some(
+            etl::elect_and_start(
+                &state_clone.db,
+                state_clone.spicedb.clone(),
+                state_clone.spicedb_key.clone(),
+                state_clone.spicedb_token_tx.clone(),
+            )
+            .await?,
+        )
+    } else {
+        println!("ETL pipeline disabled (set ETL_DISABLED=false to enable)");
+        None
+    };
     let etl_task = tokio::spawn({
         let state = state_clone.clone();
         async move {
-            let etl_role = if !etl::disabled() {
-                Some(
-                    etl::elect_and_start(
-                        &state.db,
-                        state.spicedb.clone(),
-                        state.spicedb_key.clone(),
-                        state.spicedb_token_tx.clone(),
-                    )
-                    .await?,
-                )
-            } else {
-                println!("ETL pipeline disabled (set ETL_DISABLED=false to enable)");
-                None
-            };
-
             match etl_role {
                 Some(etl::EtlRole::Leader { pipeline, lock }) => {
                     etl::supervise(
@@ -79,7 +81,6 @@ async fn main() -> Result<(), ChaosError> {
                 }
                 None => {}
             }
-            Ok::<(), ChaosError>(())
         }
     });
 
