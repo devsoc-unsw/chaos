@@ -95,7 +95,7 @@ impl DBTransaction<'_> {
     ///
     /// The relationship is `<resource_type>:<resource_id>#<relation>@<subject_type>:<subject_id>`,
     /// e.g. `chaos/organisation:5#member@chaos/user:42`. Note that deleting a
-    /// relationship that does not exist fails the eventual commit.
+    /// relationship that does not exist is a silent success (no operation).
     ///
     /// # Arguments
     ///

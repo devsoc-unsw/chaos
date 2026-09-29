@@ -19,6 +19,9 @@ services:
       - SPICEDB_GRPC_ENDPOINT=http://spicedb:50051
       - SPICEDB_URL=http://spicedb:8443
       - SPICEDB_KEY=replace-with-a-local-secret
+      # Shared secret Sequin presents as a bearer token on its webhook. Keep in
+      # sync with the sequin service below.
+      - SEQUIN_WEBHOOK_SECRET=replace-with-a-local-secret
     networks:
       - chaos-network
 
@@ -36,6 +39,9 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_DB: chaos
+    # Sequin captures changes with logical replication, which needs this set
+    # before the database is initialised.
+    command: ["postgres", "-c", "wal_level=logical"]
     ports:
       - "5432:5432"
     networks:
@@ -124,9 +130,79 @@ services:
       spicedb-migrate:
         condition: service_completed_successfully
 
+  # Sequin keeps its own sink configuration and replication bookkeeping in
+  # Postgres, separate from both the Chaos database above and the SpiceDB one.
+  sequin-db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sequin
+      POSTGRES_PASSWORD: sequin
+      POSTGRES_DB: sequin
+    networks:
+      - chaos-network
+    volumes:
+      - sequin-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sequin -d sequin"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  # Sequin uses Redis to assist change delivery.
+  sequin-redis:
+    image: redis:7
+    restart: unless-stopped
+    networks:
+      - chaos-network
+    volumes:
+      - sequin-redis-data:/data
+
+  # Streams Postgres changes to the backend webhook, which upserts the
+  # corresponding SpiceDB relationships. Everything Sequin needs is declared in
+  # backend/sequin/sequin.yaml, so there is no console setup step.
+  sequin:
+    # UPDATE: Pin this to a tested release instead of `latest`.
+    image: sequin/sequin:latest
+    restart: unless-stopped
+    environment:
+      # Sequin's own state database (the `sequin-db` service above).
+      PG_HOSTNAME: sequin-db
+      PG_PORT: 5432
+      PG_DATABASE: sequin
+      PG_USERNAME: sequin
+      PG_PASSWORD: sequin
+      REDIS_URL: redis://sequin-redis:6379
+      # UPDATE: Replace both of these before exposing Sequin anywhere. They sign
+      # cookies and encrypt sink headers respectively.
+      SECRET_KEY_BASE: wDPLYus0pvD6qJhKJICO4dauYPXfO/Yl782Zjtpew5qRBDp7CZvbWtQmY0eB13If
+      VAULT_KEY: 2Sig69bIpuSm2kv0VQfDekET2qy8qUZGI8v3/h3ASiY=
+      # Applies the declarative config on every start, so the database, slot,
+      # publication and sink are (re)created without touching the console.
+      CONFIG_FILE_PATH: /etc/sequin/sequin.yaml
+      # The backend runs in the dev container, so Sequin posts to it by service
+      # name. Must match the dev container's SEQUIN_WEBHOOK_SECRET.
+      SEQUIN_WEBHOOK_URL: http://dev-container:8080/api/v1/sequin/spicedb
+      SEQUIN_WEBHOOK_SECRET: replace-with-a-local-secret
+    volumes:
+      - ./backend/sequin/sequin.yaml:/etc/sequin/sequin.yaml:ro
+    ports:
+      - "7376:7376" # console
+    networks:
+      - chaos-network
+    depends_on:
+      db:
+        condition: service_healthy
+      sequin-db:
+        condition: service_healthy
+      sequin-redis:
+        condition: service_started
+
 volumes:
   chaos-postgres-data:
   spicedb-postgres-data:
+  sequin-postgres-data:
+  sequin-redis-data:
 
 networks:
   chaos-network:

@@ -11,6 +11,7 @@ use crate::handler::question::QuestionHandler;
 use crate::handler::rating::RatingHandler;
 use crate::handler::role::RoleHandler;
 use crate::handler::role_status::RoleStatusHandler;
+use crate::handler::sequin::SequinHandler;
 use crate::handler::user::UserHandler;
 use crate::models::email::{ChaosEmail, EmailCredentials};
 use crate::models::error::ChaosError;
@@ -115,6 +116,11 @@ pub struct AppState {
     pub spicedb_key: String,
     pub spicedb_zedtoken: Arc<RwLock<Option<ZedToken>>>,
     pub spicedb_token_tx: UnboundedSender<ZedToken>,
+
+    /// Shared secret Sequin presents as a bearer token on its webhook, from
+    /// `SEQUIN_WEBHOOK_SECRET`. Empty disables the webhook, so a deployment
+    /// without Sequin rejects the endpoint rather than leaving it open.
+    pub sequin_webhook_secret: String,
 }
 
 impl AppState {
@@ -232,6 +238,10 @@ pub async fn init_app_state() -> (AppState, UnboundedReceiver<ZedToken>) {
     let spicedb_zedtoken = Arc::new(RwLock::new(None));
     let (spicedb_token_tx, spicedb_token_rx) = mpsc::unbounded_channel();
 
+    // Optional: the webhook rejects every request when unset, so Sequin is only
+    // enabled in environments that actually configure it.
+    let sequin_webhook_secret = env::var("SEQUIN_WEBHOOK_SECRET").unwrap_or_default();
+
     // Add all data to AppState
 
     let state = AppState {
@@ -250,6 +260,7 @@ pub async fn init_app_state() -> (AppState, UnboundedReceiver<ZedToken>) {
         spicedb_key,
         spicedb_zedtoken,
         spicedb_token_tx,
+        sequin_webhook_secret,
     };
 
     (state, spicedb_token_rx)
@@ -636,9 +647,18 @@ pub async fn app() -> Result<(Router, AppState, UnboundedReceiver<ZedToken>), Ch
         // Invite routes
         // - GET  /api/v1/invite/:code  -> invite details
         // - POST /api/v1/invite/:code  -> accept invite
+        // Sequin CDC sink
+        // - POST /api/v1/sequin/spicedb -> apply a batch of changed rows
         .route(
             "/api/v1/invite/:code",
             get(InviteHandler::get).post(InviteHandler::use_invite),
+        )
+        // Sequin's CDC sink, which converges SpiceDB with Postgres. Not
+        // user-facing: it authenticates with a shared secret rather than a
+        // session and is only ever called server-to-server.
+        .route(
+            "/api/v1/sequin/spicedb",
+            post(SequinHandler::spicedb_webhook),
         )
         .layer(cors)
         .with_state(state);

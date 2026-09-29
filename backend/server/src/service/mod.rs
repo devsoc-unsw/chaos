@@ -16,6 +16,7 @@
 //! - `question`: Handles question management for applications
 //! - `rating`: Manages application ratings
 //! - `role`: Handles role management within campaigns
+//! - `sequin`: Maps Sequin change messages onto SpiceDB relationships
 
 pub mod answer;
 pub mod application;
@@ -30,4 +31,5 @@ pub mod organisation;
 pub mod question;
 pub mod rating;
 pub mod role;
+pub mod sequin;
 pub mod user;

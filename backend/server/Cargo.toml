@@ -37,12 +37,5 @@ tonic-prost = "0.14"
 prost = "0.14"
 prost-types = "0.14"
 
-# Postgres -> SpiceDB sync worker (CDC via logical replication)
-etl = { git = "https://github.com/supabase/etl", rev = "284c27b6896d48836be8cd949f8b795bd03b8c03" }
-etl-config = { git = "https://github.com/supabase/etl", rev = "284c27b6896d48836be8cd949f8b795bd03b8c03" }
-url = "2.5"
-secrecy = "0.10"
-# Ordered map so a coalesced SpiceDB batch keeps stream order
+# Ordered map so a coalesced SpiceDB batch keeps change order
 indexmap = "2"
-# Decodes percent-encoded credentials in DATABASE_URL
-percent-encoding = "2.3"

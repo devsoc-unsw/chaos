@@ -444,8 +444,13 @@ pub fn new_relationship_update(
 /// Writes a batch of relationship updates to SpiceDB atomically.
 ///
 /// All updates in the batch are applied in a single SpiceDB transaction, so
-/// either every update lands or none do. Note that creating a relationship
-/// that already exists, or deleting one that does not, fails the whole batch.
+/// either every update lands or none do. Touching a relationship that already
+/// exists fails the whole batch, which is why callers use `Touch` rather than
+/// `Create`. Deleting a relationship that does not exist is a silent no-op.
+///
+/// One call also rejects two updates to the same relationship
+/// (`ERROR_REASON_UPDATES_ON_SAME_RELATIONSHIP`), so a caller must coalesce
+/// repeated changes to one relationship into a single operation before sending.
 ///
 /// # Arguments
 ///
