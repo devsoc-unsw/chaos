@@ -130,6 +130,12 @@ fn env_secs(name: &str, default: u64) -> u64 {
 /// incomplete *expected* set is the only way this sweep can delete a correct
 /// relationship, so it must never be possible to act on a partial one.
 ///
+/// Every table is read inside one `REPEATABLE READ` transaction, so the expected
+/// set is a single consistent snapshot rather than fourteen independently-timed
+/// ones. That keeps the set self-consistent while it is being assembled; it does
+/// not replace the read ordering in [`run_once`], which is what makes the
+/// comparison itself safe.
+///
 /// # Arguments
 ///
 /// * `state` - The application state, holding the database pool
@@ -140,6 +146,11 @@ fn env_secs(name: &str, default: u64) -> u64 {
 /// * `Err(ChaosError)` if any table could not be read
 async fn expected_relationships(state: &AppState) -> Result<HashSet<StoredKey>, ChaosError> {
     let mut expected = HashSet::new();
+    let mut transaction = state.db.begin().await?;
+    // Must be the first statement in the transaction to take effect.
+    sqlx::query("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
+        .execute(&mut *transaction)
+        .await?;
 
     for table in REPLICATED_TABLES {
         // `to_jsonb` gives the row in the same shape Sequin delivers, so the
@@ -147,7 +158,7 @@ async fn expected_relationships(state: &AppState) -> Result<HashSet<StoredKey>, 
         // interpolated because the list of tables is a compile-time constant,
         // not request input, so there is nothing to inject.
         let sql = sqlx::AssertSqlSafe(format!("SELECT to_jsonb({table}) FROM {table}"));
-        let rows: Vec<Value> = sqlx::query_scalar(sql).fetch_all(&state.db).await?;
+        let rows: Vec<Value> = sqlx::query_scalar(sql).fetch_all(&mut *transaction).await?;
 
         for row in &rows {
             for (key, _) in relationships_for_row(table, row, Operation::Touch) {
@@ -155,6 +166,9 @@ async fn expected_relationships(state: &AppState) -> Result<HashSet<StoredKey>, 
             }
         }
     }
+
+    // Read-only, so there is nothing to commit.
+    transaction.rollback().await?;
 
     Ok(expected)
 }
@@ -226,10 +240,18 @@ async fn stored_relationships(state: &AppState) -> Result<Vec<Relationship>, Cha
 /// * `Err(ChaosError)` if the run could not complete; in that case nothing was
 ///   deleted
 pub async fn run_once(state: &AppState) -> Result<Report, ChaosError> {
-    // Built first and in full: if this fails, the run aborts before touching
-    // SpiceDB. See `expected_relationships` for why that ordering matters.
-    let expected = expected_relationships(state).await?;
+    // SpiceDB is read *before* Postgres, and that order is what makes deletion
+    // safe. A relationship created after the SpiceDB read is absent from
+    // `stored`, so it can only ever count as missing. Reading Postgres first
+    // would invert this: a row committed between the two reads would appear in
+    // `stored` but not in `expected`, be reported as an orphan, and get deleted,
+    // stripping live access. With this order a relationship in `stored` and not
+    // in `expected` is either a true orphan or a row deleted after the read, and
+    // deleting it is correct either way.
     let stored = stored_relationships(state).await?;
+    // Built in full before any SpiceDB write; any Postgres error aborts the run.
+    // See `expected_relationships` for why a partial expected set is dangerous.
+    let expected = expected_relationships(state).await?;
 
     let mut report = Report::default();
     let mut seen: HashSet<StoredKey> = HashSet::new();
