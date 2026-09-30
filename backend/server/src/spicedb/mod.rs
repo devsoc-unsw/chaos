@@ -126,9 +126,10 @@ fn consistency_from_stored(zedtoken: &RwLock<Option<ZedToken>>) -> Consistency {
 /// Tokens are never compared. ZedTokens are opaque and not reliably ordered
 /// (see the Authzed issue requesting a compare API), so two concurrent writes
 /// can publish their tokens out of order and leave the boundary briefly stale.
-/// That only costs a permission check some freshness until the next write, and
-/// it cannot deny access that Postgres has not granted, because a stale token is
-/// still a valid lower bound.
+/// A stale token still reads correctly from its own revision, but
+/// `at_least_as_fresh` can then be served a snapshot older than a recent grant
+/// or revocation, so permission results may be briefly stale until the next
+/// write publishes again.
 ///
 /// Before the first write the token is unset, and [`consistency_from_stored`]
 /// falls back to `MinimizeLatency` until one arrives.
@@ -178,9 +179,11 @@ fn authorized_request<T>(message: T, key: &str) -> Result<Request<T>, ChaosError
 /// Applies the SpiceDB schema from `backend/spicedb/schema.yaml` to the
 /// SpiceDB server via `WriteSchema`.
 ///
-/// This is an idempotent upsert of the full schema. It keeps the schema in
-/// sync at server startup in environments without
-/// `SPICEDB_DATASTORE_BOOTSTRAP_FILES` (e.g. production).
+/// This is an idempotent upsert of the full schema, and is the only thing that
+/// applies it: SpiceDB is deliberately not bootstrapped, because bootstrap
+/// overwrite would replace the schema on every SpiceDB restart and deleting a
+/// definition deletes its relationships, silently discarding everything Sequin
+/// had synced.
 ///
 /// # Returns
 ///
@@ -339,9 +342,10 @@ pub fn new_relationship_update(
 /// Writes a batch of relationship updates to SpiceDB atomically.
 ///
 /// All updates in the batch are applied in a single SpiceDB transaction, so
-/// either every update lands or none do. Touching a relationship that already
-/// exists fails the whole batch, which is why callers use `Touch` rather than
-/// `Create`. Deleting a relationship that does not exist is a silent no-op.
+/// either every update lands or none do. Creating a relationship that already
+/// exists fails the whole batch, which is why replay-safe callers use `Touch`
+/// (an idempotent upsert) rather than `Create`. Deleting a relationship that
+/// does not exist is a silent no-op.
 ///
 /// One call also rejects two updates to the same relationship
 /// (`ERROR_REASON_UPDATES_ON_SAME_RELATIONSHIP`), so a caller must coalesce
@@ -398,8 +402,8 @@ pub async fn write_relationships(
 /// idempotent. This does not use the standard queue in [`DBTransaction`]
 /// as it cannot be undone, hence, it is outside [`DBTransaction`].
 ///
-/// The deletion's ZedToken is sent to the Watch task so the revocation is
-/// visible to later permission checks without waiting for the Watch stream.
+/// The deletion's ZedToken is sent to the token task so the revocation is
+/// visible to later permission checks.
 ///
 /// # Arguments
 ///
@@ -475,7 +479,8 @@ pub async fn delete_all_resource_relationships(
         .into_inner();
 
     // The second RPC has the newest revision, so its token supersedes the
-    // first one's. A closed channel only means the Watch task is gone.
+    // first one's. A closed channel means the token task has exited, so the
+    // token is dropped and the boundary stays where it was.
     if let Some(token) = response.deleted_at {
         let _ = token_tx.send(token);
     }

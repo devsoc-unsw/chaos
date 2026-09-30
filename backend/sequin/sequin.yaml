@@ -13,6 +13,12 @@
 # Environment variables use Sequin's `${VAR:-default}` interpolation, so one file
 # serves local development and production.
 
+# Required. Sequin's config loader short-circuits on a missing account before it
+# creates anything, so omitting this leaves the database, endpoint and sink
+# uncreated rather than erroring loudly.
+account:
+  name: "chaos"
+
 databases:
   - name: "chaos"
     hostname: "${SEQUIN_DB_HOST:-db}"

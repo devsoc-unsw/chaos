@@ -38,8 +38,9 @@ pub struct DBTransaction<'a> {
     /// Bearer key attached to SpiceDB requests made on commit.
     spicedb_key: String,
 
-    /// Channel used to publish the commit's ZedToken to the Watch task, which
-    /// owns the stored token; see [`AppState::spicedb_token_tx`].
+    /// Channel used to publish the commit's ZedToken to the token task
+    /// (`spicedb::apply_zedtokens`), which owns the stored token; see
+    /// [`AppState::spicedb_token_tx`].
     spicedb_token_tx: UnboundedSender<ZedToken>,
 
     /// SpiceDB relationship writes queued for application on commit.
@@ -132,11 +133,13 @@ impl DBTransaction<'_> {
     ///    of truth (the DB) is consistent with what the logic asked for.
     /// 2. The queued SpiceDB writes are applied as a single atomic batch. If
     ///    this fails, SpiceDB will be left behind Postgres. We do not fail the
-    ///    commit if this happens, as our ETL pipeline will ensure SpiceDB
-    ///    catches up to Postgres' state.
+    ///    commit if this happens, because Sequin streams the Postgres change
+    ///    back to us and repairs the relationship (see
+    ///    [`AppState::sequin_webhook_secret`], which is required for that
+    ///    fallback to exist).
     ///
     /// On a successful SpiceDB write, the returned ZedToken is published to
-    /// the Watch task so later permission checks see the change immediately.
+    /// the token task so later permission checks see the change immediately.
     ///
     /// # Returns
     ///
@@ -150,7 +153,7 @@ impl DBTransaction<'_> {
             return Ok(());
         }
 
-        // It is fine if this write fails, as the ETL pipeline will sync SpiceDB with Postgres
+        // It is fine if this write fails: Sequin re-applies the change from Postgres.
         match write_relationships(
             &self.spicedb,
             &self.spicedb_key,
@@ -159,14 +162,15 @@ impl DBTransaction<'_> {
         .await
         {
             // Publish the revision so the next check is at least as fresh as
-            // this write. A closed channel only means the Watch task is gone.
+            // this write. A closed channel means the token task has exited, so
+            // the token is dropped; checks then stay on the previous boundary.
             Ok(Some(token)) => {
                 let _ = self.spicedb_token_tx.send(token);
             }
             Ok(None) => {}
             Err(error) => {
                 println!(
-                    "Failed writing SpiceDB relationships ({error}). Falling back to ETL syncing."
+                    "Failed writing SpiceDB relationships ({error}). Falling back to Sequin syncing."
                 )
             }
         }

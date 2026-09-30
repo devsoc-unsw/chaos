@@ -582,12 +582,13 @@ pub async fn apply_batch(state: &AppState, batch: &SequinBatch) -> Result<usize,
     Ok(count)
 }
 
-/// Publishes a SpiceDB write's ZedToken to the Watch task.
+/// Publishes a SpiceDB write's ZedToken to the token task.
 ///
-/// The Watch task owns the stored token; sending here means a synced change is
-/// visible to the next permission check without waiting for the Watch stream.
-/// A closed channel only means the Watch task is gone, which is not fatal: the
-/// stream catches up on its own.
+/// The token task (`spicedb::apply_zedtokens`) owns the stored token; sending
+/// here means a synced change is visible to the next permission check without
+/// waiting for anything else. A closed channel means the token task has
+/// exited, so the token is dropped and the freshness boundary stays where it
+/// was — the next write republishes.
 fn publish_token(state: &AppState, token: Option<ZedToken>) {
     if let Some(token) = token {
         let _ = state.spicedb_token_tx.send(token);

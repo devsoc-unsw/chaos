@@ -118,8 +118,8 @@ pub struct AppState {
     pub spicedb_token_tx: UnboundedSender<ZedToken>,
 
     /// Shared secret Sequin presents as a bearer token on its webhook, from
-    /// `SEQUIN_WEBHOOK_SECRET`. Empty disables the webhook, so a deployment
-    /// without Sequin rejects the endpoint rather than leaving it open.
+    /// `SEQUIN_WEBHOOK_SECRET`. Required, because it gates the fallback that
+    /// repairs SpiceDB writes the request path could not complete.
     pub sequin_webhook_secret: String,
 }
 
@@ -238,9 +238,13 @@ pub async fn init_app_state() -> (AppState, UnboundedReceiver<ZedToken>) {
     let spicedb_zedtoken = Arc::new(RwLock::new(None));
     let (spicedb_token_tx, spicedb_token_rx) = mpsc::unbounded_channel();
 
-    // Optional: the webhook rejects every request when unset, so Sequin is only
-    // enabled in environments that actually configure it.
-    let sequin_webhook_secret = env::var("SEQUIN_WEBHOOK_SECRET").unwrap_or_default();
+    // Required. `DBTransaction::commit` logs a failed SpiceDB write and returns
+    // Ok, on the assumption that Sequin re-applies the change from Postgres. If
+    // the secret were optional, a deployment could silently have no such
+    // fallback and a failed revocation would leave the permission in place
+    // indefinitely, so treat a missing secret as fatal.
+    let sequin_webhook_secret = env::var("SEQUIN_WEBHOOK_SECRET")
+        .expect("SEQUIN_WEBHOOK_SECRET must be set: it authenticates the Sequin webhook that repairs failed SpiceDB writes");
 
     // Add all data to AppState
 

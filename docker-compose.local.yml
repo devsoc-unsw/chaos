@@ -111,14 +111,16 @@ services:
       SPICEDB_HTTP_ENABLED: "true"
       SPICEDB_LOG_LEVEL: info
       SPICEDB_LOG_FORMAT: console
-      # LOCAL DEVELOPMENT ONLY: Make the bootstrap file the source of truth.
-      # SpiceDB replaces existing schema and relationships on every startup.
-      SPICEDB_DATASTORE_BOOTSTRAP_FILES: /bootstrap/schema.yaml
-      SPICEDB_DATASTORE_BOOTSTRAP_OVERWRITE: "true"
+      # No SPICEDB_DATASTORE_BOOTSTRAP_FILES here on purpose. The backend applies
+      # backend/spicedb/schema.yaml itself at boot via spicedb::migrate_schema(),
+      # which is an idempotent upsert of the same file. Bootstrapping as well
+      # would overwrite the schema on every SpiceDB restart, and overwriting a
+      # definition deletes its relationships -- so a `docker compose restart`
+      # would silently drop every relationship Sequin had synced, with no
+      # backfill to restore them (initial_backfill only runs when the sink is
+      # first created).
       # OPTIONAL: Remove to allow SpiceDB's default telemetry endpoint.
       SPICEDB_TELEMETRY_ENDPOINT: ""
-    volumes:
-      - ./backend/spicedb/schema.yaml:/bootstrap/schema.yaml:ro
     ports:
       - "50051:50051" # gRPC API
       - "8443:8443" # HTTP gateway
