@@ -58,12 +58,12 @@ impl DBTransaction<'_> {
         })
     }
 
-    /// Queues the creation of a SpiceDB relationship, applied by
+    /// Queues the idempotent upsert (`Touch`) of a SpiceDB relationship, applied by
     /// [`DBTransaction::commit`].
     ///
     /// The relationship is `<resource_type>:<resource_id>#<relation>@<subject_type>:<subject_id>`,
-    /// e.g. `chaos/campaign:123#organisation@chaos/organisation:5`. Note that
-    /// creating a relationship that already exists fails the eventual commit.
+    /// e.g. `chaos/campaign:123#organisation@chaos/organisation:5`. `Touch` is used because
+    /// the Sequin webhook can apply the same row before this commit's write.
     ///
     /// # Arguments
     ///
@@ -82,7 +82,7 @@ impl DBTransaction<'_> {
     ) {
         self.queued_relationship_updates
             .push(new_relationship_update(
-                Operation::Create,
+                Operation::Touch,
                 resource_type,
                 resource_id,
                 relation,
