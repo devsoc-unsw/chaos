@@ -847,14 +847,8 @@ impl CampaignUpdate {
             .to_string()
             .parse::<usize>()
             .map_err(|_| ChaosError::InternalServerError)?;
-        let campaign_description_max_chars = env::var("CAMPAIGN_DESCRIPTION_MAX_CHARS")
-            .expect("Error getting CAMPAIGN_DESCRIPTION_MAX_CHARS")
-            .to_string()
-            .parse::<usize>()
-            .map_err(|_| ChaosError::InternalServerError)?;
 
         if self.name.len() > campaign_name_max_chars
-            || self.description.len() > campaign_description_max_chars
             || self.name.is_empty()
             || self.slug.is_empty()
             || self.starts_at >= self.ends_at
