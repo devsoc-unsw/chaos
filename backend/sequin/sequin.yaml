@@ -19,6 +19,16 @@
 account:
   name: "chaos"
 
+# Lets the backend trigger a backfill over the Management API, which is how the
+# periodic reconciliation heals relationships that are missing rather than
+# orphaned. Only supported on self-hosted Sequin, which is what we run.
+# UPDATE: Replace this outside local development, and keep it out of source
+# control in production.
+api_tokens:
+  - name: "chaos-reconcile"
+    token: |-
+      ${SEQUIN_API_TOKEN:-chaos-reconcile-dev-token}
+
 databases:
   - name: "chaos"
     hostname: "${SEQUIN_DB_HOST:-db}"
@@ -98,9 +108,22 @@ sinks:
     # the sink in the console to re-trigger it.
     initial_backfill: true
     # Group by primary key so changes to one row are delivered serially and in
-    # commit order. Without this, a create and a later delete of the same row
-    # could arrive out of order and the delete could win.
+    # commit order, so a create and a later delete of the same row cannot arrive
+    # out of order and let the delete win. `tables` below overrides this for the
+    # one table where the primary key is not the right key.
     message_grouping: true
+    # organisation_members is the exception. Its SpiceDB relationship is
+    # organisation#<role>@user, keyed by (organisation_id, user_id), not by the
+    # membership row's own id. Grouping by primary key would put the delete of
+    # membership id=1 and a re-add as id=2 for the same pair into different
+    # groups, so they could be delivered out of order and leave the
+    # relationship wrongly deleted. Grouping by the columns that actually
+    # determine the relationship puts them in one group, delivered in order.
+    # Every other table's relationship is keyed by that row's own id, so the
+    # primary-key default is correct for them.
+    tables:
+      - name: "public.organisation_members"
+        group_column_names: ["organisation_id", "user_id"]
     batch_size: 100
     destination:
       type: "webhook"

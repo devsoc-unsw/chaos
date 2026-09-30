@@ -15,6 +15,7 @@
 //! - `organisation`: Manages organisation-related operations
 //! - `question`: Handles question management for applications
 //! - `rating`: Manages application ratings
+//! - `reconcile`: Periodically converges SpiceDB with Postgres
 //! - `role`: Handles role management within campaigns
 //! - `sequin`: Maps Sequin change messages onto SpiceDB relationships
 
@@ -30,6 +31,7 @@ pub mod offer;
 pub mod organisation;
 pub mod question;
 pub mod rating;
+pub mod reconcile;
 pub mod role;
 pub mod sequin;
 pub mod user;

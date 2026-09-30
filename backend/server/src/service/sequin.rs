@@ -70,7 +70,7 @@ pub struct SequinMetadata {
 /// The resource/relation/subject types are the `&'static str` constants from
 /// [`crate::spicedb::schema`], never runtime strings, which is what lets this
 /// be a plain tuple usable as a map key.
-type RelKey = (&'static str, i64, &'static str, &'static str, i64);
+pub(crate) type RelKey = (&'static str, i64, &'static str, &'static str, i64);
 
 /// A relationship's intended final operation, ordered by first appearance in
 /// the batch.
@@ -92,7 +92,9 @@ fn record(ops: &mut Ops, entry: (RelKey, Operation)) {
 }
 
 /// Renders one coalesced entry as a SpiceDB relationship update.
-fn to_update(entry: (RelKey, Operation)) -> crate::spicedb::authzed::api::v1::RelationshipUpdate {
+pub(crate) fn to_update(
+    entry: (RelKey, Operation),
+) -> crate::spicedb::authzed::api::v1::RelationshipUpdate {
     let ((resource_type, resource_id, relation, subject_type, subject_id), operation) = entry;
     new_relationship_update(
         operation,
@@ -170,12 +172,42 @@ fn organisation_relation(role: &str) -> &'static str {
     }
 }
 
+/// Every table Sequin replicates, paired with the Postgres table it is read
+/// from.
+///
+/// The reconciliation sweep in [`crate::service::reconcile`] walks this to build
+/// the set of relationships Postgres justifies. Adding a replicated table means
+/// adding it here as well as to the mapping below and to `sequin.yaml`; missing
+/// it here would make the sweep treat that table's live relationships as
+/// orphans.
+pub const REPLICATED_TABLES: &[&str] = &[
+    "users",
+    "organisations",
+    "organisation_members",
+    "campaigns",
+    "campaign_roles",
+    "applications",
+    "questions",
+    "campaign_rating_categories",
+    "application_ratings",
+    "application_rating_category_ratings",
+    "comments",
+    "answers",
+    "offers",
+    "email_templates",
+];
+
 /// Maps a changed row to the SpiceDB relationships it owns.
 ///
 /// Returns an empty vec when required columns are missing/null or the table
 /// owns no relationships (association tables, invites, tokens, …). Each entry is
 /// a `(relationship, operation)` pair for [`record`], not a finished update, so
 /// a batch touching the same relationship twice coalesces.
+///
+/// This is the single definition of the row-to-relationship mapping. The
+/// reconciliation sweep calls it to derive what Postgres justifies, so a second
+/// definition elsewhere would drift and every drifted key would be deleted as an
+/// orphan.
 ///
 /// # Arguments
 ///
@@ -188,7 +220,7 @@ fn organisation_relation(role: &str) -> &'static str {
 /// # Returns
 ///
 /// * The relationship operations this row implies
-fn relationships_for_row(
+pub(crate) fn relationships_for_row(
     table: &str,
     record: &Value,
     operation: Operation,
@@ -553,6 +585,22 @@ fn collect(ops: &mut Ops, message: &SequinMessage) {
 /// ordinary entries in that map rather than a separate filtered delete, so the
 /// whole batch is ordered by change order and replayed identically.
 ///
+/// # Ordering
+///
+/// Sequin delivers the messages of one group — a row, or the
+/// `organisation_members` pair configured in `sequin.yaml` — serially, and holds
+/// back later messages in that group until the current one is acknowledged. A
+/// batch may still contain several messages for one group, which arrive in
+/// commit order, and the coalescing above keeps only the newest.
+///
+/// That blocking is what makes returning an error safe *and* necessary: a failed
+/// batch is retried by Sequin, and until it succeeds Sequin will not deliver the
+/// next change to the same row, so a later change cannot overtake a failure.
+/// Acknowledging a batch that was not applied would reopen that hole, so the
+/// error below must stay an error. This only orders Sequin's own messages; a
+/// direct SpiceDB write from a request path is not part of that sequence (see
+/// the SpiceDB catch-up note in `AGENTS.md`).
+///
 /// # Arguments
 ///
 /// * `state` - The application state, holding the SpiceDB client and key
@@ -562,7 +610,7 @@ fn collect(ops: &mut Ops, message: &SequinMessage) {
 ///
 /// * `Ok(count)` with the number of relationship updates applied
 /// * `Err(ChaosError)` if a SpiceDB call fails; the caller must return 5XX so
-///   Sequin retries the batch
+///   Sequin retries the batch and blocks later messages for the same group
 pub async fn apply_batch(state: &AppState, batch: &SequinBatch) -> Result<usize, ChaosError> {
     let mut ops: Ops = Ops::default();
 
@@ -589,7 +637,7 @@ pub async fn apply_batch(state: &AppState, batch: &SequinBatch) -> Result<usize,
 /// waiting for anything else. A closed channel means the token task has
 /// exited, so the token is dropped and the freshness boundary stays where it
 /// was — the next write republishes.
-fn publish_token(state: &AppState, token: Option<ZedToken>) {
+pub(crate) fn publish_token(state: &AppState, token: Option<ZedToken>) {
     if let Some(token) = token {
         let _ = state.spicedb_token_tx.send(token);
     }

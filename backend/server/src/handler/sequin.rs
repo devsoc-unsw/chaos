@@ -29,6 +29,11 @@ impl SequinHandler {
     /// until it gets a 2XX. So this must return 2XX only once the batch is
     /// durably applied: any error here means the batch is replayed.
     ///
+    /// Sequin also blocks later messages for the same group until the current
+    /// one is acknowledged, so returning 5XX here is what stops the next change
+    /// to a row from overtaking a failure. Do not acknowledge a batch that was
+    /// not applied.
+    ///
     /// Replay is safe by construction. Every relationship write is either a
     /// `Touch` (an idempotent upsert) or a `Delete` of a relationship that
     /// SpiceDB treats as a no-op when absent, so re-applying a batch converges

@@ -77,8 +77,8 @@ use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use tonic::{metadata::MetadataValue, transport::Channel, Request};
 
 use crate::spicedb::authzed::api::v1::{
-    schema_service_client::SchemaServiceClient, DeleteRelationshipsRequest, RelationshipFilter,
-    SubjectFilter, WriteSchemaRequest, ZedToken,
+    schema_service_client::SchemaServiceClient, DeleteRelationshipsRequest,
+    ReadRelationshipsRequest, RelationshipFilter, SubjectFilter, WriteSchemaRequest, ZedToken,
 };
 use crate::spicedb::schema::PLATFORM_RESOURCE_ID;
 use crate::{
@@ -339,6 +339,27 @@ pub fn new_relationship_update(
     }
 }
 
+/// Builds a delete for a relationship exactly as it was read back from SpiceDB.
+///
+/// Used by the reconciliation sweep, which already holds the
+/// [`Relationship`] it wants removed. Cloning it verbatim is safer than
+/// reconstructing it from a hand-maintained list of schema constants, which
+/// could drift from the names SpiceDB actually stores.
+///
+/// # Arguments
+///
+/// * `relationship` - The relationship to remove
+///
+/// # Returns
+///
+/// * A [`RelationshipUpdate`] deleting that relationship
+pub fn delete_relationship(relationship: &Relationship) -> RelationshipUpdate {
+    RelationshipUpdate {
+        operation: Operation::Delete as i32,
+        relationship: Some(relationship.clone()),
+    }
+}
+
 /// Writes a batch of relationship updates to SpiceDB atomically.
 ///
 /// All updates in the batch are applied in a single SpiceDB transaction, so
@@ -387,6 +408,73 @@ pub async fn write_relationships(
         .into_inner();
 
     Ok(response.written_at)
+}
+
+/// Reads every written relationship of one resource type.
+///
+/// Used by the reconciliation sweep to compare what SpiceDB holds against what
+/// Postgres justifies. Only *written* relationships are returned; computed
+/// subject sets from a permission query are not, so a caller that diffs the
+/// result against its own mapping will not trip over derived data.
+///
+/// Reads at the stored freshness boundary, so a relationship written moments ago
+/// may not appear yet. That is the safe direction for a diff: a stale read can
+/// only make the set of orphans look smaller, never larger.
+///
+/// # Arguments
+///
+/// * `client` - SpiceDB permissions service client
+/// * `key` - Bearer token for SpiceDB authentication
+/// * `zedtoken` - The ZedToken lock in `AppState`, used for read consistency
+/// * `resource_type` - SpiceDB object type to read, such as `chaos/organisation`
+///
+/// # Returns
+///
+/// * `Ok(Vec<Relationship>)` with every written relationship of that type
+/// * `Err(ChaosError)` on gRPC failure
+pub async fn read_relationships_of_type(
+    client: &PermissionsServiceClient<Channel>,
+    key: &str,
+    zedtoken: &RwLock<Option<ZedToken>>,
+    resource_type: &str,
+) -> Result<Vec<Relationship>, ChaosError> {
+    let request = authorized_request(
+        ReadRelationshipsRequest {
+            consistency: Some(consistency_from_stored(zedtoken)),
+            // An empty resource ID and subject filter make this a wildcard over
+            // the whole resource type.
+            relationship_filter: Some(RelationshipFilter {
+                resource_type: resource_type.to_owned(),
+                optional_resource_id: String::new(),
+                optional_resource_id_prefix: String::new(),
+                optional_relation: String::new(),
+                optional_subject_filter: None,
+            }),
+            optional_limit: 0,
+            optional_cursor: None,
+        },
+        key,
+    )?;
+
+    let mut stream = client
+        .clone()
+        .read_relationships(request)
+        .await
+        .map_err(|_| ChaosError::InternalServerError)?
+        .into_inner();
+
+    let mut relationships = Vec::new();
+    while let Some(response) = stream
+        .message()
+        .await
+        .map_err(|_| ChaosError::InternalServerError)?
+    {
+        if let Some(relationship) = response.relationship {
+            relationships.push(relationship);
+        }
+    }
+
+    Ok(relationships)
 }
 
 /// WARNING: This cannot be undone, so run after Postgres commit

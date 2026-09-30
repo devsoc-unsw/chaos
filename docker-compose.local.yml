@@ -186,6 +186,15 @@ services:
       # name. Must match the dev container's SEQUIN_WEBHOOK_SECRET.
       SEQUIN_WEBHOOK_URL: http://dev-container:8080/api/v1/sequin/spicedb
       SEQUIN_WEBHOOK_SECRET: replace-with-a-local-secret
+      # Interpolated into sequin.yaml as the `chaos-reconcile` API token, which
+      # the backend uses to trigger reconciliation backfills. Must match the dev
+      # container's SEQUIN_API_TOKEN, or the backfill request is rejected.
+      SEQUIN_API_TOKEN: replace-with-a-local-secret
+      # Where the backend looks for this Sequin instance's Management API.
+      SEQUIN_URL: http://sequin:7376
+      # Reconciliation runs are opt-in per environment; leave off in dev unless
+      # you want the sweep walking every table on an interval.
+      RECONCILE_ENABLED: "false"
     volumes:
       - ./backend/sequin/sequin.yaml:/etc/sequin/sequin.yaml:ro
     ports:

@@ -37,6 +37,11 @@ async fn main() -> Result<(), ChaosError> {
     let mut seeder = Seeder::init(state_clone.clone()).await;
     seeder.seed_database(super_user_email).await?;
 
+    // Periodically converge SpiceDB with Postgres: trigger a Sequin backfill for
+    // missing relationships and sweep for orphaned ones. Every replica spawns
+    // this, but the advisory lock inside means only one reconciles per tick.
+    let reconcile_task = tokio::spawn(service::reconcile::spawn_reconciler(state_clone.clone()));
+
     let email_db = state_clone.db.clone();
     let email_task = tokio::spawn(async move {
         loop {
@@ -57,7 +62,7 @@ async fn main() -> Result<(), ChaosError> {
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
     let server_task = axum::serve(listener, app);
 
-    let _ = tokio::join!(server_task, email_task, token_task);
+    let _ = tokio::join!(server_task, email_task, token_task, reconcile_task);
 
     Ok(())
 }
