@@ -209,6 +209,7 @@ impl QuestionHandler {
             &state.spicedb_key,
             spicedb_schema::resource::QUESTION,
             question_id,
+            &state.spicedb_token_tx,
         )
         .await?;
 

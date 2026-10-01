@@ -180,6 +180,7 @@ impl OrganisationHandler {
             &state.spicedb_key,
             spicedb_schema::resource::ORGANISATION,
             id,
+            &state.spicedb_token_tx,
         )
         .await?;
 

@@ -2982,8 +2982,120 @@ paths:
         "401":
           $ref: "#/components/responses/NotLoggedIn"
 
+  /api/v1/sequin/spicedb:
+    post:
+      operationId: receiveSequinSpicedbChanges
+      description: >-
+        Receives a batch of Postgres change messages from Sequin and upserts the
+        matching SpiceDB relationships. This is the catch-up path that converges
+        SpiceDB with Postgres for changes made outside a request, or whose
+        SpiceDB write failed. Not user-facing: it authenticates with a shared
+        secret (SEQUIN_WEBHOOK_SECRET) as a bearer token, not a session. Sequin
+        retries the batch with exponential backoff until it receives a 2XX, so
+        a 5XX replays it.
+      tags:
+        - Sequin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SequinBatch"
+            example:
+              data:
+                - record:
+                    id: 1
+                    organisation_id: 5
+                    user_id: 42
+                    role: Admin
+                  changes: null
+                  action: insert
+                  metadata:
+                    table_schema: public
+                    table_name: organisation_members
+                    commit_timestamp: "2026-09-29T10:30:00Z"
+                    commit_lsn: 123456789
+                    commit_idx: 0
+      responses:
+        "200":
+          description: Batch applied
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  applied:
+                    type: integer
+                    description: Relationship updates written to SpiceDB
+                    example: 1
+                  received:
+                    type: integer
+                    description: Change messages in the batch
+                    example: 1
+        "401":
+          $ref: "#/components/responses/NotLoggedIn"
+        "500":
+          description: >-
+            SpiceDB rejected the batch. Sequin will retry it, which is safe
+            because every write is either an idempotent Touch or a delete that
+            succeeds when the relationship is already absent.
+
 components:
   schemas:
+    SequinBatch:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          description: Change messages in commit order
+          items:
+            $ref: "#/components/schemas/SequinMessage"
+
+    SequinMessage:
+      type: object
+      required:
+        - record
+        - action
+        - metadata
+      properties:
+        record:
+          type: object
+          description: The row's current state; the deleted row for a delete
+          additionalProperties: true
+        changes:
+          type: object
+          nullable: true
+          description: Previous values of the columns this change touched
+          additionalProperties: true
+        action:
+          type: string
+          description: The kind of change
+          enum: [insert, update, delete, read]
+        metadata:
+          type: object
+          required:
+            - table_schema
+            - table_name
+          properties:
+            table_schema:
+              type: string
+              example: public
+            table_name:
+              type: string
+              example: organisation_members
+            commit_timestamp:
+              type: string
+              example: "2026-09-29T10:30:00Z"
+            commit_lsn:
+              type: integer
+              format: int64
+              example: 123456789
+            commit_idx:
+              type: integer
+              example: 0
+
     Message:
       type: object
       properties:

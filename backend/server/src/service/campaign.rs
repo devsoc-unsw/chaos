@@ -7,9 +7,11 @@
 use crate::models::error::ChaosError;
 use crate::spicedb;
 use crate::spicedb::authzed::api::v1::permissions_service_client::PermissionsServiceClient;
+use crate::spicedb::authzed::api::v1::ZedToken;
 use chrono::Utc;
 use sqlx::{Pool, Postgres, Transaction};
 use std::ops::DerefMut;
+use tokio::sync::mpsc::UnboundedSender;
 use tonic::transport::Channel;
 
 /// Verifies if a user has admin privileges for a campaign.
@@ -198,6 +200,7 @@ pub fn create_proper_slug(input: &str) -> String {
 /// * `comment_ids` - IDs of the campaign's comments (via its applications) to delete
 /// * `spicedb_client` - The SpiceDB permissions service client
 /// * `spicedb_key` - The SpiceDB secret key
+/// * `token_tx` - Channel used to publish each deletion's ZedToken
 ///
 /// # Returns
 ///
@@ -209,6 +212,7 @@ pub async fn campaign_spicedb_deep_delete(
     comment_ids: Vec<i64>,
     spicedb_client: &PermissionsServiceClient<Channel>,
     spicedb_key: &str,
+    token_tx: &UnboundedSender<ZedToken>,
 ) -> Result<(), ChaosError> {
     // DELETE parent campaign
     spicedb::delete_all_resource_relationships(
@@ -216,6 +220,7 @@ pub async fn campaign_spicedb_deep_delete(
         spicedb_key,
         crate::spicedb::schema::resource::CAMPAIGN,
         campaign_id,
+        token_tx,
     )
     .await?;
 
@@ -226,6 +231,7 @@ pub async fn campaign_spicedb_deep_delete(
             spicedb_key,
             crate::spicedb::schema::resource::APPLICATION,
             application_id,
+            token_tx,
         )
         .await?;
     }
@@ -237,6 +243,7 @@ pub async fn campaign_spicedb_deep_delete(
             spicedb_key,
             crate::spicedb::schema::resource::RATING,
             rating_id,
+            token_tx,
         )
         .await?;
     }
@@ -248,6 +255,7 @@ pub async fn campaign_spicedb_deep_delete(
             spicedb_key,
             crate::spicedb::schema::resource::COMMENT,
             comment_id,
+            token_tx,
         )
         .await?;
     }

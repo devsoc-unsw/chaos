@@ -19,6 +19,17 @@ services:
       - SPICEDB_GRPC_ENDPOINT=http://spicedb:50051
       - SPICEDB_URL=http://spicedb:8443
       - SPICEDB_KEY=replace-with-a-local-secret
+      # Shared secret Sequin presents as a bearer token on its webhook. Keep in
+      # sync with the sequin service below.
+      - SEQUIN_WEBHOOK_SECRET=replace-with-a-local-secret
+      # Used by service::reconcile to trigger backfills over Sequin's Management
+      # API. Must match the sequin service's SEQUIN_API_TOKEN.
+      - SEQUIN_API_TOKEN=replace-with-a-local-secret
+      - SEQUIN_URL=http://sequin:7376
+      # Reconciliation is opt-in; leave off in dev unless you want the sweep
+      # walking every table on an interval. RECONCILE_DELETE stays unset here, so
+      # a run reports orphans without removing anything.
+      - RECONCILE_ENABLED=false
     networks:
       - chaos-network
 
@@ -36,6 +47,9 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_DB: chaos
+    # Sequin captures changes with logical replication, which needs this set
+    # before the database is initialised.
+    command: ["postgres", "-c", "wal_level=logical"]
     ports:
       - "5432:5432"
     networks:
@@ -105,14 +119,16 @@ services:
       SPICEDB_HTTP_ENABLED: "true"
       SPICEDB_LOG_LEVEL: info
       SPICEDB_LOG_FORMAT: console
-      # LOCAL DEVELOPMENT ONLY: Make the bootstrap file the source of truth.
-      # SpiceDB replaces existing schema and relationships on every startup.
-      SPICEDB_DATASTORE_BOOTSTRAP_FILES: /bootstrap/schema.yaml
-      SPICEDB_DATASTORE_BOOTSTRAP_OVERWRITE: "true"
+      # No SPICEDB_DATASTORE_BOOTSTRAP_FILES here on purpose. The backend applies
+      # backend/spicedb/schema.yaml itself at boot via spicedb::migrate_schema(),
+      # which is an idempotent upsert of the same file. Bootstrapping as well
+      # would overwrite the schema on every SpiceDB restart, and overwriting a
+      # definition deletes its relationships -- so a `docker compose restart`
+      # would silently drop every relationship Sequin had synced, with no
+      # backfill to restore them (initial_backfill only runs when the sink is
+      # first created).
       # OPTIONAL: Remove to allow SpiceDB's default telemetry endpoint.
       SPICEDB_TELEMETRY_ENDPOINT: ""
-    volumes:
-      - ./backend/spicedb/schema.yaml:/bootstrap/schema.yaml:ro
     ports:
       - "50051:50051" # gRPC API
       - "8443:8443" # HTTP gateway
@@ -124,9 +140,86 @@ services:
       spicedb-migrate:
         condition: service_completed_successfully
 
+  # Sequin keeps its own sink configuration and replication bookkeeping in
+  # Postgres, separate from both the Chaos database above and the SpiceDB one.
+  sequin-db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sequin
+      POSTGRES_PASSWORD: sequin
+      POSTGRES_DB: sequin
+    networks:
+      - chaos-network
+    volumes:
+      - sequin-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sequin -d sequin"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  # Sequin uses Redis to assist change delivery.
+  sequin-redis:
+    image: redis:7
+    restart: unless-stopped
+    networks:
+      - chaos-network
+    volumes:
+      - sequin-redis-data:/data
+
+  # Streams Postgres changes to the backend webhook, which upserts the
+  # corresponding SpiceDB relationships. Everything Sequin needs is declared in
+  # backend/sequin/sequin.yaml, so there is no console setup step.
+  sequin:
+    # Pinned: the declarative config in sequin.yaml depends on keys such as
+    # group_column_names, batch and api_tokens, so an unattended `latest` bump
+    # could break local startup. Bump deliberately.
+    # UPDATE: The rest of this stack still uses `latest`; pin those too.
+    image: sequin/sequin:v0.14.6
+    restart: unless-stopped
+    environment:
+      # Sequin's own state database (the `sequin-db` service above).
+      PG_HOSTNAME: sequin-db
+      PG_PORT: 5432
+      PG_DATABASE: sequin
+      PG_USERNAME: sequin
+      PG_PASSWORD: sequin
+      REDIS_URL: redis://sequin-redis:6379
+      # UPDATE: Replace both of these before exposing Sequin anywhere. They sign
+      # cookies and encrypt sink headers respectively.
+      SECRET_KEY_BASE: wDPLYus0pvD6qJhKJICO4dauYPXfO/Yl782Zjtpew5qRBDp7CZvbWtQmY0eB13If
+      VAULT_KEY: 2Sig69bIpuSm2kv0VQfDekET2qy8qUZGI8v3/h3ASiY=
+      # Applies the declarative config on every start, so the database, slot,
+      # publication and sink are (re)created without touching the console.
+      CONFIG_FILE_PATH: /etc/sequin/sequin.yaml
+      # The backend runs in the dev container, so Sequin posts to it by service
+      # name. Must match the dev container's SEQUIN_WEBHOOK_SECRET.
+      SEQUIN_WEBHOOK_URL: http://dev-container:8080/api/v1/sequin/spicedb
+      SEQUIN_WEBHOOK_SECRET: replace-with-a-local-secret
+      # Interpolated into sequin.yaml as the `chaos-reconcile` API token. The
+      # backend also needs this value to call Sequin's Management API, so it is
+      # set on the dev container too; keep the two in sync.
+      SEQUIN_API_TOKEN: replace-with-a-local-secret
+    volumes:
+      - ./backend/sequin/sequin.yaml:/etc/sequin/sequin.yaml:ro
+    ports:
+      - "7376:7376" # console
+    networks:
+      - chaos-network
+    depends_on:
+      db:
+        condition: service_healthy
+      sequin-db:
+        condition: service_healthy
+      sequin-redis:
+        condition: service_started
+
 volumes:
   chaos-postgres-data:
   spicedb-postgres-data:
+  sequin-postgres-data:
+  sequin-redis-data:
 
 networks:
   chaos-network:

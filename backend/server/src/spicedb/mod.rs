@@ -13,6 +13,7 @@ pub mod schema;
 
 // Generated modules
 pub mod authzed {
+    #[allow(dead_code)]
     pub mod api {
         pub mod v1 {
             include!("generated/authzed/api/v1/authzed.api.v1.rs");
@@ -27,6 +28,7 @@ pub mod authzed {
 }
 
 pub mod google {
+    #[allow(dead_code)]
     pub mod api {
         include!("generated/google/api/google.api.rs");
     }
@@ -37,16 +39,19 @@ pub mod google {
 }
 
 pub mod validate {
+    #[allow(dead_code)]
     include!("generated/validate/validate.rs");
 }
 
 pub mod buf {
+    #[allow(dead_code)]
     pub mod validate {
         include!("generated/buf/validate/buf.validate.rs");
     }
 }
 
 pub mod grpc {
+    #[allow(dead_code)]
     pub mod gateway {
         pub mod protoc_gen_openapiv2 {
             pub mod options {
@@ -68,13 +73,12 @@ use axum::{
 };
 use std::sync::{Arc, RwLock};
 use std::{collections::HashMap, marker::PhantomData};
-use tokio::sync::{Mutex, Notify};
+use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use tonic::{metadata::MetadataValue, transport::Channel, Request};
 
 use crate::spicedb::authzed::api::v1::{
-    schema_service_client::SchemaServiceClient, watch_service_client::WatchServiceClient,
-    DeleteRelationshipsRequest, RelationshipFilter, SubjectFilter, WatchKind, WatchRequest,
-    WriteSchemaRequest, ZedToken,
+    schema_service_client::SchemaServiceClient, DeleteRelationshipsRequest,
+    ReadRelationshipsRequest, RelationshipFilter, SubjectFilter, WriteSchemaRequest, ZedToken,
 };
 use crate::spicedb::schema::PLATFORM_RESOURCE_ID;
 use crate::{
@@ -108,244 +112,43 @@ fn consistency_from_stored(zedtoken: &RwLock<Option<ZedToken>>) -> Consistency {
     }
 }
 
-/// Store given ZedToken into `RwLock`
+/// Applies published ZedTokens to the shared freshness boundary.
 ///
-/// The stored token is the freshness boundary supplied to
-/// [`consistency_from_stored`]. It must never go backwards, or later
-/// authorization checks would use an outdated `AtLeastAsFresh` boundary.
+/// This task is the only writer of the stored token in
+/// [`AppState::spicedb_zedtoken`]. Every SpiceDB write originates in this
+/// process, either from a request handler ([`DBTransaction::commit`],
+/// [`delete_all_resource_relationships`]) or from the Sequin sync webhook, and
+/// each sends the ZedToken its write RPC returned over
+/// [`AppState::spicedb_token_tx`]. Routing them through one task keeps a
+/// single writer, so the token is applied in the order it was published and no
+/// two senders can race to overwrite each other.
 ///
-/// ZedTokens are opaque to clients (SpiceDB revisions are not byte-sortable
-/// and their wire format is datastore-specific), so this function cannot
-/// compare tokens itself. Monotonicity is instead guaranteed by the Watch
-/// task ([`spawn_zedtoken_watcher`]), which feeds tokens in ascending
-/// revision order and gates them behind pending `DBTransaction` writes. Do
-/// not call this from write paths: an older write finishing last would
-/// unconditionally overwrite a newer token.
+/// Tokens are never compared. ZedTokens are opaque and not reliably ordered
+/// (see the Authzed issue requesting a compare API), so two concurrent writes
+/// can publish their tokens out of order and leave the boundary briefly stale.
+/// A stale token still reads correctly from its own revision, but
+/// `at_least_as_fresh` can then be served a snapshot older than a recent grant
+/// or revocation, so permission results may be briefly stale until the next
+/// write publishes again.
+///
+/// Before the first write the token is unset, and [`consistency_from_stored`]
+/// falls back to `MinimizeLatency` until one arrives.
 ///
 /// # Arguments
 ///
 /// * `zedtoken` - The ZedToken lock in `AppState`
-/// * `token` - The new token to be stored, if any
+/// * `token_rx` - Receiver for tokens sent by write paths, owned here for the
+///   lifetime of the task so a token published just before shutdown is applied
 ///
 /// # Returns
 ///
-/// Returns nothing
-fn store_zedtoken(zedtoken: &RwLock<Option<ZedToken>>, token: Option<ZedToken>) {
-    if let Some(token) = token {
+/// Never returns while a sender remains; exits once every sender is dropped
+pub async fn apply_zedtokens(
+    zedtoken: Arc<RwLock<Option<ZedToken>>>,
+    mut token_rx: UnboundedReceiver<ZedToken>,
+) {
+    while let Some(token) = token_rx.recv().await {
         *zedtoken.write().unwrap() = Some(token);
-    }
-}
-
-/// Shared state gating publication of Watch tokens.
-///
-/// `pending_writes` counts `DBTransaction` commits that have applied a
-/// SpiceDB relationship write whose Postgres transaction has not reached a
-/// final state (committed, or compensated after failure). `deferred_token`
-/// holds the newest Watch token received while the gate was closed. Both are
-/// protected by a single async mutex; only the Watch task writes the
-/// published token in [`AppState::spicedb_zedtoken`].
-pub struct ZedTokenPublicationGate {
-    /// Number of pending SpiceDB writes with an unresolved Postgres commit.
-    pub pending_writes: usize,
-
-    /// Newest Watch token received while `pending_writes` was non-zero.
-    pub deferred_token: Option<ZedToken>,
-}
-
-impl ZedTokenPublicationGate {
-    /// Create a gate with no pending writes and no deferred token.
-    pub fn new() -> Self {
-        Self {
-            pending_writes: 0,
-            deferred_token: None,
-        }
-    }
-}
-
-/// Registers a pending SpiceDB relationship write on the gate.
-///
-/// Must be called *before* the SpiceDB write RPC: the Watch stream can
-/// report the revision as soon as the write lands, and the gate must already
-/// be closed by then, or the token would be published while the Postgres
-/// commit is still at risk.
-///
-/// # Arguments
-///
-/// * `gate` - The shared publication gate
-pub async fn register_pending_write(gate: &Arc<Mutex<ZedTokenPublicationGate>>) {
-    gate.lock().await.pending_writes += 1;
-}
-
-/// Resolves a pending SpiceDB relationship write on the gate.
-///
-/// Notifies the Watch task when the last pending write resolves, so it can
-/// publish the deferred token even while SpiceDB is idle. Do not call this
-/// on a compensation failure: SpiceDB and Postgres have then diverged and
-/// the gate must stay closed.
-///
-/// # Arguments
-///
-/// * `gate` - The shared publication gate
-/// * `notify` - Waker for the Watch task
-pub async fn resolve_pending_write(
-    gate: &Arc<Mutex<ZedTokenPublicationGate>>,
-    notify: &Arc<Notify>,
-) {
-    let mut gate = gate.lock().await;
-    gate.pending_writes -= 1;
-    if gate.pending_writes == 0 {
-        notify.notify_one();
-    }
-}
-
-/// Defers or publishes a Watch token depending on the gate.
-///
-/// While any write is pending, the token is held back: its revision may
-/// include relationships whose Postgres commit has not succeeded yet. Once
-/// the gate is open, the token is published and any older deferred token is
-/// dropped as covered (the stream delivers tokens in ascending revision
-/// order, so a freshly delivered token is never older than the deferred
-/// one).
-///
-/// # Arguments
-///
-/// * `gate` - The shared publication gate
-/// * `zedtoken` - The shared published token lock
-/// * `token` - The token delivered by the Watch stream
-async fn defer_or_publish(
-    gate: &Arc<Mutex<ZedTokenPublicationGate>>,
-    zedtoken: &Arc<RwLock<Option<ZedToken>>>,
-    token: ZedToken,
-) {
-    let mut gate = gate.lock().await;
-    if gate.pending_writes > 0 {
-        gate.deferred_token = Some(token);
-    } else {
-        gate.deferred_token = None;
-        store_zedtoken(&*zedtoken, Some(token));
-    }
-}
-
-/// Publishes the deferred token once the gate is open.
-///
-/// # Arguments
-///
-/// * `gate` - The shared publication gate
-/// * `zedtoken` - The shared published token lock
-async fn publish_deferred(
-    gate: &Arc<Mutex<ZedTokenPublicationGate>>,
-    zedtoken: &Arc<RwLock<Option<ZedToken>>>,
-) {
-    let mut gate = gate.lock().await;
-    if gate.pending_writes == 0 {
-        if let Some(token) = std::mem::take(&mut gate.deferred_token) {
-            store_zedtoken(&*zedtoken, Some(token));
-        }
-    }
-}
-
-/// Tracks SpiceDB revisions in the background, keeping the stored ZedToken
-/// monotonically increasing.
-///
-/// This is the single writer of the stored token (see [`store_zedtoken`]).
-/// It streams relationship changes via the Watch API, which delivers every
-/// response's `changes_through` token in ascending revision order, so the
-/// shared freshness boundary only ever moves forward.
-///
-/// Publication is gated on [`ZedTokenPublicationGate`]: while any
-/// `DBTransaction` commit has an uncommitted SpiceDB write, tokens are
-/// deferred instead of published. A pending write's revision may contain
-/// relationships that Postgres has not committed yet (and may still reject
-/// and compensate), so publishing it could let a concurrent check authorize
-/// a relationship that is later removed. When the last pending write
-/// resolves, the task is woken via [`Notify`] and publishes the deferred
-/// token.
-///
-/// Each (re)connection starts from the current head revision rather than
-/// resuming from the stored token, because the head is always at or past the
-/// stored token, keeps the stream monotonic across reconnects, and sidesteps
-/// garbage-collection errors for stale cursors. Requests include checkpoints
-/// so the stream stays alive while idle.
-///
-/// # Arguments
-///
-/// * `app_state` - The application state holding the SpiceDB client, key and
-///   shared zedtoken lock
-///
-/// # Returns
-///
-/// Never returns; runs until the process exits.
-pub async fn spawn_zedtoken_watcher(app_state: AppState) {
-    loop {
-        let endpoint =
-            std::env::var("SPICEDB_GRPC_ENDPOINT").expect("SPICEDB_GRPC_ENDPOINT must be set");
-        let channel = Channel::from_shared(endpoint)
-            .expect("SPICEDB_GRPC_ENDPOINT must be a valid URI")
-            .connect_lazy();
-        let mut client = WatchServiceClient::new(channel);
-
-        let request = match authorized_request(
-            WatchRequest {
-                optional_object_types: Vec::new(),
-                optional_start_cursor: None,
-                optional_relationship_filters: Vec::new(),
-                optional_update_kinds: vec![
-                    WatchKind::IncludeRelationshipUpdates as i32,
-                    WatchKind::IncludeCheckpoints as i32,
-                ],
-            },
-            &app_state.spicedb_key,
-        ) {
-            Ok(request) => request,
-            Err(error) => {
-                println!("Failed to build SpiceDB watch request: {error}");
-                tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
-                continue;
-            }
-        };
-
-        match client.watch(request).await {
-            Ok(response) => {
-                let mut stream = response.into_inner();
-                'stream: loop {
-                    tokio::select! {
-                        message = stream.message() => {
-                            match message {
-                                Ok(Some(response)) => {
-                                    // Defer while a DBTransaction write is
-                                    // pending; publish once the gate is open.
-                                    if let Some(token) = response.changes_through {
-                                        defer_or_publish(
-                                            &app_state.spicedb_publication_gate,
-                                            &app_state.spicedb_zedtoken,
-                                            token,
-                                        )
-                                        .await;
-                                    }
-                                }
-                                Ok(None) => break 'stream,
-                                Err(error) => {
-                                    println!("SpiceDB watch stream error: {error}");
-                                    break 'stream;
-                                }
-                            }
-                        }
-                        _ = app_state.spicedb_publication_notify.notified() => {}
-                    }
-
-                    // A pending write may have resolved while SpiceDB is
-                    // idle; publish its deferred token now.
-                    publish_deferred(
-                        &app_state.spicedb_publication_gate,
-                        &app_state.spicedb_zedtoken,
-                    )
-                    .await;
-                }
-            }
-            Err(error) => println!("SpiceDB watch stream failed: {error}"),
-        }
-
-        tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
     }
 }
 
@@ -376,9 +179,11 @@ fn authorized_request<T>(message: T, key: &str) -> Result<Request<T>, ChaosError
 /// Applies the SpiceDB schema from `backend/spicedb/schema.yaml` to the
 /// SpiceDB server via `WriteSchema`.
 ///
-/// This is an idempotent upsert of the full schema. It keeps the schema in
-/// sync at server startup in environments without
-/// `SPICEDB_DATASTORE_BOOTSTRAP_FILES` (e.g. production).
+/// This is an idempotent upsert of the full schema, and is the only thing that
+/// applies it: SpiceDB is deliberately not bootstrapped, because bootstrap
+/// overwrite would replace the schema on every SpiceDB restart and deleting a
+/// definition deletes its relationships, silently discarding everything Sequin
+/// had synced.
 ///
 /// # Returns
 ///
@@ -479,7 +284,9 @@ pub async fn check_permission(
         .map_err(|_| ChaosError::InternalServerError)?
         .into_inner();
 
-    // Not storing into zedtoken as this might be a stale read at startup
+    // Deliberately not published to the token task: a check's response ZedToken
+    // reflects when the read was served, not a write, so publishing it would
+    // move the boundary backwards on a stale read.
 
     match Permissionship::try_from(response.permissionship) {
         Ok(Permissionship::HasPermission) => Ok(()),
@@ -532,34 +339,38 @@ pub fn new_relationship_update(
     }
 }
 
-/// Builds the inverse of a relationship update (create becomes delete and vice
-/// versa), used to compensate writes that must be undone.
+/// Builds a delete for a relationship exactly as it was read back from SpiceDB.
+///
+/// Used by the reconciliation sweep, which already holds the
+/// [`Relationship`] it wants removed. Cloning it verbatim is safer than
+/// reconstructing it from a hand-maintained list of schema constants, which
+/// could drift from the names SpiceDB actually stores.
 ///
 /// # Arguments
 ///
-/// * `update` - The update to invert
+/// * `relationship` - The relationship to remove
 ///
 /// # Returns
 ///
-/// * `Some` inverse update for create/delete updates, `None` for anything else
-pub fn invert_relationship_update(update: &RelationshipUpdate) -> Option<RelationshipUpdate> {
-    let operation = match Operation::try_from(update.operation) {
-        Ok(Operation::Create) => Operation::Delete,
-        Ok(Operation::Delete) => Operation::Create,
-        _ => return None,
-    };
-
-    Some(RelationshipUpdate {
-        operation: operation as i32,
-        relationship: update.relationship.clone(),
-    })
+/// * A [`RelationshipUpdate`] deleting that relationship
+pub fn delete_relationship(relationship: &Relationship) -> RelationshipUpdate {
+    RelationshipUpdate {
+        operation: Operation::Delete as i32,
+        relationship: Some(relationship.clone()),
+    }
 }
 
 /// Writes a batch of relationship updates to SpiceDB atomically.
 ///
 /// All updates in the batch are applied in a single SpiceDB transaction, so
-/// either every update lands or none do. Note that creating a relationship
-/// that already exists, or deleting one that does not, fails the whole batch.
+/// either every update lands or none do. Creating a relationship that already
+/// exists fails the whole batch, which is why replay-safe callers use `Touch`
+/// (an idempotent upsert) rather than `Create`. Deleting a relationship that
+/// does not exist is a silent no-op.
+///
+/// One call also rejects two updates to the same relationship
+/// (`ERROR_REASON_UPDATES_ON_SAME_RELATIONSHIP`), so a caller must coalesce
+/// repeated changes to one relationship into a single operation before sending.
 ///
 /// # Arguments
 ///
@@ -599,6 +410,73 @@ pub async fn write_relationships(
     Ok(response.written_at)
 }
 
+/// Reads every written relationship of one resource type.
+///
+/// Used by the reconciliation sweep to compare what SpiceDB holds against what
+/// Postgres justifies. Only *written* relationships are returned; computed
+/// subject sets from a permission query are not, so a caller that diffs the
+/// result against its own mapping will not trip over derived data.
+///
+/// Reads at the stored freshness boundary, so a relationship written moments ago
+/// may not appear yet. That is the safe direction for a diff: a stale read can
+/// only make the set of orphans look smaller, never larger.
+///
+/// # Arguments
+///
+/// * `client` - SpiceDB permissions service client
+/// * `key` - Bearer token for SpiceDB authentication
+/// * `zedtoken` - The ZedToken lock in `AppState`, used for read consistency
+/// * `resource_type` - SpiceDB object type to read, such as `chaos/organisation`
+///
+/// # Returns
+///
+/// * `Ok(Vec<Relationship>)` with every written relationship of that type
+/// * `Err(ChaosError)` on gRPC failure
+pub async fn read_relationships_of_type(
+    client: &PermissionsServiceClient<Channel>,
+    key: &str,
+    zedtoken: &RwLock<Option<ZedToken>>,
+    resource_type: &str,
+) -> Result<Vec<Relationship>, ChaosError> {
+    let request = authorized_request(
+        ReadRelationshipsRequest {
+            consistency: Some(consistency_from_stored(zedtoken)),
+            // An empty resource ID and subject filter make this a wildcard over
+            // the whole resource type.
+            relationship_filter: Some(RelationshipFilter {
+                resource_type: resource_type.to_owned(),
+                optional_resource_id: String::new(),
+                optional_resource_id_prefix: String::new(),
+                optional_relation: String::new(),
+                optional_subject_filter: None,
+            }),
+            optional_limit: 0,
+            optional_cursor: None,
+        },
+        key,
+    )?;
+
+    let mut stream = client
+        .clone()
+        .read_relationships(request)
+        .await
+        .map_err(|_| ChaosError::InternalServerError)?
+        .into_inner();
+
+    let mut relationships = Vec::new();
+    while let Some(response) = stream
+        .message()
+        .await
+        .map_err(|_| ChaosError::InternalServerError)?
+    {
+        if let Some(relationship) = response.relationship {
+            relationships.push(relationship);
+        }
+    }
+
+    Ok(relationships)
+}
+
 /// WARNING: This cannot be undone, so run after Postgres commit
 /// Deletes all relationships for a given resource, where the
 /// relationship is the resource OR the subject.
@@ -612,23 +490,28 @@ pub async fn write_relationships(
 /// idempotent. This does not use the standard queue in [`DBTransaction`]
 /// as it cannot be undone, hence, it is outside [`DBTransaction`].
 ///
+/// The deletion's ZedToken is sent to the token task so the revocation is
+/// visible to later permission checks.
+///
 /// # Arguments
 ///
 /// * `client` - SpiceDB permissions service client
 /// * `key` - Bearer token for SpiceDB authentication
 /// * `resource_type` - SpiceDB object type, such as `chaos/organisation`
 /// * `resource_id` - Chaos ID of the resource
+/// * `token_tx` - Channel used to publish the deletion's ZedToken
 ///
 /// # Returns
 ///
-/// * `Ok(Option<ZedToken>)` if all relationships were deleted, a new ZedToken is returned
+/// * `Ok(())` if all relationships were deleted
 /// * `Err(ChaosError::InternalServerError)` on gRPC failure
 pub async fn delete_all_resource_relationships(
     client: &PermissionsServiceClient<Channel>,
     key: &str,
     resource_type: &str,
     resource_id: i64,
-) -> Result<Option<ZedToken>, ChaosError> {
+    token_tx: &UnboundedSender<ZedToken>,
+) -> Result<(), ChaosError> {
     // Delete all where <resource_type>:<resource_id>#relation@<anything>
     let resource_request = authorized_request(
         DeleteRelationshipsRequest {
@@ -676,15 +559,21 @@ pub async fn delete_all_resource_relationships(
         key,
     )?;
 
-    let response2 = client
+    let response = client
         .clone()
         .delete_relationships(subject_request)
         .await
         .map_err(|_| ChaosError::InternalServerError)?
         .into_inner();
 
-    // Only return newest ZedToken
-    Ok(response2.deleted_at)
+    // The second RPC has the newest revision, so its token supersedes the
+    // first one's. A closed channel means the token task has exited, so the
+    // token is dropped and the boundary stays where it was.
+    if let Some(token) = response.deleted_at {
+        let _ = token_tx.send(token);
+    }
+
+    Ok(())
 }
 
 /// Describes a SpiceDB authorization policy for the [`SpiceDbAuth`] extractor.

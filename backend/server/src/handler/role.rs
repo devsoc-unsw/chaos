@@ -77,6 +77,7 @@ impl RoleHandler {
             &state.spicedb_key,
             spicedb_schema::resource::CAMPAIGN_ROLE,
             id,
+            &state.spicedb_token_tx,
         )
         .await?;
 

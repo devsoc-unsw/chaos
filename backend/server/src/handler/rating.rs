@@ -130,6 +130,7 @@ impl RatingHandler {
             &state.spicedb_key,
             spicedb_schema::resource::RATING_CATEGORY,
             category_id,
+            &state.spicedb_token_tx,
         )
         .await?;
 
@@ -364,6 +365,7 @@ impl RatingHandler {
             &state.spicedb_key,
             spicedb_schema::resource::RATING,
             rating_id,
+            &state.spicedb_token_tx,
         )
         .await?;
 
@@ -374,6 +376,7 @@ impl RatingHandler {
                 &state.spicedb_key,
                 spicedb_schema::resource::CATEGORY_RATING,
                 category_rating.id,
+                &state.spicedb_token_tx,
             )
             .await?;
         }
@@ -405,6 +408,7 @@ impl RatingHandler {
             &state.spicedb_key,
             spicedb_schema::resource::CATEGORY_RATING,
             category_rating_id,
+            &state.spicedb_token_tx,
         )
         .await?;
 
