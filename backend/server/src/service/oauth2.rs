@@ -25,7 +25,7 @@ use std::env;
 /// # Panics
 ///
 /// This function will panic if:
-/// * The `CHAOS_HOSTNAME` environment variable is not set
+/// * The `GOOGLE_REDIRECT_URI` environment variable is not set
 /// * The redirect URL cannot be parsed
 ///
 /// # Example

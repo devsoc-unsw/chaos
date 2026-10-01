@@ -11,11 +11,15 @@ use crate::handler::question::QuestionHandler;
 use crate::handler::rating::RatingHandler;
 use crate::handler::role::RoleHandler;
 use crate::handler::role_status::RoleStatusHandler;
+use crate::handler::sequin::SequinHandler;
 use crate::handler::user::UserHandler;
 use crate::models::email::{ChaosEmail, EmailCredentials};
 use crate::models::error::ChaosError;
 use crate::models::storage::Storage;
 use crate::service::oauth2::build_oauth_client;
+use crate::spicedb::authzed::api::v1::permissions_service_client::PermissionsServiceClient;
+use crate::spicedb::authzed::api::v1::ZedToken;
+use crate::spicedb::check_permission;
 use axum::http::{header, Method, StatusCode};
 use axum::response::IntoResponse;
 use axum::routing::{delete, get, patch, post, put};
@@ -29,6 +33,9 @@ use snowflake::SnowflakeIdGenerator;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 use std::env;
+use std::sync::{Arc, RwLock};
+use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
+use tonic::transport::Channel;
 use tower_http::cors::CorsLayer;
 
 #[derive(Serialize)]
@@ -105,9 +112,68 @@ pub struct AppState {
     pub storage_bucket: Bucket,
     pub is_dev_env: bool,
     pub email_credentials: EmailCredentials,
+    pub spicedb: PermissionsServiceClient<Channel>,
+    pub spicedb_key: String,
+    pub spicedb_zedtoken: Arc<RwLock<Option<ZedToken>>>,
+    pub spicedb_token_tx: UnboundedSender<ZedToken>,
+
+    /// Shared secret Sequin presents as a bearer token on its webhook, from
+    /// `SEQUIN_WEBHOOK_SECRET`. Required, because it gates the fallback that
+    /// repairs SpiceDB writes the request path could not complete.
+    pub sequin_webhook_secret: String,
 }
 
-pub async fn init_app_state() -> AppState {
+impl AppState {
+    /// Checks whether a user holds a permission on a SpiceDB resource, using
+    /// the application's shared SpiceDB client and credentials.
+    ///
+    /// Call this directly in handlers whose resource ID does not come from a
+    /// path parameter, for example when the ID is taken from the request body,
+    /// derived from a slug, or only known after a database lookup. When the
+    /// resource ID is a path parameter, prefer the [`SpiceDbAuth`] extractor.
+    ///
+    /// # Arguments
+    ///
+    /// * `user_id` - Chaos user to authorize
+    /// * `resource_type` - SpiceDB object type, such as `chaos/organisation`
+    /// * `resource_id` - Chaos ID of the resource, sent as the SpiceDB object ID
+    /// * `permission` - SpiceDB permission to check, such as `manage`
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` if the user holds the permission
+    /// * `Err(ChaosError::ForbiddenOperation)` if the user does not
+    /// * `Err(ChaosError::InternalServerError)` if the SpiceDB call fails
+    pub async fn check_permission(
+        &self,
+        user_id: i64,
+        resource_type: &str,
+        resource_id: i64,
+        permission: &str,
+    ) -> Result<(), ChaosError> {
+        check_permission(
+            &self.spicedb,
+            &self.spicedb_key,
+            &self.spicedb_zedtoken,
+            user_id,
+            resource_type,
+            resource_id,
+            permission,
+        )
+        .await
+    }
+}
+
+/// Initialises the shared application state and the ZedToken channel.
+///
+/// # Returns
+///
+/// * `AppState` with the state used by handlers
+/// * `UnboundedReceiver<ZedToken>` for the token task, which is the only
+///   writer of [`AppState::spicedb_zedtoken`]. The receiver is returned
+///   rather than stored so the channel starts unconsumed; write paths send
+///   through [`AppState::spicedb_token_tx`].
+pub async fn init_app_state() -> (AppState, UnboundedReceiver<ZedToken>) {
     // Initialise DB connection
     let db_url = env::var("DATABASE_URL")
         .expect("Error getting DATABASE_URL")
@@ -161,9 +227,28 @@ pub async fn init_app_state() -> AppState {
     // Initialise email credentials
     let email_credentials = ChaosEmail::setup_credentials();
 
+    // Initialise the generated SpiceDB gRPC client
+    let spicedb_endpoint =
+        env::var("SPICEDB_GRPC_ENDPOINT").expect("SPICEDB_GRPC_ENDPOINT must be set");
+    let spicedb_key = env::var("SPICEDB_KEY").expect("SPICEDB_KEY must be set");
+    let spicedb_channel = Channel::from_shared(spicedb_endpoint)
+        .expect("SPICEDB_GRPC_ENDPOINT must be a valid URI")
+        .connect_lazy();
+    let spicedb = PermissionsServiceClient::new(spicedb_channel);
+    let spicedb_zedtoken = Arc::new(RwLock::new(None));
+    let (spicedb_token_tx, spicedb_token_rx) = mpsc::unbounded_channel();
+
+    // Required. `DBTransaction::commit` logs a failed SpiceDB write and returns
+    // Ok, on the assumption that Sequin re-applies the change from Postgres. If
+    // the secret were optional, a deployment could silently have no such
+    // fallback and a failed revocation would leave the permission in place
+    // indefinitely, so treat a missing secret as fatal.
+    let sequin_webhook_secret = env::var("SEQUIN_WEBHOOK_SECRET")
+        .expect("SEQUIN_WEBHOOK_SECRET must be set: it authenticates the Sequin webhook that repairs failed SpiceDB writes");
+
     // Add all data to AppState
 
-    AppState {
+    let state = AppState {
         db: pool,
         ctx,
         oauth2_client,
@@ -175,11 +260,28 @@ pub async fn init_app_state() -> AppState {
         storage_bucket,
         is_dev_env,
         email_credentials,
-    }
+        spicedb,
+        spicedb_key,
+        spicedb_zedtoken,
+        spicedb_token_tx,
+        sequin_webhook_secret,
+    };
+
+    (state, spicedb_token_rx)
 }
 
-pub async fn app() -> Result<(Router, AppState), ChaosError> {
-    let state = init_app_state().await;
+/// Builds the Axum router and the shared application state.
+///
+/// # Returns
+///
+/// * `Router` with every route and the CORS layer applied
+/// * `AppState` for background tasks (the router holds its own clone)
+/// * `UnboundedReceiver<ZedToken>` for the token task, the only writer of
+///   [`AppState::spicedb_zedtoken`]. Hand this to
+///   `spicedb::apply_zedtokens`; if the receiver is dropped, tokens published
+///   by write paths are silently lost.
+pub async fn app() -> Result<(Router, AppState, UnboundedReceiver<ZedToken>), ChaosError> {
+    let (state, spicedb_token_rx) = init_app_state().await;
     let state_clone = state.clone();
 
     let cors = CorsLayer::new()
@@ -437,17 +539,6 @@ pub async fn app() -> Result<(Router, AppState), ChaosError> {
             "/api/v1/application/:application_id/inprogress",
             get(ApplicationHandler::get_in_progress),
         )
-        // Rating routes are handled by RatingHandler, idk why they are back so commented
-        // .route(
-        //     "/api/v1/application/:application_id/rating",
-        //     get(ApplicationHandler::get_rating_by_current_user)
-        //         .post(ApplicationHandler::create_rating)
-        //         .put(ApplicationHandler::update_rating),
-        // )
-        // .route(
-        //     "/api/v1/application/:application_id/ratings",
-        //     get(ApplicationHandler::get_ratings),
-        // )
         .route(
             "/api/v1/application/:application_id/status",
             patch(ApplicationHandler::set_status),
@@ -560,12 +651,21 @@ pub async fn app() -> Result<(Router, AppState), ChaosError> {
         // Invite routes
         // - GET  /api/v1/invite/:code  -> invite details
         // - POST /api/v1/invite/:code  -> accept invite
+        // Sequin CDC sink
+        // - POST /api/v1/sequin/spicedb -> apply a batch of changed rows
         .route(
             "/api/v1/invite/:code",
             get(InviteHandler::get).post(InviteHandler::use_invite),
         )
+        // Sequin's CDC sink, which converges SpiceDB with Postgres. Not
+        // user-facing: it authenticates with a shared secret rather than a
+        // session and is only ever called server-to-server.
+        .route(
+            "/api/v1/sequin/spicedb",
+            post(SequinHandler::spicedb_webhook),
+        )
         .layer(cors)
         .with_state(state);
 
-    Ok((router, state_clone))
+    Ok((router, state_clone, spicedb_token_rx))
 }

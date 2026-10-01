@@ -19,11 +19,11 @@ use std::ops::DerefMut;
 ///
 /// * `user_id` - The ID of the user to check
 /// * `application_id` - The ID of the application
-/// * `pool` - Database connection pool
+/// * `transaction` - Database transaction
 ///
 /// # Returns
 ///
-/// * `Result<(), ChaosError>` - Ok if the user is an admin, Unauthorized error otherwise
+/// * `Result<bool, ChaosError>` - Ok(true) if the user is an admin, Ok(false) otherwise
 pub async fn user_is_application_admin(
     user_id: i64,
     application_id: i64,
@@ -64,11 +64,11 @@ pub async fn user_is_application_admin(
 ///
 /// * `user_id` - The ID of the user to check
 /// * `application_id` - The ID of the application
-/// * `pool` - Database connection pool
+/// * `transaction` - Database transaction
 ///
 /// # Returns
 ///
-/// * `Result<(), ChaosError>` - Ok if the user is the owner, Unauthorized error otherwise
+/// * `Result<bool, ChaosError>` - Ok(true) if the user is the owner, Ok(false) otherwise
 pub async fn user_is_application_owner(
     user_id: i64,
     application_id: i64,
@@ -105,7 +105,7 @@ pub async fn user_is_application_owner(
 /// # Arguments
 ///
 /// * `application_id` - The ID of the application to check
-/// * `pool` - Database connection pool
+/// * `transaction` - Database transaction
 ///
 /// # Returns
 ///

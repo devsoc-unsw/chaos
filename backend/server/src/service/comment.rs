@@ -14,11 +14,11 @@ use std::ops::DerefMut;
 ///
 /// * `user_id` - The ID of the user to check
 /// * `comment_id` - The ID of the comment
-/// * `pool` - Database connection pool
+/// * `transaction` - Database transaction
 ///
 /// # Returns
 ///
-/// * `Result<(), ChaosError>` - Ok if the user is an admin, Unauthorized error otherwise
+/// * `Result<bool, ChaosError>` - Ok(true) if the user is the author, Ok(false) otherwise
 pub async fn user_is_comment_author(
     user_id: i64,
     comment_id: i64,

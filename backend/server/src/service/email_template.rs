@@ -15,7 +15,7 @@ use std::ops::DerefMut;
 ///
 /// * `user_id` - The ID of the user to check
 /// * `template_id` - The ID of the email template
-/// * `pool` - Database connection pool
+/// * `transaction` - Database transaction
 ///
 /// # Returns
 ///

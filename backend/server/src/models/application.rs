@@ -232,13 +232,13 @@ impl Application {
     ///
     /// # Returns
     ///
-    /// * `Result<i64, ChaosError>` - ID of the application or error
+    /// * `Result<(i64, bool), ChaosError>` - ID of the application and whether it was newly created, or error
     pub async fn create_or_get(
         campaign_id: i64,
         user_id: i64,
         snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<i64, ChaosError> {
+    ) -> Result<(i64, bool), ChaosError> {
         let campaign = Campaign::get(campaign_id, transaction).await?;
         if !campaign.published {
             return Err(ChaosError::BadRequest);
@@ -257,7 +257,7 @@ impl Application {
         .await?;
 
         if let Some(application) = application {
-            return Ok(application.id);
+            return Ok((application.id, false));
         }
 
         let id = snowflake_generator.real_time_generate();
@@ -274,7 +274,7 @@ impl Application {
         .execute(transaction.deref_mut())
         .await?;
 
-        Ok(id)
+        Ok((id, true))
     }
 
     /// Checks if an application exists for a given campaign and user.
@@ -389,7 +389,7 @@ impl Application {
                 FROM applications a
                 JOIN users u ON u.id = a.user_id
                 JOIN campaigns c ON c.id = a.campaign_id
-                LEFT JOIN application_ratings ar ON ar.application_id = a.id AND ar.application_id = $2
+                LEFT JOIN application_ratings ar ON ar.application_id = a.id AND ar.rater_id = $2
                 WHERE a.id = $1 AND a.submitted = true
             ",
             id,

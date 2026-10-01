@@ -14,13 +14,32 @@ services:
     environment:
       - NODE_ENV=development
       - DATABASE_URL=postgres://postgres:password@db:5432/chaos
+      # UPDATE: Use the same value as SPICEDB_GRPC_PRESHARED_KEY below.
+      - SPICEDB_GRPC_PRESHARED_KEY=replace-with-a-local-secret
+      - SPICEDB_GRPC_ENDPOINT=http://spicedb:50051
+      - SPICEDB_URL=http://spicedb:8443
+      - SPICEDB_KEY=replace-with-a-local-secret
+      # Shared secret Sequin presents as a bearer token on its webhook. Keep in
+      # sync with the sequin service below.
+      - SEQUIN_WEBHOOK_SECRET=replace-with-a-local-secret
+      # Used by service::reconcile to trigger backfills over Sequin's Management
+      # API. Must match the sequin service's SEQUIN_API_TOKEN.
+      - SEQUIN_API_TOKEN=replace-with-a-local-secret
+      - SEQUIN_URL=http://sequin:7376
+      # Reconciliation is opt-in; leave off in dev unless you want the sweep
+      # walking every table on an interval. RECONCILE_DELETE stays unset here, so
+      # a run reports orphans without removing anything.
+      - RECONCILE_ENABLED=false
     networks:
       - chaos-network
 
     depends_on:
       db:
         condition: service_healthy
-
+      spicedb:
+        # The published SpiceDB image is minimal and does not include a shell or
+        # grpc_health_probe. Its own dependency still waits for migrations.
+        condition: service_started
 
   db:
     image: postgres:17
@@ -28,6 +47,9 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_DB: chaos
+    # Sequin captures changes with logical replication, which needs this set
+    # before the database is initialised.
+    command: ["postgres", "-c", "wal_level=logical"]
     ports:
       - "5432:5432"
     networks:
@@ -40,8 +62,164 @@ services:
       timeout: 5s
       retries: 5
 
+  # SpiceDB uses its own PostgreSQL database so its migrations and tables stay
+  # separate from the Chaos application database above.
+  spicedb-db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      # UPDATE: Change these development credentials if this stack is shared.
+      POSTGRES_USER: spicedb
+      POSTGRES_PASSWORD: spicedb
+      POSTGRES_DB: spicedb
+      POSTGRES_HOST_AUTH_METHOD: md5
+    # OPTIONAL: Remove this port mapping if PostgreSQL only needs to be reached
+    # by containers on chaos-network.
+    ports:
+      - "5434:5432"
+    networks:
+      - chaos-network
+    volumes:
+      - spicedb-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spicedb -d spicedb"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  # Run SpiceDB datastore migrations before starting the API service.
+  spicedb-migrate:
+    # UPDATE: Pin this to a tested release instead of `latest` for reproducible
+    # development environments.
+    image: authzed/spicedb:latest
+    command: datastore migrate head
+    environment:
+      SPICEDB_DATASTORE_ENGINE: postgres
+      # UPDATE: Keep this URI in sync with the spicedb-db credentials above.
+      SPICEDB_DATASTORE_CONN_URI: postgres://spicedb:spicedb@spicedb-db:5432/spicedb?sslmode=disable
+    networks:
+      - chaos-network
+    depends_on:
+      spicedb-db:
+        condition: service_healthy
+    restart: "no"
+
+  spicedb:
+    # UPDATE: Pin this to the same tested release as spicedb-migrate.
+    image: authzed/spicedb:latest
+    command: serve
+    restart: unless-stopped
+    environment:
+      SPICEDB_DATASTORE_ENGINE: postgres
+      # UPDATE: Keep this URI in sync with the spicedb-db credentials above.
+      SPICEDB_DATASTORE_CONN_URI: postgres://spicedb:spicedb@spicedb-db:5432/spicedb?sslmode=disable
+      # UPDATE: Replace this local-only key and keep the dev-container value in
+      # sync. Store it in an env file or secret manager outside local dev.
+      SPICEDB_GRPC_PRESHARED_KEY: replace-with-a-local-secret
+      SPICEDB_HTTP_ENABLED: "true"
+      SPICEDB_LOG_LEVEL: info
+      SPICEDB_LOG_FORMAT: console
+      # No SPICEDB_DATASTORE_BOOTSTRAP_FILES here on purpose. The backend applies
+      # backend/spicedb/schema.yaml itself at boot via spicedb::migrate_schema(),
+      # which is an idempotent upsert of the same file. Bootstrapping as well
+      # would overwrite the schema on every SpiceDB restart, and overwriting a
+      # definition deletes its relationships -- so a `docker compose restart`
+      # would silently drop every relationship Sequin had synced, with no
+      # backfill to restore them (initial_backfill only runs when the sink is
+      # first created).
+      # OPTIONAL: Remove to allow SpiceDB's default telemetry endpoint.
+      SPICEDB_TELEMETRY_ENDPOINT: ""
+    ports:
+      - "50051:50051" # gRPC API
+      - "8443:8443" # HTTP gateway
+      # OPTIONAL: Uncomment when host access to Prometheus metrics is needed.
+      # - "9090:9090"
+    networks:
+      - chaos-network
+    depends_on:
+      spicedb-migrate:
+        condition: service_completed_successfully
+
+  # Sequin keeps its own sink configuration and replication bookkeeping in
+  # Postgres, separate from both the Chaos database above and the SpiceDB one.
+  sequin-db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sequin
+      POSTGRES_PASSWORD: sequin
+      POSTGRES_DB: sequin
+    networks:
+      - chaos-network
+    volumes:
+      - sequin-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sequin -d sequin"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  # Sequin uses Redis to assist change delivery.
+  sequin-redis:
+    image: redis:7
+    restart: unless-stopped
+    networks:
+      - chaos-network
+    volumes:
+      - sequin-redis-data:/data
+
+  # Streams Postgres changes to the backend webhook, which upserts the
+  # corresponding SpiceDB relationships. Everything Sequin needs is declared in
+  # backend/sequin/sequin.yaml, so there is no console setup step.
+  sequin:
+    # Pinned: the declarative config in sequin.yaml depends on keys such as
+    # group_column_names, batch and api_tokens, so an unattended `latest` bump
+    # could break local startup. Bump deliberately.
+    # UPDATE: The rest of this stack still uses `latest`; pin those too.
+    image: sequin/sequin:v0.14.6
+    restart: unless-stopped
+    environment:
+      # Sequin's own state database (the `sequin-db` service above).
+      PG_HOSTNAME: sequin-db
+      PG_PORT: 5432
+      PG_DATABASE: sequin
+      PG_USERNAME: sequin
+      PG_PASSWORD: sequin
+      REDIS_URL: redis://sequin-redis:6379
+      # UPDATE: Replace both of these before exposing Sequin anywhere. They sign
+      # cookies and encrypt sink headers respectively.
+      SECRET_KEY_BASE: wDPLYus0pvD6qJhKJICO4dauYPXfO/Yl782Zjtpew5qRBDp7CZvbWtQmY0eB13If
+      VAULT_KEY: 2Sig69bIpuSm2kv0VQfDekET2qy8qUZGI8v3/h3ASiY=
+      # Applies the declarative config on every start, so the database, slot,
+      # publication and sink are (re)created without touching the console.
+      CONFIG_FILE_PATH: /etc/sequin/sequin.yaml
+      # The backend runs in the dev container, so Sequin posts to it by service
+      # name. Must match the dev container's SEQUIN_WEBHOOK_SECRET.
+      SEQUIN_WEBHOOK_URL: http://dev-container:8080/api/v1/sequin/spicedb
+      SEQUIN_WEBHOOK_SECRET: replace-with-a-local-secret
+      # Interpolated into sequin.yaml as the `chaos-reconcile` API token. The
+      # backend also needs this value to call Sequin's Management API, so it is
+      # set on the dev container too; keep the two in sync.
+      SEQUIN_API_TOKEN: replace-with-a-local-secret
+    volumes:
+      - ./backend/sequin/sequin.yaml:/etc/sequin/sequin.yaml:ro
+    ports:
+      - "7376:7376" # console
+    networks:
+      - chaos-network
+    depends_on:
+      db:
+        condition: service_healthy
+      sequin-db:
+        condition: service_healthy
+      sequin-redis:
+        condition: service_started
+
 volumes:
   chaos-postgres-data:
+  spicedb-postgres-data:
+  sequin-postgres-data:
+  sequin-redis-data:
 
 networks:
   chaos-network:
