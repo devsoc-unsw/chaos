@@ -546,6 +546,7 @@ impl OrganisationHandler {
             auth.user_id,
             request_body.email,
             state.email_credentials.clone(),
+            &state.frontend_url,
             state.is_dev_env,
             &mut state.snowflake_generator,
             &mut transaction.tx,

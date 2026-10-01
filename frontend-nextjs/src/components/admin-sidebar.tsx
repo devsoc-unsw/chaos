@@ -20,6 +20,7 @@ import { getAllOrganisations, OrganisationUserRole } from "@/models/organisation
 import { useQuery } from "@tanstack/react-query"
 import { redirect, useParams, usePathname, useRouter } from "next/navigation"
 import { APP_VERSION } from "@/lib/const"
+import { API_BASE_URL } from "@/lib/api"
 
 interface AdminSidebarProps {
   userRole: OrganisationUserRole;
@@ -140,7 +141,7 @@ export function AdminSidebar({ userRole, dict }: AdminSidebarProps) {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <a href={`${process.env.NEXT_PUBLIC_API_BASE_URL || "https://chaos-api.devsoc.app"}/auth/logout`}>
+                  <a href={`${API_BASE_URL}/auth/logout`}>
                     <LogOut />
                     <span>{dict.common.logout}</span>
                   </a>

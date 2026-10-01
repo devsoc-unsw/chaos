@@ -128,12 +128,8 @@ pub async fn google_callback(
         &state.jwt_header,
     );
 
-    // Create a cookie with the token
-    let domain = if state.is_dev_env {
-        "localhost"
-    } else {
-        "devsoc.app"
-    };
+    // Create a cookie with the token, scoped to the deployment's cookie domain
+    // and only sent over HTTPS when the frontend itself is served over HTTPS.
 
     //let cookie = Cookie::build(("auth_token", token))
     let cookie = Cookie::build(("auth_token", token))
@@ -141,8 +137,8 @@ pub async fn google_callback(
         .expires(Expiration::DateTime(
             OffsetDateTime::now_utc() + time::Duration::days(5),
         )) // Set an expiration time of 5 days, TODO: read from env?
-        .secure(!state.is_dev_env) // Send only over HTTPS, comment out for testing
-        .domain(domain)
+        .secure(state.cookie_secure)
+        .domain(state.cookie_domain.clone())
         .path("/"); // Available for all paths
 
     // let cn_cookie = Cookie::build(("auth_token", token))
@@ -152,12 +148,6 @@ pub async fn google_callback(
     //     .domain("devsoc.cn")
     //     .path("/");
 
-    let redirect_root = if state.is_dev_env {
-        "http://localhost:3000"
-    } else {
-        "https://chaos.devsoc.app"
-    };
-
     let possible_redirect = sqlx::query!(
         "DELETE FROM redirect_tokens WHERE token = $1 RETURNING redirect",
         query.state
@@ -165,6 +155,7 @@ pub async fn google_callback(
     .fetch_optional(&state.db)
     .await?;
 
+    let redirect_root = &state.frontend_url;
     let redirect_url = match possible_redirect {
         Some(redirect) => format!("{redirect_root}{}", redirect.redirect),
         None => format!("{redirect_root}/dashboard"),
@@ -191,19 +182,13 @@ pub async fn logout(
     State(state): State<AppState>,
     jar: CookieJar,
 ) -> Result<impl IntoResponse, ChaosError> {
-    let domain = if state.is_dev_env {
-        "localhost"
-    } else {
-        "devsoc.app"
-    };
-
     let empty_cookie = Cookie::build(("auth_token", ""))
         .http_only(true) // Prevent JavaScript access
         .expires(Expiration::DateTime(
             OffsetDateTime::now_utc() + time::Duration::days(5),
         )) // Set an expiration time of 5 days, TODO: read from env?
-        .secure(!state.is_dev_env) // Send only over HTTPS, comment out for testing
-        .domain(domain)
+        .secure(state.cookie_secure)
+        .domain(state.cookie_domain.clone())
         .path("/");
 
     // let empty_cn_cookie= Cookie::build(("auth_token", ""))
@@ -213,14 +198,7 @@ pub async fn logout(
     //     .domain("devsoc.cn")
     //     .path("/");
 
-    let redirect = if state.is_dev_env {
-        "http://localhost:3000"
-    } else {
-        "https://chaos.devsoc.app"
-    };
-
-    //Ok((jar.remove(empty_cookie).remove(empty_cn_cookie), Redirect::to(redirect)))
-    Ok((jar.remove(empty_cookie), Redirect::to(redirect)))
+    Ok((jar.remove(empty_cookie), Redirect::to(&state.frontend_url)))
 }
 
 pub struct DevLoginHandler;
@@ -263,10 +241,10 @@ impl DevLoginHandler {
             .path("/"); // Available for all paths
 
         // Redirect to the frontend dashboard after successful authentication
-        let redirect_url = "http://localhost:3000/dashboard";
+        let redirect_url = format!("{}/dashboard", state.frontend_url);
 
         // Add the cookie and redirect
-        Ok((jar.add(cookie), Redirect::to(redirect_url)))
+        Ok((jar.add(cookie), Redirect::to(&redirect_url)))
     }
 
     /// Dev-only login as the org admin user.
@@ -307,10 +285,10 @@ impl DevLoginHandler {
             .path("/"); // Available for all paths
 
         // Redirect to the frontend dashboard after successful authentication
-        let redirect_url = "http://localhost:3000/dashboard";
+        let redirect_url = format!("{}/dashboard", state.frontend_url);
 
         // Add the cookie and redirect
-        Ok((jar.add(cookie), Redirect::to(redirect_url)))
+        Ok((jar.add(cookie), Redirect::to(&redirect_url)))
     }
 
     /// Dev-only login as a regular user.
@@ -351,9 +329,9 @@ impl DevLoginHandler {
             .path("/"); // Available for all paths
 
         // Redirect to the frontend dashboard after successful authentication
-        let redirect_url = "http://localhost:3000/dashboard";
+        let redirect_url = format!("{}/dashboard", state.frontend_url);
 
         // Add the cookie and redirect
-        Ok((jar.add(cookie), Redirect::to(redirect_url)))
+        Ok((jar.add(cookie), Redirect::to(&redirect_url)))
     }
 }
