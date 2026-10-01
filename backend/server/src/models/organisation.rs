@@ -784,11 +784,15 @@ impl Organisation {
 
     /// Returns either an invite code (String) or the id (i64) of an existing
     /// user that matched the email, who was added to the organisation.
+    ///
+    /// `frontend_url` is the deployment's frontend base URL, used to build the
+    /// accept-invite link emailed to the invitee.
     pub async fn invite_user(
         organisation_id: i64,
         inviting_user_id: i64,
         email: String,
         email_credentials: EmailCredentials,
+        frontend_url: &str,
         is_dev_env: bool,
         snowflake_generator: &mut SnowflakeIdGenerator,
         transaction: &mut Transaction<'_, Postgres>,
@@ -884,7 +888,7 @@ impl Organisation {
                 None,
                 email,
                 "You have been invited to join an organisation on Chaos".to_string(),
-                format!("You have been invited to join an organisation on Chaos. Please use the following link to accept the invite: https://chaos.devsoc.app/dashboard/invite/{code}").to_string(),
+                format!("You have been invited to join an organisation on Chaos. Please use the following link to accept the invite: {frontend_url}/dashboard/invite/{code}").to_string(),
                 email_credentials
             )
             .await?;

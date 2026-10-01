@@ -111,6 +111,25 @@ pub struct AppState {
     pub snowflake_generator: SnowflakeIdGenerator,
     pub storage_bucket: Bucket,
     pub is_dev_env: bool,
+
+    /// Public base URL of the frontend, from `FRONTEND_URL`, for example
+    /// `http://localhost:3000`. Stored without a trailing slash so callers can
+    /// format paths directly as `format!("{}/dashboard", frontend_url)`.
+    ///
+    /// This is the single source of truth for where users are sent after
+    /// authentication and for links in emails, so no hostname is hardcoded.
+    pub frontend_url: String,
+
+    /// Domain the auth cookie is scoped to, from `COOKIE_DOMAIN`, for example
+    /// `localhost`. Kept separate from [`AppState::frontend_url`] because a
+    /// cookie domain carries no scheme and must cover both the API and the
+    /// frontend.
+    pub cookie_domain: String,
+
+    /// Whether the auth cookie may only be sent over HTTPS. Derived from the
+    /// scheme of [`AppState::frontend_url`] so the two cannot disagree.
+    pub cookie_secure: bool,
+
     pub email_credentials: EmailCredentials,
     pub spicedb: PermissionsServiceClient<Channel>,
     pub spicedb_key: String,
@@ -218,6 +237,20 @@ pub async fn init_app_state() -> (AppState, UnboundedReceiver<ZedToken>) {
         is_dev_env = true;
     }
 
+    // Where users land after authenticating, and the origin of every link in an
+    // email. Trailing slashes are stripped so callers can append paths directly.
+    let frontend_url = env::var("FRONTEND_URL")
+        .expect("FRONTEND_URL must be set: it is the post-authentication redirect target")
+        .trim_end_matches('/')
+        .to_string();
+
+    // The scheme decides whether the auth cookie may be sent over plain HTTP, so
+    // the cookie is never more permissive than the frontend it belongs to.
+    let cookie_secure = frontend_url.starts_with("https://");
+
+    let cookie_domain = env::var("COOKIE_DOMAIN")
+        .expect("COOKIE_DOMAIN must be set: it is the domain the auth cookie is scoped to");
+
     // Initialise Snowflake Generator
     let snowflake_generator = SnowflakeIdGenerator::new(1, 1);
 
@@ -259,6 +292,9 @@ pub async fn init_app_state() -> (AppState, UnboundedReceiver<ZedToken>) {
         snowflake_generator,
         storage_bucket,
         is_dev_env,
+        frontend_url,
+        cookie_domain,
+        cookie_secure,
         email_credentials,
         spicedb,
         spicedb_key,
@@ -284,6 +320,20 @@ pub async fn app() -> Result<(Router, AppState, UnboundedReceiver<ZedToken>), Ch
     let (state, spicedb_token_rx) = init_app_state().await;
     let state_clone = state.clone();
 
+    // Comma-separated so each deployment lists only its own frontend origins,
+    // rather than every environment's hostnames being compiled in.
+    let allowed_origins = env::var("ALLOWED_ORIGINS")
+        .expect("ALLOWED_ORIGINS must be set: comma-separated frontend origins allowed to call this API")
+        .split(',')
+        .map(str::trim)
+        .filter(|origin| !origin.is_empty())
+        .map(|origin| {
+            origin
+                .parse()
+                .expect("ALLOWED_ORIGINS entries must be valid origins, e.g. http://localhost:3000")
+        })
+        .collect::<Vec<_>>();
+
     let cors = CorsLayer::new()
         .allow_methods([
             Method::GET,
@@ -299,16 +349,7 @@ pub async fn app() -> Result<(Router, AppState, UnboundedReceiver<ZedToken>), Ch
             header::CONTENT_TYPE,
         ])
         .allow_credentials(true)
-        .allow_origin([
-            "http://localhost".parse().unwrap(),
-            "http://localhost:3000".parse().unwrap(),
-            "https://chaos.devsoc.app".parse().unwrap(),
-            "http://chaos.devsoc.app".parse().unwrap(),
-            "https://chaos.devsoc.cn".parse().unwrap(),
-            "http://chaos.devsoc.cn".parse().unwrap(),
-            "https://chaosstaging.devsoc.app".parse().unwrap(),
-            "http://chaosstaging.devsoc.app".parse().unwrap(),
-        ]);
+        .allow_origin(allowed_origins);
 
     let router = Router::new()
         .route("/", get(|| async { "Join DevSoc! https://devsoc.app/" }))
