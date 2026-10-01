@@ -329,6 +329,7 @@ pub async fn request_backfill(state: &AppState) -> Result<(), ChaosError> {
         .ctx
         .post(format!("{base}/api/sinks/{SINK_NAME}/backfills"))
         .bearer_auth(token)
+        .timeout(Duration::from_secs(60))
         .send()
         .await?;
 
