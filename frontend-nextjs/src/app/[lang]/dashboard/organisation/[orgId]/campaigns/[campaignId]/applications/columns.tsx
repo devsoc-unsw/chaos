@@ -3,7 +3,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import {
   ApplicationRatingSummary,
   ApplicationStatus,
@@ -17,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { OfferStatus } from "@/models/offer";
 
