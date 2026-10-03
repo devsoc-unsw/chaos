@@ -6,13 +6,13 @@ use crate::models::app::{AppMessage, AppState};
 use crate::models::auth::{
     ApplicationReviewerGivenApplicationId, CommentAuthorGivenApplicationAndCommentId,
 };
-use crate::models::comment_last_read::{CommentLastRead, UnreadCommentCount};
 use crate::models::comment::{Comment, NewComment, UpdateComment};
+use crate::models::comment_last_read::{CommentLastRead, UnreadCommentCount};
 use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
-use chrono::Utc;
 use axum::extract::{Json, Path, State};
 use axum::response::IntoResponse;
+use chrono::Utc;
 
 /// Handler for comment-related HTTP requests.
 pub struct CommentHandler;
@@ -157,7 +157,9 @@ impl CommentHandler {
 
         transaction.tx.commit().await?;
 
-        Ok(AppMessage::OkMessage("Successfully updated comment last read"))
+        Ok(AppMessage::OkMessage(
+            "Successfully updated comment last read",
+        ))
     }
 
     /// Marks all comments on an application as read for the authenticated user.
@@ -186,7 +188,9 @@ impl CommentHandler {
 
         transaction.tx.commit().await?;
 
-        Ok(AppMessage::OkMessage("Successfully marked all comments read"))
+        Ok(AppMessage::OkMessage(
+            "Successfully marked all comments read",
+        ))
     }
 
     /// Gets the number of unread comments on an application for the authenticated user.
