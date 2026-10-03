@@ -132,10 +132,8 @@ function CommentItem({
 
 export default function ApplicationDiscussionPanel({
   applicationId,
-  onClose,
 }: {
   applicationId: string;
-  onClose: () => void;
 }) {
   const queryClient = useQueryClient();
   const [text, setText] = useState("");

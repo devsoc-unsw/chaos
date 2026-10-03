@@ -33,7 +33,7 @@ interface ApplicationSummaryDataTableAllProp<TData, TValue> {
   filteredRoleId: string | null;
 }
 
-export function ApplicationSummaryDataTableAll<TData, TValue>({
+export function ApplicationSummaryDataTableAll<TValue>({
   columns,
   data,
   dict,

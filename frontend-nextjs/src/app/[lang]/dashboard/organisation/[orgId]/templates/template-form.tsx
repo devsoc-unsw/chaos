@@ -204,8 +204,8 @@ export default function TemplateForm({
                 when your emails are generated.
               </p>
               <p>
-                Please do not add any variables for emails which you won't have
-                data for (e.g adding an offer_link for rejection templates)
+                Please do not add any variables for emails which you won&apos;t
+                have data for (e.g adding an offer_link for rejection templates)
               </p>
             </TooltipContent>
           </Tooltip>

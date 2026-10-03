@@ -2,7 +2,7 @@ import { apiRequest } from "@/lib";
 import { UserDetails } from "./user";
 import { AppMessage } from "./app";
 import { RatingDetails } from "./rating";
-import { OfferDetails, OfferStatus } from "./offer";
+import { OfferStatus } from "./offer";
 
 export interface ApplicationDetails {
   id: string;

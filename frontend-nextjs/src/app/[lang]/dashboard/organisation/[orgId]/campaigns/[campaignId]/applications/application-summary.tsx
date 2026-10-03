@@ -11,12 +11,11 @@ import {
   RoleStatus,
   getApplicationRoleStatusesBatch,
   getApplicationRoleStatuses,
-  updateApplicationStatus,
 } from "@/models/application";
 import { getRatingCategories, RatingDetails } from "@/models/rating";
 import { getCampaign, getCampaignRoles } from "@/models/campaign";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Plus, X } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import Link from "next/link";
 import { getColumns } from "./columns";
 import { TableCell, TableRow } from "@/components/ui/table";
@@ -244,7 +243,7 @@ export default function ApplicationSummary({
       // Track that this item is being mutated (just for UI state, no cache updates)
       setMutatingItem({ appId: applicationId, roleId: campaignRoleId, status });
     },
-    onError: (_err, _vars, context) => {
+    onError: () => {
       // Clear the mutating item state
       setMutatingItem(null);
     },

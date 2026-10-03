@@ -33,22 +33,6 @@ const PALETTE = [
   "bg-purple-100 text-purple-800",
 ];
 
-function ApplicantLinkCell({ app }: { app: any }) {
-  const pathname = usePathname();
-  const base = pathname.endsWith("/applications")
-    ? pathname
-    : `${pathname}/applications`;
-
-  return (
-    <Link
-      href={`${base}/${app.application_id}`}
-      className="text-primary hover:underline"
-    >
-      {app.user_name}
-    </Link>
-  );
-}
-
 export function getColumns(
   dict: any,
   roleIdsToNames: Record<string, string>,

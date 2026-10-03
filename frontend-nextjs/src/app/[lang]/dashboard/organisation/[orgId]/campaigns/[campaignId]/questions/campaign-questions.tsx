@@ -510,7 +510,6 @@ function QuestionEditor({
             key={question.id}
             question={question}
             currentRole={roleId}
-            possibleRole={possibleRole}
             handleQuestionUpdate={handleQuestionUpdate}
             dict={dict}
           />
@@ -735,7 +734,7 @@ function MultiOptionQuestionCard({
                 ref={provided.innerRef}
                 className="flex flex-col"
               >
-                {options.map((option, index) => (
+                {options.map((option) => (
                   <Draggable
                     key={option.id}
                     draggableId={option.id}
@@ -819,13 +818,11 @@ function OptionDecorator({ questionType }: { questionType: string }) {
 function ShortAnswerQuestionCard({
   question,
   currentRole,
-  possibleRole,
   handleQuestionUpdate,
   dict,
 }: {
   question?: Question;
   currentRole: string;
-  possibleRole?: RoleDetails;
   handleQuestionUpdate: (
     action: "update" | "delete",
     question: Question,

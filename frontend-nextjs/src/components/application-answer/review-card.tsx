@@ -93,7 +93,7 @@ export default function ReviewCard({
           })
           .join(", ");
 
-      case "Ranking":
+      case "Ranking": {
         // Unanswered ranking is the string "No Answer" from processAnswerForDisplay
         if (
           !qa.answer ||
@@ -130,6 +130,7 @@ export default function ReviewCard({
         });
 
         return ranked.join(", ");
+      }
 
       default:
         return String(qa.answer);

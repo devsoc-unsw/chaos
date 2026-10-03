@@ -59,7 +59,7 @@ export function PublishCampaignDialog({
           <AlertDialogTitle>Publish campaign?</AlertDialogTitle>
           <AlertDialogDescription>
             Publishing this campaign is final and cannot be undone. You will not
-            be able to delete this campaign or edit any of it's details
+            be able to delete this campaign or edit any of its details
             including, but not limited to, roles, questions, rating categories,
             and attachments. Please ensure all details are correct and final
             before publishing.

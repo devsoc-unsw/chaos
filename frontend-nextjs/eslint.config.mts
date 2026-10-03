@@ -27,6 +27,15 @@ export default defineConfig([
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
       "react/prop-types": "off",
+      // A leading `_` marks a name as intentionally unused.
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
     },
     settings: {
       react: {

@@ -275,10 +275,7 @@ export function ApplicationPanel({
               <X className="w-4 h-4" />
             </DrawerClose>
           </DrawerHeader>
-          <ApplicationDiscussionPanel
-            applicationId={app.id}
-            onClose={() => setDiscussionOpen(false)}
-          />
+          <ApplicationDiscussionPanel applicationId={app.id} />
         </DrawerContent>
       </Drawer>
     </div>

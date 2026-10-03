@@ -9,9 +9,7 @@ import {
 } from "@/models/campaign";
 import { Button } from "@/components/ui/button";
 import {
-  Copy,
   SquarePen,
-  Trash,
   FormIcon,
   FileText,
   Menu,
@@ -144,9 +142,7 @@ export default function CampaignDetails({
     return counts;
   }, [applications, roleStatuses, offers]);
 
-  const [hoveredDeleteIndex, setHoveredDeleteIndex] = useState<number | null>(
-    null,
-  );
+  const [hoveredDeleteIndex] = useState<number | null>(null);
   const [descriptionHtmlState, setDescriptionHtmlState] = useState<string>("");
 
   const handlePublish = async () => {

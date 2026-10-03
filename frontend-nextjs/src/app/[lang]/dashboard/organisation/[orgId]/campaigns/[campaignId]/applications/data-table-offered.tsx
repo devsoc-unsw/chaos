@@ -2,7 +2,7 @@ import { ApplicationSummaryDataTable } from "./data-table";
 import { ColumnDef, ColumnFiltersState, Row } from "@tanstack/react-table";
 import { Dispatch, SetStateAction } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getOffersByCampaign, OfferDetails } from "@/models/offer";
+import { getOffersByCampaign } from "@/models/offer";
 import { SendEmailsApplicant } from "./send-email-modal";
 import { ApplicationRatingSummary } from "@/models/application";
 
@@ -21,7 +21,7 @@ interface ApplicationSummaryDataTableOfferedProp<TData, TValue> {
   roleIdsToNames: Record<string, string>;
 }
 
-export function ApplicationSummaryDataTableOffered<TData, TValue>({
+export function ApplicationSummaryDataTableOffered<TValue>({
   columns,
   data,
   dict,
