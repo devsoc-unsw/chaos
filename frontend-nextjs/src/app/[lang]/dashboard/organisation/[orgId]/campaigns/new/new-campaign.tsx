@@ -14,112 +14,167 @@ import ImageUpload from "@/components/ui/image-upload";
 import { DatePicker } from "@/components/ui/date-picker";
 import { createProperSlug } from "@/models/slug";
 import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger,
-} from "@/components/ui/tooltip"
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { uploadFile } from "@/models/file";
 import { createCategory } from "@/models/rating";
 import SlugInput from "@/components/slug-input";
 import { toast } from "sonner";
 
-export default function CampaignNewForm({ orgId, dict }: { orgId: string, dict: any }) {
-    const queryClient = useQueryClient();
+export default function CampaignNewForm({
+  orgId,
+  dict,
+}: {
+  orgId: string;
+  dict: any;
+}) {
+  const queryClient = useQueryClient();
 
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [suggestedSlug, setSuggestedSlug] = useState("");
+  const [slug, setSlug] = useState("");
+  const [slugAvailable, setSlugAvailable] = useState(true);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
-    const [name, setName] = useState("");
-    const [description, setDescription] = useState("");
-    const [suggestedSlug, setSuggestedSlug] = useState("");
-    const [slug, setSlug] = useState("");
-    const [slugAvailable, setSlugAvailable] = useState(true);
-    const [startDate, setStartDate] = useState("");
-    const [endDate, setEndDate] = useState("");
-    const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
 
-    const [saving, setSaving] = useState(false);
-
-    const submitData = async () => {
-        if (!slugAvailable || !selectedImage) {
-            return;
-        }
-
-        if (startDate >= endDate) {
-            toast.error(dict.dashboard.campaigns.start_date_before_end_date);
-            return;
-        }
-
-        // Prefer the edited slug; fall back to the autofilled suggestion from the name.
-        const usedSlug = (slug || suggestedSlug || createProperSlug(name)).trim();
-
-        setSaving(true);
-        const res = await createCampaign(name, description, startDate, endDate, orgId, usedSlug);
-        const campaignId = res.id;
-        const bannerUpdate = await setCampaignCoverImage(campaignId);
-        
-        await uploadFile(bannerUpdate.upload_url, selectedImage);
-
-        await queryClient.invalidateQueries({ queryKey: [`${orgId}-campaigns`] });
-        await createCategory('general', campaignId);
-        setSaving(false);
-        redirect(`/dashboard/organisation/${orgId}/campaigns/${campaignId}`);
+  const submitData = async () => {
+    if (!slugAvailable || !selectedImage) {
+      return;
     }
 
-    const handleNameChange = (nextName: string) => {
-        setName(nextName);
-        const nextSlug = createProperSlug(nextName);
-        setSuggestedSlug((prevSuggested) => {
-            // Only keep overwriting slug while it still matches the previous autofill.
-            setSlug((prevSlug) =>
-                !prevSlug || prevSlug === prevSuggested ? nextSlug : prevSlug
-            );
-            return nextSlug;
-        });
+    if (startDate >= endDate) {
+      toast.error(dict.dashboard.campaigns.start_date_before_end_date);
+      return;
     }
 
-    return (
-        <div className="flex flex-col gap-3">
-            <div className="flex justify-between items-center">
-                <div>
-                    <Link href={`/dashboard/organisation/${orgId}/campaigns`}>
-                        <div className="flex items-center gap-1">
-                            <ArrowLeft className="w-4 h-4" />
-                            {dict.common.back}
-                        </div>
-                    </Link>
-                    <h1 className="text-2xl font-bold">{dict.dashboard.campaigns.edit_campaign}</h1>
-                </div>
+    // Prefer the edited slug; fall back to the autofilled suggestion from the name.
+    const usedSlug = (slug || suggestedSlug || createProperSlug(name)).trim();
+
+    setSaving(true);
+    const res = await createCampaign(
+      name,
+      description,
+      startDate,
+      endDate,
+      orgId,
+      usedSlug,
+    );
+    const campaignId = res.id;
+    const bannerUpdate = await setCampaignCoverImage(campaignId);
+
+    await uploadFile(bannerUpdate.upload_url, selectedImage);
+
+    await queryClient.invalidateQueries({ queryKey: [`${orgId}-campaigns`] });
+    await createCategory("general", campaignId);
+    setSaving(false);
+    redirect(`/dashboard/organisation/${orgId}/campaigns/${campaignId}`);
+  };
+
+  const handleNameChange = (nextName: string) => {
+    setName(nextName);
+    const nextSlug = createProperSlug(nextName);
+    setSuggestedSlug((prevSuggested) => {
+      // Only keep overwriting slug while it still matches the previous autofill.
+      setSlug((prevSlug) =>
+        !prevSlug || prevSlug === prevSuggested ? nextSlug : prevSlug,
+      );
+      return nextSlug;
+    });
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex justify-between items-center">
+        <div>
+          <Link href={`/dashboard/organisation/${orgId}/campaigns`}>
+            <div className="flex items-center gap-1">
+              <ArrowLeft className="w-4 h-4" />
+              {dict.common.back}
             </div>
-            <div className="flex flex-col gap-3">
-                <ImageUpload selectedImage={selectedImage} onImageChange={setSelectedImage} />
-                <div className="flex flex-col gap-1">
-                    <Label>{dict.common.name}</Label>
-                    <Input className="max-w-[300px]" type="text" value={name} onChange={(e) => handleNameChange(e.target.value)} />
-                </div>
-                <div className="flex flex-col gap-1">
-                    <div className="flex gap-1">
-                        <Label>{dict.common.slug}</Label>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <InfoIcon className="w-4 h-4" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>{dict.dashboard.slug_tooltip}</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </div>
-                    <SlugInput orgId={orgId} name={name} value={slug} currentSlug={suggestedSlug} onChange={(value) => setSlug(value)} onBlur={() => { }} updateSlugAvailable={setSlugAvailable} dict={dict} />
-                </div>
-                <div className="flex flex-col gap-1">
-                    <Label>{dict.common.description}</Label>
-                    <Textarea className="max-w-2xl min-h-[300px]" value={description} onChange={(e) => setDescription(e.target.value)} />
-                </div>
-                <DatePicker label={dict.common.starts_at} value={startDate} onChange={(value) => setStartDate(value)} />
-                <DatePicker label={dict.common.ends_at} value={endDate} onChange={(value) => setEndDate(value)} />
-                <div>
-                    <Button disabled={!name || !selectedImage || !startDate || !endDate || saving || !slugAvailable || !(slug || suggestedSlug)} onClick={async () => await submitData()}>{dict.dashboard.actions.save}</Button>
-                </div>
-            </div>
+          </Link>
+          <h1 className="text-2xl font-bold">
+            {dict.dashboard.campaigns.edit_campaign}
+          </h1>
         </div>
-    )
-
+      </div>
+      <div className="flex flex-col gap-3">
+        <ImageUpload
+          selectedImage={selectedImage}
+          onImageChange={setSelectedImage}
+        />
+        <div className="flex flex-col gap-1">
+          <Label>{dict.common.name}</Label>
+          <Input
+            className="max-w-[300px]"
+            type="text"
+            value={name}
+            onChange={(e) => handleNameChange(e.target.value)}
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <div className="flex gap-1">
+            <Label>{dict.common.slug}</Label>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <InfoIcon className="w-4 h-4" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{dict.dashboard.slug_tooltip}</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <SlugInput
+            orgId={orgId}
+            name={name}
+            value={slug}
+            currentSlug={suggestedSlug}
+            onChange={(value) => setSlug(value)}
+            onBlur={() => {}}
+            updateSlugAvailable={setSlugAvailable}
+            dict={dict}
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label>{dict.common.description}</Label>
+          <Textarea
+            className="max-w-2xl min-h-[300px]"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </div>
+        <DatePicker
+          label={dict.common.starts_at}
+          value={startDate}
+          onChange={(value) => setStartDate(value)}
+        />
+        <DatePicker
+          label={dict.common.ends_at}
+          value={endDate}
+          onChange={(value) => setEndDate(value)}
+        />
+        <div>
+          <Button
+            disabled={
+              !name ||
+              !selectedImage ||
+              !startDate ||
+              !endDate ||
+              saving ||
+              !slugAvailable ||
+              !(slug || suggestedSlug)
+            }
+            onClick={async () => await submitData()}
+          >
+            {dict.dashboard.actions.save}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
 }

@@ -22,19 +22,21 @@ async function ApplicationPage({
 
   await queryClient.prefetchQuery({
     queryKey: [`application-${applicationId}`],
-    queryFn: () => getInProgressApplication(applicationId)
-  })
+    queryFn: () => getInProgressApplication(applicationId),
+  });
 
-  const application: ApplicationDetails | undefined = queryClient.getQueryData([`application-${applicationId}`]);
+  const application: ApplicationDetails | undefined = queryClient.getQueryData([
+    `application-${applicationId}`,
+  ]);
 
-    if (!application) {
-      redirect(`/campaign/apply/${campaignId}/finish`);
-    }
+  if (!application) {
+    redirect(`/campaign/apply/${campaignId}/finish`);
+  }
 
-    await queryClient.prefetchQuery({
-        queryKey: [`${applicationId}-questions-answers`],
-        queryFn: () => getApplicationQuestionsAnswers(applicationId),
-    })
+  await queryClient.prefetchQuery({
+    queryKey: [`${applicationId}-questions-answers`],
+    queryFn: () => getApplicationQuestionsAnswers(applicationId),
+  });
 
   await queryClient.prefetchQuery({
     queryKey: [`${campaignId}-campaign-info`],
@@ -54,7 +56,7 @@ async function ApplicationPage({
         dict={dict}
       />
     </HydrationBoundary>
-  )
+  );
 }
 
-export default ApplicationPage
+export default ApplicationPage;

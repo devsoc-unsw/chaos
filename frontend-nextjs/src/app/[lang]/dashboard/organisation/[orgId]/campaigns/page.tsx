@@ -2,12 +2,16 @@ import {
   dehydrate,
   HydrationBoundary,
   QueryClient,
-} from '@tanstack/react-query';
-import Campaigns from './campaigns';
-import { getOrganisationCampaigns } from '@/models/organisation';
-import { getDictionary } from '@/app/[lang]/dictionaries';
+} from "@tanstack/react-query";
+import Campaigns from "./campaigns";
+import { getOrganisationCampaigns } from "@/models/organisation";
+import { getDictionary } from "@/app/[lang]/dictionaries";
 
-export default async function CampaignsPage({ params }: { params: Promise<{ orgId: string, lang: string }> }) {
+export default async function CampaignsPage({
+  params,
+}: {
+  params: Promise<{ orgId: string; lang: string }>;
+}) {
   const { orgId, lang } = await params;
   const dict = await getDictionary(lang);
   const queryClient = new QueryClient();

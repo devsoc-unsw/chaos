@@ -1,39 +1,56 @@
 import { apiRequest } from "@/lib";
 
 export interface Answer {
-    id: string,
-    question_id: string,
-    answer_type: AnswerType,
-    answer_data: AnswerData,
-    created_at: string,
-    updated_at: string,
+  id: string;
+  question_id: string;
+  answer_type: AnswerType;
+  answer_data: AnswerData;
+  created_at: string;
+  updated_at: string;
 }
 
-export type AnswerType = "ShortAnswer" | "MultiChoice" | "MultiSelect" | "DropDown" | "Ranking";
+export type AnswerType =
+  | "ShortAnswer"
+  | "MultiChoice"
+  | "MultiSelect"
+  | "DropDown"
+  | "Ranking";
 
 export type AnswerData = string | string[];
 
-export async function updateApplicationRoles(applicationId: string, roles: unknown): Promise<void> {
+export async function updateApplicationRoles(
+  applicationId: string,
+  roles: unknown,
+): Promise<void> {
   return await apiRequest<void>(`/api/v1/application/${applicationId}/roles`, {
     method: "PATCH",
     body: {
-      roles
+      roles,
     },
   });
 }
 
-export async function updateAnswer(answerId: string, body: unknown): Promise<void> {
+export async function updateAnswer(
+  answerId: string,
+  body: unknown,
+): Promise<void> {
   return await apiRequest<void>(`/api/v1/answer/${answerId}`, {
     method: "PATCH",
     body,
   });
 }
 
-export function createAnswer(applicationId: string, body: unknown): Promise<{ id: string | number }> {
-  return apiRequest<{ id: string | number }>(`/api/v1/application/${applicationId}/answer`, {
-    method: "POST",
-    body,
-  });
+export function createAnswer(
+  applicationId: string,
+  body: unknown,
+): Promise<{ id: string | number }> {
+  return apiRequest<{ id: string | number }>(
+    `/api/v1/application/${applicationId}/answer`,
+    {
+      method: "POST",
+      body,
+    },
+  );
 }
 
 export async function deleteAnswer(answerId: string): Promise<void> {

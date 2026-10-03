@@ -1,77 +1,101 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { ChevronDownIcon } from "lucide-react"
+import * as React from "react";
+import { ChevronDownIcon } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
+} from "@/components/ui/popover";
 
 interface DatePickerProps {
-  value?: string
-  onChange?: (value: string) => void
-  onBlur?: () => void
-  label?: string
+  value?: string;
+  onChange?: (value: string) => void;
+  onBlur?: () => void;
+  label?: string;
 }
 
 export function DatePicker({ value, onChange, label }: DatePickerProps = {}) {
-  const [open, setOpen] = React.useState(false)
-  const [date, setDate] = React.useState<Date | undefined>(value ? new Date(value) : undefined)
-  const [time, setTime] = React.useState<string>(value ? new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : "00:00:00")
+  const [open, setOpen] = React.useState(false);
+  const [date, setDate] = React.useState<Date | undefined>(
+    value ? new Date(value) : undefined,
+  );
+  const [time, setTime] = React.useState<string>(
+    value
+      ? new Date(value).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        })
+      : "00:00:00",
+  );
 
   // Combine date and time into ISO datetime string
-  const updateDateTime = React.useCallback((newDate: Date | undefined, newTime: string) => {
-    if (!onChange) return
+  const updateDateTime = React.useCallback(
+    (newDate: Date | undefined, newTime: string) => {
+      if (!onChange) return;
 
-    if (newDate) {
-      const [hours, minutes, seconds = "00"] = newTime.split(':')
-      const combinedDate = new Date(newDate)
-      combinedDate.setHours(parseInt(hours) || 0)
-      combinedDate.setMinutes(parseInt(minutes) || 0)
-      combinedDate.setSeconds(parseInt(seconds) || 0)
-      combinedDate.setMilliseconds(0)
+      if (newDate) {
+        const [hours, minutes, seconds = "00"] = newTime.split(":");
+        const combinedDate = new Date(newDate);
+        combinedDate.setHours(parseInt(hours) || 0);
+        combinedDate.setMinutes(parseInt(minutes) || 0);
+        combinedDate.setSeconds(parseInt(seconds) || 0);
+        combinedDate.setMilliseconds(0);
 
-      // Return ISO string
-      onChange(combinedDate.toISOString())
-    }
-  }, [onChange])
+        // Return ISO string
+        onChange(combinedDate.toISOString());
+      }
+    },
+    [onChange],
+  );
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
-    setDate(selectedDate)
+    setDate(selectedDate);
     if (selectedDate) {
-      updateDateTime(selectedDate, time)
+      updateDateTime(selectedDate, time);
     }
-    setOpen(false)
-  }
+    setOpen(false);
+  };
 
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTime = e.target.value || "00:00:00"
-    setTime(newTime)
+    const newTime = e.target.value || "00:00:00";
+    setTime(newTime);
     if (date) {
-      updateDateTime(date, newTime)
+      updateDateTime(date, newTime);
     }
-  }
+  };
 
   return (
     <div className="flex gap-4">
       {/* Date  */}
       <div className="flex flex-col gap-1">
-        <Label htmlFor="date" className="px-1">{label || ""}</Label>
+        <Label htmlFor="date" className="px-1">
+          {label || ""}
+        </Label>
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
-            <Button variant="outline" id="date" className="w-48 justify-between font-normal">
+            <Button
+              variant="outline"
+              id="date"
+              className="w-48 justify-between font-normal"
+            >
               {date ? date.toLocaleDateString() : "Select date"}
               <ChevronDownIcon />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto overflow-hidden p-0" align="start">
-            <Calendar mode="single" selected={date} captionLayout="dropdown" onSelect={handleDateSelect} />
+            <Calendar
+              mode="single"
+              selected={date}
+              captionLayout="dropdown"
+              onSelect={handleDateSelect}
+            />
           </PopoverContent>
         </Popover>
       </div>
@@ -90,5 +114,5 @@ export function DatePicker({ value, onChange, label }: DatePickerProps = {}) {
         />
       </div>
     </div>
-  )
+  );
 }

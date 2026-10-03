@@ -22,7 +22,9 @@ export default function TabSwitcher({
         aria-label="Previous tab"
         disabled={!canGoPrev}
         className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
-        onClick={() => canGoPrev && onChangeActiveTab(tabOrder[currentIndex - 1])}
+        onClick={() =>
+          canGoPrev && onChangeActiveTab(tabOrder[currentIndex - 1])
+        }
       >
         <ChevronLeft className="h-5 w-5" />
       </button>
@@ -30,7 +32,9 @@ export default function TabSwitcher({
         aria-label="Next tab"
         disabled={!canGoNext}
         className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
-        onClick={() => canGoNext && onChangeActiveTab(tabOrder[currentIndex + 1])}
+        onClick={() =>
+          canGoNext && onChangeActiveTab(tabOrder[currentIndex + 1])
+        }
       >
         <ChevronRight className="h-5 w-5" />
       </button>

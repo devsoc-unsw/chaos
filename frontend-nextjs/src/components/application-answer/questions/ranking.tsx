@@ -1,14 +1,18 @@
-import { useState, useEffect } from 'react';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { AnswerValue, MultiOptionQuestionOption, QuestionAndAnswer } from '@/models/question';
+import { useState, useEffect } from "react";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import {
+  AnswerValue,
+  MultiOptionQuestionOption,
+  QuestionAndAnswer,
+} from "@/models/question";
 
 // Special value to represent "No Answer" selection
-export const NO_ANSWER_VALUE = '__NO_ANSWER__';
+export const NO_ANSWER_VALUE = "__NO_ANSWER__";
 
 export interface RankedOption {
-  id: string,
-  display_order: number,
-  text: string
+  id: string;
+  display_order: number;
+  text: string;
 }
 
 export default function Ranking({
@@ -18,16 +22,21 @@ export default function Ranking({
   submitAnswer,
 }: {
   question: any;
-  dict: any
+  dict: any;
   applicationId: string;
   answerId?: string;
-  submitAnswer: (question: QuestionAndAnswer, value: AnswerValue, applicationId: string, answerId?: string) => Promise<void>;
+  submitAnswer: (
+    question: QuestionAndAnswer,
+    value: AnswerValue,
+    applicationId: string,
+    answerId?: string,
+  ) => Promise<void>;
 }) {
   const options: MultiOptionQuestionOption[] = (question as any).options ?? [];
 
   function reorderOptionsFromAnswer(
     answer: string | string[] | undefined,
-    options: MultiOptionQuestionOption[]
+    options: MultiOptionQuestionOption[],
   ): MultiOptionQuestionOption[] {
     if (!answer) return options;
 
@@ -73,12 +82,11 @@ export default function Ranking({
   }
 
   const [rankedOptions, setRankedOptions] = useState<RankedOption[]>(
-    reorderOptionsFromAnswer(question.answer, options)
+    reorderOptionsFromAnswer(question.answer, options),
   );
   useEffect(() => {
     setRankedOptions(reorderOptionsFromAnswer(question.answer, options));
   }, [question.answer]);
-
 
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
@@ -88,9 +96,13 @@ export default function Ranking({
     items.splice(result.destination.index, 0, moved);
 
     setRankedOptions(items);
-    submitAnswer(question, items.map(opt => String(opt.id)), applicationId, answerId);
+    submitAnswer(
+      question,
+      items.map((opt) => String(opt.id)),
+      applicationId,
+      answerId,
+    );
   };
-
 
   return (
     <div className="mb-6 w-full">
@@ -102,7 +114,6 @@ export default function Ranking({
       {question.description && (
         <p className="mb-2 text-sm">{question.description}</p>
       )}
-
 
       <DragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId="ranking-list">
@@ -128,7 +139,9 @@ export default function Ranking({
                       <span className="bg-primary-foreground text-foreground rounded-full w-8 h-8 flex items-center justify-center font-semibold mr-3 text-sm">
                         {index + 1}
                       </span>
-                      <span className="text-foreground flex-1">{option.text}</span>
+                      <span className="text-foreground flex-1">
+                        {option.text}
+                      </span>
                     </div>
                   )}
                 </Draggable>

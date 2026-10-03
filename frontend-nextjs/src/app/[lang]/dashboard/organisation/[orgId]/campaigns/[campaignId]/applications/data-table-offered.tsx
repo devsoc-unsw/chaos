@@ -41,10 +41,15 @@ export function ApplicationSummaryDataTableOffered<TData, TValue>({
   });
 
   const combinedData: ApplicationRatingSummary[] = data.map((app) => {
-    const offer = offers?.find((o) => o.application_id === app.application_id && o.role_id === filteredRoleId);
+    const offer = offers?.find(
+      (o) =>
+        o.application_id === app.application_id && o.role_id === filteredRoleId,
+    );
     return {
       ...app,
-      offer_role: offer ? offer.role_name : roleIdsToNames[filteredRoleId as string] || null,
+      offer_role: offer
+        ? offer.role_name
+        : roleIdsToNames[filteredRoleId as string] || null,
       offer_status: offer ? offer.status : "Draft",
     };
   });

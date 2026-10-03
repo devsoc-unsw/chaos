@@ -1,8 +1,15 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getCampaign, getCampaignApplications, getCampaignRoles } from "@/models/campaign";
-import { ApplicationStatus, updateApplicationRoleStatus } from "@/models/application";
+import {
+  getCampaign,
+  getCampaignApplications,
+  getCampaignRoles,
+} from "@/models/campaign";
+import {
+  ApplicationStatus,
+  updateApplicationRoleStatus,
+} from "@/models/application";
 import { dateToString } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -29,7 +36,9 @@ export default function ReviewCampaignApplications({
 }) {
   const queryClient = useQueryClient();
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
-  const [ratedApplications, setRatedApplications] = useState<Record<string, boolean>>({});
+  const [ratedApplications, setRatedApplications] = useState<
+    Record<string, boolean>
+  >({});
   const [portFilter, setPortFilter] = useState<string>("all");
 
   const { data: campaign } = useQuery({
@@ -50,8 +59,12 @@ export default function ReviewCampaignApplications({
   useEffect(() => {
     if (!applications) return;
     setRatedApplications((prev) => {
-      const base = Object.fromEntries(applications.map((a) => [a.id, a.current_user_rated]));
-      const locallyRated = Object.fromEntries(Object.entries(prev).filter(([, v]) => v));
+      const base = Object.fromEntries(
+        applications.map((a) => [a.id, a.current_user_rated]),
+      );
+      const locallyRated = Object.fromEntries(
+        Object.entries(prev).filter(([, v]) => v),
+      );
       return { ...base, ...locallyRated };
     });
   }, [applications]);
@@ -66,19 +79,32 @@ export default function ReviewCampaignApplications({
   const reviewed = filteredApplications.filter((a) => ratedApplications[a.id]);
 
   const selectedApp = filteredApplications.find((a) => a.id === selectedAppId);
-  const selectedIndex = filteredApplications.findIndex((a) => a.id === selectedAppId);
+  const selectedIndex = filteredApplications.findIndex(
+    (a) => a.id === selectedAppId,
+  );
   const totalCount = filteredApplications.length;
 
   const handleNext = () => {
     if (filteredApplications.length === 0) return;
-    const nextIndex = selectedIndex === -1 ? 0 : (selectedIndex + 1) % filteredApplications.length;
+    const nextIndex =
+      selectedIndex === -1
+        ? 0
+        : (selectedIndex + 1) % filteredApplications.length;
     setSelectedAppId(filteredApplications[nextIndex].id);
   };
 
-  const handleDecision = async (appId: string, roleId: string, status: ApplicationStatus) => {
+  const handleDecision = async (
+    appId: string,
+    roleId: string,
+    status: ApplicationStatus,
+  ) => {
     await updateApplicationRoleStatus(appId, roleId, status);
-    await queryClient.invalidateQueries({ queryKey: [`${campaignId}-campaign-applications`] });
-    await queryClient.invalidateQueries({ queryKey: [`${appId}-application-role-statuses`] });
+    await queryClient.invalidateQueries({
+      queryKey: [`${campaignId}-campaign-applications`],
+    });
+    await queryClient.invalidateQueries({
+      queryKey: [`${appId}-application-role-statuses`],
+    });
   };
 
   return (
@@ -147,10 +173,16 @@ export default function ReviewCampaignApplications({
                   <Form />
                 </EmptyMedia>
                 <EmptyTitle>
-                  {dict.dashboard.campaigns.application_review_page.no_application_selected}
+                  {
+                    dict.dashboard.campaigns.application_review_page
+                      .no_application_selected
+                  }
                 </EmptyTitle>
                 <EmptyDescription>
-                  {dict.dashboard.campaigns.application_review_page.click_on_application_to_view}
+                  {
+                    dict.dashboard.campaigns.application_review_page
+                      .click_on_application_to_view
+                  }
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>

@@ -18,7 +18,7 @@ export default function TemplateNewForm({
     templateId: string,
     name: string,
     subject: string,
-    body: string
+    body: string,
   ) => {
     await createEmailTemplate(orgId, {
       name,

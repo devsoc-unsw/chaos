@@ -219,11 +219,11 @@ function EmailTemplatePreview({
   for (const variable of templateVariables) {
     template.template_body = template.template_body.replaceAll(
       variable.key,
-      variable.example
+      variable.example,
     );
     template.template_subject = template.template_subject.replaceAll(
       variable.key,
-      variable.example
+      variable.example,
     );
   }
 

@@ -3,7 +3,11 @@ import ErrorCard from "@/components/error-card";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 
-export default async function Join({ params }: { params: Promise<{ lang: string }> }) {
+export default async function Join({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}) {
   const { lang } = await params;
   const dict = await getDictionary(lang);
   const logoutUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://chaos-api.devsoc.app"}/auth/logout`;

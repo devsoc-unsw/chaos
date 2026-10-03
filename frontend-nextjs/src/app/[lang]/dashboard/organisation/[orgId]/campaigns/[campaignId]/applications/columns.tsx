@@ -274,10 +274,10 @@ function StatusCell({
       <span
         className={cn(
           "inline-flex items-center rounded px-4 py-2 text-sm font-semibold",
-          STATUS_BACKGROUND_COLORS[overall]
+          STATUS_BACKGROUND_COLORS[overall],
         )}
       >
-        {overall} 
+        {overall}
       </span>
     );
   }

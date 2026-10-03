@@ -23,7 +23,11 @@ type PublishCampaignDialogProps = {
   buttonClassName?: string;
 };
 
-export function PublishCampaignDialog({ onPublish, label, buttonClassName }: PublishCampaignDialogProps) {
+export function PublishCampaignDialog({
+  onPublish,
+  label,
+  buttonClassName,
+}: PublishCampaignDialogProps) {
   const [confirmPublish, setConfirmPublish] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -41,7 +45,11 @@ export function PublishCampaignDialog({ onPublish, label, buttonClassName }: Pub
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="outline" disabled={loading} className={buttonClassName}>
+        <Button
+          variant="outline"
+          disabled={loading}
+          className={buttonClassName}
+        >
           <CircleCheck className="w-4 h-4 text-green-500 mr-1" />
           {label}
         </Button>
@@ -50,9 +58,11 @@ export function PublishCampaignDialog({ onPublish, label, buttonClassName }: Pub
         <AlertDialogHeader>
           <AlertDialogTitle>Publish campaign?</AlertDialogTitle>
           <AlertDialogDescription>
-            Publishing this campaign is final and cannot be undone. You will not be able to delete this campaign or
-            edit any of it's details including, but not limited to, roles, questions, rating categories, and attachments.
-            Please ensure all details are correct and final before publishing.
+            Publishing this campaign is final and cannot be undone. You will not
+            be able to delete this campaign or edit any of it's details
+            including, but not limited to, roles, questions, rating categories,
+            and attachments. Please ensure all details are correct and final
+            before publishing.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="flex items-start gap-2 py-4">
@@ -65,7 +75,8 @@ export function PublishCampaignDialog({ onPublish, label, buttonClassName }: Pub
             htmlFor="confirm-publish"
             className="text-sm leading-snug cursor-pointer select-none"
           >
-            I understand that publishing this campaign is final, and have confirmed all details are correct.
+            I understand that publishing this campaign is final, and have
+            confirmed all details are correct.
           </Label>
         </div>
         <AlertDialogFooter>

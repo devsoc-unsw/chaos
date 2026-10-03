@@ -9,7 +9,12 @@ import {
 } from "@/components/ui/dialog";
 import { useState } from "react";
 import { RoleDetails } from "@/models/campaign";
-import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import {
+  Tooltip,
+  TooltipProvider,
+  TooltipContent,
+  TooltipTrigger,
+} from "../ui/tooltip";
 import RolePercentageBar from "./role-percentage-bar";
 export default function ReviewCard({
   questionsAndAnswersByRole,

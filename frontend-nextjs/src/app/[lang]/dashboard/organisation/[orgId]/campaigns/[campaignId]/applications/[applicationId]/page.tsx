@@ -36,4 +36,3 @@ export default async function ApplicationOverviewPage({
     </div>
   );
 }
-

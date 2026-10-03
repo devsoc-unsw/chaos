@@ -20,9 +20,12 @@ interface ImageUploadProps {
   onImageChange: (image: File | null) => void;
 }
 
-const ImageUpload: React.FC<ImageUploadProps> = ({ selectedImage, onImageChange }) => {
+const ImageUpload: React.FC<ImageUploadProps> = ({
+  selectedImage,
+  onImageChange,
+}) => {
   const [uploadedImagePath, setUploadedImagePath] = useState<string | null>(
-    null
+    null,
   );
   // The file waiting to be cropped. Works as open state for cropping modal too.
   const [pendingFile, setPendingFile] = useState<File | null>(null);

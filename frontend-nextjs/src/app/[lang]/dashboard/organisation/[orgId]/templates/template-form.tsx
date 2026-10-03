@@ -30,7 +30,7 @@ export default function TemplateForm({
     templateId: string,
     name: string,
     subject: string,
-    body: string
+    body: string,
   ) => Promise<void>;
 }) {
   const [name, setName] = useState(template?.name ?? "");
@@ -82,7 +82,7 @@ export default function TemplateForm({
     if (currentIndexRef.current < historyRef.current.length - 1) {
       historyRef.current = historyRef.current.slice(
         0,
-        currentIndexRef.current + 1
+        currentIndexRef.current + 1,
       );
     }
 
@@ -107,7 +107,7 @@ export default function TemplateForm({
       value,
       textarea.selectionStart,
       textarea.selectionEnd,
-      "end"
+      "end",
     );
 
     const newBody = textarea.value;

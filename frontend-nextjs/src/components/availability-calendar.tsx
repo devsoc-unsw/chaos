@@ -29,12 +29,22 @@ function fromKey(key: string) {
   return new Date(`${key}T00:00:00`);
 }
 
-function InterviewCard({ date, name, location }: { date: Date, name: string, location: string }) {
+function InterviewCard({
+  date,
+  name,
+  location,
+}: {
+  date: Date;
+  name: string;
+  location: string;
+}) {
   return (
     <div className="flex w-full items-stretch gap-3 bg-white">
       <div className="w-1.5 shrink-0 rounded-full bg-calendar-primary" />
       <div className="flex flex-col justify-center gap-1">
-        <div className="text-xs font-medium text-gray-900">{format(date, "dd MMMM yyyy")}</div>
+        <div className="text-xs font-medium text-gray-900">
+          {format(date, "dd MMMM yyyy")}
+        </div>
         <div className="text-xs text-gray-700">{name}</div>
         <div className="text-[11px] text-gray-500">{location}</div>
       </div>
@@ -53,11 +63,13 @@ export interface AvailabilityCalendarProps {
   className?: string;
 }
 
-{/* 
+{
+  /* 
   TODO: 
   - Visualize important dates of campaign (start date, end date, interview period) in this calendar
   - Replace mock data with actual interview data (needs CRUD functions and seeder to be modified)
-*/}
+*/
+}
 export default function AvailabilityCalendar({
   value,
   defaultValue,
@@ -76,7 +88,9 @@ export default function AvailabilityCalendar({
     [isControlled, value, internal],
   );
 
-  const [month, setMonth] = React.useState<Date>(() => startOfMonth(new Date()));
+  const [month, setMonth] = React.useState<Date>(() =>
+    startOfMonth(new Date()),
+  );
   const [editing, setEditing] = React.useState(false);
   const [draft, setDraft] = React.useState<Set<string>>(new Set());
   const [saving, setSaving] = React.useState(false);
@@ -197,7 +211,9 @@ export default function AvailabilityCalendar({
           {weeks.flat().map((day) => {
             const inMonth = isSameMonth(day, month);
             if (!inMonth) {
-              return <div key={toKey(day)} aria-hidden className="aspect-square" />;
+              return (
+                <div key={toKey(day)} aria-hidden className="aspect-square" />
+              );
             }
 
             const marked = active.has(toKey(day));
@@ -205,7 +221,10 @@ export default function AvailabilityCalendar({
             const interactive = editing;
 
             return (
-              <div key={toKey(day)} className="flex aspect-square items-center justify-center p-0.5">
+              <div
+                key={toKey(day)}
+                className="flex aspect-square items-center justify-center p-0.5"
+              >
                 <button
                   type="button"
                   onClick={() => toggle(day)}
@@ -219,9 +238,9 @@ export default function AvailabilityCalendar({
                     marked
                       ? "bg-calendar-secondary font-semibold hover:bg-calendar-primary"
                       : cn(
-                        "text-foreground",
-                        interactive && "hover:bg-calendar-primary",
-                      ),
+                          "text-foreground",
+                          interactive && "hover:bg-calendar-primary",
+                        ),
                     today && !marked && "ring-2 ring-inset ring-primary/60",
                     today && marked && "ring-2 ring-inset ring-primary",
                   )}
@@ -237,7 +256,10 @@ export default function AvailabilityCalendar({
         <div className="mt-2.5 flex items-center justify-between gap-2">
           {editing ? (
             <>
-              <span className="text-xs text-muted-foreground" aria-live="polite">
+              <span
+                className="text-xs text-muted-foreground"
+                aria-live="polite"
+              >
                 {draft.size} {draft.size === 1 ? "day" : "days"} marked
               </span>
               <div className="flex items-center gap-1.5">
@@ -285,11 +307,25 @@ export default function AvailabilityCalendar({
 
       {/* Upcoming interviews */}
       <section className="mt-5 flex flex-col gap-4">
-        <h2 className="text-lg font-semibold text-gray-900">3 Upcoming Interviews</h2>
+        <h2 className="text-lg font-semibold text-gray-900">
+          3 Upcoming Interviews
+        </h2>
         <div className="flex flex-col gap-4">
-          <InterviewCard date={new Date()} name="Peter Nguyen" location="UNSW Library G041" />
-          <InterviewCard date={new Date(Date.now() + 86400000)} name="Young Liam" location="UNSW Library G041" />
-          <InterviewCard date={new Date(Date.now() + 172800000)} name="Mitsuki Koga" location="UNSW Library G041" />
+          <InterviewCard
+            date={new Date()}
+            name="Peter Nguyen"
+            location="UNSW Library G041"
+          />
+          <InterviewCard
+            date={new Date(Date.now() + 86400000)}
+            name="Young Liam"
+            location="UNSW Library G041"
+          />
+          <InterviewCard
+            date={new Date(Date.now() + 172800000)}
+            name="Mitsuki Koga"
+            location="UNSW Library G041"
+          />
         </div>
       </section>
     </div>
