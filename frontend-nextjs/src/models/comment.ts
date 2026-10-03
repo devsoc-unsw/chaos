@@ -61,3 +61,22 @@ export async function getCommentsByApplication(
     },
   );
 }
+
+export async function getUnreadCommentCount(
+  applicationId: string,
+): Promise<{ count: number }> {
+  return await apiRequest<{ count: number }>(
+    `/api/v1/application/${applicationId}/comment/unread_count`,
+    {
+      method: "GET",
+    },
+  );
+}
+
+export async function markAllCommentsRead(
+  applicationId: string,
+): Promise<void> {
+  await apiRequest(`/api/v1/application/${applicationId}/comment/read_all`, {
+    method: "PATCH",
+  });
+}

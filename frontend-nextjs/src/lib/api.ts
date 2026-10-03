@@ -33,7 +33,12 @@ export async function apiRequest<T>(
   path: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const { method = "GET", body, headers = {}, okRequiredOtherwiseLogin = true } = options;
+  const {
+    method = "GET",
+    body,
+    headers = {},
+    okRequiredOtherwiseLogin = true,
+  } = options;
 
   const requestHeaders: Record<string, string> = { ...headers };
 
@@ -42,9 +47,8 @@ export async function apiRequest<T>(
   }
 
   const cleanPath = path.startsWith("/") ? path.slice(1) : path;
-  const base = API_BASE_URL.replace(/\/+$/, ""); 
+  const base = API_BASE_URL.replace(/\/+$/, "");
   const url = `${base}/${cleanPath}`;
-  
   
   let fetchOptions: RequestInit;
 
@@ -85,18 +89,33 @@ export async function apiRequest<T>(
 
         redirect(`/login?to=${encodeURIComponent(pathname)}`);
       } else {
-        window.location.href = `/login?to=${encodeURIComponent(window.location.pathname)}`;
+        window.location.href = `/login?to=${encodeURIComponent(
+          window.location.pathname
+        )}`;
       }
     }
-    
+
+    let backendMessage: string | undefined;
+    try {
+      const errorBody = await response.json();
+      if (typeof errorBody?.error === "string") {
+        backendMessage = errorBody.error;
+      }
+    } catch {
+      // if response body wasn't JSON, fall back to the generic message below
+    }
+
     throw new ApiError(
       response.status,
       response.statusText,
-      `API request failed: ${method} ${path}`
+      backendMessage || `API request failed: ${method} ${path}`
     );
   }
 
-  if (response.status === 204 || response.headers.get("content-length") === "0") {
+  if (
+    response.status === 204 ||
+    response.headers.get("content-length") === "0"
+  ) {
     return undefined as T;
   }
 

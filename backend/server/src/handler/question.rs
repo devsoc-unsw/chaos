@@ -150,6 +150,7 @@ impl QuestionHandler {
             data.common,
             data.roles,
             data.required,
+            data.short_answer_word_limit,
             data.question_data,
             &mut transaction.tx,
             &mut state.snowflake_generator,

@@ -1,3 +1,4 @@
+use crate::models::answer::Answer;
 use crate::models::error::ChaosError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -61,6 +62,8 @@ pub struct Question {
     pub roles: Vec<i64>, // (Possibly empty) list of roles the question is for
     pub required: bool,
 
+    pub short_answer_word_limit: Option<i32>,
+
     #[serde(flatten)]
     pub question_data: QuestionData,
 
@@ -76,6 +79,35 @@ pub struct Question {
 /// NewQuestion is now just Question with DB fields skipped during deserialization
 pub type NewQuestion = Question;
 
+/// Question and nested answer
+#[derive(Serialize)]
+pub struct QuestionWithAnswer {
+    #[serde(flatten)]
+    pub question: Question,
+    pub answer: Option<Answer>,
+}
+
+impl QuestionWithAnswer {
+   /// Merge questions and respective answers
+    pub fn merge(questions: Vec<Question>, answers: Vec<Answer>) -> Vec<QuestionWithAnswer> {
+        let mut answers_by_question: std::collections::HashMap<i64, Answer> = answers
+            .into_iter()
+            .map(|answer| (answer.question_id, answer))
+            .collect();
+
+        questions
+            .into_iter()
+            .map(|question| {
+                let id = question.id;
+                QuestionWithAnswer {
+                    question,
+                    answer: answers_by_question.remove(&id),
+                }
+            })
+            .collect()
+    }
+}
+
 #[derive(Deserialize, sqlx::FromRow)]
 pub struct QuestionRawData {
     id: i64,
@@ -84,7 +116,7 @@ pub struct QuestionRawData {
     common: bool, // Common question are shown at the start
     roles: Vec<i64>,
     required: bool,
-
+    short_answer_word_limit: Option<i32>,
     question_type: QuestionType,
     multi_option_data: Option<sqlx::types::Json<Vec<MultiOptionQuestionOption>>>,
 
@@ -174,6 +206,7 @@ impl Question {
                     q.common,
                     COALESCE(array_remove(array_agg(DISTINCT qr.role_id), NULL), '{}') AS "roles!: Vec<i64>",
                     q.required,
+                    q.short_answer_word_limit,
                     q.question_type AS "question_type: QuestionType",
                     q.created_at,
                     q.updated_at,
@@ -215,6 +248,7 @@ impl Question {
             common: question_raw_data.common,
             roles: question_raw_data.roles,
             required: question_raw_data.required,
+            short_answer_word_limit: question_raw_data.short_answer_word_limit,
             question_data,
             created_at: question_raw_data.created_at,
             updated_at: question_raw_data.updated_at,
@@ -235,6 +269,7 @@ impl Question {
                     q.common,
                     COALESCE(array_remove(array_agg(DISTINCT qr.role_id), NULL), '{}') AS "roles!: Vec<i64>",
                     q.required,
+                    q.short_answer_word_limit,
                     q.question_type AS "question_type: QuestionType",
                     q.created_at,
                     q.updated_at,
@@ -278,6 +313,7 @@ impl Question {
                     common: question_raw_data.common,
                     roles: question_raw_data.roles,
                     required: question_raw_data.required,
+                    short_answer_word_limit: question_raw_data.short_answer_word_limit,
                     question_data,
                     created_at: question_raw_data.created_at,
                     updated_at: question_raw_data.updated_at,
@@ -306,6 +342,7 @@ impl Question {
                         '{}'
                     ) AS "roles!: Vec<i64>",
                     q.required,
+                    q.short_answer_word_limit,
                     q.question_type AS "question_type: QuestionType",
                     q.created_at,
                     q.updated_at,
@@ -352,6 +389,7 @@ impl Question {
                     common: question_raw_data.common,
                     roles: question_raw_data.roles,
                     required: question_raw_data.required,
+                    short_answer_word_limit: question_raw_data.short_answer_word_limit,
                     question_data,
                     created_at: question_raw_data.created_at,
                     updated_at: question_raw_data.updated_at,
@@ -376,6 +414,7 @@ impl Question {
                     q.common,
                     COALESCE(array_remove(array_agg(DISTINCT qr.role_id), NULL), '{}') AS "roles!: Vec<i64>",
                     q.required,
+                    q.short_answer_word_limit,
                     q.question_type AS "question_type: QuestionType",
                     q.created_at,
                     q.updated_at,
@@ -419,6 +458,99 @@ impl Question {
                     common: question_raw_data.common,
                     roles: question_raw_data.roles,
                     required: question_raw_data.required,
+                    short_answer_word_limit: question_raw_data.short_answer_word_limit,
+                    question_data,
+                    created_at: question_raw_data.created_at,
+                    updated_at: question_raw_data.updated_at,
+                }
+            })
+            .collect();
+
+        Ok(questions)
+    }
+
+    /// Retrieves all questions relevant to an application, in one query.
+    ///
+    /// Returns common questions plus questions for each role the application
+    /// has applied for, each with its roles and options aggregated.
+    ///
+    /// # Arguments
+    ///
+    /// * `application_id` - ID of the application to get questions for
+    /// * `transaction` - Database transaction to use
+    ///
+    /// # Returns
+    ///
+    /// * `Result<Vec<Question>, ChaosError>` - List of questions or error
+    pub async fn get_all_for_application(
+        application_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<Question>, ChaosError> {
+        let question_raw_data = sqlx::query_as!(
+            QuestionRawData,
+            r#"
+                SELECT
+                    q.id,
+                    q.title,
+                    q.description,
+                    q.common,
+                    COALESCE(array_remove(array_agg(DISTINCT qr.role_id), NULL), '{}') AS "roles!: Vec<i64>",
+                    q.required,
+                    q.short_answer_word_limit,
+                    q.question_type AS "question_type: QuestionType",
+                    q.created_at,
+                    q.updated_at,
+                    to_jsonb(
+                        array_agg(
+                            jsonb_build_object(
+                                'id', mod.id,
+                                'display_order', mod.display_order,
+                                'text', mod.text
+                            ) ORDER BY mod.display_order
+                        ) FILTER (WHERE mod.id IS NOT NULL)
+                    ) AS "multi_option_data: Json<Vec<MultiOptionQuestionOption>>"
+                FROM
+                    questions q
+                        LEFT JOIN
+                    question_roles qr ON q.id = qr.question_id
+                        LEFT JOIN
+                    multi_option_question_options mod ON q.id = mod.question_id
+                        AND q.question_type IN ('MultiChoice', 'MultiSelect', 'DropDown', 'Ranking')
+                WHERE
+                    q.campaign_id = (SELECT campaign_id FROM applications WHERE id = $1)
+                    AND (
+                        q.common = true
+                        OR EXISTS (
+                            SELECT 1
+                            FROM question_roles qr2
+                            JOIN application_roles ar ON ar.campaign_role_id = qr2.role_id
+                            WHERE qr2.question_id = q.id AND ar.application_id = $1
+                        )
+                    )
+                GROUP BY
+                    q.id
+            "#,
+            application_id
+        )
+            .fetch_all(transaction.deref_mut())
+            .await?;
+
+        let questions = question_raw_data
+            .into_iter()
+            .map(|question_raw_data| {
+                let question_data = QuestionData::from_question_raw_data(
+                    question_raw_data.question_type,
+                    question_raw_data.multi_option_data,
+                );
+
+                Question {
+                    id: question_raw_data.id,
+                    title: question_raw_data.title,
+                    description: question_raw_data.description,
+                    common: question_raw_data.common,
+                    roles: question_raw_data.roles,
+                    required: question_raw_data.required,
+                    short_answer_word_limit: question_raw_data.short_answer_word_limit,
                     question_data,
                     created_at: question_raw_data.created_at,
                     updated_at: question_raw_data.updated_at,
@@ -436,6 +568,7 @@ impl Question {
         common: bool,
         roles: Vec<i64>,
         required: bool,
+        short_answer_word_limit: Option<i32>,
         question_data: QuestionData,
         transaction: &mut Transaction<'_, Postgres>,
         snowflake_generator: &mut SnowflakeIdGenerator,
@@ -447,7 +580,9 @@ impl Question {
             r#"
                 UPDATE questions SET
                     title = $2, description = $3, common = $4,
-                    required = $5, question_type = $6, updated_at = $7
+                    required = $5, question_type = $6, updated_at = $7,
+                    short_answer_word_limit = $8
+
                 WHERE id = $1
                 RETURNING question_type AS "question_type: QuestionType"
             "#,
@@ -457,7 +592,8 @@ impl Question {
             common,
             required,
             QuestionType::from_question_data(&question_data) as QuestionType,
-            Utc::now()
+            Utc::now(),
+            short_answer_word_limit
         )
         .fetch_one(transaction.deref_mut())
         .await?;

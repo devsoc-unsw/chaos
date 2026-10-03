@@ -67,6 +67,8 @@
         "empty_available_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
         "selected_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
         "available_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "preference_total_error": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+        "unselecting_role": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
         "no_role_specific_qs": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
         "your_answer": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
         "no_answer": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;"
@@ -110,7 +112,12 @@
         "campaign_settings": "活动设置",
         "general_settings": "通用设置",
         "role_settings": "角色设置",
-        "rating_category_settings": "评分类别设置"
+        "rating_category_settings": "评分类别设置",
+        "campaign_banner": "活动横幅",
+        "campaign_banner_help": "选择图片后点击保存。将替换当前横幅文件。",
+        "upload_banner": "保存横幅",
+        "campaign_banner_uploaded": "横幅已保存。",
+        "campaign_banner_failed": "无法保存横幅。"
       },
       "questions": {
         "answer_text": "答案文本",

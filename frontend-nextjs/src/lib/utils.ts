@@ -2,6 +2,7 @@ import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import moment from "moment";
 import { QuestionAndAnswer } from "@/models/question";
+import { ApplicationStatus } from "@/models/application";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -53,4 +54,18 @@ export function buildAnswerPayload(question: QuestionAndAnswer, value: unknown) 
     answer_type: question.question_type,
     answer_data: answerData,
   };
+}
+
+
+export function privateStatusLabel(status: ApplicationStatus): string {
+  switch (status) {
+    case "Successful":
+      return "Offer";
+    case "Rejected":
+      return "Reject";
+    case "Pending":
+      return "Pending";
+    case "Interview":
+      return "Interview";
+  }
 }

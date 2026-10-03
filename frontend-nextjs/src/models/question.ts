@@ -8,6 +8,7 @@ export interface Question {
     common: boolean,
     roles: string[],
     required: boolean,
+    short_answer_word_limit: number | null,
     question_type: QuestionType,
     data: QuestionData,
     created_at: string,
@@ -36,8 +37,15 @@ export interface QuestionAndAnswer {
     answer: AnswerValue,
     question_type: QuestionType,
     required: boolean,
+    short_answer_word_limit: number | null,
     options: MultiOptionQuestionOption[],
     description: string | null,
+}
+
+export type QuestionWithAnswer = Question & { answer: Answer | null };
+
+export async function getApplicationQuestionsAnswers(applicationId: string): Promise<QuestionWithAnswer[]> {
+    return await apiRequest<QuestionWithAnswer[]>(`/api/v1/application/${applicationId}/questions_answers`);
 }
 
 export async function getAllCommonQuestions(campaignId: string): Promise<Question[]> {
@@ -118,9 +126,9 @@ export function processAnswerForDisplay(
     }
 }
 
-export function linkQuestionsAndAnswers(questions: Question[], answers: Answer[]): QuestionAndAnswer[] {
+export function linkQuestionsAndAnswers(questions: QuestionWithAnswer[]): QuestionAndAnswer[] {
     return questions.map((question) => {
-        const answer = answers?.find((answer) => answer.question_id === question.id);
+        const answer = question.answer;
         const processedAnswer = processAnswerForDisplay(
             question.question_type,
             answer?.answer_data,
@@ -134,6 +142,7 @@ export function linkQuestionsAndAnswers(questions: Question[], answers: Answer[]
             answer: processedAnswer,
             question_type: question.question_type,
             required: question.required,
+            short_answer_word_limit: question.short_answer_word_limit,
             options: question.data?.options,
             description: question?.description,
         };

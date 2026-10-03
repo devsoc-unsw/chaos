@@ -10,6 +10,7 @@ use crate::handler::organisation::OrganisationHandler;
 use crate::handler::question::QuestionHandler;
 use crate::handler::rating::RatingHandler;
 use crate::handler::role::RoleHandler;
+use crate::handler::role_status::RoleStatusHandler;
 use crate::handler::user::UserHandler;
 use crate::models::email::{ChaosEmail, EmailCredentials};
 use crate::models::error::ChaosError;
@@ -456,8 +457,28 @@ pub async fn app() -> Result<(Router, AppState), ChaosError> {
             patch(ApplicationHandler::set_private_status),
         )
         .route(
+            "/api/v1/application/:application_id/rolestatus/:campaign_role_id",
+            put(RoleStatusHandler::update_role_status),
+        )
+        .route(
+            "/api/v1/application/:application_id/rolestatus",
+            get(RoleStatusHandler::get_role_statuses_for_application),
+        )
+        .route(
+            "/api/v1/campaign/:campaign_id/rolestatus/:campaign_role_id",
+            get(RoleStatusHandler::get_role_statuses_for_campaign_role),
+        )
+        .route(
+            "/api/v1/campaign/:campaign_id/rolestatus",
+            get(RoleStatusHandler::get_role_statuses_for_campaign),
+        )
+        .route(
             "/api/v1/application/:application_id/answers/common",
             get(AnswerHandler::get_all_common_by_application),
+        )
+        .route(
+            "/api/v1/application/:application_id/questions_answers",
+            get(ApplicationHandler::get_questions_and_answers),
         )
         .route(
             "/api/v1/application/:application_id/answer",
@@ -486,6 +507,18 @@ pub async fn app() -> Result<(Router, AppState), ChaosError> {
         .route(
             "/api/v1/application/:application_id/comment/:comment_id",
             delete(CommentHandler::delete_comment),
+        )
+        .route(
+            "/api/v1/application/:application_id/comment/:comment_id/read",
+            patch(CommentHandler::mark_comment_read),
+        )
+        .route(
+            "/api/v1/application/:application_id/comment/read_all",
+            patch(CommentHandler::mark_all_comments_read),
+        )
+        .route(
+            "/api/v1/application/:application_id/comment/unread_count",
+            get(CommentHandler::get_unread_comment_count),
         )
         .route(
             "/api/v1/application/:application_id/comment",

@@ -8,7 +8,9 @@ import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createQuestion, deleteQuestion, getAllCommonQuestions, getAllRoleQuestions, MultiOptionQuestionOption, Question, QuestionType, updateQuestion } from "@/models/question";
 import { useState } from "react";
+import { ButtonGroup } from "@/components/ui/button-group";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
 import { snowflakeGenerator } from "@/lib";
@@ -104,7 +106,7 @@ export default function CampaignQuestions({ campaignId, orgId, dict }: { campaig
     const addNewQuestion = async (type: QuestionType, roleId: string) => {
         const common = roleId === "common";
 
-        const newQuestion: Question = { id: snowflakeGenerator.generate().toString(), title: "", description: "", roles: common ? [] : [roleId], created_at: new Date().toISOString(), updated_at: new Date().toISOString(), question_type: type, data: { options: [{ id: snowflakeGenerator.generate().toString(), display_order: 1, text: "Default Option" }] }, common, required: false };
+        const newQuestion: Question = { id: snowflakeGenerator.generate().toString(), title: "", description: "", roles: common ? [] : [roleId], created_at: new Date().toISOString(), updated_at: new Date().toISOString(), question_type: type, data: { options: [{ id: snowflakeGenerator.generate().toString(), display_order: 1, text: "Default Option" }] }, common, required: false, short_answer_word_limit: null };
         if (type === 'ShortAnswer') {
             delete (newQuestion as any).data;
         }
@@ -302,9 +304,22 @@ function QuestionEditor({ possibleRole, questions, handleQuestionUpdate, dict }:
 
 function MultiOptionQuestionCard({ question, currentRole, handleQuestionUpdate, dict }: { question?: Question, currentRole: string, handleQuestionUpdate: (action: "update" | "delete", question: Question) => Promise<void>, dict: any }) {
     const [title, setTitle] = useState<string>(question?.title ?? "");
+    const [description, setDescription] = useState<string>(question?.description ?? "");
     const [questionType, setQuestionType] = useState<string>(question?.question_type ?? "");
     const [options, setOptions] = useState<MultiOptionQuestionOption[]>(question?.data?.options ?? []);
     const [required, setRequired] = useState<boolean>(question?.required ?? false);
+
+    const updateQuestion = async (overrides: Partial<Question> = {}) => {
+        await handleQuestionUpdate('update', {
+            ...question!,
+            title,
+            description: description.trim() === "" ? null : description,
+            question_type: questionType as QuestionType,
+            data: { options },
+            required,
+            ...overrides,
+        });
+    }
 
     const handleDragEnd = async (result: DropResult) => {
         if (!result.destination) {
@@ -317,36 +332,44 @@ function MultiOptionQuestionCard({ question, currentRole, handleQuestionUpdate, 
         const newItems = items.map((option, index) => ({ ...option, display_order: index + 1 }));
 
         setOptions(newItems);
-        await handleQuestionUpdate('update', { ...question!, data: { options: newItems } });
+        await updateQuestion({ data: { options: newItems } });
     }
 
     const addOption = async (text: string) => {
         // Generate random id for use with DnD and to send to server (which expects i64 - as string or number)
         const newItems: MultiOptionQuestionOption[] = [...options, { id: snowflakeGenerator.generate().toString(), text: text, display_order: options.length + 1 }];
         setOptions(newItems);
-        await handleQuestionUpdate('update', { ...question!, data: { options: newItems } });
+        await updateQuestion({ data: { options: newItems } });
     }
 
     const removeOption = async (id: string) => {
         const newItems = options.filter((option) => option.id !== id);
         setOptions(newItems);
-        await handleQuestionUpdate('update', { ...question!, data: { options: newItems } });
+        await updateQuestion({ data: { options: newItems } });
     }
 
     const updateOption = async (id: string, text: string) => {
-        const newItems = options.map((option) => option.id === id ? { ...option, text: text } : option);
+        const serverText = question?.data?.options?.find((option) => option.id === id)?.text;
+        if (text === serverText) return;
+        const newItems = options.map((option) => option.id === id ? { ...option, text } : option);
         setOptions(newItems);
-        await handleQuestionUpdate('update', { ...question!, data: { options: newItems } });
+        await updateQuestion({ data: { options: newItems } });
     }
 
-    const updateTitle = async (title: string) => {
-        setTitle(title);
-        await handleQuestionUpdate('update', { ...question!, title: title });
+    const updateTitle = async () => {
+        if (title === (question?.title ?? "")) return;
+        await updateQuestion({ title });
     }
 
-    const updateQuestionType = async (questionType: string) => {
-        setQuestionType(questionType);
-        await handleQuestionUpdate('update', { ...question!, question_type: questionType as QuestionType });
+    const updateDescription = async () => {
+        const next = description.trim() === "" ? null : description;
+        if (next === (question?.description ?? null)) return;
+        await updateQuestion({ description: next });
+    }
+
+    const updateQuestionType = async (nextType: string) => {
+        setQuestionType(nextType);
+        await updateQuestion({ question_type: nextType as QuestionType });
     }
 
     const handleDeleteQuestion = async () => {
@@ -354,21 +377,21 @@ function MultiOptionQuestionCard({ question, currentRole, handleQuestionUpdate, 
     }
 
     const handleRemoveQuestionFromRole = async () => {
-        const updatedQuestion = { ...question!, roles: question?.roles?.filter((role) => role !== currentRole) ?? [] };
-        await handleQuestionUpdate('update', updatedQuestion);
+        await updateQuestion({ roles: question?.roles?.filter((role) => role !== currentRole) ?? [] });
     }
 
     const toggleRequired = async () => {
         const newRequired = !required;
         setRequired(newRequired);
-        await handleQuestionUpdate('update', { ...question!, required: newRequired });
+        await updateQuestion({ required: newRequired });
     }
 
     return (
         <div className="flex flex-col p-2 border rounded-md gap-2 w">
             <div className="flex flex-col gap-1">
+                <label className="text-sm text-foreground">{dict.common.title}</label>
                 <div className="flex justify-between">
-                    <Input className="max-w-[500px]" value={title} onChange={async (e) => await updateTitle(e.target.value)} />
+                    <Input className="max-w-[500px]" value={title} onChange={(e) => setTitle(e.target.value)} onBlur={updateTitle} />
                     <div className="flex items-center gap-1">
                         <Tooltip>
                             <TooltipTrigger asChild>
@@ -397,17 +420,30 @@ function MultiOptionQuestionCard({ question, currentRole, handleQuestionUpdate, 
                         <Button variant="destructive" onClick={handleDeleteQuestion}><Trash className="w-4 h-4" /></Button>
                     </div>
                 </div>
-                <Select value={questionType} onValueChange={async (value) => await updateQuestionType(value)}>
-                    <SelectTrigger>
-                        <SelectValue placeholder={dict.common.question_type} />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="MultiChoice">{dict.common.question_types.multi_choice}</SelectItem>
-                        <SelectItem value="MultiSelect">{dict.common.question_types.multi_select}</SelectItem>
-                        <SelectItem value="DropDown">{dict.common.question_types.dropdown}</SelectItem>
-                        <SelectItem value="Ranking">{dict.common.question_types.ranking}</SelectItem>
-                    </SelectContent>
-                </Select>
+                <div className="flex items-center gap-2">
+                    <label className="text-sm text-muted-foreground whitespace-nowrap">{dict.common.question_type}</label>
+                    <Select value={questionType} onValueChange={async (value) => await updateQuestionType(value)}>
+                        <SelectTrigger>
+                            <SelectValue placeholder={dict.common.question_type} />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="MultiChoice">{dict.common.question_types.multi_choice}</SelectItem>
+                            <SelectItem value="MultiSelect">{dict.common.question_types.multi_select}</SelectItem>
+                            <SelectItem value="DropDown">{dict.common.question_types.dropdown}</SelectItem>
+                            <SelectItem value="Ranking">{dict.common.question_types.ranking}</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="flex flex-col gap-1">
+                    <label className="text-sm text-foreground">{dict.common.description}</label>
+                    <Textarea
+                        className="max-w-[500px] min-h-[80px]"
+                        placeholder="Optional info for applicants"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        onBlur={updateDescription}
+                    />
+                </div>
             </div>
             <div>
                 <DragDropContext onDragEnd={handleDragEnd}>
@@ -432,7 +468,15 @@ function MultiOptionQuestionCard({ question, currentRole, handleQuestionUpdate, 
                                                     <div className="mt-1">
                                                         <OptionDecorator questionType={questionType} />
                                                     </div>
-                                                    <input className="w-full focus:outline-none border-b-2 border-dotted border-gray-500 max-w-[300px]" defaultValue={option.text} onChange={async (e) => await updateOption(option.id, (e.target as HTMLInputElement).value)} />
+                                                    <input
+                                                        className="w-full focus:outline-none border-b-2 border-dotted border-gray-500 max-w-[300px]"
+                                                        value={option.text}
+                                                        onChange={(e) => {
+                                                            const text = e.target.value;
+                                                            setOptions((prev) => prev.map((item) => item.id === option.id ? { ...item, text } : item));
+                                                        }}
+                                                        onBlur={(e) => updateOption(option.id, e.target.value)}
+                                                    />
                                                 </div>
                                                 <X className="w-5 h-5 cursor-pointer text-red-500 hover:text-red-600" onClick={async () => await removeOption(option.id)} />
                                             </div>
@@ -447,19 +491,11 @@ function MultiOptionQuestionCard({ question, currentRole, handleQuestionUpdate, 
                 <div
                     className="p-2 flex items-start gap-2"
                 >
-                    <GripVertical className="w-4 h-4 mt-1" />
-                    <div className="mt-1">
-                        <OptionDecorator questionType={questionType} />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <input className="w-full focus:outline-none border-b-2 border-dotted border-gray-500 max-w-[300px]" placeholder={dict.dashboard.campaigns.questions.add_option} onKeyDown={async (e) => {
-                            if (e.key === 'Enter') {
-                                await addOption((e.target as HTMLInputElement).value);
-                                (e.target as HTMLInputElement).value = '';
-                            }
-                        }} />
-                        <p className="text-xs text-gray-500">{dict.dashboard.campaigns.questions.option_help}</p>
-                    </div>
+                    <ButtonGroup className="w-full sm:w-auto flex-col sm:flex-row gap-2 sm:gap-0 [&>*]:w-full sm:[&>*]:w-auto" onClick={async () => await addOption(dict.dashboard.campaigns.questions.new_option)}>
+                        <Button className="w-full justify-center sm:w-auto">
+                            {dict.dashboard.campaigns.questions.add_option}
+                        </Button>
+                    </ButtonGroup>
                 </div>
             </div>
         </div>
@@ -481,11 +517,35 @@ function OptionDecorator({ questionType }: { questionType: string }) {
 
 function ShortAnswerQuestionCard({ question, currentRole, possibleRole, handleQuestionUpdate, dict }: { question?: Question, currentRole: string, possibleRole?: RoleDetails, handleQuestionUpdate: (action: "update" | "delete", question: Question) => Promise<void>, dict: any }) {
     const [title, setTitle] = useState(question?.title ?? "");
+    const [description, setDescription] = useState(question?.description ?? "");
     const [required, setRequired] = useState(question?.required ?? false);
+    const [wordLimit, setWordLimit] = useState<number | null>(question?.short_answer_word_limit ?? null);
 
-    const updateTitle = async (title: string) => {
-        setTitle(title);
-        await handleQuestionUpdate('update', { ...question!, title: title });
+    const updateQuestion = async (overrides: Partial<Question> = {}) => {
+        await handleQuestionUpdate('update', {
+            ...question!,
+            title,
+            description: description.trim() === "" ? null : description,
+            required,
+            short_answer_word_limit: wordLimit,
+            ...overrides,
+        });
+    }
+
+    const updateTitle = async () => {
+        if (title === (question?.title ?? "")) return;
+        await updateQuestion({ title });
+    }
+
+    const updateDescription = async () => {
+        const next = description.trim() === "" ? null : description;
+        if (next === (question?.description ?? null)) return;
+        await updateQuestion({ description: next });
+    }
+
+    const updateWordLimit = async () => {
+        if (wordLimit === (question?.short_answer_word_limit ?? null)) return;
+        await updateQuestion({ short_answer_word_limit: wordLimit });
     }
 
     const handleDeleteQuestion = async () => {
@@ -493,31 +553,32 @@ function ShortAnswerQuestionCard({ question, currentRole, possibleRole, handleQu
     }
 
     const handleRemoveQuestionFromRole = async () => {
-        const updatedQuestion = { ...question!, roles: question?.roles?.filter((role) => role !== currentRole) ?? [] };
-        await handleQuestionUpdate('update', updatedQuestion);
+        await updateQuestion({ roles: question?.roles?.filter((role) => role !== currentRole) ?? [] });
     }
 
     const toggleRequired = async () => {
         const newRequired = !required;
         setRequired(newRequired);
-        await handleQuestionUpdate('update', { ...question!, required: newRequired });
+        await updateQuestion({ required: newRequired });
     }
 
     return (
         <div className="flex flex-col justify-between p-2 border rounded-md gap-2 min-h-[120px]">
-            <div className="flex justify-between">
-                <Input className="max-w-[500px]" value={title} onChange={async (e) => await updateTitle(e.target.value)} />
-                <div className="flex items-center gap-1">
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant={required ? "default" : "outline"} onClick={toggleRequired}>
-                                <Asterisk className="w-4 h-4" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>{required ? "Required" : "Optional"}</p>
-                        </TooltipContent>
-                    </Tooltip>
+            <div className="flex flex-col gap-1">
+                <label className="text-sm text-foreground">{dict.common.title}</label>
+                <div className="flex justify-between">
+                    <Input className="max-w-[500px]" value={title} onChange={(e) => setTitle(e.target.value)} onBlur={updateTitle} />
+                    <div className="flex items-center gap-1">
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant={required ? "default" : "outline"} onClick={toggleRequired}>
+                                    <Asterisk className="w-4 h-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>{required ? "Required" : "Optional"}</p>
+                            </TooltipContent>
+                        </Tooltip>
                     {
                         question?.roles && question?.roles.length > 1 && (
                             <Tooltip>
@@ -533,11 +594,37 @@ function ShortAnswerQuestionCard({ question, currentRole, possibleRole, handleQu
                         )
                     }
                     <Button variant="destructive" onClick={handleDeleteQuestion}><Trash className="w-4 h-4" /></Button>
+                    </div>
                 </div>
+            </div>
+            <div className="flex flex-col gap-1 px-2">
+                <label className="text-sm text-foreground">{dict.common.description}</label>
+                <Textarea
+                    className="max-w-[500px] min-h-[80px]"
+                    placeholder="Optional info for applicants"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    onBlur={updateDescription}
+                />
+            </div>
+            <div className="flex items-center gap-2 p-2">
+                <label className="text-sm text-foreground whitespace-nowrap">Word limit</label>
+                <Input
+                    type="text"
+                    inputMode="numeric"
+                    className="max-w-[120px]"
+                    placeholder="None"
+                    value={wordLimit ?? ""}
+                    onChange={(e) => {
+                        const value = e.target.value.replace(/[^0-9]/g, "");
+                        setWordLimit(value === "" ? null : parseInt(value, 10));
+                    }}
+                    onBlur={updateWordLimit}
+                />
             </div>
             <div className="flex flex-col gap-1 p-2">
                 <div className="border-b-2 border-dotted border-gray-500 max-w-[300px]">
-                    <p className="text-sm text-gray-500">{dict.dashboard.campaigns.questions.answer_text}</p>
+                    <p className="text-sm text-foreground">{dict.dashboard.campaigns.questions.answer_text}</p>
                 </div>
             </div>
         </div>

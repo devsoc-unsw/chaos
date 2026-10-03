@@ -31,7 +31,7 @@ pub async fn user_is_comment_author(
                     SELECT u.id FROM users u
                     JOIN comments c on c.author_id = $1
                     WHERE c.id = $2
-                )
+                ) AS sub
             )
         ",
         user_id,

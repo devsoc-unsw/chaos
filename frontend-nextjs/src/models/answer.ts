@@ -13,14 +13,6 @@ export type AnswerType = "ShortAnswer" | "MultiChoice" | "MultiSelect" | "DropDo
 
 export type AnswerData = string | string[];
 
-export async function getAllCommonAnswers(applicationId: string): Promise<Answer[]> {
-    return await apiRequest<Answer[]>(`/api/v1/application/${applicationId}/answers/common`);
-}
-
-export async function getAllRoleAnswers(applicationId: string, roleId: string): Promise<Answer[]> {
-    return await apiRequest<Answer[]>(`/api/v1/application/${applicationId}/role/${roleId}/answers`);
-}
-
 export async function updateApplicationRoles(applicationId: string, roles: unknown): Promise<void> {
   return await apiRequest<void>(`/api/v1/application/${applicationId}/roles`, {
     method: "PATCH",
@@ -37,8 +29,8 @@ export async function updateAnswer(answerId: string, body: unknown): Promise<voi
   });
 }
 
-export function createAnswer(applicationId: string, body: unknown) {
-  return apiRequest(`/api/v1/application/${applicationId}/answer`, {
+export function createAnswer(applicationId: string, body: unknown): Promise<{ id: string | number }> {
+  return apiRequest<{ id: string | number }>(`/api/v1/application/${applicationId}/answer`, {
     method: "POST",
     body,
   });

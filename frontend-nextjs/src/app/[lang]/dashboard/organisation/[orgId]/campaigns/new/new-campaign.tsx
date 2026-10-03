@@ -21,6 +21,7 @@ import {
 import { uploadFile } from "@/models/file";
 import { createCategory } from "@/models/rating";
 import SlugInput from "@/components/slug-input";
+import { toast } from "sonner";
 
 export default function CampaignNewForm({ orgId, dict }: { orgId: string, dict: any }) {
     const queryClient = useQueryClient();
@@ -42,12 +43,20 @@ export default function CampaignNewForm({ orgId, dict }: { orgId: string, dict: 
             return;
         }
 
+        if (startDate >= endDate) {
+            toast.error(dict.dashboard.campaigns.start_date_before_end_date);
+            return;
+        }
+
+        // Prefer the edited slug; fall back to the autofilled suggestion from the name.
+        const usedSlug = (slug || suggestedSlug || createProperSlug(name)).trim();
+
         setSaving(true);
-        const res = await createCampaign(name, description, startDate, endDate, orgId, slug);
+        const res = await createCampaign(name, description, startDate, endDate, orgId, usedSlug);
         const campaignId = res.id;
         const bannerUpdate = await setCampaignCoverImage(campaignId);
-
-        uploadFile(bannerUpdate.upload_url, selectedImage);
+        
+        await uploadFile(bannerUpdate.upload_url, selectedImage);
 
         await queryClient.invalidateQueries({ queryKey: [`${orgId}-campaigns`] });
         await createCategory('general', campaignId);
@@ -55,9 +64,16 @@ export default function CampaignNewForm({ orgId, dict }: { orgId: string, dict: 
         redirect(`/dashboard/organisation/${orgId}/campaigns/${campaignId}`);
     }
 
-    const handleNameChange = (name: string) => {
-        setName(name);
-        setSuggestedSlug(createProperSlug(name));
+    const handleNameChange = (nextName: string) => {
+        setName(nextName);
+        const nextSlug = createProperSlug(nextName);
+        setSuggestedSlug((prevSuggested) => {
+            // Only keep overwriting slug while it still matches the previous autofill.
+            setSlug((prevSlug) =>
+                !prevSlug || prevSlug === prevSuggested ? nextSlug : prevSlug
+            );
+            return nextSlug;
+        });
     }
 
     return (
@@ -100,7 +116,7 @@ export default function CampaignNewForm({ orgId, dict }: { orgId: string, dict: 
                 <DatePicker label={dict.common.starts_at} value={startDate} onChange={(value) => setStartDate(value)} />
                 <DatePicker label={dict.common.ends_at} value={endDate} onChange={(value) => setEndDate(value)} />
                 <div>
-                    <Button disabled={!name || !selectedImage || !startDate || !endDate || saving || !slugAvailable || !slug} onClick={async () => await submitData()}>{dict.dashboard.actions.save}</Button>
+                    <Button disabled={!name || !selectedImage || !startDate || !endDate || saving || !slugAvailable || !(slug || suggestedSlug)} onClick={async () => await submitData()}>{dict.dashboard.actions.save}</Button>
                 </div>
             </div>
         </div>

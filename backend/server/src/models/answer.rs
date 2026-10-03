@@ -36,7 +36,7 @@ pub struct Answer {
     id: i64,
     /// ID of the question this answer is for
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
-    question_id: i64,
+    pub question_id: i64,
 
     /// The actual answer data, flattened in serialization
     #[serde(flatten)]
@@ -279,6 +279,82 @@ impl Answer {
                     ranking_answer_rankings rar ON rar.answer_id = a.id
                         AND q.question_type = 'Ranking'
                 WHERE a.application_id = $1 AND q.common = true
+                GROUP BY
+                    a.id, q.question_type, saa.text
+            "#,
+            application_id
+        )
+        .fetch_all(transaction.deref_mut())
+        .await?;
+
+        let answers = answer_raw_data
+            .into_iter()
+            .map(|answer_raw_data| {
+                let answer_data = AnswerData::from_answer_raw_data(
+                    answer_raw_data.question_type,
+                    answer_raw_data.short_answer_answer,
+                    answer_raw_data.multi_option_answers,
+                    answer_raw_data.ranking_answers,
+                );
+
+                Answer {
+                    id: answer_raw_data.id,
+                    question_id: answer_raw_data.question_id,
+                    data: answer_data,
+                    created_at: answer_raw_data.created_at,
+                    updated_at: answer_raw_data.updated_at,
+                }
+            })
+            .collect();
+
+        Ok(answers)
+    }
+
+    /// Retrieves all answers for an application, regardless of question type.
+    ///
+    /// # Arguments
+    ///
+    /// * `application_id` - ID of the application to get answers for
+    /// * `transaction` - Database transaction to use
+    ///
+    /// # Returns
+    ///
+    /// * `Result<Vec<Answer>, ChaosError>` - List of answers or error
+    pub async fn get_all_by_application(
+        application_id: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<Answer>, ChaosError> {
+        let answer_raw_data = sqlx::query_as!(
+            AnswerRawData,
+            r#"
+                SELECT
+                    a.id,
+                    a.question_id,
+                    q.question_type AS "question_type: QuestionType",
+                    a.created_at,
+                    a.updated_at,
+                    COALESCE(saa.text, '') AS short_answer_answer,
+                    array_remove(array_agg(
+                        moao.option_id
+                    ), NULL) AS multi_option_answers,
+                    array_remove(array_agg(
+                        rar.option_id ORDER BY rar.rank
+                    ), NULL) AS ranking_answers
+                FROM
+                    answers a
+                    JOIN questions q ON a.question_id = q.id
+                        LEFT JOIN
+                    multi_option_answer_options moao ON moao.answer_id = a.id
+                        AND q.question_type IN ('MultiChoice', 'MultiSelect', 'DropDown')
+
+                        LEFT JOIN
+                    short_answer_answers saa ON saa.answer_id = a.id
+                        AND q.question_type = 'ShortAnswer'
+
+                        LEFT JOIN
+                    ranking_answer_rankings rar ON rar.answer_id = a.id
+                        AND q.question_type = 'Ranking'
+                WHERE a.application_id = $1
                 GROUP BY
                     a.id, q.question_type, saa.text
             "#,
