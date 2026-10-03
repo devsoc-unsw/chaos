@@ -16,7 +16,7 @@ export default function Finish({
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center">
-      Thanks for applying to {campaign?.name}! We'll be in touch with next steps
+      Thanks for applying to {campaign?.name}! We&apos;ll be in touch with next steps
       soon!
     </div>
   );

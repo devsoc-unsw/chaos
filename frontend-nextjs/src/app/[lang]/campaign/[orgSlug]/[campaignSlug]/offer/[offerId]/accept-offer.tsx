@@ -44,7 +44,7 @@ export default function AcceptOffer({ offerId }: { offerId: string }) {
               <p>
                 Dear {offerDetails.user_name}, congratulations! We are please to
                 inform you that you have been successful in your application to{" "}
-                {offerDetails.organisation_name}'s {offerDetails.campaign_name}!
+                {offerDetails.organisation_name}&apos;s {offerDetails.campaign_name}!
                 You have been accepted for the following role:{" "}
                 {offerDetails.role_name}. Please accept this offer by{" "}
                 {offerDetails.expiry}.
