@@ -1,4 +1,8 @@
-import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query";
 import { getOffer } from "@/models/offer";
 import { redirect } from "next/navigation";
 import { OfferDetails } from "@/models/offer";
@@ -22,16 +26,17 @@ export default async function OfferPage({
     queryFn: () => getOffer(offerId),
   });
 
-  const offer: OfferDetails | undefined = queryClient.getQueryData([`offer-${offerId}`]);
+  const offer: OfferDetails | undefined = queryClient.getQueryData([
+    `offer-${offerId}`,
+  ]);
 
   if (!offer) {
     redirect(`/error`);
   }
 
   return (
-   <HydrationBoundary state={dehydrate(queryClient)}>
-     <AcceptOffer offerId={offerId} />
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <AcceptOffer offerId={offerId} />
     </HydrationBoundary>
   );
 }
-

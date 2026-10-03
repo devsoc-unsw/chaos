@@ -16,7 +16,7 @@ export default function ErrorCard({
   return (
     <div className="min-h-screen font-sans flex flex-col items-center justify-center px-6">
       <div className="relative mb-8">
-        <div className="absolute inset-0 blur-3xl opacity-30 bg-purple-500 rounded-full scale-100" />
+        <div className="absolute inset-0 blur-3xl opacity-30 bg-primary rounded-full scale-100" />
         <img
           src={imageSrc}
           alt={imageAlt}
@@ -26,15 +26,15 @@ export default function ErrorCard({
         />
       </div>
       <div className="text-center max-w-2xl">
-        <h1 className="text-4xl md:text-5xl font-bold text-slate-950 mb-4">
+        <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
           {title}
         </h1>
-        <p className="md:text-xl text-zinc-500 font-light max-w-xl text-xl text-slate-700 leading-relaxed">
+        <p className="md:text-xl text-muted-foreground font-light max-w-xl text-xl text-subtle-foreground leading-relaxed">
           {message}
           {details && (
             <>
               <br />
-              <span className="font-medium text-slate-900 mt-4 block">
+              <span className="font-medium text-foreground mt-4 block">
                 {details}
               </span>
             </>

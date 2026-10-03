@@ -1,11 +1,18 @@
-import { getDictionary } from "@/app/[lang]/dictionaries"
-import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query"
-import OrganisationMembers from "./members"
+import { getDictionary } from "@/app/[lang]/dictionaries";
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query";
+import OrganisationMembers from "./members";
 import { getAllOrganisationMembers } from "@/models/organisation";
 import { getIsSuperuser } from "@/models/user";
 
-
-export default async function OrganisationMembersPage({ params }: { params: Promise<{ orgId: string, lang: string }> }) {
+export default async function OrganisationMembersPage({
+  params,
+}: {
+  params: Promise<{ orgId: string; lang: string }>;
+}) {
   const { orgId, lang } = await params;
   const dict = await getDictionary(lang);
   const queryClient = new QueryClient();
@@ -24,5 +31,5 @@ export default async function OrganisationMembersPage({ params }: { params: Prom
     <HydrationBoundary state={dehydrate(queryClient)}>
       <OrganisationMembers orgId={orgId} dict={dict} />
     </HydrationBoundary>
-  )
+  );
 }

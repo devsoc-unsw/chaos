@@ -31,7 +31,7 @@ type RequestOptions = {
  */
 export async function apiRequest<T>(
   path: string,
-  options: RequestOptions = {}
+  options: RequestOptions = {},
 ): Promise<T> {
   const {
     method = "GET",
@@ -49,7 +49,7 @@ export async function apiRequest<T>(
   const cleanPath = path.startsWith("/") ? path.slice(1) : path;
   const base = API_BASE_URL.replace(/\/+$/, "");
   const url = `${base}/${cleanPath}`;
-  
+
   let fetchOptions: RequestInit;
 
   if (isServer) {
@@ -90,7 +90,7 @@ export async function apiRequest<T>(
         redirect(`/login?to=${encodeURIComponent(pathname)}`);
       } else {
         window.location.href = `/login?to=${encodeURIComponent(
-          window.location.pathname
+          window.location.pathname,
         )}`;
       }
     }
@@ -108,7 +108,7 @@ export async function apiRequest<T>(
     throw new ApiError(
       response.status,
       response.statusText,
-      backendMessage || `API request failed: ${method} ${path}`
+      backendMessage || `API request failed: ${method} ${path}`,
     );
   }
 

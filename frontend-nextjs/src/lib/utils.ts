@@ -1,20 +1,23 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 import moment from "moment";
 import { QuestionAndAnswer } from "@/models/question";
 import { ApplicationStatus } from "@/models/application";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 export function dateToString(date: string) {
-    return moment(date).format("D MMM YYYY H:mm");
+  return moment(date).format("D MMM YYYY H:mm");
 }
 
 // I might wanna move this out of here lowk it's kinda question specific
-export function buildAnswerPayload(question: QuestionAndAnswer, value: unknown) {
-  console.log(question)
+export function buildAnswerPayload(
+  question: QuestionAndAnswer,
+  value: unknown,
+) {
+  console.log(question);
   if (!question?.question_id) {
     throw new Error("Question object missing question_id");
   }
@@ -27,16 +30,16 @@ export function buildAnswerPayload(question: QuestionAndAnswer, value: unknown) 
   switch (question.question_type) {
     case "ShortAnswer":
       answerData = String(value);
-      if (answerData.trim() === '') {
-        answerData = null
+      if (answerData.trim() === "") {
+        answerData = null;
       }
       break;
 
     case "MultiChoice":
     case "DropDown":
       answerData = value;
-      if (answerData === 'NO_ANSWER') {
-        answerData = null
+      if (answerData === "NO_ANSWER") {
+        answerData = null;
       }
       break;
 
@@ -55,7 +58,6 @@ export function buildAnswerPayload(question: QuestionAndAnswer, value: unknown) 
     answer_data: answerData,
   };
 }
-
 
 export function privateStatusLabel(status: ApplicationStatus): string {
   switch (status) {

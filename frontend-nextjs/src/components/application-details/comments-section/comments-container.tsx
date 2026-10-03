@@ -1,9 +1,7 @@
 "use client";
 
-import { CommentDetails, getCommentsByApplication } from "@/models/comment";
+import { CommentDetails } from "@/models/comment";
 import { Spinner } from "@components/ui/spinner";
-import { useQuery } from "@tanstack/react-query";
-import { dateToString } from "@/lib/utils";
 import { useEffect, useRef } from "react";
 import Comment from "@components/application-details/comments-section/comment";
 

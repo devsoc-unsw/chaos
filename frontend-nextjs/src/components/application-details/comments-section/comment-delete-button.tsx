@@ -10,7 +10,7 @@ export default function CommentDeleteButton({ onClick }: Props) {
   return (
     <Button
       size="icon-sm"
-      className="bg-slate-900 hover:scale-105 hover:bg-slate-900 hover:text-red-400 focus:scale-105 focus:text-red-400"
+      className="bg-foreground hover:scale-105 hover:bg-foreground hover:text-destructive focus:scale-105 focus:text-destructive"
       onClick={onClick}
       aria-label="Delete message"
     >
