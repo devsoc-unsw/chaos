@@ -4,6 +4,7 @@
 //! including creation, updates, and retrieval of role information.
 
 use crate::models::error::ChaosError;
+use crate::models::limits;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
@@ -246,35 +247,19 @@ impl Role {
 
 impl RoleUpdate {
     pub fn validate(&self) -> Result<(), ChaosError> {
-        let role_name_max_chars = env::var("ROLE_NAME_MAX_CHARS")
-            .expect("Error getting ROLE_NAME_MAX_CHARS")
-            .to_string()
-            .parse::<usize>()
-            .map_err(|_| ChaosError::InternalServerError)?;
-        let role_description_max_chars = env::var("ROLE_DESCRIPTION_MAX_CHARS")
-            .expect("Error getting ROLE_DESCRIPTION_MAX_CHARS")
-            .to_string()
-            .parse::<usize>()
-            .map_err(|_| ChaosError::InternalServerError)?;
-        let role_positions_available_max = env::var("ROLE_POSITIONS_AVAILABLE_MAX")
-            .expect("Error getting ROLE_POSITIONS_AVAILABLE_MAX")
-            .to_string()
-            .parse::<i32>()
-            .map_err(|_| ChaosError::InternalServerError)?;
-
         if self.name.is_empty()
             || self.min_available < 0
             || self.max_available < 1
             || self.min_available > self.max_available
-            || self.name.len() > role_name_max_chars
-            || self.min_available > role_positions_available_max
-            || self.max_available > role_positions_available_max
+            || self.name.len() > limits::ROLE_NAME_MAX_CHARS
+            || self.min_available > limits::ROLE_POSITIONS_AVAILABLE_MAX
+            || self.max_available > limits::ROLE_POSITIONS_AVAILABLE_MAX
         {
             return Err(ChaosError::BadRequest);
         }
 
         if self.description.is_some()
-            && self.description.as_ref().unwrap().len() > role_description_max_chars
+            && self.description.as_ref().unwrap().len() > limits::ROLE_DESCRIPTION_MAX_CHARS
         {
             return Err(ChaosError::BadRequest);
         }

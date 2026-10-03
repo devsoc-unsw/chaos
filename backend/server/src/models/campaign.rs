@@ -4,7 +4,7 @@
 //! including creation, updates, and retrieval of campaign information.
 //! It also handles campaign banner management and campaign status tracking.
 
-use super::{error::ChaosError, storage::Storage};
+use super::{error::ChaosError, limits, storage::Storage};
 use crate::models::app::AppState;
 use crate::models::role::{Role, RoleUpdate};
 use crate::service::campaign::{assert_campaign_is_open, create_proper_slug};
@@ -630,7 +630,6 @@ impl Campaign {
         transaction: &mut Transaction<'_, Postgres>,
         snowflake_generator: &mut SnowflakeIdGenerator,
     ) -> Result<i64, ChaosError> {
-
         let campaign = Self::get(campaign_id, transaction).await?;
         if campaign.published {
             return Err(ChaosError::BadRequest);
@@ -843,13 +842,8 @@ where
 
 impl CampaignUpdate {
     pub fn validate(&self) -> Result<(), ChaosError> {
-        let campaign_name_max_chars = env::var("CAMPAIGN_NAME_MAX_CHARS")
-            .expect("Error getting CAMPAIGN_NAME_MAX_CHARS")
-            .to_string()
-            .parse::<usize>()
-            .map_err(|_| ChaosError::InternalServerError)?;
-
-        if self.name.len() > campaign_name_max_chars
+        if self.name.len() > limits::CAMPAIGN_NAME_MAX_CHARS
+            || self.description.len() > limits::CAMPAIGN_DESCRIPTION_MAX_CHARS
             || self.name.is_empty()
             || self.slug.is_empty()
             || self.starts_at >= self.ends_at
