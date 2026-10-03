@@ -1,11 +1,28 @@
-"use client";
+'use client';
 
-import { useQuery } from "@tanstack/react-query";
-import { getCampaign, getCampaignRoles, getCampaignAttachments, publishCampaign, getCampaignApplications } from "@/models/campaign";
-import { Button } from "@/components/ui/button";
-import { Copy, SquarePen, Trash, FormIcon, FileText, Menu, Play, Link as LinkIcon } from "lucide-react";
-import { ButtonGroup } from "@/components/ui/button-group";
-import { cn, dateToString } from "@/lib/utils";
+import { useQuery } from '@tanstack/react-query';
+import {
+  getCampaign,
+  getCampaignRoles,
+  getCampaignAttachments,
+  publishCampaign,
+  getCampaignApplications,
+} from '@/models/campaign';
+import { Button } from '@/components/ui/button';
+import {
+  Copy,
+  SquarePen,
+  Trash,
+  FormIcon,
+  FileText,
+  Menu,
+  Play,
+  Drama,
+  Link as LinkIcon,
+  Palette,
+} from 'lucide-react';
+import { ButtonGroup } from '@/components/ui/button-group';
+import { cn, dateToString } from '@/lib/utils';
 import {
   Table,
   TableBody,
@@ -13,19 +30,19 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import Link from "next/link";
-import { getOrganisationUserRole } from "@/models/organisation";
-import { useEffect, useMemo, useState } from "react";
-import { remark } from "remark";
-import html from "remark-html";
-import CopyButton from "@/components/copy-button";
-import AvailabilityCalendar from "@/components/availability-calendar";
-import { toast } from "sonner";
-import { PublishCampaignDialog } from "./publish-campaign-dialog";
-import { getCurrentUser } from "@/lib/auth";
-import { getCampaignRoleStatuses } from "@/models/application";
-import { getOffersByCampaign } from "@/models/offer";
+} from '@/components/ui/table';
+import Link from 'next/link';
+import { getOrganisationUserRole } from '@/models/organisation';
+import { useEffect, useMemo, useState } from 'react';
+import { remark } from 'remark';
+import html from 'remark-html';
+import CopyButton from '@/components/copy-button';
+import AvailabilityCalendar from '@/components/availability-calendar';
+import { toast } from 'sonner';
+import { PublishCampaignDialog } from './publish-campaign-dialog';
+import { getCurrentUser } from '@/lib/auth';
+import { getCampaignRoleStatuses } from '@/models/application';
+import { getOffersByCampaign } from '@/models/offer';
 
 interface RolePipeline {
   applications: number;
@@ -41,7 +58,15 @@ const EMPTY_PIPELINE: RolePipeline = {
   hired: 0,
 };
 
-export default function CampaignDetails({ campaignId, orgId, dict }: { campaignId: string, orgId: string, dict: any }) {
+export default function CampaignDetails({
+  campaignId,
+  orgId,
+  dict,
+}: {
+  campaignId: string;
+  orgId: string;
+  dict: any;
+}) {
   const { data: campaign, refetch: refetchCampaign } = useQuery({
     queryKey: [`${campaignId}-campaign-details`],
     queryFn: () => getCampaign(campaignId),
@@ -104,17 +129,17 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
     }
 
     for (const roleStatus of roleStatuses ?? []) {
-      if (roleStatus.status === "Interview") {
+      if (roleStatus.status === 'Interview') {
         bucket(roleStatus.campaign_role_id).assessment += 1;
       }
     }
 
     for (const offer of offers ?? []) {
       // Drafts haven't been extended to the applicant yet
-      if (offer.status === "Draft") continue;
+      if (offer.status === 'Draft') continue;
 
       bucket(offer.role_id).offer += 1;
-      if (offer.status === "Accepted") {
+      if (offer.status === 'Accepted') {
         bucket(offer.role_id).hired += 1;
       }
     }
@@ -122,15 +147,17 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
     return counts;
   }, [applications, roleStatuses, offers]);
 
-  const [hoveredDeleteIndex, setHoveredDeleteIndex] = useState<number | null>(null);
-  const [descriptionHtmlState, setDescriptionHtmlState] = useState<string>("");
+  const [hoveredDeleteIndex, setHoveredDeleteIndex] = useState<number | null>(
+    null,
+  );
+  const [descriptionHtmlState, setDescriptionHtmlState] = useState<string>('');
 
   const handlePublish = async () => {
     try {
       await publishCampaign(campaignId);
       await refetchCampaign();
     } catch (error) {
-      console.error("Failed to publish campaign:", error);
+      console.error('Failed to publish campaign:', error);
     }
   };
 
@@ -152,27 +179,32 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
     (campaign?.cover_image && /^https?:\/\//i.test(campaign.cover_image)
       ? campaign.cover_image
       : null) ||
-    "/placeholder.svg";
+    '/placeholder.svg';
 
   function getGreeting(hour: number) {
-    if (hour < 12) return "Morning";
-    if (hour < 18) return "Afternoon";
-    return "Evening";
+    if (hour < 12) return 'Morning';
+    if (hour < 18) return 'Afternoon';
+    return 'Evening';
   }
-  
-  const [greeting, setGreeting] = useState("");
+
+  const [greeting, setGreeting] = useState('');
 
   useEffect(() => {
     setGreeting(getGreeting(new Date().getHours()));
   }, []);
 
   return (
-
-    <div className="mx-auto px-4 py-6 sm:px-6 sm:py-8 grid gap-6 lg:grid-cols-[1.4fr_0.6fr] 
-      animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
+    <div
+      className="mx-auto px-4 py-6 sm:px-6 sm:py-8 grid gap-6 lg:grid-cols-[1.4fr_0.6fr] 
+      animate-in fade-in-0 slide-in-from-bottom-2 duration-500"
+    >
       <div className="flex w-full min-w-0 max-w-6xl flex-col gap-6">
         <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
-          <img className="w-full max-h-52 object-cover" src={existingBannerSrc} alt={`${campaign?.name} cover image`} />
+          <img
+            className="w-full max-h-52 object-cover"
+            src={existingBannerSrc}
+            alt={`${campaign?.name} cover image`}
+          />
           <div className="flex flex-col gap-3 border-t px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <div className="flex flex-col gap-2">
               <h1 className="text-3xl font-bold tracking-tight">
@@ -183,7 +215,8 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                   {campaign?.name}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  {dateToString(campaign?.starts_at ?? "")} - {dateToString(campaign?.ends_at ?? "")}
+                  {dateToString(campaign?.starts_at ?? '')} -{' '}
+                  {dateToString(campaign?.ends_at ?? '')}
                 </p>
               </div>
             </div>
@@ -193,41 +226,69 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
         {/* Quick actions */}
         <section className="flex flex-col">
           <h2 className="text-lg font-semibold">{dict.common.quick_actions}</h2>
-          <div className="mt-4 flex flex-col w-full sm:flex-row flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-col w-full sm:flex-row flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap gap-2 w-full sm:w-auto">
               <CopyButton
                 value={`https://chaos.devsoc.app/campaign/${campaign?.organisation_slug}/${campaign?.campaign_slug}`}
                 className="w-full justify-center sm:w-auto"
               >
-                <LinkIcon className="w-4 h-4" /> {dict.dashboard.campaigns.share_link}
+                <LinkIcon className="w-4 h-4" />{' '}
+                {dict.dashboard.campaigns.share_link}
               </CopyButton>
-              {userRole?.role === "Admin" && <Link href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}/edit`} className="w-full sm:w-auto">
-                <Button variant="outline" className="cursor-pointer w-full justify-center sm:w-auto">
-                  <SquarePen className="w-4 h-4" /> {dict.dashboard.actions.edit}
-                </Button>
-              </Link>}
+              {userRole?.role === 'Admin' && (
+                <Link
+                  href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}/edit`}
+                  className="w-full sm:w-auto"
+                >
+                  <Button
+                    variant="outline"
+                    className="cursor-pointer w-full justify-center sm:w-auto"
+                  >
+                    <SquarePen className="w-4 h-4" />{' '}
+                    {dict.dashboard.actions.edit}
+                  </Button>
+                </Link>
+              )}
             </div>
 
             <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-              <Link href={`/dashboard/organisation/${campaign?.organisation_id}/campaigns/${campaignId}/review`} className="w-full sm:w-auto">
-                <Button variant="outline" className="w-full justify-center sm:w-auto">
-                  <Play className="w-4 h-4" /> {dict.dashboard.campaigns.grading_queue}
+              <Link
+                href={`/dashboard/organisation/${campaign?.organisation_id}/campaigns/${campaignId}/review`}
+                className="w-full sm:w-auto"
+              >
+                <Button
+                  variant="outline"
+                  className="w-full justify-center sm:w-auto"
+                >
+                  <Play className="w-4 h-4" />{' '}
+                  {dict.dashboard.campaigns.grading_queue}
                 </Button>
               </Link>
 
-              <Link href={`/dashboard/organisation/${campaign?.organisation_id}/campaigns/${campaignId}/applications`} className="w-full sm:w-auto">
+              <Link
+                href={`/dashboard/organisation/${campaign?.organisation_id}/campaigns/${campaignId}/applications`}
+                className="w-full sm:w-auto"
+              >
                 <Button className="w-full justify-center sm:w-auto">
-                  <Menu className="w-4 h-4" /> {dict.dashboard.campaigns.application_summary}
+                  <Menu className="w-4 h-4" />{' '}
+                  {dict.dashboard.campaigns.application_summary}
                 </Button>
               </Link>
             </div>
+            </div>
 
-
-            {userRole?.role === "Admin" && (
-              <>
+            {userRole?.role === 'Admin' && (
+              <div className="mt-4 flex flex-col w-full sm:flex-row items-center justify-between gap-2">
                 {/* <Button variant="outline" className="cursor-pointer w-full justify-center sm:w-auto">
                   <Trash className="w-4 h-4" /> {dict.dashboard.actions.delete}
                 </Button> */}
+                <ButtonGroup className="w-full sm:w-auto flex-col sm:flex-row gap-2 sm:gap-0 [&>*]:w-full sm:[&>*]:w-auto">
+                  <Link href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}/preview`} className="w-full sm:w-auto">
+                    <Button variant="outline" className="w-full justify-center sm:w-auto">
+                      <Drama className="w-4 h-4" /> {dict.dashboard.campaigns.view_as_respondent}
+                    </Button>
+                  </Link>
+                </ButtonGroup>
                 {!campaign?.published && (
                   <>
                     <ButtonGroup className="w-full sm:w-auto flex-col sm:flex-row gap-2 sm:gap-0 [&>*]:w-full sm:[&>*]:w-auto">
@@ -248,17 +309,17 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                 )}
               </>
             )}
-
-          </div>
         </section>
 
         {/* Applicant Pipeline */}
         <section>
-          <h2 className="text-lg font-semibold">{dict.dashboard.campaigns.applicant_pipeline}</h2>
+          <h2 className="text-lg font-semibold">
+            {dict.dashboard.campaigns.applicant_pipeline}
+          </h2>
           <div className="gap-6">
             <div className="mt-4 overflow-hidden rounded-lg border">
               <Table>
-                <TableHeader >
+                <TableHeader>
                   <TableRow className="bg-muted">
                     <TableHead className="w-[160px]">
                       {dict.dashboard.campaigns.roles.role}
@@ -289,13 +350,12 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                       <TableRow
                         key={role.id}
                         className={cn(
-                          "group transition-colors",
-                          hoveredDeleteIndex === index && "bg-destructive/10 hover:bg-destructive/20"
+                          'group transition-colors',
+                          hoveredDeleteIndex === index &&
+                            'bg-destructive/10 hover:bg-destructive/20',
                         )}
                       >
-                        <TableCell>
-                          {role.name}
-                        </TableCell>
+                        <TableCell>{role.name}</TableCell>
                         <TableCell>
                           {/* Number of roles available */}
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -330,7 +390,9 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                   {roles?.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center">
-                        <p className="text-sm text-muted-foreground">{dict.dashboard.campaigns.no_roles_available}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {dict.dashboard.campaigns.no_roles_available}
+                        </p>
                       </TableCell>
                     </TableRow>
                   )}
@@ -347,15 +409,17 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
           onSave={(dates) => {
             toast.success(
               dates.length === 0
-                ? "Availability cleared"
-                : `Saved ${dates.length} available ${dates.length === 1 ? "day" : "days"}`
+                ? 'Availability cleared'
+                : `Saved ${dates.length} available ${dates.length === 1 ? 'day' : 'days'}`,
             );
           }}
         />
         <div className="flex flex-col gap-6">
           <section className="rounded-xl border bg-white p-4 shadow-sm sm:p-6">
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold">{dict.common.description}</h2>
+              <h2 className="text-lg font-semibold">
+                {dict.common.description}
+              </h2>
             </div>
             <div className="mt-3 text-sm leading-relaxed text-muted-foreground">
               <div dangerouslySetInnerHTML={{ __html: descriptionHtmlState }} />
@@ -364,11 +428,13 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
 
           <section className="rounded-xl border bg-white p-4 shadow-sm sm:p-6">
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold">{dict.common.attachments}</h2>
+              <h2 className="text-lg font-semibold">
+                {dict.common.attachments}
+              </h2>
             </div>
             {attachments && attachments.length > 0 ? (
               <div className="mt-3 space-y-2">
-                {attachments.map(attachment => (
+                {attachments.map((attachment) => (
                   <a
                     href={attachment.download_url}
                     target="_blank"
@@ -384,7 +450,9 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
                 ))}
               </div>
             ) : (
-              <p className="mt-3 text-sm text-muted-foreground">No attachments yet.</p>
+              <p className="mt-3 text-sm text-muted-foreground">
+                No attachments yet.
+              </p>
             )}
           </section>
         </div>
