@@ -59,7 +59,7 @@ export function RatingsShelf({
     return (
       <TableRow key="no-ratings">
         <TableCell className="align-top text-center" colSpan={columns.length}>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted-foreground">
             {dict.dashboard.campaigns.application_summary_page.no_ratings}
           </p>
         </TableCell>
@@ -73,7 +73,7 @@ export function RatingsShelf({
         <TableRow key={rating.id}>
           <TableCell className="align-top" colSpan={3}>
             <span className="font-medium">{rating.rater_name}</span>
-            <p className="text-sm text-gray-700">{rating.comment}</p>
+            <p className="text-sm text-subtle-foreground">{rating.comment}</p>
           </TableCell>
           {rating.category_ratings.map((cr) => (
             <TableCell key={cr.id}>{cr.rating ?? "-"}</TableCell>
@@ -309,21 +309,21 @@ export default function ApplicationSummary({
     {
       id: "all",
       label: "All",
-      color: "bg-gray-200",
-      hoverColor: "hover:bg-gray-300",
+      color: "bg-border",
+      hoverColor: "hover:bg-input",
       isSpecial: true,
     },
     {
       id: "rejected",
       label: "Rejected",
-      color: "bg-red-100",
-      hoverColor: "hover:bg-red-200",
+      color: "bg-destructive-subtle",
+      hoverColor: "hover:bg-destructive-subtle-hover",
     },
     {
       id: "successful",
       label: "Successful",
-      color: "bg-green-100",
-      hoverColor: "hover:bg-green-200",
+      color: "bg-success-subtle",
+      hoverColor: "hover:bg-success-subtle-hover",
     },
   ];
 
@@ -418,7 +418,7 @@ export default function ApplicationSummary({
           {dict.dashboard.campaigns.review_applications}
         </h1>
         <h2 className="text-lg font-medium">{campaign?.name}</h2>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted-foreground">
           {dateToString(campaign?.starts_at ?? "")} -{" "}
           {dateToString(campaign?.ends_at ?? "")}
         </p>

@@ -108,7 +108,7 @@ export default function Ranking({
     <div className="mb-6 w-full">
       <div className="flex items-center mb-1">
         <label className="text-lg font-medium ">{question.text}</label>
-        {question.required && <span className="ml-1 text-red-500">*</span>}
+        {question.required && <span className="ml-1 text-destructive">*</span>}
       </div>
 
       {question.description && (

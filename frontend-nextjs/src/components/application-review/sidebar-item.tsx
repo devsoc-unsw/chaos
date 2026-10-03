@@ -24,9 +24,9 @@ export function SidebarItem({
       <div
         className={cn(
           "w-5 h-5 rounded-sm shrink-0 mt-0.5",
-          app.private_status === "Rejected" && "bg-red-500",
-          app.private_status === "Successful" && "bg-emerald-500",
-          app.private_status === "Pending" && "bg-yellow-400",
+          app.private_status === "Rejected" && "bg-destructive",
+          app.private_status === "Successful" && "bg-success",
+          app.private_status === "Pending" && "bg-warning",
         )}
       />
       <div className="min-w-0 flex-1">

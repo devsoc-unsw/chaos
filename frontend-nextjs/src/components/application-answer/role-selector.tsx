@@ -141,7 +141,7 @@ export default function RoleSelector({
             </Droppable>
           </div>
           {percentageInvalid && (
-            <p className="text-xs text-red-500 text-right">
+            <p className="text-xs text-destructive text-right">
               {dict.applicationpage.preference_total_error.replace(
                 "{total}",
                 String(totalPercentage),

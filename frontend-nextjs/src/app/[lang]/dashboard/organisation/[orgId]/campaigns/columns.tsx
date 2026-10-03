@@ -61,13 +61,11 @@ export function getColumns(
       accessorKey: "published",
       cell: ({ row }) => {
         return row.original.published ? (
-          <Badge className="bg-green-500">
+          <Badge className="bg-success">
             {dict.dashboard.campaigns.published}
           </Badge>
         ) : (
-          <Badge className="bg-yellow-500">
-            {dict.dashboard.campaigns.draft}
-          </Badge>
+          <Badge className="bg-warning">{dict.dashboard.campaigns.draft}</Badge>
         );
       },
     },

@@ -63,9 +63,9 @@ export default function SlugInput({
   return (
     <>
       {name && (
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted-foreground">
           {dict.dashboard.suggested_slug}:{" "}
-          <span className="bg-gray-100 border rounded px-1">
+          <span className="bg-muted border rounded px-1">
             {name ? createProperSlug(name) : ""}
           </span>
         </p>
@@ -77,7 +77,7 @@ export default function SlugInput({
         onChange={(e) => handleChange(e)}
         onBlur={handleBlur}
       />
-      <p className="text-red-500 text-xs">
+      <p className="text-destructive text-xs">
         {!slugAvailable && dict.dashboard.slug_not_available}
       </p>
     </>

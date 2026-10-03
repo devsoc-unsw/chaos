@@ -39,14 +39,14 @@ function InterviewCard({
   location: string;
 }) {
   return (
-    <div className="flex w-full items-stretch gap-3 bg-white">
+    <div className="flex w-full items-stretch gap-3 bg-background">
       <div className="w-1.5 shrink-0 rounded-full bg-calendar-primary" />
       <div className="flex flex-col justify-center gap-1">
-        <div className="text-xs font-medium text-gray-900">
+        <div className="text-xs font-medium text-foreground">
           {format(date, "dd MMMM yyyy")}
         </div>
-        <div className="text-xs text-gray-700">{name}</div>
-        <div className="text-[11px] text-gray-500">{location}</div>
+        <div className="text-xs text-subtle-foreground">{name}</div>
+        <div className="text-[11px] text-muted-foreground">{location}</div>
       </div>
     </div>
   );
@@ -307,7 +307,7 @@ export default function AvailabilityCalendar({
 
       {/* Upcoming interviews */}
       <section className="mt-5 flex flex-col gap-4">
-        <h2 className="text-lg font-semibold text-gray-900">
+        <h2 className="text-lg font-semibold text-foreground">
           3 Upcoming Interviews
         </h2>
         <div className="flex flex-col gap-4">

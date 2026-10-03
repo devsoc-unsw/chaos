@@ -50,7 +50,7 @@ export function PublishCampaignDialog({
           disabled={loading}
           className={buttonClassName}
         >
-          <CircleCheck className="w-4 h-4 text-green-500 mr-1" />
+          <CircleCheck className="w-4 h-4 text-success mr-1" />
           {label}
         </Button>
       </AlertDialogTrigger>
@@ -89,7 +89,7 @@ export function PublishCampaignDialog({
               onClick={handlePublishClick}
               disabled={!confirmPublish || loading}
             >
-              <CircleCheck className="w-4 h-4 mr-2 text-green-500" />
+              <CircleCheck className="w-4 h-4 mr-2 text-success" />
               {label}
             </Button>
           </AlertDialogAction>

@@ -20,15 +20,15 @@ import { cn } from "@/lib/utils";
 import { OfferStatus } from "@/models/offer";
 
 const PALETTE = [
-  "bg-rose-100 text-amber-800",
-  "bg-yellow-100 text-yellow-800",
-  "bg-blue-100 text-blue-800",
-  "bg-sky-100 text-sky-800",
-  "bg-lime-100 text-lime-800",
-  "bg-pink-100 text-pink-800",
-  "bg-teal-100 text-teal-800",
-  "bg-indigo-100 text-indigo-800",
-  "bg-purple-100 text-purple-800",
+  "bg-tag-1 text-tag-1-foreground",
+  "bg-tag-2 text-tag-2-foreground",
+  "bg-tag-3 text-tag-3-foreground",
+  "bg-tag-4 text-tag-4-foreground",
+  "bg-tag-5 text-tag-5-foreground",
+  "bg-tag-6 text-tag-6-foreground",
+  "bg-tag-7 text-tag-7-foreground",
+  "bg-tag-8 text-tag-8-foreground",
+  "bg-tag-9 text-tag-9-foreground",
 ];
 
 export function getColumns(
@@ -77,10 +77,10 @@ export function getColumns(
   }) as ColumnDef<ApplicationRatingSummary>[];
 
   const STATUS_COLOR_CLASSES: Record<OfferStatus, string> = {
-    Draft: "text-gray-800",
-    Sent: "text-blue-800",
-    Accepted: "text-green-800",
-    Declined: "text-red-800",
+    Draft: "text-foreground",
+    Sent: "text-info-text",
+    Accepted: "text-success-text",
+    Declined: "text-destructive-text",
   };
 
   return [
@@ -242,10 +242,10 @@ function StatusCell({
 }) {
   // TODO: Consider switching the colour used by interview
   const STATUS_BACKGROUND_COLORS: Record<ApplicationStatus, string> = {
-    Successful: "bg-green-100 border-green-300",
-    Rejected: "bg-red-100 border-red-300",
-    Pending: "bg-gray-100 border-gray-300",
-    Interview: "bg-gray-100 border-gray-300",
+    Successful: "bg-success-subtle border-success-border",
+    Rejected: "bg-destructive-subtle border-destructive-border",
+    Pending: "bg-muted border-input",
+    Interview: "bg-muted border-input",
   };
 
   // No specific role is filtered, don't show the status dropdown

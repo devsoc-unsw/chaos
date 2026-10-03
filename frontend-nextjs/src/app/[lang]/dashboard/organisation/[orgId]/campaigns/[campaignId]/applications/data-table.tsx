@@ -71,8 +71,8 @@ export function ApplicationSummaryDataTable<TData, TValue>({
 }: DataTableProps<TData, TValue>) {
   const router = useRouter();
   const colorMap: Record<string, string> = {
-    "bg-green-100": "border-green-100",
-    "bg-red-100": "border-red-100",
+    "bg-success-subtle": "border-success-subtle",
+    "bg-destructive-subtle": "border-destructive-subtle",
   };
 
   const table = useReactTable<TData>({
@@ -88,7 +88,7 @@ export function ApplicationSummaryDataTable<TData, TValue>({
     },
   });
 
-  const borderColor = colorMap[color] || "border-gray-200";
+  const borderColor = colorMap[color] || "border-border";
 
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const { data: campaign } = useQuery({

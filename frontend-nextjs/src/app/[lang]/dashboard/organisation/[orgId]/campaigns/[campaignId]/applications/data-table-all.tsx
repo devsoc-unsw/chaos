@@ -133,7 +133,7 @@ export function ApplicationSummaryDataTableAll<TValue>({
             setColumnFilters={setColumnFilters}
             columnFilters={columnFilters}
             label="To Review"
-            color="bg-gray-200"
+            color="bg-border"
             orgId={orgId}
             campaignId={campaignId}
             renderSubComponent={renderSubComponent}
@@ -145,7 +145,7 @@ export function ApplicationSummaryDataTableAll<TValue>({
 
           <ApplicationSummaryDataTable
             label="Reviewed"
-            color="bg-gray-200"
+            color="bg-border"
             dict={dict}
             renderSubComponent={renderSubComponent}
             columns={columns}
@@ -168,7 +168,7 @@ export function ApplicationSummaryDataTableAll<TValue>({
             setColumnFilters={setColumnFilters}
             columnFilters={columnFilters}
             label="All"
-            color="bg-gray-200"
+            color="bg-border"
             orgId={orgId}
             campaignId={campaignId}
             renderSubComponent={renderSubComponent}

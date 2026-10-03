@@ -230,7 +230,7 @@ export function ApplicationPanel({
           </Button>
           {unreadCount > 0 && (
             <span
-              className="absolute -top-1.5 -right-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white shadow-sm"
+              className="absolute -top-1.5 -right-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none text-destructive-foreground shadow-sm"
               aria-label={`${unreadCount} unread comments`}
             >
               {unreadCount > 99 ? "99+" : unreadCount}

@@ -67,16 +67,18 @@ export default function InviteClient({ code, currentUser, dict }: Props) {
       )}
       {/* Show the expired message if the invite has expired */}
       {invite?.expired && (
-        <p className="text-sm text-red-600">{dict.dashboard.invite.expired}</p>
+        <p className="text-sm text-destructive">
+          {dict.dashboard.invite.expired}
+        </p>
       )}
       {/* Show the used message if the invite has been used */}
       {invite?.used && (
-        <p className="text-sm text-red-600">{dict.dashboard.invite.used}</p>
+        <p className="text-sm text-destructive">{dict.dashboard.invite.used}</p>
       )}
       {/* Show the message if there is an error */}
       {message && (
         <p
-          className={`text-sm ${status === "success" ? "text-green-600" : "text-red-600"}`}
+          className={`text-sm ${status === "success" ? "text-success-text" : "text-destructive"}`}
         >
           {message}
         </p>

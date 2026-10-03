@@ -38,6 +38,64 @@
   --sidebar-accent-foreground: #343434;
   --sidebar-border: #ebebeb;
   --sidebar-ring: #b5b5b5;
+
+  /* App-specific tokens. Defined only here: .dark inherits them until a dark palette exists. */
+  --subtle-foreground: oklch(43.9% 0 0);
+  --overlay: oklch(0% 0 0 / 0.5);
+  --brand-tint: hsl(220 97% 97%);
+  --rating: oklch(85.2% 0.199 91.936);
+
+  /* Status colours: solid = dots/badges, subtle = row/chip backgrounds, text = status labels */
+  --success: oklch(72.3% 0.219 149.579);
+  --success-subtle: oklch(96.2% 0.044 156.743);
+  --success-subtle-hover: oklch(92.5% 0.084 155.995);
+  --success-border: oklch(87.1% 0.15 154.449);
+  --success-text: oklch(44.8% 0.119 151.328);
+  --destructive-subtle: oklch(93.6% 0.032 17.717);
+  --destructive-subtle-hover: oklch(88.5% 0.062 18.334);
+  --destructive-border: oklch(80.8% 0.114 19.571);
+  --destructive-text: oklch(44.4% 0.177 26.899);
+  --warning: oklch(79.5% 0.184 86.047);
+  --info-text: oklch(42.4% 0.199 265.638);
+
+  /* Rotating tag colours (applicant role tags) */
+  --tag-1: oklch(94.1% 0.03 12.58);
+  --tag-1-foreground: oklch(45.5% 0.188 13.697);
+  --tag-2: oklch(97.3% 0.071 103.193);
+  --tag-2-foreground: oklch(47.6% 0.114 61.907);
+  --tag-3: oklch(93.2% 0.032 255.585);
+  --tag-3-foreground: oklch(42.4% 0.199 265.638);
+  --tag-4: oklch(95.1% 0.026 236.824);
+  --tag-4-foreground: oklch(44.3% 0.11 240.79);
+  --tag-5: oklch(96.7% 0.067 122.328);
+  --tag-5-foreground: oklch(45.3% 0.124 130.933);
+  --tag-6: oklch(94.8% 0.028 342.258);
+  --tag-6-foreground: oklch(45.9% 0.187 3.815);
+  --tag-7: oklch(95.3% 0.051 180.801);
+  --tag-7-foreground: oklch(43.7% 0.078 188.216);
+  --tag-8: oklch(93% 0.034 272.788);
+  --tag-8-foreground: oklch(39.8% 0.195 277.366);
+  --tag-9: oklch(94.6% 0.033 307.174);
+  --tag-9-foreground: oklch(43.8% 0.218 303.724);
+
+  /* Rotating avatar colours (discussion panel) */
+  --avatar-1: oklch(93.2% 0.032 255.585);
+  --avatar-1-foreground: oklch(48.8% 0.243 264.376);
+  --avatar-2: oklch(94.3% 0.029 294.588);
+  --avatar-2-foreground: oklch(49.1% 0.27 292.581);
+  --avatar-3: oklch(95% 0.052 163.051);
+  --avatar-3-foreground: oklch(50.8% 0.118 165.612);
+  --avatar-4: oklch(96.2% 0.059 95.617);
+  --avatar-4-foreground: oklch(55.5% 0.163 48.998);
+  --avatar-5: oklch(94.1% 0.03 12.58);
+  --avatar-5-foreground: oklch(51.4% 0.222 16.935);
+  --avatar-6: oklch(95.6% 0.045 203.388);
+  --avatar-6-foreground: oklch(52% 0.105 223.128);
+  --avatar-7: oklch(95.4% 0.038 75.164);
+  --avatar-7-foreground: oklch(55.3% 0.195 38.402);
+  --avatar-8: oklch(94.8% 0.028 342.258);
+  --avatar-8-foreground: oklch(52.5% 0.223 3.958);
+
   --font-sans:
     ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
@@ -186,6 +244,59 @@
 
   --color-calendar-primary: var(--color-purple-300);
   --color-calendar-secondary: var(--color-purple-200);
+
+  --color-subtle-foreground: var(--subtle-foreground);
+  --color-overlay: var(--overlay);
+  --color-brand-tint: var(--brand-tint);
+  --color-rating: var(--rating);
+
+  --color-success: var(--success);
+  --color-success-subtle: var(--success-subtle);
+  --color-success-subtle-hover: var(--success-subtle-hover);
+  --color-success-border: var(--success-border);
+  --color-success-text: var(--success-text);
+  --color-destructive-subtle: var(--destructive-subtle);
+  --color-destructive-subtle-hover: var(--destructive-subtle-hover);
+  --color-destructive-border: var(--destructive-border);
+  --color-destructive-text: var(--destructive-text);
+  --color-warning: var(--warning);
+  --color-info-text: var(--info-text);
+
+  --color-tag-1: var(--tag-1);
+  --color-tag-1-foreground: var(--tag-1-foreground);
+  --color-tag-2: var(--tag-2);
+  --color-tag-2-foreground: var(--tag-2-foreground);
+  --color-tag-3: var(--tag-3);
+  --color-tag-3-foreground: var(--tag-3-foreground);
+  --color-tag-4: var(--tag-4);
+  --color-tag-4-foreground: var(--tag-4-foreground);
+  --color-tag-5: var(--tag-5);
+  --color-tag-5-foreground: var(--tag-5-foreground);
+  --color-tag-6: var(--tag-6);
+  --color-tag-6-foreground: var(--tag-6-foreground);
+  --color-tag-7: var(--tag-7);
+  --color-tag-7-foreground: var(--tag-7-foreground);
+  --color-tag-8: var(--tag-8);
+  --color-tag-8-foreground: var(--tag-8-foreground);
+  --color-tag-9: var(--tag-9);
+  --color-tag-9-foreground: var(--tag-9-foreground);
+
+  --color-avatar-1: var(--avatar-1);
+  --color-avatar-1-foreground: var(--avatar-1-foreground);
+  --color-avatar-2: var(--avatar-2);
+  --color-avatar-2-foreground: var(--avatar-2-foreground);
+  --color-avatar-3: var(--avatar-3);
+  --color-avatar-3-foreground: var(--avatar-3-foreground);
+  --color-avatar-4: var(--avatar-4);
+  --color-avatar-4-foreground: var(--avatar-4-foreground);
+  --color-avatar-5: var(--avatar-5);
+  --color-avatar-5-foreground: var(--avatar-5-foreground);
+  --color-avatar-6: var(--avatar-6);
+  --color-avatar-6-foreground: var(--avatar-6-foreground);
+  --color-avatar-7: var(--avatar-7);
+  --color-avatar-7-foreground: var(--avatar-7-foreground);
+  --color-avatar-8: var(--avatar-8);
+  --color-avatar-8-foreground: var(--avatar-8-foreground);
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);

@@ -753,7 +753,7 @@ function MultiOptionQuestionCard({
                             <OptionDecorator questionType={questionType} />
                           </div>
                           <input
-                            className="w-full focus:outline-none border-b-2 border-dotted border-gray-500 max-w-[300px]"
+                            className="w-full focus:outline-none border-b-2 border-dotted border-muted-foreground max-w-[300px]"
                             value={option.text}
                             onChange={(e) => {
                               const text = e.target.value;
@@ -771,7 +771,7 @@ function MultiOptionQuestionCard({
                           />
                         </div>
                         <X
-                          className="w-5 h-5 cursor-pointer text-red-500 hover:text-red-600"
+                          className="w-5 h-5 cursor-pointer text-destructive hover:text-destructive/80"
                           onClick={async () => await removeOption(option.id)}
                         />
                       </div>
@@ -803,16 +803,20 @@ function MultiOptionQuestionCard({
 function OptionDecorator({ questionType }: { questionType: string }) {
   if (questionType === "MultiChoice") {
     return (
-      <div className="rounded-full border-2 border-gray-500 w-4 h-4"></div>
+      <div className="rounded-full border-2 border-muted-foreground w-4 h-4"></div>
     );
   } else if (questionType === "MultiSelect") {
-    return <div className="rounded-xs border-2 border-gray-500 w-4 h-4"></div>;
+    return (
+      <div className="rounded-xs border-2 border-muted-foreground w-4 h-4"></div>
+    );
   } else if (questionType === "DropDown") {
     return <div className=""></div>;
   } else if (questionType === "Ranking") {
     return <div className=""></div>;
   }
-  return <div className="rounded-full border-2 border-gray-500 w-4 h-4"></div>;
+  return (
+    <div className="rounded-full border-2 border-muted-foreground w-4 h-4"></div>
+  );
 }
 
 function ShortAnswerQuestionCard({
@@ -955,7 +959,7 @@ function ShortAnswerQuestionCard({
         />
       </div>
       <div className="flex flex-col gap-1 p-2">
-        <div className="border-b-2 border-dotted border-gray-500 max-w-[300px]">
+        <div className="border-b-2 border-dotted border-muted-foreground max-w-[300px]">
           <p className="text-sm text-foreground">
             {dict.dashboard.campaigns.questions.answer_text}
           </p>

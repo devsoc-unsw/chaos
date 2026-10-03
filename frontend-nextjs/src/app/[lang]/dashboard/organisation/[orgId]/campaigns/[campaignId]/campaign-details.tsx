@@ -192,7 +192,7 @@ export default function CampaignDetails({
       animate-in fade-in-0 slide-in-from-bottom-2 duration-500"
     >
       <div className="flex w-full min-w-0 max-w-6xl flex-col gap-6">
-        <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
+        <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
           <img
             className="w-full max-h-52 object-cover"
             src={existingBannerSrc}
@@ -408,7 +408,7 @@ export default function CampaignDetails({
           }}
         />
         <div className="flex flex-col gap-6">
-          <section className="rounded-xl border bg-white p-4 shadow-sm sm:p-6">
+          <section className="rounded-xl border bg-card p-4 shadow-sm sm:p-6">
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-semibold">
                 {dict.common.description}
@@ -419,7 +419,7 @@ export default function CampaignDetails({
             </div>
           </section>
 
-          <section className="rounded-xl border bg-white p-4 shadow-sm sm:p-6">
+          <section className="rounded-xl border bg-card p-4 shadow-sm sm:p-6">
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-semibold">
                 {dict.common.attachments}

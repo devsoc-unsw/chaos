@@ -70,7 +70,7 @@ export default function EmailTemplates({
           );
         })}
         <Card
-          className="flex items-center justify-center gap-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 cursor-pointer"
+          className="flex items-center justify-center gap-1 text-muted-foreground hover:text-subtle-foreground hover:bg-muted cursor-pointer"
           onClick={() =>
             router.push(`/dashboard/organisation/${orgId}/templates/new`)
           }
@@ -111,7 +111,7 @@ function EmailCard({ template, dict }: { template: EmailTemplate; dict: any }) {
     <Card>
       <CardHeader>
         <div>
-          <p className="text-sm font-semibold text-gray-700">
+          <p className="text-sm font-semibold text-subtle-foreground">
             {dict.dashboard.email.name}:
           </p>
           <p className="text-2xl line-clamp-1">{template.name}</p>
@@ -119,13 +119,13 @@ function EmailCard({ template, dict }: { template: EmailTemplate; dict: any }) {
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
         <div>
-          <p className="text-sm font-semibold text-gray-700">
+          <p className="text-sm font-semibold text-subtle-foreground">
             {dict.dashboard.email.subject}:
           </p>
           <p className="line-clamp-2">{template.template_subject}</p>
         </div>
         <div>
-          <p className="text-sm font-semibold text-gray-700">
+          <p className="text-sm font-semibold text-subtle-foreground">
             {dict.dashboard.email.body}:
           </p>
           <p className="line-clamp-4 whitespace-pre-wrap">
@@ -248,14 +248,14 @@ function EmailTemplatePreview({
           </DialogHeader>
           <div className="grid gap-2">
             <div className="flex flex-col">
-              <p className="text-sm font-semibold text-gray-700">
+              <p className="text-sm font-semibold text-subtle-foreground">
                 {dict.dashboard.email.subject}:
               </p>
               <p className="whitespace-pre-wrap">{template.template_subject}</p>
             </div>
 
             <div className="flex flex-col">
-              <p className="text-sm font-semibold text-gray-700">
+              <p className="text-sm font-semibold text-subtle-foreground">
                 {dict.dashboard.email.body}:
               </p>
               <p className="whitespace-pre-wrap">{template.template_body}</p>

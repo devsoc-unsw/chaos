@@ -58,7 +58,7 @@ export function ApplicationSummaryDataTableOffered<TValue>({
     <div className="flex flex-col gap-5">
       <ApplicationSummaryDataTable
         label="Offered"
-        color="bg-green-100"
+        color="bg-success-subtle"
         data={data ?? []}
         dict={dict}
         renderSubComponent={renderSubComponent}
@@ -74,7 +74,7 @@ export function ApplicationSummaryDataTableOffered<TValue>({
 
       <ApplicationSummaryDataTable
         label="Outcome"
-        color="bg-green-100"
+        color="bg-success-subtle"
         data={combinedData.filter((app) => app.offer_status !== null) ?? []}
         dict={dict}
         renderSubComponent={renderSubComponent}

@@ -14,14 +14,14 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 const AVATAR_COLORS = [
-  "bg-blue-100 text-blue-700",
-  "bg-violet-100 text-violet-700",
-  "bg-emerald-100 text-emerald-700",
-  "bg-amber-100 text-amber-700",
-  "bg-rose-100 text-rose-700",
-  "bg-cyan-100 text-cyan-700",
-  "bg-orange-100 text-orange-700",
-  "bg-pink-100 text-pink-700",
+  "bg-avatar-1 text-avatar-1-foreground",
+  "bg-avatar-2 text-avatar-2-foreground",
+  "bg-avatar-3 text-avatar-3-foreground",
+  "bg-avatar-4 text-avatar-4-foreground",
+  "bg-avatar-5 text-avatar-5-foreground",
+  "bg-avatar-6 text-avatar-6-foreground",
+  "bg-avatar-7 text-avatar-7-foreground",
+  "bg-avatar-8 text-avatar-8-foreground",
 ];
 
 function avatarColor(name: string) {

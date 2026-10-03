@@ -128,7 +128,7 @@ export function AddMemberDialog({ orgId, dict }: { orgId: string; dict: any }) {
           <Label>{dict.common.email}</Label>
           <Input value={email} onChange={(e) => setEmail(e.target.value)} />
           {errorMessage && (
-            <p className="text-xs text-red-600">{errorMessage}</p>
+            <p className="text-xs text-destructive">{errorMessage}</p>
           )}
         </div>
         <DialogFooter>

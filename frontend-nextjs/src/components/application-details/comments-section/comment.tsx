@@ -38,7 +38,7 @@ function Comment({ comment, applicationId }: Props) {
   // Return comment component
   return (
     <div
-      className="group relative rounded-lg p-2 focus-within:bg-slate-100 hover:bg-slate-100 focus:outline-none"
+      className="group relative rounded-lg p-2 focus-within:bg-muted hover:bg-muted focus:outline-none"
       tabIndex={0}
     >
       <div className="absolute -top-2 right-3 hidden group-focus-within:block group-hover:block">
@@ -48,7 +48,7 @@ function Comment({ comment, applicationId }: Props) {
       </div>
       <div>
         <span className="font-semibold">{comment.name}</span>{" "}
-        <span className="text-sm text-gray-500">
+        <span className="text-sm text-muted-foreground">
           {dateToString(comment.created_at)}
         </span>
       </div>
