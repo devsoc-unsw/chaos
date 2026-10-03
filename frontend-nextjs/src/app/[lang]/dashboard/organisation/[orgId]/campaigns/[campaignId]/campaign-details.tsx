@@ -278,31 +278,24 @@ export default function CampaignDetails({
                 {/* <Button variant="outline" className="cursor-pointer w-full justify-center sm:w-auto">
                   <Trash className="w-4 h-4" /> {dict.dashboard.actions.delete}
                 </Button> */}
-                {/* {!campaign?.published && ( */}
-                <>
-                  <ButtonGroup className="w-full sm:w-auto flex-col sm:flex-row gap-2 sm:gap-0 [&>*]:w-full sm:[&>*]:w-auto">
-                    <Link
-                      href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}/questions`}
-                      className="w-full sm:w-auto"
-                    >
-                      <Button
-                        variant="outline"
-                        className="w-full justify-center sm:w-auto"
-                      >
-                        <FormIcon className="w-4 h-4" />{" "}
-                        {dict.dashboard.campaigns.manage_questions}
-                      </Button>
-                    </Link>
-                  </ButtonGroup>
-                  <ButtonGroup className="w-full sm:w-auto flex-col sm:flex-row gap-2 sm:gap-0 [&>*]:w-full sm:[&>*]:w-auto">
-                    <PublishCampaignDialog
-                      onPublish={handlePublish}
-                      label={dict.dashboard.campaigns.publish}
-                      buttonClassName="w-full justify-center sm:w-auto"
-                    />
-                  </ButtonGroup>
-                </>
-                {/* )} */}
+                {!campaign?.published && (
+                  <>
+                    <ButtonGroup className="w-full sm:w-auto flex-col sm:flex-row gap-2 sm:gap-0 [&>*]:w-full sm:[&>*]:w-auto">
+                      <Link href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}/questions`} className="w-full sm:w-auto">
+                        <Button variant="outline" className="w-full justify-center sm:w-auto">
+                          <FormIcon className="w-4 h-4" /> {dict.dashboard.campaigns.manage_questions}
+                        </Button>
+                      </Link>
+                    </ButtonGroup>
+                    <ButtonGroup className="w-full sm:w-auto flex-col sm:flex-row gap-2 sm:gap-0 [&>*]:w-full sm:[&>*]:w-auto">
+                      <PublishCampaignDialog
+                        onPublish={handlePublish}
+                        label={dict.dashboard.campaigns.publish}
+                        buttonClassName="w-full justify-center sm:w-auto"
+                      />
+                    </ButtonGroup>
+                  </>
+                )}
               </>
             )}
           </div>
