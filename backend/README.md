@@ -19,8 +19,8 @@ To run the backend in a dev/testing environment:
 4. If you are using WSL/Linux, install the OpenSSL development package with `sudo apt install libssl-dev`.
 5. Run `./setup-dev-env.sh` (you might have to make it executable before with `chmod +x setup-dev-env.sh`), which should drop you into a new shell that has the required tools installed. This will install the SQLx CLI (for managing database transactions) and start a Postgres container in Docker.
 6. Now open a **new** terminal session to complete the following tasks, keeping the shell script from above running.
-7. Seed the database with demo data by running `cargo run -- --email <YOUR_GMAIL>` in the `backend/database-seeding` folder.
-8. From the `backend` directory, generate the SpiceDB gRPC bindings with `buf generate buf.build/authzed/api --include-imports --template buf.gen.yaml` (requires the [`buf` CLI](https://buf.build/docs/installation)). These bindings are not committed, so this must be run after a fresh checkout and whenever the SpiceDB API changes.
+7. From the `backend` directory, generate the SpiceDB gRPC bindings with `buf generate buf.build/authzed/api --include-imports --template buf.gen.yaml` (requires the [`buf` CLI](https://buf.build/docs/installation)). These bindings are not committed, so this must be run after a fresh checkout and whenever the SpiceDB API changes.
+8. Seed the database with demo data by running `cargo run -- --email <YOUR_GMAIL>` in the `backend/database-seeding` folder.
 9. Now, go back to the `backend/server` directory and you should be able to `cargo build` successfully.
 10. Once you exit out of the newly created shell from step 5 (e.g. type `exit`, or kill the terminal), the dockerized postgres instance should automatically be torn down, so it's not unnecessarily running in the background all the time.
 11. To resume development, open the Docker Desktop app and press the play button on the right of the "backend" group under the "Containers" tab. This will start the Postgres container. To shut down the container, press the stop button that has replaced the play button.
