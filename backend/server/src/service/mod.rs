@@ -11,10 +11,7 @@
 //! - `email_template`: Manages email template operations
 //! - `jwt`: Handles JWT token generation and validation
 //! - `oauth2`: Manages OAuth2 authentication flow
-//! - `offer`: Handles offer creation and management
-//! - `organisation`: Manages organisation-related operations
 //! - `question`: Handles question management for applications
-//! - `rating`: Manages application ratings
 //! - `reconcile`: Periodically converges SpiceDB with Postgres
 //! - `role`: Handles role management within campaigns
 //! - `sequin`: Maps Sequin change messages onto SpiceDB relationships
@@ -27,10 +24,7 @@ pub mod comment;
 pub mod email_template;
 pub mod jwt;
 pub mod oauth2;
-pub mod offer;
-pub mod organisation;
 pub mod question;
-pub mod rating;
 pub mod reconcile;
 pub mod role;
 pub mod sequin;
