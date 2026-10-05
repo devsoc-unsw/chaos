@@ -518,14 +518,9 @@ pub async fn delete_all_resource_relationships(
             relationship_filter: Some(RelationshipFilter {
                 resource_type: resource_type.to_owned(),
                 optional_resource_id: resource_id.to_string(),
-                optional_resource_id_prefix: String::new(),
-                optional_relation: String::new(),
-                optional_subject_filter: None,
+                ..Default::default()
             }),
-            optional_preconditions: Vec::new(),
-            optional_limit: 0,
-            optional_allow_partial_deletions: false,
-            optional_transaction_metadata: None,
+            ..Default::default()
         },
         key,
     )?;
@@ -541,20 +536,14 @@ pub async fn delete_all_resource_relationships(
     let subject_request = authorized_request(
         DeleteRelationshipsRequest {
             relationship_filter: Some(RelationshipFilter {
-                resource_type: String::new(),
-                optional_resource_id: String::new(),
-                optional_resource_id_prefix: String::new(),
-                optional_relation: String::new(),
                 optional_subject_filter: Some(SubjectFilter {
                     subject_type: resource_type.to_owned(),
                     optional_subject_id: resource_id.to_string(),
-                    optional_relation: None,
+                    ..Default::default()
                 }),
+                ..Default::default()
             }),
-            optional_preconditions: Vec::new(),
-            optional_limit: 0,
-            optional_allow_partial_deletions: false,
-            optional_transaction_metadata: None,
+            ..Default::default()
         },
         key,
     )?;
