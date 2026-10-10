@@ -62,17 +62,17 @@
     "add": "添加"
   },
   "applicationpage": {
-        "empty_selected_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
-        "drag_to_reorder": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
-        "empty_available_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
-        "selected_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
-        "available_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
-        "preference_total_error": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
-        "unselecting_role": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
-        "no_role_specific_qs": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
-        "your_answer": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
-        "no_answer": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;"
-    },
+    "empty_selected_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+    "drag_to_reorder": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+    "empty_available_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+    "selected_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+    "available_roles": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+    "preference_total_error": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+    "unselecting_role": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+    "no_role_specific_qs": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+    "your_answer": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;",
+    "no_answer": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;"
+  },
   "dashboard": {
     "email_templates": "邮件模板",
     "members": {
@@ -102,6 +102,7 @@
       "application_summary": "申请总结",
       "application_avg_ratings": "申请平均评分",
       "manage_questions": "管理问题",
+      "view_as_respondent": "试用",
       "publish": "发布",
       "published": "已发布",
       "draft": "草稿",
