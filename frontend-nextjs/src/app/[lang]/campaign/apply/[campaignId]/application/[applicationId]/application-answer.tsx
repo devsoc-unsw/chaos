@@ -16,11 +16,14 @@ import ReviewCard from '@components/application-answer/review-card';
 import {
   getApplicationQuestionsAnswers,
   linkQuestionsAndAnswers,
+  AnswerValue,
   QuestionAndAnswer,
   QuestionWithAnswer,
 } from '@/models/question';
-import { redirect, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { updateAnswer, createAnswer, deleteAnswer } from '@/models/answer';
+import { buildAnswerPayload } from '@/lib/utils';
 
 interface ApplicationReviewProps {
   campaignId: string;
@@ -218,6 +221,123 @@ export default function ApplicationReview({
     }
   };
 
+  const generalTab = activeTab === 'general';
+
+  const tabQuestionsAndAnswers = (data: typeof qaData) =>
+    linkQuestionsAndAnswers(
+      (data ?? []).filter((q) =>
+        generalTab ? q.common : q.roles.includes(activeTab),
+      ),
+    );
+
+  const questionsAndAnswers = qaByRole?.has(activeTab)
+    ? (qaByRole.get(activeTab) ?? [])
+    : tabQuestionsAndAnswers(qaData);
+
+  // submits answer to a question
+  const resyncQuestionFromServer = async (question: QuestionAndAnswer) => {
+    await queryClient.invalidateQueries({
+      queryKey: [`${applicationId}-questions-answers`],
+    });
+
+    const fresh = await queryClient
+      .fetchQuery({
+        queryKey: [`${applicationId}-questions-answers`],
+        queryFn: () => getApplicationQuestionsAnswers(applicationId),
+      })
+      .then((data) =>
+        tabQuestionsAndAnswers(data).find(
+          (q) => q.question_id === question.question_id,
+        ),
+      );
+
+    updateQuestionAnswer(fresh ?? question);
+  };
+
+  const submitAnswer = async (
+    question: QuestionAndAnswer,
+    value: AnswerValue,
+    applicationId: string,
+    answerId: string | undefined,
+  ): Promise<void> => {
+    const effectiveAnswerId = answerId ?? question.answer_id;
+    const updatedQA: QuestionAndAnswer = {
+      ...question,
+      answer: value,
+    };
+
+    let payload;
+    try {
+      payload = buildAnswerPayload(question, value);
+    } catch (err) {
+      console.error('Failed to build answer payload', err);
+      toast.error('Failed to submit answer');
+      return;
+    }
+
+    try {
+      // HANDLE EMPTY QUESTION
+      if (payload.answer_data === null) {
+        if (effectiveAnswerId) {
+          await deleteAnswer(effectiveAnswerId);
+          await queryClient.invalidateQueries({
+            queryKey: [`${applicationId}-questions-answers`],
+          });
+        }
+        const deletedQA: QuestionAndAnswer = {
+          ...question,
+          answer_id: undefined,
+          answer: 'No Answer',
+        };
+        updateQuestionAnswer(deletedQA);
+        return;
+      }
+
+      if (effectiveAnswerId) {
+        await updateAnswer(effectiveAnswerId, payload);
+        updateQuestionAnswer(updatedQA);
+      } else {
+        const created = await createAnswer(applicationId, payload);
+        updateQuestionAnswer({ ...updatedQA, answer_id: String(created.id) });
+      }
+    } catch (err) {
+      if (!effectiveAnswerId) {
+        try {
+          const found = await queryClient
+            .fetchQuery({
+              queryKey: [`${applicationId}-questions-answers`],
+              queryFn: () => getApplicationQuestionsAnswers(applicationId),
+            })
+            .then(
+              (data) =>
+                data.find(
+                  (q) =>
+                    q.answer &&
+                    String(q.answer.question_id) ===
+                      String(question.question_id),
+                )?.answer,
+            );
+          if (found) {
+            await updateAnswer(found.id, payload);
+            updateQuestionAnswer({ ...updatedQA, answer_id: String(found.id) });
+            return;
+          }
+        } catch (recoveryErr) {
+          console.error('Recovery update failed:', recoveryErr);
+        }
+      }
+
+      console.error('Failed to submit answer', err);
+      toast.error('Failed to submit answer');
+      try {
+        await resyncQuestionFromServer(question);
+      } catch (resyncErr) {
+        console.error('Failed to resync answer from server', resyncErr);
+        updateQuestionAnswer(question);
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-background">
       <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
@@ -258,8 +378,8 @@ export default function ApplicationReview({
                 applicationId={applicationId}
                 activeTab={activeTab}
                 dict={dict}
-                updateRoleAnswers={updateQuestionAnswer}
-                qaByRole={qaByRole}
+                tabQuestions={questionsAndAnswers}
+                submitAnswer={submitAnswer}
               />
               <TabSwitcher
                 roles={roles}
