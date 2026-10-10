@@ -13,19 +13,42 @@ CHAOS' backend is implemented in Rust and for data persistence, we use PostgreSQ
 
 ### Backend Development
 To run the backend in a dev/testing environment:
+
 1. Install `docker-compose` (see [official installation guide](https://docs.docker.com/compose/install/)).
+
+1.2. docker compose -f docker-compose.local.yml up -d
+1.3. docker exec -it chaos-dev-container bash (this will enter your dev container)
+1.4. Then you can run the project locally in here without the worry of not working on your machine (I 100% sure broo!)
+
 2. Navigate to the directory this file is in (`backend`) in your terminal (not `backend/server`).
+
 3. Possibly terminate any running instances of postgres, as the dockerized postgres we will spawn uses the same default port, so the two might interefere with each other.
+
 4. If you are using WSL/Linux, install the OpenSSL development package with `sudo apt install libssl-dev`.
-5. Run `./setup-dev-env.sh` (you might have to make it executable before with `chmod +x setup-dev-env.sh`), which should drop you into a new shell that has the required tools installed. This will install the SQLx CLI (for managing database transactions) and start a Postgres container in Docker.
-6. Now open a **new** terminal session to complete the following tasks, keeping the shell script from above running.
-7. Seed the database with demo data by running `cargo run -- --email <YOUR_GMAIL>` in the `backend/database-seeding` folder.
-8. Now, go back to the `backend/server` directory and you should be able to `cargo build` successfully.
-9. Once you exit out of the newly created shell from step 5 (e.g. type `exit`, or kill the terminal), the dockerized postgres instance should automatically be torn down, so it's not unnecessarily running in the background all the time.
-10. To resume development, open the Docker Desktop app and press the play button on the right of the "backend" group under the "Containers" tab. This will start the Postgres container. To shut down the container, press the stop button that has replaced the play button.
+
+5. Run `./setup-dev-env.sh` (you might have to make it executable before with `chmod +x setup-dev-env.sh`), which should check if you have the correct docker setup and run the db-instance and do db setup and migrations. Then, it will also start your BE and FE container, so you could work on the project ASAP.
+
+6 (DB Seeding IMPORTANT). To set up your first data for development, run `./setup-admin-db-dev.sh <your-gmail>` (you might have to make it executable before with `chmod +x setup-admin-db-dev.sh`). This sets your personal email as a SUPERUSER ROLE, giving you access to all pages (no restriction).
+Example: `./setup-admin-db-dev.sh peter@gmail.com`
+
+7. To run the FE and BE, you can either run it locally or using the docker:
+    - Local:
+        at `backend/server`: do `cargo run build` to run the backend server.
+        at `frontend-nextjs`: do `bun run dev` to run the frontend.
+    - Docker:
+        at the root `chaos/` folder,
+        do `docker compose -f docker-compose.local.yml up -d frontend backend`
+        do `docker compose -f docker-compose.local.yml up -d` to run all 3 (db, FE and BE)
+                    or 
+        If you want to run those seperately:
+        do `docker compose -f docker-compose.local.yml up -d backend`
+        do `docker compose -f docker-compose.local.yml up -d frontend`
+
+7 (Optional). If you want to clear the database, an empty database to restart maybe, run `./reset-db-dev.sh` (you might have to make it executable before with `chmod +x ./reset-db-dev.sh`).
+
 
 ### Authentication
-Some routes are only accessible by Users/Admins/SuperAdmins. To login your browser with a respective User/Admin/SuperAdmin cookie, seed your database as above (step 5), and then call one of the following routes in your browser:
+Some routes are only accessible by Users/Admins/SuperAdmins. To login your browser with a respective User/Admin/SuperAdmin cookie, seed your database as above (step 6), and then call one of the following routes in your browser:
 - **Normal User:** `/api/v1/dev/user_login`
 - **Organisation Admin User:** `/api/v1/dev/org_admin_login`
 - **Super Admin User:** `/api/v1/dev/super_admin_login`
