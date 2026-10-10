@@ -20,15 +20,6 @@ pub enum UserRole {
     SuperUser,
 }
 
-impl UserRole {
-    pub fn convert_to_spicedb(&self) -> &str {
-        match self {
-            UserRole::User => crate::spicedb::schema::relation::platform::USER,
-            UserRole::SuperUser => crate::spicedb::schema::relation::platform::SUPERUSER,
-        }
-    }
-}
-
 /// Detailed information about a user.
 ///
 /// This struct contains all the personal and academic information about a user
@@ -115,15 +106,6 @@ pub struct UserDegree {
     pub degree_name: String,
     /// New degree starting year for the user
     pub degree_starting_year: i32,
-}
-
-/// Data structure for updating a user's role.
-#[derive(Deserialize, Serialize)]
-pub struct UserRoleUpdate {
-    /// Email of the user whose role should be updated
-    pub email: String,
-    /// New role for the user
-    pub role: UserRole,
 }
 
 impl User {

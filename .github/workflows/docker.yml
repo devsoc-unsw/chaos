@@ -58,6 +58,17 @@ jobs:
           echo "DATABASE_URL=postgres://postgres:password@localhost:5432/chaos" >> .env
           sqlx migrate run
       
+      - name: Setup buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          version: "1.73.0"
+
+      # The SpiceDB bindings are not committed (see backend/.gitignore), and
+      # `cargo sqlx prepare` compiles the crate, so they must exist here too.
+      - name: Generate SpiceDB bindings
+        working-directory: backend
+        run: buf generate buf.build/authzed/api --include-imports --template buf.gen.yaml
+
       - name: Generate SQLx files
         working-directory: backend/server
         run: cargo sqlx prepare

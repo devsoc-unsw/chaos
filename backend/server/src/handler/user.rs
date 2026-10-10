@@ -4,14 +4,12 @@
 //! - Retrieving user details
 //! - Updating user information (name, pronouns, gender, zid, degree)
 
-use crate::models::app::AppMessage;
+use crate::models::app::{AppMessage, AppState};
 use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
-use crate::models::user::{
-    User, UserDegree, UserGender, UserName, UserPronouns, UserRole, UserZid,
-};
-use crate::spicedb::{policies::UsePlatform, SpiceDbAuth};
-use axum::extract::Json;
+use crate::models::user::{User, UserDegree, UserGender, UserName, UserPronouns, UserZid};
+use crate::spicedb::{policies::UsePlatform, schema as spicedb_schema, SpiceDbAuth};
+use axum::extract::{Json, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 
@@ -169,21 +167,36 @@ impl UserHandler {
 
     /// Returns whether the current user is a superuser.
     ///
+    /// Superuser status is the SpiceDB platform `manage` permission, mirroring
+    /// the authorization used elsewhere, rather than the Postgres `users.role`
+    /// column.
+    ///
     /// # Arguments
     ///
-    /// * `transaction` - Database transaction
+    /// * `state` - The application state, used for the SpiceDB permission check
     /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
     ///
     /// # Returns
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - JSON containing the `is_superuser` boolean or error
     pub async fn is_superuser(
-        mut transaction: DBTransaction<'_>,
+        State(state): State<AppState>,
         auth: SpiceDbAuth<UsePlatform>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        let user = User::get(auth.user_id, &mut transaction.tx).await?;
-        transaction.commit().await?;
-        let is_superuser = matches!(user.role, UserRole::SuperUser);
+        let is_superuser = match state
+            .check_permission(
+                auth.user_id,
+                spicedb_schema::resource::PLATFORM,
+                spicedb_schema::PLATFORM_RESOURCE_ID,
+                spicedb_schema::permission::platform::MANAGE,
+            )
+            .await
+        {
+            Ok(()) => true,
+            Err(ChaosError::ForbiddenOperation) => false,
+            Err(e) => return Err(e),
+        };
+
         Ok((
             StatusCode::OK,
             Json(serde_json::json!({ "is_superuser": is_superuser })),

@@ -78,6 +78,13 @@ jobs:
           which sqlx || cargo install sqlx-cli --no-default-features --features native-tls,postgres
           sqlx database create
           sqlx migrate run
+      - name: Setup buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          version: "1.73.0"
+      - name: Generate SpiceDB bindings
+        working-directory: backend
+        run: buf generate buf.build/authzed/api --include-imports --template buf.gen.yaml
       - name: Build
         working-directory: backend/server
         run: cargo build
