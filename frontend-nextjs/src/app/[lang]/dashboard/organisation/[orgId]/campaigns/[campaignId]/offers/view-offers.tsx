@@ -49,7 +49,9 @@ export default function OffersOverview({ campaignId, orgId, dict }: Props) {
     <div className="space-y-4">
       <div className="flex items-center justify-between m-0">
         <div>
-          <Link href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}`}>
+          <Link
+            href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}`}
+          >
             <div className="flex items-center gap-1">
               <ArrowLeft className="h-4 w-4" />
               {dict.common.back}
@@ -72,4 +74,3 @@ export default function OffersOverview({ campaignId, orgId, dict }: Props) {
     </div>
   );
 }
-

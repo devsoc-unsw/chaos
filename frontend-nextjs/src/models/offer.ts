@@ -37,9 +37,7 @@ export type CreateOfferRequest = Offer;
 export async function getOffersByCampaign(
   campaignId: string,
 ): Promise<OfferDetails[]> {
-  return apiRequest<OfferDetails[]>(
-    `/api/v1/campaign/${campaignId}/offers`,
-  );
+  return apiRequest<OfferDetails[]>(`/api/v1/campaign/${campaignId}/offers`);
 }
 
 export async function getOffer(offerId: string): Promise<OfferDetails> {
@@ -55,5 +53,3 @@ export async function replyToOffer(
     body: reply,
   });
 }
-
-

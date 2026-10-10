@@ -5,6 +5,8 @@ import { apiRequest } from "./api";
  * Gets the current authenticated user's profile
  * Works on both server and client automatically
  */
-export async function getCurrentUser(okRequiredOtherwiseLogin?: boolean): Promise<User> {
+export async function getCurrentUser(
+  okRequiredOtherwiseLogin?: boolean,
+): Promise<User> {
   return await apiRequest<User>("/api/v1/user", { okRequiredOtherwiseLogin });
 }
