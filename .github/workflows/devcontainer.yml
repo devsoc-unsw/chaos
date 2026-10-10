@@ -115,7 +115,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/devsoc-unsw/${{ env.IMAGE_NAME }}
           tags: |
-            type=sha,prefix=sha-
+            type=raw,value=${{ github.sha }}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
       - name: Create manifest list and push
@@ -126,4 +126,4 @@ jobs:
             $(printf '${{ env.REGISTRY }}/devsoc-unsw/${{ env.IMAGE_NAME }}@sha256:%s ' *)
 
       - name: Inspect image
-        run: docker buildx imagetools inspect ${{ env.REGISTRY }}/devsoc-unsw/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
+        run: docker buildx imagetools inspect ${{ env.REGISTRY }}/devsoc-unsw/${{ env.IMAGE_NAME }}:${{ github.sha }}
