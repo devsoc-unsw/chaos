@@ -40,7 +40,7 @@ jobs:
           token: ${{ github.token }}
       
       - name: Setup Cargo cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/bin/
@@ -106,7 +106,7 @@ jobs:
           path: backend/server/.sqlx
 
       - name: Setup cargo cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/bin/
