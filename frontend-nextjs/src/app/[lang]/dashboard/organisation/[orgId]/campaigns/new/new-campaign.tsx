@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, InfoIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import { Textarea } from "@/components/ui/textarea";
+import { MarkdownTextarea } from "@/components/markdown/markdown-textarea";
 import ImageUpload from "@/components/ui/image-upload";
 import { DatePicker } from "@/components/ui/date-picker";
 import { createProperSlug } from "@/models/slug";
@@ -112,7 +112,7 @@ export default function CampaignNewForm({ orgId, dict }: { orgId: string, dict: 
                 </div>
                 <div className="flex flex-col gap-1">
                     <Label>{dict.common.description}</Label>
-                    <Textarea className="max-w-2xl min-h-[300px]" value={description} onChange={(e) => setDescription(e.target.value)} />
+                    <MarkdownTextarea dict={dict} containerClassName="max-w-2xl" className="min-h-[300px]" value={description} onChange={(e) => setDescription(e.target.value)} />
                 </div>
                 <DatePicker label={dict.common.starts_at} value={startDate} onChange={(value) => setStartDate(value)} />
                 <DatePicker label={dict.common.ends_at} value={endDate} onChange={(value) => setEndDate(value)} />

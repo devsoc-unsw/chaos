@@ -17,8 +17,7 @@ import {
 import Link from "next/link";
 import { getOrganisationUserRole } from "@/models/organisation";
 import { useEffect, useMemo, useState } from "react";
-import { remark } from "remark";
-import html from "remark-html";
+import { Markdown } from "@/components/markdown/markdown";
 import CopyButton from "@/components/copy-button";
 import AvailabilityCalendar from "@/components/availability-calendar";
 import { toast } from "sonner";
@@ -123,7 +122,6 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
   }, [applications, roleStatuses, offers]);
 
   const [hoveredDeleteIndex, setHoveredDeleteIndex] = useState<number | null>(null);
-  const [descriptionHtmlState, setDescriptionHtmlState] = useState<string>("");
 
   const handlePublish = async () => {
     try {
@@ -133,19 +131,6 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
       console.error("Failed to publish campaign:", error);
     }
   };
-
-  useEffect(() => {
-    async function processMarkdown() {
-      if (campaign?.description) {
-        const processed = await remark()
-          .use(html)
-          .process(campaign.description);
-
-        setDescriptionHtmlState(processed.toString());
-      }
-    }
-    processMarkdown();
-  }, [campaign?.description]);
 
   const existingBannerSrc =
     campaign?.cover_image_url ||
@@ -357,9 +342,9 @@ export default function CampaignDetails({ campaignId, orgId, dict }: { campaignI
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-semibold">{dict.common.description}</h2>
             </div>
-            <div className="mt-3 text-sm leading-relaxed text-muted-foreground">
-              <div dangerouslySetInnerHTML={{ __html: descriptionHtmlState }} />
-            </div>
+            <Markdown className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              {campaign?.description}
+            </Markdown>
           </section>
 
           <section className="rounded-xl border bg-white p-4 shadow-sm sm:p-6">

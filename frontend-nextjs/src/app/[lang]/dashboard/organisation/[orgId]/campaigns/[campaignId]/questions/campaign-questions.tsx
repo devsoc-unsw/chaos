@@ -10,7 +10,7 @@ import { createQuestion, deleteQuestion, getAllCommonQuestions, getAllRoleQuesti
 import { useState } from "react";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { MarkdownTextarea } from "@/components/markdown/markdown-textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
 import { snowflakeGenerator } from "@/lib";
@@ -436,8 +436,11 @@ function MultiOptionQuestionCard({ question, currentRole, possibleRole, handleQu
                 </div>
                 <div className="flex flex-col gap-1">
                     <label className="text-sm text-foreground">{dict.common.description}</label>
-                    <Textarea
-                        className="max-w-[500px] min-h-[80px]"
+                    <MarkdownTextarea
+                        dict={dict}
+                        containerClassName="max-w-[500px]"
+                        className="min-h-[80px]"
+                        previewVariant="compact"
                         placeholder="Optional info for applicants"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
@@ -599,8 +602,11 @@ function ShortAnswerQuestionCard({ question, currentRole, possibleRole, handleQu
             </div>
             <div className="flex flex-col gap-1 px-2">
                 <label className="text-sm text-foreground">{dict.common.description}</label>
-                <Textarea
-                    className="max-w-[500px] min-h-[80px]"
+                <MarkdownTextarea
+                    dict={dict}
+                    containerClassName="max-w-[500px]"
+                    className="min-h-[80px]"
+                    previewVariant="compact"
                     placeholder="Optional info for applicants"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
