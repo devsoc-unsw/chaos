@@ -11,6 +11,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { MarkdownTextarea } from "@/components/markdown/markdown-textarea";
 import SlugInput from "@/components/slug-input";
 import { DatePicker } from "@/components/ui/date-picker";
 import ImageUpload from "@/components/ui/image-upload";
@@ -184,13 +185,16 @@ export default function CampaignSettings({ campaignId, orgId, dict }: { campaign
 
                 <div className="flex flex-col gap-1">
                     <Label htmlFor="campaign-description">{dict.common.description}</Label>
-                    <Textarea className="min-h-[300px]"
+                    <MarkdownTextarea id="campaign-description" className="min-h-[300px]"
+                        dict={dict}
                         value={campaignDescription}
                         onChange={(e) => setCampaignDescription(e.target.value)}
-                        onBlur={() => handleCampaignDetailsUpdate()} />
-                    <p className="text-muted-foreground">
-                        {campaignDescription.length} characters
-                    </p>
+                        onBlur={() => handleCampaignDetailsUpdate()}
+                        footer={
+                            <p className="text-muted-foreground">
+                                {campaignDescription.length} characters
+                            </p>
+                        } />
                 </div>
 
                 <div className="flex flex-col gap-1">

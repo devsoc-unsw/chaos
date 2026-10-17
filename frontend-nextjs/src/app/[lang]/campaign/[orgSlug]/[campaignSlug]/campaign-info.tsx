@@ -8,6 +8,7 @@ import { dateToString } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { notFound, useParams } from "next/navigation";
 import Link from "next/link";
+import { Markdown } from "@/components/markdown/markdown";
 
 export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug: string, campaignSlug: string, dict: any, lang: string }) {
     const params = useParams();
@@ -75,9 +76,9 @@ export default function CampaignInfo({ orgSlug, campaignSlug, dict }: { orgSlug:
                                         <Info className="w-6 h-6" />
                                         {dict.common.about}
                                     </h2>
-                                    <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">
+                                    <Markdown className="text-gray-600 leading-relaxed">
                                         {campaignData.description}
-                                    </p>
+                                    </Markdown>
                                 </div>
                             )}
 
