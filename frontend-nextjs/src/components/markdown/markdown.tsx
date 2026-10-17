@@ -13,8 +13,8 @@ type MarkdownProps = {
   variant?: MarkdownVariant
 } & Pick<Options, "allowedElements" | "disallowedElements" | "unwrapDisallowed">
 
-// Raw HTML is never rendered (no rehype-raw) and react-markdown's default
-// urlTransform strips unsafe protocols such as javascript:, so user input is safe here.
+// Raw HTML is never rendered (no rehype-raw), react-markdown's default urlTransform
+// strips unsafe protocols such as javascript:, and images are never loaded (see `img` below).
 const remarkPlugins: Options["remarkPlugins"] = [remarkGfm, remarkBreaks]
 
 const baseComponents: Components = {
@@ -44,10 +44,13 @@ const baseComponents: Components = {
     />
   ),
   hr: ({ node, ...props }) => <hr className="border-border" {...props} />,
-  img: ({ node, ...props }) => (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img className="max-w-full rounded-md" alt={props.alt ?? ""} {...props} />
-  ),
+  // Images are rendered as their alt text, never <img>: loading an author-supplied URL on view
+  // would expose the viewer's IP and visit time to that host (e.g. tracking pixels).
+  // Plain text rather than a link so images inside links don't produce nested <a> tags.
+  img: ({ src, alt }) => {
+    const url = typeof src === "string" && src ? src : undefined
+    return alt || url ? <span title={url}>{alt || url}</span> : null
+  },
   table: ({ node, ...props }) => (
     <div className="overflow-x-auto">
       <table className="w-full border-collapse text-left" {...props} />
