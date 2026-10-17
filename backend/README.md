@@ -16,8 +16,8 @@ To run the backend in a dev/testing environment:
 
 1. Install `docker-compose` (see [official installation guide](https://docs.docker.com/compose/install/)).
 
-1.2. docker compose -f docker-compose.local.yml up -d
-1.3. docker exec -it chaos-dev-container bash (this will enter your dev container)
+1.2. USER_UID=$(id -u) USER_GID=$(id -g) docker compose -f docker-compose.local.yml up -d --build
+1.3. docker exec -it chaos-dev-container bash (this will enter your dev container as the `dev` user, not root)
 1.4. Then you can run the project locally in here without the worry of not working on your machine (I 100% sure broo!)
 
 2. Navigate to the directory this file is in (`backend`) in your terminal (not `backend/server`).
