@@ -234,7 +234,6 @@ export default function ApplicationReview({
     ? (qaByRole.get(activeTab) ?? [])
     : tabQuestionsAndAnswers(qaData);
 
-  // submits answer to a question
   const resyncQuestionFromServer = async (question: QuestionAndAnswer) => {
     await queryClient.invalidateQueries({
       queryKey: [`${applicationId}-questions-answers`],
