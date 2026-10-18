@@ -145,6 +145,7 @@ impl DBTransaction<'_> {
     ///
     /// * `Ok(())` if Postgres was committed (SpiceDB write failures are logged, not returned)
     /// * `Err(ChaosError)` if Postgres failed to commit
+    #[tracing::instrument(skip_all, fields(relationship_count = self.queued_relationship_updates.len()), err)]
     pub async fn commit(self) -> Result<(), ChaosError> {
         self.tx.commit().await?;
 

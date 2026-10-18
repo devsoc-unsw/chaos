@@ -965,6 +965,7 @@ impl Application {
     /// # Returns
     ///
     /// * `Result<(), ChaosError>` - Success or error
+    #[tracing::instrument(name = "application.persist_submission", skip_all, fields(application_id = %id), err)]
     pub async fn submit(
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,

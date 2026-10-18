@@ -110,33 +110,22 @@ pub enum ChaosError {
 }
 
 impl ChaosError {
+    /// Records an error as structured telemetry without dumping request data.
     pub fn print(&self) {
-        match &self {
-            ChaosError::NotLoggedIn
-            | ChaosError::Unauthorized
-            | ChaosError::ForbiddenOperation
-            | ChaosError::BadRequest
-            | ChaosError::NotFound
-            | ChaosError::ApplicationClosed
-            | ChaosError::CampaignClosed
-            | ChaosError::CampaignOpen
-            | ChaosError::InternalServerError => println!("{:?}", self),
-            ChaosError::BadRequestWithMessage(e) => println!("Bad Request: {}", e),
-            ChaosError::InternalServerErrorWithMessage(e) => {
-                println!("Internal server error: {}", e)
-            } // TODO: Handle error message internally and only send vague message
-            ChaosError::DatabaseError(e) => println!("Database error: {}", e),
-            ChaosError::MigrationError(e) => println!("Migration error: {}", e),
-            ChaosError::ReqwestError(e) => println!("Reqwest error: {}", e),
-            ChaosError::OAuthError(e) => println!("OAuth2 error: {}", e),
-            ChaosError::StorageError(e) => println!("Storage error: {}", e),
-            ChaosError::DotEnvyError(e) => println!("DotEnvy error: {}", e),
-            ChaosError::TemplateError(e) => println!("Template error: {}", e),
-            ChaosError::TemplateRenderError(e) => println!("TemplateRender error: {}", e),
-            ChaosError::LettreError(e) => println!("Lettre error: {}", e),
-            ChaosError::AddressError(e) => println!("Address error: {}", e),
-            ChaosError::SmtpTransportError(e) => println!("SmtpTransport error: {}", e),
-        };
+        match self {
+            Self::NotLoggedIn
+            | Self::Unauthorized
+            | Self::ForbiddenOperation
+            | Self::BadRequest
+            | Self::BadRequestWithMessage(_)
+            | Self::NotFound
+            | Self::ApplicationClosed
+            | Self::CampaignClosed
+            | Self::CampaignOpen => {
+                tracing::warn!(error = %self, "Request rejected");
+            }
+            _ => tracing::error!(error = %self, "Backend operation failed"),
+        }
     }
 }
 

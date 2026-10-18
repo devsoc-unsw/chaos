@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 # Primary crates
-tokio = { version = "1.34", features = ["macros", "rt-multi-thread", "sync"] }
+tokio = { version = "1.34", features = ["macros", "rt-multi-thread", "sync", "signal"] }
 axum = { version = "0.7", features = ["macros"] }
 axum-extra = { version = "0.9.6", features = ["typed-header", "cookie"] }
 sqlx = { version = "0.9", default-features = false, features = ["runtime-tokio", "tls-native-tls", "postgres", "chrono", "uuid", "migrate", "macros", "json"] }
@@ -39,3 +39,19 @@ prost-types = "0.14"
 
 # Ordered map so a coalesced SpiceDB batch keeps change order
 indexmap = "2"
+
+# Structured logs, distributed traces, and live host/process metrics.
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+tracing-opentelemetry = { version = "0.33", default-features = false }
+opentelemetry = { version = "0.32", default-features = false, features = ["trace", "metrics", "logs"] }
+opentelemetry_sdk = { version = "0.32", default-features = false, features = ["trace", "metrics", "logs"] }
+opentelemetry-appender-tracing = { version = "0.32", default-features = false }
+opentelemetry-stdout = { version = "0.32", default-features = false, features = ["trace", "metrics"] }
+opentelemetry-otlp = { version = "0.32", default-features = false, features = ["trace", "metrics", "logs", "grpc-tonic", "tls-ring", "tls-roots", "internal-logs"] }
+sysinfo = "0.38"
+
+[dev-dependencies]
+tower = { version = "0.5", features = ["util"] }
+# Inspect real metric exports in hardware-sampler tests without a collector.
+opentelemetry_sdk = { version = "0.32", default-features = false, features = ["trace", "metrics", "testing"] }

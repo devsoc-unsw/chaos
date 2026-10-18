@@ -1,0 +1,16 @@
+[package]
+name = "chaos-telemetry-example"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+anyhow = "1"
+opentelemetry = { version = "0.32", default-features = false, features = ["trace", "metrics"] }
+opentelemetry_sdk = { version = "0.32", default-features = false, features = ["trace", "metrics"] }
+opentelemetry-stdout = { version = "0.32", default-features = false, features = ["trace", "metrics"] }
+sysinfo = "0.38"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
+tracing = "0.1"
+tracing-opentelemetry = { version = "0.33", default-features = false }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }

@@ -294,6 +294,7 @@ impl ApplicationHandler {
     /// # Returns
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - Success message or error
+    #[tracing::instrument(name = "application.submit", skip_all, fields(application_id = %application_id), err)]
     pub async fn submit(
         _auth: SpiceDbAuth<EditApplication>,
         _: OpenApplicationByApplicationId,
