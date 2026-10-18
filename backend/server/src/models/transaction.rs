@@ -170,9 +170,10 @@ impl DBTransaction<'_> {
             }
             Ok(None) => {}
             Err(error) => {
-                println!(
-                    "Failed writing SpiceDB relationships ({error}). Falling back to Sequin syncing."
-                )
+                tracing::warn!(
+                    error_kind = error.kind(),
+                    "Failed writing SpiceDB relationships; Sequin will retry synchronization"
+                );
             }
         }
 

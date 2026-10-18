@@ -110,6 +110,34 @@ pub enum ChaosError {
 }
 
 impl ChaosError {
+    /// Returns a stable diagnostic category without exposing error payloads.
+    pub fn kind(&self) -> &'static str {
+        match self {
+            Self::NotLoggedIn => "not_logged_in",
+            Self::Unauthorized => "unauthorized",
+            Self::ForbiddenOperation => "forbidden_operation",
+            Self::BadRequest | Self::BadRequestWithMessage(_) => "bad_request",
+            Self::NotFound => "not_found",
+            Self::ApplicationClosed => "application_closed",
+            Self::CampaignClosed => "campaign_closed",
+            Self::CampaignOpen => "campaign_open",
+            Self::DatabaseError(_) => "database_error",
+            Self::MigrationError(_) => "migration_error",
+            Self::ReqwestError(_) => "http_client_error",
+            Self::OAuthError(_) => "oauth_error",
+            Self::StorageError(_) => "storage_error",
+            Self::DotEnvyError(_) => "environment_error",
+            Self::TemplateError(_) => "template_error",
+            Self::TemplateRenderError(_) => "template_render_error",
+            Self::LettreError(_) => "email_error",
+            Self::AddressError(_) => "email_address_error",
+            Self::SmtpTransportError(_) => "smtp_error",
+            Self::InternalServerError | Self::InternalServerErrorWithMessage(_) => {
+                "internal_server_error"
+            }
+        }
+    }
+
     /// Records an error as structured telemetry without dumping request data.
     pub fn print(&self) {
         match self {
@@ -122,9 +150,9 @@ impl ChaosError {
             | Self::ApplicationClosed
             | Self::CampaignClosed
             | Self::CampaignOpen => {
-                tracing::warn!(error = %self, "Request rejected");
+                tracing::warn!(error_kind = self.kind(), "Request rejected");
             }
-            _ => tracing::error!(error = %self, "Backend operation failed"),
+            _ => tracing::error!(error_kind = self.kind(), "Backend operation failed"),
         }
     }
 }
@@ -136,7 +164,6 @@ impl ChaosError {
 /// errors from external dependencies.
 impl IntoResponse for ChaosError {
     fn into_response(self) -> Response {
-        // TODO: Change to logging to OpenTelemetry collector
         self.print();
 
         // Don't leak real error, only return a generic error message

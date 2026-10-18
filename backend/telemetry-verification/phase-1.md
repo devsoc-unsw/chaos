@@ -1,5 +1,9 @@
 # Phase 1 configuration review
 
+Current follow-up: [review-phases-1-2.md](review-phases-1-2.md) records additional
+percent-escape validation and the latest regression results on top of `3512d54`.
+The original review history below is retained; independent acceptance is pending.
+
 Date: 17 October 2026. Current status: **reviewed finding FIXED**, regression and
 startup checks pass; independent phase acceptance remains pending. The original
 review below recorded **FAIL** before the follow-up fix.

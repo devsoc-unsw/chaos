@@ -882,7 +882,8 @@ impl Organisation {
         .await?;
 
         if is_dev_env {
-            println!("Invite code for {email}: {code}")
+            tracing::debug!(organisation_id = %organisation_id,
+                "Skipped sending organisation invitation email in development");
         } else {
             ChaosEmail::send_message(
                 None,

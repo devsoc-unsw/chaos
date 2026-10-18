@@ -1160,197 +1160,227 @@ pub enum ErrorReason {
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_SCHEMA_PARSE_ERROR",
-    ///        "domain": "authzed.com",
-    ///        "metadata": {
-    ///          "start_line_number": "1",
-    ///          "start_column_position": "19",
-    ///          "end_line_number": "1",
-    ///          "end_column_position": "19",
-    ///          "source_code": "somedefinition",
-    ///        }
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_SCHEMA_PARSE_ERROR",
+    ///    "domain": "authzed.com",
+    ///    "metadata": {
+    ///      "start_line_number": "1",
+    ///      "start_column_position": "19",
+    ///      "end_line_number": "1",
+    ///      "end_column_position": "19",
+    ///      "source_code": "somedefinition",
+    ///    }
+    ///  }
     ///
+    /// ```
     /// The line numbers and column positions are 0-indexed and may not be present.
     SchemaParseError = 1,
     /// The request contains a schema with a type error.
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_SCHEMA_TYPE_ERROR",
-    ///        "domain": "authzed.com",
-    ///        "metadata": {
-    ///          "definition_name": "somedefinition",
-    ///          ... additional keys based on the kind of type error ...
-    ///        }
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_SCHEMA_TYPE_ERROR",
+    ///    "domain": "authzed.com",
+    ///    "metadata": {
+    ///      "definition_name": "somedefinition",
+    ///      ... additional keys based on the kind of type error ...
+    ///    }
+    ///  }
+    /// ```
     SchemaTypeError = 2,
     /// The request referenced an unknown object definition in the schema.
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_UNKNOWN_DEFINITION",
-    ///        "domain": "authzed.com",
-    ///        "metadata": {
-    ///          "definition_name": "somedefinition"
-    ///        }
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_UNKNOWN_DEFINITION",
+    ///    "domain": "authzed.com",
+    ///    "metadata": {
+    ///      "definition_name": "somedefinition"
+    ///    }
+    ///  }
+    /// ```
     UnknownDefinition = 3,
     /// The request referenced an unknown relation or permission under a definition in the schema.
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_UNKNOWN_RELATION_OR_PERMISSION",
-    ///        "domain": "authzed.com",
-    ///        "metadata": {
-    ///          "definition_name": "somedefinition",
-    ///          "relation_or_permission_name": "somepermission"
-    ///        }
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_UNKNOWN_RELATION_OR_PERMISSION",
+    ///    "domain": "authzed.com",
+    ///    "metadata": {
+    ///      "definition_name": "somedefinition",
+    ///      "relation_or_permission_name": "somepermission"
+    ///    }
+    ///  }
+    /// ```
     UnknownRelationOrPermission = 4,
     /// The WriteRelationships request contained more updates than the maximum configured.
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      { "reason": "ERROR_REASON_TOO_MANY_UPDATES_IN_REQUEST",
-    ///        "domain": "authzed.com",
-    ///        "metadata": {
-    ///          "update_count": "525",
-    ///          "maximum_updates_allowed": "500",
-    ///        }
-    ///      }
+    /// ```text
+    ///  { "reason": "ERROR_REASON_TOO_MANY_UPDATES_IN_REQUEST",
+    ///    "domain": "authzed.com",
+    ///    "metadata": {
+    ///      "update_count": "525",
+    ///      "maximum_updates_allowed": "500",
+    ///    }
+    ///  }
+    /// ```
     TooManyUpdatesInRequest = 5,
     /// The request contained more preconditions than the maximum configured.
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_TOO_MANY_PRECONDITIONS_IN_REQUEST",
-    ///        "domain": "authzed.com",
-    ///        "metadata": {
-    ///          "precondition_count": "525",
-    ///          "maximum_preconditions_allowed": "500",
-    ///        }
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_TOO_MANY_PRECONDITIONS_IN_REQUEST",
+    ///    "domain": "authzed.com",
+    ///    "metadata": {
+    ///      "precondition_count": "525",
+    ///      "maximum_preconditions_allowed": "500",
+    ///    }
+    ///  }
+    /// ```
     TooManyPreconditionsInRequest = 6,
     /// The request contained a precondition that failed.
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_WRITE_OR_DELETE_PRECONDITION_FAILURE",
-    ///        "domain": "authzed.com",
-    ///        "metadata": {
-    ///          "precondition_resource_type": "document",
-    ///          ... other fields for the filter ...
-    ///          "precondition_operation": "MUST_EXIST",
-    ///        }
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_WRITE_OR_DELETE_PRECONDITION_FAILURE",
+    ///    "domain": "authzed.com",
+    ///    "metadata": {
+    ///      "precondition_resource_type": "document",
+    ///      ... other fields for the filter ...
+    ///      "precondition_operation": "MUST_EXIST",
+    ///    }
+    ///  }
+    /// ```
     WriteOrDeletePreconditionFailure = 7,
     /// A write or delete request was made to an instance that is deployed in read-only mode.
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_SERVICE_READ_ONLY",
-    ///        "domain": "authzed.com"
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_SERVICE_READ_ONLY",
+    ///    "domain": "authzed.com"
+    ///  }
+    /// ```
     ServiceReadOnly = 8,
     /// The request referenced an unknown caveat in the schema.
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_UNKNOWN_CAVEAT",
-    ///        "domain": "authzed.com",
-    ///        "metadata": {
-    ///          "caveat_name": "somecaveat"
-    ///        }
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_UNKNOWN_CAVEAT",
+    ///    "domain": "authzed.com",
+    ///    "metadata": {
+    ///      "caveat_name": "somecaveat"
+    ///    }
+    ///  }
+    /// ```
     UnknownCaveat = 9,
     /// The request tries to use a subject type that was not valid for a relation.
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_INVALID_SUBJECT_TYPE",
-    ///        "domain": "authzed.com",
-    ///        "metadata": {
-    ///          "definition_name": "somedefinition",
-    ///          "relation_name": "somerelation",
-    ///          "subject_type": "user:*"
-    ///        }
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_INVALID_SUBJECT_TYPE",
+    ///    "domain": "authzed.com",
+    ///    "metadata": {
+    ///      "definition_name": "somedefinition",
+    ///      "relation_name": "somerelation",
+    ///      "subject_type": "user:*"
+    ///    }
+    ///  }
+    /// ```
     InvalidSubjectType = 10,
     /// The request tries to specify a caveat parameter value with the wrong type.
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_CAVEAT_PARAMETER_TYPE_ERROR",
-    ///        "domain": "authzed.com",
-    ///        "metadata": {
-    ///          "definition_name": "somedefinition",
-    ///          "relation_name": "somerelation",
-    ///          "caveat_name": "somecaveat",
-    ///          "parameter_name": "someparameter",
-    ///          "expected_type": "int",
-    ///        }
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_CAVEAT_PARAMETER_TYPE_ERROR",
+    ///    "domain": "authzed.com",
+    ///    "metadata": {
+    ///      "definition_name": "somedefinition",
+    ///      "relation_name": "somerelation",
+    ///      "caveat_name": "somecaveat",
+    ///      "parameter_name": "someparameter",
+    ///      "expected_type": "int",
+    ///    }
+    ///  }
+    /// ```
     CaveatParameterTypeError = 11,
     /// The request tries to perform two or more updates on the same relationship in the same WriteRelationships call.
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_UPDATES_ON_SAME_RELATIONSHIP",
-    ///        "domain": "authzed.com",
-    ///        "metadata": {
-    ///          "definition_name": "somedefinition",
-    ///          "relationship": "somerelationship",
-    ///        }
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_UPDATES_ON_SAME_RELATIONSHIP",
+    ///    "domain": "authzed.com",
+    ///    "metadata": {
+    ///      "definition_name": "somedefinition",
+    ///      "relationship": "somerelationship",
+    ///    }
+    ///  }
+    /// ```
     UpdatesOnSameRelationship = 12,
     /// The request tries to write a relationship on a permission instead of a relation.
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_CANNOT_UPDATE_PERMISSION",
-    ///        "domain": "authzed.com",
-    ///        "metadata": {
-    ///          "definition_name": "somedefinition",
-    ///          "permission_name": "somerelation",
-    ///        }
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_CANNOT_UPDATE_PERMISSION",
+    ///    "domain": "authzed.com",
+    ///    "metadata": {
+    ///      "definition_name": "somedefinition",
+    ///      "permission_name": "somerelation",
+    ///    }
+    ///  }
+    /// ```
     CannotUpdatePermission = 13,
     /// The request failed to evaluate a caveat expression due to an error.
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_CAVEAT_EVALUATION_ERROR",
-    ///        "domain": "authzed.com",
-    ///        "metadata": {
-    ///          "caveat_name": "somecaveat",
-    ///        }
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_CAVEAT_EVALUATION_ERROR",
+    ///    "domain": "authzed.com",
+    ///    "metadata": {
+    ///      "caveat_name": "somecaveat",
+    ///    }
+    ///  }
+    /// ```
     CaveatEvaluationError = 14,
     /// The request failed because the provided cursor was invalid in some way.
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_INVALID_CURSOR",
-    ///        "domain": "authzed.com",
-    ///        "metadata": {
-    ///           ... additional keys based on the kind of cursor error ...
-    ///        }
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_INVALID_CURSOR",
+    ///    "domain": "authzed.com",
+    ///    "metadata": {
+    ///       ... additional keys based on the kind of cursor error ...
+    ///    }
+    ///  }
+    /// ```
     InvalidCursor = 15,
     /// The request failed because there are too many matching relationships to be
     /// deleted within a single transactional deletion call. To avoid, set
@@ -1358,44 +1388,50 @@ pub enum ErrorReason {
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_TOO_MANY_RELATIONSHIPS_FOR_TRANSACTIONAL_DELETE",
-    ///        "domain": "authzed.com",
-    ///        "metadata": {
-    ///           ... fields for the filter ...
-    ///        }
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_TOO_MANY_RELATIONSHIPS_FOR_TRANSACTIONAL_DELETE",
+    ///    "domain": "authzed.com",
+    ///    "metadata": {
+    ///       ... fields for the filter ...
+    ///    }
+    ///  }
+    /// ```
     TooManyRelationshipsForTransactionalDelete = 16,
     /// The request failed because the client attempted to write a relationship
     /// with a context that exceeded the configured server limit.
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_MAX_RELATIONSHIP_CONTEXT_SIZE",
-    ///        "domain": "authzed.com",
-    ///        "metadata": {
-    ///          "relationship":     "relationship_exceeding_the_limit",
-    ///          "max_allowed_size": "server_max_allowed_context_size",
-    ///          "context_size":     "actual_relationship_context_size" ,
-    ///        }
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_MAX_RELATIONSHIP_CONTEXT_SIZE",
+    ///    "domain": "authzed.com",
+    ///    "metadata": {
+    ///      "relationship":     "relationship_exceeding_the_limit",
+    ///      "max_allowed_size": "server_max_allowed_context_size",
+    ///      "context_size":     "actual_relationship_context_size" ,
+    ///    }
+    ///  }
+    /// ```
     MaxRelationshipContextSize = 17,
     /// The request failed because a relationship marked to be CREATEd
     /// was already present within the datastore.
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_ATTEMPT_TO_RECREATE_RELATIONSHIP",
-    ///        "domain": "authzed.com",
-    ///        "metadata": {
-    ///          "relationship":          "relationship_that_already_existed",
-    ///          "resource_type":         "resource type",
-    ///          "resource_object_id":    "resource object id",
-    ///          ... additional decomposed relationship fields ...
-    ///        }
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_ATTEMPT_TO_RECREATE_RELATIONSHIP",
+    ///    "domain": "authzed.com",
+    ///    "metadata": {
+    ///      "relationship":          "relationship_that_already_existed",
+    ///      "resource_type":         "resource type",
+    ///      "resource_object_id":    "resource object id",
+    ///      ... additional decomposed relationship fields ...
+    ///    }
+    ///  }
+    /// ```
     AttemptToRecreateRelationship = 18,
     /// The request failed because it caused the maximum depth allowed to be
     /// exceeded. This typically indicates that there is a circular data traversal
@@ -1404,14 +1440,16 @@ pub enum ErrorReason {
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_MAXIMUM_DEPTH_EXCEEDED",
-    ///        "domain": "authzed.com",
-    ///        "metadata": {
-    ///          "maximum_depth_allowed": "50",
-    ///          ... additional fields based on request type ...
-    ///        }
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_MAXIMUM_DEPTH_EXCEEDED",
+    ///    "domain": "authzed.com",
+    ///    "metadata": {
+    ///      "maximum_depth_allowed": "50",
+    ///      ... additional fields based on request type ...
+    ///    }
+    ///  }
+    /// ```
     MaximumDepthExceeded = 19,
     /// The request failed due to a serialization error in the backend database.
     /// This typically indicates that various in flight transactions conflicted with each other
@@ -1420,90 +1458,106 @@ pub enum ErrorReason {
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_SERIALIZATION_FAILURE",
-    ///        "domain": "authzed.com",
-    ///        "metadata": {}
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_SERIALIZATION_FAILURE",
+    ///    "domain": "authzed.com",
+    ///    "metadata": {}
+    ///  }
+    /// ```
     SerializationFailure = 20,
     /// The request contained more check items than the maximum configured.
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_TOO_MANY_CHECKS_IN_REQUEST",
-    ///        "domain": "authzed.com",
-    ///        "metadata": {
-    ///          "check_count": "525",
-    ///          "maximum_checks_allowed": "500",
-    ///        }
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_TOO_MANY_CHECKS_IN_REQUEST",
+    ///    "domain": "authzed.com",
+    ///    "metadata": {
+    ///      "check_count": "525",
+    ///      "maximum_checks_allowed": "500",
+    ///    }
+    ///  }
+    /// ```
     TooManyChecksInRequest = 21,
     /// The request's specified limit is too large.
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_EXCEEDS_MAXIMUM_ALLOWABLE_LIMIT",
-    ///        "domain": "authzed.com",
-    ///        "metadata": {
-    ///          "limit_provided": "525",
-    ///          "maximum_limit_allowed": "500",
-    ///        }
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_EXCEEDS_MAXIMUM_ALLOWABLE_LIMIT",
+    ///    "domain": "authzed.com",
+    ///    "metadata": {
+    ///      "limit_provided": "525",
+    ///      "maximum_limit_allowed": "500",
+    ///    }
+    ///  }
+    /// ```
     ExceedsMaximumAllowableLimit = 22,
     /// The request failed because the provided filter was invalid in some way.
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_INVALID_FILTER",
-    ///        "domain": "authzed.com",
-    ///        "metadata": {
-    ///          "filter": "...",
-    ///        }
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_INVALID_FILTER",
+    ///    "domain": "authzed.com",
+    ///    "metadata": {
+    ///      "filter": "...",
+    ///    }
+    ///  }
+    /// ```
     InvalidFilter = 23,
     /// The request failed because too many concurrent updates were attempted
     /// against the in-memory datastore.
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_INMEMORY_TOO_MANY_CONCURRENT_UPDATES",
-    ///        "domain": "authzed.com",
-    ///        "metadata": {}
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_INMEMORY_TOO_MANY_CONCURRENT_UPDATES",
+    ///    "domain": "authzed.com",
+    ///    "metadata": {}
+    ///  }
+    /// ```
     InmemoryTooManyConcurrentUpdates = 24,
     /// The request failed because the precondition specified is empty.
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_EMPTY_PRECONDITION",
-    ///        "domain": "authzed.com",
-    ///        "metadata": {}
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_EMPTY_PRECONDITION",
+    ///    "domain": "authzed.com",
+    ///    "metadata": {}
+    ///  }
+    /// ```
     EmptyPrecondition = 25,
     /// The request failed because the counter was already registered.
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_COUNTER_ALREADY_REGISTERED",
-    ///        "domain": "authzed.com",
-    ///        "metadata": { "counter_name": "name" }
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_COUNTER_ALREADY_REGISTERED",
+    ///    "domain": "authzed.com",
+    ///    "metadata": { "counter_name": "name" }
+    ///  }
+    /// ```
     CounterAlreadyRegistered = 26,
     /// The request failed because the counter was not registered.
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_COUNTER_NOT_REGISTERED",
-    ///        "domain": "authzed.com",
-    ///        "metadata": { "counter_name": "name"  }
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_COUNTER_NOT_REGISTERED",
+    ///    "domain": "authzed.com",
+    ///    "metadata": { "counter_name": "name"  }
+    ///  }
+    /// ```
     CounterNotRegistered = 27,
     /// The request failed because a wildcard was not allowed. For CheckPermission,
     /// this means that the subject or resource ID was a wildcard. For LookupResources,
@@ -1511,24 +1565,28 @@ pub enum ErrorReason {
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_WILDCARD_NOT_ALLOWED",
-    ///        "domain": "authzed.com",
-    ///        "metadata": { "disallowed_field": "subject_id" }
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_WILDCARD_NOT_ALLOWED",
+    ///    "domain": "authzed.com",
+    ///    "metadata": { "disallowed_field": "subject_id" }
+    ///  }
+    /// ```
     WildcardNotAllowed = 28,
     /// The request failed because the transaction metadata was too large.
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_TRANSACTION_METADATA_TOO_LARGE",
-    ///        "domain": "authzed.com",
-    ///        "metadata": {
-    ///          "metadata_byte_size": "1024",
-    ///          "maximum_allowed_metadata_byte_size": "512",
-    ///        }
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_TRANSACTION_METADATA_TOO_LARGE",
+    ///    "domain": "authzed.com",
+    ///    "metadata": {
+    ///      "metadata_byte_size": "1024",
+    ///      "maximum_allowed_metadata_byte_size": "512",
+    ///    }
+    ///  }
+    /// ```
     TransactionMetadataTooLarge = 29,
     /// The request failed because the datastore has not been migrated.
     /// This typically indicates that the `spicedb datastore migrate` command
@@ -1536,11 +1594,13 @@ pub enum ErrorReason {
     ///
     /// Example of an ErrorInfo:
     ///
-    ///      {
-    ///        "reason": "ERROR_REASON_DATASTORE_NOT_MIGRATED",
-    ///        "domain": "authzed.com",
-    ///        "metadata": {}
-    ///      }
+    /// ```text
+    ///  {
+    ///    "reason": "ERROR_REASON_DATASTORE_NOT_MIGRATED",
+    ///    "domain": "authzed.com",
+    ///    "metadata": {}
+    ///  }
+    /// ```
     DatastoreNotMigrated = 30,
 }
 impl ErrorReason {

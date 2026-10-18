@@ -7,23 +7,25 @@
 /// Example:
 ///
 ///   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
-///     info: {
-///       title: "Echo API";
-///       version: "1.0";
-///       description: "";
-///       contact: {
-///         name: "gRPC-Gateway project";
-///         url: "<https://github.com/grpc-ecosystem/grpc-gateway";>
-///         email: "none@example.com";
-///       };
-///       license: {
-///         name: "BSD 3-Clause License";
-///         url: "<https://github.com/grpc-ecosystem/grpc-gateway/blob/main/LICENSE";>
-///       };
-///     };
-///     schemes: HTTPS;
-///     consumes: "application/json";
-///     produces: "application/json";
+/// ```text
+/// info: {
+///   title: "Echo API";
+///   version: "1.0";
+///   description: "";
+///   contact: {
+///     name: "gRPC-Gateway project";
+///     url: "<https://github.com/grpc-ecosystem/grpc-gateway";>
+///     email: "none@example.com";
+///   };
+///   license: {
+///     name: "BSD 3-Clause License";
+///     url: "<https://github.com/grpc-ecosystem/grpc-gateway/blob/main/LICENSE";>
+///   };
+/// };
+/// schemes: HTTPS;
+/// consumes: "application/json";
+/// produces: "application/json";
+/// ```
 ///   };
 ///
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -102,23 +104,25 @@ pub struct Swagger {
 /// Example:
 ///
 ///   service EchoService {
-///     rpc Echo(SimpleMessage) returns (SimpleMessage) {
-///       option (google.api.http) = {
-///         get: "/v1/example/echo/{id}"
-///       };
+/// ```text
+/// rpc Echo(SimpleMessage) returns (SimpleMessage) {
+///   option (google.api.http) = {
+///     get: "/v1/example/echo/{id}"
+///   };
 ///
-///       option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-///         summary: "Get a message.";
-///         operation_id: "getMessage";
-///         tags: "echo";
-///         responses: {
-///           key: "200"
-///             value: {
-///             description: "OK";
-///           }
-///         }
-///       };
+///   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+///     summary: "Get a message.";
+///     operation_id: "getMessage";
+///     tags: "echo";
+///     responses: {
+///       key: "200"
+///         value: {
+///         description: "OK";
+///       }
 ///     }
+///   };
+/// }
+/// ```
 ///   }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Operation {
@@ -317,21 +321,23 @@ pub struct Response {
 /// Example:
 ///
 ///   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
-///     info: {
-///       title: "Echo API";
-///       version: "1.0";
-///       description: "";
-///       contact: {
-///         name: "gRPC-Gateway project";
-///         url: "<https://github.com/grpc-ecosystem/grpc-gateway";>
-///         email: "none@example.com";
-///       };
-///       license: {
-///         name: "BSD 3-Clause License";
-///         url: "<https://github.com/grpc-ecosystem/grpc-gateway/blob/main/LICENSE";>
-///       };
-///     };
-///     ...
+/// ```text
+/// info: {
+///   title: "Echo API";
+///   version: "1.0";
+///   description: "";
+///   contact: {
+///     name: "gRPC-Gateway project";
+///     url: "<https://github.com/grpc-ecosystem/grpc-gateway";>
+///     email: "none@example.com";
+///   };
+///   license: {
+///     name: "BSD 3-Clause License";
+///     url: "<https://github.com/grpc-ecosystem/grpc-gateway/blob/main/LICENSE";>
+///   };
+/// };
+/// ...
+/// ```
 ///   };
 ///
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -369,16 +375,18 @@ pub struct Info {
 /// Example:
 ///
 ///   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
-///     info: {
-///       ...
-///       contact: {
-///         name: "gRPC-Gateway project";
-///         url: "<https://github.com/grpc-ecosystem/grpc-gateway";>
-///         email: "none@example.com";
-///       };
-///       ...
-///     };
-///     ...
+/// ```text
+/// info: {
+///   ...
+///   contact: {
+///     name: "gRPC-Gateway project";
+///     url: "<https://github.com/grpc-ecosystem/grpc-gateway";>
+///     email: "none@example.com";
+///   };
+///   ...
+/// };
+/// ...
+/// ```
 ///   };
 ///
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
@@ -402,15 +410,17 @@ pub struct Contact {
 /// Example:
 ///
 ///   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
-///     info: {
-///       ...
-///       license: {
-///         name: "BSD 3-Clause License";
-///         url: "<https://github.com/grpc-ecosystem/grpc-gateway/blob/main/LICENSE";>
-///       };
-///       ...
-///     };
-///     ...
+/// ```text
+/// info: {
+///   ...
+///   license: {
+///     name: "BSD 3-Clause License";
+///     url: "<https://github.com/grpc-ecosystem/grpc-gateway/blob/main/LICENSE";>
+///   };
+///   ...
+/// };
+/// ...
+/// ```
 ///   };
 ///
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
@@ -430,12 +440,14 @@ pub struct License {
 /// Example:
 ///
 ///   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
-///     ...
-///     external_docs: {
-///       description: "More about gRPC-Gateway";
-///       url: "<https://github.com/grpc-ecosystem/grpc-gateway";>
-///     }
-///     ...
+/// ```text
+/// ...
+/// external_docs: {
+///   description: "More about gRPC-Gateway";
+///   url: "<https://github.com/grpc-ecosystem/grpc-gateway";>
+/// }
+/// ...
+/// ```
 ///   };
 ///
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
@@ -486,12 +498,14 @@ pub struct Schema {
 /// Example:
 ///
 ///   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_enum) = {
-///     ...
-///     title: "MyEnum";
-///     description:"This is my nice enum";
-///     example: "ZERO";
-///     required: true;
-///     ...
+/// ```text
+/// ...
+/// title: "MyEnum";
+/// description:"This is my nice enum";
+/// example: "ZERO";
+/// required: true;
+/// ...
+/// ```
 ///   };
 ///
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -540,19 +554,21 @@ pub struct EnumSchema {
 /// Example:
 ///
 ///   message SimpleMessage {
-///     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-///       json_schema: {
-///         title: "SimpleMessage"
-///         description: "A simple message."
-///         required: \["id"\]
-///       }
-///     };
+/// ```text
+/// option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+///   json_schema: {
+///     title: "SimpleMessage"
+///     description: "A simple message."
+///     required: \["id"\]
+///   }
+/// };
 ///
-///     // Id represents the message identifier.
-///     string id = 1; [
-///         (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-///           description: "The unique identifier of the simple message."
-///         }];
+/// // Id represents the message identifier.
+/// string id = 1; [
+///     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+///       description: "The unique identifier of the simple message."
+///     }];
+/// ```
 ///   }
 ///
 #[derive(Clone, PartialEq, ::prost::Message)]

@@ -1,5 +1,10 @@
 # Phase 2 — optional remote export
 
+Current follow-up: [review-phases-1-2.md](review-phases-1-2.md) records the review
+fixes and [phase-3.md](phase-3.md) records the now-passing full suite and logging
+policy. The historical phase 2 report below describes its original snapshot;
+independent acceptance remains pending.
+
 Date: 18 October 2026 (Australia/Sydney).
 Implementer: Codex `/root`. Independent reviewer: pending.
 Status: **implementation ready for review; acceptance pending**.

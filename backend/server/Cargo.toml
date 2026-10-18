@@ -42,6 +42,7 @@ indexmap = "2"
 
 # Structured logs, distributed traces, and live host/process metrics.
 tracing = "0.1"
+tracing-log = "0.2"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 tracing-opentelemetry = { version = "0.33", default-features = false }
 opentelemetry = { version = "0.32", default-features = false, features = ["trace", "metrics", "logs"] }

@@ -43,7 +43,10 @@ struct OtlpExporters;
 impl OtlpExporters {
     /// Explicitly loads enabled trust roots for HTTPS without changing plain HTTP.
     fn with_tls_roots<B: WithTonicConfig>(builder: B, endpoint: &str) -> B {
-        if endpoint.starts_with("https://") {
+        if endpoint
+            .get(..8)
+            .is_some_and(|scheme| scheme.eq_ignore_ascii_case("https://"))
+        {
             builder.with_tls_config(tonic::transport::ClientTlsConfig::new().with_enabled_roots())
         } else {
             builder
@@ -238,22 +241,31 @@ impl Drop for Providers {
 /// Keeps SDK/export-transport diagnostics local to prevent telemetry feedback loops.
 /// Other targets, including application-owned outbound spans, remain eligible.
 pub(super) fn export_eligible(metadata: &tracing::Metadata<'_>) -> bool {
+    !exporter_diagnostic(metadata)
+}
+
+/// Identifies SDK and shared transport targets by crate/module boundaries.
+pub(super) fn exporter_diagnostic(metadata: &tracing::Metadata<'_>) -> bool {
     let target = metadata.target();
-    !target.starts_with("opentelemetry")
-        && ![
-            "h2",
-            "hyper",
-            "hyper_util",
-            "tonic::transport",
-            "tower::buffer",
-        ]
-        .iter()
-        .any(|prefix| {
-            target == *prefix
-                || target
-                    .strip_prefix(prefix)
-                    .is_some_and(|rest| rest.starts_with("::"))
-        })
+    [
+        "opentelemetry",
+        "opentelemetry_sdk",
+        "opentelemetry-otlp",
+        "opentelemetry-appender-tracing",
+        "tracing_opentelemetry",
+        "h2",
+        "hyper",
+        "hyper_util",
+        "tonic::transport",
+        "tower::buffer",
+    ]
+    .iter()
+    .any(|prefix| {
+        target == *prefix
+            || target
+                .strip_prefix(prefix)
+                .is_some_and(|rest| rest.starts_with("::"))
+    })
 }
 
 #[cfg(test)]

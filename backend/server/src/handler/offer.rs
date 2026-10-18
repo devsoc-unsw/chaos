@@ -242,8 +242,7 @@ impl OfferHandler {
                     item.application_id,
                 );
                 if state.is_dev_env {
-                    let email = item.email;
-                    println!("need to call offers here, but sent to: {email}");
+                    tracing::debug!(offer_id = %offer_id, "Skipped sending offer email in development");
                 } else {
                     Offer::send_offer(
                         offer_id,
@@ -254,8 +253,7 @@ impl OfferHandler {
                 }
             } else {
                 if state.is_dev_env {
-                    let email = item.email;
-                    println!("Sending reject email to {email}");
+                    tracing::debug!("Skipped sending rejection email in development");
                 } else {
                     EmailQueue::add_to_queue(
                         Some(item.name),

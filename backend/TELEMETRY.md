@@ -6,6 +6,18 @@ For a function-by-function explanation and the OTLP gRPC data flow, see
 Telemetry is integrated into `backend/server`, not just the standalone example.
 It runs continuously for the lifetime of the real server.
 
+`LOG_LEVEL` is the backend's single event-verbosity setting; `RUST_LOG` is ignored.
+Use uppercase `INFO` (the default, including DEBUG/TRACE events), `WARN`, or `ERROR`.
+Surrounding whitespace is accepted; blank and other values stop startup with a
+configuration error. WARN/ERROR suppress lower-severity events in local JSON,
+remote LogRecords, and exported span events while keeping eligible spans and
+metrics. The standalone demo retains its own configuration.
+
+SDK/shared transport diagnostics remain local and retain only severity, target,
+and callsite; their arbitrary fields/messages can contain credentials. They are
+never fed back into remote export. Application error logs use stable categories,
+and development email/invitation logs omit addresses and invite codes.
+
 ## Run the backend and frontend yourself
 
 Open each terminal at the repository root (`chaos`). Keep the backend and frontend
@@ -27,7 +39,7 @@ DEV_ENV=dev
 GOOGLE_REDIRECT_URI=http://localhost:8080/api/auth/callback/google
 SPICEDB_GRPC_ENDPOINT=http://localhost:50051
 TELEMETRY_INTERVAL_SECS=1
-RUST_LOG=server=info
+LOG_LEVEL=INFO
 ```
 
 `DATABASE_URL` must connect to the local `chaos` database at `localhost:5432` using
@@ -42,10 +54,11 @@ Use `localhost` consistently in the browser and configuration; mixing it with
 both its browser API URL and server-side API URL, overriding any Docker-oriented
 URLs in the existing frontend environment files.
 
-For terminal span/metric output, leave `OTEL_EXPORTER_OTLP_ENDPOINT` unset. If it
-is set in your shell or environment file, remove it for this manual test; otherwise
-spans/metrics are exported to that collector instead of stdout. JSON logs still
-appear in either mode.
+For terminal span/metric output, leave `OTEL_EXPORTER_OTLP_ENDPOINT` unset or blank.
+A nonblank HTTP/HTTPS endpoint enables remote logs, traces, and metrics; JSON logs
+still appear on stderr. The endpoint is trimmed and validated before workers start.
+Malformed values stop startup; a valid but unavailable collector does not gate
+startup. Signal-specific endpoint variables alone cannot enable remote export.
 
 ### 2. Start the database and SpiceDB — terminal A
 
@@ -87,7 +100,7 @@ Starting from the repository root:
 ```sh
 cd "$(git rev-parse --show-toplevel)/backend/server"
 cargo build
-RUST_LOG=server=info TELEMETRY_INTERVAL_SECS=1 ./target/debug/server \
+LOG_LEVEL=INFO TELEMETRY_INTERVAL_SECS=1 ./target/debug/server \
   > /tmp/chaos-telemetry.log 2> /tmp/chaos-server.jsonl
 ```
 
@@ -99,7 +112,7 @@ For all output directly in the backend terminal instead, use:
 
 ```sh
 cd "$(git rev-parse --show-toplevel)/backend/server"
-RUST_LOG=server=info TELEMETRY_INTERVAL_SECS=1 cargo run
+LOG_LEVEL=INFO TELEMETRY_INTERVAL_SECS=1 cargo run
 ```
 
 Choose one backend command, not both. The direct `cargo run` version does not create
@@ -224,7 +237,7 @@ JSON performance summary contains host CPU, used host RAM, and sensor count.
 - **CORS or login-cookie errors:** use `localhost` everywhere and check the origin,
   frontend URL, cookie domain, and OAuth callback configuration.
 - **No performance samples:** check for `Performance sampling stopped`, confirm
-  `TELEMETRY_INTERVAL_SECS` is positive, and use `RUST_LOG=server=info`.
+  `TELEMETRY_INTERVAL_SECS` is positive, and use `LOG_LEVEL=INFO`.
 - **No stdout metric blocks:** check whether an OTLP endpoint is configured; in
   that mode, use the collector's output/dashboard instead.
 - **No temperatures:** sensor access depends on OS/hardware/permissions. An
@@ -267,7 +280,7 @@ The sampler primes CPU readings before waiting for the first interval. It runs
 on a separate worker so OS queries do not block request executor threads. The
 sampling/export interval defaults to five seconds; `TELEMETRY_INTERVAL_SECS` must
 be a positive integer. Sampling/export scheduling can shift the actual interval.
-Metrics export independently of `RUST_LOG`; filtering a trace disables that span.
+Metrics and eligible spans export independently of `LOG_LEVEL`; the setting filters events only.
 
 Process memory refers to this backend process. Resident memory is physical RAM;
 virtual memory is address space. Process CPU can exceed 100% across cores. Load
@@ -277,14 +290,14 @@ sum their capacities. These metrics do not attribute CPU/RAM to individual spans
 
 ## Export to a monitoring backend
 
-Set a gRPC collector endpoint to replace stdout export with batched OTLP traces
-and periodic OTLP metrics:
+Set a gRPC collector endpoint to replace stdout span/metric export with batched
+OTLP traces and LogRecords plus periodic OTLP metrics:
 
 ```sh
 cd "$(git rev-parse --show-toplevel)/backend/server"
 OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 \
   OTEL_SERVICE_NAME=chaos-server \
-  RUST_LOG=server=info TELEMETRY_INTERVAL_SECS=5 cargo run
+  LOG_LEVEL=INFO TELEMETRY_INTERVAL_SECS=5 cargo run
 ```
 
 The collector must have a gRPC OTLP receiver and trace/metric pipelines, connected

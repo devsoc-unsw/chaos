@@ -68,7 +68,7 @@ CPU, call every handler, or turn a log file into telemetry.
 5. Its `tonic` client sends those messages over gRPC to an OTLP receiver.
 6. The receiver forwards the data according to its configured pipelines.
 
-OTLP/gRPC defines separate export services for traces and metrics, using unary
+OTLP/gRPC defines separate export services for logs, traces, and metrics, using unary
 export calls. The standard gRPC receiver port is `4317`.
 See the [official OTLP specification](https://opentelemetry.io/docs/specs/otlp/).
 
@@ -93,16 +93,17 @@ opentelemetry_otlp::MetricExporter::builder()
 
 | Setting | Actual branch behavior |
 | --- | --- |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` absent | Traces and metrics go to readable stdout. No OpenTelemetry gRPC export is selected. |
-| `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317` | Traces and metrics go to that OTLP gRPC receiver instead of stdout. A receiver must already be listening. |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` absent or blank | Traces and metrics go to readable stdout; JSON logs stay on stderr. No remote exporters or logger provider are created. |
+| `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317` | Logs, traces, and metrics use that gRPC receiver; JSON logs remain local. Connectivity is not a startup gate. |
 | `OTEL_SERVICE_NAME` | Resource service name; defaults to `chaos-server`. |
 | `TELEMETRY_INTERVAL_SECS` | Hardware delay and metric export interval in seconds; defaults to `5`, must be positive. |
-| `RUST_LOG=server=info` | Enables the server's INFO spans/logs. More restrictive filters can suppress request spans and events. |
+| `LOG_LEVEL` | INFO (default) includes all five event severities; WARN/ERROR use their usual thresholds. Eligible spans and metrics remain enabled at every setting. |
+| `RUST_LOG` | Legacy backend setting, now ignored. The standalone demo has separate configuration. |
 
 The branch chooses transport explicitly with `with_tonic()`; setting
 `OTEL_EXPORTER_OTLP_PROTOCOL` does not switch this code to an HTTP exporter.
-An empty endpoint variable still selects the OTLP branch because the code checks
-whether the variable exists. Unset it completely for terminal export.
+The typed parser trims the endpoint; missing/empty/whitespace values select local
+export. Invalid settings fail before providers start, with sanitized errors.
 
 For a backend running natively, with a collector already available:
 
@@ -111,7 +112,7 @@ cd "$(git rev-parse --show-toplevel)/backend/server"
 OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 \
 OTEL_SERVICE_NAME=chaos-server \
 TELEMETRY_INTERVAL_SECS=1 \
-RUST_LOG=server=info \
+LOG_LEVEL=INFO \
 cargo run
 ```
 
@@ -119,10 +120,11 @@ Use the existing server instance or stop it before starting another on `8080`.
 Environment changes take effect at startup. In a container, `localhost` refers to
 that container; use the collector's reachable service address instead.
 
-This branch exports **traces and metrics** over OTLP. It does not configure an
-OpenTelemetry logs provider/exporter. JSON logs remain on stderr; log events can
-also appear as events attached to exported spans. A collector is not itself a
-browser dashboard, and this branch does not install a telemetry UI.
+The optional SDK logger provider and compatible tracing bridge export standalone
+LogRecords alongside traces and metrics. Request logs carry the current span's
+trace/span IDs; background logs can export without a request context. One event
+produces one record per log destination; its additional span-event representation
+is distinct. A collector is not itself a dashboard; no telemetry UI is installed.
 
 ### When does data appear?
 
@@ -170,8 +172,8 @@ Source: [server/src/telemetry/mod.rs](server/src/telemetry/mod.rs).
 
 | Function | Inputs, output, and behavior |
 | --- | --- |
-| `Telemetry::init()` | Reads environment configuration; returns `Result<Telemetry>`. Creates trace/metric providers with shared resource metadata; installs JSON logging, the tracing bridge, global meter provider, and W3C propagator. Starts hardware polling on a blocking worker with its own Tokio timer runtime. |
-| `Telemetry::shutdown(self)` | Sends the stop flag, awaits the sampler, and shuts down both SDK providers on a blocking worker. Returns sampling/join/export shutdown errors. |
+| `Telemetry::init()` | Validates configuration, constructs providers through `providers.rs`, and installs independent output layers through `logging.rs`. Sets the global meter provider/W3C propagator and starts hardware polling only after subscriber installation. |
+| `Telemetry::shutdown(self)` | Sends the stop flag, awaits the sampler, and attempts shutdown of traces, metrics, and optional logs on a blocking worker, including when sampling or another provider fails. |
 | `SamplingStop::drop()` | Sends `true` on the watch channel when its owner is dropped, including startup unwinding. Wakes the sampler; does not itself flush exporters. |
 | `RequestMetrics::new()` | Creates request instruments from the installed global `chaos-http` meter. |
 | `RequestMetrics::from_meter(meter)` | Private constructor using a supplied meter. Enables isolated tests without replacing the application's global metric provider. |

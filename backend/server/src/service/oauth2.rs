@@ -30,7 +30,11 @@ use std::env;
 ///
 /// # Example
 ///
-/// ```rust
+/// This example requires `GOOGLE_REDIRECT_URI` in the deployment environment.
+///
+/// ```no_run
+/// use server::service::oauth2::build_oauth_client;
+///
 /// let client = build_oauth_client(
 ///     "your-client-id".to_string(),
 ///     "your-client-secret".to_string()

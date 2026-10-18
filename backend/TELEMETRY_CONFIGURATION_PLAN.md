@@ -1,8 +1,8 @@
 # Telemetry configuration implementation plan
 
-Status: phases 1–2 implemented; the phase 1 validation finding is fixed and phase 2
-implementation checks pass. Independent verification remains pending. No phase 2
-acceptance or later phase completion is claimed.
+Status: phases 1–2 reviewed and corrected; phase 3 implemented. Regression, full
+Rust suite, formatting, and build checks pass. Independent acceptance remains
+pending; phases 4–6 have not been accepted. See the verification records below.
 Branch: `open-telemetry`.
 Plan reviewed against the working tree: 17 October 2026.
 
@@ -17,7 +17,8 @@ This document assigns future agent responsibilities. It does not mean those
 agents have been launched or the proposed checks have passed.
 
 This handoff is for implementing the configuration changes, not rebuilding the
-existing telemetry subsystem. The current planning task changes only this file.
+existing telemetry subsystem. Implementation changes and evidence are recorded
+under `telemetry-verification/`.
 Defaults and edge-case policies below are proposed implementation decisions;
 the requested requirements are optional ingestion, the three logging levels,
 and tracing integration with instrumented dependencies.
@@ -29,7 +30,7 @@ endpoint-based workflow and synchronization verification. Invalid-setting startu
 behavior is confirmed: stop startup for invalid settings; keep serving when a
 validly configured collector is temporarily unavailable.
 
-## Current implementation (updated through phase 2)
+## Current implementation (updated through phase 3)
 
 - `server/src/telemetry/config.rs` validates the main endpoint and LOG_LEVEL before
   providers/workers start. Missing/blank endpoints select local output; nonblank
@@ -37,9 +38,9 @@ validly configured collector is temporarily unavailable.
 - `server/src/telemetry/providers.rs` constructs OTLP gRPC exporters for logs,
   traces, and metrics only when the parsed main endpoint is configured. Local mode
   retains stdout traces/metrics and JSON stderr logs, with no remote logger provider.
-- Logging still reads `RUST_LOG`, defaulting to `server=info` plus local WARN/ERROR
-  exporter diagnostics. The shared filter can suppress HTTP spans; phase 3 replaces
-  it with LOG_LEVEL and independent event/span filtering.
+- Logging uses validated `LOG_LEVEL`; `RUST_LOG` is ignored. Per-layer event
+  filtering preserves eligible request/dependency spans and metrics at WARN/ERROR.
+  INFO includes DEBUG/TRACE. JSON and LogRecord tests assert severity and trace IDs.
 - `tracing`, `tracing-subscriber`, `tracing-opentelemetry`, and
   `opentelemetry-otlp` are already dependencies.
 - HTTP middleware and selected business operations already have spans. Hardware
@@ -52,8 +53,10 @@ validly configured collector is temporarily unavailable.
 - `main.rs` loads dotenv before telemetry initialization and already owns shutdown.
 - `performance/recording.rs` records observable metrics; endpoint parsing and
   logging configuration belong in telemetry initialization, not gauge callbacks.
-- `service/reconcile.rs` still emits `log` events, and some handlers/models use
-  `println!`. Audit these during phase 3 so operational messages obey LOG_LEVEL.
+- First-party operational `log`/`println!` bypasses have been converted to tracing.
+  Development logs omit emails/invite codes, error logs use stable categories, and
+  SDK/transport diagnostics are sanitized locally and excluded from remote export.
+  Legacy targets are normalized without installing a second logger bridge.
 
 ## Baseline checkpoint — before phase 1
 
@@ -424,9 +427,9 @@ Fill this table during implementation; phases are currently unverified.
 
 | Phase | Implementing agent | Verifying agent | Red evidence | Green evidence / commands | Verdict |
 | --- | --- | --- | --- | --- | --- |
-| 1 — Configuration | Codex `/root` | Codex `/root` self-review; independent reviewer pending | Initial compile-red; fix regression failed before implementation; [report](telemetry-verification/phase-1.md) | Fix: 48 unit-test executions, fmt, build and startup checks pass; previously observed 40 generated doctest failures remain; [baseline](telemetry-verification/baseline.md) | Reviewed finding FIXED; independent gate pending |
-| 2 — Optional export | Codex `/root` | Independent reviewer pending | Compile-red plus diagnostic duplicate-record assertion failure; [report](telemetry-verification/phase-2.md) | 68 unit-test executions, fmt and build pass; full suite retains 40 generated doctest failures | Implementation ready; independent acceptance pending; receiver evidence deferred to phase 5 |
-| 3 — Logging levels | Unassigned | Unassigned | Pending | Pending | Pending |
+| 1 — Configuration | Codex `/root` | Codex `/root` self-review; independent reviewer pending | Invalid IP and percent-escape regressions failed before fixes; [review](telemetry-verification/review-phases-1-2.md) | Parser/startup regressions, full suite, fmt and build pass | Reviewed findings fixed; independent gate pending |
+| 2 — Optional export | Codex `/root` | Codex `/root` self-review; independent reviewer pending | Initial compile-red and diagnostic regressions; [review](telemetry-verification/review-phases-1-2.md) | Provider/cleanup regressions, full suite, fmt and build pass | Reviewed findings fixed; independent gate pending; receiver evidence remains phase 5 |
+| 3 — Logging levels | Codex `/root` | Self-review complete; independent reviewer pending | Matrix, privacy, legacy target and explicit-parent regressions; [report](telemetry-verification/phase-3.md) | 78 unit-test executions plus 1 passing doctest; 1 existing ignored; fmt/build pass | Reviewed correlation defect fixed; independent gate pending |
 | 4 — Dependencies | Unassigned | Unassigned | Pending | Pending | Pending |
 | 5 — gRPC integration | Unassigned | Unassigned | Pending | Pending | Pending |
 | 6 — Documentation | Unassigned | Unassigned | N/A: documentation review | Pending | Pending |

@@ -279,10 +279,9 @@ pub async fn run_once(state: &AppState) -> Result<Report, ChaosError> {
     }
 
     if !env_flag("RECONCILE_DELETE") {
-        log::warn!(
-            "Reconcile: {} orphaned relationship(s) found but RECONCILE_DELETE is not set, so \
-             nothing was removed. Set it to repair, or inspect the console log above for them.",
-            report.orphans.len()
+        tracing::warn!(
+            orphan_count = report.orphans.len(),
+            "Reconcile found orphaned relationships; RECONCILE_DELETE is disabled"
         );
         return Ok(report);
     }
@@ -358,7 +357,7 @@ pub async fn request_backfill(state: &AppState) -> Result<(), ChaosError> {
 /// Never returns; runs until the process exits
 pub async fn spawn_reconciler(state: AppState) {
     if !env_flag("RECONCILE_ENABLED") {
-        log::info!("Reconcile: disabled (set RECONCILE_ENABLED=true to enable)");
+        tracing::info!("Reconcile is disabled; set RECONCILE_ENABLED=true to enable");
         return;
     }
 
@@ -371,7 +370,7 @@ pub async fn spawn_reconciler(state: AppState) {
         let conn = match state.db.acquire().await {
             Ok(conn) => conn,
             Err(error) => {
-                log::error!("Reconcile: could not check out a connection: {error}");
+                tracing::error!(%error, "Reconcile could not check out a database connection");
                 continue;
             }
         };
@@ -384,27 +383,32 @@ pub async fn spawn_reconciler(state: AppState) {
             // Another replica is reconciling; skip this tick.
             Ok(Either::Right(_conn)) => continue,
             Err(error) => {
-                log::error!("Reconcile: leadership check failed: {error}");
+                tracing::error!(%error, "Reconcile leadership check failed");
                 continue;
             }
         };
 
         if let Err(error) = request_backfill(&state).await {
-            log::warn!("Reconcile: could not trigger a Sequin backfill: {error:?}");
+            tracing::warn!(
+                error_kind = error.kind(),
+                "Reconcile could not trigger a Sequin backfill"
+            );
         }
 
         match run_once(&state).await {
-            Ok(report) => log::info!(
-                "Reconcile: {} matched, {} missing (backfill repairs), {} orphaned{}, deleted={}",
-                report.matched,
-                report.missing,
-                report.orphans.len(),
-                if report.deleted { "" } else { " (not removed)" },
-                report.deleted,
+            Ok(report) => tracing::info!(
+                matched = report.matched,
+                missing = report.missing,
+                orphan_count = report.orphans.len(),
+                deleted = report.deleted,
+                "Reconciliation completed"
             ),
             // Nothing was deleted, because the expected set is built in full
             // before any write.
-            Err(error) => log::error!("Reconcile: run failed, nothing was deleted: {error:?}"),
+            Err(error) => tracing::error!(
+                error_kind = error.kind(),
+                "Reconciliation failed; the sweep did not complete"
+            ),
         }
 
         drop(guard);

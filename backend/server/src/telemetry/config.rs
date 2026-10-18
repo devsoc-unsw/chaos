@@ -30,7 +30,7 @@ impl LogLevel {
 pub struct TelemetryConfig {
     /// Trimmed HTTP/HTTPS OTLP receiver URI, or local-only export when absent.
     pub endpoint: Option<String>,
-    /// Validated event policy; layer filtering is integrated in phase 3.
+    /// Validated event policy applied to local logs, remote logs, and span events.
     pub log_level: LogLevel,
 }
 
@@ -58,6 +58,16 @@ impl TelemetryConfig {
     pub fn parse(endpoint: Option<&str>, log_level: Option<&str>) -> Result<Self, ConfigError> {
         let endpoint = endpoint.map(str::trim).filter(|value| !value.is_empty());
         if let Some(value) = endpoint {
+            // http::Uri accepts malformed percent escapes in paths and queries.
+            let mut bytes = value.bytes();
+            while let Some(byte) = bytes.next() {
+                if byte == b'%'
+                    && (!bytes.next().is_some_and(|next| next.is_ascii_hexdigit())
+                        || !bytes.next().is_some_and(|next| next.is_ascii_hexdigit()))
+                {
+                    return Err(ConfigError::InvalidEndpoint);
+                }
+            }
             let uri = value
                 .parse::<Uri>()
                 .map_err(|_| ConfigError::InvalidEndpoint)?;
@@ -146,6 +156,8 @@ mod tests {
             "http://[::1]",
             "https://[2001:db8::1]:4317",
             "http://[::ffff:192.0.2.1]:4317",
+            "HTTPS://collector.example:4317",
+            "http://collector.example/otlp%2Ftraces?name=space%20value",
         ] {
             let input = format!(" \t{endpoint}\n");
             assert_eq!(
@@ -170,6 +182,9 @@ mod tests {
             "http://collector:65536",
             "http://collector with spaces:4317",
             "http://collector:4317/#fragment",
+            "http://collector:4317/invalid%zz",
+            "http://collector:4317/?name=%",
+            "http://collector:4317/?name=%2",
         ] {
             let error = TelemetryConfig::parse(Some(endpoint), None).err().unwrap();
             assert!(error.to_string().contains("OTEL_EXPORTER_OTLP_ENDPOINT"));

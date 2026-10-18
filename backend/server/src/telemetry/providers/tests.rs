@@ -278,7 +278,11 @@ fn shutdown_flushes_logs_even_when_metrics_fail() {
 /// HTTP/HTTPS OTLP exporters build lazily without a collector connectivity gate.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn real_exporters_construct_without_a_collector() {
-    for endpoint in ["http://127.0.0.1:1", "https://collector.example:4317"] {
+    for endpoint in [
+        "http://127.0.0.1:1",
+        "https://collector.example:4317",
+        "HTTPS://collector.example:4317",
+    ] {
         let mut providers = Providers::new(
             Some(endpoint),
             Resource::builder().build(),

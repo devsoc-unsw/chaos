@@ -1,6 +1,7 @@
 //! Server telemetry: JSON logs, HTTP traces/metrics, and continuous OS sampling.
 
 pub mod config;
+mod logging;
 mod performance;
 mod providers;
 
@@ -13,11 +14,13 @@ use axum::{
     middleware::Next,
     response::Response,
 };
+#[cfg(test)]
+use opentelemetry::trace::TracerProvider as _;
 use opentelemetry::{
     global,
     metrics::{Counter, Histogram},
     propagation::Extractor,
-    trace::{TraceContextExt, TracerProvider as _},
+    trace::TraceContextExt,
     KeyValue,
 };
 #[cfg(test)]
@@ -32,7 +35,9 @@ use std::{
 };
 use tracing::Instrument;
 use tracing_opentelemetry::OpenTelemetrySpanExt;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer};
+#[cfg(test)]
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::util::SubscriberInitExt;
 
 /// Owns telemetry providers and the sampler so shutdown can flush and stop them.
 pub struct Telemetry {
@@ -81,30 +86,14 @@ impl Telemetry {
             ])
             .build();
         let providers = providers::Providers::new(config.endpoint.as_deref(), resource, interval)?;
-        let log_bridge = providers.logs.as_ref().map(|logs| {
-            opentelemetry_appender_tracing::layer::OpenTelemetryTracingBridge::new(logs)
-                .with_filter(tracing_subscriber::filter::filter_fn(
-                    providers::export_eligible,
-                ))
-        });
-        tracing_subscriber::registry()
-            .with(
-                EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-                    EnvFilter::new("server=info,opentelemetry=warn,opentelemetry_sdk=warn,opentelemetry-otlp=warn,h2=warn,hyper=warn,hyper_util=warn,tonic::transport=warn,tower::buffer=warn")
-                }),
-            )
-            .with(
-                tracing_subscriber::fmt::layer()
-                    .json()
-                    .with_writer(std::io::stderr)
-                    .with_file(true)
-                    .with_line_number(true),
-            )
-            .with(tracing_opentelemetry::layer().with_tracer(providers.traces.tracer("chaos-server"))
-                .with_filter(tracing_subscriber::filter::filter_fn(providers::export_eligible)))
-            .with(log_bridge)
-            .try_init()
-            .map_err(|error| anyhow::anyhow!(error.to_string()))?;
+        logging::subscriber(
+            config.log_level,
+            &providers.traces,
+            providers.logs.as_ref(),
+            std::io::stderr,
+        )
+        .try_init()
+        .map_err(|error| anyhow::anyhow!(error.to_string()))?;
         global::set_meter_provider(providers.metrics.clone());
         global::set_text_map_propagator(TraceContextPropagator::new());
         let (stop, receiver) = tokio::sync::watch::channel(false);
