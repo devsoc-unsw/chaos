@@ -278,12 +278,11 @@ pub async fn check_permission(
         key,
     )?;
 
-    let response = client
-        .clone()
-        .check_permission(request)
-        .await
-        .map_err(|_| ChaosError::InternalServerError)?
-        .into_inner();
+    let response =
+        crate::telemetry::spicedb_rpc("CheckPermission", client.clone().check_permission(request))
+            .await
+            .map_err(|_| ChaosError::InternalServerError)?
+            .into_inner();
 
     // Deliberately not published to the token task: a check's response ZedToken
     // reflects when the read was served, not a write, so publishing it would
@@ -407,12 +406,13 @@ pub async fn write_relationships(
         key,
     )?;
 
-    let response = client
-        .clone()
-        .write_relationships(request)
-        .await
-        .map_err(|_| ChaosError::InternalServerError)?
-        .into_inner();
+    let response = crate::telemetry::spicedb_rpc(
+        "WriteRelationships",
+        client.clone().write_relationships(request),
+    )
+    .await
+    .map_err(|_| ChaosError::InternalServerError)?
+    .into_inner();
 
     Ok(response.written_at)
 }
@@ -463,12 +463,13 @@ pub async fn read_relationships_of_type(
         key,
     )?;
 
-    let mut stream = client
-        .clone()
-        .read_relationships(request)
-        .await
-        .map_err(|_| ChaosError::InternalServerError)?
-        .into_inner();
+    let mut stream = crate::telemetry::spicedb_rpc(
+        "ReadRelationships",
+        client.clone().read_relationships(request),
+    )
+    .await
+    .map_err(|_| ChaosError::InternalServerError)?
+    .into_inner();
 
     let mut relationships = Vec::new();
     while let Some(response) = stream
@@ -537,12 +538,13 @@ pub async fn delete_all_resource_relationships(
         key,
     )?;
 
-    client
-        .clone()
-        .delete_relationships(resource_request)
-        .await
-        .map_err(|_| ChaosError::InternalServerError)?
-        .into_inner();
+    crate::telemetry::spicedb_rpc(
+        "DeleteRelationships",
+        client.clone().delete_relationships(resource_request),
+    )
+    .await
+    .map_err(|_| ChaosError::InternalServerError)?
+    .into_inner();
 
     // Delete all where <anything>#relation@<type>:<id>
     let subject_request = authorized_request(
@@ -566,12 +568,13 @@ pub async fn delete_all_resource_relationships(
         key,
     )?;
 
-    let response = client
-        .clone()
-        .delete_relationships(subject_request)
-        .await
-        .map_err(|_| ChaosError::InternalServerError)?
-        .into_inner();
+    let response = crate::telemetry::spicedb_rpc(
+        "DeleteRelationships",
+        client.clone().delete_relationships(subject_request),
+    )
+    .await
+    .map_err(|_| ChaosError::InternalServerError)?
+    .into_inner();
 
     // The second RPC has the newest revision, so its token supersedes the
     // first one's. A closed channel means the token task has exited, so the

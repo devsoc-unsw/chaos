@@ -263,6 +263,13 @@ removed. The backend also handles SIGTERM for graceful shutdown.
 - Request count and duration are labelled by method, route template, and status.
   Unmatched URLs share the `unmatched` label rather than generating a metric
   series for each requested URL. Streaming body transfer time is not measured.
+- Actual Axum rejection and SQLx query events retain fixed messages and numeric
+  status/timing/count fields. SQL text, query summaries, and rejection bodies are
+  removed from JSON logs, remote LogRecords, and exported span events.
+- Application-owned PostgreSQL client spans cover submission queries and transaction
+  begin/commit, with static operation labels. SpiceDB RPC client spans record method
+  and gRPC status; streaming reads measure initial response setup. Outgoing gRPC
+  trace propagation is not implemented.
 - Shared SpiceDB permission checks record resource/user IDs, permission, and
   allowed/denied outcome. Transaction commits and application submission have
   nested spans. Add `#[tracing::instrument(skip_all, fields(...))]` to further
@@ -300,9 +307,9 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 \
   LOG_LEVEL=INFO TELEMETRY_INTERVAL_SECS=5 cargo run
 ```
 
-The collector must have a gRPC OTLP receiver and trace/metric pipelines, connected
-to your telemetry storage/dashboard. JSON logs remain on stderr; this change does
-not export standalone OTLP logs or automatically start a dashboard. Outgoing HTTP
+The collector must have a gRPC OTLP receiver and log/trace/metric pipelines, connected
+to your telemetry storage/dashboard. JSON logs remain on stderr; configured remote
+export includes standalone OTLP LogRecords. Outgoing HTTP
 and gRPC trace context propagation needs instrumentation at those call sites.
 
 For container deployment, host readings refer to the container/VM-visible system.
@@ -345,10 +352,20 @@ To run all backend library and binary tests, including hardware telemetry:
 cargo test --lib --bins
 ```
 
-An unrestricted `cargo test` also runs documentation examples. The current
-repository has 40 failing documentation tests, mostly generated protobuf examples
-that Rust interprets as code, plus an existing OAuth example. These are separate
-from the passing library/binary telemetry tests; `--lib --bins` does not run them.
+An unrestricted `cargo test` also runs documentation examples. Generated protobuf
+examples are marked as text; the OAuth example is compile-checked without execution.
+
+Real dependency integration coverage uses read-only PostgreSQL queries and an
+ephemeral local tonic permission-service fixture, without writing to your SpiceDB:
+
+```sh
+cargo test --locked --offline --lib telemetry::logging::tests::integration
+```
+
+These tests require the configured local PostgreSQL database. They cover real Axum
+rejections, SQLx events, and SpiceDB check/write transport calls at all three log
+levels. They use in-memory telemetry exporters; OTLP receiver verification remains
+phase 5. See [phase 4 evidence](telemetry-verification/phase-4.md).
 
 ## Hardware telemetry tests
 

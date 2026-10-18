@@ -2,6 +2,7 @@
 
 use super::{
     config::LogLevel,
+    dependencies,
     providers::{export_eligible, exporter_diagnostic},
 };
 use opentelemetry::{
@@ -55,6 +56,26 @@ where
                     "level": metadata.level().as_str(),
                     "target": metadata.target(),
                     "fields": { "message": "Telemetry transport diagnostic", "callsite": metadata.name() }
+                })
+            )
+        } else if let Some(kind) = dependencies::kind(
+            metadata.target(),
+            metadata.fields().field("db.statement").is_some(),
+        ) {
+            let mut measurements = dependencies::Measurements {
+                kind,
+                fields: Default::default(),
+            };
+            event.record(&mut measurements);
+            measurements
+                .fields
+                .insert("message".into(), kind.message().into());
+            writeln!(
+                writer,
+                "{}",
+                serde_json::json!({
+                    "level": metadata.level().as_str(), "target": metadata.target(),
+                    "filename": metadata.file(), "line_number": metadata.line(), "fields": measurements.fields
                 })
             )
         } else {
@@ -126,6 +147,7 @@ impl Logger for OriginalTargetLogger {
                 record.set_target(target);
             }
         }
+        let record = dependencies::bounded_record(&record, &self.0).unwrap_or(record);
         self.0.emit(record);
     }
     /// Retains SDK enablement and recursion suppression behavior.

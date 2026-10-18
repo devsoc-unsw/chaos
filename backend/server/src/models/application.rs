@@ -21,6 +21,7 @@ use sqlx::types::Json;
 use sqlx::{FromRow, Postgres, Transaction};
 use std::collections::HashMap;
 use std::ops::DerefMut;
+use tracing::Instrument;
 
 /// Represents an application in the system.
 ///
@@ -979,6 +980,9 @@ impl Application {
             id
         )
         .fetch_one(transaction.deref_mut())
+        .instrument(crate::telemetry::database_span(
+            "application_role_preferences.sum",
+        ))
         .await?
         .total
         .unwrap_or(0);
@@ -996,6 +1000,7 @@ impl Application {
             id
         )
         .fetch_one(transaction.deref_mut())
+        .instrument(crate::telemetry::database_span("application.submit"))
         .await?;
 
         Ok(())

@@ -23,6 +23,7 @@ each unit target (78 executions), plus 1 passing and 1 existing ignored doctest.
 Capture: `/tmp/chaos-phase3-review-green.log`; red evidence:
 `/tmp/chaos-phase3-review-red.log`. Independent acceptance remains pending.
 The historical implementation snapshot and results below precede this correction.
+The reviewed phase 3 changes were committed as `eaa3676` before phase 4 began.
 
 Reviewed revision: `3512d54` plus the phase 1–2 corrections in
 [review-phases-1-2.md](review-phases-1-2.md) and the phase 3 working-tree changes.

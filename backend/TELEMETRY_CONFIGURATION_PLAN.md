@@ -1,6 +1,6 @@
 # Telemetry configuration implementation plan
 
-Status: phases 1–2 reviewed and corrected; phase 3 implemented. Regression, full
+Status: phases 1–3 reviewed and corrected; phase 4 implemented. Regression, full
 Rust suite, formatting, and build checks pass. Independent acceptance remains
 pending; phases 4–6 have not been accepted. See the verification records below.
 Branch: `open-telemetry`.
@@ -30,7 +30,7 @@ endpoint-based workflow and synchronization verification. Invalid-setting startu
 behavior is confirmed: stop startup for invalid settings; keep serving when a
 validly configured collector is temporarily unavailable.
 
-## Current implementation (updated through phase 3)
+## Current implementation (updated through phase 4)
 
 - `server/src/telemetry/config.rs` validates the main endpoint and LOG_LEVEL before
   providers/workers start. Missing/blank endpoints select local output; nonblank
@@ -57,6 +57,11 @@ validly configured collector is temporarily unavailable.
   Development logs omit emails/invite codes, error logs use stable categories, and
   SDK/transport diagnostics are sanitized locally and excluded from remote export.
   Legacy targets are normalized without installing a second logger bridge.
+- Real Axum rejection and SQLx statement events retain bounded numeric metadata,
+  excluding rejection bodies and SQL text across all destinations. Application-owned
+  client spans cover submission queries, transaction begin/commit, and SpiceDB RPCs.
+  Routed tests exercise real SQLx/Postgres and tonic calls; outgoing gRPC context
+  propagation is not implemented. See [phase 4 evidence](telemetry-verification/phase-4.md).
 
 ## Baseline checkpoint — before phase 1
 
@@ -430,7 +435,7 @@ Fill this table during implementation; phases are currently unverified.
 | 1 — Configuration | Codex `/root` | Codex `/root` self-review; independent reviewer pending | Invalid IP and percent-escape regressions failed before fixes; [review](telemetry-verification/review-phases-1-2.md) | Parser/startup regressions, full suite, fmt and build pass | Reviewed findings fixed; independent gate pending |
 | 2 — Optional export | Codex `/root` | Codex `/root` self-review; independent reviewer pending | Initial compile-red and diagnostic regressions; [review](telemetry-verification/review-phases-1-2.md) | Provider/cleanup regressions, full suite, fmt and build pass | Reviewed findings fixed; independent gate pending; receiver evidence remains phase 5 |
 | 3 — Logging levels | Codex `/root` | Self-review complete; independent reviewer pending | Matrix, privacy, legacy target and explicit-parent regressions; [report](telemetry-verification/phase-3.md) | 78 unit-test executions plus 1 passing doctest; 1 existing ignored; fmt/build pass | Reviewed correlation defect fixed; independent gate pending |
-| 4 — Dependencies | Unassigned | Unassigned | Pending | Pending | Pending |
+| 4 — Dependencies | Codex `/root` | Self-checks complete; independent reviewer pending | Real routed status assertion failed: u16 status exported as text; [report](telemetry-verification/phase-4.md) | Real Axum/SQLx/tonic tests at all levels; full suite, fmt/build recorded in report | Implementation complete; independent gate pending |
 | 5 — gRPC integration | Unassigned | Unassigned | Pending | Pending | Pending |
 | 6 — Documentation | Unassigned | Unassigned | N/A: documentation review | Pending | Pending |
 

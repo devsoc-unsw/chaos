@@ -20,6 +20,40 @@ use tower::ServiceExt;
 use tracing::instrument::WithSubscriber;
 use tracing_subscriber::util::SubscriberInitExt;
 
+mod integration;
+
+/// SDK event limits must not let dependency payloads bypass export sanitization.
+#[test]
+fn truncated_dependency_events_remain_private() {
+    for limit in [0, 2] {
+        let spans = InMemorySpanExporter::default();
+        let traces = SdkTracerProvider::builder()
+            .with_span_limits(opentelemetry_sdk::trace::SpanLimits {
+                max_attributes_per_event: limit,
+                ..Default::default()
+            })
+            .with_simple_exporter(crate::telemetry::dependencies::BoundedSpanExporter(
+                spans.clone(),
+            ))
+            .build();
+        tracing::subscriber::with_default(
+            subscriber(LogLevel::Info, &traces, None, std::io::sink),
+            || {
+                let root = tracing::info_span!("test");
+                root.in_scope(|| {
+                tracing::event!(target: "sqlx::query", tracing::Level::DEBUG, { db.statement = "PRIVATE_SQL", summary = "PRIVATE_SUMMARY" }, "PRIVATE_MESSAGE");
+                tracing::trace!(target: "axum::rejection", body = "PRIVATE_BODY", "PRIVATE_REJECTION");
+            });
+            },
+        );
+        assert!(
+            !format!("{:?}", spans.get_finished_spans().unwrap()).contains("PRIVATE_"),
+            "attribute limit {limit} must fail closed"
+        );
+        traces.shutdown().unwrap();
+    }
+}
+
 /// Isolated JSON sink, shared by one fixture's writer handles.
 #[derive(Clone, Default)]
 struct Capture(Arc<Mutex<Vec<u8>>>);
@@ -56,7 +90,9 @@ impl Fixture {
         Self {
             traces: SdkTracerProvider::builder()
                 .with_sampler(opentelemetry_sdk::trace::Sampler::AlwaysOn)
-                .with_simple_exporter(spans.clone())
+                .with_simple_exporter(crate::telemetry::dependencies::BoundedSpanExporter(
+                    spans.clone(),
+                ))
                 .build(),
             spans,
             logs: SdkLoggerProvider::builder()

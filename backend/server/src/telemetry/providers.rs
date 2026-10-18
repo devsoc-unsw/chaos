@@ -1,5 +1,6 @@
 //! Provider construction and cleanup for optional remote export.
 
+use super::dependencies::BoundedSpanExporter;
 use anyhow::Result;
 use opentelemetry_otlp::{WithExportConfig, WithTonicConfig};
 use opentelemetry_sdk::{
@@ -139,7 +140,9 @@ impl Providers {
             return Ok(Self {
                 traces: SdkTracerProvider::builder()
                     .with_resource(resource.clone())
-                    .with_simple_exporter(opentelemetry_stdout::SpanExporter::default())
+                    .with_simple_exporter(BoundedSpanExporter(
+                        opentelemetry_stdout::SpanExporter::default(),
+                    ))
                     .build(),
                 metrics: SdkMeterProvider::builder()
                     .with_resource(resource)
@@ -173,7 +176,7 @@ impl Providers {
             traces: SdkTracerProvider::builder()
                 .with_resource(resource.clone())
                 .with_span_processor(
-                    BatchSpanProcessor::builder(spans)
+                    BatchSpanProcessor::builder(BoundedSpanExporter(spans))
                         .with_batch_config(
                             SpanBatchConfigBuilder::default()
                                 .with_max_queue_size(2048)

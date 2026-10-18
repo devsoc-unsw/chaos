@@ -1,9 +1,13 @@
 //! Server telemetry: JSON logs, HTTP traces/metrics, and continuous OS sampling.
 
 pub mod config;
+mod dependencies;
 mod logging;
+mod operations;
 mod performance;
 mod providers;
+
+pub use operations::{database_span, spicedb_rpc};
 
 #[cfg(test)]
 mod tests;
@@ -211,7 +215,7 @@ pub async fn trace_request(
         let status = response.status().as_u16();
         let elapsed = started.elapsed().as_secs_f64();
         let span = tracing::Span::current();
-        span.record("http.response.status_code", status);
+        span.record("http.response.status_code", i64::from(status));
         if status >= 500 {
             span.record("otel.status_code", "ERROR");
         }

@@ -16,6 +16,7 @@ use axum::http::request::Parts;
 use sqlx::{Postgres, Transaction};
 use tokio::sync::mpsc::UnboundedSender;
 use tonic::transport::Channel;
+use tracing::Instrument;
 
 /// A wrapper around a PostgreSQL transaction and queued SpiceDB calls.
 ///
@@ -48,9 +49,14 @@ pub struct DBTransaction<'a> {
 }
 
 impl DBTransaction<'_> {
+    /// Begins a timed PostgreSQL transaction without recording connection credentials.
     pub async fn new(state: &AppState) -> Result<Self, ChaosError> {
         Ok(DBTransaction {
-            tx: state.db.begin().await?,
+            tx: state
+                .db
+                .begin()
+                .instrument(crate::telemetry::database_span("transaction.begin"))
+                .await?,
             spicedb: state.spicedb.clone(),
             spicedb_key: state.spicedb_key.clone(),
             spicedb_token_tx: state.spicedb_token_tx.clone(),
@@ -147,7 +153,10 @@ impl DBTransaction<'_> {
     /// * `Err(ChaosError)` if Postgres failed to commit
     #[tracing::instrument(skip_all, fields(relationship_count = self.queued_relationship_updates.len()), err)]
     pub async fn commit(self) -> Result<(), ChaosError> {
-        self.tx.commit().await?;
+        self.tx
+            .commit()
+            .instrument(crate::telemetry::database_span("transaction.commit"))
+            .await?;
 
         // If there are no SpiceDB calls, only commit Postgres
         if self.queued_relationship_updates.is_empty() {
