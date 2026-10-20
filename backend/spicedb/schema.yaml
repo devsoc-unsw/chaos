@@ -27,7 +27,7 @@ schema: |-
 
   definition chaos/campaign {
       relation organisation: chaos/organisation
-      permission manage = organisation->admin
+      permission manage = organisation->manage
       permission review = organisation->member + organisation->admin
   }
   

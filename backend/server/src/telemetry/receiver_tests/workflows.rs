@@ -313,11 +313,16 @@ async fn scenarios(
     port: u16,
     webhook_failures: &AtomicUsize,
 ) -> anyhow::Result<()> {
-    for id in [1001_i64, 1002, 1003] {
-        sqlx::query("INSERT INTO users (id,email,name) VALUES ($1,$2,$3)")
+    for id in [1001_i64, 1002, 1003, 1004] {
+        sqlx::query("INSERT INTO users (id,email,name,role) VALUES ($1,$2,$3,$4)")
             .bind(id)
             .bind(format!("fixture-{id}@example.invalid"))
             .bind("Fixture")
+            .bind(if id == 1004 {
+                crate::models::user::UserRole::SuperUser
+            } else {
+                crate::models::user::UserRole::User
+            })
             .execute(&state.db)
             .await?;
     }
@@ -366,6 +371,14 @@ async fn scenarios(
                 "chaos/user",
                 1003,
             ),
+            update(
+                Operation::Touch,
+                "chaos/platform",
+                0,
+                "superuser",
+                "chaos/user",
+                1004,
+            ),
         ],
     )
     .await?;
@@ -380,6 +393,7 @@ async fn scenarios(
     let admin = token(1001);
     let applicant = token(1002);
     let outsider = token(1003);
+    let superuser = token(1004);
     permission(state, 1001, "chaos/organisation", 2001, "manage", true).await?;
     let body = json!({"slug":"phase5-campaign","name":"Phase5 campaign","description":"Fixture", "starts_at":"2020-01-01T00:00:00Z", "ends_at":"2099-01-01T00:00:00Z"});
     session
@@ -422,6 +436,22 @@ async fn scenarios(
         .fetch_one(&state.db)
         .await?;
     let path = format!("/api/v1/campaign/{campaign}");
+    // A platform superuser must inherit management without organisation membership.
+    ensure!(
+        sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM organisation_members WHERE user_id=1004"
+        )
+        .fetch_one(&state.db)
+        .await?
+            == 0,
+        "superuser fixture must not gain permission through membership"
+    );
+    permission(state, 1004, "chaos/campaign", campaign, "manage", true).await?;
+    permission(state, 1002, "chaos/campaign", campaign, "manage", false).await?;
+    permission(state, 1003, "chaos/campaign", campaign, "manage", false).await?;
+    session
+        .call("PUT", &path, Some(&superuser), Some(body.clone()), 200)
+        .await?;
     session.call("GET", &path, None, None, 200).await?;
     let mut edited = body.clone();
     edited["name"] = json!("Edited fixture");
@@ -441,6 +471,7 @@ async fn scenarios(
         .bind(campaign)
         .fetch_one(&state.db)
         .await?;
+    permission(state, 1004, "chaos/campaign_role", role, "manage", true).await?;
     session
         .call("PATCH", &format!("{path}/publish"), Some(&admin), None, 200)
         .await?;
@@ -682,7 +713,7 @@ async fn scenarios(
         .call("DELETE", &path, Some(&admin), None, 403)
         .await?;
     shutdown_inflight(state, session).await?;
-    let summary = json!({"calls":session.calls,"fixture_ids":{"admin":"1001","applicant":"1002","outsider":"1003","organisation":"2001","campaign":campaign.to_string(),"application":application.to_string(),"role":role.to_string()},"real_cdc":cdc,"real_cdc_failed_deliveries":webhook_failures.load(Ordering::SeqCst),"concurrent_observed_manage":concurrent_observed_manage,"converged_after_replay":true,"concurrent_write_race":"accepted; not disproved by this fixture"});
+    let summary = json!({"calls":session.calls,"fixture_ids":{"admin":"1001","applicant":"1002","outsider":"1003","superuser":"1004","organisation":"2001","campaign":campaign.to_string(),"application":application.to_string(),"role":role.to_string()},"superuser_campaign_management_verified":true,"real_cdc":cdc,"real_cdc_failed_deliveries":webhook_failures.load(Ordering::SeqCst),"concurrent_observed_manage":concurrent_observed_manage,"converged_after_replay":true,"concurrent_write_race":"accepted; not disproved by this fixture"});
     std::fs::write(
         std::env::var("CHAOS_PHASE5_RESULT_FILE")?,
         serde_json::to_vec_pretty(&summary)?,
