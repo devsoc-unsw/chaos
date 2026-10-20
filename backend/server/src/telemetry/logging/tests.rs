@@ -409,20 +409,46 @@ fn diagnostics_are_sanitized_and_similarly_named_application_targets_are_eligibl
     assert_eq!(records.len(), 1);
 }
 
-/// User-supplied error messages are never copied into operational log destinations.
+/// Original error details reach JSON and OTLP logs while respecting the chosen level.
 #[test]
-fn operational_errors_omit_private_messages() {
-    let fixture = Fixture::new();
-    tracing::subscriber::with_default(fixture.subscriber(LogLevel::Info), || {
-        crate::models::error::ChaosError::BadRequestWithMessage("PRIVATE_BODY".into()).print();
-        crate::models::error::ChaosError::InternalServerErrorWithMessage("PRIVATE_TOKEN".into())
+fn operational_errors_preserve_original_details() {
+    for level in [LogLevel::Info, LogLevel::Warn, LogLevel::Error] {
+        let fixture = Fixture::new();
+        tracing::subscriber::with_default(fixture.subscriber(level), || {
+            crate::models::error::ChaosError::BadRequestWithMessage("REQUEST_DETAIL".into())
+                .print();
+            crate::models::error::ChaosError::InternalServerErrorWithMessage(
+                "SERVER_DETAIL".into(),
+            )
             .print();
-    });
-    let json = fixture.json();
-    let records = fixture.records.get_emitted_logs().unwrap();
-    assert_eq!(json.len(), 2);
-    assert_eq!(records.len(), 2);
-    assert!(!format!("{json:?} {records:?}").contains("PRIVATE_"));
+            crate::models::error::ChaosError::DatabaseError(sqlx::Error::Protocol(
+                "DATABASE_DETAIL".into(),
+            ))
+            .print();
+        });
+        let json = fixture.json();
+        let records = fixture.records.get_emitted_logs().unwrap();
+        let expected = if level == LogLevel::Error { 2 } else { 3 };
+        assert_eq!(json.len(), expected);
+        assert_eq!(records.len(), expected);
+        for detail in ["SERVER_DETAIL", "DATABASE_DETAIL"] {
+            assert!(json.iter().any(|event| event["fields"]["error"]
+                .as_str()
+                .is_some_and(|error| error.contains(detail))));
+            assert!(format!("{records:?}").contains(detail));
+        }
+        assert_eq!(
+            format!("{json:?}").contains("REQUEST_DETAIL"),
+            level != LogLevel::Error
+        );
+        assert_eq!(
+            format!("{records:?}").contains("REQUEST_DETAIL"),
+            level != LogLevel::Error
+        );
+        assert!(json
+            .iter()
+            .all(|event| event["fields"].get("error_kind").is_none()));
+    }
 }
 
 /// Explicit event ancestry overrides the currently entered span for remote correlation.

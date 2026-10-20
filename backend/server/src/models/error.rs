@@ -110,49 +110,42 @@ pub enum ChaosError {
 }
 
 impl ChaosError {
-    /// Returns a stable diagnostic category without exposing error payloads.
-    pub fn kind(&self) -> &'static str {
-        match self {
-            Self::NotLoggedIn => "not_logged_in",
-            Self::Unauthorized => "unauthorized",
-            Self::ForbiddenOperation => "forbidden_operation",
-            Self::BadRequest | Self::BadRequestWithMessage(_) => "bad_request",
-            Self::NotFound => "not_found",
-            Self::ApplicationClosed => "application_closed",
-            Self::CampaignClosed => "campaign_closed",
-            Self::CampaignOpen => "campaign_open",
-            Self::DatabaseError(_) => "database_error",
-            Self::MigrationError(_) => "migration_error",
-            Self::ReqwestError(_) => "http_client_error",
-            Self::OAuthError(_) => "oauth_error",
-            Self::StorageError(_) => "storage_error",
-            Self::DotEnvyError(_) => "environment_error",
-            Self::TemplateError(_) => "template_error",
-            Self::TemplateRenderError(_) => "template_render_error",
-            Self::LettreError(_) => "email_error",
-            Self::AddressError(_) => "email_address_error",
-            Self::SmtpTransportError(_) => "smtp_error",
-            Self::InternalServerError | Self::InternalServerErrorWithMessage(_) => {
-                "internal_server_error"
-            }
-        }
-    }
-
-    /// Records an error as structured telemetry without dumping request data.
+    /// Records the original error details through structured telemetry.
+    /// Payloads are included in local logs and configured remote log exports.
     pub fn print(&self) {
         match self {
             Self::NotLoggedIn
             | Self::Unauthorized
             | Self::ForbiddenOperation
             | Self::BadRequest
-            | Self::BadRequestWithMessage(_)
             | Self::NotFound
             | Self::ApplicationClosed
             | Self::CampaignClosed
             | Self::CampaignOpen => {
-                tracing::warn!(error_kind = self.kind(), "Request rejected");
+                tracing::warn!(error = ?self, "Request rejected");
             }
-            _ => tracing::error!(error_kind = self.kind(), "Backend operation failed"),
+            Self::InternalServerError => {
+                tracing::error!(error = ?self, "Backend operation failed");
+            }
+            Self::BadRequestWithMessage(error) => {
+                tracing::warn!(%error, "Bad request");
+            }
+            Self::InternalServerErrorWithMessage(error) => {
+                tracing::error!(%error, "Internal server error");
+            }
+            Self::DatabaseError(error) => tracing::error!(%error, "Database error"),
+            Self::MigrationError(error) => tracing::error!(%error, "Migration error"),
+            Self::ReqwestError(error) => tracing::error!(%error, "Reqwest error"),
+            Self::OAuthError(error) => tracing::error!(%error, "OAuth2 error"),
+            Self::StorageError(error) => tracing::error!(%error, "Storage error"),
+            Self::DotEnvyError(error) => tracing::error!(%error, "DotEnvy error"),
+            Self::TemplateError(error) => tracing::error!(%error, "Template error"),
+            Self::TemplateRenderError(error) => {
+                tracing::error!(%error, "Template render error");
+            }
+            Self::LettreError(error) => tracing::error!(%error, "Lettre error"),
+            Self::AddressError(error) => tracing::error!(%error, "Address error"),
+            Self::SmtpTransportError(error) => tracing::error!(%error, "SMTP transport error"),
         }
     }
 }

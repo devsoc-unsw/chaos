@@ -428,7 +428,7 @@ pub async fn spawn_reconciler(state: AppState) {
 
         if let Err(error) = request_backfill(&state).await {
             tracing::warn!(
-                error_kind = error.kind(),
+                error = ?error,
                 "Reconcile could not trigger a Sequin backfill"
             );
         }
@@ -444,7 +444,7 @@ pub async fn spawn_reconciler(state: AppState) {
             // Nothing was deleted, because the expected set is built in full
             // before any write.
             Err(error) => tracing::error!(
-                error_kind = error.kind(),
+                error = ?error,
                 "Reconciliation failed; the sweep did not complete"
             ),
         }
