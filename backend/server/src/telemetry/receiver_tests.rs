@@ -33,6 +33,8 @@ use std::{
 use tokio_stream::StreamExt;
 use tonic::{Request as RpcRequest, Response as RpcResponse, Status};
 
+mod workflows;
+
 /// Captured protobuf requests and controllable collector availability.
 #[derive(Clone, Default)]
 struct Received {
@@ -253,7 +255,12 @@ impl Process {
     }
     /// Enforces a wall-clock limit independently of the child runtime and SDK workers.
     async fn finish(mut self) -> (String, String) {
-        let deadline = Instant::now() + Duration::from_secs(35);
+        let deadline = Instant::now()
+            + Duration::from_secs(if std::env::var_os("CHAOS_PHASE5_ISOLATED").is_some() {
+                270
+            } else {
+                35
+            });
         let status = loop {
             if let Some(status) = self.child.try_wait().unwrap() {
                 break status;
@@ -345,6 +352,11 @@ fn exercise_child() {
         use axum::{body::Body, http::Request, routing::get, Router};
         use tower::ServiceExt;
         let telemetry = Telemetry::init().unwrap();
+        if mode == "workflow" {
+            workflows::exercise(&telemetry).await.unwrap();
+            telemetry.shutdown().await.unwrap();
+            return;
+        }
         events();
         let app = Router::new().route("/fixture/:id", get(|| async {
             let child = tracing::trace_span!("phase5.child");

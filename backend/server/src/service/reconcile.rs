@@ -16,6 +16,9 @@
 //! Deletion is opt-in. Runs report orphans and, unless `RECONCILE_DELETE` is
 //! set, change nothing.
 
+#[cfg(test)]
+mod tests;
+
 use crate::models::app::AppState;
 use crate::models::error::ChaosError;
 use crate::service::sequin::{publish_token, relationships_for_row, RelKey, REPLICATED_TABLES};
@@ -237,9 +240,18 @@ async fn stored_relationships(state: &AppState) -> Result<Vec<Relationship>, Cha
 /// # Returns
 ///
 /// * `Ok(Report)` describing what was found
-/// * `Err(ChaosError)` if the run could not complete; in that case nothing was
-///   deleted
+/// * `Err(ChaosError)` if the run could not complete; earlier deletion batches
+///   may already have succeeded
 pub async fn run_once(state: &AppState) -> Result<Report, ChaosError> {
+    run_with_deletion(state, env_flag("RECONCILE_DELETE")).await
+}
+
+/// Runs one sweep with an explicit deletion policy, keeping environment reads at the entry point.
+/// Tests use isolated stores to verify both policies without mutating process environment.
+pub(crate) async fn run_with_deletion(
+    state: &AppState,
+    delete_orphans: bool,
+) -> Result<Report, ChaosError> {
     // SpiceDB is read *before* Postgres, and that order is what makes deletion
     // safe. A relationship created after the SpiceDB read is absent from
     // `stored`, so it can only ever count as missing. Reading Postgres first
@@ -278,7 +290,7 @@ pub async fn run_once(state: &AppState) -> Result<Report, ChaosError> {
         return Ok(report);
     }
 
-    if !env_flag("RECONCILE_DELETE") {
+    if !delete_orphans {
         tracing::warn!(
             orphan_count = report.orphans.len(),
             "Reconcile found orphaned relationships; RECONCILE_DELETE is disabled"
@@ -311,7 +323,7 @@ pub async fn run_once(state: &AppState) -> Result<Report, ChaosError> {
 ///
 /// # Returns
 ///
-/// * `Ok(())` if Sequin accepted the request
+/// * `Ok(())` if Sequin accepted a backfill for every replicated table
 /// * `Err(ChaosError)` if the request failed
 pub async fn request_backfill(state: &AppState) -> Result<(), ChaosError> {
     let base = std::env::var("SEQUIN_URL")
@@ -324,19 +336,45 @@ pub async fn request_backfill(state: &AppState) -> Result<(), ChaosError> {
         ))
     })?;
 
-    let response = state
-        .ctx
-        .post(format!("{base}/api/sinks/{SINK_NAME}/backfills"))
-        .bearer_auth(token)
-        .timeout(Duration::from_secs(60))
-        .send()
-        .await?;
+    request_table_backfills(
+        &state.ctx,
+        &format!("{base}/api/sinks/{SINK_NAME}/backfills"),
+        &token,
+    )
+    .await
+}
 
-    if !response.status().is_success() {
-        return Err(ChaosError::InternalServerErrorWithMessage(format!(
-            "Sequin rejected the backfill request: {}",
-            response.status()
-        )));
+/// Requests each replicated table explicitly, returning the first failure within one shared budget.
+async fn request_table_backfills(
+    client: &reqwest::Client,
+    endpoint: &str,
+    token: &str,
+) -> Result<(), ChaosError> {
+    // A multi-table sink requires an explicit source table for each backfill.
+    // Share one deadline so an unavailable Sequin cannot multiply the old
+    // sixty-second operation bound by the number of replicated tables.
+    let deadline = std::time::Instant::now() + Duration::from_secs(60);
+    for table in REPLICATED_TABLES {
+        let remaining = deadline.saturating_duration_since(std::time::Instant::now());
+        if remaining.is_zero() {
+            return Err(ChaosError::InternalServerErrorWithMessage(
+                "Sequin backfill requests exceeded the sixty-second deadline".to_owned(),
+            ));
+        }
+        let response = client
+            .post(endpoint)
+            .bearer_auth(token)
+            .json(&serde_json::json!({"table": format!("public.{table}")}))
+            .timeout(remaining)
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            return Err(ChaosError::InternalServerErrorWithMessage(format!(
+                "Sequin rejected the backfill for {table}: {}",
+                response.status()
+            )));
+        }
     }
 
     Ok(())
