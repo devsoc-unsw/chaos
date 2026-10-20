@@ -1,8 +1,20 @@
 # Telemetry configuration implementation plan
 
+Working-document policy (20 October 2026): this configuration plan is retained in
+the repository so phase 5 can resume later. Supporting Markdown and verification
+reports were moved to the local temporary archive
+`/private/tmp/chaos-telemetry-docs-2026-10-20-5g801vdc.zip`; historical report links
+below refer to archived files. Keep future working reports outside the repository.
+The standalone `backend/telemetry-example` demo has been removed; use the real
+server and its receiver tests. Phase 4 numeric-event and local-correlation fixes
+pass 98 unit-test executions plus one passing/one existing ignored doctest. Phase
+5 receiver tests are implemented; business-workflow and CDC checks remain pending.
+
 Status: phases 1–3 reviewed and corrected; phase 4 implemented. Regression, full
 Rust suite, formatting, and build checks pass. Independent acceptance remains
 pending; phases 4–6 have not been accepted. See the verification records below.
+Phase 4 review/fix is committed as `b5452f8`; phase 5 receiver-backed verification
+is implemented, with workflow/CDC scenarios still outstanding.
 Branch: `open-telemetry`.
 Plan reviewed against the working tree: 17 October 2026.
 
@@ -46,8 +58,8 @@ validly configured collector is temporarily unavailable.
 - HTTP middleware and selected business operations already have spans. Hardware
   metrics are collected independently. JSON logs go to stderr.
 - The compatible tracing-to-logs bridge and SDK logger provider are configured.
-  Provider construction, cleanup, and in-memory delivery are tested; actual gRPC
-  ingestion remains unverified until the phase 5 receiver checks.
+  Provider construction, cleanup, in-memory delivery and actual gRPC ingestion of
+  all three signals are tested. Phase 5 workflow/CDC checks remain outstanding.
 - Exporter/transport diagnostics stay local to avoid feedback loops. Providers
   flush/shut down all three signals and clean up partial startup failures.
 - `main.rs` loads dotenv before telemetry initialization and already owns shutdown.
@@ -393,6 +405,9 @@ cargo build --locked
 ```
 
 Run the new receiver-backed test target using the command added with that target.
+The implemented receiver target is `cargo test --locked --offline --lib
+telemetry::receiver_tests` from `backend/server`; see
+[phase 5 evidence and outstanding matrix](telemetry-verification/phase-5.md).
 Record its exact command here during implementation. Also check `cargo test`
 separately and record any documentation-test failures against the fresh baseline;
 do not assume a previously documented failure count still applies. Do not call
@@ -436,7 +451,7 @@ Fill this table during implementation; phases are currently unverified.
 | 2 — Optional export | Codex `/root` | Codex `/root` self-review; independent reviewer pending | Initial compile-red and diagnostic regressions; [review](telemetry-verification/review-phases-1-2.md) | Provider/cleanup regressions, full suite, fmt and build pass | Reviewed findings fixed; independent gate pending; receiver evidence remains phase 5 |
 | 3 — Logging levels | Codex `/root` | Self-review complete; independent reviewer pending | Matrix, privacy, legacy target and explicit-parent regressions; [report](telemetry-verification/phase-3.md) | 78 unit-test executions plus 1 passing doctest; 1 existing ignored; fmt/build pass | Reviewed correlation defect fixed; independent gate pending |
 | 4 — Dependencies | Codex `/root` | Self-checks complete; independent reviewer pending | Real routed status assertion failed: u16 status exported as text; [report](telemetry-verification/phase-4.md) | Real Axum/SQLx/tonic tests at all levels; full suite, fmt/build recorded in report | Implementation complete; independent gate pending |
-| 5 — gRPC integration | Unassigned | Unassigned | Pending | Pending | Pending |
+| 5 — gRPC integration | Codex `/root` | Self-checks partial; independent reviewer pending | Initial recovery count exposed dropped batches; [report](telemetry-verification/phase-5.md) | Receiver matrix, zero connections, recovery, pending shutdown delivery; permission suite 4/4 | In progress; workflow/CDC scenarios outstanding |
 | 6 — Documentation | Unassigned | Unassigned | N/A: documentation review | Pending | Pending |
 
 ## Agent handoff prompts

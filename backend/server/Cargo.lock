@@ -2656,6 +2656,7 @@ dependencies = [
  "opentelemetry",
  "opentelemetry-appender-tracing",
  "opentelemetry-otlp",
+ "opentelemetry-proto",
  "opentelemetry-stdout",
  "opentelemetry_sdk",
  "prost",

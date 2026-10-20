@@ -7,7 +7,7 @@ use super::{
 };
 use opentelemetry::{
     logs::{AnyValue, LogRecord as _, Logger, LoggerProvider, Severity},
-    trace::TracerProvider as _,
+    trace::{TraceContextExt as _, TracerProvider as _},
     InstrumentationScope,
 };
 use opentelemetry_appender_tracing::layer::OpenTelemetryTracingBridge;
@@ -15,7 +15,7 @@ use opentelemetry_sdk::{
     logs::{SdkLogRecord, SdkLogger, SdkLoggerProvider},
     trace::SdkTracerProvider,
 };
-use std::sync::OnceLock;
+use std::sync::{Arc, OnceLock};
 use tracing_log::NormalizeEvent;
 use tracing_subscriber::{
     fmt::{
@@ -32,6 +32,8 @@ use tracing_subscriber::{
 struct SafeJson {
     /// Standard structured formatting for application and other dependency events.
     normal: Format<Json>,
+    /// Shared weak dispatch handle; callbacks cannot use tracing's reentrancy-disabled default.
+    dispatch: Arc<OnceLock<tracing::dispatcher::WeakDispatch>>,
 }
 
 impl<S, N> FormatEvent<S, N> for SafeJson
@@ -70,14 +72,25 @@ where
             measurements
                 .fields
                 .insert("message".into(), kind.message().into());
-            writeln!(
-                writer,
-                "{}",
-                serde_json::json!({
-                    "level": metadata.level().as_str(), "target": metadata.target(),
-                    "filename": metadata.file(), "line_number": metadata.line(), "fields": measurements.fields
-                })
-            )
+            let mut json = serde_json::json!({
+                "level": metadata.level().as_str(), "target": metadata.target(),
+                "filename": metadata.file(), "line_number": metadata.line(), "fields": measurements.fields
+            });
+            // Respect contextual, explicit and root event ancestry. Copy only IDs;
+            // formatted parent span fields may contain data the event sanitizer removed.
+            let parent = context.parent_span().and_then(|span| {
+                let dispatch = self.dispatch.get()?.upgrade()?;
+                tracing_opentelemetry::get_otel_context(&span.id(), &dispatch)
+            });
+            if let Some(parent) = parent {
+                let span = parent.span();
+                let ids = span.span_context();
+                if ids.is_valid() {
+                    json["trace_id"] = ids.trace_id().to_string().into();
+                    json["span_id"] = ids.span_id().to_string().into();
+                }
+            }
+            writeln!(writer, "{json}")
         } else {
             self.normal.format_event(context, writer, event)
         }
@@ -161,7 +174,7 @@ struct EventAncestry<B> {
     /// The single official tracing-to-logs bridge.
     bridge: B,
     /// Non-owning dispatch handle used to activate an explicit event parent.
-    dispatch: OnceLock<tracing::dispatcher::WeakDispatch>,
+    dispatch: Arc<OnceLock<tracing::dispatcher::WeakDispatch>>,
 }
 
 impl<S, B> Layer<S> for EventAncestry<B>
@@ -207,9 +220,10 @@ where
         level,
         remote: true,
     };
+    let dispatch = Arc::new(OnceLock::new());
     let bridge = EventAncestry {
         bridge: logs.map(|logs| OpenTelemetryTracingBridge::new(&OriginalTargets(logs.clone()))),
-        dispatch: OnceLock::new(),
+        dispatch: dispatch.clone(),
     }
     .with_filter(remote);
     tracing_subscriber::registry()
@@ -218,6 +232,7 @@ where
                 .json()
                 .with_writer(writer)
                 .event_format(SafeJson {
+                    dispatch,
                     normal: tracing_subscriber::fmt::format()
                         .json()
                         .with_file(true)

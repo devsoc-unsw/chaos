@@ -205,6 +205,23 @@ async fn real_database_and_spicedb_calls_have_bounded_correlated_telemetry() -> 
                     .unwrap()
                     .contains("sqlx-core-0.9.0/src/logger.rs"));
                 assert_eq!(event["fields"]["message"], "Database statement completed");
+                assert_eq!(event["trace_id"], query.span_context.trace_id().to_string());
+                assert_eq!(event["span_id"], query.span_context.span_id().to_string());
+                let completion = query
+                    .events
+                    .iter()
+                    .find(|event| event.name == "Database statement completed")
+                    .unwrap();
+                assert!(completion
+                    .attributes
+                    .iter()
+                    .any(|field| field.key.as_str() == "rows_returned"
+                        && field.value == opentelemetry::Value::I64(1)));
+                assert!(completion
+                    .attributes
+                    .iter()
+                    .any(|field| field.key.as_str() == "rows_affected"
+                        && matches!(field.value, opentelemetry::Value::I64(_))));
                 let log = logs
                     .iter()
                     .find(|log| {
@@ -376,6 +393,24 @@ async fn real_framework_rejections_obey_levels_and_exclude_payloads() {
             framework.len()
         );
         if let Some(event) = framework.first() {
+            assert_eq!(
+                event["trace_id"],
+                spans[0].span_context.trace_id().to_string()
+            );
+            assert_eq!(
+                event["span_id"],
+                spans[0].span_context.span_id().to_string()
+            );
+            let rejection = spans[0]
+                .events
+                .iter()
+                .find(|event| event.name == "Request extractor rejected request")
+                .unwrap();
+            assert!(rejection
+                .attributes
+                .iter()
+                .any(|field| field.key.as_str() == "status"
+                    && field.value == opentelemetry::Value::I64(422)));
             assert!(event["filename"]
                 .as_str()
                 .unwrap()

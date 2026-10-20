@@ -10,6 +10,8 @@ mod providers;
 pub use operations::{database_span, spicedb_rpc};
 
 #[cfg(test)]
+mod receiver_tests;
+#[cfg(test)]
 mod tests;
 
 use anyhow::Result;

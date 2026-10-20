@@ -35,6 +35,21 @@ impl Kind {
             Self::Rejection => key == "status",
         }
     }
+
+    /// Normalizes only allowed measurements, including unsigned integers formatted by the bridge.
+    fn span_measurement(self, key: &str, value: &Value) -> Option<Value> {
+        if !self.allows(key) {
+            return None;
+        }
+        match value {
+            Value::I64(_) => Some(value.clone()),
+            Value::F64(number) if number.is_finite() => Some(value.clone()),
+            // tracing-opentelemetry's default u64 visitor records decimal strings.
+            // Parse strictly into the OTLP integer range, never retain arbitrary text.
+            Value::String(text) => text.as_str().parse::<i64>().ok().map(Value::I64),
+            _ => None,
+        }
+    }
 }
 
 /// Identifies SQLx statement events by their schema and Axum extractor rejections by target.
@@ -151,10 +166,16 @@ impl<E: SpanExporter> SpanExporter for BoundedSpanExporter<E> {
                     continue;
                 };
                 event.name = kind.message().into();
-                event.attributes.retain(|field| {
-                    matches!(field.key.as_str(), "target" | "level")
-                        || (kind.allows(field.key.as_str())
-                            && matches!(field.value, Value::I64(_) | Value::F64(_)))
+                event.attributes.retain_mut(|field| {
+                    if matches!(field.key.as_str(), "target" | "level") {
+                        return true;
+                    }
+                    if let Some(value) = kind.span_measurement(field.key.as_str(), &field.value) {
+                        field.value = value;
+                        true
+                    } else {
+                        false
+                    }
                 });
                 event
                     .attributes

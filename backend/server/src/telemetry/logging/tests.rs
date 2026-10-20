@@ -22,6 +22,68 @@ use tracing_subscriber::util::SubscriberInitExt;
 
 mod integration;
 
+/// Sanitized JSON respects contextual, alternate, root and background event ancestry.
+#[test]
+fn dependency_json_preserves_safe_event_correlation() {
+    use opentelemetry::trace::TraceContextExt as _;
+    use tracing_opentelemetry::OpenTelemetrySpanExt as _;
+    for level in [LogLevel::Info, LogLevel::Warn, LogLevel::Error] {
+        let fixture = Fixture::new();
+        tracing::subscriber::with_default(fixture.subscriber(level), || {
+            let current = tracing::info_span!("current", secret = "PRIVATE_CURRENT");
+            let alternate =
+                tracing::info_span!(parent: None, "alternate", secret = "PRIVATE_ALTERNATE");
+            let active = current.enter();
+            tracing::error!(target: "axum::rejection", status = 422_u16, body = "PRIVATE_BODY");
+            tracing::error!(target: "axum::rejection", parent: &alternate, status = 422_u16, body = "PRIVATE_BODY");
+            tracing::error!(target: "axum::rejection", parent: None, status = 422_u16, body = "PRIVATE_BODY");
+            drop(active);
+            tracing::error!(target: "axum::rejection", status = 422_u16, body = "PRIVATE_BODY");
+            let json = fixture.json();
+            for (index, span) in [(0, &current), (1, &alternate)] {
+                let context = span.context();
+                let parent = context.span();
+                assert_eq!(
+                    json[index]["trace_id"],
+                    parent.span_context().trace_id().to_string()
+                );
+                assert_eq!(
+                    json[index]["span_id"],
+                    parent.span_context().span_id().to_string()
+                );
+            }
+            for event in &json[2..] {
+                assert!(event.get("trace_id").is_none());
+                assert!(event.get("span_id").is_none());
+            }
+            assert!(!format!("{json:?}").contains("PRIVATE_"));
+        });
+    }
+}
+
+/// Numeric normalization cannot admit arbitrary text, overflow or nonfinite values.
+#[test]
+fn dependency_span_measurements_stay_bounded() {
+    let fixture = Fixture::new();
+    tracing::subscriber::with_default(fixture.subscriber(LogLevel::Info), || {
+        tracing::info_span!("request").in_scope(|| {
+            tracing::event!(target: "sqlx::query", tracing::Level::DEBUG,
+                { db.statement = "PRIVATE_SQL", rows_returned = "PRIVATE_COUNT", rows_affected = u64::MAX, elapsed_secs = f64::NAN });
+        });
+    });
+    let spans = fixture.spans.get_finished_spans().unwrap();
+    let event = spans[0]
+        .events
+        .iter()
+        .find(|event| event.name == "Database statement completed")
+        .unwrap();
+    assert!(!event.attributes.iter().any(|field| matches!(
+        field.key.as_str(),
+        "rows_returned" | "rows_affected" | "elapsed_secs"
+    )));
+    assert!(!format!("{spans:?}").contains("PRIVATE_"));
+}
+
 /// SDK event limits must not let dependency payloads bypass export sanitization.
 #[test]
 fn truncated_dependency_events_remain_private() {

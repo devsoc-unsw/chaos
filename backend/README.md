@@ -2,9 +2,6 @@
 
 CHAOS' backend is implemented in Rust and for data persistence, we use PostgreSQL.
 
-Live request traces and CPU/RAM metrics are integrated into the server. See
-[TELEMETRY.md](TELEMETRY.md) for running it and watching real-time output.
-
 ## Table of Contents
 
 - [Dev Setup](#dev-setup)

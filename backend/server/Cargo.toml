@@ -53,6 +53,7 @@ opentelemetry-otlp = { version = "0.32", default-features = false, features = ["
 sysinfo = "0.38"
 
 [dev-dependencies]
+opentelemetry-proto = { version = "0.32", default-features = false, features = ["gen-tonic", "trace", "logs", "metrics"] }
 tokio-stream = { version = "0.1", features = ["net"] }
 tower = { version = "0.5", features = ["util"] }
 # Inspect real metric exports in hardware-sampler tests without a collector.
