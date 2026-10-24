@@ -58,9 +58,9 @@ pub enum ChaosError {
     #[error("Migration error")]
     MigrationError(#[from] sqlx::migrate::MigrateError),
 
-    /// HTTP request failed
+    /// HTTP request failed; automatic conversion removes the request URL.
     #[error("Reqwest error")]
-    ReqwestError(#[from] reqwest::Error),
+    ReqwestError(#[source] reqwest::Error),
 
     /// OAuth2 authentication failed
     #[error("OAuth2 error")]
@@ -109,34 +109,54 @@ pub enum ChaosError {
     InternalServerError,
 }
 
+impl From<reqwest::Error> for ChaosError {
+    /// Removes potentially sensitive URL components while retaining the HTTP error and source.
+    fn from(error: reqwest::Error) -> Self {
+        Self::ReqwestError(error.without_url())
+    }
+}
+
 impl ChaosError {
+    /// Records the original error details through structured telemetry.
+    /// Payloads are included in local logs and configured remote log exports.
     pub fn print(&self) {
-        match &self {
-            ChaosError::NotLoggedIn
-            | ChaosError::Unauthorized
-            | ChaosError::ForbiddenOperation
-            | ChaosError::BadRequest
-            | ChaosError::NotFound
-            | ChaosError::ApplicationClosed
-            | ChaosError::CampaignClosed
-            | ChaosError::CampaignOpen
-            | ChaosError::InternalServerError => println!("{:?}", self),
-            ChaosError::BadRequestWithMessage(e) => println!("Bad Request: {}", e),
-            ChaosError::InternalServerErrorWithMessage(e) => {
-                println!("Internal server error: {}", e)
-            } // TODO: Handle error message internally and only send vague message
-            ChaosError::DatabaseError(e) => println!("Database error: {}", e),
-            ChaosError::MigrationError(e) => println!("Migration error: {}", e),
-            ChaosError::ReqwestError(e) => println!("Reqwest error: {}", e),
-            ChaosError::OAuthError(e) => println!("OAuth2 error: {}", e),
-            ChaosError::StorageError(e) => println!("Storage error: {}", e),
-            ChaosError::DotEnvyError(e) => println!("DotEnvy error: {}", e),
-            ChaosError::TemplateError(e) => println!("Template error: {}", e),
-            ChaosError::TemplateRenderError(e) => println!("TemplateRender error: {}", e),
-            ChaosError::LettreError(e) => println!("Lettre error: {}", e),
-            ChaosError::AddressError(e) => println!("Address error: {}", e),
-            ChaosError::SmtpTransportError(e) => println!("SmtpTransport error: {}", e),
-        };
+        match self {
+            Self::NotLoggedIn
+            | Self::Unauthorized
+            | Self::ForbiddenOperation
+            | Self::BadRequest
+            | Self::NotFound
+            | Self::ApplicationClosed
+            | Self::CampaignClosed
+            | Self::CampaignOpen => {
+                tracing::warn!(error = ?self, "Request rejected");
+            }
+            Self::InternalServerError => {
+                tracing::error!(error = ?self, "Backend operation failed");
+            }
+            Self::BadRequestWithMessage(error) => {
+                tracing::warn!(%error, "Bad request");
+            }
+            Self::InternalServerErrorWithMessage(error) => {
+                tracing::error!(%error, "Internal server error");
+            }
+            Self::DatabaseError(error @ sqlx::Error::RowNotFound) => {
+                tracing::warn!(%error, "Request rejected");
+            }
+            Self::DatabaseError(error) => tracing::error!(%error, "Database error"),
+            Self::MigrationError(error) => tracing::error!(%error, "Migration error"),
+            Self::ReqwestError(error) => tracing::error!(%error, "Reqwest error"),
+            Self::OAuthError(error) => tracing::error!(%error, "OAuth2 error"),
+            Self::StorageError(error) => tracing::error!(%error, "Storage error"),
+            Self::DotEnvyError(error) => tracing::error!(%error, "DotEnvy error"),
+            Self::TemplateError(error) => tracing::error!(%error, "Template error"),
+            Self::TemplateRenderError(error) => {
+                tracing::error!(%error, "Template render error");
+            }
+            Self::LettreError(error) => tracing::error!(%error, "Lettre error"),
+            Self::AddressError(error) => tracing::error!(%error, "Address error"),
+            Self::SmtpTransportError(error) => tracing::error!(%error, "SMTP transport error"),
+        }
     }
 }
 
@@ -147,7 +167,6 @@ impl ChaosError {
 /// errors from external dependencies.
 impl IntoResponse for ChaosError {
     fn into_response(self) -> Response {
-        // TODO: Change to logging to OpenTelemetry collector
         self.print();
 
         // Don't leak real error, only return a generic error message

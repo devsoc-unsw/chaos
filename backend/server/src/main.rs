@@ -8,21 +8,32 @@ mod handler;
 mod models;
 mod service;
 mod spicedb;
+mod telemetry;
 
+/// Initializes telemetry, runs the server, and flushes exporters on shutdown.
 #[tokio::main]
-async fn main() -> Result<(), ChaosError> {
+async fn main() -> anyhow::Result<()> {
     // Try to load .env file, but don't fail if it doesn't exist (env vars may be set via Docker)
     dotenvy::dotenv().ok();
+    let telemetry = telemetry::Telemetry::init()?;
+    let result = run_server().await;
+    let shutdown = telemetry.shutdown().await;
+    result?;
+    shutdown?;
+    Ok(())
+}
 
+/// Runs migrations and workers, serves HTTP, and stops workers on Ctrl+C.
+async fn run_server() -> Result<(), ChaosError> {
     let (app, state_clone, spicedb_token_rx) = app().await?;
 
     // Run DB migrations
     sqlx::migrate!("../migrations").run(&state_clone.db).await?;
-    println!("Migrations ran successfully!");
+    tracing::info!("Migrations ran successfully");
 
     // Run SpiceDB migrations (upsert the schema from spicedb/schema.yaml)
     spicedb::migrate_schema().await?;
-    println!("SpiceDB migrations ran successfully!");
+    tracing::info!("SpiceDB migrations ran successfully");
 
     // Apply the ZedTokens published by every SpiceDB write path, keeping the
     // freshness boundary used by permission checks up to date. This task is the
@@ -59,10 +70,50 @@ async fn main() -> Result<(), ChaosError> {
         }
     });
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
-    let server_task = axum::serve(listener, app);
-
-    let _ = tokio::join!(server_task, email_task, token_task, reconcile_task);
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8080")
+        .await
+        .map_err(|error| {
+            tracing::error!(%error, "Could not bind HTTP listener");
+            ChaosError::InternalServerError
+        })?;
+    tracing::info!(address = "0.0.0.0:8080", "HTTP server listening");
+    let served = axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
+        .await;
+    email_task.abort();
+    reconcile_task.abort();
+    token_task.abort();
+    let _ = tokio::join!(email_task, reconcile_task, token_task);
+    if let Err(error) = served {
+        tracing::error!(%error, "HTTP server stopped unexpectedly");
+        return Err(ChaosError::InternalServerError);
+    }
 
     Ok(())
+}
+
+/// Waits for Ctrl+C or the container's SIGTERM signal before draining HTTP work.
+async fn shutdown_signal() {
+    #[cfg(unix)]
+    {
+        match tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate()) {
+            Ok(mut terminate) => {
+                tokio::select! {
+                    result = tokio::signal::ctrl_c() => {
+                        if let Err(error) = result {
+                            tracing::error!(%error, "Could not listen for Ctrl+C");
+                        }
+                    }
+                    _ = terminate.recv() => {}
+                }
+            }
+            Err(error) => {
+                tracing::error!(%error, "Could not listen for SIGTERM");
+                let _ = tokio::signal::ctrl_c().await;
+            }
+        }
+    }
+    #[cfg(not(unix))]
+    let _ = tokio::signal::ctrl_c().await;
+    tracing::info!("Shutdown requested");
 }

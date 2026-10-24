@@ -4,3 +4,5 @@
 **/.next/
 **/target/
 **/.env.*
+/.local/telemetry/
+/backend/TELEMETRY_CONFIGURATION_PLAN.md

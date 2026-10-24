@@ -3,3 +3,4 @@ pub mod handler;
 pub mod models;
 pub mod service;
 pub mod spicedb;
+pub mod telemetry;

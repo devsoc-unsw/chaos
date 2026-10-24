@@ -16,6 +16,9 @@
 //! Deletion is opt-in. Runs report orphans and, unless `RECONCILE_DELETE` is
 //! set, change nothing.
 
+#[cfg(test)]
+mod tests;
+
 use crate::models::app::AppState;
 use crate::models::error::ChaosError;
 use crate::service::sequin::{publish_token, relationships_for_row, RelKey, REPLICATED_TABLES};
@@ -237,9 +240,18 @@ async fn stored_relationships(state: &AppState) -> Result<Vec<Relationship>, Cha
 /// # Returns
 ///
 /// * `Ok(Report)` describing what was found
-/// * `Err(ChaosError)` if the run could not complete; in that case nothing was
-///   deleted
+/// * `Err(ChaosError)` if the run could not complete; earlier deletion batches
+///   may already have succeeded
 pub async fn run_once(state: &AppState) -> Result<Report, ChaosError> {
+    run_with_deletion(state, env_flag("RECONCILE_DELETE")).await
+}
+
+/// Runs one sweep with an explicit deletion policy, keeping environment reads at the entry point.
+/// Tests use isolated stores to verify both policies without mutating process environment.
+pub(crate) async fn run_with_deletion(
+    state: &AppState,
+    delete_orphans: bool,
+) -> Result<Report, ChaosError> {
     // SpiceDB is read *before* Postgres, and that order is what makes deletion
     // safe. A relationship created after the SpiceDB read is absent from
     // `stored`, so it can only ever count as missing. Reading Postgres first
@@ -278,11 +290,10 @@ pub async fn run_once(state: &AppState) -> Result<Report, ChaosError> {
         return Ok(report);
     }
 
-    if !env_flag("RECONCILE_DELETE") {
-        log::warn!(
-            "Reconcile: {} orphaned relationship(s) found but RECONCILE_DELETE is not set, so \
-             nothing was removed. Set it to repair, or inspect the console log above for them.",
-            report.orphans.len()
+    if !delete_orphans {
+        tracing::warn!(
+            orphan_count = report.orphans.len(),
+            "Reconcile found orphaned relationships; RECONCILE_DELETE is disabled"
         );
         return Ok(report);
     }
@@ -312,7 +323,7 @@ pub async fn run_once(state: &AppState) -> Result<Report, ChaosError> {
 ///
 /// # Returns
 ///
-/// * `Ok(())` if Sequin accepted the request
+/// * `Ok(())` if Sequin accepted a backfill for every replicated table
 /// * `Err(ChaosError)` if the request failed
 pub async fn request_backfill(state: &AppState) -> Result<(), ChaosError> {
     let base = std::env::var("SEQUIN_URL")
@@ -325,19 +336,45 @@ pub async fn request_backfill(state: &AppState) -> Result<(), ChaosError> {
         ))
     })?;
 
-    let response = state
-        .ctx
-        .post(format!("{base}/api/sinks/{SINK_NAME}/backfills"))
-        .bearer_auth(token)
-        .timeout(Duration::from_secs(60))
-        .send()
-        .await?;
+    request_table_backfills(
+        &state.ctx,
+        &format!("{base}/api/sinks/{SINK_NAME}/backfills"),
+        &token,
+    )
+    .await
+}
 
-    if !response.status().is_success() {
-        return Err(ChaosError::InternalServerErrorWithMessage(format!(
-            "Sequin rejected the backfill request: {}",
-            response.status()
-        )));
+/// Requests each replicated table explicitly, returning the first failure within one shared budget.
+async fn request_table_backfills(
+    client: &reqwest::Client,
+    endpoint: &str,
+    token: &str,
+) -> Result<(), ChaosError> {
+    // A multi-table sink requires an explicit source table for each backfill.
+    // Share one deadline so an unavailable Sequin cannot multiply the old
+    // sixty-second operation bound by the number of replicated tables.
+    let deadline = std::time::Instant::now() + Duration::from_secs(60);
+    for table in REPLICATED_TABLES {
+        let remaining = deadline.saturating_duration_since(std::time::Instant::now());
+        if remaining.is_zero() {
+            return Err(ChaosError::InternalServerErrorWithMessage(
+                "Sequin backfill requests exceeded the sixty-second deadline".to_owned(),
+            ));
+        }
+        let response = client
+            .post(endpoint)
+            .bearer_auth(token)
+            .json(&serde_json::json!({"table": format!("public.{table}")}))
+            .timeout(remaining)
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            return Err(ChaosError::InternalServerErrorWithMessage(format!(
+                "Sequin rejected the backfill for {table}: {}",
+                response.status()
+            )));
+        }
     }
 
     Ok(())
@@ -358,7 +395,7 @@ pub async fn request_backfill(state: &AppState) -> Result<(), ChaosError> {
 /// Never returns; runs until the process exits
 pub async fn spawn_reconciler(state: AppState) {
     if !env_flag("RECONCILE_ENABLED") {
-        log::info!("Reconcile: disabled (set RECONCILE_ENABLED=true to enable)");
+        tracing::info!("Reconcile is disabled; set RECONCILE_ENABLED=true to enable");
         return;
     }
 
@@ -371,7 +408,7 @@ pub async fn spawn_reconciler(state: AppState) {
         let conn = match state.db.acquire().await {
             Ok(conn) => conn,
             Err(error) => {
-                log::error!("Reconcile: could not check out a connection: {error}");
+                tracing::error!(%error, "Reconcile could not check out a database connection");
                 continue;
             }
         };
@@ -384,27 +421,32 @@ pub async fn spawn_reconciler(state: AppState) {
             // Another replica is reconciling; skip this tick.
             Ok(Either::Right(_conn)) => continue,
             Err(error) => {
-                log::error!("Reconcile: leadership check failed: {error}");
+                tracing::error!(%error, "Reconcile leadership check failed");
                 continue;
             }
         };
 
         if let Err(error) = request_backfill(&state).await {
-            log::warn!("Reconcile: could not trigger a Sequin backfill: {error:?}");
+            tracing::warn!(
+                error = ?error,
+                "Reconcile could not trigger a Sequin backfill"
+            );
         }
 
         match run_once(&state).await {
-            Ok(report) => log::info!(
-                "Reconcile: {} matched, {} missing (backfill repairs), {} orphaned{}, deleted={}",
-                report.matched,
-                report.missing,
-                report.orphans.len(),
-                if report.deleted { "" } else { " (not removed)" },
-                report.deleted,
+            Ok(report) => tracing::info!(
+                matched = report.matched,
+                missing = report.missing,
+                orphan_count = report.orphans.len(),
+                deleted = report.deleted,
+                "Reconciliation completed"
             ),
-            // Nothing was deleted, because the expected set is built in full
-            // before any write.
-            Err(error) => log::error!("Reconcile: run failed, nothing was deleted: {error:?}"),
+            // A Postgres or SpiceDB read failure aborts before any write, but a
+            // failure during deletion may follow earlier successful batches.
+            Err(error) => tracing::error!(
+                error = ?error,
+                "Reconciliation failed; the sweep did not complete"
+            ),
         }
 
         drop(guard);
