@@ -247,7 +247,7 @@ pub async fn migrate_schema() -> Result<(), ChaosError> {
 /// * `Ok(())` if the user holds the permission
 /// * `Err(ChaosError::ForbiddenOperation)` if the user does not
 /// * `Err(ChaosError::InternalServerError)` if the SpiceDB call fails
-#[tracing::instrument(skip_all, fields(user_id = %user_id, resource_type, resource_id = %resource_id, permission, allowed = tracing::field::Empty))]
+#[tracing::instrument(skip_all, fields(user_id = %user_id, resource_type = %resource_type, resource_id = %resource_id, permission = %permission, allowed = tracing::field::Empty))]
 pub async fn check_permission(
     client: &PermissionsServiceClient<Channel>,
     key: &str,

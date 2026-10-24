@@ -441,8 +441,8 @@ pub async fn spawn_reconciler(state: AppState) {
                 deleted = report.deleted,
                 "Reconciliation completed"
             ),
-            // Nothing was deleted, because the expected set is built in full
-            // before any write.
+            // A Postgres or SpiceDB read failure aborts before any write, but a
+            // failure during deletion may follow earlier successful batches.
             Err(error) => tracing::error!(
                 error = ?error,
                 "Reconciliation failed; the sweep did not complete"

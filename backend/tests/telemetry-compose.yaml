@@ -35,6 +35,8 @@ services:
   sequin:
     image: sequin/sequin:v0.14.6
     profiles: ["cdc"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       PG_HOSTNAME: sequin-db
       PG_PORT: 5432

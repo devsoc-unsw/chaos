@@ -56,7 +56,8 @@ pub async fn sample_performance(
         disks.refresh(true);
         networks.refresh(true);
 
-        snapshot.float("chaos.host.cpu.usage",
+        snapshot.float(
+            "chaos.host.cpu.usage",
             system.global_cpu_usage() as f64,
             &[KeyValue::new("cpu", "average")],
         );
@@ -84,12 +85,21 @@ pub async fn sample_performance(
             ("5m", averages.five),
             ("15m", averages.fifteen),
         ] {
-            snapshot.float("chaos.host.load_average", value, &[KeyValue::new("window", window)]);
+            snapshot.float(
+                "chaos.host.load_average",
+                value,
+                &[KeyValue::new("window", window)],
+            );
         }
         if let Some(process) = system.process(pid) {
             snapshot.float("chaos.process.cpu.usage", process.cpu_usage() as f64, &[]);
-            snapshot.integer("chaos.process.memory", process.memory(), &[KeyValue::new("kind", "resident")]);
-            snapshot.integer("chaos.process.memory",
+            snapshot.integer(
+                "chaos.process.memory",
+                process.memory(),
+                &[KeyValue::new("kind", "resident")],
+            );
+            snapshot.integer(
+                "chaos.process.memory",
                 process.virtual_memory(),
                 &[KeyValue::new("kind", "virtual")],
             );
@@ -100,7 +110,8 @@ pub async fn sample_performance(
                 ("available", entry.available_space()),
                 ("total", entry.total_space()),
             ] {
-                snapshot.integer("chaos.host.disk.space",
+                snapshot.integer(
+                    "chaos.host.disk.space",
                     value,
                     &[
                         KeyValue::new("mount", mount.clone()),
@@ -114,7 +125,8 @@ pub async fn sample_performance(
                 ("receive", entry.received()),
                 ("transmit", entry.transmitted()),
             ] {
-                snapshot.integer("chaos.host.network.bytes_since_previous_sample",
+                snapshot.integer(
+                    "chaos.host.network.bytes_since_previous_sample",
                     value,
                     &[
                         KeyValue::new("interface", name.clone()),
@@ -126,7 +138,8 @@ pub async fn sample_performance(
         let mut sensor_count = 0;
         for component in &components {
             if let Some(value) = component.temperature().filter(|value| value.is_finite()) {
-                snapshot.float("chaos.host.sensor.temperature",
+                snapshot.float(
+                    "chaos.host.sensor.temperature",
                     value as f64,
                     &[KeyValue::new("sensor", component.label().to_owned())],
                 );
@@ -135,7 +148,9 @@ pub async fn sample_performance(
         }
         if !warned_temperature && sensor_count == 0 {
             warned_temperature = true;
-            tracing::warn!("Temperature sensors unavailable on this OS/hardware; no temperature value will be fabricated");
+            tracing::warn!(
+                "Temperature sensors unavailable; no temperature value will be fabricated"
+            );
         }
         tracing::info!(
             host_cpu_percent = system.global_cpu_usage(),
@@ -144,7 +159,8 @@ pub async fn sample_performance(
             "Performance sample recorded"
         );
         Ok(snapshot)
-    }).await
+    })
+    .await
 }
 
 /// Polls a hardware source at the given interval, publishing complete snapshots.
