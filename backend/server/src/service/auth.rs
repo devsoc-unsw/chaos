@@ -2,22 +2,18 @@
 //!
 //! This module provides functionality for user authentication and authorization, including:
 //! - User creation and retrieval
-//! - Super user verification
 //! - JWT token extraction and validation
 //! - User ID extraction from requests
 
 use crate::models::app::AppState;
 use crate::models::error::ChaosError;
 use crate::models::transaction::DBTransaction;
-use crate::models::user::UserRole;
 use crate::service::jwt::decode_auth_token;
-use crate::spicedb::schema::{self, PLATFORM_RESOURCE_ID};
 use axum::http::request::Parts;
 use axum::RequestPartsExt;
 use axum_extra::headers::Cookie;
 use axum_extra::TypedHeader;
 use snowflake::SnowflakeIdGenerator;
-use sqlx::{Postgres, Transaction};
 use std::ops::DerefMut;
 
 /// Checks if a user exists in DB based on given email address. If so, their user_id is returned.
@@ -68,37 +64,6 @@ pub async fn create_or_get_user_id(
     .await?;
 
     Ok((user_id, true))
-}
-
-/// Verifies if a user has super user privileges.
-///
-/// # Arguments
-///
-/// * `user_id` - The ID of the user to check
-/// * `transaction` - Database transaction
-///
-/// # Returns
-///
-/// * `Result<(), ChaosError>` - Ok if the user is a super user, Unauthorized error otherwise
-pub async fn assert_is_super_user(
-    user_id: i64,
-    transaction: &mut Transaction<'_, Postgres>,
-) -> Result<(), ChaosError> {
-    let is_super_user = sqlx::query!(
-        "SELECT EXISTS(SELECT 1 FROM users WHERE id = $1 AND role = $2)",
-        user_id,
-        UserRole::SuperUser as UserRole
-    )
-    .fetch_one(transaction.deref_mut())
-    .await?
-    .exists
-    .expect("`exists` should always exist in this query result");
-
-    if !is_super_user {
-        return Err(ChaosError::Unauthorized);
-    }
-
-    Ok(())
 }
 
 /// Extracts the user ID from an HTTP request using the JWT token in cookies.

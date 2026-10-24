@@ -16,7 +16,6 @@ use crate::models::organisation::{
     Organisation, OrganisationRole, SlugCheck,
 };
 use crate::models::transaction::DBTransaction;
-use crate::service::auth::assert_is_super_user;
 use crate::spicedb;
 use crate::spicedb::policies::{ManageOrganisation, ManagePlatform, UsePlatform};
 use crate::spicedb::{schema as spicedb_schema, SpiceDbAuth};
@@ -195,6 +194,7 @@ impl OrganisationHandler {
     ///
     /// # Arguments
     ///
+    /// * `state` - The application state, used for the SpiceDB permission check
     /// * `transaction` - Database transaction
     /// * `auth` - The authenticated user, authorized by `SpiceDbAuth<UsePlatform>`
     ///
@@ -202,21 +202,27 @@ impl OrganisationHandler {
     ///
     /// * `Result<impl IntoResponse, ChaosError>` - List of organisations or error
     pub async fn get_all_for_user(
+        State(state): State<AppState>,
         mut transaction: DBTransaction<'_>,
         auth: SpiceDbAuth<UsePlatform>,
     ) -> Result<impl IntoResponse, ChaosError> {
-        // Check if user is Super User
-        let orgs = match assert_is_super_user(auth.user_id, &mut transaction.tx).await {
-            Ok(_) => {
-                // Is Super User
-                Ok(Organisation::get_all(&mut transaction.tx).await?)
+        // Superusers (platform `manage`) see every organisation; everyone else
+        // only sees the organisations they belong to.
+        let orgs = match state
+            .check_permission(
+                auth.user_id,
+                spicedb_schema::resource::PLATFORM,
+                spicedb_schema::PLATFORM_RESOURCE_ID,
+                spicedb_schema::permission::platform::MANAGE,
+            )
+            .await
+        {
+            Ok(()) => Organisation::get_all(&mut transaction.tx).await?,
+            Err(ChaosError::ForbiddenOperation) => {
+                Organisation::get_by_member(auth.user_id, &mut transaction.tx).await?
             }
-            Err(ChaosError::Unauthorized) => {
-                // Not a Super User
-                Ok(Organisation::get_by_member(auth.user_id, &mut transaction.tx).await?)
-            }
-            Err(e) => Err(e),
-        }?;
+            Err(e) => return Err(e),
+        };
 
         transaction.commit().await?;
         Ok((StatusCode::OK, Json(orgs)))
