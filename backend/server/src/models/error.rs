@@ -58,9 +58,9 @@ pub enum ChaosError {
     #[error("Migration error")]
     MigrationError(#[from] sqlx::migrate::MigrateError),
 
-    /// HTTP request failed
+    /// HTTP request failed; automatic conversion removes the request URL.
     #[error("Reqwest error")]
-    ReqwestError(#[from] reqwest::Error),
+    ReqwestError(#[source] reqwest::Error),
 
     /// OAuth2 authentication failed
     #[error("OAuth2 error")]
@@ -109,6 +109,13 @@ pub enum ChaosError {
     InternalServerError,
 }
 
+impl From<reqwest::Error> for ChaosError {
+    /// Removes potentially sensitive URL components while retaining the HTTP error and source.
+    fn from(error: reqwest::Error) -> Self {
+        Self::ReqwestError(error.without_url())
+    }
+}
+
 impl ChaosError {
     /// Records the original error details through structured telemetry.
     /// Payloads are included in local logs and configured remote log exports.
@@ -132,6 +139,9 @@ impl ChaosError {
             }
             Self::InternalServerErrorWithMessage(error) => {
                 tracing::error!(%error, "Internal server error");
+            }
+            Self::DatabaseError(error @ sqlx::Error::RowNotFound) => {
+                tracing::warn!(%error, "Request rejected");
             }
             Self::DatabaseError(error) => tracing::error!(%error, "Database error"),
             Self::MigrationError(error) => tracing::error!(%error, "Migration error"),

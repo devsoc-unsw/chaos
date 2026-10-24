@@ -451,6 +451,90 @@ fn operational_errors_preserve_original_details() {
     }
 }
 
+/// Missing rows return 404 and WARN, while operational database failures remain ERROR.
+#[test]
+fn missing_database_rows_do_not_emit_error_logs() {
+    use crate::models::error::ChaosError;
+    use axum::response::IntoResponse;
+
+    for level in [LogLevel::Info, LogLevel::Warn, LogLevel::Error] {
+        let fixture = Fixture::new();
+        tracing::subscriber::with_default(fixture.subscriber(level), || {
+            let response = ChaosError::from(sqlx::Error::RowNotFound).into_response();
+            assert_eq!(response.status(), axum::http::StatusCode::NOT_FOUND);
+            let response =
+                ChaosError::from(sqlx::Error::Protocol("DATABASE_DETAIL".into())).into_response();
+            assert_eq!(
+                response.status(),
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR
+            );
+        });
+        let json = fixture.json();
+        let records = fixture.records.get_emitted_logs().unwrap();
+        let expected = if level == LogLevel::Error { 1 } else { 2 };
+        assert_eq!(json.len(), expected);
+        assert_eq!(records.len(), expected);
+        if level != LogLevel::Error {
+            assert_eq!(json[0]["level"], "WARN");
+            assert_eq!(json[0]["fields"]["message"], "Request rejected");
+            assert_eq!(records[0].record.severity_number(), Some(Severity::Warn));
+        }
+        assert_eq!(json.last().unwrap()["level"], "ERROR");
+        assert_eq!(json.last().unwrap()["fields"]["error"], "DATABASE_DETAIL");
+        assert_eq!(
+            records.last().unwrap().record.severity_number(),
+            Some(Severity::Error)
+        );
+    }
+}
+
+/// HTTP error conversion removes URLs from JSON, LogRecords and span events, retaining the cause.
+#[tokio::test]
+async fn request_errors_omit_sensitive_urls() {
+    use crate::models::error::ChaosError;
+    use std::error::Error as _;
+
+    for level in [LogLevel::Info, LogLevel::Warn, LogLevel::Error] {
+        // Unsupported schemes fail locally without making a network request.
+        let error = reqwest::Client::new()
+            .get("ftp://PRIVATE_USER:PRIVATE_PASSWORD@private.invalid/PRIVATE_PATH?key=PRIVATE_QUERY#PRIVATE_FRAGMENT")
+            .send()
+            .await
+            .unwrap_err();
+        assert!(error.url().is_some());
+        let cause = error.source().unwrap().to_string();
+        let error = ChaosError::from(error);
+        let ChaosError::ReqwestError(inner) = &error else {
+            panic!("HTTP error conversion must retain its variant");
+        };
+        assert!(inner.url().is_none());
+        assert!(inner.is_builder());
+        assert_eq!(inner.source().unwrap().to_string(), cause);
+        assert!(error.source().is_some());
+
+        let fixture = Fixture::new();
+        tracing::subscriber::with_default(fixture.subscriber(level), || {
+            tracing::info_span!("request").in_scope(|| error.print());
+        });
+        let json = fixture.json();
+        let records = fixture.records.get_emitted_logs().unwrap();
+        let spans = fixture.spans.get_finished_spans().unwrap();
+        assert_eq!(json.len(), 1);
+        assert_eq!(records.len(), 1);
+        assert_eq!(json[0]["level"], "ERROR");
+        assert_eq!(records[0].record.severity_number(), Some(Severity::Error));
+        assert!(json[0]["fields"]["error"]
+            .as_str()
+            .unwrap()
+            .contains(&cause));
+        assert!(format!("{records:?}").contains(&cause));
+        assert!(format!("{spans:?}").contains(&cause));
+        let output = format!("{error:?} {json:?} {records:?} {spans:?}");
+        assert!(!output.contains("PRIVATE_"));
+        assert!(!output.contains("private.invalid"));
+    }
+}
+
 /// Explicit event ancestry overrides the currently entered span for remote correlation.
 #[test]
 fn explicit_event_parents_control_log_correlation() {
