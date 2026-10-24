@@ -299,7 +299,8 @@ export default function CampaignDetails({
               {!campaign?.published && (
                 <>
                   <ButtonGroup className="w-full sm:w-auto flex-col sm:flex-row gap-2 sm:gap-0 [&>*]:w-full sm:[&>*]:w-auto">
-                    <Button asChild
+                    <Button
+                      asChild
                       variant="outline"
                       className="w-full justify-center sm:w-auto"
                     >
