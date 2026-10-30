@@ -1,5 +1,12 @@
 'use client';
 
+// Ok so rn the file does pretty much everything: data fetching, role and answer state management, and page layout. Prolly need to decompose:
+// We'll refer to the different files as the following
+//   - hooks/use-application-roles.ts -> This will handle role and preference state management. Think of any function that manages role data going here.
+//   - hooks/use-application-answers.ts -> This handles anything to do with answers. Any function that manages answer data should probably go here (such as any of those QA sync functions)
+//   - application-form.tsx -> frontend only component. We'll be passing different hooks that we've defined in other files as props into this component (try remember our callback func discussion)
+//   - We want this file to only fetch data and call the different hooks which we've moved into separate files.
+
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getCampaign, getCampaignRoles } from '@/models/campaign';
 import {
@@ -31,6 +38,7 @@ interface ApplicationReviewProps {
   dict: any;
 }
 
+// Prolly put this somewhere else as it's a generic helper and should honestly be reused throughout the app instead of js here
 function formatDate(d: string | undefined) {
   if (d !== undefined) {
     return new Intl.DateTimeFormat('en-AU', {
@@ -47,6 +55,7 @@ export default function ApplicationReview({
   applicationId,
   dict,
 }: ApplicationReviewProps) {
+  // all this fetching can stay here I'm p sure
   const router = useRouter();
   const { data: campaign } = useQuery({
     queryKey: [`${campaignId}-campaign-info`],
@@ -63,11 +72,15 @@ export default function ApplicationReview({
     queryFn: () => getInProgressApplication(applicationId),
   });
 
+  // Move into hooks/use-application-roles.ts: selectedRoleIds and rolePercentages belong together, along with updateRoles, handlePercentageChange and the
+  // "init from application.applied_roles" effect below.
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
   const [rolePercentages, setRolePercentages] = useState<
     Record<string, number>
   >({});
+  // Move into application-form.tsx: activeTab is js UI stuff. 
   const [activeTab, setActiveTab] = useState<'general' | string>('general');
+  // Move into hooks/use-application-answers.ts. Since we're just copying the data from the server consider looking into using useMemo to derive it from qaData.
   const [qaByRole, setQAByRole] = useState<Map<string, QuestionAndAnswer[]>>(
     new Map(),
   );
@@ -79,7 +92,7 @@ export default function ApplicationReview({
     enabled: !!applicationId,
   });
 
-  // derive per-tab questions and answers from the single combined fetch
+  // Move this into use-application-answers.ts. Builds a qaByRole map from qaData.
   useEffect(() => {
     if (!qaData) return;
     const buildMap = (data: QuestionWithAnswer[]) => {
@@ -101,6 +114,7 @@ export default function ApplicationReview({
     setQAByRole(buildMap(qaData));
   }, [qaData, selectedRoleIds]);
 
+  // Move into hooks/use-application-answers.ts. Doesn't really do anything in the backend. Just updates local state
   const updateQuestionAnswer = (newQA: QuestionAndAnswer) => {
     setQAByRole((prev) => {
       const newQAMap = new Map(prev);
@@ -118,7 +132,7 @@ export default function ApplicationReview({
     });
   };
 
-  // even split across n roles that always sums to exactly 100 (remainder on the last role)
+  // Move into shared util prolly, but I can see an argument for having it wherever the percentage checker thingy is used.
   const evenSplit = (n: number): number[] => {
     if (n === 0) return [];
     const base = Math.floor(100 / n);
@@ -127,7 +141,7 @@ export default function ApplicationReview({
     return splits;
   };
 
-  // format roles to match what backend expects
+  // format roles to match what backend expects: consider moving into answer.ts or some other shared util
   const buildUpdatedRolesPayload = (
     orderedIds: string[],
     percentages: Record<string, number>,
@@ -138,7 +152,7 @@ export default function ApplicationReview({
     }));
   };
 
-  // update roles in backend
+  // update roles in backend: move into use-application-roles.ts
   const updateRoles = async (nextSelectedRoles: string[]) => {
     const lengthChanged = nextSelectedRoles.length !== selectedRoleIds.length;
     const nextPercentages = lengthChanged
@@ -189,6 +203,7 @@ export default function ApplicationReview({
     }
   };
 
+  // Move into hooks/use-application-roles.ts
   useEffect(() => {
     if (application?.applied_roles) {
       const sorted = [...application.applied_roles].sort(
@@ -206,6 +221,7 @@ export default function ApplicationReview({
     }
   }, [application]);
 
+  // Keep this here as it's what's used to actually submit applications
   const handleApplicationSubmit = async () => {
     try {
       await submitApplication(applicationId);
@@ -221,6 +237,7 @@ export default function ApplicationReview({
     }
   };
 
+  //  Ifl this can be a shared helper or smth like that but prolly shouldn't live here anymore too.
   const generalTab = activeTab === 'general';
 
   const tabQuestionsAndAnswers = (data: typeof qaData) =>
@@ -234,6 +251,7 @@ export default function ApplicationReview({
     ? (qaByRole.get(activeTab) ?? [])
     : tabQuestionsAndAnswers(qaData);
 
+  // Move into hooks/use-application-answers.ts. This is a helper function that's used to resync a question from the server.
   const resyncQuestionFromServer = async (question: QuestionAndAnswer) => {
     await queryClient.invalidateQueries({
       queryKey: [`${applicationId}-questions-answers`],
@@ -253,6 +271,7 @@ export default function ApplicationReview({
     updateQuestionAnswer(fresh ?? question);
   };
 
+  // Move into @/hooks/use-application-answers.ts.
   const submitAnswer = async (
     question: QuestionAndAnswer,
     value: AnswerValue,
@@ -337,6 +356,14 @@ export default function ApplicationReview({
     }
   };
 
+  // Move into application-form.tsx. When you render here literally just do <ApplicationForm props={...} />
+  // Props should roughly be:
+  //   header: { name, startsAt, endsAt } (data taken from campaign query)
+  //   roles, maxRoles (also taken from campaign query)
+  //   roleState: { selectedRoleIds, rolePercentages, onChangeSelectedRoles, onChangeRolePercentage } (taken from use-application-roles)
+  //   qaByRole, onSubmitAnswer (taken from use-application-answers)
+  //   onSubmitApplication, dict
+  // ActiveTab should now be managed form level, so no need to pass that in
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-background">
       <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
