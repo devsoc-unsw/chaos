@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { API_BASE_URL } from "@/lib/api";
+import { PUBLIC_API_BASE_URL } from "@/lib/api";
 
 export default async function Login({
     searchParams
@@ -9,7 +9,9 @@ export default async function Login({
     const to = (await searchParams).to ?? "/dashboard";
 
     // add a trailing slash if not present
-    const apiBase = API_BASE_URL.endsWith("/") ? API_BASE_URL : `${API_BASE_URL}/`;
+    const apiBase = PUBLIC_API_BASE_URL.endsWith("/")
+        ? PUBLIC_API_BASE_URL
+        : `${PUBLIC_API_BASE_URL}/`;
 
     redirect(`${apiBase}auth/google?to=${encodeURIComponent(to)}`);
 

@@ -1,13 +1,17 @@
 const isServer = typeof window === "undefined";
 
-// Base URL of the Chaos API, resolved from the environment. Exported so links
-// built outside the fetch helpers (such as the logout link) resolve the same
-// host instead of hardcoding one.
+// Browser navigation must use a publicly reachable address, even when rendered
+// on the server. NEXT_API_BASE_URL can be an internal Docker service hostname.
+export const PUBLIC_API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+
+// Server-side requests can use the internal network; browser requests use the
+// public address shared by login redirects and logout links.
 export const API_BASE_URL = isServer
   ? process.env.NEXT_API_BASE_URL ||
     process.env.NEXT_PUBLIC_API_BASE_URL ||
     "http://backend:8080"
-  : process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+  : PUBLIC_API_BASE_URL;
 
 export class ApiError extends Error {
   status: number;

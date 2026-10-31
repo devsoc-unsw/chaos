@@ -21,6 +21,7 @@ use sqlx::types::Json;
 use sqlx::{FromRow, Postgres, Transaction};
 use std::collections::HashMap;
 use std::ops::DerefMut;
+use tracing::Instrument;
 
 /// Represents an application in the system.
 ///
@@ -965,6 +966,7 @@ impl Application {
     /// # Returns
     ///
     /// * `Result<(), ChaosError>` - Success or error
+    #[tracing::instrument(name = "application.persist_submission", skip_all, fields(application_id = %id))]
     pub async fn submit(
         id: i64,
         transaction: &mut Transaction<'_, Postgres>,
@@ -978,6 +980,9 @@ impl Application {
             id
         )
         .fetch_one(transaction.deref_mut())
+        .instrument(crate::telemetry::database_span(
+            "application_role_preferences.sum",
+        ))
         .await?
         .total
         .unwrap_or(0);
@@ -995,6 +1000,7 @@ impl Application {
             id
         )
         .fetch_one(transaction.deref_mut())
+        .instrument(crate::telemetry::database_span("application.submit"))
         .await?;
 
         Ok(())

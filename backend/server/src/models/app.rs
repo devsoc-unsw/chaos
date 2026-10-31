@@ -706,6 +706,10 @@ pub async fn app() -> Result<(Router, AppState, UnboundedReceiver<ZedToken>), Ch
             post(SequinHandler::spicedb_webhook),
         )
         .layer(cors)
+        .layer(axum::middleware::from_fn_with_state(
+            crate::telemetry::RequestMetrics::new(),
+            crate::telemetry::trace_request,
+        ))
         .with_state(state);
 
     Ok((router, state_clone, spicedb_token_rx))
