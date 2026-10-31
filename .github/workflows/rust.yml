@@ -48,7 +48,6 @@ jobs:
           echo "SMTP_HOST=smtp.example.com" >> backend/.env
           echo "SMTP_PORT=587" >> backend/.env
           echo "CAMPAIGN_NAME_MAX_CHARS=50" >> backend/.env
-          echo "CAMPAIGN_DESCRIPTION_MAX_ChARS=500" >> backend/.env
           echo "ROLE_NAME_MAX_CHARS=20" >> backend/.env
           echo "ROLE_DESCRIPTION_MAX_CHARS=50" >> backend/.env
           echo "ROLE_POSITIONS_AVAILABLE_MAX=20" >> backend/.env

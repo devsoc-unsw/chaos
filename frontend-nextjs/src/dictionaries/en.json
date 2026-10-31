@@ -15,6 +15,13 @@
     "rating_categories": "Rating Categories",
     "description": "Description",
     "about": "About",
+    "markdown": {
+      "write": "Write",
+      "preview": "Preview",
+      "supported": "Markdown supported",
+      "nothing_to_preview": "Nothing to preview",
+      "cheatsheet_title": "Formatting with Markdown"
+    },
     "questions": "Questions",
     "title": "Title",
     "question_type": "Question Type",

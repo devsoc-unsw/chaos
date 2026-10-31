@@ -2,6 +2,7 @@ import { useState, useEffect, ChangeEvent } from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { AnswerValue, MultiOptionQuestionOption, QuestionAndAnswer } from '@/models/question';
+import { Markdown } from '@/components/markdown/markdown';
 
 export default function  ShortAnswer({
   question,
@@ -67,11 +68,11 @@ export default function  ShortAnswer({
     return (
         <div className="mb-6 w-full">
             <div className="mb-2 flex">
-                <Label>{question.text}</Label>
+                <Label className="text-xl font-medium">{question.text}</Label>
                 {question.required && <span className="ml-1 text-destructive">*</span>}
             </div>
             {question.description && (
-                <p className="mb-4 text-sm text-muted-foreground">{question.description}</p>
+                <Markdown variant="compact" className="mb-4 text-sm">{question.description}</Markdown>
             )}
             <Textarea
                 value={value}

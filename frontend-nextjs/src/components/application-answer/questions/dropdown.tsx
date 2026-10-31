@@ -1,5 +1,6 @@
 import React, { useState, useEffect, ChangeEvent } from 'react';
 import { Label } from '@/components/ui/label';
+import { Markdown } from '@/components/markdown/markdown';
 import {
   Select,
   SelectContent,
@@ -88,11 +89,11 @@ export default function Dropdown({
     return (
         <div className="mb-6 w-full max-w-sm">
             <div className="mb-4 flex">
-                <Label>{question.text}</Label>
+                <Label className="text-xl font-medium">{question.text}</Label>
                 {question.required && <span className="ml-1 text-destructive">*</span>}
             </div>
             {question.description && (
-                <p className="mb-4 text-sm text-muted-foreground">{question.description}</p>
+                <Markdown variant="compact" className="mb-4 text-sm">{question.description}</Markdown>
             )}
             <Select
                 key={options.length + '-' + value}

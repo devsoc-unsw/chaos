@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { AnswerValue, MultiOptionQuestionOption, Question, QuestionAndAnswer} from '@/models/question';
+import { Markdown } from '@/components/markdown/markdown';
 
 // Special value to represent "No Answer" selection
 export const NO_ANSWER_VALUE = '__NO_ANSWER__';
@@ -50,12 +51,12 @@ export default function MultiChoice({
     return (
     <div className="mb-6">
       <div className="flex items-center mb-2">
-          <Label className='text-foreground'>{question.text}</Label>
+          <Label className="text-xl font-medium">{question.text}</Label>
           {question.required && <span className="ml-1 text-destructive">*</span>}
       </div>
 
         {question.description && (
-          <p className="mb-4 text-sm text-muted-foreground">{question.description}</p>
+          <Markdown variant="compact" className="mb-4 text-sm">{question.description}</Markdown>
         )}
 
         <RadioGroup
