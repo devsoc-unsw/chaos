@@ -30,24 +30,12 @@ import {
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { updateAnswer, createAnswer, deleteAnswer } from '@/models/answer';
-import { buildAnswerPayload } from '@/lib/utils';
+import { buildAnswerPayload, formatDate } from '@/lib/utils';
 
 interface ApplicationReviewProps {
   campaignId: string;
   applicationId: string;
   dict: any;
-}
-
-// Prolly put this somewhere else as it's a generic helper and should honestly be reused throughout the app instead of js here
-function formatDate(d: string | undefined) {
-  if (d !== undefined) {
-    return new Intl.DateTimeFormat('en-AU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: '2-digit',
-    }).format(new Date(d));
-  }
-  return '';
 }
 
 export default function ApplicationReview({
@@ -78,7 +66,7 @@ export default function ApplicationReview({
   const [rolePercentages, setRolePercentages] = useState<
     Record<string, number>
   >({});
-  // Move into application-form.tsx: activeTab is js UI stuff. 
+  // Move into application-form.tsx: activeTab is js UI stuff.
   const [activeTab, setActiveTab] = useState<'general' | string>('general');
   // Move into hooks/use-application-answers.ts. Since we're just copying the data from the server consider looking into using useMemo to derive it from qaData.
   const [qaByRole, setQAByRole] = useState<Map<string, QuestionAndAnswer[]>>(

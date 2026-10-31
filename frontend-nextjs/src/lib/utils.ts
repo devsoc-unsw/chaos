@@ -69,3 +69,14 @@ export function privateStatusLabel(status: ApplicationStatus): string {
       return "Interview";
   }
 }
+
+export function formatDate(d: string | undefined) {
+  if (d !== undefined) {
+    return new Intl.DateTimeFormat('en-AU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit',
+    }).format(new Date(d));
+  }
+  return '';
+}
