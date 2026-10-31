@@ -74,6 +74,13 @@
         "no_answer": "NOT TRANSLATED SORRY CN DEVSOC COMMUNITY ;-;"
     },
   "dashboard": {
+    "breadcrumbs": {
+      "applications": "申请",
+      "offers": "录用",
+      "review": "审核",
+      "edit": "编辑",
+      "new": "新建"
+    },
     "email_templates": "邮件模板",
     "members": {
       "role": "角色",

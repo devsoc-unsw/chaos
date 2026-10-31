@@ -45,7 +45,6 @@ export default function TemplateEditForm({
     <TemplateForm
       templateId={templateId}
       template={template}
-      orgId={orgId}
       dict={dict}
       submitData={submitData}
     />

@@ -5,8 +5,7 @@ import { CampaignUpdate, createCampaignRole, getCampaign, getCampaignRoles, upda
 import { uploadFile } from "@/models/file";
 import { getRatingCategories, createCategory, updateCategory, deleteCategory, RatingCategory } from "@/models/rating";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload, ArrowLeft, Trash } from "lucide-react";
-import Link from "next/link";
+import { Plus, Upload, Trash } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -159,12 +158,6 @@ export default function CampaignSettings({ campaignId, orgId, dict }: { campaign
     return (
         <div className="flex flex-col gap-10 max-w-2xl">
             <div>
-                <Link href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}`}>
-                    <div className="flex items-center gap-1">
-                        <ArrowLeft className="w-4 h-4" />
-                        {dict.common.back}
-                    </div>
-                </Link>
                 <h1 className="text-2xl font-bold">{dict.dashboard.campaigns.settings.campaign_settings}</h1>
                 <p className="text-lg font-medium">{campaign?.name}</p>
             </div>

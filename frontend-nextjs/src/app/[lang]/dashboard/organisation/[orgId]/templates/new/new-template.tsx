@@ -38,7 +38,6 @@ export default function TemplateNewForm({
   return (
     <TemplateForm
       templateId={"0"}
-      orgId={orgId}
       dict={dict}
       submitData={submitData}
     />

@@ -84,6 +84,13 @@
         "submit_application_tooltip": "Please answer all required questions before submitting."
     },
   "dashboard": {
+    "breadcrumbs": {
+      "applications": "Applications",
+      "offers": "Offers",
+      "review": "Review",
+      "edit": "Edit",
+      "new": "New"
+    },
     "email_templates": "Email Templates",
     "members": {
       "role": "Role",

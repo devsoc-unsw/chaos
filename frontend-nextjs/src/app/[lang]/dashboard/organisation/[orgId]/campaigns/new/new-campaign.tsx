@@ -4,9 +4,8 @@ import { checkCampaignSlugAvailability, createCampaign, setCampaignCoverImage } 
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, InfoIcon } from "lucide-react";
+import { InfoIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
@@ -81,12 +80,6 @@ export default function CampaignNewForm({ orgId, dict }: { orgId: string, dict: 
         <div className="flex flex-col gap-3">
             <div className="flex justify-between items-center">
                 <div>
-                    <Link href={`/dashboard/organisation/${orgId}/campaigns`}>
-                        <div className="flex items-center gap-1">
-                            <ArrowLeft className="w-4 h-4" />
-                            {dict.common.back}
-                        </div>
-                    </Link>
                     <h1 className="text-2xl font-bold">{dict.dashboard.campaigns.edit_campaign}</h1>
                 </div>
             </div>

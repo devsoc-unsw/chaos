@@ -1,5 +1,7 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AdminSidebar } from "@/components/admin-sidebar"
+import { PageBreadcrumbs } from "@/components/page-breadcrumbs"
+import { Separator } from "@/components/ui/separator"
 import { getDictionary } from "@/app/[lang]/dictionaries";
 import { getCurrentUser } from "@/lib/auth";
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
@@ -55,7 +57,11 @@ export default async function Layout({ children, params }: { children: React.Rea
       <SidebarProvider>
         <AdminSidebar userRole={userRole} dict={dict} />
         <main className="w-full h-screen">
-          <SidebarTrigger />
+          <div className="flex items-center gap-2 px-2 py-2">
+            <SidebarTrigger />
+            <Separator orientation="vertical" className="data-[orientation=vertical]:h-4" />
+            <PageBreadcrumbs dict={dict} />
+          </div>
           <div className="px-2 max-w-[1500px] mx-auto overflow-y-auto min-h-[calc(100vh-100px)] pb-20">
             {children}
           </div>

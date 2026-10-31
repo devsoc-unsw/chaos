@@ -9,7 +9,7 @@ export default async function OffersOverviewPage({
 }: {
   params: Promise<{ campaignId: string; orgId: string; lang: string }>;
 }) {
-    const { campaignId, orgId, lang } = await params;
+    const { campaignId, lang } = await params;
     const dict = await getDictionary(lang);
     const queryClient = new QueryClient();
 
@@ -29,7 +29,7 @@ export default async function OffersOverviewPage({
     });
     return (
         <HydrationBoundary state={dehydrate(queryClient)}>
-            <OffersOverview campaignId={campaignId} orgId={orgId} dict={dict} />
+            <OffersOverview campaignId={campaignId} dict={dict} />
         </HydrationBoundary>
     )
 }

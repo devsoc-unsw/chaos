@@ -3,8 +3,7 @@
 import { cn } from "@/lib/utils";
 import { getCampaign, getCampaignRoles, RoleDetails } from "@/models/campaign";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Asterisk, Check, ChevronsUpDown, GripVertical, Plus, Trash, X } from "lucide-react";
-import Link from "next/link";
+import { Asterisk, Check, ChevronsUpDown, GripVertical, Plus, Trash, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createQuestion, deleteQuestion, getAllCommonQuestions, getAllRoleQuestions, MultiOptionQuestionOption, Question, QuestionType, updateQuestion } from "@/models/question";
 import { useState } from "react";
@@ -41,7 +40,7 @@ import {
     CommandList,
 } from "@/components/ui/command"
 
-export default function CampaignQuestions({ campaignId, orgId, dict }: { campaignId: string, orgId: string, dict: any }) {
+export default function CampaignQuestions({ campaignId, dict }: { campaignId: string, dict: any }) {
     const queryClient = useQueryClient();
 
     const { data: campaign } = useQuery({
@@ -132,12 +131,6 @@ export default function CampaignQuestions({ campaignId, orgId, dict }: { campaig
         <div>
             <div className="flex justify-between items-center">
                 <div>
-                    <Link href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}`}>
-                        <div className="flex items-center gap-1">
-                            <ArrowLeft className="w-4 h-4" />
-                            {dict.common.back}
-                        </div>
-                    </Link>
                     <h1 className="text-2xl font-bold">{dict.dashboard.campaigns.campaign_questions}</h1>
                     <h2 className="text-lg font-medium">{campaign?.name}</h2>
                 </div>

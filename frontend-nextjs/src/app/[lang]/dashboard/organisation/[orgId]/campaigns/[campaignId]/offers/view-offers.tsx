@@ -1,9 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { type ColumnDef } from "@tanstack/react-table";
-import { ArrowLeft } from "lucide-react";
 
 import { dateToString } from "@/lib/utils";
 import { getCampaign } from "@/models/campaign";
@@ -11,11 +9,10 @@ import { getOffersByCampaign, type OfferDetails } from "@/models/offer";
 import { DataTable } from "@/components/ui/data-table";
 type Props = {
   campaignId: string;
-  orgId: string;
   dict: any;
 };
 
-export default function OffersOverview({ campaignId, orgId, dict }: Props) {
+export default function OffersOverview({ campaignId, dict }: Props) {
   const { data: campaign } = useQuery({
     queryKey: [`${campaignId}-campaign-details`],
     queryFn: () => getCampaign(campaignId),
@@ -49,12 +46,6 @@ export default function OffersOverview({ campaignId, orgId, dict }: Props) {
     <div className="space-y-4">
       <div className="flex items-center justify-between m-0">
         <div>
-          <Link href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}`}>
-            <div className="flex items-center gap-1">
-              <ArrowLeft className="h-4 w-4" />
-              {dict.common.back}
-            </div>
-          </Link>
           <h1 className="text-2xl font-bold">
             {dict.dashboard.campaigns.offers ?? "Offers"}
           </h1>
