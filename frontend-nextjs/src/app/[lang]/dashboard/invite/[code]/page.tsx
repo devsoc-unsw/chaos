@@ -1,11 +1,19 @@
 import { getDictionary } from "@/app/[lang]/dictionaries";
 import { getInvite } from "@/models/invite";
-import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";
+import {
+  HydrationBoundary,
+  QueryClient,
+  dehydrate,
+} from "@tanstack/react-query";
 import InviteClient from "./invite-client";
 import { getCurrentUser } from "@/lib";
 import { User } from "@/models/user";
 
-export default async function Page({ params }: { params: Promise<{ lang: string; code: string }> }) {
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ lang: string; code: string }>;
+}) {
   const { lang, code } = await params;
   const dict = await getDictionary(lang);
   const queryClient = new QueryClient();
@@ -15,11 +23,12 @@ export default async function Page({ params }: { params: Promise<{ lang: string;
     queryFn: () => getInvite(code),
   });
 
-
   let user: User | undefined = undefined;
   try {
     user = await getCurrentUser(false);
-  } catch (_) {}
+  } catch {
+    user = undefined;
+  }
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
@@ -27,6 +36,3 @@ export default async function Page({ params }: { params: Promise<{ lang: string;
     </HydrationBoundary>
   );
 }
-
-
-

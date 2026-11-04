@@ -1,7 +1,7 @@
 export interface AppMessage {
-    message: string;
+  message: string;
 }
 
 export interface AppErrorMessage {
-    error: string;
+  error: string;
 }

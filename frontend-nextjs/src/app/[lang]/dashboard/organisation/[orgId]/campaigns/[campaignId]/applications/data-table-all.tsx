@@ -33,7 +33,7 @@ interface ApplicationSummaryDataTableAllProp<TData, TValue> {
   filteredRoleId: string | null;
 }
 
-export function ApplicationSummaryDataTableAll<TData, TValue>({
+export function ApplicationSummaryDataTableAll<TValue>({
   columns,
   data,
   dict,
@@ -133,7 +133,7 @@ export function ApplicationSummaryDataTableAll<TData, TValue>({
             setColumnFilters={setColumnFilters}
             columnFilters={columnFilters}
             label="To Review"
-            color="bg-gray-200"
+            color="bg-border"
             orgId={orgId}
             campaignId={campaignId}
             renderSubComponent={renderSubComponent}
@@ -145,7 +145,7 @@ export function ApplicationSummaryDataTableAll<TData, TValue>({
 
           <ApplicationSummaryDataTable
             label="Reviewed"
-            color="bg-gray-200"
+            color="bg-border"
             dict={dict}
             renderSubComponent={renderSubComponent}
             columns={columns}
@@ -168,7 +168,7 @@ export function ApplicationSummaryDataTableAll<TData, TValue>({
             setColumnFilters={setColumnFilters}
             columnFilters={columnFilters}
             label="All"
-            color="bg-gray-200"
+            color="bg-border"
             orgId={orgId}
             campaignId={campaignId}
             renderSubComponent={renderSubComponent}

@@ -3,630 +3,968 @@
 import { cn } from "@/lib/utils";
 import { getCampaign, getCampaignRoles, RoleDetails } from "@/models/campaign";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Asterisk, Check, ChevronsUpDown, GripVertical, Plus, Trash, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Asterisk,
+  Check,
+  ChevronsUpDown,
+  GripVertical,
+  Plus,
+  Trash,
+  X,
+} from "lucide-react";
 import Link from "next/link";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { createQuestion, deleteQuestion, getAllCommonQuestions, getAllRoleQuestions, MultiOptionQuestionOption, Question, QuestionType, updateQuestion } from "@/models/question";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  createQuestion,
+  deleteQuestion,
+  getAllCommonQuestions,
+  getAllRoleQuestions,
+  MultiOptionQuestionOption,
+  Question,
+  QuestionType,
+  updateQuestion,
+} from "@/models/question";
 import { useState } from "react";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DragDropContext,
+  Draggable,
+  Droppable,
+  DropResult,
+} from "@hello-pangea/dnd";
 import { snowflakeGenerator } from "@/lib";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-    CommandList,
-} from "@/components/ui/command"
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 
-export default function CampaignQuestions({ campaignId, orgId, dict }: { campaignId: string, orgId: string, dict: any }) {
-    const queryClient = useQueryClient();
+export default function CampaignQuestions({
+  campaignId,
+  orgId,
+  dict,
+}: {
+  campaignId: string;
+  orgId: string;
+  dict: any;
+}) {
+  const queryClient = useQueryClient();
 
-    const { data: campaign } = useQuery({
-        queryKey: [`${campaignId}-campaign-details`],
-        queryFn: () => getCampaign(campaignId),
-    });
+  const { data: campaign } = useQuery({
+    queryKey: [`${campaignId}-campaign-details`],
+    queryFn: () => getCampaign(campaignId),
+  });
 
-    const { data: roles } = useQuery({
-        queryKey: [`${campaignId}-campaign-roles`],
-        queryFn: () => getCampaignRoles(campaignId),
-    });
+  const { data: roles } = useQuery({
+    queryKey: [`${campaignId}-campaign-roles`],
+    queryFn: () => getCampaignRoles(campaignId),
+  });
 
-    const { data: commonQuestions } = useQuery({
+  const { data: commonQuestions } = useQuery({
+    queryKey: [`${campaignId}-common-questions`],
+    queryFn: () => getAllCommonQuestions(campaignId),
+  });
+
+  const { data: rolesAndQuestions } = useQuery({
+    queryKey: [`${campaignId}-all-role-questions`, roles],
+    queryFn: async () => {
+      if (!roles) return [];
+      return await Promise.all(
+        roles.map(async (role) => {
+          const questions = await getAllRoleQuestions(campaignId, role.id);
+          return { role, questions };
+        }),
+      );
+    },
+  });
+
+  const { mutateAsync: mutateUpdateQuestion } = useMutation({
+    mutationFn: ({
+      questionId,
+      question,
+    }: {
+      questionId: string;
+      question: Question;
+    }) => updateQuestion(campaignId, questionId, question),
+    onSettled: () => {
+      queryClient.invalidateQueries({
         queryKey: [`${campaignId}-common-questions`],
-        queryFn: () => getAllCommonQuestions(campaignId),
-    });
+      });
+      queryClient.invalidateQueries({
+        queryKey: [`${campaignId}-all-role-questions`],
+      });
+    },
+  });
 
-    const { data: rolesAndQuestions } = useQuery({
-        queryKey: [`${campaignId}-all-role-questions`, roles],
-        queryFn: async () => {
-            if (!roles) return [];
-            return await Promise.all(roles.map(async (role) => {
-                const questions = await getAllRoleQuestions(campaignId, role.id);
-                return { role, questions };
-            }));
-        }
-    });
+  const { mutateAsync: mutateDeleteQuestion } = useMutation({
+    mutationFn: (questionId: string) => deleteQuestion(campaignId, questionId),
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: [`${campaignId}-common-questions`],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [`${campaignId}-all-role-questions`],
+      });
+    },
+  });
 
-    const { mutateAsync: mutateUpdateQuestion } = useMutation({
-        mutationFn: ({ questionId, question }: { questionId: string; question: Question }) =>
-            updateQuestion(campaignId, questionId, question),
-        onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: [`${campaignId}-common-questions`] });
-            queryClient.invalidateQueries({ queryKey: [`${campaignId}-all-role-questions`] });
-        },
-    });
+  const { mutateAsync: mutateCreateQuestion } = useMutation({
+    mutationFn: (question: Question) => createQuestion(campaignId, question),
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: [`${campaignId}-common-questions`],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [`${campaignId}-all-role-questions`],
+      });
+    },
+  });
 
-    const { mutateAsync: mutateDeleteQuestion } = useMutation({
-        mutationFn: (questionId: string) => deleteQuestion(campaignId, questionId),
-        onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: [`${campaignId}-common-questions`] });
-            queryClient.invalidateQueries({ queryKey: [`${campaignId}-all-role-questions`] });
-        }
-    });
+  const handleQuestionUpdate = async (
+    action: "update" | "delete",
+    question: Question,
+  ) => {
+    if (action === "delete") {
+      await mutateDeleteQuestion(question.id);
+    } else {
+      await mutateUpdateQuestion({ questionId: question.id, question });
+    }
+  };
 
-    const { mutateAsync: mutateCreateQuestion } = useMutation({
-        mutationFn: (question: Question) => createQuestion(campaignId, question),
-        onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: [`${campaignId}-common-questions`] });
-            queryClient.invalidateQueries({ queryKey: [`${campaignId}-all-role-questions`] });
-        },
-    });
+  const addNewQuestion = async (type: QuestionType, roleId: string) => {
+    const common = roleId === "common";
 
-    const handleQuestionUpdate = async (action: "update" | "delete", question: Question) => {
-        if (action === 'delete') {
-            await mutateDeleteQuestion(question.id);
-        } else {
-            await mutateUpdateQuestion({ questionId: question.id, question });
-        }
+    const newQuestion: Question = {
+      id: snowflakeGenerator.generate().toString(),
+      title: "",
+      description: "",
+      roles: common ? [] : [roleId],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      question_type: type,
+      data: {
+        options: [
+          {
+            id: snowflakeGenerator.generate().toString(),
+            display_order: 1,
+            text: "Default Option",
+          },
+        ],
+      },
+      common,
+      required: false,
+      short_answer_word_limit: null,
+    };
+    if (type === "ShortAnswer") {
+      delete (newQuestion as any).data;
     }
 
-    const addNewQuestion = async (type: QuestionType, roleId: string) => {
-        const common = roleId === "common";
+    await mutateCreateQuestion(newQuestion);
+  };
 
-        let newQuestion: Question = { id: snowflakeGenerator.generate().toString(), title: "", description: "", roles: common ? [] : [roleId], created_at: new Date().toISOString(), updated_at: new Date().toISOString(), question_type: type, data: { options: [{ id: snowflakeGenerator.generate().toString(), display_order: 1, text: "Default Option" }] }, common, required: false, short_answer_word_limit: null };
-        if (type === 'ShortAnswer') {
-            delete (newQuestion as any).data;
-        }
-
-        await mutateCreateQuestion(newQuestion);
+  const addExistingQuestion = async (
+    questionId: string,
+    oldRoleId: string,
+    newRoleId: string,
+  ) => {
+    // Common questions cannot be shared with roles
+    if (newRoleId === "common" || oldRoleId === "common") {
+      return;
     }
 
-    const addExistingQuestion = async (questionId: string, oldRoleId: string, newRoleId: string) => {
-        // Common questions cannot be shared with roles
-        if (newRoleId === "common" || oldRoleId === "common") { return; }
+    const question = rolesAndQuestions
+      ?.find(({ role }) => role.id === oldRoleId)
+      ?.questions.find((question) => question.id === questionId);
 
-        const question = rolesAndQuestions
-            ?.find(({ role }) => role.id === oldRoleId)
-            ?.questions.find((question) => question.id === questionId);
-
-        if (!question) { return; }
-
-        const updatedQuestion = { ...question, roles: [...question.roles, newRoleId] };
-        await mutateUpdateQuestion({ questionId: question.id, question: updatedQuestion });
+    if (!question) {
+      return;
     }
 
-    return (
+    const updatedQuestion = {
+      ...question,
+      roles: [...question.roles, newRoleId],
+    };
+    await mutateUpdateQuestion({
+      questionId: question.id,
+      question: updatedQuestion,
+    });
+  };
+
+  return (
+    <div>
+      <div className="flex justify-between items-center">
         <div>
-            <div className="flex justify-between items-center">
-                <div>
-                    <Link href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}`}>
-                        <div className="flex items-center gap-1">
-                            <ArrowLeft className="w-4 h-4" />
-                            {dict.common.back}
-                        </div>
-                    </Link>
-                    <h1 className="text-2xl font-bold">{dict.dashboard.campaigns.campaign_questions}</h1>
-                    <h2 className="text-lg font-medium">{campaign?.name}</h2>
-                </div>
+          <Link
+            href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}`}
+          >
+            <div className="flex items-center gap-1">
+              <ArrowLeft className="w-4 h-4" />
+              {dict.common.back}
             </div>
-            <div className="mt-2 pb-10">
-                <Tabs defaultValue="common" className="max-w-[1000px]">
-                    <TabsList>
-                        <TabsTrigger value="common">Common</TabsTrigger>
-                        {roles?.map((role) => (
-                            <TabsTrigger key={role.id} value={role.id}>{role.name}</TabsTrigger>
-                        ))}
-                    </TabsList>
-                    <TabsContent value="common">
-                        <QuestionEditor questions={commonQuestions ?? []} handleQuestionUpdate={handleQuestionUpdate} dict={dict} />
-                        <NewQuestionButton currentRole="common" allRoleQuestions={rolesAndQuestions ?? []} onAddNew={(type) => addNewQuestion(type, "common")} onAddExisting={(questionId) => { }} disableExisting={true} dict={dict} />
-                    </TabsContent>
-                    {rolesAndQuestions?.map(({ role, questions }) => (
-                        <TabsContent key={role.id} value={role.id}>
-                            <QuestionEditor possibleRole={role} questions={questions} handleQuestionUpdate={handleQuestionUpdate} dict={dict} />
-                            <NewQuestionButton currentRole={role.id} allRoleQuestions={rolesAndQuestions ?? []} onAddNew={(type) => addNewQuestion(type, role.id)} onAddExisting={(questionId, oldRoleId) => addExistingQuestion(questionId, oldRoleId, role.id)} dict={dict} />
-                        </TabsContent>
-                    ))}
-                </Tabs>
-            </div>
+          </Link>
+          <h1 className="text-2xl font-bold">
+            {dict.dashboard.campaigns.campaign_questions}
+          </h1>
+          <h2 className="text-lg font-medium">{campaign?.name}</h2>
         </div>
-    );
-}
-
-function NewQuestionButton({ currentRole, allRoleQuestions, onAddNew, onAddExisting, disableExisting = false, dict }: { currentRole: string, allRoleQuestions: { role: RoleDetails, questions: Question[] }[], onAddNew: (type: QuestionType) => void, onAddExisting: (questionId: string, oldRoleId: string) => void, disableExisting?: boolean, dict: any }) {
-    const [questionId, setQuestionId] = useState<string>("");
-    const [oldRoleId, setOldRoleId] = useState<string>("");
-
-    return (
-        <div className="flex justify-center mt-4">
-            <AlertDialog>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost"><Plus className="w-4 h-4" /></Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-[300px]">
-                        <DropdownMenuItem onClick={() => onAddNew("ShortAnswer")}>{dict.common.question_types.short_answer}</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onAddNew("MultiChoice")}>{dict.common.question_types.multi_choice}</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onAddNew("MultiSelect")}>{dict.common.question_types.multi_select}</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onAddNew("DropDown")}>{dict.common.question_types.dropdown}</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onAddNew("Ranking")}>{dict.common.question_types.ranking}</DropdownMenuItem>
-                        {!disableExisting && (
-                            <>
-                                <DropdownMenuSeparator />
-                                <AlertDialogTrigger>
-                                    <DropdownMenuItem>{dict.common.question_types.existing_questions}</DropdownMenuItem>
-                                </AlertDialogTrigger>
-                            </>
-                        )}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-
-                <AlertDialogContent className="sm:max-w-[800px]">
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>{dict.common.question_types.existing_questions}</AlertDialogTitle>
-                    </AlertDialogHeader>
-                    <div>
-                        <ExistingQuestionsCombobox
-                            // Filter out questions that are already assigned to the current role
-                            allRoleQuestions={
-                                allRoleQuestions
-                                    .filter(({ role }) => role.id !== currentRole)
-                                    .map(({ role, questions }) => (
-                                        {
-                                            role,
-                                            questions: questions.filter((question) => !question.roles.includes(currentRole))
-                                        }
-                                    ))
-                                    .filter(({ questions }) => questions.length > 0)
-                            } setQuestion={setQuestionId} setOldRoleId={setOldRoleId} />
-                    </div>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel asChild>
-                            <Button variant="outline">{dict.dashboard.actions.cancel}</Button>
-                        </AlertDialogCancel>
-                        <AlertDialogAction asChild>
-                            <Button disabled={!questionId} onClick={() => onAddExisting(questionId, oldRoleId)} type="submit">{dict.dashboard.actions.add}</Button>
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-        </div>
-    );
-}
-
-
-function ExistingQuestionsCombobox({ allRoleQuestions, setQuestion, setOldRoleId }: { allRoleQuestions: { role: RoleDetails, questions: Question[] }[], setQuestion: (questionId: string) => void, setOldRoleId: (oldRoleId: string) => void }) {
-    const [open, setOpen] = useState(false)
-    const [value, setValue] = useState("")
-
-    const handleSetValue = (value: string, oldRoleId: string) => {
-        setValue(value);
-        setQuestion(value);
-        setOldRoleId(oldRoleId);
-    }
-
-    return (
-        <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-                <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={open}
-                    className="w-[700px] justify-between"
-                >
-                    {value
-                        ? allRoleQuestions.find(({ questions }) => questions.find((question) => question.id === value))?.questions.find((question) => question.id === value)?.title
-                        : "Select question..."}
-                    <ChevronsUpDown className="opacity-50" />
-                </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[700px] p-0">
-                <Command>
-                    <CommandInput placeholder="Search questions..." className="h-9" />
-                    <CommandList>
-                        <CommandEmpty>No question found.</CommandEmpty>
-                        {allRoleQuestions.map(({ role, questions }) => (
-                            <CommandGroup key={role.id} heading={role.name}>
-                                {questions.map((question) => (
-                                    <CommandItem
-                                        key={`${role.id}-${question.id}`}
-                                        value={question.title}
-                                        onSelect={(currentValue) => {
-                                            handleSetValue(currentValue === questions.find((question) => question.id === value)?.title ? "" : question.id, role.id)
-                                            setOpen(false)
-                                        }}
-                                    >
-                                        {question.title}
-                                        <Check
-                                            className={cn(
-                                                "ml-auto",
-                                                value === question.id ? "opacity-100" : "opacity-0"
-                                            )}
-                                        />
-                                    </CommandItem>
-                                ))}
-                            </CommandGroup>
-                        ))}
-                    </CommandList>
-                </Command>
-            </PopoverContent>
-        </Popover>
-    )
-}
-
-function QuestionEditor({ possibleRole, questions, handleQuestionUpdate, dict }: { possibleRole?: RoleDetails, questions?: Question[], handleQuestionUpdate: (action: "update" | "delete", question: Question) => Promise<void>, dict: any }) {
-    const roleId = possibleRole?.id ?? "common";
-
-    return (
-        <div className="flex flex-col gap-2">
-            {questions?.map((question) => {
-                if (question.question_type !== 'ShortAnswer') {
-                    return <MultiOptionQuestionCard key={question.id} question={question} currentRole={roleId} possibleRole={possibleRole} handleQuestionUpdate={handleQuestionUpdate} dict={dict} />
+      </div>
+      <div className="mt-2 pb-10">
+        <Tabs defaultValue="common" className="max-w-[1000px]">
+          <TabsList>
+            <TabsTrigger value="common">Common</TabsTrigger>
+            {roles?.map((role) => (
+              <TabsTrigger key={role.id} value={role.id}>
+                {role.name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <TabsContent value="common">
+            <QuestionEditor
+              questions={commonQuestions ?? []}
+              handleQuestionUpdate={handleQuestionUpdate}
+              dict={dict}
+            />
+            <NewQuestionButton
+              currentRole="common"
+              allRoleQuestions={rolesAndQuestions ?? []}
+              onAddNew={(type) => addNewQuestion(type, "common")}
+              onAddExisting={() => {}}
+              disableExisting={true}
+              dict={dict}
+            />
+          </TabsContent>
+          {rolesAndQuestions?.map(({ role, questions }) => (
+            <TabsContent key={role.id} value={role.id}>
+              <QuestionEditor
+                possibleRole={role}
+                questions={questions}
+                handleQuestionUpdate={handleQuestionUpdate}
+                dict={dict}
+              />
+              <NewQuestionButton
+                currentRole={role.id}
+                allRoleQuestions={rolesAndQuestions ?? []}
+                onAddNew={(type) => addNewQuestion(type, role.id)}
+                onAddExisting={(questionId, oldRoleId) =>
+                  addExistingQuestion(questionId, oldRoleId, role.id)
                 }
-                return <ShortAnswerQuestionCard key={question.id} question={question} currentRole={roleId} possibleRole={possibleRole} handleQuestionUpdate={handleQuestionUpdate} dict={dict} />;
-            })}
-        </div>
-    );
+                dict={dict}
+              />
+            </TabsContent>
+          ))}
+        </Tabs>
+      </div>
+    </div>
+  );
 }
 
-function MultiOptionQuestionCard({ question, currentRole, possibleRole, handleQuestionUpdate, dict }: { question?: Question, currentRole: string, possibleRole?: RoleDetails, handleQuestionUpdate: (action: "update" | "delete", question: Question) => Promise<void>, dict: any }) {
-    const [title, setTitle] = useState<string>(question?.title ?? "");
-    const [description, setDescription] = useState<string>(question?.description ?? "");
-    const [questionType, setQuestionType] = useState<string>(question?.question_type ?? "");
-    const [options, setOptions] = useState<MultiOptionQuestionOption[]>(question?.data?.options ?? []);
-    const [required, setRequired] = useState<boolean>(question?.required ?? false);
+function NewQuestionButton({
+  currentRole,
+  allRoleQuestions,
+  onAddNew,
+  onAddExisting,
+  disableExisting = false,
+  dict,
+}: {
+  currentRole: string;
+  allRoleQuestions: { role: RoleDetails; questions: Question[] }[];
+  onAddNew: (type: QuestionType) => void;
+  onAddExisting: (questionId: string, oldRoleId: string) => void;
+  disableExisting?: boolean;
+  dict: any;
+}) {
+  const [questionId, setQuestionId] = useState<string>("");
+  const [oldRoleId, setOldRoleId] = useState<string>("");
 
-    const updateQuestion = async (overrides: Partial<Question> = {}) => {
-        await handleQuestionUpdate('update', {
-            ...question!,
-            title,
-            description: description.trim() === "" ? null : description,
-            question_type: questionType as QuestionType,
-            data: { options },
-            required,
-            ...overrides,
-        });
-    }
+  return (
+    <div className="flex justify-center mt-4">
+      <AlertDialog>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost">
+              <Plus className="w-4 h-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-[300px]">
+            <DropdownMenuItem onClick={() => onAddNew("ShortAnswer")}>
+              {dict.common.question_types.short_answer}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onAddNew("MultiChoice")}>
+              {dict.common.question_types.multi_choice}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onAddNew("MultiSelect")}>
+              {dict.common.question_types.multi_select}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onAddNew("DropDown")}>
+              {dict.common.question_types.dropdown}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onAddNew("Ranking")}>
+              {dict.common.question_types.ranking}
+            </DropdownMenuItem>
+            {!disableExisting && (
+              <>
+                <DropdownMenuSeparator />
+                <AlertDialogTrigger>
+                  <DropdownMenuItem>
+                    {dict.common.question_types.existing_questions}
+                  </DropdownMenuItem>
+                </AlertDialogTrigger>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-    const handleDragEnd = async (result: DropResult) => {
-        if (!result.destination) {
-            return;
-        }
-
-        const items = Array.from(options);
-        const [reorderedItem] = items.splice(result.source.index, 1);
-        items.splice(result.destination.index, 0, reorderedItem);
-        const newItems = items.map((option, index) => ({ ...option, display_order: index + 1 }));
-
-        setOptions(newItems);
-        await updateQuestion({ data: { options: newItems } });
-    }
-
-    const addOption = async (text: string) => {
-        // Generate random id for use with DnD and to send to server (which expects i64 - as string or number)
-        const newItems: MultiOptionQuestionOption[] = [...options, { id: snowflakeGenerator.generate().toString(), text: text, display_order: options.length + 1 }];
-        setOptions(newItems);
-        await updateQuestion({ data: { options: newItems } });
-    }
-
-    const removeOption = async (id: string) => {
-        const newItems = options.filter((option) => option.id !== id);
-        setOptions(newItems);
-        await updateQuestion({ data: { options: newItems } });
-    }
-
-    const updateOption = async (id: string, text: string) => {
-        const serverText = question?.data?.options?.find((option) => option.id === id)?.text;
-        if (text === serverText) return;
-        const newItems = options.map((option) => option.id === id ? { ...option, text } : option);
-        setOptions(newItems);
-        await updateQuestion({ data: { options: newItems } });
-    }
-
-    const updateTitle = async () => {
-        if (title === (question?.title ?? "")) return;
-        await updateQuestion({ title });
-    }
-
-    const updateDescription = async () => {
-        const next = description.trim() === "" ? null : description;
-        if (next === (question?.description ?? null)) return;
-        await updateQuestion({ description: next });
-    }
-
-    const updateQuestionType = async (nextType: string) => {
-        setQuestionType(nextType);
-        await updateQuestion({ question_type: nextType as QuestionType });
-    }
-
-    const handleDeleteQuestion = async () => {
-        await handleQuestionUpdate('delete', question!);
-    }
-
-    const handleRemoveQuestionFromRole = async () => {
-        await updateQuestion({ roles: question?.roles?.filter((role) => role !== currentRole) ?? [] });
-    }
-
-    const toggleRequired = async () => {
-        const newRequired = !required;
-        setRequired(newRequired);
-        await updateQuestion({ required: newRequired });
-    }
-
-    return (
-        <div className="flex flex-col p-2 border rounded-md gap-2 w">
-            <div className="flex flex-col gap-1">
-                <label className="text-sm text-foreground">{dict.common.title}</label>
-                <div className="flex justify-between">
-                    <Input className="max-w-[500px]" value={title} onChange={(e) => setTitle(e.target.value)} onBlur={updateTitle} />
-                    <div className="flex items-center gap-1">
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant={required ? "default" : "outline"} onClick={toggleRequired}>
-                                    <Asterisk className="w-4 h-4" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>{required ? "Required" : "Optional"}</p>
-                            </TooltipContent>
-                        </Tooltip>
-                        {
-                            question?.roles && question?.roles.length > 1 && (
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button variant="ghost" onClick={handleRemoveQuestionFromRole}>
-                                            <X className="w-8 h-8" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Remove question from this role</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            )
-                        }
-                        <Button variant="destructive" onClick={handleDeleteQuestion}><Trash className="w-4 h-4" /></Button>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    <label className="text-sm text-muted-foreground whitespace-nowrap">{dict.common.question_type}</label>
-                    <Select value={questionType} onValueChange={async (value) => await updateQuestionType(value)}>
-                        <SelectTrigger>
-                            <SelectValue placeholder={dict.common.question_type} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="MultiChoice">{dict.common.question_types.multi_choice}</SelectItem>
-                            <SelectItem value="MultiSelect">{dict.common.question_types.multi_select}</SelectItem>
-                            <SelectItem value="DropDown">{dict.common.question_types.dropdown}</SelectItem>
-                            <SelectItem value="Ranking">{dict.common.question_types.ranking}</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="flex flex-col gap-1">
-                    <label className="text-sm text-foreground">{dict.common.description}</label>
-                    <Textarea
-                        className="max-w-[500px] min-h-[80px]"
-                        placeholder="Optional info for applicants"
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        onBlur={updateDescription}
-                    />
-                </div>
-            </div>
-            <div>
-                <DragDropContext onDragEnd={handleDragEnd}>
-                    <Droppable droppableId="options-box">
-                        {(provided) => (
-                            <div
-                                {...provided.droppableProps}
-                                ref={provided.innerRef}
-                                className="flex flex-col"
-                            >
-                                {options.map((option, index) => (
-                                    <Draggable key={option.id} draggableId={option.id} index={option.display_order - 1}>
-                                        {(provided) => (
-                                            <div
-                                                ref={provided.innerRef}
-                                                {...provided.draggableProps}
-                                                {...provided.dragHandleProps}
-                                                className="p-2 my-1 flex justify-between items-center gap-2"
-                                            >
-                                                <div className="flex items-center gap-2">
-                                                    <GripVertical className="w-4 h-4" />
-                                                    <div className="mt-1">
-                                                        <OptionDecorator questionType={questionType} index={index} />
-                                                    </div>
-                                                    <input
-                                                        className="w-full focus:outline-none border-b-2 border-dotted border-gray-500 max-w-[300px]"
-                                                        value={option.text}
-                                                        onChange={(e) => {
-                                                            const text = e.target.value;
-                                                            setOptions((prev) => prev.map((item) => item.id === option.id ? { ...item, text } : item));
-                                                        }}
-                                                        onBlur={(e) => updateOption(option.id, e.target.value)}
-                                                    />
-                                                </div>
-                                                <X className="w-5 h-5 cursor-pointer text-red-500 hover:text-red-600" onClick={async () => await removeOption(option.id)} />
-                                            </div>
-                                        )}
-                                    </Draggable>
-                                ))}
-                                {provided.placeholder}
-                            </div>
-                        )}
-                    </Droppable>
-                </DragDropContext>
-                <div
-                    className="p-2 flex items-start gap-2"
-                >
-                    <ButtonGroup className="w-full sm:w-auto flex-col sm:flex-row gap-2 sm:gap-0 [&>*]:w-full sm:[&>*]:w-auto" onClick={async () => await addOption(dict.dashboard.campaigns.questions.new_option)}>
-                        <Button className="w-full justify-center sm:w-auto">
-                            {dict.dashboard.campaigns.questions.add_option}
-                        </Button>
-                    </ButtonGroup>
-                </div>
-            </div>
-        </div>
-    );
+        <AlertDialogContent className="sm:max-w-[800px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {dict.common.question_types.existing_questions}
+            </AlertDialogTitle>
+          </AlertDialogHeader>
+          <div>
+            <ExistingQuestionsCombobox
+              // Filter out questions that are already assigned to the current role
+              allRoleQuestions={allRoleQuestions
+                .filter(({ role }) => role.id !== currentRole)
+                .map(({ role, questions }) => ({
+                  role,
+                  questions: questions.filter(
+                    (question) => !question.roles.includes(currentRole),
+                  ),
+                }))
+                .filter(({ questions }) => questions.length > 0)}
+              setQuestion={setQuestionId}
+              setOldRoleId={setOldRoleId}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel asChild>
+              <Button variant="outline">{dict.dashboard.actions.cancel}</Button>
+            </AlertDialogCancel>
+            <AlertDialogAction asChild>
+              <Button
+                disabled={!questionId}
+                onClick={() => onAddExisting(questionId, oldRoleId)}
+                type="submit"
+              >
+                {dict.dashboard.actions.add}
+              </Button>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
 }
 
-function OptionDecorator({ questionType, index }: { questionType: string, index: number }) {
-    if (questionType === 'MultiChoice') {
-        return <div className="rounded-full border-2 border-gray-500 w-4 h-4"></div>;
-    } else if (questionType === 'MultiSelect') {
-        return <div className="rounded-xs border-2 border-gray-500 w-4 h-4"></div>;
-    } else if (questionType === 'DropDown') {
-        return <div className=""></div>;
-    } else if (questionType === 'Ranking') {
-        return <div className=""></div>;
-    }
-    return <div className="rounded-full border-2 border-gray-500 w-4 h-4"></div>;
-}
+function ExistingQuestionsCombobox({
+  allRoleQuestions,
+  setQuestion,
+  setOldRoleId,
+}: {
+  allRoleQuestions: { role: RoleDetails; questions: Question[] }[];
+  setQuestion: (questionId: string) => void;
+  setOldRoleId: (oldRoleId: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState("");
 
-function ShortAnswerQuestionCard({ question, currentRole, possibleRole, handleQuestionUpdate, dict }: { question?: Question, currentRole: string, possibleRole?: RoleDetails, handleQuestionUpdate: (action: "update" | "delete", question: Question) => Promise<void>, dict: any }) {
-    const [title, setTitle] = useState(question?.title ?? "");
-    const [description, setDescription] = useState(question?.description ?? "");
-    const [required, setRequired] = useState(question?.required ?? false);
-    const [wordLimit, setWordLimit] = useState<number | null>(question?.short_answer_word_limit ?? null);
+  const handleSetValue = (value: string, oldRoleId: string) => {
+    setValue(value);
+    setQuestion(value);
+    setOldRoleId(oldRoleId);
+  };
 
-    const updateQuestion = async (overrides: Partial<Question> = {}) => {
-        await handleQuestionUpdate('update', {
-            ...question!,
-            title,
-            description: description.trim() === "" ? null : description,
-            required,
-            short_answer_word_limit: wordLimit,
-            ...overrides,
-        });
-    }
-
-    const updateTitle = async () => {
-        if (title === (question?.title ?? "")) return;
-        await updateQuestion({ title });
-    }
-
-    const updateDescription = async () => {
-        const next = description.trim() === "" ? null : description;
-        if (next === (question?.description ?? null)) return;
-        await updateQuestion({ description: next });
-    }
-
-    const updateWordLimit = async () => {
-        if (wordLimit === (question?.short_answer_word_limit ?? null)) return;
-        await updateQuestion({ short_answer_word_limit: wordLimit });
-    }
-
-    const handleDeleteQuestion = async () => {
-        await handleQuestionUpdate('delete', question!);
-    }
-
-    const handleRemoveQuestionFromRole = async () => {
-        await updateQuestion({ roles: question?.roles?.filter((role) => role !== currentRole) ?? [] });
-    }
-
-    const toggleRequired = async () => {
-        const newRequired = !required;
-        setRequired(newRequired);
-        await updateQuestion({ required: newRequired });
-    }
-
-    return (
-        <div className="flex flex-col justify-between p-2 border rounded-md gap-2 min-h-[120px]">
-            <div className="flex flex-col gap-1">
-                <label className="text-sm text-foreground">{dict.common.title}</label>
-                <div className="flex justify-between">
-                    <Input className="max-w-[500px]" value={title} onChange={(e) => setTitle(e.target.value)} onBlur={updateTitle} />
-                    <div className="flex items-center gap-1">
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant={required ? "default" : "outline"} onClick={toggleRequired}>
-                                    <Asterisk className="w-4 h-4" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>{required ? "Required" : "Optional"}</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    {
-                        question?.roles && question?.roles.length > 1 && (
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button variant="ghost" onClick={handleRemoveQuestionFromRole}>
-                                        <X className="w-8 h-8" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>Remove question from this role</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        )
-                    }
-                    <Button variant="destructive" onClick={handleDeleteQuestion}><Trash className="w-4 h-4" /></Button>
-                    </div>
-                </div>
-            </div>
-            <div className="flex flex-col gap-1 px-2">
-                <label className="text-sm text-foreground">{dict.common.description}</label>
-                <Textarea
-                    className="max-w-[500px] min-h-[80px]"
-                    placeholder="Optional info for applicants"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    onBlur={updateDescription}
-                />
-            </div>
-            <div className="flex items-center gap-2 p-2">
-                <label className="text-sm text-foreground whitespace-nowrap">Word limit</label>
-                <Input
-                    type="text"
-                    inputMode="numeric"
-                    className="max-w-[120px]"
-                    placeholder="None"
-                    value={wordLimit ?? ""}
-                    onChange={(e) => {
-                        const value = e.target.value.replace(/[^0-9]/g, "");
-                        setWordLimit(value === "" ? null : parseInt(value, 10));
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-[700px] justify-between"
+        >
+          {value
+            ? allRoleQuestions
+                .find(({ questions }) =>
+                  questions.find((question) => question.id === value),
+                )
+                ?.questions.find((question) => question.id === value)?.title
+            : "Select question..."}
+          <ChevronsUpDown className="opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[700px] p-0">
+        <Command>
+          <CommandInput placeholder="Search questions..." className="h-9" />
+          <CommandList>
+            <CommandEmpty>No question found.</CommandEmpty>
+            {allRoleQuestions.map(({ role, questions }) => (
+              <CommandGroup key={role.id} heading={role.name}>
+                {questions.map((question) => (
+                  <CommandItem
+                    key={`${role.id}-${question.id}`}
+                    value={question.title}
+                    onSelect={(currentValue) => {
+                      handleSetValue(
+                        currentValue ===
+                          questions.find((question) => question.id === value)
+                            ?.title
+                          ? ""
+                          : question.id,
+                        role.id,
+                      );
+                      setOpen(false);
                     }}
-                    onBlur={updateWordLimit}
-                />
-            </div>
-            <div className="flex flex-col gap-1 p-2">
-                <div className="border-b-2 border-dotted border-gray-500 max-w-[300px]">
-                    <p className="text-sm text-foreground">{dict.dashboard.campaigns.questions.answer_text}</p>
-                </div>
-            </div>
-        </div>
+                  >
+                    {question.title}
+                    <Check
+                      className={cn(
+                        "ml-auto",
+                        value === question.id ? "opacity-100" : "opacity-0",
+                      )}
+                    />
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ))}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function QuestionEditor({
+  possibleRole,
+  questions,
+  handleQuestionUpdate,
+  dict,
+}: {
+  possibleRole?: RoleDetails;
+  questions?: Question[];
+  handleQuestionUpdate: (
+    action: "update" | "delete",
+    question: Question,
+  ) => Promise<void>;
+  dict: any;
+}) {
+  const roleId = possibleRole?.id ?? "common";
+
+  return (
+    <div className="flex flex-col gap-2">
+      {questions?.map((question) => {
+        if (question.question_type !== "ShortAnswer") {
+          return (
+            <MultiOptionQuestionCard
+              key={question.id}
+              question={question}
+              currentRole={roleId}
+              handleQuestionUpdate={handleQuestionUpdate}
+              dict={dict}
+            />
+          );
+        }
+        return (
+          <ShortAnswerQuestionCard
+            key={question.id}
+            question={question}
+            currentRole={roleId}
+            handleQuestionUpdate={handleQuestionUpdate}
+            dict={dict}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function MultiOptionQuestionCard({
+  question,
+  currentRole,
+  handleQuestionUpdate,
+  dict,
+}: {
+  question?: Question;
+  currentRole: string;
+  handleQuestionUpdate: (
+    action: "update" | "delete",
+    question: Question,
+  ) => Promise<void>;
+  dict: any;
+}) {
+  const [title, setTitle] = useState<string>(question?.title ?? "");
+  const [description, setDescription] = useState<string>(
+    question?.description ?? "",
+  );
+  const [questionType, setQuestionType] = useState<string>(
+    question?.question_type ?? "",
+  );
+  const [options, setOptions] = useState<MultiOptionQuestionOption[]>(
+    question?.data?.options ?? [],
+  );
+  const [required, setRequired] = useState<boolean>(
+    question?.required ?? false,
+  );
+
+  const updateQuestion = async (overrides: Partial<Question> = {}) => {
+    await handleQuestionUpdate("update", {
+      ...question!,
+      title,
+      description: description.trim() === "" ? null : description,
+      question_type: questionType as QuestionType,
+      data: { options },
+      required,
+      ...overrides,
+    });
+  };
+
+  const handleDragEnd = async (result: DropResult) => {
+    if (!result.destination) {
+      return;
+    }
+
+    const items = Array.from(options);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    const newItems = items.map((option, index) => ({
+      ...option,
+      display_order: index + 1,
+    }));
+
+    setOptions(newItems);
+    await updateQuestion({ data: { options: newItems } });
+  };
+
+  const addOption = async (text: string) => {
+    // Generate random id for use with DnD and to send to server (which expects i64 - as string or number)
+    const newItems: MultiOptionQuestionOption[] = [
+      ...options,
+      {
+        id: snowflakeGenerator.generate().toString(),
+        text: text,
+        display_order: options.length + 1,
+      },
+    ];
+    setOptions(newItems);
+    await updateQuestion({ data: { options: newItems } });
+  };
+
+  const removeOption = async (id: string) => {
+    const newItems = options.filter((option) => option.id !== id);
+    setOptions(newItems);
+    await updateQuestion({ data: { options: newItems } });
+  };
+
+  const updateOption = async (id: string, text: string) => {
+    const serverText = question?.data?.options?.find(
+      (option) => option.id === id,
+    )?.text;
+    if (text === serverText) return;
+    const newItems = options.map((option) =>
+      option.id === id ? { ...option, text } : option,
     );
+    setOptions(newItems);
+    await updateQuestion({ data: { options: newItems } });
+  };
+
+  const updateTitle = async () => {
+    if (title === (question?.title ?? "")) return;
+    await updateQuestion({ title });
+  };
+
+  const updateDescription = async () => {
+    const next = description.trim() === "" ? null : description;
+    if (next === (question?.description ?? null)) return;
+    await updateQuestion({ description: next });
+  };
+
+  const updateQuestionType = async (nextType: string) => {
+    setQuestionType(nextType);
+    await updateQuestion({ question_type: nextType as QuestionType });
+  };
+
+  const handleDeleteQuestion = async () => {
+    await handleQuestionUpdate("delete", question!);
+  };
+
+  const handleRemoveQuestionFromRole = async () => {
+    await updateQuestion({
+      roles: question?.roles?.filter((role) => role !== currentRole) ?? [],
+    });
+  };
+
+  const toggleRequired = async () => {
+    const newRequired = !required;
+    setRequired(newRequired);
+    await updateQuestion({ required: newRequired });
+  };
+
+  return (
+    <div className="flex flex-col p-2 border rounded-md gap-2 w">
+      <div className="flex flex-col gap-1">
+        <label className="text-sm text-foreground">{dict.common.title}</label>
+        <div className="flex justify-between">
+          <Input
+            className="max-w-[500px]"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            onBlur={updateTitle}
+          />
+          <div className="flex items-center gap-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={required ? "default" : "outline"}
+                  onClick={toggleRequired}
+                >
+                  <Asterisk className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{required ? "Required" : "Optional"}</p>
+              </TooltipContent>
+            </Tooltip>
+            {question?.roles && question?.roles.length > 1 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    onClick={handleRemoveQuestionFromRole}
+                  >
+                    <X className="w-8 h-8" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Remove question from this role</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            <Button variant="destructive" onClick={handleDeleteQuestion}>
+              <Trash className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-muted-foreground whitespace-nowrap">
+            {dict.common.question_type}
+          </label>
+          <Select
+            value={questionType}
+            onValueChange={async (value) => await updateQuestionType(value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={dict.common.question_type} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="MultiChoice">
+                {dict.common.question_types.multi_choice}
+              </SelectItem>
+              <SelectItem value="MultiSelect">
+                {dict.common.question_types.multi_select}
+              </SelectItem>
+              <SelectItem value="DropDown">
+                {dict.common.question_types.dropdown}
+              </SelectItem>
+              <SelectItem value="Ranking">
+                {dict.common.question_types.ranking}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm text-foreground">
+            {dict.common.description}
+          </label>
+          <Textarea
+            className="max-w-[500px] min-h-[80px]"
+            placeholder="Optional info for applicants"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            onBlur={updateDescription}
+          />
+        </div>
+      </div>
+      <div>
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="options-box">
+            {(provided) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="flex flex-col"
+              >
+                {options.map((option) => (
+                  <Draggable
+                    key={option.id}
+                    draggableId={option.id}
+                    index={option.display_order - 1}
+                  >
+                    {(provided) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        className="p-2 my-1 flex justify-between items-center gap-2"
+                      >
+                        <div className="flex items-center gap-2">
+                          <GripVertical className="w-4 h-4" />
+                          <div className="mt-1">
+                            <OptionDecorator questionType={questionType} />
+                          </div>
+                          <input
+                            className="w-full focus:outline-none border-b-2 border-dotted border-muted-foreground max-w-[300px]"
+                            value={option.text}
+                            onChange={(e) => {
+                              const text = e.target.value;
+                              setOptions((prev) =>
+                                prev.map((item) =>
+                                  item.id === option.id
+                                    ? { ...item, text }
+                                    : item,
+                                ),
+                              );
+                            }}
+                            onBlur={(e) =>
+                              updateOption(option.id, e.target.value)
+                            }
+                          />
+                        </div>
+                        <X
+                          className="w-5 h-5 cursor-pointer text-destructive hover:text-destructive/80"
+                          onClick={async () => await removeOption(option.id)}
+                        />
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+        <div className="p-2 flex items-start gap-2">
+          <ButtonGroup
+            className="w-full sm:w-auto flex-col sm:flex-row gap-2 sm:gap-0 [&>*]:w-full sm:[&>*]:w-auto"
+            onClick={async () =>
+              await addOption(dict.dashboard.campaigns.questions.new_option)
+            }
+          >
+            <Button className="w-full justify-center sm:w-auto">
+              {dict.dashboard.campaigns.questions.add_option}
+            </Button>
+          </ButtonGroup>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OptionDecorator({ questionType }: { questionType: string }) {
+  if (questionType === "MultiChoice") {
+    return (
+      <div className="rounded-full border-2 border-muted-foreground w-4 h-4"></div>
+    );
+  } else if (questionType === "MultiSelect") {
+    return (
+      <div className="rounded-xs border-2 border-muted-foreground w-4 h-4"></div>
+    );
+  } else if (questionType === "DropDown") {
+    return <div className=""></div>;
+  } else if (questionType === "Ranking") {
+    return <div className=""></div>;
+  }
+  return (
+    <div className="rounded-full border-2 border-muted-foreground w-4 h-4"></div>
+  );
+}
+
+function ShortAnswerQuestionCard({
+  question,
+  currentRole,
+  handleQuestionUpdate,
+  dict,
+}: {
+  question?: Question;
+  currentRole: string;
+  handleQuestionUpdate: (
+    action: "update" | "delete",
+    question: Question,
+  ) => Promise<void>;
+  dict: any;
+}) {
+  const [title, setTitle] = useState(question?.title ?? "");
+  const [description, setDescription] = useState(question?.description ?? "");
+  const [required, setRequired] = useState(question?.required ?? false);
+  const [wordLimit, setWordLimit] = useState<number | null>(
+    question?.short_answer_word_limit ?? null,
+  );
+
+  const updateQuestion = async (overrides: Partial<Question> = {}) => {
+    await handleQuestionUpdate("update", {
+      ...question!,
+      title,
+      description: description.trim() === "" ? null : description,
+      required,
+      short_answer_word_limit: wordLimit,
+      ...overrides,
+    });
+  };
+
+  const updateTitle = async () => {
+    if (title === (question?.title ?? "")) return;
+    await updateQuestion({ title });
+  };
+
+  const updateDescription = async () => {
+    const next = description.trim() === "" ? null : description;
+    if (next === (question?.description ?? null)) return;
+    await updateQuestion({ description: next });
+  };
+
+  const updateWordLimit = async () => {
+    if (wordLimit === (question?.short_answer_word_limit ?? null)) return;
+    await updateQuestion({ short_answer_word_limit: wordLimit });
+  };
+
+  const handleDeleteQuestion = async () => {
+    await handleQuestionUpdate("delete", question!);
+  };
+
+  const handleRemoveQuestionFromRole = async () => {
+    await updateQuestion({
+      roles: question?.roles?.filter((role) => role !== currentRole) ?? [],
+    });
+  };
+
+  const toggleRequired = async () => {
+    const newRequired = !required;
+    setRequired(newRequired);
+    await updateQuestion({ required: newRequired });
+  };
+
+  return (
+    <div className="flex flex-col justify-between p-2 border rounded-md gap-2 min-h-[120px]">
+      <div className="flex flex-col gap-1">
+        <label className="text-sm text-foreground">{dict.common.title}</label>
+        <div className="flex justify-between">
+          <Input
+            className="max-w-[500px]"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            onBlur={updateTitle}
+          />
+          <div className="flex items-center gap-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={required ? "default" : "outline"}
+                  onClick={toggleRequired}
+                >
+                  <Asterisk className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{required ? "Required" : "Optional"}</p>
+              </TooltipContent>
+            </Tooltip>
+            {question?.roles && question?.roles.length > 1 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    onClick={handleRemoveQuestionFromRole}
+                  >
+                    <X className="w-8 h-8" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Remove question from this role</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            <Button variant="destructive" onClick={handleDeleteQuestion}>
+              <Trash className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-col gap-1 px-2">
+        <label className="text-sm text-foreground">
+          {dict.common.description}
+        </label>
+        <Textarea
+          className="max-w-[500px] min-h-[80px]"
+          placeholder="Optional info for applicants"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          onBlur={updateDescription}
+        />
+      </div>
+      <div className="flex items-center gap-2 p-2">
+        <label className="text-sm text-foreground whitespace-nowrap">
+          Word limit
+        </label>
+        <Input
+          type="text"
+          inputMode="numeric"
+          className="max-w-[120px]"
+          placeholder="None"
+          value={wordLimit ?? ""}
+          onChange={(e) => {
+            const value = e.target.value.replace(/[^0-9]/g, "");
+            setWordLimit(value === "" ? null : parseInt(value, 10));
+          }}
+          onBlur={updateWordLimit}
+        />
+      </div>
+      <div className="flex flex-col gap-1 p-2">
+        <div className="border-b-2 border-dotted border-muted-foreground max-w-[300px]">
+          <p className="text-sm text-foreground">
+            {dict.dashboard.campaigns.questions.answer_text}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 }

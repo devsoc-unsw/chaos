@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  createEmailTemplate,
-  getEmailTemplate,
-  updateEmailTemplate,
-} from "@/models/email";
+import { createEmailTemplate } from "@/models/email";
 import { useQueryClient } from "@tanstack/react-query";
 import TemplateForm from "../template-form";
 import { redirect } from "next/navigation";
@@ -22,7 +18,7 @@ export default function TemplateNewForm({
     templateId: string,
     name: string,
     subject: string,
-    body: string
+    body: string,
   ) => {
     await createEmailTemplate(orgId, {
       name,

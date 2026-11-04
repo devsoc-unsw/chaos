@@ -9,7 +9,7 @@ export function proxy(request: NextRequest) {
 
   // Check if there is any supported locale in the pathname
   const pathnameHasLocale = locales.some(
-    (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
+    (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`,
   );
 
   if (pathnameHasLocale) return;
@@ -22,7 +22,7 @@ export function proxy(request: NextRequest) {
 
   // Redirect to the locale path (e.g. /about -> /zh-CN/about)
   request.nextUrl.pathname = `/${locale}${pathname}`;
-  
+
   const response = NextResponse.rewrite(request.nextUrl);
 
   // Inject the current pathname into a header for server-side access

@@ -20,9 +20,12 @@ interface ImageUploadProps {
   onImageChange: (image: File | null) => void;
 }
 
-const ImageUpload: React.FC<ImageUploadProps> = ({ selectedImage, onImageChange }) => {
+const ImageUpload: React.FC<ImageUploadProps> = ({
+  selectedImage,
+  onImageChange,
+}) => {
   const [uploadedImagePath, setUploadedImagePath] = useState<string | null>(
-    null
+    null,
   );
   // The file waiting to be cropped. Works as open state for cropping modal too.
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -88,7 +91,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ selectedImage, onImageChange 
       <div {...getRootProps()} className="h-full">
         <label
           htmlFor="dropzone-file"
-          className="relative flex flex-col items-center justify-center p-6 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600 w-full visually-hidden-focusable h-full"
+          className="relative flex flex-col items-center justify-center p-6 border-2 border-input border-dashed rounded-lg cursor-pointer bg-muted hover:bg-accent w-full visually-hidden-focusable h-full"
         >
           {!uploadedImagePath && (
             <div className="text-center">
@@ -96,10 +99,10 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ selectedImage, onImageChange 
                 <IoCloudUploadOutline size="1.6em" />
               </div>
 
-              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              <p className="mt-2 text-sm text-muted-foreground">
                 <span className="font-semibold">Upload a banner</span>
               </p>
-              <p className="text-xs text-gray-400 dark:text-gray-400">
+              <p className="text-xs text-muted-foreground">
                 Select an image or drag here to upload directly
               </p>
             </div>
@@ -116,7 +119,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ selectedImage, onImageChange 
               />
               <div className="space-y-1">
                 <p className="text-sm font-semibold">Image Uploaded</p>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   Click here to upload another image
                 </p>
               </div>

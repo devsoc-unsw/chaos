@@ -81,43 +81,43 @@ export const templateCategories: TemplateCategory[] = [
 ];
 
 export async function getOrganisationEmailTemplates(
-  organisationId: string
+  organisationId: string,
 ): Promise<EmailTemplate[]> {
   return await apiRequest<EmailTemplate[]>(
-    `/api/v1/organisation/${organisationId}/email_templates`
+    `/api/v1/organisation/${organisationId}/email_templates`,
   );
 }
 
 export async function createEmailTemplate(
   organisationId: string,
-  template: NewEmailTemplate
+  template: NewEmailTemplate,
 ): Promise<AppMessage> {
   return await apiRequest<AppMessage>(
     `/api/v1/organisation/${organisationId}/email_template`,
-    { method: "POST", body: template }
+    { method: "POST", body: template },
   );
 }
 
 export async function getEmailTemplate(
-  templateId: string
+  templateId: string,
 ): Promise<EmailTemplate> {
   return await apiRequest<EmailTemplate>(
-    `/api/v1/email_template/${templateId}`
+    `/api/v1/email_template/${templateId}`,
   );
 }
 
 export async function duplicateEmailTemplate(
-  templateId: string
+  templateId: string,
 ): Promise<AppMessage> {
   return await apiRequest<AppMessage>(
     `/api/v1/email_template/${templateId}/duplicate`,
-    { method: "POST" }
+    { method: "POST" },
   );
 }
 
 export async function updateEmailTemplate(
   templateId: string,
-  template: EmailTemplate
+  template: EmailTemplate,
 ): Promise<AppMessage> {
   return await apiRequest<AppMessage>(`/api/v1/email_template/${templateId}`, {
     method: "PATCH",
@@ -126,7 +126,7 @@ export async function updateEmailTemplate(
 }
 
 export async function deleteEmailTemplate(
-  templateId: string
+  templateId: string,
 ): Promise<AppMessage> {
   return await apiRequest<AppMessage>(`/api/v1/email_template/${templateId}`, {
     method: "DELETE",
@@ -152,7 +152,7 @@ export interface QueueOutcomeEmailsPayload {
 
 export async function queueCampaignOutcomeEmails(
   campaignId: string,
-  payload: QueueOutcomeEmailsPayload
+  payload: QueueOutcomeEmailsPayload,
 ): Promise<AppMessage> {
   console.log(payload);
   return await apiRequest<AppMessage>(
@@ -160,6 +160,6 @@ export async function queueCampaignOutcomeEmails(
     {
       method: "POST",
       body: payload,
-    }
+    },
   );
 }

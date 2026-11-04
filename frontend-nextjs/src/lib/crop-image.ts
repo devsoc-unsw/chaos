@@ -12,7 +12,8 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("Could not read the selected image"));
+    image.onerror = () =>
+      reject(new Error("Could not read the selected image"));
     image.src = src;
   });
 }
@@ -21,7 +22,10 @@ function loadImage(src: string): Promise<HTMLImageElement> {
  * Cuts `area` out of `file` and re-encodes it, keeping PNG input as PNG so
  * transparency survives and sending everything else to JPEG.
  */
-export async function cropImageToFile(file: File, area: CropArea): Promise<File> {
+export async function cropImageToFile(
+  file: File,
+  area: CropArea,
+): Promise<File> {
   const objectUrl = URL.createObjectURL(file);
 
   try {
@@ -29,8 +33,14 @@ export async function cropImageToFile(file: File, area: CropArea): Promise<File>
 
     const sourceX = Math.max(0, Math.round(area.x));
     const sourceY = Math.max(0, Math.round(area.y));
-    const sourceWidth = Math.min(Math.round(area.width), image.naturalWidth - sourceX);
-    const sourceHeight = Math.min(Math.round(area.height), image.naturalHeight - sourceY);
+    const sourceWidth = Math.min(
+      Math.round(area.width),
+      image.naturalWidth - sourceX,
+    );
+    const sourceHeight = Math.min(
+      Math.round(area.height),
+      image.naturalHeight - sourceY,
+    );
 
     if (sourceWidth <= 0 || sourceHeight <= 0) {
       throw new Error("Could not crop the image");
@@ -58,12 +68,12 @@ export async function cropImageToFile(file: File, area: CropArea): Promise<File>
       0,
       0,
       width,
-      height
+      height,
     );
 
     const type = file.type === "image/png" ? "image/png" : "image/jpeg";
     const blob = await new Promise<Blob | null>((resolve) =>
-      canvas.toBlob(resolve, type)
+      canvas.toBlob(resolve, type),
     );
 
     if (!blob) {

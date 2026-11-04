@@ -60,7 +60,7 @@ export default function RolePercentageBar({
                 left: `${displayStart}%`,
                 width: `${displayEnd - displayStart}%`,
               }}
-              className={`absolute inset-y-0 bg-violet-50 ${
+              className={`absolute inset-y-0 bg-primary/10 ${
                 displayEnd < 100 ? "border-r-2 border-primary" : ""
               }`}
             />

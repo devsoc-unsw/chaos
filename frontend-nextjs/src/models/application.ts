@@ -2,7 +2,7 @@ import { apiRequest } from "@/lib";
 import { UserDetails } from "./user";
 import { AppMessage } from "./app";
 import { RatingDetails } from "./rating";
-import { OfferDetails, OfferStatus } from "./offer";
+import { OfferStatus } from "./offer";
 
 export interface ApplicationDetails {
   id: string;
@@ -14,7 +14,11 @@ export interface ApplicationDetails {
   current_user_rated: boolean;
 }
 
-export type ApplicationStatus = "Pending" | "Rejected" | "Successful" | "Interview";
+export type ApplicationStatus =
+  | "Pending"
+  | "Rejected"
+  | "Successful"
+  | "Interview";
 
 export interface ApplicationAppliedRoleDetails {
   campaign_role_id: string;
@@ -174,7 +178,7 @@ export async function getApplicationRoleStatusesBatch(
   applicationIds: string[],
 ): Promise<Record<string, RoleStatus[]>> {
   const results = await Promise.all(
-    applicationIds.map((id) => getApplicationRoleStatuses(id))
+    applicationIds.map((id) => getApplicationRoleStatuses(id)),
   );
 
   const roleStatusMap: Record<string, RoleStatus[]> = {};

@@ -1,12 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -31,10 +26,7 @@ function averageCategoryScore(rating: RatingDetails): string {
   return (nums.reduce((a, b) => a + b, 0) / nums.length).toFixed(1);
 }
 
-function scoreForCategory(
-  rating: RatingDetails,
-  categoryId: string,
-): string {
+function scoreForCategory(rating: RatingDetails, categoryId: string): string {
   const cr = rating.category_ratings.find(
     (c) => c.campaign_rating_category_id === categoryId,
   );
@@ -110,7 +102,7 @@ export default function ApplicationRatingsSection({
                     <TableCell className="align-top text-sm text-muted-foreground">
                       {rating.comment?.trim()
                         ? rating.comment
-                        : d.no_comment ?? "—"}
+                        : (d.no_comment ?? "—")}
                     </TableCell>
                     {categories.map((cat) => (
                       <TableCell key={cat.id} className="text-center">

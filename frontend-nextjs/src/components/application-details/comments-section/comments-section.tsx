@@ -1,4 +1,3 @@
-import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card";
 import CommentsContainer from "@components/application-details/comments-section/comments-container";
 import CommentsInput from "@components/application-details/comments-section/comments-input";

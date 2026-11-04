@@ -22,5 +22,3 @@ export async function acceptInvite(code: string): Promise<AppMessage> {
     method: "POST",
   });
 }
-
-

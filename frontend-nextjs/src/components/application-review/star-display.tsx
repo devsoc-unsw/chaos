@@ -9,7 +9,7 @@ export function StarDisplay({ value }: { value: number }) {
           className={cn(
             "w-4 h-4",
             star <= value
-              ? "text-yellow-400 fill-yellow-400"
+              ? "text-rating fill-rating"
               : "fill-none text-muted-foreground",
           )}
           viewBox="0 0 24 24"

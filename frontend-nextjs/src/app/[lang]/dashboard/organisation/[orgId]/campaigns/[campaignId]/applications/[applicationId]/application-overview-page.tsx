@@ -18,10 +18,7 @@ export default function ApplicationOverviewPageComponent({
 }: Props) {
   return (
     <div className="flex flex-col gap-4">
-      <ApplicationDetailsComponent
-        applicationId={applicationId}
-        dict={dict}
-      />
+      <ApplicationDetailsComponent applicationId={applicationId} dict={dict} />
       <ApplicationRatingsSection
         applicationId={applicationId}
         campaignId={campaignId}

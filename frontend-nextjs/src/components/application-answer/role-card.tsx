@@ -1,13 +1,12 @@
 import { DraggableProvided } from "@hello-pangea/dnd";
-import { GripVertical } from "lucide-react"
+import { GripVertical } from "lucide-react";
 import { RoleDetails } from "@/models/campaign";
 import { Info } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
-
+} from "@/components/ui/tooltip";
 
 export function RoleCard({
   role,
@@ -18,7 +17,7 @@ export function RoleCard({
   percentage,
   onPercentageChange,
   percentageInvalid,
-  dict
+  dict,
 }: {
   role: RoleDetails;
   index?: number;
@@ -65,14 +64,14 @@ export function RoleCard({
 
       <div className="relative flex items-center justify-between">
         <div className="flex items-center gap-2 min-w-0">
-          <div
-            className="cursor-grab text-muted-foreground select-none"
-          >
+          <div className="cursor-grab text-muted-foreground select-none">
             {selected ? (
               <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-semibold bg-primary text-primary-foreground rounded-full">
                 {index! + 1}
               </span>
-            ) : <GripVertical />}
+            ) : (
+              <GripVertical />
+            )}
           </div>
           <h3 className="font-medium text-sm truncate">{role.name}</h3>
         </div>
@@ -98,7 +97,9 @@ export function RoleCard({
                 value={percentage ?? 0}
                 onChange={(e) => onPercentageChange?.(Number(e.target.value))}
                 className={`w-14 rounded-full border bg-background px-2 py-1 text-xs text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
-                  percentageInvalid ? "border-destructive text-destructive" : "border-border"
+                  percentageInvalid
+                    ? "border-destructive text-destructive"
+                    : "border-border"
                 }`}
               />
               <span className="text-xs text-muted-foreground">%</span>

@@ -30,7 +30,7 @@ export default function TemplateForm({
     templateId: string,
     name: string,
     subject: string,
-    body: string
+    body: string,
   ) => Promise<void>;
 }) {
   const [name, setName] = useState(template?.name ?? "");
@@ -82,7 +82,7 @@ export default function TemplateForm({
     if (currentIndexRef.current < historyRef.current.length - 1) {
       historyRef.current = historyRef.current.slice(
         0,
-        currentIndexRef.current + 1
+        currentIndexRef.current + 1,
       );
     }
 
@@ -107,7 +107,7 @@ export default function TemplateForm({
       value,
       textarea.selectionStart,
       textarea.selectionEnd,
-      "end"
+      "end",
     );
 
     const newBody = textarea.value;
@@ -204,8 +204,8 @@ export default function TemplateForm({
                 when your emails are generated.
               </p>
               <p>
-                Please do not add any variables for emails which you won't have
-                data for (e.g adding an offer_link for rejection templates)
+                Please do not add any variables for emails which you won&apos;t
+                have data for (e.g adding an offer_link for rejection templates)
               </p>
             </TooltipContent>
           </Tooltip>

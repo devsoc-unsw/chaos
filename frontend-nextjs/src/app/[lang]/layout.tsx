@@ -5,7 +5,8 @@ import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "Chaos - Recruitment drives, without the chaos",
-  description: "Chaos is a recruitment platform for student societies. Built by UNSW DevSoc.",
+  description:
+    "Chaos is a recruitment platform for student societies. Built by UNSW DevSoc.",
   icons: {
     icon: "/favicon.ico",
   },
@@ -19,11 +20,11 @@ export default async function RootLayout({
   params: Promise<{ lang: string }>;
 }>) {
   const { lang } = await params;
-  
+
   return (
     <html lang={lang}>
       <body>
-        <Providers>{children}</Providers> 
+        <Providers>{children}</Providers>
         <Toaster />
       </body>
     </html>

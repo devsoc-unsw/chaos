@@ -4,7 +4,7 @@ import {
   Draggable,
   type DropResult,
 } from "@hello-pangea/dnd";
-import { CampaignRole, RoleDetails } from "@/models/campaign";
+import { RoleDetails } from "@/models/campaign";
 import { RoleCard } from "./role-card";
 
 export default function RoleSelector({
@@ -14,7 +14,6 @@ export default function RoleSelector({
   onChangeSelectedRoles,
   rolePercentages,
   onChangeRolePercentage,
-  applicationId,
   dict,
 }: {
   roles: RoleDetails[] | undefined;
@@ -117,7 +116,6 @@ export default function RoleSelector({
                   {selectedRoleIds.map((id, index) => {
                     const role = roles?.find((r) => String(r.id) === id);
                     if (!role) return null;
-                    const selected = true;
                     return (
                       <Draggable key={id} draggableId={id} index={index}>
                         {(drag) => (
@@ -143,7 +141,7 @@ export default function RoleSelector({
             </Droppable>
           </div>
           {percentageInvalid && (
-            <p className="text-xs text-red-500 text-right">
+            <p className="text-xs text-destructive text-right">
               {dict.applicationpage.preference_total_error.replace(
                 "{total}",
                 String(totalPercentage),

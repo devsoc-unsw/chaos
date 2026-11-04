@@ -1,6 +1,16 @@
-"use client"
+"use client";
 
-import { Building2, ChevronDown, LogOut, Mail, Megaphone, Plus, Settings, User, Users } from "lucide-react"
+import {
+  Building2,
+  ChevronDown,
+  LogOut,
+  Mail,
+  Megaphone,
+  Plus,
+  Settings,
+  User,
+  Users,
+} from "lucide-react";
 
 import {
   Sidebar,
@@ -13,13 +23,22 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { getAllOrganisations, OrganisationUserRole } from "@/models/organisation"
-import { useQuery } from "@tanstack/react-query"
-import { redirect, useParams, usePathname, useRouter } from "next/navigation"
-import { APP_VERSION } from "@/lib/const"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  getAllOrganisations,
+  OrganisationUserRole,
+} from "@/models/organisation";
+import { useQuery } from "@tanstack/react-query";
+import { redirect, useParams, usePathname, useRouter } from "next/navigation";
+import { APP_VERSION } from "@/lib/const";
 
 interface AdminSidebarProps {
   userRole: OrganisationUserRole;
@@ -32,7 +51,7 @@ export function AdminSidebar({ userRole, dict }: AdminSidebarProps) {
   const pathname = usePathname();
 
   const { data: orgs } = useQuery({
-    queryKey: ['organisations'],
+    queryKey: ["organisations"],
     queryFn: getAllOrganisations,
   });
 
@@ -44,32 +63,36 @@ export function AdminSidebar({ userRole, dict }: AdminSidebarProps) {
 
   const handleOrgChange = (newOrgId: string) => {
     router.push(`/dashboard/organisation/${newOrgId}`);
-  }
+  };
 
   const items = [
     {
       title: dict.common.campaigns,
       href: "campaigns",
       icon: Megaphone,
-    }
-  ]
+    },
+  ];
 
   if (userRole.role === "Admin") {
-    items.push(...[{
-      title: dict.dashboard.email_templates,
-      href: "templates",
-      icon: Mail,
-    },
-    {
-      title: dict.dashboard.members.members,
-      href: "members",
-      icon: Users,
-    },
-    {
-      title: dict.common.settings,
-      href: "settings",
-      icon: Settings,
-    },]);
+    items.push(
+      ...[
+        {
+          title: dict.dashboard.email_templates,
+          href: "templates",
+          icon: Mail,
+        },
+        {
+          title: dict.dashboard.members.members,
+          href: "members",
+          icon: Users,
+        },
+        {
+          title: dict.common.settings,
+          href: "settings",
+          icon: Settings,
+        },
+      ],
+    );
   }
 
   return (
@@ -84,15 +107,25 @@ export function AdminSidebar({ userRole, dict }: AdminSidebarProps) {
                     <Building2 className="size-4" />
                   </div>
                   <div className="flex flex-1 flex-col gap-0.5 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">{selectedOrg?.name}</span>
-                    <span className="truncate text-xs text-muted-foreground">{dict.common.organisation}</span>
+                    <span className="truncate font-semibold">
+                      {selectedOrg?.name}
+                    </span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {dict.common.organisation}
+                    </span>
                   </div>
                   <ChevronDown className="ml-auto size-4" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-(--radix-dropdown-menu-trigger-width)" align="start">
+              <DropdownMenuContent
+                className="w-(--radix-dropdown-menu-trigger-width)"
+                align="start"
+              >
                 {orgs?.map((org) => (
-                  <DropdownMenuItem key={org.id} onSelect={() => handleOrgChange(org.id)}>
+                  <DropdownMenuItem
+                    key={org.id}
+                    onSelect={() => handleOrgChange(org.id)}
+                  >
                     <Building2 className="mr-2 size-4" />
                     {org.name}
                   </DropdownMenuItem>
@@ -115,7 +148,12 @@ export function AdminSidebar({ userRole, dict }: AdminSidebarProps) {
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname.includes(`/dashboard/organisation/${orgId}/${item.href}`)}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname.includes(
+                      `/dashboard/organisation/${orgId}/${item.href}`,
+                    )}
+                  >
                     <a href={`/dashboard/organisation/${orgId}/${item.href}`}>
                       <item.icon />
                       <span>{item.title}</span>
@@ -140,7 +178,9 @@ export function AdminSidebar({ userRole, dict }: AdminSidebarProps) {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <a href={`${process.env.NEXT_PUBLIC_API_BASE_URL || "https://chaos-api.devsoc.app"}/auth/logout`}>
+                  <a
+                    href={`${process.env.NEXT_PUBLIC_API_BASE_URL || "https://chaos-api.devsoc.app"}/auth/logout`}
+                  >
                     <LogOut />
                     <span>{dict.common.logout}</span>
                   </a>
@@ -150,13 +190,21 @@ export function AdminSidebar({ userRole, dict }: AdminSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter >
+      <SidebarFooter>
         <p className="text-xs text-muted-foreground text-center">
           Chaos version {APP_VERSION}
           <br />
-          Developed by <a className="hover:underline" href="https://devsoc.app" target="_blank" rel="noopener noreferrer">DevSoc</a>
+          Developed by{" "}
+          <a
+            className="hover:underline"
+            href="https://devsoc.app"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            DevSoc
+          </a>
         </p>
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }

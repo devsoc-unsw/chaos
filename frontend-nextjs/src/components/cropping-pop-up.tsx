@@ -49,7 +49,6 @@ export default function CroppingPopUp({
     return () => URL.revokeObjectURL(preview);
   }, [file]);
 
-
   const handleCropComplete = useCallback((_: Area, areaPixels: Area) => {
     setCroppedArea(areaPixels);
   }, []);
@@ -87,8 +86,8 @@ export default function CroppingPopUp({
         <DialogHeader>
           <DialogTitle>Crop banner</DialogTitle>
           <DialogDescription>
-            Drag to reposition and zoom to pick the part of the image used as the
-            banner.
+            Drag to reposition and zoom to pick the part of the image used as
+            the banner.
           </DialogDescription>
         </DialogHeader>
 
@@ -111,7 +110,10 @@ export default function CroppingPopUp({
         </div>
 
         <div className="flex items-center gap-3">
-          <label htmlFor="banner-zoom" className="text-sm text-muted-foreground">
+          <label
+            htmlFor="banner-zoom"
+            className="text-sm text-muted-foreground"
+          >
             Zoom
           </label>
           <input

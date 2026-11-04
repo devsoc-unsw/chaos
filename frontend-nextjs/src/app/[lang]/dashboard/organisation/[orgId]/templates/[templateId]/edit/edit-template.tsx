@@ -24,7 +24,7 @@ export default function TemplateEditForm({
     templateId: string,
     name: string,
     subject: string,
-    body: string
+    body: string,
   ) => {
     await updateEmailTemplate(templateId, {
       id: templateId,

@@ -8,12 +8,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useState } from "react";
-import { CampaignRole, RoleDetails } from "@/models/campaign";
-import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { RoleDetails } from "@/models/campaign";
+import {
+  Tooltip,
+  TooltipProvider,
+  TooltipContent,
+  TooltipTrigger,
+} from "../ui/tooltip";
 import RolePercentageBar from "./role-percentage-bar";
 export default function ReviewCard({
   questionsAndAnswersByRole,
-  applicationId,
   selectedRoleIds,
   rolePercentages,
   handleSubmit,
@@ -89,7 +93,7 @@ export default function ReviewCard({
           })
           .join(", ");
 
-      case "Ranking":
+      case "Ranking": {
         // Unanswered ranking is the string "No Answer" from processAnswerForDisplay
         if (
           !qa.answer ||
@@ -126,6 +130,7 @@ export default function ReviewCard({
         });
 
         return ranked.join(", ");
+      }
 
       default:
         return String(qa.answer);
@@ -164,9 +169,6 @@ export default function ReviewCard({
             {questionsAndAnswersByRole.has("general") &&
               (() => {
                 const qas = questionsAndAnswersByRole.get("general");
-                const role = roles?.find(
-                  (r) => String(r.id) === String("general"),
-                );
                 return (
                   <div key="general" className="mb-6">
                     <h3 className="text-lg font-bold sm:text-xl">General</h3>

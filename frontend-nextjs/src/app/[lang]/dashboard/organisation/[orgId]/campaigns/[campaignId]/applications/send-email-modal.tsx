@@ -86,10 +86,9 @@ export function SendEmailsModal(props: SendEmailsModalProps) {
   const [body, setBody] = useState("");
   const [outcome, setOutcome] = useState<OutcomeType>("accepted");
 
-  const {
-    data: templates = [],
-    isLoading: templatesLoading,
-  } = useQuery<EmailTemplate[]>({
+  const { data: templates = [], isLoading: templatesLoading } = useQuery<
+    EmailTemplate[]
+  >({
     queryKey: [`${orgId}-email-templates`],
     queryFn: () => getOrganisationEmailTemplates(orgId),
     enabled: open && !!orgId,
@@ -162,31 +161,31 @@ export function SendEmailsModal(props: SendEmailsModalProps) {
       a: SendEmailsApplicant,
       emailType: "Accept" | "Reject",
     ) => {
-        const roleStr = a.roles.length ? a.roles.join(", ") : "";
-        const primaryRoleId = a.roleIds[0];
+      const roleStr = a.roles.length ? a.roles.join(", ") : "";
+      const primaryRoleId = a.roleIds[0];
 
-        const vars: Record<string, string> = {
-          name: a.name,
-          role: roleStr,
-          organisation_name: organisationName,
-          campaign_name: campaignName,
-          event_name: eventLabel,
-          expiry_date: expiryDate,
-        };
-        return {
-          id: a.id,
-          application_id: a.id,
-          name: a.name,
-          email: a.email,
-          email_type: emailType,
-          role: roleStr,
-          role_id: primaryRoleId,
-          email_template_id: selectedTemplateId,
-          expiry: expiryIso,
-          subject: mergeOutcomePlaceholders(subj, vars),
-          body: mergeOutcomePlaceholders(bod, vars),
-        };
+      const vars: Record<string, string> = {
+        name: a.name,
+        role: roleStr,
+        organisation_name: organisationName,
+        campaign_name: campaignName,
+        event_name: eventLabel,
+        expiry_date: expiryDate,
       };
+      return {
+        id: a.id,
+        application_id: a.id,
+        name: a.name,
+        email: a.email,
+        email_type: emailType,
+        role: roleStr,
+        role_id: primaryRoleId,
+        email_template_id: selectedTemplateId,
+        expiry: expiryIso,
+        subject: mergeOutcomePlaceholders(subj, vars),
+        body: mergeOutcomePlaceholders(bod, vars),
+      };
+    };
 
     const emailType: "Accept" | "Reject" =
       outcome === "accepted" ? "Accept" : "Reject";
@@ -227,8 +226,7 @@ export function SendEmailsModal(props: SendEmailsModalProps) {
           <div className="rounded-lg border bg-muted/20 p-3 space-y-3">
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm text-muted-foreground">
-                Recipients (
-                <span className="font-medium">{totalEmails}</span>)
+                Recipients (<span className="font-medium">{totalEmails}</span>)
               </p>
               <div className="flex items-center gap-2">
                 <Label className="text-xs">Outcome</Label>

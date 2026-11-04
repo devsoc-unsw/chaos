@@ -2,7 +2,7 @@ import { ApplicationSummaryDataTable } from "./data-table";
 import { ColumnDef, ColumnFiltersState, Row } from "@tanstack/react-table";
 import { Dispatch, SetStateAction } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getOffersByCampaign, OfferDetails } from "@/models/offer";
+import { getOffersByCampaign } from "@/models/offer";
 import { SendEmailsApplicant } from "./send-email-modal";
 import { ApplicationRatingSummary } from "@/models/application";
 
@@ -21,7 +21,7 @@ interface ApplicationSummaryDataTableOfferedProp<TData, TValue> {
   roleIdsToNames: Record<string, string>;
 }
 
-export function ApplicationSummaryDataTableOffered<TData, TValue>({
+export function ApplicationSummaryDataTableOffered<TValue>({
   columns,
   data,
   dict,
@@ -41,10 +41,15 @@ export function ApplicationSummaryDataTableOffered<TData, TValue>({
   });
 
   const combinedData: ApplicationRatingSummary[] = data.map((app) => {
-    const offer = offers?.find((o) => o.application_id === app.application_id && o.role_id === filteredRoleId);
+    const offer = offers?.find(
+      (o) =>
+        o.application_id === app.application_id && o.role_id === filteredRoleId,
+    );
     return {
       ...app,
-      offer_role: offer ? offer.role_name : roleIdsToNames[filteredRoleId as string] || null,
+      offer_role: offer
+        ? offer.role_name
+        : roleIdsToNames[filteredRoleId as string] || null,
       offer_status: offer ? offer.status : "Draft",
     };
   });
@@ -53,7 +58,7 @@ export function ApplicationSummaryDataTableOffered<TData, TValue>({
     <div className="flex flex-col gap-5">
       <ApplicationSummaryDataTable
         label="Offered"
-        color="bg-green-100"
+        color="bg-success-subtle"
         data={data ?? []}
         dict={dict}
         renderSubComponent={renderSubComponent}
@@ -69,7 +74,7 @@ export function ApplicationSummaryDataTableOffered<TData, TValue>({
 
       <ApplicationSummaryDataTable
         label="Outcome"
-        color="bg-green-100"
+        color="bg-success-subtle"
         data={combinedData.filter((app) => app.offer_status !== null) ?? []}
         dict={dict}
         renderSubComponent={renderSubComponent}
