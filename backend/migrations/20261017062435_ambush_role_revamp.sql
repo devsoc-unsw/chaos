@@ -28,7 +28,8 @@ CREATE TABLE ambush_team_memberships (
     team_role_id BIGINT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT FK_ambush_team_memberships_team_role FOREIGN KEY(team_role_id) REFERENCES ambush_team_roles(id) ON DELETE RESTRICT ON UPDATE CASCADE
+    CONSTRAINT FK_ambush_team_memberships_user FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT FK_ambush_team_memberships_team_role FOREIGN KEY(team_role_id) REFERENCES ambush_team_roles(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE INDEX IDX_ambush_teams_organisation on ambush_teams(organisation_id);
