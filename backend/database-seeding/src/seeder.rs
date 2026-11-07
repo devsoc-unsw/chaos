@@ -159,11 +159,9 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
     let role_id_1 = Role::create(
         campaign_id,
         RoleUpdate {
-            name: "Chaos".to_string(),
             description: Some("The DevSoc Rust project".to_string()),
             min_available: 1,
             max_available: 10,
-            finalised: false,
         },
         &mut tx,
         &mut seeder.app_state.snowflake_generator,
@@ -174,11 +172,9 @@ pub async fn seed_database(dev_email: String, mut seeder: Seeder) {
     let role_id_2 = Role::create(
         campaign_id,
         RoleUpdate {
-            name: "Notangles".to_string(),
             description: Some("We hate tangles.".to_string()),
             min_available: 1,
             max_available: 20,
-            finalised: true,
         },
         &mut tx,
         &mut seeder.app_state.snowflake_generator,
