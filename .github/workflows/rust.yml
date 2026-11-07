@@ -2,7 +2,14 @@ name: Rust
 
 on:
   pull_request:
-    branches: [main, "renovate/*", "CHAOS-224-KHAOS-rewrite", "CHAOS-571-integrate-be-fe", "CHAOS-598-nextjs"]
+    branches:
+      [
+        main,
+        "renovate/*",
+        "CHAOS-224-KHAOS-rewrite",
+        "CHAOS-571-integrate-be-fe",
+        "CHAOS-598-nextjs",
+      ]
     paths:
       - "backend/**"
       - ".github/workflows/rust.yml"
