@@ -2,53 +2,54 @@
 //!
 //! This module provides functionality for user authentication and authorization, including:
 //! - User creation and retrieval
-//! - Super user verification
 //! - JWT token extraction and validation
 //! - User ID extraction from requests
 
 use crate::models::app::AppState;
 use crate::models::error::ChaosError;
-use crate::models::user::UserRole;
+use crate::models::transaction::DBTransaction;
 use crate::service::jwt::decode_auth_token;
 use axum::http::request::Parts;
 use axum::RequestPartsExt;
 use axum_extra::headers::Cookie;
 use axum_extra::TypedHeader;
 use snowflake::SnowflakeIdGenerator;
-use sqlx::{Pool, Postgres, Transaction};
 use std::ops::DerefMut;
 
 /// Checks if a user exists in DB based on given email address. If so, their user_id is returned.
 /// Otherwise, a new user is created in the DB, and the new id is returned.
 /// This function is used in OAuth flows to login/signup users when they click the
 /// "Sign in with ___" buttons. The returned user_id will be used to generate a JWT to be
-/// used as a token for the user's browser.
+/// used as a token for the user's browser. When the returned `created` flag is true, the
+/// caller is responsible for queueing the SpiceDB platform `user` relationship on the
+/// transaction.
 ///
 /// # Arguments
 ///
 /// * `email` - The email address of the user
 /// * `name` - The name of the user
-/// * `pool` - Database connection pool
 /// * `snowflake_generator` - Generator for unique user IDs
+/// * `transaction` - Database transaction used for the user lookup and insertion
 ///
 /// # Returns
 ///
-/// * `Result<i64, ChaosError>` - The user ID if successful, or an error
+/// * `Result<(i64, bool), ChaosError>` - The user ID if successful + if the user was
+/// newly created, or an error
 pub async fn create_or_get_user_id(
     email: String,
     name: String,
-    pool: &Pool<Postgres>,
     snowflake_generator: &mut SnowflakeIdGenerator,
-) -> Result<i64, ChaosError> {
+    transaction: &mut DBTransaction<'_>,
+) -> Result<(i64, bool), ChaosError> {
     let possible_user_id = sqlx::query!(
         "SELECT id FROM users WHERE lower(email) = $1",
         email.to_lowercase()
     )
-    .fetch_optional(pool)
+    .fetch_optional(transaction.tx.deref_mut())
     .await?;
 
     if let Some(result) = possible_user_id {
-        return Ok(result.id);
+        return Ok((result.id, false));
     }
 
     let user_id = snowflake_generator.real_time_generate();
@@ -59,41 +60,10 @@ pub async fn create_or_get_user_id(
         email.to_lowercase(),
         name
     )
-    .execute(pool)
+    .execute(transaction.tx.deref_mut())
     .await?;
 
-    Ok(user_id)
-}
-
-/// Verifies if a user has super user privileges.
-///
-/// # Arguments
-///
-/// * `user_id` - The ID of the user to check
-/// * `pool` - Database connection pool
-///
-/// # Returns
-///
-/// * `Result<(), ChaosError>` - Ok if the user is a super user, Unauthorized error otherwise
-pub async fn assert_is_super_user(
-    user_id: i64,
-    transaction: &mut Transaction<'_, Postgres>,
-) -> Result<(), ChaosError> {
-    let is_super_user = sqlx::query!(
-        "SELECT EXISTS(SELECT 1 FROM users WHERE id = $1 AND role = $2)",
-        user_id,
-        UserRole::SuperUser as UserRole
-    )
-    .fetch_one(transaction.deref_mut())
-    .await?
-    .exists
-    .expect("`exists` should always exist in this query result");
-
-    if !is_super_user {
-        return Err(ChaosError::Unauthorized);
-    }
-
-    Ok(())
+    Ok((user_id, true))
 }
 
 /// Extracts the user ID from an HTTP request using the JWT token in cookies.

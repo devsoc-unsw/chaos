@@ -43,9 +43,13 @@ pub enum ChaosError {
     #[error("Application closed")]
     ApplicationClosed,
 
-    /// Campaign period has ended
-    #[error("Campagin closed")]
+    /// Campaign period has ended or not started
+    #[error("Campaign closed")]
     CampaignClosed,
+
+    /// Campaign is published
+    #[error("Campaign open")]
+    CampaignOpen,
 
     /// Database operation failed
     #[error("SQLx error")]
@@ -96,6 +100,10 @@ pub enum ChaosError {
     #[error("SMTP transport error")]
     SmtpTransportError(#[from] lettre::transport::smtp::Error),
 
+    /// Internal server error with detailed message
+    #[error("Internal server error: {0}")]
+    InternalServerErrorWithMessage(String),
+
     // not covered by any other error
     #[error("Internal server error")]
     InternalServerError,
@@ -111,8 +119,12 @@ impl ChaosError {
             | ChaosError::NotFound
             | ChaosError::ApplicationClosed
             | ChaosError::CampaignClosed
+            | ChaosError::CampaignOpen
             | ChaosError::InternalServerError => println!("{:?}", self),
             ChaosError::BadRequestWithMessage(e) => println!("Bad Request: {}", e),
+            ChaosError::InternalServerErrorWithMessage(e) => {
+                println!("Internal server error: {}", e)
+            } // TODO: Handle error message internally and only send vague message
             ChaosError::DatabaseError(e) => println!("Database error: {}", e),
             ChaosError::MigrationError(e) => println!("Migration error: {}", e),
             ChaosError::ReqwestError(e) => println!("Reqwest error: {}", e),
@@ -135,6 +147,7 @@ impl ChaosError {
 /// errors from external dependencies.
 impl IntoResponse for ChaosError {
     fn into_response(self) -> Response {
+        // TODO: Change to logging to OpenTelemetry collector
         self.print();
 
         // Don't leak real error, only return a generic error message
@@ -159,10 +172,19 @@ impl IntoResponse for ChaosError {
             ChaosError::CampaignClosed => {
                 AppMessage::BadRequestMessage("Campaign closed").into_response()
             }
-            // We only care about the RowNotFound error, as others are miscellaneous DB errors.
-            ChaosError::DatabaseError(sqlx::Error::RowNotFound) => {
-                AppMessage::NotFoundMessage("Not found").into_response()
+            ChaosError::CampaignOpen => {
+                AppMessage::BadRequestMessage("Campaign open").into_response()
             }
+            // We only care about the RowNotFound error, as others are miscellaneous DB errors.
+            ChaosError::DatabaseError(e) => match e {
+                sqlx::Error::RowNotFound => {
+                    AppMessage::NotFoundMessage("Not found").into_response()
+                }
+                sqlx::Error::Database(_) => {
+                    AppMessage::BadRequestMessage("Bad request").into_response()
+                }
+                _ => AppMessage::ErrorMessage("Internal server error").into_response(),
+            },
             _ => AppMessage::ErrorMessage("Internal server error").into_response(),
         }
     }

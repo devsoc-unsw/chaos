@@ -11,7 +11,7 @@ use std::ops::DerefMut;
 /// Represents the role of a user in the system.
 ///
 /// Users can have different roles that determine their permissions and access levels.
-#[derive(Deserialize, Serialize, sqlx::Type, Clone)]
+#[derive(Deserialize, Serialize, sqlx::Type, Clone, Copy)]
 #[sqlx(type_name = "user_role", rename_all = "PascalCase")]
 pub enum UserRole {
     /// Regular user with basic access
@@ -106,15 +106,6 @@ pub struct UserDegree {
     pub degree_name: String,
     /// New degree starting year for the user
     pub degree_starting_year: i32,
-}
-
-/// Data structure for updating a user's role.
-#[derive(Deserialize, Serialize)]
-pub struct UserRoleUpdate {
-    /// Email of the user whose role should be updated
-    pub email: String,
-    /// New role for the user
-    pub role: UserRole,
 }
 
 impl User {

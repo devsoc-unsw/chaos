@@ -5,19 +5,178 @@
 
 use crate::models::app::AppState;
 use crate::models::error::ChaosError;
+use crate::spicedb::authzed::api::v1::{
+    permissions_service_client::PermissionsServiceClient, relationship_update::Operation,
+    RelationshipUpdate, ZedToken,
+};
+use crate::spicedb::{new_relationship_update, write_relationships};
 use axum::async_trait;
 use axum::extract::{FromRef, FromRequestParts};
 use axum::http::request::Parts;
 use sqlx::{Postgres, Transaction};
+use tokio::sync::mpsc::UnboundedSender;
+use tonic::transport::Channel;
 
-/// A wrapper around a PostgreSQL transaction.
+/// A wrapper around a PostgreSQL transaction and queued SpiceDB calls.
 ///
 /// This struct provides a type-safe way to handle database transactions
 /// in request handlers. It automatically begins a transaction when extracted
 /// from a request.
+///
+/// SpiceDB relationship writes can be queued on the transaction with
+/// [`DBTransaction::create_spicedb_relationship`] and [`DBTransaction::delete_spicedb_relationship`].
+/// Because SpiceDB has no transactions or rollbacks, the writes are buffered
+/// in memory and only applied by [`DBTransaction::commit`], which keeps the two
+/// systems as consistent as possible (see its documentation).
 pub struct DBTransaction<'a> {
     /// The underlying PostgreSQL transaction
     pub tx: Transaction<'a, Postgres>,
+
+    /// Shared SpiceDB client used to flush queued relationship writes on commit.
+    spicedb: PermissionsServiceClient<Channel>,
+
+    /// Bearer key attached to SpiceDB requests made on commit.
+    spicedb_key: String,
+
+    /// Channel used to publish the commit's ZedToken to the token task
+    /// (`spicedb::apply_zedtokens`), which owns the stored token; see
+    /// [`AppState::spicedb_token_tx`].
+    spicedb_token_tx: UnboundedSender<ZedToken>,
+
+    /// SpiceDB relationship writes queued for application on commit.
+    queued_relationship_updates: Vec<RelationshipUpdate>,
+}
+
+impl DBTransaction<'_> {
+    pub async fn new(state: &AppState) -> Result<Self, ChaosError> {
+        Ok(DBTransaction {
+            tx: state.db.begin().await?,
+            spicedb: state.spicedb.clone(),
+            spicedb_key: state.spicedb_key.clone(),
+            spicedb_token_tx: state.spicedb_token_tx.clone(),
+            queued_relationship_updates: Vec::new(),
+        })
+    }
+
+    /// Queues the idempotent upsert (`Touch`) of a SpiceDB relationship, applied by
+    /// [`DBTransaction::commit`].
+    ///
+    /// The relationship is `<resource_type>:<resource_id>#<relation>@<subject_type>:<subject_id>`,
+    /// e.g. `chaos/campaign:123#organisation@chaos/organisation:5`. `Touch` is used because
+    /// the Sequin webhook can apply the same row before this commit's write.
+    ///
+    /// # Arguments
+    ///
+    /// * `resource_type` - SpiceDB object type of the resource, such as `chaos/campaign`
+    /// * `resource_id` - Chaos ID of the resource
+    /// * `relation` - SpiceDB relation on the resource, such as `organisation`
+    /// * `subject_type` - SpiceDB object type of the subject, such as `chaos/user`
+    /// * `subject_id` - Chaos ID of the subject
+    pub fn create_spicedb_relationship(
+        &mut self,
+        resource_type: &str,
+        resource_id: i64,
+        relation: &str,
+        subject_type: &str,
+        subject_id: i64,
+    ) {
+        self.queued_relationship_updates
+            .push(new_relationship_update(
+                Operation::Touch,
+                resource_type,
+                resource_id,
+                relation,
+                subject_type,
+                subject_id,
+            ));
+    }
+
+    /// Queues the deletion of a specific SpiceDB relationship, applied by
+    /// [`DBTransaction::commit`].
+    ///
+    /// The relationship is `<resource_type>:<resource_id>#<relation>@<subject_type>:<subject_id>`,
+    /// e.g. `chaos/organisation:5#member@chaos/user:42`. Note that deleting a
+    /// relationship that does not exist is a silent success (no operation).
+    ///
+    /// # Arguments
+    ///
+    /// * `resource_type` - SpiceDB object type of the resource, such as `chaos/organisation`
+    /// * `resource_id` - Chaos ID of the resource
+    /// * `relation` - SpiceDB relation on the resource, such as `member`
+    /// * `subject_type` - SpiceDB object type of the subject, such as `chaos/user`
+    /// * `subject_id` - Chaos ID of the subject
+    pub fn delete_spicedb_relationship(
+        &mut self,
+        resource_type: &str,
+        resource_id: i64,
+        relation: &str,
+        subject_type: &str,
+        subject_id: i64,
+    ) {
+        self.queued_relationship_updates
+            .push(new_relationship_update(
+                Operation::Delete,
+                resource_type,
+                resource_id,
+                relation,
+                subject_type,
+                subject_id,
+            ));
+    }
+
+    /// Commits the transaction and the queued SpiceDB relationship writes.
+    ///
+    /// Postgres and SpiceDB cannot commit atomically, so the commit is
+    /// ordered to fail in the safest direction:
+    ///
+    /// 1. The Postgres transaction is committed. This ensures that our source
+    ///    of truth (the DB) is consistent with what the logic asked for.
+    /// 2. The queued SpiceDB writes are applied as a single atomic batch. If
+    ///    this fails, SpiceDB will be left behind Postgres. We do not fail the
+    ///    commit if this happens, because Sequin streams the Postgres change
+    ///    back to us and repairs the relationship (see
+    ///    [`AppState::sequin_webhook_secret`], which is required for that
+    ///    fallback to exist).
+    ///
+    /// On a successful SpiceDB write, the returned ZedToken is published to
+    /// the token task so later permission checks see the change immediately.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` if Postgres was committed (SpiceDB write failures are logged, not returned)
+    /// * `Err(ChaosError)` if Postgres failed to commit
+    pub async fn commit(self) -> Result<(), ChaosError> {
+        self.tx.commit().await?;
+
+        // If there are no SpiceDB calls, only commit Postgres
+        if self.queued_relationship_updates.is_empty() {
+            return Ok(());
+        }
+
+        // It is fine if this write fails: Sequin re-applies the change from Postgres.
+        match write_relationships(
+            &self.spicedb,
+            &self.spicedb_key,
+            self.queued_relationship_updates,
+        )
+        .await
+        {
+            // Publish the revision so the next check is at least as fresh as
+            // this write. A closed channel means the token task has exited, so
+            // the token is dropped; checks then stay on the previous boundary.
+            Ok(Some(token)) => {
+                let _ = self.spicedb_token_tx.send(token);
+            }
+            Ok(None) => {}
+            Err(error) => {
+                println!(
+                    "Failed writing SpiceDB relationships ({error}). Falling back to Sequin syncing."
+                )
+            }
+        }
+
+        Ok(())
+    }
 }
 
 /// Implementation of `FromRequestParts` for `DBTransaction`.
@@ -46,8 +205,6 @@ where
     async fn from_request_parts(_: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
 
-        Ok(DBTransaction {
-            tx: app_state.db.begin().await?,
-        })
+        DBTransaction::new(&app_state).await
     }
 }

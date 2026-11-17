@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { AnswerValue, MultiOptionQuestionOption, QuestionAndAnswer } from '@/models/question';
+import { Markdown } from '@/components/markdown/markdown';
 
 // Special value to represent "No Answer" selection
 export const NO_ANSWER_VALUE = '__NO_ANSWER__';
@@ -96,12 +97,12 @@ export default function Ranking({
     return (
         <div className="mb-6 w-full">
             <div className="flex items-center mb-1">
-                <label className="text-lg font-medium ">{question.text}</label>
+                <label className="text-xl font-medium">{question.text}</label>
                 {question.required && <span tw="ml-1 text-red-500">*</span>}
             </div>
 
             {question.description && (
-                <p className="mb-2 text-sm">{question.description}</p>
+                <Markdown variant="compact" className="mb-2 text-sm">{question.description}</Markdown>
             )}
 
 

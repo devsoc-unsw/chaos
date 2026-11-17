@@ -1,0 +1,136 @@
+# Sequin configuration: streams Postgres changes to the Chaos backend, which
+# upserts the matching SpiceDB relationships.
+#
+# This file is declarative on purpose. Sequin applies it on every start, so a
+# fresh environment converges without anyone clicking through the console, and
+# a changed sink config is picked up by restarting Sequin rather than by
+# remembering to reconfigure the UI.
+#
+# The backend endpoint is `POST /api/v1/sequin/spicedb` and authenticates with
+# a bearer token, so the same secret must be set for Sequin (below) and for the
+# backend (`SEQUIN_WEBHOOK_SECRET`).
+#
+# Environment variables use Sequin's `${VAR:-default}` interpolation, so one file
+# serves local development and production.
+
+# Required. Sequin's config loader short-circuits on a missing account before it
+# creates anything, so omitting this leaves the database, endpoint and sink
+# uncreated rather than erroring loudly.
+account:
+  name: "chaos"
+
+# Lets the backend trigger a backfill over the Management API, which is how the
+# periodic reconciliation heals relationships that are missing rather than
+# orphaned. Only supported on self-hosted Sequin, which is what we run.
+# UPDATE: Replace this outside local development, and keep it out of source
+# control in production.
+api_tokens:
+  - name: "chaos-reconcile"
+    token: |-
+      ${SEQUIN_API_TOKEN:-chaos-reconcile-dev-token}
+
+databases:
+  - name: "chaos"
+    hostname: "${SEQUIN_DB_HOST:-db}"
+    port: ${SEQUIN_DB_PORT:-5432}
+    database: "${SEQUIN_DB_NAME:-chaos}"
+    username: "${SEQUIN_DB_USER:-postgres}"
+    password: |-
+      ${SEQUIN_DB_PASSWORD:-password}
+    # The Chaos application database. Sequin reads logical changes from it and
+    # connects as a normal client; it does not need to own this database.
+    slot:
+      name: "sequin_chaos_slot"
+      # Slot creation needs REPLICATION privileges, which the local dev role
+      # has. Set to false if your production role is provisioned the slot
+      # out-of-band.
+      create_if_not_exists: true
+    publication:
+      name: "sequin_chaos_pub"
+      create_if_not_exists: true
+      # Matches the table list in backend/migrations/20260922092514_cdc.sql.
+      # Sequin can create the publication itself, but it cannot ALTER TABLE
+      # REPLICA IDENTITY, so that stays in the migration.
+      init_sql: |-
+        create publication sequin_chaos_pub for table
+            users,
+            organisations,
+            organisation_members,
+            campaigns,
+            campaign_roles,
+            applications,
+            questions,
+            campaign_rating_categories,
+            application_ratings,
+            application_rating_category_ratings,
+            comments,
+            answers,
+            offers,
+            email_templates
+        with (publish_via_partition_root = true)
+    # Sequin and the database start together in docker compose, so allow a
+    # generous window for Postgres to accept connections and logical decoding.
+    await_database:
+      timeout_ms: 60000
+      interval_ms: 3000
+
+http_endpoints:
+  - name: "chaos-backend"
+    url: "${SEQUIN_WEBHOOK_URL:-http://dev-container:8080/api/v1/sequin/spicedb}"
+    encrypted_headers:
+      # Must match the backend's SEQUIN_WEBHOOK_SECRET. Sequin stores this
+      # encrypted, so it is safe to keep in this file.
+      - key: "Authorization"
+        value: |-
+          Bearer ${SEQUIN_WEBHOOK_SECRET}
+
+sinks:
+  - name: "chaos-spicedb"
+    database: "chaos"
+    source:
+      include_tables:
+        - "public.users"
+        - "public.organisations"
+        - "public.organisation_members"
+        - "public.campaigns"
+        - "public.campaign_roles"
+        - "public.applications"
+        - "public.questions"
+        - "public.campaign_rating_categories"
+        - "public.application_ratings"
+        - "public.application_rating_category_ratings"
+        - "public.comments"
+        - "public.answers"
+        - "public.offers"
+        - "public.email_templates"
+    # Converge a fresh environment (or one whose SpiceDB was wiped) from the
+    # rows that already exist. Only runs when the sink is first created; delete
+    # the sink in the console to re-trigger it.
+    initial_backfill: true
+    # Group by primary key so changes to one row are delivered serially and in
+    # commit order, so a create and a later delete of the same row cannot arrive
+    # out of order and let the delete win. `tables` below overrides this for the
+    # one table where the primary key is not the right key.
+    message_grouping: true
+    # organisation_members is the exception. Its SpiceDB relationship is
+    # organisation#<role>@user, keyed by (organisation_id, user_id), not by the
+    # membership row's own id. Grouping by primary key would put the delete of
+    # membership id=1 and a re-add as id=2 for the same pair into different
+    # groups, so they could be delivered out of order and leave the
+    # relationship wrongly deleted. Grouping by the columns that actually
+    # determine the relationship puts them in one group, delivered in order.
+    # Every other table's relationship is keyed by that row's own id, so the
+    # primary-key default is correct for them.
+    tables:
+      - name: "public.organisation_members"
+        group_column_names: ["organisation_id", "user_id"]
+    batch_size: 100
+    destination:
+      type: "webhook"
+      http_endpoint: "chaos-backend"
+      # Batch messages into one request so the backend can coalesce them into a
+      # single atomic WriteRelationships call.
+      batch: true
+      # The backend replies only after SpiceDB has applied the batch, so this
+      # must exceed a slow SpiceDB write.
+      request_timeout: 30000

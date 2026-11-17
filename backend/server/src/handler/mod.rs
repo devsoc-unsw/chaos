@@ -15,6 +15,7 @@
 //! - `question`: Handles question-related requests
 //! - `rating`: Processes rating-related requests
 //! - `role`: Handles role-related requests
+//! - `sequin`: Receives Sequin's change-data-capture webhooks
 //! - `user`: Processes user-related requests
 
 pub mod answer;
@@ -30,4 +31,5 @@ pub mod question;
 pub mod rating;
 pub mod role;
 pub mod role_status;
+pub mod sequin;
 pub mod user;

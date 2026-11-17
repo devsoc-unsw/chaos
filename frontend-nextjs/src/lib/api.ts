@@ -1,5 +1,9 @@
 const isServer = typeof window === "undefined";
-const API_BASE_URL = isServer
+
+// Base URL of the Chaos API, resolved from the environment. Exported so links
+// built outside the fetch helpers (such as the logout link) resolve the same
+// host instead of hardcoding one.
+export const API_BASE_URL = isServer
   ? process.env.NEXT_API_BASE_URL ||
     process.env.NEXT_PUBLIC_API_BASE_URL ||
     "http://backend:8080"

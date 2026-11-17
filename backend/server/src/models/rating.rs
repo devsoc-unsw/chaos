@@ -242,6 +242,7 @@ impl Rating {
     ///
     /// # Arguments
     /// * `category_id` - The ID of the category to update
+    /// * `campaign_id` - The ID of the campaign the category must belong to
     /// * `updated_category` - The new category (ONLY INCLUDES NAME)
     /// * `transaction` - A mutable reference to the database transaction
     ///
@@ -251,17 +252,19 @@ impl Rating {
     /// * `Err(ChaosError)` - An error if update fails
     pub async fn update_category(
         category_id: i64,
+        campaign_id: i64,
         name: String,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         sqlx::query!(
             "
                 UPDATE campaign_rating_categories
-                SET name = $2
-                WHERE id = $1
+                SET name = $3
+                WHERE id = $1 AND campaign_id = $2
                 RETURNING id
             ",
             category_id,
+            campaign_id,
             name,
         )
         .fetch_one(transaction.deref_mut())
@@ -270,17 +273,30 @@ impl Rating {
         Ok(())
     }
 
-    /// Deletes a category
+    /// Deletes a category.
+    ///
+    /// # Arguments
+    /// * `category_id` - The ID of the category to delete
+    /// * `campaign_id` - The ID of the campaign the category must belong to
+    /// * `transaction` - A mutable reference to the database transaction
+    ///
+    /// # Returns
+    /// Returns a `Result` containing either:
+    /// * `Ok(())` - If the category was deleted successfully
+    /// * `Err(ChaosError)` - An error if deletion fails
     pub async fn delete_category(
         category_id: i64,
+        campaign_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         sqlx::query!(
             "
-                DELETE FROM campaign_rating_categories WHERE id = $1
+                DELETE FROM campaign_rating_categories
+                WHERE id = $1 AND campaign_id = $2
                 RETURNING id
             ",
-            category_id
+            category_id,
+            campaign_id,
         )
         .fetch_one(transaction.deref_mut())
         .await?;
@@ -302,7 +318,7 @@ impl Rating {
     ///
     /// # Returns
     /// Returns a `Result` containing either:
-    /// * `Ok(())` - If the rating was created successfully
+    /// * `Ok(i64)` - The newly created rating's id
     /// * `Err(ChaosError)` - An error if creation fails
     pub async fn create_application_rating(
         comment: Option<String>,
@@ -313,12 +329,12 @@ impl Rating {
     ) -> Result<i64, ChaosError> {
         let rating_id = snowflake_generator.real_time_generate();
 
+        // Will fail on CONFLICT (application_id, rater_id)
+        // Expected behaviour to prevent implicit update
         sqlx::query!(
             "
                 INSERT INTO application_ratings (id, application_id, rater_id, comment)
                     VALUES ($1, $2, $3, $4)
-                ON CONFLICT (application_id, rater_id)
-                DO UPDATE SET comment = $4, updated_at = NOW()
             ",
             rating_id,
             application_id,
@@ -562,6 +578,7 @@ impl Rating {
     ///
     /// # Arguments
     /// * `category_rating_id` - The ID of the category rating to update
+    /// * `rating_id` - The ID of the application rating the category rating must belong to
     /// * `updated_rating` - The new rating data
     /// * `transaction` - A mutable reference to the database transaction
     ///
@@ -571,6 +588,7 @@ impl Rating {
     /// * `Err(ChaosError)` - An error if update fails
     pub async fn update_category_rating(
         category_rating_id: i64,
+        rating_id: i64,
         updated_rating: i32,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
@@ -579,11 +597,12 @@ impl Rating {
         sqlx::query!(
             "
             UPDATE application_rating_category_ratings
-            SET rating = $2, updated_at = $3
-            WHERE id = $1
+            SET rating = $3, updated_at = $4
+            WHERE id = $1 AND application_rating_id = $2
             RETURNING id
         ",
             category_rating_id,
+            rating_id,
             updated_rating,
             current_time
         )
@@ -626,6 +645,7 @@ impl Rating {
     ///
     /// # Arguments
     /// * `application_category_rating_id` - The ID of the application category rating to delete
+    /// * `rating_id` - The ID of the application rating the category rating must belong to
     /// * `transaction` - A mutable reference to the database transaction
     ///
     /// # Returns
@@ -634,14 +654,17 @@ impl Rating {
     /// * `Err(ChaosError)` - An error if deletion fails
     pub async fn delete_category_rating(
         application_category_rating_id: i64,
+        rating_id: i64,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), ChaosError> {
         sqlx::query!(
             "
-            DELETE FROM application_rating_category_ratings WHERE id = $1
+            DELETE FROM application_rating_category_ratings
+            WHERE id = $1 AND application_rating_id = $2
             RETURNING id
         ",
-            application_category_rating_id
+            application_category_rating_id,
+            rating_id
         )
         .fetch_one(transaction.deref_mut())
         .await?;

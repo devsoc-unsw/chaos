@@ -10,6 +10,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { MarkdownTextarea } from "@/components/markdown/markdown-textarea";
 import SlugInput from "@/components/slug-input";
 import { DatePicker } from "@/components/ui/date-picker";
 import ImageUpload from "@/components/ui/image-upload";

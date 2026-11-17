@@ -7,8 +7,11 @@
 use crate::models::app::AppState;
 use crate::models::auth::{AuthRequest, GoogleUserProfile, LoginRequest};
 use crate::models::error::ChaosError;
+use crate::models::transaction::DBTransaction;
 use crate::service::auth::create_or_get_user_id;
 use crate::service::jwt::encode_auth_token;
+use crate::spicedb::schema;
+use crate::spicedb::schema::PLATFORM_RESOURCE_ID;
 use axum::extract::{Query, State};
 use axum::response::{IntoResponse, Redirect};
 use axum_extra::extract::cookie::{Cookie, CookieJar, Expiration};
@@ -16,22 +19,6 @@ use oauth2::reqwest::async_http_client;
 use oauth2::{AuthorizationCode, Scope, TokenResponse};
 use time::OffsetDateTime;
 
-/// Handles the Google OAuth2 callback.
-///
-/// This handler processes the OAuth2 code received from Google after user authorization.
-/// It exchanges the code for an access token, retrieves the user's profile information,
-/// creates or retrieves the user in the database, and generates a JWT token for authentication.
-///
-/// # Arguments
-///
-/// * `state` - The application state
-/// * `query` - The OAuth2 callback query parameters containing the authorization code
-/// * `oauth_client` - The OAuth2 client for Google authentication
-///
-/// # Returns
-///
-/// * `Result<impl IntoResponse, ChaosError>` - JWT token or error
-///
 /// Initiates the Google OAuth2 flow.
 ///
 /// This handler redirects users to Google's OAuth2 authorization URL to begin
@@ -40,6 +27,7 @@ use time::OffsetDateTime;
 /// # Arguments
 ///
 /// * `state` - The application state containing the OAuth2 client
+/// * `query` - The login request query parameters, including the optional redirect target
 ///
 /// # Returns
 ///
@@ -80,12 +68,13 @@ pub async fn google_auth_init(
 /// # Arguments
 ///
 /// * `state` - The application state
+/// * `jar` - The cookie jar, used to set the auth token cookie
 /// * `query` - The OAuth2 callback query parameters containing the authorization code
-/// * `oauth_client` - The OAuth2 client for Google authentication
+/// and optional `state` parameter used to resolve the redirect target
 ///
 /// # Returns
 ///
-/// * `Result<impl IntoResponse, ChaosError>` - JWT token or error
+/// * `Result<impl IntoResponse, ChaosError>` - Redirect to the frontend with the auth token cookie set, or error
 ///
 /// # Note
 ///
@@ -110,13 +99,27 @@ pub async fn google_callback(
 
     let profile = profile.json::<GoogleUserProfile>().await?;
 
-    let user_id = create_or_get_user_id(
+    let mut transaction = DBTransaction::new(&state).await?;
+
+    let (user_id, created) = create_or_get_user_id(
         profile.email.clone(),
         profile.name,
-        &state.db,
         &mut state.snowflake_generator,
+        &mut transaction,
     )
     .await?;
+
+    if created {
+        transaction.create_spicedb_relationship(
+            schema::resource::PLATFORM,
+            PLATFORM_RESOURCE_ID,
+            schema::relation::platform::USER,
+            schema::resource::USER,
+            user_id,
+        );
+    }
+
+    transaction.commit().await?;
 
     let token = encode_auth_token(
         profile.email,
@@ -125,12 +128,8 @@ pub async fn google_callback(
         &state.jwt_header,
     );
 
-    // Create a cookie with the token
-    let domain = if state.is_dev_env {
-        "localhost"
-    } else {
-        "devsoc.app"
-    };
+    // Create a cookie with the token, scoped to the deployment's cookie domain
+    // and only sent over HTTPS when the frontend itself is served over HTTPS.
 
     //let cookie = Cookie::build(("auth_token", token))
     let cookie = Cookie::build(("auth_token", token))
@@ -138,8 +137,8 @@ pub async fn google_callback(
         .expires(Expiration::DateTime(
             OffsetDateTime::now_utc() + time::Duration::days(5),
         )) // Set an expiration time of 5 days, TODO: read from env?
-        .secure(!state.is_dev_env) // Send only over HTTPS, comment out for testing
-        .domain(domain)
+        .secure(state.cookie_secure)
+        .domain(state.cookie_domain.clone())
         .path("/"); // Available for all paths
 
     // let cn_cookie = Cookie::build(("auth_token", token))
@@ -149,12 +148,6 @@ pub async fn google_callback(
     //     .domain("devsoc.cn")
     //     .path("/");
 
-    let redirect_root = if state.is_dev_env {
-        "http://localhost:3000"
-    } else {
-        "https://chaos.devsoc.app"
-    };
-
     let possible_redirect = sqlx::query!(
         "DELETE FROM redirect_tokens WHERE token = $1 RETURNING redirect",
         query.state
@@ -162,6 +155,7 @@ pub async fn google_callback(
     .fetch_optional(&state.db)
     .await?;
 
+    let redirect_root = &state.frontend_url;
     let redirect_url = match possible_redirect {
         Some(redirect) => format!("{redirect_root}{}", redirect.redirect),
         None => format!("{redirect_root}/dashboard"),
@@ -172,23 +166,29 @@ pub async fn google_callback(
     Ok((jar.add(cookie), Redirect::to(redirect_url.as_str())))
 }
 
+/// Logs out the authenticated user.
+///
+/// This handler clears the auth token cookie and redirects to the frontend.
+///
+/// # Arguments
+///
+/// * `state` - The application state
+/// * `jar` - The cookie jar, used to remove the auth token cookie
+///
+/// # Returns
+///
+/// * `Result<impl IntoResponse, ChaosError>` - Redirect to the frontend or error
 pub async fn logout(
     State(state): State<AppState>,
     jar: CookieJar,
 ) -> Result<impl IntoResponse, ChaosError> {
-    let domain = if state.is_dev_env {
-        "localhost"
-    } else {
-        "devsoc.app"
-    };
-
     let empty_cookie = Cookie::build(("auth_token", ""))
         .http_only(true) // Prevent JavaScript access
         .expires(Expiration::DateTime(
             OffsetDateTime::now_utc() + time::Duration::days(5),
         )) // Set an expiration time of 5 days, TODO: read from env?
-        .secure(!state.is_dev_env) // Send only over HTTPS, comment out for testing
-        .domain(domain)
+        .secure(state.cookie_secure)
+        .domain(state.cookie_domain.clone())
         .path("/");
 
     // let empty_cn_cookie= Cookie::build(("auth_token", ""))
@@ -198,18 +198,24 @@ pub async fn logout(
     //     .domain("devsoc.cn")
     //     .path("/");
 
-    let redirect = if state.is_dev_env {
-        "http://localhost:3000"
-    } else {
-        "https://chaos.devsoc.app"
-    };
-
-    //Ok((jar.remove(empty_cookie).remove(empty_cn_cookie), Redirect::to(redirect)))
-    Ok((jar.remove(empty_cookie), Redirect::to(redirect)))
+    Ok((jar.remove(empty_cookie), Redirect::to(&state.frontend_url)))
 }
 
 pub struct DevLoginHandler;
 impl DevLoginHandler {
+    /// Dev-only login as the super admin user.
+    ///
+    /// This handler issues a JWT for a hardcoded super admin account and sets it
+    /// as an auth token cookie. Disabled outside dev environments.
+    ///
+    /// # Arguments
+    ///
+    /// * `state` - The application state
+    /// * `jar` - The cookie jar, used to set the auth token cookie
+    ///
+    /// # Returns
+    ///
+    /// * `Result<impl IntoResponse, ChaosError>` - Redirect to the dashboard or error
     pub async fn dev_super_admin_login(
         State(state): State<AppState>,
         jar: CookieJar,
@@ -235,12 +241,25 @@ impl DevLoginHandler {
             .path("/"); // Available for all paths
 
         // Redirect to the frontend dashboard after successful authentication
-        let redirect_url = "http://localhost:3000/dashboard";
+        let redirect_url = format!("{}/dashboard", state.frontend_url);
 
         // Add the cookie and redirect
-        Ok((jar.add(cookie), Redirect::to(redirect_url)))
+        Ok((jar.add(cookie), Redirect::to(&redirect_url)))
     }
 
+    /// Dev-only login as the org admin user.
+    ///
+    /// This handler issues a JWT for a hardcoded org admin account and sets it
+    /// as an auth token cookie. Disabled outside dev environments.
+    ///
+    /// # Arguments
+    ///
+    /// * `state` - The application state
+    /// * `jar` - The cookie jar, used to set the auth token cookie
+    ///
+    /// # Returns
+    ///
+    /// * `Result<impl IntoResponse, ChaosError>` - Redirect to the dashboard or error
     pub async fn dev_org_admin_login(
         State(state): State<AppState>,
         jar: CookieJar,
@@ -266,12 +285,25 @@ impl DevLoginHandler {
             .path("/"); // Available for all paths
 
         // Redirect to the frontend dashboard after successful authentication
-        let redirect_url = "http://localhost:3000/dashboard";
+        let redirect_url = format!("{}/dashboard", state.frontend_url);
 
         // Add the cookie and redirect
-        Ok((jar.add(cookie), Redirect::to(redirect_url)))
+        Ok((jar.add(cookie), Redirect::to(&redirect_url)))
     }
 
+    /// Dev-only login as a regular user.
+    ///
+    /// This handler issues a JWT for a hardcoded user account and sets it
+    /// as an auth token cookie. Disabled outside dev environments.
+    ///
+    /// # Arguments
+    ///
+    /// * `state` - The application state
+    /// * `jar` - The cookie jar, used to set the auth token cookie
+    ///
+    /// # Returns
+    ///
+    /// * `Result<impl IntoResponse, ChaosError>` - Redirect to the dashboard or error
     pub async fn dev_user_login(
         State(state): State<AppState>,
         jar: CookieJar,
@@ -297,9 +329,9 @@ impl DevLoginHandler {
             .path("/"); // Available for all paths
 
         // Redirect to the frontend dashboard after successful authentication
-        let redirect_url = "http://localhost:3000/dashboard";
+        let redirect_url = format!("{}/dashboard", state.frontend_url);
 
         // Add the cookie and redirect
-        Ok((jar.add(cookie), Redirect::to(redirect_url)))
+        Ok((jar.add(cookie), Redirect::to(&redirect_url)))
     }
 }

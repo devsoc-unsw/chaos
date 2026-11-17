@@ -7,8 +7,6 @@ import {
 import { getCampaign, getCampaignRoles } from '@/models/campaign';
 import { getDictionary } from '@/app/[lang]/dictionaries';
 import CampaignSettings from './campaign-settings';
-import { remark } from 'remark';
-import html from 'remark-html';
 import { getRatingCategories } from '@/models/rating';
   
   export default async function CampaignDetailsPage({ params }: { params: Promise<{ campaignId: string, lang: string }> }) {

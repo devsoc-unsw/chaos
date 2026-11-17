@@ -1,7 +1,7 @@
-//! Role service for the Chaos application.
+//! User service for the Chaos application.
 //!
-//! This module provides functionality for managing campaign roles, including:
-//! - Verifying role admin privileges
+//! This module provides functionality for managing users, including:
+//! - Checking if a user exists by email
 
 use crate::models::error::ChaosError;
 use sqlx::{Postgres, Transaction};
@@ -14,8 +14,8 @@ use std::ops::DerefMut;
 ///
 /// # Arguments
 ///
-/// * `username` - The username of the user to check
-/// * `pool` - Database connection pool
+/// * `email` - The email of the user to check
+/// * `transaction` - Database transaction
 ///
 /// # Returns
 ///
