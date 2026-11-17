@@ -3919,9 +3919,6 @@ components:
           type: string
           description: Campaign ID (as string to preserve large integer precision)
           example: "1116987453965262849"
-        name:
-          type: string
-          example: Chief Mouser
         description:
           type: string
           nullable: true
@@ -3934,16 +3931,10 @@ components:
           type: integer
           format: int32
           example: 3
-        finalised:
-          type: boolean
-          example: false
 
     RoleUpdate:
       type: object
       properties:
-        name:
-          type: string
-          example: Chief Mouser
         description:
           type: string
           nullable: true
@@ -3956,17 +3947,10 @@ components:
           type: integer
           format: int32
           example: 3
-        finalised:
-          type: boolean
-          description: Whether this role has been finalised (e.g. max available number)
-          example: false
 
     NewRole:
       type: object
       properties:
-        name:
-          type: string
-          example: Chief Mouser
         description:
           type: string
           nullable: true
@@ -3979,10 +3963,6 @@ components:
           type: integer
           format: int32
           example: 3
-        finalised:
-          type: boolean
-          description: Whether this role has been finalised (e.g. max available number)
-          example: false
 
     RoleStatus:
       type: object

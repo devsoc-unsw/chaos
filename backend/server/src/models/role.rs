@@ -23,16 +23,12 @@ pub struct Role {
     /// ID of the campaign this role belongs to
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_id: i64,
-    /// Optional name of the role
-    pub name: Option<String>,
     /// Detailed description of the role
     pub description: String,
     /// Minimum number of positions available
     pub min_available: i32,
     /// Maximum number of positions available
     pub max_available: i32,
-    /// Whether the role details have been finalized
-    pub finalised: bool,
     /// When the role was created
     pub created_at: DateTime<Utc>,
     /// When the role was last updated
@@ -45,16 +41,12 @@ pub struct Role {
 /// excluding system-managed fields like IDs and timestamps.
 #[derive(Deserialize, Serialize)]
 pub struct RoleUpdate {
-    /// Name of the role
-    pub name: String,
     /// Optional detailed description of the role
     pub description: Option<String>,
     /// Minimum number of positions available
     pub min_available: i32,
     /// Maximum number of positions available
     pub max_available: i32,
-    /// Whether the role details have been finalized
-    pub finalised: bool,
 }
 
 /// Detailed view of a role's information.
@@ -69,16 +61,12 @@ pub struct RoleDetails {
     /// ID of the campaign this role belongs to
     #[serde(serialize_with = "crate::models::serde_string::serialize")]
     pub campaign_id: i64,
-    /// Name of the role
-    pub name: String,
     /// Optional detailed description of the role
     pub description: Option<String>,
     /// Minimum number of positions available
     pub min_available: i32,
     /// Maximum number of positions available
     pub max_available: i32,
-    /// Whether the role details have been finalized
-    pub finalised: bool,
 }
 
 impl Role {
@@ -105,16 +93,14 @@ impl Role {
 
         sqlx::query!(
             "
-                INSERT INTO campaign_roles (id, campaign_id, name, description, min_available, max_available, finalised)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                INSERT INTO campaign_roles (id, campaign_id, description, min_available, max_available)
+                VALUES ($1, $2, $3, $4, $5)
             ",
             id,
             campaign_id,
-            role_data.name,
             role_data.description,
             role_data.min_available,
-            role_data.max_available,
-            role_data.finalised
+            role_data.max_available
         )
         .execute(transaction.deref_mut())
         .await?;
@@ -139,7 +125,7 @@ impl Role {
         let role = sqlx::query_as!(
             RoleDetails,
             "
-                SELECT id, campaign_id, name, description, min_available, max_available, finalised
+                SELECT id, campaign_id, description, min_available, max_available
                 FROM campaign_roles
                 WHERE id = $1
             ",
@@ -198,15 +184,13 @@ impl Role {
         sqlx::query!(
             "
                 UPDATE campaign_roles
-                SET (name, description, min_available, max_available, finalised) = ($2, $3, $4, $5, $6)
+                SET (description, min_available, max_available) = ($2, $3, $4)
                 WHERE id = $1 RETURNING id
             ",
             id,
-            role_data.name,
             role_data.description,
             role_data.min_available,
-            role_data.max_available,
-            role_data.finalised
+            role_data.max_available
         )
         .fetch_one(transaction.deref_mut())
         .await?;
@@ -231,7 +215,7 @@ impl Role {
         let roles = sqlx::query_as!(
             RoleDetails,
             "
-                SELECT id, campaign_id, name, description, min_available, max_available, finalised
+                SELECT id, campaign_id, description, min_available, max_available
                 FROM campaign_roles
                 WHERE campaign_id = $1
             ",
@@ -246,11 +230,6 @@ impl Role {
 
 impl RoleUpdate {
     pub fn validate(&self) -> Result<(), ChaosError> {
-        let role_name_max_chars = env::var("ROLE_NAME_MAX_CHARS")
-            .expect("Error getting ROLE_NAME_MAX_CHARS")
-            .to_string()
-            .parse::<usize>()
-            .map_err(|_| ChaosError::InternalServerError)?;
         let role_description_max_chars = env::var("ROLE_DESCRIPTION_MAX_CHARS")
             .expect("Error getting ROLE_DESCRIPTION_MAX_CHARS")
             .to_string()
@@ -262,11 +241,9 @@ impl RoleUpdate {
             .parse::<i32>()
             .map_err(|_| ChaosError::InternalServerError)?;
 
-        if self.name.is_empty()
-            || self.min_available < 0
+        if self.min_available < 0
             || self.max_available < 1
             || self.min_available > self.max_available
-            || self.name.len() > role_name_max_chars
             || self.min_available > role_positions_available_max
             || self.max_available > role_positions_available_max
         {
