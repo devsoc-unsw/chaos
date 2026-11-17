@@ -13,18 +13,15 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { ArrowLeft, Play, Form } from "lucide-react";
-import Link from "next/link";
+import { Play, Form } from "lucide-react";
 import { ReviewSidebar } from "./components/review-sidebar";
 import { ApplicationPanel } from "./components/application-panel";
 
 export default function ReviewCampaignApplications({
   campaignId,
-  orgId,
   dict,
 }: {
   campaignId: string;
-  orgId: string;
   dict: any;
 }) {
   const queryClient = useQueryClient();
@@ -86,13 +83,6 @@ export default function ReviewCampaignApplications({
       {/* Page header */}
       <div className="flex justify-between items-start shrink-0">
         <div>
-          <Link
-            href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}`}
-            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            {dict.common.back}
-          </Link>
           <h1 className="text-2xl font-bold">
             {dict.dashboard.campaigns.review_applications}
           </h1>

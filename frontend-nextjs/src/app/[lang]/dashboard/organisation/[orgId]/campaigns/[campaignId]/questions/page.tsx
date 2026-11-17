@@ -6,7 +6,7 @@ import CampaignQuestions from "./campaign-questions";
 import { getAllCommonQuestions, getAllRoleQuestions } from "@/models/question";
 
 export default async function ApplicationAvgRatingsPage({ params }: { params: Promise<{ campaignId: string, orgId: string, lang: string }>; }) {
-    const { lang, campaignId, orgId } = await params;
+    const { lang, campaignId } = await params;
     const dict = await getDictionary(lang);
     const queryClient = new QueryClient();
 
@@ -41,7 +41,7 @@ export default async function ApplicationAvgRatingsPage({ params }: { params: Pr
 
     return (
         <HydrationBoundary state={dehydrate(queryClient)}>
-            <CampaignQuestions campaignId={campaignId} orgId={orgId} dict={dict} />
+            <CampaignQuestions campaignId={campaignId} dict={dict} />
         </HydrationBoundary>
     );
 }

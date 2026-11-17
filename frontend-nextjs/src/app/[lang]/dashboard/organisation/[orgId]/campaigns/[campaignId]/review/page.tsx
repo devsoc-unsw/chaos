@@ -9,7 +9,7 @@ import { getDictionary } from '@/app/[lang]/dictionaries';
 import ReviewCampaignApplications from './review-applications';
 
 export default async function CampaignReviewPage({ params }: { params: Promise<{ campaignId: string, orgId: string, lang: string }> }) {
-    const { campaignId, orgId, lang } = await params;
+    const { campaignId, lang } = await params;
     const dict = await getDictionary(lang);
     const queryClient = new QueryClient();
 
@@ -35,7 +35,7 @@ export default async function CampaignReviewPage({ params }: { params: Promise<{
 
     return (
         <HydrationBoundary state={dehydrate(queryClient)}>
-            <ReviewCampaignApplications campaignId={campaignId} orgId={orgId} dict={dict} />
+            <ReviewCampaignApplications campaignId={campaignId} dict={dict} />
         </HydrationBoundary>
     );
 }

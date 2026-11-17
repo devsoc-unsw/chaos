@@ -1,9 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 import { ButtonGroup } from "@/components/ui/button-group";
-import Link from "next/link";
 import { templateVariables, type EmailTemplate } from "@/models/email";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -18,13 +16,11 @@ import { Textarea } from "@/components/ui/textarea";
 export default function TemplateForm({
   templateId,
   template,
-  orgId,
   dict,
   submitData,
 }: {
   templateId: string;
   template?: EmailTemplate;
-  orgId: string;
   dict: any;
   submitData: (
     templateId: string,
@@ -146,12 +142,6 @@ export default function TemplateForm({
     <div className="flex flex-col gap-3">
       <div className="flex justify-between items-center">
         <div>
-          <Link href={`/dashboard/organisation/${orgId}/templates`}>
-            <div className="flex items-center gap-1">
-              <ArrowLeft className="w-4 h-4" />
-              {dict.common.back}
-            </div>
-          </Link>
           <h1 className="text-2xl font-bold">
             {dict.dashboard.email.edit_template}
           </h1>

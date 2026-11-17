@@ -16,8 +16,7 @@ import {
 import { getRatingCategories, RatingDetails } from "@/models/rating";
 import { getCampaign, getCampaignRoles } from "@/models/campaign";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Plus, X } from "lucide-react";
-import Link from "next/link";
+import { Plus, X } from "lucide-react";
 import { getColumns } from "./columns";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { useMemo, useState, useCallback } from "react";
@@ -409,12 +408,6 @@ export default function ApplicationSummary({
   return (
     <>
       <div>
-        <Link href={`/dashboard/organisation/${orgId}/campaigns/${campaignId}`}>
-          <div className="flex items-center gap-1">
-            <ArrowLeft className="w-4 h-4" />
-            {dict.common.back}
-          </div>
-        </Link>
         <h1 className="text-2xl font-bold">
           {dict.dashboard.campaigns.review_applications}
         </h1>
