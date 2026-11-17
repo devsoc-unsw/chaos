@@ -30,7 +30,7 @@ CREATE TABLE ambush_team_roles (
     UNIQUE (team_id, role_id)
 );
 
--- team membership pivot table, basically says that x user is in y team as a z
+-- role user pivot table, says that x user has y role (which implicitly puts them in z team)
 CREATE TABLE ambush_team_memberships (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL,
